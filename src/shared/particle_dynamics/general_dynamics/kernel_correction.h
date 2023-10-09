@@ -53,7 +53,7 @@ class KernelCorrectionMatrix<DataDelegationType>
 };
 
 template <>
-class KernelCorrectionMatrix<Inner>
+class KernelCorrectionMatrix<Inner<>>
     : public KernelCorrectionMatrix<GeneralDataDelegateInner>
 {
   public:
@@ -65,10 +65,10 @@ class KernelCorrectionMatrix<Inner>
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using KernelCorrectionMatrixInner = KernelCorrectionMatrix<Inner>;
+using KernelCorrectionMatrixInner = KernelCorrectionMatrix<Inner<>>;
 
 template <>
-class KernelCorrectionMatrix<Contact>
+class KernelCorrectionMatrix<Contact<>>
     : public KernelCorrectionMatrix<GeneralDataDelegateContact>
 {
   public:
@@ -92,7 +92,7 @@ class BaseKernelCorrectionMatrixComplex
         : ComplexInteraction<KernelCorrectionMatrix<InnerInteractionType, ContactInteractionType>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
-using KernelCorrectionMatrixComplex = BaseKernelCorrectionMatrixComplex<Inner, Contact>;
+using KernelCorrectionMatrixComplex = BaseKernelCorrectionMatrixComplex<Inner<>, Contact<>>;
 
 template <typename... InteractionTypes>
 class KernelGradientCorrection;
@@ -112,7 +112,7 @@ class KernelGradientCorrection<DataDelegationType>
 };
 
 template <>
-class KernelGradientCorrection<Inner>
+class KernelGradientCorrection<Inner<>>
     : public KernelGradientCorrection<GeneralDataDelegateInner>
 {
     PairAverageInner<Matd> average_correction_matrix_;
@@ -124,7 +124,7 @@ class KernelGradientCorrection<Inner>
 };
 
 template <>
-class KernelGradientCorrection<Contact>
+class KernelGradientCorrection<Contact<>>
     : public KernelGradientCorrection<GeneralDataDelegateContact>
 {
     StdVec<PairAverageContact<Matd>> contact_average_correction_matrix_;
@@ -144,6 +144,6 @@ class BaseKernelGradientCorrectionComplex
         : ComplexInteraction<KernelGradientCorrection<InnerInteractionType, ContactInteractionType>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
-using KernelGradientCorrectionComplex = BaseKernelGradientCorrectionComplex<Inner, Contact>;
+using KernelGradientCorrectionComplex = BaseKernelGradientCorrectionComplex<Inner<>, Contact<>>;
 } // namespace SPH
 #endif // KERNEL_CORRECTION_H

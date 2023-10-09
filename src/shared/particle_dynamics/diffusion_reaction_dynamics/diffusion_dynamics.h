@@ -56,7 +56,7 @@ template <typename... InteractionTypes>
 class DiffusionRelaxation;
 
 template <template <typename... T> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
-class DiffusionRelaxation<DataDelegationType<ParticlesType, ContactParticlesType...>>
+class DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>
     : public LocalDynamics,
       public DataDelegationType<ParticlesType, ContactParticlesType...>
 {
@@ -107,7 +107,7 @@ class CorrectedKernelGradientInner
  */
 template <class ParticlesType, class KernelGradientType>
 class DiffusionRelaxation<Inner<ParticlesType, KernelGradientType>>
-    : public DiffusionRelaxation<DiffusionReactionInnerData<ParticlesType>>
+    : public DiffusionRelaxation<Base, DiffusionReactionInnerData<ParticlesType>>
 {
   protected:
     KernelGradientType kernel_gradient_;
@@ -146,7 +146,7 @@ class CorrectedKernelGradientContact
 
 template <class ParticlesType, class ContactParticlesType, class ContactKernelGradientType>
 class DiffusionRelaxation<BaseContact, ParticlesType, ContactParticlesType, ContactKernelGradientType>
-    : public DiffusionRelaxation<DiffusionReactionContactData<ParticlesType, ContactParticlesType>>
+    : public DiffusionRelaxation<Base, DiffusionReactionContactData<ParticlesType, ContactParticlesType>>
 {
   protected:
     StdVec<StdVec<std::string>> contact_gradient_species_names_;
@@ -227,7 +227,7 @@ class DiffusionRelaxation<Robin<ContactParameters...>>
  * @brief Initialization of a runge-kutta integration scheme.
  */
 template <class ParticlesType>
-class InitializationRK : public DiffusionRelaxation<DiffusionReactionSimpleData<ParticlesType>>
+class InitializationRK : public DiffusionRelaxation<Base, DiffusionReactionSimpleData<ParticlesType>>
 {
   protected:
     StdVec<StdLargeVec<Real>> &diffusion_species_s_;

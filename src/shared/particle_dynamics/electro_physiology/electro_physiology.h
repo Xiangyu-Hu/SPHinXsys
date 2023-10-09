@@ -183,7 +183,7 @@ class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<Electro
 };
 
 using ElectroPhysiologyDiffusionRelaxationInner =
-    DiffusionRelaxation<Identifier<Inner, ElectroPhysiologyParticles, CorrectedKernelGradientInner>>;
+    DiffusionRelaxation<Inner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
@@ -198,21 +198,21 @@ class ElectroPhysiologyDiffusionInnerRK2
 };
 
 using DiffusionRelaxationWithDirichletContact =
-    DiffusionRelaxation<Identifier<Dirichlet, ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>;
+    DiffusionRelaxation<Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>;
 /**
  * @class ElectroPhysiologyDiffusionRelaxationComplex
  * @brief Compute the diffusion relaxation process
  */
 class ElectroPhysiologyDiffusionRelaxationComplex
     : public DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-          Identifier<Inner, ElectroPhysiologyParticles, KernelGradientInner>,
-          Identifier<Dirichlet, ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>>>
+          Inner<ElectroPhysiologyParticles, KernelGradientInner>,
+          Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>>>
 {
   public:
     explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
         : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-              Identifier<Inner, ElectroPhysiologyParticles, KernelGradientInner>,
-              Identifier<Dirichlet, ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>>>(
+              Inner<ElectroPhysiologyParticles, KernelGradientInner>,
+              Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>>>(
               inner_relation, contact_relation){};
     virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 };

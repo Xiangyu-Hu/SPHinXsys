@@ -57,7 +57,7 @@ class FreeSurfaceIndication<DataDelegationType>
 };
 
 template <>
-class FreeSurfaceIndication<Inner>
+class FreeSurfaceIndication<Inner<>>
     : public FreeSurfaceIndication<GeneralDataDelegateInner>
 {
   public:
@@ -72,7 +72,7 @@ class FreeSurfaceIndication<Inner>
 };
 
 template <>
-class FreeSurfaceIndication<Contact>
+class FreeSurfaceIndication<Contact<>>
     : public FreeSurfaceIndication<GeneralDataDelegateContact>
 {
   public:
@@ -83,8 +83,8 @@ class FreeSurfaceIndication<Contact>
 };
 
 template <>
-class FreeSurfaceIndication<SpatialTemporal<Inner>>
-    : public FreeSurfaceIndication<Inner>
+class FreeSurfaceIndication<Inner<SpatialTemporal>>
+    : public FreeSurfaceIndication<Inner<>>
 {
   public:
     explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
@@ -98,11 +98,11 @@ class FreeSurfaceIndication<SpatialTemporal<Inner>>
 };
 
 class SpatialTemporalFreeSurfaceIndicationComplex
-    : public ComplexInteraction<FreeSurfaceIndication<SpatialTemporal<Inner>, Contact>>
+    : public ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>
 {
   public:
     explicit SpatialTemporalFreeSurfaceIndicationComplex(ComplexRelation &complex_relation)
-        : ComplexInteraction<FreeSurfaceIndication<SpatialTemporal<Inner>, Contact>>(
+        : ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
 } // namespace SPH

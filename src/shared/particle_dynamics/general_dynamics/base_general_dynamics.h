@@ -38,9 +38,6 @@
 
 namespace SPH
 {
-template <typename InteractionType>
-class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
-
 typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
 typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateContact;
