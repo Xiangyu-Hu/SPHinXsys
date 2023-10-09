@@ -37,6 +37,97 @@
 
 namespace SPH
 {
+//----------------------------------------------------------------------
+//	Remann Solver classes.
+//----------------------------------------------------------------------
+/**
+ * @struct CompressibleFluidState
+ * @brief  Struct for stored states of Riemann solver in compressible flow.
+ */
+struct CompressibleFluidState : FluidState
+{
+    Real &E_;
+    CompressibleFluidState(Real &rho, Vecd &vel, Real &p, Real &E)
+        : FluidState(rho, vel, p), E_(E){};
+};
+struct CompressibleFluidStarState : FluidStarState
+{
+    Real rho_;
+    Real E_;
+    CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
+        : FluidStarState(vel, p), rho_(rho), E_(E){};
+};
+struct ContactWaveSpeedAndPressure
+{
+    Real contact_wave_speed_star_, contact_pressure_star_;
+    ContactWaveSpeedAndPressure(Real contact_wave_speed_star, Real contact_pressure_star)
+        : contact_wave_speed_star_(contact_wave_speed_star), contact_pressure_star_(contact_pressure_star){};
+};
+
+/**
+ * @struct NoRiemannSolverInCompressibleEulerianMethod
+ * @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for compressible flow. 
+ *         Here, abbreviation CEM means CompressibleEuelrianMethod. 
+ */
+class NoRiemannSolverInCEM
+{
+  public:
+    NoRiemannSolverInCEM(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
+    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, 
+                                    const CompressibleFluidState &state_j, const Vecd &e_ij);
+
+  protected:
+    CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
+};
+
+/**
+ * @struct HLLCRiemannSolver
+ * @brief  HLLC Riemann solver.
+ */
+class HLLCRiemannSolver : public NoRiemannSolverInCEM
+{
+  public:
+    HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
+        : NoRiemannSolverInCEM(compressible_fluid_i, compressible_fluid_j){};
+    Vec2d getSmallestAndLargestWaveSpeeds(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    virtual ContactWaveSpeedAndPressure getContactWaveSpeedAndPressure(const CompressibleFluidState &state_i, 
+                                            const CompressibleFluidState &state_j, const Vecd &e_ij);
+    virtual CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, 
+                                            const CompressibleFluidState &state_j, const Vecd &e_ij);
+};
+
+/**
+ * @struct HLLCWithLimiterRiemannSolver
+ * @brief  HLLC Riemann solver with dissipation limiter.
+ */
+class HLLCWithLimiterRiemannSolver : public HLLCRiemannSolver
+{
+  public:
+    HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
+        : HLLCRiemannSolver(compressible_fluid_i, compressible_fluid_j){};
+    ContactWaveSpeedAndPressure getContactWaveSpeedAndPressure(const CompressibleFluidState &state_i, 
+                                    const CompressibleFluidState &state_j, const Vecd &e_ij) override;
+    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, 
+                                    const CompressibleFluidState &state_j, const Vecd &e_ij) override;
+};
+
+/**
+ * @class EulerianViscousAccelerationInner
+ * @brief  the viscosity force induced acceleration in Eulerian method
+ */
+class EulerianCompressibleViscousAccelerationInner : public fluid_dynamics::ViscousAccelerationInner
+{
+  public:
+    explicit EulerianCompressibleViscousAccelerationInner(BaseInnerRelation &inner_relation);
+    virtual ~EulerianCompressibleViscousAccelerationInner(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    StdLargeVec<Real> &dE_dt_prior_;
+    StdLargeVec<Vecd> &dmom_dt_prior_;
+};
+
+//----------------------------------------------------------------------
+//	Relaxation definition
+//----------------------------------------------------------------------
 /**
  * @class EulerianCompressibleTimeStepInitialization
  * @brief initialize a time step for a body.
@@ -70,109 +161,15 @@ class EulerianCompressibleAcousticTimeStepSize : public fluid_dynamics::Acoustic
     Real smoothing_length_;
 
   public:
-    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body);
+    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
     virtual ~EulerianCompressibleAcousticTimeStepSize(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
     CompressibleFluid compressible_fluid_;
+    Real acousticCFL_;
 };
 
-//----------------------------------------------------------------------
-//	Remann Solver classes.
-//----------------------------------------------------------------------
-/**
- * @struct CompressibleFluidState
- * @brief  Struct for stored states of Riemann solver in compressible flow.
- */
-struct CompressibleFluidState : FluidState
-{
-    Real &E_;
-    CompressibleFluidState(Real &rho, Vecd &vel, Real &p, Real &E)
-        : FluidState(rho, vel, p), E_(E){};
-};
-struct CompressibleFluidStarState : FluidStarState
-{
-    Real rho_;
-    Real E_;
-    CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
-        : FluidStarState(vel, p), rho_(rho), E_(E){};
-};
-
-/**
- * @struct CompressibleFluidConsistencyStarState
- * @brief  Struct for stored states of Riemann solver in compressible flow.
- */
-struct CompressibleFluidConsistencyStarState : FluidConsistencyStarState
-{
-    Real rho_;
-    Matd E_B_;
-    CompressibleFluidConsistencyStarState(Real rho, Vecd vel, Matd p_B, Matd E_B)
-        : FluidConsistencyStarState(vel, p_B), rho_(rho), E_B_(E_B) {};
-};
-
-/**
- * @struct NoRiemannSolverInCompressibleEulerianMethod
- * @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for compressible flow.
- */
-class NoRiemannSolverInCompressibleEulerianMethod
-{
-    CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
-
-  public:
-    NoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
-    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
-    CompressibleFluidConsistencyStarState getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
-                                                                       const Matd& B_i, const Matd B_j, const Vecd& e_ij);
-};
-
-/**
- * @struct HLLCRiemannSolver
- * @brief  HLLC Riemann solver.
- */
-class HLLCRiemannSolver
-{
-    CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
-
-  public:
-    HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 0.0);
-    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
-    CompressibleFluidConsistencyStarState getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
-                                                                       const Matd& B_i, const Matd B_j, const Vecd& e_ij);
-};
-/**
- * @struct HLLCWithLimiterRiemannSolver
- * @brief  HLLC Riemann solver with dissipation limiter.
- */
-class HLLCWithLimiterRiemannSolver
-{
-    CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
-    Real limiter_parameter_;
-
-  public:
-    HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 5.0);
-    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
-    CompressibleFluidConsistencyStarState getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
-                                                                       const Matd& B_i, const Matd B_j, const Vecd& e_ij);
-};
-
-/**
- * @class EulerianViscousAccelerationInner
- * @brief  the viscosity force induced acceleration in Eulerian method
- */
-class EulerianCompressibleViscousAccelerationInner : public fluid_dynamics::ViscousAccelerationInner
-{
-  public:
-    explicit EulerianCompressibleViscousAccelerationInner(BaseInnerRelation &inner_relation);
-    virtual ~EulerianCompressibleViscousAccelerationInner(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-    StdLargeVec<Real> &dE_dt_prior_;
-    StdLargeVec<Vecd> &dmom_dt_prior_;
-};
-
-//----------------------------------------------------------------------
-//	Relaxation definition
-//----------------------------------------------------------------------
 /**
  * @class BaseIntegrationInCompressible
  * @brief Pure abstract base class for all fluid relaxation schemes in compressible flows
@@ -187,7 +184,6 @@ class BaseIntegrationInCompressible : public fluid_dynamics::BaseIntegration
     CompressibleFluid compressible_fluid_;
     StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dE_dt_prior_;
     StdLargeVec<Vecd> &mom_, &dmom_dt_, &dmom_dt_prior_;
-    StdLargeVec<Matd>& B_;
 };
 
 /**
@@ -199,13 +195,13 @@ template <class RiemannSolverType>
 class BaseIntegration1stHalf : public BaseIntegrationInCompressible
 {
   public:
-    explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 5.0);
+    explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
     virtual ~BaseIntegration1stHalf(){};
     RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolverInCompressibleEulerianMethod>;
+using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolverInCEM>;
 using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
 using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCWithLimiterRiemannSolver>;
 
@@ -217,13 +213,13 @@ template <class RiemannSolverType>
 class BaseIntegration2ndHalf : public BaseIntegrationInCompressible
 {
   public:
-    explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 5.0);
+    explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~BaseIntegration2ndHalf(){};
     RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCompressibleEulerianMethod>;
+using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCEM>;
 using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
 using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 

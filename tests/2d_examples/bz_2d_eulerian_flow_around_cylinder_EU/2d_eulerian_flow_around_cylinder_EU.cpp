@@ -103,10 +103,10 @@ int main(int ac, char *av[])
         return 0;
     }
     //----------------------------------------------------------------------
-    //	Define the main numerical methods used in the simulation.
-    //	Note that there may be data dependence on the constructors of these methods.
-    //----------------------------------------------------------------------
-    /** Initial condition */
+   //	Define the main numerical methods used in the simulation.
+   //	Note that there may be data dependence on the constructors of these methods.
+   //----------------------------------------------------------------------
+   /** Initial condition */
     SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     InteractionWithUpdate<KernelGradientWithCorrectionComplex> kernel_gradient_update(water_block_complex);
     SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    Real end_time = 300.0;
+    Real end_time = 150.0;
     Real output_interval = 1.0; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -178,8 +178,8 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
-                          << "	dt = " << dt << "\n";
+                    << GlobalStaticVariables::physical_time_
+                    << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
         }

@@ -12,8 +12,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 40.0;                        /**< Channel length. */
-Real DH = 40.0;                        /**< Channel height. */
+Real DL = 25.0;                        /**< Channel length. */
+Real DH = 15.0;                        /**< Channel height. */
 Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */

@@ -197,16 +197,21 @@ class Integration1stHalf : public BaseIntegration1stHalf
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
 
             //correction scheme
-            /*acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+           /* acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
                             (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
-                             numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij; */                                                                                                                                                      
+                             numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;  */
+
+
+            acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+                (stress_PK1_[index_i] * B_with_level_set_[index_i] + stress_PK1_[index_j] * B_with_level_set_[index_j] +
+                    numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;
 
             //consistence correction scheme
 
-            acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+            /*acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
                             (stress_PK1_[index_i] * (B_[index_i].determinant() > 1.5 ? B_[index_i] : B_with_level_set_[index_i]) +
                              stress_PK1_[index_j] * (B_[index_j].determinant() > 1.5 ? B_[index_j] : B_with_level_set_[index_j]) +
-                             numerical_dissipation_factor_ * weight * numerical_stress_ij) *  e_ij;
+                             numerical_dissipation_factor_ * weight * numerical_stress_ij) *  e_ij;*/
         }
 
         acc_[index_i] = acceleration;

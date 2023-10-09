@@ -116,7 +116,6 @@ void RelaxationStepInner::exec(Real dt)
     relaxation_acceleration_inner_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
-    //surface_bounding_.exec();
 }
 //=================================================================================================//
 RelaxationAccelerationComplexWithLevelSetCorrection::
@@ -528,7 +527,7 @@ void CheckCorrectedZeroOrderConsistency::interaction(size_t index_i, Real dt)
 	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 	{
 		size_t index_j = inner_neighborhood.j_[n];
-		acceleration -= (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
+		acceleration -= 0.5 * (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
 	}
 
 	if (level_set_correction_)
@@ -539,13 +538,13 @@ void CheckCorrectedZeroOrderConsistency::interaction(size_t index_i, Real dt)
 
         if (phi > -constrained_distance_)
         {
-            acceleration -= 0.5 * (B_[index_i]  + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-						     pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1);
+            acceleration -= 0.5 * (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+                pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
         }
         else
         {
             acceleration -= 0.5 * (B_[index_i]  + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-						     pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1);
+						     pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
         };
 	}
 

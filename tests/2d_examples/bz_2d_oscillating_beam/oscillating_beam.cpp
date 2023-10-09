@@ -100,8 +100,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setRunParticleRelaxation(true);
-    sph_system.setReloadParticles(false);
+    sph_system.setRunParticleRelaxation(false);
+    sph_system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(beam_body);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, { &beam_body });
+        BodyStatesRecordingToPlt write_insert_body_to_vtp(io_environment, { &beam_body });
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(io_environment, { &beam_body });
         /** A  Physics relaxation step. */
@@ -149,6 +149,7 @@ int main(int ac, char *av[])
         relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner(beam_body_inner, true);
         relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_cm_inner(beam_body_inner, true);
         InteractionDynamics<relax_dynamics::CheckCorrectedZeroOrderConsistency> check_zero_order_consistency(beam_body_inner, true);
+        InteractionDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_kinetic_energy(beam_body_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -161,15 +162,16 @@ int main(int ac, char *av[])
         int ite_p = 0;
         while (ite_p < 20000)
         {
-            //configuration_beam_body.exec();
-            relaxation_step_inner_explicit.exec();
-            //relaxation_step_cm_inner_explicit.exec();
+            configuration_beam_body.exec();
+            //relaxation_step_inner_explicit.exec();
+            relaxation_step_cm_inner_explicit.exec();
             //relaxation_step_inner.exec();
             //relaxation_step_cm_inner.exec();
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
                 check_zero_order_consistency.exec();
+                update_kinetic_energy.exec();
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
                 write_insert_body_to_vtp.writeToFile(ite_p);
             }
@@ -207,7 +209,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt write_beam_states(io_environment, sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //----------------------------------------------------------------------

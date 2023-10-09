@@ -115,16 +115,18 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], 
                        sph_adaptation_->SmoothingLengthRatio(index_i));
 
-        if (phi > -constrained_distance_)
-        {
-            acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], 
+        //if (phi > -constrained_distance_)
+        //{
+        //    acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], 
+        //        sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+        //}
+        //else
+        //{
+        //    acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], 
+        //        sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
+        //};
+        acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i],
                 sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-        }
-        else
-        {
-            acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], 
-                sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
-        };
     };
 
   protected:
@@ -361,16 +363,19 @@ public:
         RelaxationAccelerationByCMInner::interaction(index_i, dt);
         Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-        if (phi > -constrained_distance_)
-        {
-            acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                              pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-        }
-        else
-        {
-            acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                              pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
-        };
+        //if (phi > -constrained_distance_)
+        //{
+        //    acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+        //                      pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+        //}
+        //else
+        //{
+        //    acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+        //                      pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
+        //};
+
+        acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+                          pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
 
 protected:
