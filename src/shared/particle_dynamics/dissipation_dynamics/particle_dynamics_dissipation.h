@@ -189,12 +189,37 @@ class DampingPairwiseFromWall : public LocalDynamics,
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   private:
-    Real eta_; /**< damping coefficient */
     StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<VariableType> &variable_;
     StdVec<StdLargeVec<Real> *> wall_Vol_;
     StdVec<StdLargeVec<VariableType> *> wall_variable_;
+
+  protected:
+		Real eta_; /**< damping coefficient */
 };
+
+/**
+	 * @class DampingPairwiseFromShell
+	 * @brief Damping to wall by which the wall velocity is not updated
+	 * and the mass of wall particle is not considered.
+	 */
+	template <typename VariableType>
+	class DampingPairwiseFromShell : public LocalDynamics,
+									public DataDelegateContact<BaseParticles, ShellParticles>
+	{
+	public:
+		DampingPairwiseFromShell(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
+		virtual ~DampingPairwiseFromShell(){};
+		void interaction(size_t index_i, Real dt = 0.0);
+
+	private:
+		StdLargeVec<Real> &Vol_, &mass_;
+		StdLargeVec<VariableType> &variable_;
+		StdVec<StdLargeVec<VariableType> *> shell_variable_;
+	
+	protected:
+		Real eta_; /**< damping coefficient */
+	};
 
 /**
  * @class DampingWithRandomChoice

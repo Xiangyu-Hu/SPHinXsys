@@ -15,7 +15,8 @@ BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_re
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       rho_(particles_->rho_), mass_(particles_->mass_),
       rho0_(sph_body_.base_material_->ReferenceDensity()),
-      inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity())
+      inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
+      spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing())
 {
     particles_->registerVariable(rho_sum_, "DensitySummation");
 }

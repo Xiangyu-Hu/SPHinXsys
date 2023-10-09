@@ -69,7 +69,7 @@ class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
 
   protected:
     StdLargeVec<Real> &rho_, rho_sum_, &mass_;
-    Real rho0_, inv_sigma0_;
+    Real rho0_, inv_sigma0_, spacing_ref_;
 };
 
 /**

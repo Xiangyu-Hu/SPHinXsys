@@ -117,10 +117,11 @@ class TransportVelocityCorrectionComplex
                 Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
                 for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
                 {
+                    size_t index_j = contact_neighborhood.j_[n];
                     Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
                     // acceleration for transport velocity
-                    acceleration_trans -= 2.0 * nablaW_ijV_j;
+                    acceleration_trans -= 2.0 * nablaW_ijV_j * this->contact_particles_[k]->DegeneratedSpacing(index_j);
                 }
             }
 

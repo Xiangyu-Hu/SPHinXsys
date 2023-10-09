@@ -192,6 +192,9 @@ class BaseParticles
     //----------------------------------------------------------------------
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleMass(size_t index) { return mass_[index]; }
+    
+    /** Return degenerated spacing. */
+		virtual Real DegeneratedSpacing(size_t index_i) { return 1.0; }
 
   protected:
     SPHBody &sph_body_;

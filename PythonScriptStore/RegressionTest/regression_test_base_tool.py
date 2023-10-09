@@ -16,15 +16,15 @@ class SphinxsysRegressionTestByCTest:
         self.sphinxsys_case_name = casename
         self.sphinxsys_body_name = bodyname
         self.sphinxsys_parameter_name = parametername
-        self.enter_sphinxsys_exec_folder = f"cd {self.sphinxsys_exec_path};"
-        self.enter_sphinxsys_case_folder = f"cd {self.sphinxsys_case_path};"
+        self.enter_sphinxsys_exec_folder = f"{self.sphinxsys_exec_path}"
+        self.enter_sphinxsys_case_folder = f"{self.sphinxsys_case_path}"
         self.input_file_path = os.path.join(self.sphinxsys_exec_path, "input")
         self.condition_file_path = os.path.join(self.input_file_path, f"{bodyname}_{parametername}_runtimes.dat")
 
     def compile_case(self) -> None:
         print('Start compiling test case....')
         command = "make -j8"
-        os.system(self.enter_sphinxsys_case_folder)
+        os.chdir(self.enter_sphinxsys_case_folder)
         os.system(command)
         print('Compiling test case is finished...')
 
@@ -68,29 +68,29 @@ class SphinxsysRegressionTest:
         self.sphinxsys_case_name = casename
         self.sphinxsys_body_name = bodyname
         self.sphinxsys_parameter_name = parametername
-        self.enter_sphinxsys_exec_folder = f"cd {self.sphinxsys_exec_path};"
-        self.enter_sphinxsys_case_folder = f"cd {self.sphinxsys_case_path};"
+        self.enter_sphinxsys_exec_folder = f"{self.sphinxsys_exec_path}"
+        self.enter_sphinxsys_case_folder = f"{self.sphinxsys_case_path}"
         self.input_file_path = os.path.join(self.sphinxsys_exec_path, "input")
         self.condition_file_path = os.path.join(self.input_file_path, f"{bodyname}_{parametername}_runtimes.dat")
 
     def compile_case(self) -> None:
         print('Start compiling test case....')
         command = "make -j8"
-        os.system(self.enter_sphinxsys_case_folder)
+        os.chdir(self.enter_sphinxsys_case_folder)
         os.system(command)
         print('Compiling test case is finished...')
 
     def test_case(self) -> None:
         print('Start test case...')
         command = "make test"
-        os.system(self.enter_sphinxsys_case_folder)
+        os.chdir(self.enter_sphinxsys_case_folder)
         os.system(command)
         print('Testing case is finished...')
 
     def copy_reload(self) -> None:
         print('Start copy the reload file...')
         command = "cp -r reload bin"
-        os.system(self.enter_sphinxsys_case_folder)
+        os.chdir(self.enter_sphinxsys_case_folder)
         os.system(command)
         print('Copying the reload file is finished...')
 

@@ -5,25 +5,6 @@ namespace SPH
 //=====================================================================================================//
 namespace fluid_dynamics
 {
-//=================================================================================================//
-FreeSurfaceIndicationComplex::
-    FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
-                                 BaseContactRelation &contact_relation, Real threshold)
-    : FreeSurfaceIndicationInner(inner_relation, threshold), FluidContactOnly(contact_relation)
-{
-    for (size_t k = 0; k != contact_particles_.size(); ++k)
-    {
-        Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
-        contact_inv_rho0_.push_back(1.0 / rho0_k);
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
-    }
-}
-//=================================================================================================//
-FreeSurfaceIndicationComplex::
-    FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold)
-    : FreeSurfaceIndicationComplex(complex_relation.getInnerRelation(),
-                                   complex_relation.getContactRelation(), threshold) {}
-//=================================================================================================//
 ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseInnerRelation &inner_relation,
                                                            BaseContactRelation &contact_relation)
     : ColorFunctionGradientInner(inner_relation), FluidContactOnly(contact_relation)

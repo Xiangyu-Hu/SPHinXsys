@@ -70,9 +70,9 @@ target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
-target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>)
-
-# ## Threads
+target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>) 
+add_compile_definitions(TBB_SUPPRESS_DEPRECATED_MESSAGES=1)
+### Threads
 find_package(Threads REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Threads::Threads)
 

@@ -41,3 +41,5 @@
 #include "fluid_surface_complex.h"
 #include "fluid_surface_inner.hpp"
 #include "transport_velocity_correction.h"
+#include "fluid_shell_interaction.h"
+#include "fluid_shell_interaction.hpp"

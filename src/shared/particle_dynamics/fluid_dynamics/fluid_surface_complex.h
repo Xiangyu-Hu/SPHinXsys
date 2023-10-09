@@ -42,12 +42,13 @@ namespace fluid_dynamics
  * @class FreeSurfaceIndicationComplex
  * @brief indicate the particles near the free fluid surface.
  */
-class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactOnly
+class FreeSurfaceIndicationComplex
+    : public BaseInteractionComplex<FreeSurfaceIndicationInner, FluidContactData>
 {
   public:
-    FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
-                                 BaseContactRelation &contact_relation, Real threshold = 0.75);
-    explicit FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75);
+    template <typename... Args>
+    FreeSurfaceIndicationComplex(Args &&...args)
+        : BaseInteractionComplex<FreeSurfaceIndicationInner, FluidContactData>(std::forward<Args>(args)...){};
     virtual ~FreeSurfaceIndicationComplex(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -60,7 +61,7 @@ class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public F
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
-                pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+                pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n] * this->contact_particles_[k]->DegeneratedSpacing(contact_neighborhood.j_[n]);
             }
         }
         pos_div_[index_i] += pos_div;
@@ -70,8 +71,7 @@ class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public F
     StdVec<Real> contact_inv_rho0_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
 };
-using SpatialTemporalFreeSurfaceIdentificationComplex =
-    SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
+using SpatialTemporalFreeSurfaceIdentificationComplex = SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 
 /** the cases with free surface and freestream */
 using DensitySummationFreeSurfaceComplex = DensitySummationFreeSurface<DensitySummationComplex>;

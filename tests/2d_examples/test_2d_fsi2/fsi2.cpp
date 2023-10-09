@@ -302,6 +302,5 @@ int main(int ac, char *av[])
         write_beam_tip_displacement.testResult();
     }
 
-
     return 0;
 }

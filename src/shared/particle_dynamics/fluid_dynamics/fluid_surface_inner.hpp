@@ -107,9 +107,9 @@ SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
     SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args)
     : FreeSurfaceIdentification(std::forward<ConstructorArgs>(args)...)
 {
-    this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", [&](size_t i) -> int
-                                       { return 1; });
-    this->particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");
+    FluidDataInner::particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", [&](size_t i) -> int
+                                                 { return 1; });
+    FluidDataInner::particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");
 }
 //=================================================================================================//
 template <class FreeSurfaceIdentification>
