@@ -63,7 +63,7 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
 };
 
 template <typename... CommonControlTypes>
-class TransportVelocityCorrection<Inner, CommonControlTypes...>
+class TransportVelocityCorrection<Inner<>, CommonControlTypes...>
     : public TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>
 {
   public:
@@ -75,7 +75,7 @@ class TransportVelocityCorrection<Inner, CommonControlTypes...>
 };
 
 template <typename... CommonControlTypes>
-class TransportVelocityCorrection<ContactBoundary, CommonControlTypes...>
+class TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>
     : public TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>
 {
   public:
@@ -87,7 +87,7 @@ class TransportVelocityCorrection<ContactBoundary, CommonControlTypes...>
 };
 
 template <class KernelCorrectionType, typename... CommonControlTypes>
-class TransportVelocityCorrection<Contact, KernelCorrectionType, CommonControlTypes...>
+class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>
     : public TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>
 {
   public:
@@ -103,11 +103,11 @@ class TransportVelocityCorrection<Contact, KernelCorrectionType, CommonControlTy
 
 template <typename... CommonControlTypes>
 class BaseTransportVelocityCorrectionComplex
-    : public ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>, CommonControlTypes...>
+    : public ComplexInteraction<TransportVelocityCorrection<Inner<>, ContactBoundary<>>, CommonControlTypes...>
 {
   public:
     explicit BaseTransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
-        : ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>, CommonControlTypes...>(
+        : ComplexInteraction<TransportVelocityCorrection<Inner<>, ContactBoundary<>>, CommonControlTypes...>(
               ConstructorArgs(complex_relation.getInnerRelation(), coefficient),
               ConstructorArgs(complex_relation.getContactRelation(), coefficient)){};
 };

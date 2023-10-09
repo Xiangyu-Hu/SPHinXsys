@@ -69,7 +69,7 @@ template <typename... InteractionTypes>
 class Integration1stHalf;
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>
+class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
     : public BaseIntegration<FluidDataInner>
 {
   public:
@@ -85,7 +85,7 @@ class Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>
+class Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
     : public InteractionWithWall<BaseIntegration>
 {
   public:
@@ -99,8 +99,8 @@ class Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<Extended<ContactWall>, RiemannSolverType, KernelCorrectionType>
-    : public Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>
+class Integration1stHalf<Extended<ContactWall<>>, RiemannSolverType, KernelCorrectionType>
+    : public Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
 {
   public:
     explicit Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
@@ -117,7 +117,7 @@ template <typename... InteractionTypes>
 class Integration2ndHalf;
 
 template <class RiemannSolverType>
-class Integration2ndHalf<Inner, RiemannSolverType>
+class Integration2ndHalf<Inner<>, RiemannSolverType>
     : public BaseIntegration<FluidDataInner>
 {
   public:
@@ -133,7 +133,7 @@ class Integration2ndHalf<Inner, RiemannSolverType>
 };
 
 template <class RiemannSolverType>
-class Integration2ndHalf<ContactWall, RiemannSolverType>
+class Integration2ndHalf<ContactWall<>, RiemannSolverType>
     : public InteractionWithWall<BaseIntegration>
 {
   public:
@@ -147,11 +147,11 @@ class Integration2ndHalf<ContactWall, RiemannSolverType>
 
 template <class RiemannSolverType>
 class Integration1stHalfRiemannWithWall
-    : public ComplexInteraction<Integration1stHalf<Inner, ContactWall>, RiemannSolverType, NoKernelCorrection>
+    : public ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, NoKernelCorrection>
 {
   public:
     explicit Integration1stHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration1stHalf<Inner, ContactWall>, RiemannSolverType, NoKernelCorrection>(
+        : ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, NoKernelCorrection>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 using Integration1stHalfWithWallNoRiemann = Integration1stHalfRiemannWithWall<NoRiemannSolver>;
@@ -159,11 +159,11 @@ using Integration1stHalfWithWallRiemann = Integration1stHalfRiemannWithWall<Acou
 
 template <class RiemannSolverType>
 class Integration2ndHalfWithWall
-    : public ComplexInteraction<Integration2ndHalf<Inner, ContactWall>, RiemannSolverType>
+    : public ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>
 {
   public:
     explicit Integration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration2ndHalf<Inner, ContactWall>, RiemannSolverType>(
+        : ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 

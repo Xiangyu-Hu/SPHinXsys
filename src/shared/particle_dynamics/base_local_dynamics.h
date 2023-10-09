@@ -39,23 +39,28 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction type identifies
 //----------------------------------------------------------------------
-class Base;            /**< Indicating base class for a method */
-class Inner;           /**< Inner interaction: interaction within a body*/
-class InnerAdaptive;   /**< Inner interaction with adaptive resolution */
-class BaseInner;       /**< Base inner interaction */
-class Contact;         /**< Contact interaction: interaction between a body with one or several another bodies */
+class Base; /**< Indicating base class for a method */
+
+template <typename... InnerParameters>
+class Inner; /**< Inner interaction: interaction within a body*/
+
+class InnerAdaptive; /**< Inner interaction with adaptive resolution */
+class BaseInner;     /**< Base inner interaction */
+
+template <typename... ContactParameters>
+class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
+
 class ContactAdaptive; /**< Contact interaction with adaptive resolution */
 class BaseContact;     /**< Base contact interaction*/
+
+template <typename... ContactBoundaryParameters>
 class ContactBoundary; /**< Contact interaction with boundary */
-class ContactWall;     /**< Contact interaction with wall boundary */
-class Dirichlet;       /**< Contact interaction with Dirichlet boundary condition */
-class Neumann;         /**< Contact interaction with Neumann boundary condition */
-class Robin;           /**< Contact interaction with Robin boundary condition */
+
+template <typename... ContactWallParameters>
+class ContactWall; /**< Contact interaction with wall boundary */
 
 template <typename InteractionType>
 class Extended; /**< An extened method of an interaction type */
-template <typename... ControlTypes>
-class Identifier; /**< A general interaction with control parameters */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
@@ -318,8 +323,8 @@ struct ConstructorArgs
 template <typename... T>
 class ComplexInteraction;
 
-template <typename... CommonControlTypes, template <typename... InteractionTypes> class LocalDynamicsName>
-class ComplexInteraction<LocalDynamicsName<>, CommonControlTypes...>
+template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName>
+class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
 {
   public:
     ComplexInteraction(){};
@@ -327,24 +332,24 @@ class ComplexInteraction<LocalDynamicsName<>, CommonControlTypes...>
     void interaction(size_t index_i, Real dt = 0.0){};
 };
 
-template <typename... CommonControlTypes, template <typename... InteractionTypes> class LocalDynamicsName,
+template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,
           class FirstInteraction, class... OtherInteractions>
-class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>, CommonControlTypes...>
-    : public LocalDynamicsName<FirstInteraction, CommonControlTypes...>
+class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>, CommonParameters...>
+    : public LocalDynamicsName<FirstInteraction, CommonParameters...>
 {
   protected:
-    ComplexInteraction<LocalDynamicsName<OtherInteractions...>, CommonControlTypes...> other_interactions_;
+    ComplexInteraction<LocalDynamicsName<OtherInteractions...>, CommonParameters...> other_interactions_;
 
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
                                 OtherParameterSets &&...other_parameter_sets)
-        : LocalDynamicsName<FirstInteraction, CommonControlTypes...>(first_parameter_set),
+        : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
-        LocalDynamicsName<FirstInteraction, CommonControlTypes...>::interaction(index_i, dt);
+        LocalDynamicsName<FirstInteraction, CommonParameters...>::interaction(index_i, dt);
         other_interactions_.interaction(index_i, dt);
     };
 };

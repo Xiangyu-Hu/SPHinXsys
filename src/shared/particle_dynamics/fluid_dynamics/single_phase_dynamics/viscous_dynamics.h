@@ -56,7 +56,7 @@ class ViscousAcceleration<DataDelegationType>
 };
 
 template <>
-class ViscousAcceleration<Inner> : public ViscousAcceleration<FluidDataInner>
+class ViscousAcceleration<Inner<>> : public ViscousAcceleration<FluidDataInner>
 {
   public:
     explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
@@ -66,7 +66,7 @@ class ViscousAcceleration<Inner> : public ViscousAcceleration<FluidDataInner>
 };
 
 template <>
-class ViscousAcceleration<AngularConservative<Inner>>
+class ViscousAcceleration<AngularConservative<Inner<>>>
     : public ViscousAcceleration<FluidDataInner>
 {
   public:
@@ -77,26 +77,26 @@ class ViscousAcceleration<AngularConservative<Inner>>
 };
 
 template <>
-class ViscousAcceleration<ContactWall> : public InteractionWithWall<ViscousAcceleration>
+class ViscousAcceleration<ContactWall<>> : public InteractionWithWall<ViscousAcceleration>
 {
   public:
-    ViscousAcceleration(BaseContactRelation &wall_contact_relation)
+    explicit ViscousAcceleration(BaseContactRelation &wall_contact_relation)
         : InteractionWithWall<ViscousAcceleration>(wall_contact_relation){};
     virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 class ViscousAccelerationWithWall
-    : public ComplexInteraction<ViscousAcceleration<Inner, ContactWall>>
+    : public ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>
 {
   public:
     explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<ViscousAcceleration<Inner, ContactWall>>(
+        : ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 
 template <>
-class ViscousAcceleration<Contact> : public ViscousAcceleration<FluidContactData>
+class ViscousAcceleration<Contact<>> : public ViscousAcceleration<FluidContactData>
 {
   public:
     explicit ViscousAcceleration(BaseContactRelation &contact_relation);

@@ -5,7 +5,7 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void DensitySummation<Inner>::interaction(size_t index_i, Real dt)
+void DensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Real sigma = W0_;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -59,7 +59,7 @@ Real DensitySummation<BaseContact>::ContactSummation(size_t index_i)
     return sigma;
 };
 //=================================================================================================//
-void DensitySummation<Contact>::interaction(size_t index_i, Real dt)
+void DensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 {
     Real sigma = DensitySummation<BaseContact>::ContactSummation(index_i);
     rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];

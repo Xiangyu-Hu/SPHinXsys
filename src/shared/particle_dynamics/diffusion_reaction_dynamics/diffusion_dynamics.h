@@ -106,7 +106,7 @@ class CorrectedKernelGradientInner
  * @brief Compute the diffusion relaxation process of all species
  */
 template <class ParticlesType, class KernelGradientType>
-class DiffusionRelaxation<Identifier<Inner, ParticlesType, KernelGradientType>>
+class DiffusionRelaxation<Inner<ParticlesType, KernelGradientType>>
     : public DiffusionRelaxation<DiffusionReactionInnerData<ParticlesType>>
 {
   protected:
@@ -159,9 +159,12 @@ class DiffusionRelaxation<BaseContact, ParticlesType, ContactParticlesType, Cont
     virtual ~DiffusionRelaxation(){};
 };
 
-template <typename... CommonControlTypes>
-class DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>
-    : public DiffusionRelaxation<BaseContact, CommonControlTypes...>
+template <typename... ControlTypes>
+class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
+
+template <typename... ContactParameters>
+class DiffusionRelaxation<Dirichlet<ContactParameters...>>
+    : public DiffusionRelaxation<BaseContact, ContactParameters...>
 {
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
@@ -175,9 +178,12 @@ class DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>
     inline void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <typename... CommonControlTypes>
-class DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>
-    : public DiffusionRelaxation<BaseContact, CommonControlTypes...>
+template <typename... ControlTypes>
+class Neumann; /**< Contact interaction with Neumann boundary condition */
+
+template <typename... ContactParameters>
+class DiffusionRelaxation<Neumann<ContactParameters...>>
+    : public DiffusionRelaxation<BaseContact, ContactParameters...>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_heat_flux_;
@@ -193,9 +199,12 @@ class DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <typename... CommonControlTypes>
-class DiffusionRelaxation<Identifier<Robin, CommonControlTypes...>>
-    : public DiffusionRelaxation<BaseContact, CommonControlTypes...>
+template <typename... ControlTypes>
+class Robin; /**< Contact interaction with Robin boundary condition */
+
+template <typename... ContactParameters>
+class DiffusionRelaxation<Robin<ContactParameters...>>
+    : public DiffusionRelaxation<BaseContact, ContactParameters...>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_convection_;

@@ -56,13 +56,13 @@ void DiffusionRelaxation<DataDelegationType<ParticlesType, ContactParticlesType.
 }
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
-DiffusionRelaxation<Identifier<Inner, ParticlesType, KernelGradientType>>::
+DiffusionRelaxation<Identifier<Inner<ParticlesType, KernelGradientType>>::
     DiffusionRelaxation(BaseInnerRelation &inner_relation)
     : DiffusionRelaxation<DiffusionReactionInnerData<ParticlesType>>(inner_relation),
       kernel_gradient_(this->particles_) {}
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxation<Identifier<Inner, ParticlesType, KernelGradientType>>::
+void DiffusionRelaxation<Identifier<Inner<ParticlesType, KernelGradientType>>::
     interaction(size_t index_i, Real dt)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -124,7 +124,7 @@ DiffusionRelaxation<BaseContact, ParticlesType, ContactParticlesType, ContactKer
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>::
+DiffusionRelaxation<Identifier<Dirichlet<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
     : DiffusionRelaxation<BaseContact, CommonControlTypes...>(contact_relation)
 {
@@ -144,7 +144,7 @@ DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>::
+void DiffusionRelaxation<Identifier<Dirichlet<CommonControlTypes...>>::
     getDiffusionChangeRateDirichlet(size_t particle_i, size_t particle_j, Vecd &e_ij,
                                     Real surface_area_ij, const StdVec<StdLargeVec<Real> *> &gradient_species_k)
 {
@@ -158,7 +158,7 @@ void DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>::
+void DiffusionRelaxation<Identifier<Dirichlet<CommonControlTypes...>>::
     interaction(size_t index_i, Real dt)
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -181,7 +181,7 @@ void DiffusionRelaxation<Identifier<Dirichlet, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>::
+DiffusionRelaxation<Identifier<Neumann<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
     : DiffusionRelaxation<BaseContact, CommonControlTypes...>(contact_relation),
       n_(this->particles_->n_)
@@ -198,7 +198,7 @@ DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>::
+void DiffusionRelaxation<Identifier<Neumann<CommonControlTypes...>>::
     getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
                                   Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k)
 {
@@ -209,7 +209,7 @@ void DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>::
+void DiffusionRelaxation<Identifier<Neumann<CommonControlTypes...>>::
     interaction(size_t index_i, Real dt)
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -233,7 +233,7 @@ void DiffusionRelaxation<Identifier<Neumann, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-DiffusionRelaxation<Identifier<Robin, CommonControlTypes...>>::
+DiffusionRelaxation<Identifier<Robin<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
     : DiffusionRelaxation<BaseContact, CommonControlTypes...>(contact_relation),
       n_(this->particles_->n_)
@@ -253,7 +253,7 @@ DiffusionRelaxation<Identifier<Robin, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void DiffusionRelaxation<Identifier<Robin, CommonControlTypes...>>::
+void DiffusionRelaxation<Identifier<Robin<CommonControlTypes...>>::
     getDiffusionChangeRateRobin(size_t particle_i, size_t particle_j,
                                 Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k)
 {
@@ -265,7 +265,7 @@ void DiffusionRelaxation<Identifier<Robin, CommonControlTypes...>>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void DiffusionRelaxation<Identifier<Robin, CommonControlTypes...>>::
+void DiffusionRelaxation<Identifier<Robin<CommonControlTypes...>>::
     interaction(size_t index_i, Real dt)
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)

@@ -69,7 +69,7 @@ class DensitySummation<BaseInner> : public DensitySummation<Base, FluidDataInner
 };
 
 template <>
-class DensitySummation<Inner> : public DensitySummation<BaseInner>
+class DensitySummation<Inner<>> : public DensitySummation<BaseInner>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation)
@@ -108,7 +108,7 @@ class DensitySummation<BaseContact> : public DensitySummation<Base, FluidContact
 };
 
 template <>
-class DensitySummation<Contact> : public DensitySummation<BaseContact>
+class DensitySummation<Contact<>> : public DensitySummation<BaseContact>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation)
@@ -167,11 +167,11 @@ class BaseDensitySummationComplex
         : ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
-using DensitySummationComplex = BaseDensitySummationComplex<Inner, Contact>;
+using DensitySummationComplex = BaseDensitySummationComplex<Inner<>, Contact<>>;
 using DensitySummationComplexAdaptive = BaseDensitySummationComplex<InnerAdaptive, ContactAdaptive>;
-using DensitySummationFreeSurfaceComplex = BaseDensitySummationComplex<FreeSurface<Inner>, Contact>;
+using DensitySummationFreeSurfaceComplex = BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>>;
 using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<FreeSurface<InnerAdaptive>, ContactAdaptive>;
-using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<FreeStream<Inner>, Contact>;
+using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<FreeStream<Inner<>>, Contact<>>;
 using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<FreeStream<InnerAdaptive>, ContactAdaptive>;
 } // namespace fluid_dynamics
 } // namespace SPH

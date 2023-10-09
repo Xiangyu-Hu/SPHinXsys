@@ -17,13 +17,13 @@ TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, Reso
       checkWithinScope(this->particles_) {}
 //=================================================================================================//
 template <typename... CommonControlTypes>
-TransportVelocityCorrection<Inner, CommonControlTypes...>::
+TransportVelocityCorrection<Inner<>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
     : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(
           inner_relation, coefficient) {}
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void TransportVelocityCorrection<Inner, CommonControlTypes...>::
+void TransportVelocityCorrection<Inner<>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
@@ -44,13 +44,13 @@ void TransportVelocityCorrection<Inner, CommonControlTypes...>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-TransportVelocityCorrection<ContactBoundary, CommonControlTypes...>::
+TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
     : TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>(
           contact_relation, coefficient) {}
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void TransportVelocityCorrection<ContactBoundary, CommonControlTypes...>::
+void TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
@@ -72,7 +72,7 @@ void TransportVelocityCorrection<ContactBoundary, CommonControlTypes...>::
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... CommonControlTypes>
-TransportVelocityCorrection<Contact, KernelCorrectionType, CommonControlTypes...>::
+TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
     : TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>(
           contact_relation, coefficient)
@@ -84,7 +84,7 @@ TransportVelocityCorrection<Contact, KernelCorrectionType, CommonControlTypes...
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... CommonControlTypes>
-void TransportVelocityCorrection<Contact, KernelCorrectionType, CommonControlTypes...>::
+void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
