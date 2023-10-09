@@ -316,7 +316,7 @@ int main()
     InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall>
         water_viscous_acceleration(water_wall_contact, water_air_complex);
     /** Surface tension. */
-    InteractionDynamics<SurfaceTensionStress, SequencedPolicy>
+    InteractionDynamics<SurfaceTensionStress>
         water_surface_tension_stress(water_air_complex.getContactRelation(), StdVec<Real>{Real(1.0)});
     InteractionDynamics<SurfaceTensionStress>
         air_surface_tension_stress(air_water_complex.getContactRelation(), StdVec<Real>{Real(1.0e-3)});
@@ -331,7 +331,7 @@ int main()
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(io_environment, water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -459,7 +459,7 @@ int main()
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_water_mechanical_energy.testResult();
     }
