@@ -83,6 +83,33 @@ namespace SPH
 			int dimension_;
 		};
 
+		/** Note this is a temporary treatment *
+		* @class GetTimeAverageCrossSectionData
+		* @brief  GetTimeAverageCrossSectionData
+		*/
+		class GetTimeAverageCrossSectionData : public BaseTurtbulentModelInner
+		{
+		public:
+			explicit GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points);
+			virtual ~GetTimeAverageCrossSectionData() {};
+
+			void update(size_t index_i, Real dt = 0.0);
+			void output_time_average_data();
+		protected:
+			PltEngine plt_engine_;
+
+			StdLargeVec<Vecd> & pos_;
+			StdLargeVec<Real>& turbu_mu_, & turbu_k_, & turbu_epsilon_;
+			std::vector<std::vector<Real>>  data_sto_;
+			StdLargeVec<int> num_in_cell_;
+			Real x_min ;
+			Real x_max ;
+			int num_cell, num_data;
+			StdLargeVec<std::string> file_name_;
+			std::string file_path_output_;
+			std::vector<Real>  data_ta_sto_; //time avergae
+		};
+
 		/**
 		 * @class GetVelocityGradientInner
 		 * @brief  GetVelocityGradientInner

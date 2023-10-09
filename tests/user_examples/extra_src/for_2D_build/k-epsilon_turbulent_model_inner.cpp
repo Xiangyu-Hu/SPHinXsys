@@ -69,6 +69,96 @@ namespace SPH
 				
 		}
 		//=================================================================================================//
+		GetTimeAverageCrossSectionData::GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points)
+			: BaseTurtbulentModelInner(inner_relation), pos_(particles_->pos_), num_cell(num_observer_points),
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")), plt_engine_()
+		{
+			x_min = 109;
+			x_max = 111;
+			num_data = 4;
+
+			file_name_.push_back("vel_x_sto_");
+			file_name_.push_back("turbu_k_sto_");
+			file_name_.push_back("turbu_epsilon_sto_");
+			file_name_.push_back("turbu_mu_sto_");
+			num_in_cell_.resize(num_cell);
+			data_ta_sto_.resize(num_data);
+			data_sto_.resize(num_cell); //Rows
+			for (size_t i = 0; i != num_cell; ++i)
+			{
+				data_sto_[i].resize(num_data); //Cols
+			}
+
+			for (size_t j = 0; j != num_data; ++j)
+			{
+				file_path_output_ = "C:/Software/SPHinXsys-GitHub-FengWang-Build/tests/user_examples/2d_turbulent_channel/bin/output/"
+					+ file_name_[j] + ".dat";
+				std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+				out_file << "run_time" << "   ";
+				for (size_t i = 0; i != num_cell; ++i)
+				{
+					std::string quantity_name_i = file_name_[j] + "[" + std::to_string(i) + "]";
+					plt_engine_.writeAQuantityHeader(out_file, data_sto_[i][j], quantity_name_i);
+				}
+				out_file << "\n";
+				out_file.close();
+			}
+			
+		}
+		//=================================================================================================//
+		void GetTimeAverageCrossSectionData::update(size_t index_i, Real dt)
+		{
+			//** Get data *
+			if (pos_[index_i][0] > x_min && pos_[index_i][0] <= x_max)
+			{
+				for (int i = 0; i < num_cell; i++)
+				{
+					if (pos_[index_i][1] > i* particle_spacing_min_ && 
+						pos_[index_i][1] <= (i+1)* particle_spacing_min_)
+					{
+						num_in_cell_[i] += 1;
+						data_sto_[i][0] += vel_[index_i][0];
+						data_sto_[i][1] += turbu_k_[index_i];
+						data_sto_[i][2] += turbu_epsilon_[index_i];
+						data_sto_[i][3] += turbu_mu_[index_i];
+						
+					}
+				}
+			}
+			//** Add up the data *
+
+		}
+		void GetTimeAverageCrossSectionData::output_time_average_data()
+		{
+			/** Output for .dat file. */
+			for (size_t j = 0; j != num_data; ++j)
+			{
+				file_path_output_ = "C:/Software/SPHinXsys-GitHub-FengWang-Build/tests/user_examples/2d_turbulent_channel/bin/output/"
+					+ file_name_[j] + ".dat";
+				std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+				out_file << GlobalStaticVariables::physical_time_ << "   ";
+				for (size_t i = 0; i != num_cell; ++i)
+				{
+					plt_engine_.writeAQuantity(out_file, data_sto_[i][j]/ num_in_cell_[i]);
+				}
+				out_file << "\n";
+				out_file.close();
+			}
+
+			//** Clear data *
+			for (int i = 0; i < num_cell; i++)
+			{
+				num_in_cell_[i] = 0;
+				for (size_t j = 0; j != num_data; ++j)
+				{
+					data_sto_[i][j] = 0.0;
+				}
+			}
+
+		}
+		//=================================================================================================//
 		GetVelocityGradientInner::GetVelocityGradientInner(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			vel_(particles_->vel_), pos_(particles_->pos_),

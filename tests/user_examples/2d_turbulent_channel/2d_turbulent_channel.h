@@ -12,7 +12,7 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 120;						  /**< Reference length. */
 Real DH = 2;						  /**< Reference and the height of main channel. */
-Real resolution_ref = 0.1;			  /**< Initial reference particle spacing. */
+Real resolution_ref = 0.05;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 //-------------------------------------------------------
@@ -23,7 +23,7 @@ Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
-int num_observer_points = 20;
+int num_observer_points = int(DH/ resolution_ref);
 Real observe_spacing = DH / num_observer_points;
 StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
