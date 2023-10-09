@@ -124,7 +124,7 @@ void Integration1stHalfCauchy::initialization(size_t index_i, Real dt)
     Matd inverse_F_T = F_T.inverse();
     Matd almansi_strain = 0.5 * (Matd::Identity() - (F_[index_i] * F_T).inverse());
     // obtain the first Piola-Kirchhoff stress from the  Cauchy stress
-    stress_PK1_B_[index_i] = J * elastic_solid_.StressCauchy(almansi_strain, F_[index_i], index_i) *
+    stress_PK1_B_[index_i] = J * elastic_solid_.StressCauchy(almansi_strain, index_i) *
                              inverse_F_T * B_[index_i];
 }
 //=================================================================================================//

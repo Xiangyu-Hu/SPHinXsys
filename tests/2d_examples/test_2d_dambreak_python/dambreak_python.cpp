@@ -122,7 +122,7 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording;
     RestartIO restart_io;
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy;
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure;

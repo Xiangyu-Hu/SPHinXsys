@@ -180,8 +180,8 @@ int main(int ac, char *av[])
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> free_ball_initialize_timestep(free_ball, gravity_ptr);
     SimpleDynamics<TimeStepInitialization> damping_ball_initialize_timestep(damping_ball, gravity_ptr);
-    InteractionWithUpdate<CorrectedConfigurationInner> free_ball_corrected_configuration(free_ball_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> damping_ball_corrected_configuration(damping_ball_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     /** stress relaxation for the balls. */

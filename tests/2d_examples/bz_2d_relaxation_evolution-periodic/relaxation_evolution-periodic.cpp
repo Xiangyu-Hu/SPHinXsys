@@ -1,9 +1,10 @@
 /**
  * @file 	relaxation_evolution_periodical.cpp
- * @brief   This is the test case with periodical boundary condition 
+ * @brief   This is the first case with periodical boundary condition
  *          by testing the relaxation and consistency.
  * @author  Bo Zhang, Xiangyu Hu.
  */
+
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -121,7 +122,6 @@ int main(int ac, char* av[])
 		periodic_condition_y.update_cell_linked_list_.exec();
 		sph_system.initializeSystemConfigurations();
 		testing_initial_condition.exec();
-		write_insert_body_to_vtp.writeToFile(0);
 
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.

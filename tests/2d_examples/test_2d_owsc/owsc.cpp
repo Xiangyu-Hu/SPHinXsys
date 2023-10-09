@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
@@ -162,22 +162,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<
-        ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+        ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalForceOnSolid");
     WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
 
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_4(io_environment, wave_probe_buffer_no_4);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_probe_4(io_environment, wave_probe_buffer_no_4, "FreeSurfaceHeight");
 
     BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_5(io_environment, wave_probe_buffer_no_5);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_probe_5(io_environment, wave_probe_buffer_no_5, "FreeSurfaceHeight");
 
     BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_12(io_environment, wave_probe_buffer_no_12);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_probe_12(io_environment, wave_probe_buffer_no_12, "FreeSurfaceHeight");
 
     /** Pressure probe. */
     ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
@@ -308,7 +308,6 @@ int main(int ac, char *av[])
     {
         write_total_force_on_flap.testResult();
     }
-
 
     return 0;
 }

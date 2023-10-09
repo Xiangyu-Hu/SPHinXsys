@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> cream_initialize_timestep(cream, gravity_ptr);
-    InteractionWithUpdate<CorrectedConfigurationInner> cream_corrected_configuration(cream_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);

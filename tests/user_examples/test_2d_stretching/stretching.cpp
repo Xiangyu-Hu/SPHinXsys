@@ -251,7 +251,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
 
     // corrected strong configuration
-    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
 
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
@@ -276,7 +276,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
 
     BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
-    ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>
+    ReducedQuantityRecording<TotalMechanicalEnergy>
         write_total_mechanical_energy(io_environment, beam_body);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.

@@ -90,6 +90,19 @@ void ShapeSurfaceBounding::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
+NearSurfaceVolumeCorrection::NearSurfaceVolumeCorrection(NearShapeSurface& near_shape_surface)
+    : BaseLocalDynamics<BodyPartByCell>(near_shape_surface),
+    RelaxDataDelegateSimple(sph_body_), pos_(particles_->pos_), Vol_(particles_->Vol_),
+    level_set_shape_(&near_shape_surface.level_set_shape_),
+    sph_adaptation_(sph_body_.sph_adaptation_) {}
+//=================================================================================================//
+void NearSurfaceVolumeCorrection::update(size_t index_i, Real dt)
+{
+    Real particle_spacing = sph_adaptation_->getLocalSpacing(*level_set_shape_, pos_[index_i]);
+    Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+    Vol_[index_i] = pow(particle_spacing, Dimensions) * SMAX(0.5, (1.0 - overlap));
+}
+//=================================================================================================//
 RelaxationStepInner::
     RelaxationStepInner(BaseInnerRelation &inner_relation, bool level_set_correction)
     : BaseDynamics<void>(inner_relation.getSPHBody()), real_body_(inner_relation.real_body_),
@@ -101,6 +114,7 @@ RelaxationStepInner::
     {
         relaxation_acceleration_inner_ =
             makeUnique<InteractionDynamics<RelaxationAccelerationInner>>(inner_relation);
+		surface_correction_ = makeShared<SimpleDynamics<ShapeSurfaceBounding>>(near_shape_surface_);
     }
     else
     {
@@ -110,6 +124,48 @@ RelaxationStepInner::
 }
 //=================================================================================================//
 void RelaxationStepInner::exec(Real dt)
+{
+    //real_body_->updateCellLinkedList();
+    //inner_relation_.updateConfiguration();
+    relaxation_acceleration_inner_->exec();
+    Real dt_square = get_time_step_square_.exec();
+    update_particle_position_.exec(dt_square);
+    //surface_bounding_.exec();
+}
+//=================================================================================================//
+RelaxationAccelerationByStressInner::RelaxationAccelerationByStressInner(BaseInnerRelation& inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
+    acc_(particles_->acc_), pos_(particles_->pos_),
+    B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")) {}
+//=================================================================================================//
+RelaxationAccelerationByStressInnerWithLevelSetCorrection::
+RelaxationAccelerationByStressInnerWithLevelSetCorrection(BaseInnerRelation& inner_relation)
+    : RelaxationAccelerationByStressInner(inner_relation), sph_adaptation_(sph_body_.sph_adaptation_)
+{
+    level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
+}
+//=================================================================================================//
+RelaxationStepByStressInner::RelaxationStepByStressInner(BaseInnerRelation& inner_relation, bool level_set_correction)
+    : BaseDynamics<void>(inner_relation.getSPHBody()), real_body_(inner_relation.real_body_),
+    inner_relation_(inner_relation),
+    near_shape_surface_(*real_body_), get_time_step_square_(*real_body_),
+    update_particle_position_(*real_body_), surface_bounding_(near_shape_surface_)
+{
+    if (!level_set_correction)
+    {
+        relaxation_acceleration_inner_ =
+            makeUnique<InteractionDynamics<RelaxationAccelerationByStressInner>>(inner_relation);
+        surface_correction_ = makeShared<SimpleDynamics<ShapeSurfaceBounding>>(near_shape_surface_);
+    }
+    else
+    {
+        relaxation_acceleration_inner_ =
+            makeUnique<InteractionDynamics<RelaxationAccelerationByStressInnerWithLevelSetCorrection>>(inner_relation);
+        surface_correction_ = makeShared<SimpleDynamics<NearSurfaceVolumeCorrection>>(near_shape_surface_);
+    }
+}
+//=================================================================================================//
+void RelaxationStepByStressInner::exec(Real dt)
 {
     real_body_->updateCellLinkedList();
     inner_relation_.updateConfiguration();
@@ -608,6 +664,7 @@ CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_co
     B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
     sph_adaptation_(sph_body_.sph_adaptation_)
 {
+
     particles_->registerVariable(relaxation_error_, "RelaxationErrorNorm");
     particles_->addVariableToWrite<Real>("RelaxationErrorNorm");
     particles_->registerVariable(pressure_gradient_error_norm_, "PressureGradientErrorNorm");
@@ -708,19 +765,17 @@ void CheckReverseConsistencyRealization::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellMidSurfaceBounding::
-    ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
-                            Real thickness, Real level_set_refinement_ratio)
+    ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation)
     : BaseLocalDynamics<BodyPartByCell>(body_part), RelaxDataDelegateInner(inner_relation),
       pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
       particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
-      thickness_(thickness), level_set_refinement_ratio_(level_set_refinement_ratio),
       level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)) {}
 //=================================================================================================//
 void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 {
     Vecd none_normalized_normal = level_set_shape_->findLevelSetGradient(pos_[index_i]);
     Vecd normal = level_set_shape_->findNormalDirection(pos_[index_i]);
-    Real factor = none_normalized_normal.squaredNorm() / level_set_refinement_ratio_;
+    Real factor = 0.2 * none_normalized_normal.norm();
     pos_[index_i] -= factor * constrained_distance_ * normal;
 }
 //=================================================================================================//
@@ -841,12 +896,10 @@ void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Rea
 }
 //=================================================================================================//
 ShellRelaxationStepInner::
-    ShellRelaxationStepInner(BaseInnerRelation &inner_relation, Real thickness,
-                             Real level_set_refinement_ratio, bool level_set_correction)
+    ShellRelaxationStepInner(BaseInnerRelation &inner_relation, bool level_set_correction)
     : RelaxationStepInner(inner_relation, level_set_correction),
       update_shell_particle_position_(*real_body_),
-      mid_surface_bounding_(near_shape_surface_, inner_relation,
-                            thickness, level_set_refinement_ratio) {}
+      mid_surface_bounding_(near_shape_surface_, inner_relation) {}
 //=================================================================================================//
 void ShellRelaxationStepInner::exec(Real ite_p)
 {

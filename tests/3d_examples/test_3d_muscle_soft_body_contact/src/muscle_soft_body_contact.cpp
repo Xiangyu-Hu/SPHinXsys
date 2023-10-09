@@ -77,8 +77,8 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
     SimpleDynamics<TimeStepInitialization> plate_initialize_time_step(moving_plate, makeShared<Gravity>(Vecd(-100.0, 0.0, 0.0)));
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_2(moving_plate_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);

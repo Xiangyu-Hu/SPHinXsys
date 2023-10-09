@@ -32,12 +32,12 @@
 
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
+#include "all_simbody.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
-#include "all_simbody.h"
 
 namespace SPH
 {
@@ -268,11 +268,11 @@ class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
          * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
          * base_particle_data_i.pos_ = (p_GB + r);
          */
-        degradeToVecd(SimTKToEigen(pos), this->pos_[index_i]);
-        degradeToVecd(SimTKToEigen(vel), this->vel_[index_i]);
+        this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
+        this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
 
         SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(this->n0_[index_i])));
-        degradeToVecd(SimTKToEigen(n), this->n_[index_i]);
+        this->n_[index_i] = degradeToVecd(SimTKToEigen(n));
     };
 
   protected:

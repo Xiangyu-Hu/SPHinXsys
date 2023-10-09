@@ -3,9 +3,9 @@
 namespace SPH
 {
 //=================================================================================================//
-int ThirdAxis(int first_axis)
+int NextNextAxis(int first_axis)
 {
-    return SecondAxis(SecondAxis(first_axis));
+    return NextAxis(NextAxis(first_axis));
 }
 //=================================================================================================//
 Real getLeftStateInWeno(Real v_1, Real v_2, Real v_3, Real v_4)

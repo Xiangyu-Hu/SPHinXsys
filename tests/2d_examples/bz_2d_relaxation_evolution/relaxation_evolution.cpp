@@ -113,7 +113,6 @@ int main(int ac, char* av[])
 		sph_system.initializeSystemConfigurations();
 		testing_initial_condition.exec();
 		write_insert_body_to_vtp.writeToFile(0);
-
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
 		//----------------------------------------------------------------------
@@ -149,14 +148,12 @@ int main(int ac, char* av[])
 		ite++;
 		write_insert_body_to_vtp.writeToFile(ite);
 		write_particle_reload_files.writeToFile(0);
-
 		TickCount t2 = TickCount::now();
 		TickCount::interval_t tt;
 		tt = t2 - t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 		return 0;
 	}
-
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//----------------------------------------------------------------------
