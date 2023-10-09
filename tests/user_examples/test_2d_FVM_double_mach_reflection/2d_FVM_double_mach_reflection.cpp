@@ -13,7 +13,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    readMeshFile read_mesh_data(double_mach_reflection_mesh_fullpath);
+    readMeshFile read_mesh_data(double_mach_reflection_mesh1_fullpath);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
@@ -46,15 +46,13 @@ int main(int ac, char *av[])
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
     SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, read_mesh_data.min_distance_between_nodes_, 0.2);
-    /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
-    the value is larger, the numerical dissipation larger*/
+    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, read_mesh_data.min_distance_between_nodes_, 0.1);
     InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
     // Visualization in FVM with date in cell.
     BodyStatesRecordingInMeshToVtp write_real_body_states(
         io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(io_environment, wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.

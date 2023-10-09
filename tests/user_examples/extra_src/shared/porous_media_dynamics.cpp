@@ -56,7 +56,7 @@ void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real d
         
     //obtain the Stress_PK one without J, J is added in total momentum
     //Note if anisotropic kernel is used, B correction cannot be applied here
-    Stress_[index_i] = (particles_->porous_solid_.StressCauchy(almansi_strain, F_[index_i], index_i)
+    Stress_[index_i] = (particles_->porous_solid_.StressCauchy(almansi_strain, index_i)
         - water_pressure_constant * (fluid_saturation_[index_i] - Eps) * Matd::Identity() ) * inverse_F_T;
 
     outer_fluid_velocity_relative_fluid_flux_[index_i] = fluid_velocity_[index_i] * relative_fluid_flux_[index_i].transpose() * inverse_F_T;

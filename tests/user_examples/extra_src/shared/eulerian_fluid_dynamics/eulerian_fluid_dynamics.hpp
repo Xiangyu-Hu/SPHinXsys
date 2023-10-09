@@ -9,9 +9,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<RiemannSolverType>::
-    EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
-      riemann_solver_(this->fluid_, this->fluid_, limiter_input_),
+    EulerianIntegration1stHalf(BaseInnerRelation &inner_relation)
+    : BaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
       acc_prior_(particles_->acc_prior_)
 {
     particles_->registerVariable(mom_, "Momentum");
@@ -79,9 +78,8 @@ void EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfType>::interac
 //=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration2ndHalf<RiemannSolverType>::
-    EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
-      riemann_solver_(this->fluid_, this->fluid_, limiter_input_) {}
+    EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation)
+    : BaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)

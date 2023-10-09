@@ -653,15 +653,14 @@ class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
                                 public RelaxDataDelegateInner
 {
   public:
-    ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
-                            Real thickness, Real level_set_refinement_ratio);
+    ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation);
     virtual ~ShellMidSurfaceBounding(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     StdLargeVec<Vecd> &pos_;
     Real constrained_distance_;
-    Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
+    Real particle_spacing_ref_;
     LevelSetShape *level_set_shape_;
 };
 
@@ -791,8 +790,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 class ShellRelaxationStepInner : public RelaxationStepInner
 {
   public:
-    explicit ShellRelaxationStepInner(BaseInnerRelation &inner_relation, Real thickness,
-                                      Real level_set_refinement_ratio, bool level_set_correction = false);
+    explicit ShellRelaxationStepInner(BaseInnerRelation &inner_relation, bool level_set_correction = false);
     virtual ~ShellRelaxationStepInner(){};
 
     SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;

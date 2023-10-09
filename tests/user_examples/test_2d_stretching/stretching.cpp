@@ -276,7 +276,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
 
     BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
-    ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>
+    ReducedQuantityRecording<TotalMechanicalEnergy>
         write_total_mechanical_energy(io_environment, beam_body);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.

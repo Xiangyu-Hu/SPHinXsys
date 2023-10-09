@@ -121,7 +121,7 @@ class QuickSortParticleRange
     QuickSortParticleRange(QuickSortParticleRange &range, split)
         : comp_(range.comp_), swap_sortable_particle_data_(range.swap_sortable_particle_data_), size_(splitRange(range))
           // +1 accounts for the pivot element, which is at its correct place
-          // already and, therefore, is not included into subranges.
+          // already and, therefore, is not included into sub-ranges.
           ,
           begin_(range.begin_ + range.size_ + 1)
     {

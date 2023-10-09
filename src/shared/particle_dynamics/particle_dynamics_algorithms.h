@@ -38,7 +38,7 @@
  *			such as InteractionWithUpdate or Dynamics1Level should be used.
  *			There are 2 classes for the second type.
  *			ReduceDynamics carries out a reduce operation through the particles.
- *			ReduceAverage further computes average of a ReduceDynamics for summation.
+ *			Average further computes average of a ReduceDynamics for summation.
  *			Each particle dynamics is templated with a LocalDynamics and a DynamicsRange.
  *			The local dynamics defines the behavior of a single particle or with its neighbors,
  *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
@@ -150,32 +150,6 @@ class ReduceDynamics : public LocalDynamicsType,
                                           [&](size_t i) -> ReturnType
                                           { return this->reduce(i, dt); });
         return this->outputResult(temp);
-    };
-};
-
-/**
- * @class ReduceAverage
- * @brief Template class for computing particle-wise averages
- */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class ReduceAverage : public ReduceDynamics<LocalDynamicsType>
-{
-    using ReturnType = typename LocalDynamicsType::ReduceReturnType;
-    ReturnType outputAverage(ReturnType sum, size_t size_of_loop_range)
-    {
-        return sum / Real(size_of_loop_range);
-    }
-
-  public:
-    template <class DynamicsIdentifier, typename... Args>
-    ReduceAverage(DynamicsIdentifier &identifier, Args &&...args)
-        : ReduceDynamics<LocalDynamicsType, ExecutionPolicy>(identifier, std::forward<Args>(args)...){};
-    virtual ~ReduceAverage(){};
-
-    virtual ReturnType exec(Real dt = 0.0) override
-    {
-        ReturnType sum = ReduceDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
-        return outputAverage(sum, this->identifier_.SizeOfLoopRange());
     };
 };
 

@@ -167,16 +167,16 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
 //----------------------------------------------------------------------
 typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
 /**
- * @class MidSurfaceVonMisesStressofShells
+ * @class MidSurfaceVonMisesStress
  * @brief computing mid-surface von Mises stress of shells
  */
-class MidSurfaceVonMisesStressofShells : public BaseDerivedVariable<Real>,
+class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
                                          public ShellSolidDataSimple,
                                          public LocalDynamics
 {
   public:
-    explicit MidSurfaceVonMisesStressofShells(SPHBody &sph_body);
-    virtual ~MidSurfaceVonMisesStressofShells(){};
+    explicit MidSurfaceVonMisesStress(SPHBody &sph_body);
+    virtual ~MidSurfaceVonMisesStress(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

@@ -134,7 +134,7 @@ void CellLinkedList::
 void CellLinkedList::
     tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis)
 {
-    int second_axis = SecondAxis(axis);
+    int second_axis = NextAxis(axis);
     Array2i body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first_);
     Array2i body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second_);
 
