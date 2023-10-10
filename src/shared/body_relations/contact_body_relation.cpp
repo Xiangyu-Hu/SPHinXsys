@@ -127,4 +127,26 @@ void AdaptiveContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
+ShellContactRelation::ShellContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_contact_neighbors_.push_back(
+            neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContactShell>(
+                sph_body_, *contact_bodies_[k]));
+    }
+}
+//=================================================================================================//
+void ShellContactRelation::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
 } // namespace SPH
