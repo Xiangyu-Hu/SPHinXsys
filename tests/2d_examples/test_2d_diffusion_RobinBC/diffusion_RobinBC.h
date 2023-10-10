@@ -179,23 +179,8 @@ class RobinWallBoundaryInitialCondition
     }
 };
 
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
-using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
-using SolidDiffusionRobin = DiffusionRelaxationRobin<DiffusionParticles, WallParticles>;
-//----------------------------------------------------------------------
-//	Specify diffusion relaxation method.
-//----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation,
-                                     BaseContactRelation &body_contact_relation_Dirichlet,
-                                     BaseContactRelation &body_contact_relation_Robin)
-        : DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>(
-              inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
+    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Dirichlet, Robin>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------

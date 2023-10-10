@@ -312,7 +312,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     InteractionWithUpdate<fluid_dynamics::WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex>
         free_stream_surface_indicator(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_complex);
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");

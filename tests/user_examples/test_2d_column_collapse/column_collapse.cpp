@@ -110,7 +110,7 @@ int main(int ac, char *av[])
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
 	SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.2);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> soil_density_by_summation(soil_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_complex);
 	InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_complex.getInnerRelation());
 	//stress relaxation with Riemann solver
 	Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_complex);

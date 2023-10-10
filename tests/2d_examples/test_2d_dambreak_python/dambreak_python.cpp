@@ -110,7 +110,7 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation;
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation;
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation;
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation;
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
     SharedPtr<Gravity> gravity_ptr;
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization;

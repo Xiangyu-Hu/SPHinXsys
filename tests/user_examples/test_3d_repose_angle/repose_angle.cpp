@@ -152,7 +152,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.1);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> soil_density_by_summation(soil_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_complex);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_complex.getInnerRelation());
     Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_complex);
     Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_complex);

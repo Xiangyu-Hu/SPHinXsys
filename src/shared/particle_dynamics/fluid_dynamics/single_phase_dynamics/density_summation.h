@@ -169,7 +169,7 @@ class BaseDensitySummationComplex
 };
 using DensitySummationComplex = BaseDensitySummationComplex<Inner<>, Contact<>>;
 using DensitySummationComplexAdaptive = BaseDensitySummationComplex<InnerAdaptive, ContactAdaptive>;
-using DensitySummationFreeSurfaceComplex = BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>>;
+using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>>;
 using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<FreeSurface<InnerAdaptive>, ContactAdaptive>;
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<FreeStream<Inner<>>, Contact<>>;
 using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<FreeStream<InnerAdaptive>, ContactAdaptive>;

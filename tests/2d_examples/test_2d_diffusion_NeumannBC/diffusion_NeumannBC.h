@@ -178,23 +178,8 @@ class NeumannWallBoundaryInitialCondition
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-          Identifier<Inner, DiffusionParticles, KernelGradientInner>,
-          Identifier<Dirichlet, DiffusionParticles, WallParticles, KernelGradientContact>,
-          Identifier<Neumann, DiffusionParticles, WallParticles, KernelGradientContact>>>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(InnerRelation &inner_relation,
-                                     ContactRelation &contact_Dirichlet,
-                                     ContactRelation &contact_Neumann)
-        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-              Identifier<Inner, DiffusionParticles, KernelGradientInner>,
-              Identifier<Dirichlet, DiffusionParticles, WallParticles, KernelGradientContact>,
-              Identifier<Neumann, DiffusionParticles, WallParticles, KernelGradientContact>>>>(
-              inner_relation, contact_Dirichlet, contact_Neumann){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
+    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------

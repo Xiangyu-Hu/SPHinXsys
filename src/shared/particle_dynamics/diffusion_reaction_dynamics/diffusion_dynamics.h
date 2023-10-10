@@ -282,5 +282,23 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
 
     virtual void exec(Real dt = 0.0) override;
 };
+
+template <class ParticlesType, class ContactParticlesType,
+          class KernelGradientType, class ContactKernelGradientType,
+          template <typename... Parameters> typename... ContactInteractionTypes>
+class DiffusionBodyRelaxationComplex
+    : public DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
+          Inner<ParticlesType, KernelGradientType>,
+          ContactInteractionTypes<ParticlesType, ContactParticlesType, ContactKernelGradientType>...>>>
+{
+  public:
+    template <typename... OtherArgs>
+    explicit DiffusionBodyRelaxationComplex(InnerRelation &inner_relation, OtherArgs &&...args)
+        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
+              Inner<ParticlesType, KernelGradientType>,
+              ContactInteractionTypes<ParticlesType, ContactParticlesType, ContactKernelGradientType>...>>>(
+              inner_relation, std::forward<OtherArgs>(args)...){};
+    virtual ~DiffusionBodyRelaxationComplex(){};
+};
 } // namespace SPH
 #endif // DIFFUSION_DYNAMICS_H
