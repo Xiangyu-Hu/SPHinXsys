@@ -200,7 +200,7 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
  * @class NeighborBuilderContactShell
  * @brief A contact neighbor builder functor for contact relation between fluid and shell.
  */
-class NeighborBuilderContactShell : public NeighborBuilderContact
+class NeighborBuilderContactShell : public NeighborBuilder
 {
   public:
     NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body);
@@ -212,14 +212,12 @@ class NeighborBuilderContactShell : public NeighborBuilderContact
     StdLargeVec<Vecd> &n_;   // normal direction of contact body
     Real particle_distance_; // reference spacing of contact body
 
-    std::pair<Real, Vecd> get_corrected_dW_ij_V_j_e_ij(Real distance, Vecd displacement, Real Vol_j, Vecd pos_j,
-                                                       const Vecd &pos_i, const Vecd &n_j) const;
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         const Vecd &displacement, size_t index_j,
-                        const Real &dW_ijV_j, const Vecd &e_ij) const;
+                        const Real &dW_ijV_j, const Vecd &e_ij);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
                             const Vecd &displacement, size_t index_j,
-                            const Real &dW_ijV_j, const Vecd &e_ij) const;
+                            const Real &dW_ijV_j, const Vecd &e_ij);
 };
 
 } // namespace SPH

@@ -232,63 +232,34 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 }
 //=================================================================================================//
 NeighborBuilderContactShell::NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body)
-    : NeighborBuilderContact(body, contact_body),
+    : NeighborBuilder(),
       n_(*contact_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
       particle_distance_(contact_body.getSPHBodyResolutionRef())
 {
-}
-//=================================================================================================//
-std::pair<Real, Vecd> NeighborBuilderContactShell::get_corrected_dW_ij_V_j_e_ij(Real distance, Vecd displacement, Real Vol_j, Vecd pos_j,
-                                                                                const Vecd &pos_i, const Vecd &n_j) const
-{
-    // contribution of the shell particles
-    double dW_ijV_j = kernel_->dW(distance, displacement) * Vol_j;
-    Vecd e_ij = displacement / (distance + TinyReal);
-
-    // calculate summation of dWij_Vj*e_ij
-    Vecd dW_ij_V_j_e_ij_ttl = dW_ijV_j * e_ij;
-
-    // contribution of dummy particles
-    while (distance < kernel_->CutOffRadius())
-    {
-        // calculate the position and volume of the next dummy particle
-        pos_j += n_j * particle_distance_;
-        displacement = pos_i - pos_j;
-        distance = displacement.norm();
-
-        // calculate dWij and eij
-        dW_ijV_j = kernel_->dW(distance, displacement) * Vol_j;
-        e_ij = displacement / (distance + TinyReal);
-
-        // go to the next loop, repeat until distance is larger than cut off radius
-        dW_ij_V_j_e_ij_ttl += dW_ijV_j * e_ij;
-    }
-    Real dW_ij_V_j_corrected = dW_ij_V_j_e_ij_ttl.norm();
-    Vecd e_ij_corrected = dW_ij_V_j_e_ij_ttl / dW_ij_V_j_corrected;
-    return std::make_pair(dW_ij_V_j_corrected, e_ij_corrected);
+    Kernel *source_kernel = body.sph_adaptation_->getKernel();
+    Kernel *target_kernel = contact_body.sph_adaptation_->getKernel();
+    kernel_ = source_kernel->SmoothingLength() > target_kernel->SmoothingLength() ? source_kernel : target_kernel;
 }
 //=================================================================================================//
 void NeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                 const Vecd &displacement, size_t index_j,
-                                                 const Real &dW_ijV_j, const Vecd &e_ij) const
+                                                 const Vecd &displacement, size_t index_j, const Real &dW_ijV_j, const Vecd &e_ij)
 {
     neighborhood.j_.push_back(index_j);
     neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
-    neighborhood.r_ij_.push_back(distance);
     neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
+    neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(e_ij);
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
 void NeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                     const Vecd &displacement, size_t index_j,
-                                                     const Real &dW_ijV_j, const Vecd &e_ij) const
+                                                     const Vecd &displacement, size_t index_j, const Real &dW_ijV_j, const Vecd &e_ij)
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
     neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
-    neighborhood.r_ij_[current_size] = distance;
     neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
+    neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = e_ij;
 }
 //=================================================================================================//
@@ -296,20 +267,45 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
                                              const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 {
     size_t index_j = std::get<0>(list_data_j);
-    const Vecd pos_j = std::get<1>(list_data_j);
-    Vecd displacement = pos_i - pos_j;
-    Real distance = displacement.norm();
+    const Vecd n_j = n_[index_j]; // normal direction of shell particle in cell linked list with index j
 
-    Vecd n_j = n_[index_j]; // normal direction of shell particle in cell linked list with index j
+    const Vecd pos_j = std::get<1>(list_data_j);
+    const Vecd displacement = pos_i - pos_j;
+    const Real distance = displacement.norm();
+
+    Real Vol_j = std::get<2>(list_data_j);
+
     // correct normal direction, make sure it points from fluid to shell
-    Vecd correct_n_j = -SGN(displacement.dot(n_j)) * n_j;
+    const Vecd n_j_corrected = -SGN(displacement.dot(n_j)) * n_j; // sign of r_ij and n_j
 
     if (distance < kernel_->CutOffRadius())
     {
-        auto [dW_ijV_j, e_ij] = get_corrected_dW_ij_V_j_e_ij(distance, displacement, std::get<2>(list_data_j), pos_j, pos_i, correct_n_j);
+        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
+        Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
+
+        Vecd pos_j_dummy = pos_j + n_j_corrected * particle_distance_;
+        Vecd displacement_dummy = pos_i - pos_j_dummy;
+        Real distance_dummy = displacement_dummy.norm();
+
+        while (distance_dummy < kernel_->CutOffRadius())
+        {
+            Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j;
+            Vecd e_ij = displacement_dummy / (distance_dummy + TinyReal);
+            dW_ijV_j_ttl += dW_ijV_j;
+            dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
+
+            // calculate the position and volume of the next dummy particle
+            pos_j_dummy += n_j_corrected * particle_distance_;
+            displacement_dummy = pos_i - pos_j_dummy;
+            distance_dummy = displacement_dummy.norm();
+        }
+
+        Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / (dW_ijV_j_ttl + TinyReal);
+
+        // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_
-            ? createNeighbor(neighborhood, distance, displacement, index_j, dW_ijV_j, e_ij)
-            : initializeNeighbor(neighborhood, distance, displacement, index_j, dW_ijV_j, e_ij);
+            ? createNeighbor(neighborhood, distance, displacement, index_j, dW_ijV_j_ttl, e_ij_corrected)
+            : initializeNeighbor(neighborhood, distance, displacement, index_j, dW_ijV_j_ttl, e_ij_corrected);
         neighborhood.current_size_++;
     }
 };
