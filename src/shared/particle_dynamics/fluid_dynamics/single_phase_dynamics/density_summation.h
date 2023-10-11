@@ -143,6 +143,7 @@ class DensitySummation<FreeSurface<InteractionType>> : public DensitySummation<I
         DensitySummation<InteractionType>::reinitializeDensity(index_i);
     };
 };
+using DensitySummationFreeSurfaceInner = DensitySummation<FreeSurface<Inner<>>>;
 
 template <class InteractionType>
 class DensitySummation<FreeStream<InteractionType>> : public DensitySummation<InteractionType>
