@@ -171,21 +171,11 @@ class ThermofluidBodyInitialCondition
         }
     };
 };
-
-using FluidDiffusionInner = DiffusionRelaxationInner<DiffusionBaseParticles>;
-using FluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionBaseParticles, DiffusionSolidParticles>;
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
 //----------------------------------------------------------------------
-class ThermalRelaxationComplex
-    : public DiffusionRelaxationRK2<
-          OldComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>
-{
-  public:
-    explicit ThermalRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<OldComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>(inner_relation, body_contact_relation_Dirichlet){};
-    virtual ~ThermalRelaxationComplex(){};
-};
+using ThermalRelaxationComplex = DiffusionBodyRelaxationComplex<
+    DiffusionBaseParticles, DiffusionSolidParticles, KernelGradientInner, KernelGradientContact, Dirichlet>;
 //----------------------------------------------------------------------
 //	Inflow velocity
 //----------------------------------------------------------------------
@@ -272,8 +262,8 @@ int main(int ac, char *av[])
     ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_wall_contact_Dirichlet);
     /** Pressure relaxation using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(fluid_body_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(fluid_body_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_body_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_body_complex);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
     /** Apply transport velocity formulation. */
