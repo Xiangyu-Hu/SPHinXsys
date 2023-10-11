@@ -44,11 +44,10 @@ class KernelCorrectionMatrix<DataDelegationType>
 {
   public:
     template <class BaseRelationType>
-    explicit KernelCorrectionMatrix(BaseRelationType &base_relation, Real alpha = Real(0));
+    explicit KernelCorrectionMatrix(BaseRelationType &base_relation);
     virtual ~KernelCorrectionMatrix(){};
 
   protected:
-    Real alpha_;
     StdLargeVec<Matd> &B_;
 };
 
@@ -56,9 +55,11 @@ template <>
 class KernelCorrectionMatrix<Inner<>>
     : public KernelCorrectionMatrix<GeneralDataDelegateInner>
 {
+    Real alpha_;
+
   public:
     explicit KernelCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
-        : KernelCorrectionMatrix<GeneralDataDelegateInner>(inner_relation){};
+        : KernelCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
     explicit KernelCorrectionMatrix(ConstructorArgs<BaseInnerRelation, Real> parameters)
         : KernelCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~KernelCorrectionMatrix(){};
@@ -72,9 +73,7 @@ class KernelCorrectionMatrix<Contact<>>
     : public KernelCorrectionMatrix<GeneralDataDelegateContact>
 {
   public:
-    explicit KernelCorrectionMatrix(BaseContactRelation &contact_relation, Real alpha = Real(0));
-    explicit KernelCorrectionMatrix(ConstructorArgs<BaseContactRelation, Real> parameters)
-        : KernelCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    explicit KernelCorrectionMatrix(BaseContactRelation &contact_relation);
     virtual ~KernelCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -88,9 +87,10 @@ class BaseKernelCorrectionMatrixComplex
     : public ComplexInteraction<KernelCorrectionMatrix<InnerInteractionType, ContactInteractionType>>
 {
   public:
-    explicit BaseKernelCorrectionMatrixComplex(ComplexRelation &complex_relation)
+    explicit BaseKernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0))
         : ComplexInteraction<KernelCorrectionMatrix<InnerInteractionType, ContactInteractionType>>(
-              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+              ConstructorArgs<BaseInnerRelation, Real>(complex_relation.getInnerRelation(), alpha),
+              complex_relation.getContactRelation()){};
 };
 using KernelCorrectionMatrixComplex = BaseKernelCorrectionMatrixComplex<Inner<>, Contact<>>;
 

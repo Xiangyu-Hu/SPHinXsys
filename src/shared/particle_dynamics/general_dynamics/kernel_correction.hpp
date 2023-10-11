@@ -8,10 +8,8 @@ namespace SPH
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-KernelCorrectionMatrix<DataDelegationType>::
-    KernelCorrectionMatrix(BaseRelationType &base_relation, Real alpha)
-    : LocalDynamics(base_relation.getSPHBody()),
-      DataDelegationType(base_relation), alpha_(alpha),
+KernelCorrectionMatrix<DataDelegationType>::KernelCorrectionMatrix(BaseRelationType &base_relation)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>

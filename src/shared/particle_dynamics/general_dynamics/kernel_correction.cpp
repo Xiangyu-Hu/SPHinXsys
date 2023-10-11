@@ -19,16 +19,14 @@ void KernelCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 void KernelCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
-    Real det_sqr = alpha_;
     Matd inverse = B_[index_i].inverse();
-    Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
-    Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
-    B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
+    Real weight = alpha_ / (B_[index_i].determinant() + alpha_);
+    B_[index_i] = weight * Matd::Identity() + (1.0 - weight) * inverse;
 }
 //=================================================================================================//
 KernelCorrectionMatrix<Contact<>>::
-    KernelCorrectionMatrix(BaseContactRelation &contact_relation, Real alpha)
-    : KernelCorrectionMatrix<GeneralDataDelegateContact>(contact_relation, alpha)
+    KernelCorrectionMatrix(BaseContactRelation &contact_relation)
+    : KernelCorrectionMatrix<GeneralDataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

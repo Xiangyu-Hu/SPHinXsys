@@ -238,8 +238,12 @@ int main(int ac, char *av[])
     InnerRelation fluid_body_inner(thermofluid_body);
     InnerRelation solid_body_inner(thermosolid_body);
     ContactRelation fluid_wall_contact_Dirichlet(thermofluid_body, {&thermosolid_body});
-    ComplexRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
+    ContactRelation fluid_body_contact(thermofluid_body, {&thermosolid_body});
     ContactRelation fluid_observer_contact(temperature_observer, {&thermofluid_body});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation fluid_body_complex(fluid_body_inner, fluid_body_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.

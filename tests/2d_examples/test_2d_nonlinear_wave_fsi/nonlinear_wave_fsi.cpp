@@ -17,7 +17,6 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
-
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -37,7 +36,6 @@ int main(int ac, char *av[])
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticleGenerator>(
         StdVec<Vecd>{obs});
-
     //---------------------------------------------------------
     // PRESSURE PROBES
     //---------------------------------------------------------
@@ -53,7 +51,6 @@ int main(int ac, char *av[])
     StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y)};
     fp3.defineAdaptationRatios(1.15, 2.0);
     fp3.generateParticles<ObserverParticleGenerator>(fp3l);
-
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -64,7 +61,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation structure_inner(structure);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &structure});
+    ContactRelation water_block_contact(water_block, {&wall_boundary, &structure});
     ContactRelation structure_contact(structure, {&water_block});
     ContactRelation observer_contact_with_water(observer, {&water_block});
     ContactRelation observer_contact_with_structure(observer, {&structure});
@@ -72,7 +69,10 @@ int main(int ac, char *av[])
     ContactRelation fp3_contact_s(fp3, {&structure});
     ContactRelation fp2_contact_w(fp2, {&water_block});
     ContactRelation fp3_contact_w(fp3, {&water_block});
-
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
@@ -87,13 +87,12 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** pressure relaxation using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> pressure_relaxation(water_block_complex);
-    // Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** corrected strong configuration. */
     InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.1);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
+    /** pressure relaxation using Verlet time stepping. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_complex);
+    // Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_complex);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Fluid force on structure. */
@@ -102,7 +101,6 @@ int main(int ac, char *av[])
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
-
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -197,7 +195,6 @@ int main(int ac, char *av[])
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
-
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -207,8 +204,6 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     structure_normal_direction.exec();
-    structure_corrected_configuration.exec();
-
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -224,7 +219,6 @@ int main(int ac, char *av[])
         fp2_contact_w.updateConfiguration();
         fp3_contact_w.updateConfiguration();
     }
-
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
