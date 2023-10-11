@@ -113,6 +113,7 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
         Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], 
                        sph_adaptation_->SmoothingLengthRatio(index_i));
+        acc_[index_i] = acc_[index_i];
 
         //if (phi > -constrained_distance_)
         //{
@@ -125,7 +126,7 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
         //        sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
         //};
         acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i],
-                sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+            sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
 
   protected:
@@ -373,7 +374,6 @@ public:
         //    acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
         //                      pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
         //};
-
         acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
                           pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
@@ -662,10 +662,28 @@ class CorrectedConfigurationInnerWithLevelSet : public LocalDynamics, public Rel
 };
 
 /**
+  * @class CorrectionBasedOnLevelSet
+  */
+class CorrectionBasedOnLevelSet : public LocalDynamics, public RelaxDataDelegateSimple
+{
+public:
+    explicit CorrectionBasedOnLevelSet(SPHBody& sph_body);
+    virtual ~CorrectionBasedOnLevelSet() {};
+    void update(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdLargeVec<Vecd>& pos_;
+    StdLargeVec<Real> kernel_correction_;
+    StdLargeVec<Vecd> kernel_gradient_correction_;
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
+};
+
+/**
  * @class UpdateParticleKineticEnergy
  * @brief calculate the particle kinetic energy
  */
-class UpdateParticleKineticEnergy : public LocalDynamics, public GeneralDataDelegateInner
+class UpdateParticleKineticEnergy : public LocalDynamics, public RelaxDataDelegateInner
 {
 public:
     UpdateParticleKineticEnergy(BaseInnerRelation& inner_relation);

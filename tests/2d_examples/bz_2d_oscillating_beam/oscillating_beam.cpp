@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-one body version           *
+ *            SPHinXsys: 2D oscillation beam example-one body version          *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases, also the first case for            *
  * understanding SPH method for solid simulation.                              *
@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
@@ -113,7 +113,7 @@ int main(int ac, char *av[])
     beam_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles()) 
         ? beam_body.generateParticles<ParticleGeneratorReload>(io_environment, beam_body.getName())
         : beam_body.generateParticles<ParticleGeneratorLattice>();
 
@@ -121,9 +121,8 @@ int main(int ac, char *av[])
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
-    beam_body.addBodyStateForRecording<Matd>("CorrectionMatrix");
+    beam_body.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
     beam_body.addBodyStateForRecording<Matd>("CorrectionMatrixWithLevelSet");
-    beam_body.addBodyStateForRecording<Real>("VolumetricMeasure");
      //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -139,22 +138,24 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(beam_body);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToPlt write_insert_body_to_vtp(io_environment, { &beam_body });
+        BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, { &beam_body });
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(io_environment, { &beam_body });
-        /** A  Physics relaxation step. */
+
+        /** Physics relaxation step. */
         InteractionWithUpdate<relax_dynamics::CorrectedConfigurationInnerWithLevelSet> configuration_beam_body(beam_body_inner, true);
         relax_dynamics::RelaxationStepInner relaxation_step_inner_explicit(beam_body_inner, true);
         relax_dynamics::RelaxationStepByCMInner relaxation_step_cm_inner_explicit(beam_body_inner, true);
-        relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner(beam_body_inner, true);
-        relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_cm_inner(beam_body_inner, true);
-        InteractionDynamics<relax_dynamics::CheckCorrectedZeroOrderConsistency> check_zero_order_consistency(beam_body_inner, true);
+        relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner_implicit(beam_body_inner, true);
+        relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_cm_inner_implicit(beam_body_inner, true);
+        
         InteractionDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_kinetic_energy(beam_body_inner);
+        InteractionDynamics<relax_dynamics::CheckCorrectedZeroOrderConsistency> check_zero_order_consistency(beam_body_inner, true);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
         random_insert_body_particles.exec(0.25);
-        relaxation_step_inner.SurfaceBounding().exec();
+        relaxation_step_inner_explicit.SurfaceBounding().exec();
         write_insert_body_to_vtp.writeToFile(0);
         //----------------------------------------------------------------------
         //	Relax particles of the insert body.
@@ -164,14 +165,15 @@ int main(int ac, char *av[])
         {
             configuration_beam_body.exec();
             //relaxation_step_inner_explicit.exec();
-            relaxation_step_cm_inner_explicit.exec();
-            //relaxation_step_inner.exec();
-            //relaxation_step_cm_inner.exec();
+            //relaxation_step_cm_inner_explicit.exec();
+            //relaxation_step_inner_implicit.exec();
+            relaxation_step_cm_inner_implicit.exec();
+
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
+                update_kinetic_energy.exec(); 
                 check_zero_order_consistency.exec();
-                update_kinetic_energy.exec();
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
                 write_insert_body_to_vtp.writeToFile(ite_p);
             }
@@ -196,8 +198,9 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     // corrected strong configuration
-    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     InteractionWithUpdate<relax_dynamics::CorrectedConfigurationInnerWithLevelSet> beam_corrected_configuration_level_set(beam_body_inner, true);
+    SimpleDynamics<relax_dynamics::CorrectionBasedOnLevelSet> correction_based_level_set(beam_body);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
@@ -209,7 +212,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    BodyStatesRecordingToPlt write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //----------------------------------------------------------------------
@@ -220,6 +223,7 @@ int main(int ac, char *av[])
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
     beam_corrected_configuration_level_set.exec();
+    correction_based_level_set.exec();
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------

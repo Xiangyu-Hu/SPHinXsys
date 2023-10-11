@@ -7,24 +7,15 @@
 #include "eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
-/**
- * @file 	2d_eulerian_flow_around_cylinder_LG.cpp
- * @brief 	This is the test file for the weakly compressible viscous flow around a cylinder coupling with the Laguerre Gauss kernel.
- * @details We consider a Eulerian flow passing by a cylinder in 2D.
- * @author 	Zhentong Wang and Xiangyu Hu
- */
-#include "eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
-#include "sphinxsys.h"
-using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 15.0;                        /**< Channel length. */
-Real DH = 10.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 4.0;       /**< Initial reference particle spacing. */
+Real DL = 50.0;                        /**< Channel length. */
+Real DH = 30.0;                        /**< Channel height. */
+Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
-Vec2d cylinder_center(4.0, DH / 2.0);  /**< Location of the cylinder center. */
+Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */
 Real cylinder_radius = 1.0;            /**< Radius of the cylinder. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -200,7 +191,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
@@ -224,7 +215,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    Real end_time = 150.0;
+    Real end_time = 200.0;
     Real output_interval = 1.0; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time

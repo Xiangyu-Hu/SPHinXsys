@@ -58,7 +58,7 @@ Real AcousticTimeStepSize::outputResult(Real reduced_value)
 {
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
-    return acousticCFL_ * smoothing_length_min_ / (reduced_value + TinyReal);
+    return acousticCFL_ * smoothing_length_min_ / (reduced_value + TinyReal) / 2;
 }
 //=================================================================================================//
 AdvectionTimeStepSizeForImplicitViscosity::

@@ -44,8 +44,7 @@ BaseElasticIntegration::
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
       rho_(particles_->rho_), mass_(particles_->mass_),
       pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
-      B_(particles_->B_), B_with_level_set_(particles_->B_with_level_set_),
-      F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
+      B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_){}
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
@@ -68,7 +67,6 @@ Integration1stHalf::
     : BaseIntegration1stHalf(inner_relation)
 {
     particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
-    particles_->registerVariable(stress_PK1_, "StressPK1");
     numerical_dissipation_factor_ = 0.25;
 }
 //=================================================================================================//
@@ -82,7 +80,6 @@ void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
     rho_[index_i] = rho0_ / F_[index_i].determinant();
     // obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
     // it seems using reproducing correction here increases convergence rate near the free surface, note that the correction matrix is in a form of transpose
-    stress_PK1_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i);
     stress_PK1_B_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i) * B_[index_i].transpose();
 }
 //=================================================================================================//
@@ -107,7 +104,7 @@ void Integration1stHalfKirchhoff::initialization(size_t index_i, Real dt)
     // near the free surface however, this correction is not used for the numerical dissipation
     stress_PK1_B_[index_i] = (Matd::Identity() * elastic_solid_.VolumetricKirchhoff(J) +
                               elastic_solid_.DeviatoricKirchhoff(deviatoric_b)) *
-                             inverse_F_T * B_[index_i];
+                              inverse_F_T * B_[index_i];
 }
 //=================================================================================================//
 Integration1stHalfCauchy::
