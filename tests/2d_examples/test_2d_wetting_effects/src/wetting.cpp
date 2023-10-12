@@ -69,12 +69,12 @@ int main(int ac, char *av[])
     /** Pressure relaxation for water by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemannWithWall>
         water_pressure_relaxation(water_wall_contact, water_air_complex);
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         water_density_relaxation(water_wall_contact, water_air_complex);
     /** Extend Pressure relaxation is used for air. */
     Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
         air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_wall_contact, air_water_complex);
     /** Viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> air_viscous_acceleration(air_water_complex);

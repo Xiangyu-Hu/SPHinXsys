@@ -78,6 +78,7 @@ class DensitySummation<Inner<>> : public DensitySummation<BaseInner>
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
 };
+using DensitySummationInner = DensitySummation<Inner<>>;
 
 template <>
 class DensitySummation<InnerAdaptive> : public DensitySummation<BaseInner>

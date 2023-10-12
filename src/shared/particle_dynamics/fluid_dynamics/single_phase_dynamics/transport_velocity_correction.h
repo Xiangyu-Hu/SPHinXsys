@@ -73,6 +73,9 @@ class TransportVelocityCorrection<Inner<>, CommonControlTypes...>
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
+template <class ParticleScope>
+using TransportVelocityCorrectionInner =
+    TransportVelocityCorrection<Inner<>, NoKernelCorrection, SingleResolution, ParticleScope>;
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>

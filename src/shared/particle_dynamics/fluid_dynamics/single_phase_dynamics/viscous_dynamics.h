@@ -64,6 +64,7 @@ class ViscousAcceleration<Inner<>> : public ViscousAcceleration<FluidDataInner>
     virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
+using ViscousAccelerationInner = ViscousAcceleration<Inner<>>;
 
 template <>
 class ViscousAcceleration<AngularConservative<Inner<>>>

@@ -42,12 +42,12 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf<ContactWall<>>::
     Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation)
-    : Integration1stHalfWithWallDissipative(wall_contact_relation),
+    : Integration1stHalfContactWallDissipative(wall_contact_relation),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")){};
 //=================================================================================================//
 void Oldroyd_BIntegration1stHalf<ContactWall<>>::interaction(size_t index_i, Real dt)
 {
-    Integration1stHalfWithWallDissipative::interaction(index_i, dt);
+    Integration1stHalfContactWallDissipative::interaction(index_i, dt);
 
     Real rho_i = rho_[index_i];
     Matd tau_i = tau_[index_i];
@@ -85,8 +85,7 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::update(size_t index_i, Real dt)
     tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
-void Oldroyd_BIntegration2ndHalf<Inner<>>::
-    interaction(size_t index_i, Real dt)
+void Oldroyd_BIntegration2ndHalf<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Integration2ndHalfInnerDissipative::interaction(index_i, dt);
 

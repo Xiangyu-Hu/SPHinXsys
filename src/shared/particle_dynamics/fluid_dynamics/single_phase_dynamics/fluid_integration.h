@@ -133,6 +133,7 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
     StdLargeVec<Real> &Vol_, &mass_;
 };
 using Integration2ndHalfInnerRiemann = Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
+using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSolver>;
 
 template <class RiemannSolverType>
 class Integration2ndHalf<ContactWall<>, RiemannSolverType>

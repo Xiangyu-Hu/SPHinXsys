@@ -59,11 +59,12 @@ class Oldroyd_BIntegration1stHalf<Inner<>>
     StdLargeVec<Matd> tau_, dtau_dt_;
 };
 
-using Integration1stHalfWithWallDissipative =
+using Integration1stHalfContactWallDissipative =
     Integration1stHalf<ContactWall<>, DissipativeRiemannSolver, NoKernelCorrection>;
+
 template <>
 class Oldroyd_BIntegration1stHalf<ContactWall<>>
-    : public Integration1stHalfWithWallDissipative
+    : public Integration1stHalfContactWallDissipative
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation);
@@ -72,6 +73,15 @@ class Oldroyd_BIntegration1stHalf<ContactWall<>>
 
   protected:
     StdLargeVec<Matd> &tau_;
+};
+
+class Oldroyd_BIntegration1stHalfWithWall
+    : public ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>
+{
+  public:
+    explicit Oldroyd_BIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 
 template <typename... InteractionTypes>
@@ -104,13 +114,23 @@ class Oldroyd_BIntegration2ndHalf<ContactWall<>>
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Oldroyd_B_Fluid &oldroyd_b_fluid_;
     StdLargeVec<Matd> &tau_, &dtau_dt_;
     Real mu_p_, lambda_;
 };
+
+class Oldroyd_BIntegration2ndHalfWithWall
+    : public ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>
+{
+  public:
+    explicit Oldroyd_BIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // NON_NEWTONIAN_DYNAMICS_H
