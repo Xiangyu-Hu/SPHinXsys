@@ -101,3 +101,17 @@ void NeighborBuilderOneSidedSurfaceContact::operator()(Neighborhood &neighborhoo
 4. Write a new class `OneSidedSurfaceContactRelation` with protected variable `UniquePtrsKeeper<NeighborBuilderOneSidedSurfaceContact> neighbor_builder_contact_ptrs_keeper_`
 
 5. write auxiliary classes to calculate shell curvature
+
+
+# Shell curvature
+We can compute H and K by:
+
+$$H=\nabla \cdot \mathbf{n}_r$$
+
+$$K=\frac{1}{2}(H^2-\sum_i \sum_j (\frac{\partial n_j}{\partial x_i})^2)$$
+
+where $\mathbf{n}_r$ is the normal direction of the surface. 
+
+
+# Reference
+- Nitschke, Ingo, Axel Voigt, and Jörg Wensch. "A finite element approach to incompressible two-phase flow on manifolds." Journal of Fluid Mechanics 708 (2012): 418-438.

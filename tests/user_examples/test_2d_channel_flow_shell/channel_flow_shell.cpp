@@ -35,6 +35,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
+    /** Must construct ShellContactRelation first! Otherwise ComplexRelation creates ContactRelation*/
     ShellContactRelation water_wall_contact(water_block, {&wall_boundary});
     ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});

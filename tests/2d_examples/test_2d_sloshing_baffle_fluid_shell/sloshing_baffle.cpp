@@ -46,7 +46,7 @@ int main(int ac, char *av[])
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation baffle_inner(shell_baffle);
-    ContactRelation water_shell_contact(water_block, {&shell_baffle});
+    ShellContactRelation water_shell_contact(water_block, {&shell_baffle});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
 
     ComplexRelation water_wall_complex(water_block_inner, water_wall_contact);
