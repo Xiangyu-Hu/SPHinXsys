@@ -59,7 +59,6 @@ class ContactBoundary; /**< Contact interaction with boundary */
 template <typename... ContactWallParameters>
 class ContactWall; /**< Contact interaction with wall boundary */
 
-template <typename InteractionType>
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
 //----------------------------------------------------------------------

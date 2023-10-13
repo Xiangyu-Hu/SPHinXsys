@@ -105,13 +105,13 @@ void Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>:
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-Integration1stHalf<Extended<ContactWall<>>, RiemannSolverType, KernelCorrectionType>::
+Integration1stHalf<ContactWall<Extended>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength)
     : Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
       penalty_strength_(penalty_strength) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void Integration1stHalf<Extended<ContactWall<>>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
+void Integration1stHalf<ContactWall<Extended>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
 

@@ -100,7 +100,7 @@ class Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<Extended<ContactWall<>>, RiemannSolverType, KernelCorrectionType>
+class Integration1stHalf<ContactWall<Extended>, RiemannSolverType, KernelCorrectionType>
     : public Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
 {
   public:
