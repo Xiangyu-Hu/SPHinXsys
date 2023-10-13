@@ -165,49 +165,5 @@ class DataDelegateContact : public BaseDataDelegateType
     /** Configurations for particle interaction between bodies. */
     StdVec<ParticleConfiguration *> contact_configuration_;
 };
-
-/**
- * @class DataDelegateComplex
- * @brief prepare data for complex particle dynamics
- */
-template <class ParticlesType = BaseParticles,
-          class ContactParticlesType = BaseParticles>
-class DataDelegateComplex : public DataDelegateInner<ParticlesType>,
-                            public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
-{
-  public:
-    explicit DataDelegateComplex(ComplexRelation &complex_relation)
-        : DataDelegateInner<ParticlesType>(complex_relation.getInnerRelation()),
-          DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation()){};
-    virtual ~DataDelegateComplex(){};
-};
-
-/**
- * @class BaseInteractionComplex
- * @brief Abstract base class for general complex interaction dynamics
- */
-template <class InteractionInnerType, class ContactDataType>
-class BaseInteractionComplex : public InteractionInnerType, public ContactDataType
-{
-  public:
-    // template for different combination of constructing body relations
-    template <typename... Args>
-    BaseInteractionComplex(BaseContactRelation &contact_relation,
-                           BaseInnerRelation &inner_relation, Args &&...args)
-        : InteractionInnerType(inner_relation, std::forward<Args>(args)...),
-          ContactDataType(contact_relation){};
-    template <typename... Args>
-    BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
-        : BaseInteractionComplex(complex_relation.getContactRelation(),
-                                 complex_relation.getInnerRelation(), std::forward<Args>(args)...){};
-    template <typename... Args>
-    BaseInteractionComplex(BaseContactRelation &extra_contact_relation,
-                           ComplexRelation &complex_relation, Args &&...args)
-        : BaseInteractionComplex(complex_relation, std::forward<Args>(args)...)
-    {
-        this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
-    };
-    virtual ~BaseInteractionComplex(){};
-};
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

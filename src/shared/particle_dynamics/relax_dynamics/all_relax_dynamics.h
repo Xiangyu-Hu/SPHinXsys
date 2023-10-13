@@ -21,39 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	complex_body_relation.h
- * @brief 	The topological relations within one body and to other bodies.
+ * @file    all_relax_dynamics.h
+ * @brief   This is the header file that user code should include to pick up all
+ *          relax dynamics used in SPHinXsys.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef COMPLEX_BODY_RELATION_H
-#define COMPLEX_BODY_RELATION_H
+#pragma once
 
-#include "base_body_relation.h"
-
-namespace SPH
-{
-/**
- * @class ComplexRelation
- * @brief The relation combined an inner and one or several contact body relation.
- * Note that this relation are not used for construct local dynamics,
- * which are only done by using inner and contact relations.
- * This is temporary class used for updating several configuration together,
- * before the automation on updating is done.
- */
-class ComplexRelation : public SPHRelation
-{
-  protected:
-    BaseInnerRelation &inner_relation_;
-    StdVec<BaseContactRelation *> contact_relations_;
-
-  public:
-    ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
-    ComplexRelation(BaseInnerRelation &inner_relation, StdVec<BaseContactRelation *> contact_relations);
-    virtual ~ComplexRelation(){};
-
-    virtual void resizeConfiguration() override;
-    virtual void updateConfiguration() override;
-};
-} // namespace SPH
-#endif // COMPLEX_BODY_RELATION_H
+#include "base_relax_dynamics.h"

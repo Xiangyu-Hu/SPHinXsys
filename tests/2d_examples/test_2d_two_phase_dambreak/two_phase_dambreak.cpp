@@ -43,11 +43,17 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    ComplexRelation water_air_complex(water_block, {&air_block});
+    InnerRelation water_inner(water_block);
+    ContactRelation water_air_contact(water_block, {&air_block});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ComplexRelation air_water_complex(air_block, {&water_block});
+    InnerRelation air_inner(air_block);
+    ContactRelation air_water_contact(air_block, {&water_block});
     ContactRelation air_wall_contact(air_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, RealBodyVector{&water_block, &air_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation water_wall_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -219,7 +225,6 @@ int main(int ac, char *av[])
 
     write_water_mechanical_energy.testResult();
     write_recorded_pressure.testResult();
-
 
     return 0;
 }

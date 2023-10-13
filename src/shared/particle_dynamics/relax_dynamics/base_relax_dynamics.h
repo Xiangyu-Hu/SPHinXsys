@@ -21,39 +21,30 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	complex_body_relation.h
- * @brief 	The topological relations within one body and to other bodies.
+ * @file 	base_relax_dynamics.h
+ * @brief 	This is the classes of particle relaxation in order to produce body fitted
+ * 			initial particle distribution.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef COMPLEX_BODY_RELATION_H
-#define COMPLEX_BODY_RELATION_H
+#ifndef BASE_RELAX_DYNAMICS_H
+#define BASE_RELAX_DYNAMICS_H
 
-#include "base_body_relation.h"
+#include "all_body_relations.h"
+#include "all_particle_dynamics.h"
+#include "base_kernel.h"
+#include "cell_linked_list.h"
+#include "particle_smoothing.hpp"
 
 namespace SPH
 {
-/**
- * @class ComplexRelation
- * @brief The relation combined an inner and one or several contact body relation.
- * Note that this relation are not used for construct local dynamics,
- * which are only done by using inner and contact relations.
- * This is temporary class used for updating several configuration together,
- * before the automation on updating is done.
- */
-class ComplexRelation : public SPHRelation
+class LevelSetCorrection;
+
+namespace relax_dynamics
 {
-  protected:
-    BaseInnerRelation &inner_relation_;
-    StdVec<BaseContactRelation *> contact_relations_;
-
-  public:
-    ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
-    ComplexRelation(BaseInnerRelation &inner_relation, StdVec<BaseContactRelation *> contact_relations);
-    virtual ~ComplexRelation(){};
-
-    virtual void resizeConfiguration() override;
-    virtual void updateConfiguration() override;
-};
+typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
+typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
+typedef DataDelegateContact<BaseParticles, BaseParticles> RelaxDataDelegateContact;
+} // namespace relax_dynamics
 } // namespace SPH
-#endif // COMPLEX_BODY_RELATION_H
+#endif // BASE_RELAX_DYNAMICS_H

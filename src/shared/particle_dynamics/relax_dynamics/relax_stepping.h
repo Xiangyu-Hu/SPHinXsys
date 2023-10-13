@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	relax_dynamics.h
+ * @file 	relax_stepping.h
  * @brief 	This is the classes of particle relaxation in order to produce body fitted
  * 			initial particle distribution.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef RELAX_DYNAMICS_H
-#define RELAX_DYNAMICS_H
+#ifndef RELAX_STEPPING_H
+#define RELAX_STEPPING_H
 
 #include "base_relax_dynamics.h"
 
@@ -39,10 +39,6 @@ class LevelSetShape;
 
 namespace relax_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> RelaxDataDelegateContact;
-
 /**
  * @class GetTimeStepSizeSquare
  * @brief relaxation dynamics for particle initialization
@@ -63,78 +59,55 @@ class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
     virtual Real outputResult(Real reduced_value);
 };
 
-/**
- * @class RelaxationAccelerationInner
- * @brief simple algorithm for physics relaxation
- * without considering contact interaction.
- * this is usually used for solid like bodies
- */
-class RelaxationAccelerationInner : public LocalDynamics, public RelaxDataDelegateInner
+template <typename... InteractionTypes>
+class ParticleRelaxation;
+
+template <class DataDelegationType>
+class ParticleRelaxation<Base, DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation);
-    virtual ~RelaxationAccelerationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd acceleration = Vecd::Zero();
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        }
-        acc_[index_i] = acceleration;
-    };
+    template <class BaseRelationType>
+    explicit ParticleRelaxation(BaseRelationType &base_relation);
+    virtual ~ParticleRelaxation(){};
 
   protected:
-    StdLargeVec<Vecd> &acc_, &pos_;
+    SPHAdaptation *sph_adaptation_;
+    StdLargeVec<Vecd> &pos_;
 };
 
-/**
- * @class RelaxationAccelerationInnerWithLevelSetCorrection
- * @brief we constrain particles to a level function representing the interface.
- */
-class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccelerationInner
+template <>
+class ParticleRelaxation<Inner<>>
+    : public ParticleRelaxation<Base, RelaxDataDelegateInner>
 {
   public:
-    explicit RelaxationAccelerationInnerWithLevelSetCorrection(
-        BaseInnerRelation &inner_relation);
-    virtual ~RelaxationAccelerationInnerWithLevelSetCorrection(){};
+    explicit ParticleRelaxation(BaseInnerRelation &inner_relation)
+        : ParticleRelaxation<Base, RelaxDataDelegateInner>(inner_relation){};
+    virtual ~ParticleRelaxation(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
 
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        RelaxationAccelerationInner::interaction(index_i, dt);
-        acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                                   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-    };
+template <>
+class ParticleRelaxation<Inner<LevelSetCorrection>> : public ParticleRelaxation<Inner<>>
+{
+  public:
+    explicit ParticleRelaxation(BaseInnerRelation &inner_relation);
+    virtual ~ParticleRelaxation(){};
 
   protected:
     LevelSetShape *level_set_shape_;
-    SPHAdaptation *sph_adaptation_;
 };
 
-/**
- * @class UpdateParticlePosition
- * @brief update the particle position for a time step
- */
-class UpdateParticlePosition : public LocalDynamics,
-                               public RelaxDataDelegateSimple
+template <>
+class ParticleRelaxation<Contact<>>
+    : public ParticleRelaxation<Base, RelaxDataDelegateContact>
 {
-  protected:
-    SPHAdaptation *sph_adaptation_;
-    StdLargeVec<Vecd> &pos_, &acc_;
-
   public:
-    explicit UpdateParticlePosition(SPHBody &sph_body);
-    virtual ~UpdateParticlePosition(){};
-
-    void update(size_t index_i, Real dt = 0.0);
+    explicit ParticleRelaxation(BaseContactRelation &contact_relation);
+    virtual ~ParticleRelaxation(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class UpdateSmoothingLengthRatioByShape
- * @brief update the particle smoothing length ratio
- */
 class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
                                           public RelaxDataDelegateSimple
 {
@@ -151,45 +124,6 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
     virtual ~UpdateSmoothingLengthRatioByShape(){};
 
     void update(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class RelaxationAccelerationComplex
- * @brief compute relaxation acceleration while consider the present of contact bodies
- * with considering contact interaction
- * this is usually used for fluid like bodies //TODO: seems better called as Contact
- */
-class RelaxationAccelerationComplex : public LocalDynamics,
-                                      public RelaxDataDelegateComplex
-{
-  public:
-    explicit RelaxationAccelerationComplex(ComplexRelation &complex_relation);
-    virtual ~RelaxationAccelerationComplex(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd acceleration = Vecd::Zero();
-        Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        }
-
-        /** Contact interaction. */
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                acceleration -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            }
-        }
-
-        acc_[index_i] = acceleration;
-    };
-
-  protected:
-    StdLargeVec<Vecd> &acc_, &pos_;
 };
 
 /**
@@ -445,4 +379,4 @@ class ShellRelaxationStepInner : public RelaxationStepInner
 };
 } // namespace relax_dynamics
 } // namespace SPH
-#endif // RELAX_DYNAMICS_H
+#endif // RELAX_STEPPING_H

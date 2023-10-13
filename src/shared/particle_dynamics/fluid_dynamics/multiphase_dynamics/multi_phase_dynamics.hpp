@@ -8,9 +8,9 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-MultiPhaseMomentumInterface<RiemannSolverType, KernelCorrectionType>::
-    MultiPhaseMomentumInterface(BaseContactRelation &contact_relation)
-    : BaseIntegration<MultiPhaseContactData>(contact_relation),
+Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
+    Integration1stHalf(BaseContactRelation &contact_relation)
+    : BaseIntegration<FluidContactData>(contact_relation),
       correction_(particles_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)

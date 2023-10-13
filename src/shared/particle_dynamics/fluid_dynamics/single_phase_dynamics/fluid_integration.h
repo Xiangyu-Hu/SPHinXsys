@@ -114,6 +114,22 @@ class Integration1stHalf<ContactWall<Extended>, RiemannSolverType, KernelCorrect
     Real penalty_strength_;
 };
 
+template <class RiemannSolverType, class KernelCorrectionType>
+class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
+    : public BaseIntegration<FluidContactData>
+{
+  public:
+    explicit Integration1stHalf(BaseContactRelation &contact_relation);
+    virtual ~Integration1stHalf(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<KernelCorrectionType> correction_;
+    StdVec<KernelCorrectionType> contact_corrections_;
+    StdVec<RiemannSolverType> riemann_solvers_;
+    StdVec<StdLargeVec<Real> *> contact_p_;
+};
+
 template <typename... InteractionTypes>
 class Integration2ndHalf;
 
@@ -146,6 +162,21 @@ class Integration2ndHalf<ContactWall<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
+};
+
+template <class RiemannSolverType>
+class Integration2ndHalf<Contact<>, RiemannSolverType> 
+: public BaseIntegration<FluidContactData>
+{
+  public:
+    explicit Integration2ndHalf(BaseContactRelation &contact_relation);
+    virtual ~Integration2ndHalf(){};
+    inline void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<RiemannSolverType> riemann_solvers_;
+    StdVec<StdLargeVec<Real> *> contact_p_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
