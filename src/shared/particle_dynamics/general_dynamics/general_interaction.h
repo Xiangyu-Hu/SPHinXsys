@@ -30,6 +30,7 @@
 #define GENERAL_INTERACTION_H
 
 #include "general_dynamics.h"
+#include "relax_dynamics.h"
 
 namespace SPH
 {
@@ -47,6 +48,20 @@ class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDele
     void update(size_t index_i, Real dt = 0.0);
 };
 
+class KernelCorrectionMatrixInnerWithLevelSet : public KernelCorrectionMatrixInner
+{
+public:
+    explicit KernelCorrectionMatrixInnerWithLevelSet(BaseInnerRelation& inner_relation);
+    virtual ~KernelCorrectionMatrixInnerWithLevelSet() {};
+
+protected:
+    StdLargeVec<Vecd>& pos_;
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
+
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
 class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public GeneralDataDelegateContactOnly
 {
   public:
@@ -56,6 +71,20 @@ class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public
   protected: 
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
+
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+class KernelCorrectionMatrixComplexWithLevelSet : public KernelCorrectionMatrixComplex
+{
+public:
+    explicit KernelCorrectionMatrixComplexWithLevelSet(ComplexRelation& complex_relation, const std::string& shape_name);
+    virtual ~KernelCorrectionMatrixComplexWithLevelSet() {};
+
+protected:
+    StdLargeVec<Vecd>& pos_;
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
 
     void interaction(size_t index_i, Real dt = 0.0);
 };

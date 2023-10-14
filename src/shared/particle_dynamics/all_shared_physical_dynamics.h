@@ -41,6 +41,7 @@
 #include "particle_dynamics_dissipation.h"
 #include "particle_dynamics_dissipation.hpp"
 #include "relax_dynamics.h"
+#include "relax_dynamics.hpp"
 #include "diffusion_optimization.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_H

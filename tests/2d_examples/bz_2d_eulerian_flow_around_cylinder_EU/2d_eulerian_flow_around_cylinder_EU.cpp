@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 50.0;                        /**< Channel length. */
 Real DH = 30.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
+Real resolution_ref = 1.0 / 6.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    sph_system.setRunParticleRelaxation(false);
+    sph_system.setRunParticleRelaxation(true);
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(true);
     // Handle command line arguments and override the tags for particle relaxation and reload.
@@ -120,6 +120,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
+        InnerRelation water_block_inner(water_block);
         InnerRelation cylinder_inner(cylinder); // extra body topology only for particle relaxation
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -128,18 +129,12 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
         ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
+        InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_inner(cylinder_inner);
+        InteractionWithUpdate<KernelCorrectionMatrixComplexWithLevelSet> kernel_correction_complex(water_block_complex, "OuterBoundary");
         relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
         relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
-
-        //relax_dynamics::RelaxationStepByCMInner relaxation_step_CM_inner(cylinder_inner, true);
-        //relax_dynamics::RelaxationStepByCMComplex relaxation_step_CM_complex(water_block_complex, "OuterBoundary", true);
-
-        //relax_dynamics::RelaxationStepImplicitInner relaxation_step_implicit_inner(cylinder_inner, true);
-        //relax_dynamics::RelaxationStepImplicitComplex relaxation_step_implicit_complex(water_block_complex, "OuterBoundary", true);
-        
-        //relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_implicit_inner(cylinder_inner, true);
-        //relax_dynamics::RelaxationStepByCMImplicitComplex relaxation_step_implicit_complex(water_block_complex, "OuterBoundary", true); 
-         
+        SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_block_inner);
+        SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_cylinder_kietic_energy(cylinder_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -150,13 +145,17 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile(0);
 
         int ite_p = 0;
-        while (ite_p < 1000)
+        while (ite_p < 5000)
         {
+            kernel_correction_inner.exec();
             relaxation_step_inner.exec();
+            kernel_correction_complex.exec();
             relaxation_step_complex.exec();
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
+                update_water_block_kinetic_energy.exec();
+                update_cylinder_kietic_energy.exec();
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
                 write_real_body_states.writeToFile(ite_p);
             }
@@ -215,7 +214,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    Real end_time = 200.0;
+    Real end_time = 300.0;
     Real output_interval = 1.0; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time

@@ -69,12 +69,35 @@ class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
     virtual Real outputResult(Real reduced_value);
 };
 
+class PressureRelaxation
+{
+public:
+    PressureRelaxation() {};
+
+    Real getBackgroundForce(Matd Bi, Matd Bj) 
+    { 
+        return 2; 
+    };
+};
+
+class CorrectionMatrixRelaxation
+{
+public:
+    CorrectionMatrixRelaxation() {};
+
+    Matd getBackgroundForce(Matd Bi, Matd Bj) 
+    { 
+        return (Bi + Bj); 
+    };
+};
+
 /**
  * @class RelaxationAccelerationInner
  * @brief simple algorithm for physics relaxation
  * without considering contact interaction.
  * this is usually used for solid like bodies
  */
+template <typename RelaxationType>
 class RelaxationAccelerationInner : public LocalDynamics, 
                                     public RelaxDataDelegateInner
 {
@@ -88,20 +111,25 @@ class RelaxationAccelerationInner : public LocalDynamics,
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            size_t index_j = inner_neighborhood.j_[n];
+            acceleration -= relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) * 
+                            inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         }
         acc_[index_i] = acceleration;
     };
 
   protected:
+    RelaxationType relaxation_type;
     StdLargeVec<Vecd> &acc_, &pos_;
+    StdLargeVec<Matd>& B_;
 };
 
 /**
  * @class RelaxationAccelerationInnerWithLevelSetCorrection
  * @brief we constrain particles to a level function representing the interface.
  */
-class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccelerationInner
+template <typename RelaxationType>
+class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccelerationInner<RelaxationType>
 {
   public:
     explicit RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerRelation &inner_relation);
@@ -109,24 +137,15 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
-        RelaxationAccelerationInner::interaction(index_i, dt);
-        Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
-        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], 
+        RelaxationAccelerationInner<RelaxationType>::interaction(index_i, dt);
+        Real phi = level_set_shape_->findSignedDistance(this->pos_[index_i]);
+        Real overlap = level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
                        sph_adaptation_->SmoothingLengthRatio(index_i));
-        acc_[index_i] = acc_[index_i];
-
-        //if (phi > -constrained_distance_)
-        //{
-        //    acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], 
-        //        sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-        //}
-        //else
-        //{
-        //    acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], 
-        //        sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
-        //};
-        acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i],
-            sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+       
+        /* A scaling is adopted to handle the particle overlap. */
+        this->acc_[index_i] -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) * 
+                         level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
+                         sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
 
   protected:
@@ -176,45 +195,6 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
 };
 
 /**
- * @class RelaxationAccelerationComplex
- * @brief compute relaxation acceleration while consider the present of contact bodies
- * with considering contact interaction
- * this is usually used for fluid like bodies //TODO: seems better called as Contact
- */
-class RelaxationAccelerationComplex : public LocalDynamics,
-                                      public RelaxDataDelegateComplex
-{
-  public:
-    explicit RelaxationAccelerationComplex(ComplexRelation &complex_relation);
-    virtual ~RelaxationAccelerationComplex(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd acceleration = Vecd::Zero();
-        Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        }
-
-        /** Contact interaction. */
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                acceleration -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            }
-        }
-
-        acc_[index_i] = acceleration;
-    };
-
-  protected:
-    StdLargeVec<Vecd> &acc_, &pos_;
-};
-
-/**
  * @class ShapeSurfaceBounding
  * @brief constrain surface particles by
  * map constrained particles to geometry face and
@@ -238,6 +218,7 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
  * @class RelaxationStepInner
  * @brief carry out particle relaxation step of particles within the body
  */
+template <typename RelaxationType = PressureRelaxation>
 class RelaxationStepInner : public BaseDynamics<void>
 {
   public:
@@ -255,7 +236,54 @@ class RelaxationStepInner : public BaseDynamics<void>
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
     SimpleDynamics<UpdateParticlePosition> update_particle_position_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-    SharedPtr<BaseDynamics<void>> surface_correction_;
+};
+
+/**
+ * @class RelaxationAccelerationComplex
+ * @brief compute relaxation acceleration while consider the present of contact bodies
+ * with considering contact interaction
+ * this is usually used for fluid like bodies //TODO: seems better called as Contact
+ */
+template <typename RelaxationType = PressureRelaxation>
+class RelaxationAccelerationComplex : public LocalDynamics,
+    public RelaxDataDelegateComplex
+{
+public:
+    explicit RelaxationAccelerationComplex(ComplexRelation& complex_relation);
+    virtual ~RelaxationAccelerationComplex() {};
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd acceleration = Vecd::Zero();
+        Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            acceleration -= relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) *
+                inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        }
+
+        /** Contact interaction. */
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            StdLargeVec<Matd>& B_k = *(contact_B_[k]);
+            Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                acceleration -= relaxation_type.getBackgroundForce(B_[index_i], B_k[index_j]) *
+                    contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            }
+        }
+
+        acc_[index_i] = acceleration;
+    };
+
+protected:
+    RelaxationType relaxation_type;
+    StdLargeVec<Vecd>& acc_, & pos_;
+    StdLargeVec<Matd>& B_;
+    StdVec<StdLargeVec<Matd>*> contact_B_;
 };
 
 /**
@@ -265,7 +293,8 @@ class RelaxationStepInner : public BaseDynamics<void>
  * this is usually used for fluid like bodies
  * we constrain particles with a level-set correction function when the fluid boundary is not contacted with solid.
  */
-class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAccelerationComplex
+template <typename RelaxationType = PressureRelaxation>
+class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAccelerationComplex<RelaxationType>
 {
   public:
     RelaxationAccelerationComplexWithLevelSetCorrection(
@@ -274,20 +303,14 @@ class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAcc
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
-        RelaxationAccelerationComplex::interaction(index_i, dt);
-        Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
-        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], 
+        RelaxationAccelerationComplex<RelaxationType>::interaction(index_i, dt);
+        Real phi = level_set_shape_->findSignedDistance(this->pos_[index_i]);
+        Real overlap = level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
                        sph_adaptation_->SmoothingLengthRatio(index_i));
-        if (phi > -constrained_distance_)
-        {
-            acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-        }
-        else
-        {
-            acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
-        };
+
+        this->acc_[index_i] -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
+                         level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
+                         sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
 
   protected:
@@ -300,6 +323,7 @@ class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAcc
  * @class RelaxationStepComplex
  * @brief carry out particle relaxation step of particles within multi bodies
  */
+template <class RelaxationType = PressureRelaxation>
 class RelaxationStepComplex : public BaseDynamics<void>
 {
   public:
@@ -319,193 +343,6 @@ class RelaxationStepComplex : public BaseDynamics<void>
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
-/**
- * @class RelaxationAccelerationByCMInner
- * @brief simple algorithm for physics relaxation by correction 
- *        matrix without considering contact interaction.
- */
-class RelaxationAccelerationByCMInner : public LocalDynamics, 
-                                        public RelaxDataDelegateInner
-{
-public:
-    explicit RelaxationAccelerationByCMInner(BaseInnerRelation& inner_relation);
-    virtual ~RelaxationAccelerationByCMInner() {};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd acceleration = Vecd::Zero();
-        const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            acceleration -= (B_[index_i] + B_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        }
-        acc_[index_i] = acceleration;
-    };
-
-protected:
-    StdLargeVec<Vecd>& acc_, & pos_;
-    StdLargeVec<Matd>& B_;
-};
-
-/**
- * @class RelaxationAccelerationByCMInnerWithLevelSetCorrection
- * @brief we constrain particles to a level function representing the interface.
- */
-class RelaxationAccelerationByCMInnerWithLevelSetCorrection : 
-    public RelaxationAccelerationByCMInner
-{
-public:
-    explicit RelaxationAccelerationByCMInnerWithLevelSetCorrection(BaseInnerRelation& inner_relation);
-    virtual ~RelaxationAccelerationByCMInnerWithLevelSetCorrection() {};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        RelaxationAccelerationByCMInner::interaction(index_i, dt);
-        Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
-        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-        //if (phi > -constrained_distance_)
-        //{
-        //    acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-        //                      pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-        //}
-        //else
-        //{
-        //    acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-        //                      pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
-        //};
-        acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                          pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-    };
-
-protected:
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-    Real constrained_distance_;
-};
-
-/**
- * @class RelaxationStepByCMInner
- * @brief carry out particle relaxation step of particle by stress
- *  within the body with the first order consisitency.
- */
-class RelaxationStepByCMInner : public BaseDynamics<void>
-{
-public:
-    explicit RelaxationStepByCMInner(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~RelaxationStepByCMInner() {};
-    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
-    virtual void exec(Real dt = 0.0) override;
-
-protected:
-    RealBody* real_body_;
-    BaseInnerRelation& inner_relation_;
-    NearShapeSurface near_shape_surface_;
-    UniquePtr<BaseDynamics<void>> relaxation_acceleration_inner_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
-    SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-};
-
-/**
- * @class RelaxationAccelerationByCMComplex
- */
-class RelaxationAccelerationByCMComplex : public LocalDynamics,
-    public RelaxDataDelegateComplex
-{
-public:
-    explicit RelaxationAccelerationByCMComplex(ComplexRelation& complex_relation);
-    virtual ~RelaxationAccelerationByCMComplex() {};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd acceleration = Vecd::Zero();
-        Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            acceleration -= (B_[index_i] + B_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        }
-
-        /** Contact interaction. */
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            StdLargeVec<Matd>& B_k = *(contact_B_[k]);
-            Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = contact_neighborhood.j_[n];
-                acceleration -= (B_[index_i] + B_k[index_j]) * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            }
-        }
-
-        acc_[index_i] = acceleration;
-    };
-
-protected:
-    StdLargeVec<Vecd>& acc_, & pos_;
-    StdLargeVec<Matd>& B_;
-    StdVec<StdLargeVec<Matd>*> contact_B_;
-};
-
-/**
- * @class RelaxationAccelerationByCMComplexWithLevelSetCorrection
- */
-class RelaxationAccelerationByCMComplexWithLevelSetCorrection : 
-    public RelaxationAccelerationByCMComplex
-{
-public:
-    RelaxationAccelerationByCMComplexWithLevelSetCorrection(
-        ComplexRelation& complex_relation, const std::string& shape_name);
-    virtual ~RelaxationAccelerationByCMComplexWithLevelSetCorrection() {};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        RelaxationAccelerationByCMComplex::interaction(index_i, dt);
-        Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
-        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], 
-                       sph_adaptation_->SmoothingLengthRatio(index_i));
-        if (phi > -constrained_distance_)
-        {
-            acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
-        }
-        else
-        {
-            acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
-        };
-    };
-
-protected:
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-    Real constrained_distance_;
-};
-
-/**
- * @class RelaxationStepByCMComplex
- */
-class RelaxationStepByCMComplex : public BaseDynamics<void>
-{
-public:
-    explicit RelaxationStepByCMComplex(ComplexRelation& complex_relation,
-        const std::string& shape_name, bool level_set_correction = false);
-    virtual ~RelaxationStepByCMComplex() {};
-    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
-    virtual void exec(Real dt = 0.0) override;
-
-protected:
-    RealBody* real_body_;
-    ComplexRelation& complex_relation_;
-    NearShapeSurface near_shape_surface_;
-    UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
-    SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-};
-
-//****************************************IMPLICIT SCHEME******************************************//
 template <typename ErrorDataType, typename ParameterADataType, typename ParameterCDataType>
 struct ErrorAndParameters
 {
@@ -520,74 +357,15 @@ struct ErrorAndParameters
 };
 
 /**
- * @class RelaxationImplicitInner
+ * @class RelaxationInnerImplicit
  * @brief carry out particle relaxation by position with implicit evolution.
  */
-class RelaxationImplicitInner : public LocalDynamics, public RelaxDataDelegateInner
+template <class RelaxationType = PressureRelaxation>
+class RelaxationInnerImplicit : public LocalDynamics, public RelaxDataDelegateInner
 {
 public:
-    explicit RelaxationImplicitInner(BaseInnerRelation& inner_relation);
-    virtual ~RelaxationImplicitInner() {};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-protected:
-    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
-
-    Kernel* kernel_;
-    StdLargeVec<Real>& Vol_;
-    StdLargeVec<Vecd>& pos_, & acc_;
-    StdLargeVec<Real> implicit_residual_pressure_;
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-    Real constrained_distance_;
-};
-
-/**
- * @class RelaxationImplicitInnerWithLevelSetCorrection
- * @brief we constrain particles to a level function representing the interface.
- */
-class RelaxationImplicitInnerWithLevelSetCorrection : public RelaxationImplicitInner
-{
-public:
-    explicit RelaxationImplicitInnerWithLevelSetCorrection(BaseInnerRelation& inner_relation);
-    virtual ~RelaxationImplicitInnerWithLevelSetCorrection() {};
-
-protected:
-    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
-};
-
-/**
- * @class RelaxationStepImplicitInner
- * @brief carry out the particle relaxation evolution within the body
- */
-class RelaxationStepImplicitInner : public BaseDynamics<void>
-{
-public:
-    explicit RelaxationStepImplicitInner(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~RelaxationStepImplicitInner() {};
-    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
-    virtual void exec(Real dt = 0.0) override;
-
-protected:
-    Real time_step_size_;
-    RealBody* real_body_;
-    BaseInnerRelation& inner_relation_;
-    NearShapeSurface near_shape_surface_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationImplicitInnerWithLevelSetCorrection> relaxation_evolution_inner_;
-    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-};
-
-/**
- * @class RelaxationByCMImplicitInner
- * @brief carry out particle relaxation by first ordre consistency implicit evolution.
- */
-class RelaxationByCMImplicitInner : public LocalDynamics, public RelaxDataDelegateInner
-{
-public:
-    explicit RelaxationByCMImplicitInner(BaseInnerRelation& inner_relation);
-    virtual ~RelaxationByCMImplicitInner() {};
+    explicit RelaxationInnerImplicit(BaseInnerRelation& inner_relation);
+    virtual ~RelaxationInnerImplicit() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
 protected:
@@ -598,9 +376,10 @@ protected:
     StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd>& pos_, & acc_;
     StdLargeVec<Matd>& B_;
-    StdLargeVec<Real> implicit_residual_cm_;
+    StdLargeVec<Real> implicit_residual_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
+    RelaxationType relaxation_type;
     Real constrained_distance_;
 };
 
@@ -608,25 +387,27 @@ protected:
  * @class RelaxationByCMImplicitInnerWithLevelSetCorrection
  * @brief we constrain particles to a level function representing the interface.
  */
-class RelaxationByCMImplicitInnerWithLevelSetCorrection : public RelaxationByCMImplicitInner
+template <class RelaxationType = PressureRelaxation>
+class RelaxationInnerWithLevelSetCorrectionImplicit : public RelaxationInnerImplicit<RelaxationType>
 {
 public:
-    explicit RelaxationByCMImplicitInnerWithLevelSetCorrection(BaseInnerRelation& inner_relation);
-    virtual ~RelaxationByCMImplicitInnerWithLevelSetCorrection() {};
+    explicit RelaxationInnerWithLevelSetCorrectionImplicit(BaseInnerRelation& inner_relation);
+    virtual ~RelaxationInnerWithLevelSetCorrectionImplicit() {};
 
 protected:
     virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
 };
 
 /**
- * @class RelaxationStepByStressInner
+ * @class RelaxationStepInner
  * @brief carry out the particle relaxation evolution from first order consistency within the body
  */
-class RelaxationStepByCMImplicitInner : public BaseDynamics<void>
+template <class RelaxationType = PressureRelaxation>
+class RelaxationStepInnerImplicit : public BaseDynamics<void>
 {
 public:
-    explicit RelaxationStepByCMImplicitInner(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~RelaxationStepByCMImplicitInner() {};
+    explicit RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation);
+    virtual ~RelaxationStepInnerImplicit() {};
     SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
 
@@ -636,47 +417,75 @@ protected:
     BaseInnerRelation& inner_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationByCMImplicitInnerWithLevelSetCorrection> relaxation_evolution_inner_;
+    InteractionSplit<RelaxationInnerWithLevelSetCorrectionImplicit<RelaxationType>> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
 /**
-  * @class CorrectedConfigurationInnerWithLevelSet
-  * @brief calculate the correction matrix based on the level set
-  */
-class CorrectedConfigurationInnerWithLevelSet : public LocalDynamics, public RelaxDataDelegateInner
+ * @class RelaxationComplexImplicit
+ * @brief carry out particle relaxation by position with implicit evolution.
+ */
+template <class RelaxationType = PressureRelaxation>
+class RelaxationComplexImplicit : public LocalDynamics, public RelaxDataDelegateComplex
 {
-  public:
-    explicit CorrectedConfigurationInnerWithLevelSet(BaseInnerRelation &inner_relation, bool level_set_correction = false);
-    virtual ~CorrectedConfigurationInnerWithLevelSet(){};
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Matd> &B_with_level_set_;
-    bool level_set_correction_;
-    LevelSetShape *level_set_shape_;
-    SPHAdaptation *sph_adaptation_;
-
+public:
+    explicit RelaxationComplexImplicit(ComplexRelation& complex_relation, const std::string& shape_name);
+    virtual ~RelaxationComplexImplicit() {};
     void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
+
+protected:
+    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
+
+    Kernel* kernel_;
+    StdLargeVec<Real>& Vol_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdLargeVec<Vecd>& pos_, & acc_;
+    StdLargeVec<Matd>& B_;
+    StdVec<StdLargeVec<Matd>*> contact_B_;
+    StdLargeVec<Real> implicit_residual_;
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
+    RelaxationType relaxation_type;
+    Real constrained_distance_;
 };
 
 /**
-  * @class CorrectionBasedOnLevelSet
-  */
-class CorrectionBasedOnLevelSet : public LocalDynamics, public RelaxDataDelegateSimple
+ * @class RelaxationByCMImplicitInnerWithLevelSetCorrection
+ * @brief we constrain particles to a level function representing the interface.
+ */
+template <class RelaxationType = PressureRelaxation>
+class RelaxationComplexWithLevelSetCorrectionImplicit : public RelaxationComplexImplicit<RelaxationType>
 {
 public:
-    explicit CorrectionBasedOnLevelSet(SPHBody& sph_body);
-    virtual ~CorrectionBasedOnLevelSet() {};
-    void update(size_t index_i, Real dt = 0.0);
+    explicit RelaxationComplexWithLevelSetCorrectionImplicit(ComplexRelation& complex_relation, const std::string& shape_name);
+    virtual ~RelaxationComplexWithLevelSetCorrectionImplicit() {};
 
 protected:
-    StdLargeVec<Vecd>& pos_;
-    StdLargeVec<Real> kernel_correction_;
-    StdLargeVec<Vecd> kernel_gradient_correction_;
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
+    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
+};
+
+/**
+ * @class RelaxationStepComplexImplicit
+ * @brief carry out the particle relaxation evolution from first order consistency within the body
+ */
+template <class RelaxationType = PressureRelaxation>
+class RelaxationStepComplexImplicit : public BaseDynamics<void>
+{
+public:
+    explicit RelaxationStepComplexImplicit(ComplexRelation& complex_relation, const std::string& shape_name);
+    virtual ~RelaxationStepComplexImplicit() {};
+    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
+    virtual void exec(Real dt = 0.0) override;
+
+protected:
+    Real time_step_size_;
+    RealBody* real_body_;
+    ComplexRelation& complex_relation_;
+    NearShapeSurface near_shape_surface_;
+    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
+    InteractionSplit<RelaxationComplexWithLevelSetCorrectionImplicit<RelaxationType>> relaxation_evolution_complex_;
+    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
 /**
@@ -688,7 +497,7 @@ class UpdateParticleKineticEnergy : public LocalDynamics, public RelaxDataDelega
 public:
     UpdateParticleKineticEnergy(BaseInnerRelation& inner_relation);
     virtual ~UpdateParticleKineticEnergy() {};
-    void interaction(size_t index_i, Real dt);
+    void update(size_t index_i, Real dt);
 
 protected:
     StdLargeVec<Real>& mass_;
@@ -937,7 +746,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
  * @class ShellRelaxationStepInner
  * @brief carry out particle relaxation step of particles within the shell body
  */
-class ShellRelaxationStepInner : public RelaxationStepInner
+class ShellRelaxationStepInner : public RelaxationStepInner<PressureRelaxation>
 {
   public:
     explicit ShellRelaxationStepInner(BaseInnerRelation &inner_relation, bool level_set_correction = false);

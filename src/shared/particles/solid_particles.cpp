@@ -22,8 +22,6 @@ void SolidParticles::initializeOtherVariables()
                      { return n_[i]; });
     registerVariable(B_, "KernelCorrectionMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
-    registerVariable(B_with_level_set_, "CorrectionMatrixWithLevelSet", [&](size_t i) -> Matd
-                     { return Matd::Identity(); });
 }
 //=============================================================================================//
 ElasticSolidParticles::
