@@ -23,6 +23,7 @@ int main(int ac, char* av[])
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
+	//water_block.defineAdaptationRatios(1.4);
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -66,12 +67,12 @@ int main(int ac, char* av[])
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, y_p_theo_);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref);
 
 	//** For test *
 	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner,SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner);
 
-	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
+	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData, SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
 
 
 	/** TurbulentViscous cal. includes the molecular one and the eddy viscosity one */
@@ -141,7 +142,7 @@ int main(int ac, char* av[])
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 200.0;
-	Real output_interval = end_time / 4000.0; /**< Time stamps for output of body states. */
+	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time

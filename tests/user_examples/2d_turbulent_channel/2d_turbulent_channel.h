@@ -8,11 +8,17 @@
 #include "k-epsilon_turbulent_model_complex.hpp"
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
+//	Global parameters on the turbulent properties
+//----------------------------------------------------------------------
+Real y_p_theo = 0.05;                 /**< Theoretical distance from the first particle P to wall  */
+Real resolution_ref = 0.082609;			  /**< Initial reference particle spacing. */
+Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref;
+//Real offset_dist_ref = 0.0;
+//----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 120;						  /**< Reference length. */
-Real DH = 2;						  /**< Reference and the height of main channel. */
-Real resolution_ref = 0.05;			  /**< Initial reference particle spacing. */
+Real DH = 2 - 2.0 * offset_dist_ref;  /**< Reference and the height of main channel. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 //-------------------------------------------------------
@@ -23,7 +29,7 @@ Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
-int num_observer_points = int(DH/ resolution_ref);
+int num_observer_points = std::round(DH/ resolution_ref);
 Real observe_spacing = DH / num_observer_points;
 StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
@@ -35,8 +41,7 @@ Real U_f = 1.0;	   /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;
 Real Re = 40000.0;					/**< Reynolds number. */
 //Real Re = 100.0;
-Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
-Real y_p_theo_ = 0.05;  /**< Theoretical distance from the first particle P to wall  */
+Real mu_f = rho0_f * U_f * (DH + 2.0 * offset_dist_ref) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------

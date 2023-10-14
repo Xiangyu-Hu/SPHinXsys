@@ -95,12 +95,14 @@ namespace SPH
 
 			void update(size_t index_i, Real dt = 0.0);
 			void output_time_average_data();
+
 		protected:
 			PltEngine plt_engine_;
 
 			StdLargeVec<Vecd> & pos_;
 			StdLargeVec<Real>& turbu_mu_, & turbu_k_, & turbu_epsilon_;
 			std::vector<std::vector<Real>>  data_sto_;
+			//ConcurrentVec<ConcurrentVec<Real>> data_sto_;
 			StdLargeVec<int> num_in_cell_;
 			Real x_min ;
 			Real x_max ;

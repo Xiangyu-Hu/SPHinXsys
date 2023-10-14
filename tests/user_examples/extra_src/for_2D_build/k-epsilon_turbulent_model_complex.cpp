@@ -9,15 +9,15 @@ namespace SPH
 		//=================================================================================================//
 //=================================================================================================//
 		StandardWallFunctionCorrection::
-			StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real y_p_theo)
+			StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist)
 			: StandardWallFunctionCorrection(complex_relation.getInnerRelation(),
-				complex_relation.getContactRelation(), y_p_theo) {}
+				complex_relation.getContactRelation(), offset_dist) {}
 		//=================================================================================================//
 		StandardWallFunctionCorrection::
 			StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
-				BaseContactRelation& contact_relation, Real y_p_theo)
+				BaseContactRelation& contact_relation, Real offset_dist)
 			: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
-			y_p_theo_(y_p_theo),vel_(particles_->vel_),pos_(particles_->pos_),dimension_(Vecd(0).size()),
+			offset_dist_(offset_dist),vel_(particles_->vel_),pos_(particles_->pos_),dimension_(Vecd(0).size()),
 			rho_(particles_->rho_), mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()) ,
 			particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
 			cutoff_radius_(inner_relation.getSPHBody().sph_adaptation_->getKernel()->CutOffRadius()),
@@ -28,9 +28,6 @@ namespace SPH
 			velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 			k_production_(*particles_->getVariableByName<Real>("K_Production"))
 		{
-			//** Calculate the offset distance for wall function wall *
-			offset_dist_ = y_p_theo_ - 0.5 * particle_spacing_;
-
 			particles_->registerVariable(y_p_, "Y_P");
 			particles_->registerSortableVariable<Real>("Y_P");
 			particles_->addVariableToWrite<Real>("Y_P");

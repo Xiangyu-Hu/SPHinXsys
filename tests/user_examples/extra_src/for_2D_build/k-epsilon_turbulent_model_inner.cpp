@@ -78,13 +78,13 @@ namespace SPH
 			x_min = 109;
 			x_max = 111;
 			num_data = 4;
-
 			file_name_.push_back("vel_x_sto_");
 			file_name_.push_back("turbu_k_sto_");
 			file_name_.push_back("turbu_epsilon_sto_");
 			file_name_.push_back("turbu_mu_sto_");
 			num_in_cell_.resize(num_cell);
 			data_ta_sto_.resize(num_data);
+			
 			data_sto_.resize(num_cell); //Rows
 			for (size_t i = 0; i != num_cell; ++i)
 			{
@@ -105,7 +105,6 @@ namespace SPH
 				out_file << "\n";
 				out_file.close();
 			}
-			
 		}
 		//=================================================================================================//
 		void GetTimeAverageCrossSectionData::update(size_t index_i, Real dt)
@@ -123,12 +122,9 @@ namespace SPH
 						data_sto_[i][1] += turbu_k_[index_i];
 						data_sto_[i][2] += turbu_epsilon_[index_i];
 						data_sto_[i][3] += turbu_mu_[index_i];
-						
 					}
 				}
 			}
-			//** Add up the data *
-
 		}
 		void GetTimeAverageCrossSectionData::output_time_average_data()
 		{
