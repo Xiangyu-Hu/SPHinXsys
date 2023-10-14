@@ -21,9 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	relax_stepping.h
- * @brief 	This is the classes of particle relaxation in order to produce body fitted
- * 			initial particle distribution.
+ * @file relax_stepping.h
+ * @brief Particle relax is the process to produce body fitted
+ * particle distribution with zero-order consistency.
  * @author	Xiangyu Hu
  */
 
@@ -39,74 +39,90 @@ class LevelSetShape;
 
 namespace relax_dynamics
 {
-/**
- * @class GetTimeStepSizeSquare
- * @brief relaxation dynamics for particle initialization
- * computing the square of time step size
- */
-class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
-                              public RelaxDataDelegateSimple
-{
-  protected:
-    StdLargeVec<Vecd> &acc_;
-    Real h_ref_;
-
-  public:
-    explicit GetTimeStepSizeSquare(SPHBody &sph_body);
-    virtual ~GetTimeStepSizeSquare(){};
-
-    Real reduce(size_t index_i, Real dt = 0.0);
-    virtual Real outputResult(Real reduced_value);
-};
-
 template <typename... InteractionTypes>
-class ParticleRelaxation;
+class RelaxationResidue;
 
 template <class DataDelegationType>
-class ParticleRelaxation<Base, DataDelegationType>
+class RelaxationResidue<Base, DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit ParticleRelaxation(BaseRelationType &base_relation);
-    virtual ~ParticleRelaxation(){};
+    explicit RelaxationResidue(BaseRelationType &base_relation);
+    virtual ~RelaxationResidue(){};
 
   protected:
     SPHAdaptation *sph_adaptation_;
-    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Vecd> &residue_;
 };
 
 template <>
-class ParticleRelaxation<Inner<>>
-    : public ParticleRelaxation<Base, RelaxDataDelegateInner>
+class RelaxationResidue<Inner<>>
+    : public RelaxationResidue<Base, RelaxDataDelegateInner>
 {
   public:
-    explicit ParticleRelaxation(BaseInnerRelation &inner_relation)
-        : ParticleRelaxation<Base, RelaxDataDelegateInner>(inner_relation){};
-    virtual ~ParticleRelaxation(){};
-    void interaction(size_t index_i, Real dt_square);
+    explicit RelaxationResidue(BaseInnerRelation &inner_relation)
+        : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation){};
+    virtual ~RelaxationResidue(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
 template <>
-class ParticleRelaxation<Inner<LevelSetCorrection>> : public ParticleRelaxation<Inner<>>
+class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<Inner<>>
 {
   public:
-    explicit ParticleRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ParticleRelaxation(){};
-    void interaction(size_t index_i, Real dt_square);
+    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
+    virtual ~RelaxationResidue(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    StdLargeVec<Vecd> &pos_;
     LevelSetShape *level_set_shape_;
 };
 
 template <>
-class ParticleRelaxation<Contact<>>
-    : public ParticleRelaxation<Base, RelaxDataDelegateContact>
+class RelaxationResidue<Contact<>>
+    : public RelaxationResidue<Base, RelaxDataDelegateContact>
 {
   public:
-    explicit ParticleRelaxation(BaseContactRelation &contact_relation);
-    virtual ~ParticleRelaxation(){};
-    void interaction(size_t index_i, Real dt_square);
+    explicit RelaxationResidue(BaseContactRelation &contact_relation);
+    virtual ~RelaxationResidue(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class RelaxationScaling
+ * @brief Obtain the scale for a particle relaxation step
+ */
+class RelaxationScaling : public LocalDynamicsReduce<Real, ReduceMax>,
+                          public RelaxDataDelegateSimple
+{
+  public:
+    explicit RelaxationScaling(SPHBody &sph_body);
+    virtual ~RelaxationScaling(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value);
+
+  protected:
+    StdLargeVec<Vecd> &residue_;
+    Real h_ref_;
+};
+
+/**
+ * @class PositionRelaxation
+ * @brief update the particle position for a relaxation step
+ */
+class PositionRelaxation : public LocalDynamics,
+                           public RelaxDataDelegateSimple
+{
+  protected:
+    SPHAdaptation *sph_adaptation_;
+    StdLargeVec<Vecd> &pos_, &residue_;
+
+  public:
+    explicit PositionRelaxation(SPHBody &sph_body);
+    virtual ~PositionRelaxation(){};
+    void update(size_t index_i, Real scaling);
 };
 
 class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
@@ -144,6 +160,26 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     StdLargeVec<Vecd> &pos_;
     LevelSetShape *level_set_shape_;
     Real constrained_distance_;
+};
+
+template <class RelaxationResidueType>
+class RelaxationStep : public BaseDynamics<void>
+{
+  public:
+    template <typename FirstArg, typename... OtherArgs>
+    explicit RelaxationStep(FirstArg &first_arg, OtherArgs &&...other_args);
+    virtual ~RelaxationStep(){};
+    SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
+    virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    RealBody &real_body_;
+    StdVec<SPHRelation *> &body_relations_;
+    NearShapeSurface near_shape_surface_;
+    InteractionDynamics<RelaxationResidueType> relaxation_residue_;
+    ReduceDynamics<RelaxationScaling> relaxation_scaling_;
+    SimpleDynamics<PositionRelaxation> position_relaxation_;
+    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 } // namespace relax_dynamics
 } // namespace SPH

@@ -103,7 +103,7 @@ class SpatialTemporalFreeSurfaceIndicationComplex
   public:
     explicit SpatialTemporalFreeSurfaceIndicationComplex(ComplexRelation &complex_relation)
         : ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>(
-              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+              complex_relation.getBodyRelation(), complex_relation.getBodyRelation()){};
 };
 } // namespace SPH
 #endif // SURFACE_INDICATION_H

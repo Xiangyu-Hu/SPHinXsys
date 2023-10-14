@@ -167,7 +167,7 @@ class BaseDensitySummationComplex
   public:
     explicit BaseDensitySummationComplex(ComplexRelation &complex_relation)
         : ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>(
-              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+              complex_relation.getBodyRelation(), complex_relation.getBodyRelation()){};
 };
 using DensitySummationComplex = BaseDensitySummationComplex<Inner<>, Contact<>>;
 using DensitySummationComplexAdaptive = BaseDensitySummationComplex<InnerAdaptive, ContactAdaptive>;

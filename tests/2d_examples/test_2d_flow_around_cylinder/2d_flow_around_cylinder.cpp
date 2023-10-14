@@ -126,7 +126,7 @@ int main(int ac, char *av[])
     /** Impose transport velocity. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_complex);
     /** Computing vorticity in the flow. */
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getBodyRelation());
     /** free stream boundary condition. */
     BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
     SimpleDynamics<FreeStreamCondition> freestream_condition(free_stream_buffer);

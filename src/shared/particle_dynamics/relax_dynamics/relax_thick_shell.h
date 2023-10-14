@@ -21,16 +21,18 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	relax_bounding.h
- * @brief 	This is the classes of particle relaxation in order to produce body fitted
- * 			initial particle distribution.
+ * @file 	relax_thick_shell.h
+ * @brief This is the classes of particle relaxation in order to produce body fitted
+ * initial particle distribution for a thick shell.
  * @author	Xiangyu Hu
  */
 
-#ifndef RELAX_BOUNDING_H
-#define RELAX_BOUNDING_H
+#ifndef RELAX_THICK_SHELL_H
+#define RELAX_THICK_SHELL_H
 
 #include "base_relax_dynamics.h"
+#include "particle_smoothing.hpp"
+#include "relax_stepping.hpp"
 
 namespace SPH
 {
@@ -50,14 +52,14 @@ class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
                                 public RelaxDataDelegateSimple
 {
   public:
-    ShellMidSurfaceBounding(NearShapeSurface &body_part, Real thickness, Real level_set_refinement_ratio);
+    explicit ShellMidSurfaceBounding(NearShapeSurface &body_part);
     virtual ~ShellMidSurfaceBounding(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     StdLargeVec<Vecd> &pos_;
     Real constrained_distance_;
-    Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
+    Real particle_spacing_ref_;
     LevelSetShape *level_set_shape_;
 };
 
@@ -152,21 +154,25 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 };
 
 /**
- * @class ShellRelaxationStepInner
+ * @class ShellRelaxationStep
  * @brief carry out particle relaxation step of particles within the shell body
  */
-class ShellRelaxationStepInner : public RelaxationStepInner
+class ShellRelaxationStep : public BaseDynamics<void>
 {
   public:
-    explicit ShellRelaxationStepInner(BaseInnerRelation &inner_relation, Real thickness,
-                                      Real level_set_refinement_ratio, bool level_set_correction = false);
-    virtual ~ShellRelaxationStepInner(){};
-
-    SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
-    SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;
-
+    explicit ShellRelaxationStep(BaseInnerRelation &inner_relation);
+    virtual ~ShellRelaxationStep(){};
     virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    RealBody &real_body_;
+    BaseInnerRelation &inner_relation_;
+    NearShapeSurface near_shape_surface_;
+    InteractionDynamics<RelaxationResidue<Inner<>>> relaxation_residue_;
+    ReduceDynamics<RelaxationScaling> relaxation_scaling_;
+    SimpleDynamics<PositionRelaxation> position_relaxation_;
+    SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;
 };
 } // namespace relax_dynamics
 } // namespace SPH
-#endif // RELAX_BOUNDING_H
+#endif // RELAX_THICK_SHELL_H

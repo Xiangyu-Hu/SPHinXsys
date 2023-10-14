@@ -135,7 +135,7 @@ class DataDelegateInner : public BaseDataDelegateType
           inner_relation_(inner_relation),
           inner_configuration_(inner_relation.inner_configuration_){};
     virtual ~DataDelegateInner(){};
-    BaseInnerRelation &getInnerRelation() { return inner_relation_; };
+    BaseInnerRelation &getBodyRelation() { return inner_relation_; };
 
   protected:
     /** inner configuration of the designated body */
@@ -157,7 +157,7 @@ class DataDelegateContact : public BaseDataDelegateType
     explicit DataDelegateContact(BaseContactRelation &contact_relation);
     virtual ~DataDelegateContact(){};
     void addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation);
-    BaseContactRelation &getContactRelation() { return contact_relation_; };
+    BaseContactRelation &getBodyRelation() { return contact_relation_; };
 
   protected:
     SPHBodyVector contact_bodies_;

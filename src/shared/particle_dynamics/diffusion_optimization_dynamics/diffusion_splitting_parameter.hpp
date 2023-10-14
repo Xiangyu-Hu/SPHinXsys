@@ -126,8 +126,8 @@ namespace SPH
 	template <class ParticlesType, class ContactParticlesType, typename VariableType>
 	ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
 		ParameterSplittingByPDEWithBoundary(ComplexRelation& complex_relation, const std::string& variable_name):
-		ParameterSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getInnerRelation(), variable_name),
-		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation())
+		ParameterSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getBodyRelation(), variable_name),
+		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getBodyRelation())
 	{
 		boundary_heat_flux_.resize(this->contact_particles_.size());
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)

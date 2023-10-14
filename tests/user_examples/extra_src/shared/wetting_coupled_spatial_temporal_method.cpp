@@ -18,8 +18,8 @@ NonWettingSurfaceIndication::
 //=================================================================================================//
 NonWettingSurfaceIndication::
     NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold)
-    : NonWettingSurfaceIndication(complex_relation.getInnerRelation(),
-                                  complex_relation.getContactRelation(), threshold) {}
+    : NonWettingSurfaceIndication(complex_relation.getBodyRelation(),
+                                  complex_relation.getBodyRelation(), threshold) {}
 
 //=================================================================================================//
 } // namespace fluid_dynamics

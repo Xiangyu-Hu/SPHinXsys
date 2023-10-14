@@ -87,6 +87,7 @@ class SPHBody
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
     BaseParticles &getBaseParticles() { return *base_particles_; };
+    StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     size_t &LoopRange() { return base_particles_->total_real_particles_; };
     size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
     Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };

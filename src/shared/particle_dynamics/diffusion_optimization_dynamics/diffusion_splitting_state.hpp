@@ -76,8 +76,8 @@ namespace SPH
 	template <class ParticlesType, class ContactParticlesType, typename VariableType>
 	TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
 		TemperatureSplittingByPDEWithBoundary(ComplexRelation &complex_relation, const std::string &variable_name):
-		TemperatureSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getInnerRelation(), variable_name),
-		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation())
+		TemperatureSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getBodyRelation(), variable_name),
+		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getBodyRelation())
     {
 		boundary_heat_flux_.resize(this->contact_particles_.size());
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)

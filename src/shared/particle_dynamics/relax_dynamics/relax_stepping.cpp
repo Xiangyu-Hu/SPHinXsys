@@ -5,60 +5,68 @@ namespace SPH
 namespace relax_dynamics
 {
 //=================================================================================================//
-GetTimeStepSizeSquare::GetTimeStepSizeSquare(SPHBody &sph_body)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-      RelaxDataDelegateSimple(sph_body), acc_(particles_->acc_),
-      h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
-//=================================================================================================//
-Real GetTimeStepSizeSquare::reduce(size_t index_i, Real dt)
+void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 {
-    return acc_[index_i].norm();
-}
-//=================================================================================================//
-Real GetTimeStepSizeSquare::outputResult(Real reduced_value)
-{
-    return 0.0625 * h_ref_ / (reduced_value + TinyReal);
-}
-//=================================================================================================//
-void ParticleRelaxation<Inner<>>::interaction(size_t index_i, Real dt_square)
-{
-    Vecd acceleration = Vecd::Zero();
+    Vecd residue = Vecd::Zero();
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        residue -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
     }
-    pos_[index_i] += acceleration * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
+    residue_[index_i] = residue;
 };
 //=================================================================================================//
-ParticleRelaxation<Inner<LevelSetCorrection>>::
-    ParticleRelaxation(BaseInnerRelation &inner_relation)
-    : ParticleRelaxation<Inner<>>(inner_relation),
+RelaxationResidue<Inner<LevelSetCorrection>>::
+    RelaxationResidue(BaseInnerRelation &inner_relation)
+    : RelaxationResidue<Inner<>>(inner_relation), pos_(particles_->pos_),
       level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)) {}
 //=================================================================================================//
-void ParticleRelaxation<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt_square)
+void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
-    ParticleRelaxation<Inner<>>::interaction(index_i, dt);
-    Vecd acceleration = -2.0 * level_set_shape_->computeKernelGradientIntegral(
+    RelaxationResidue<Inner<>>::interaction(index_i, dt);
+    residue_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
                                    pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-    pos_[index_i] += acceleration * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 }
 //=================================================================================================//
-void ParticleRelaxation<Contact<>>::interaction(size_t index_i, Real dt_square)
+void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
 {
-    Vecd acceleration = Vecd::Zero();
+    Vecd residue = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            acceleration -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            residue -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
         }
     }
-
-    pos_[index_i] += acceleration * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
-};
-
+    residue_[index_i] += residue;
+}
+//=================================================================================================//
+RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
+    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+      RelaxDataDelegateSimple(sph_body),
+      residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")),
+      h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+//=================================================================================================//
+Real RelaxationScaling::reduce(size_t index_i, Real dt)
+{
+    return residue_[index_i].norm();
+}
+//=================================================================================================//
+Real RelaxationScaling::outputResult(Real reduced_value)
+{
+    return 0.0625 * h_ref_ / (reduced_value + TinyReal);
+}
+//=================================================================================================//
+PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
+    : LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
+      sph_adaptation_(sph_body.sph_adaptation_), pos_(particles_->pos_),
+      residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")) {}
+//=================================================================================================//
+void PositionRelaxation::update(size_t index_i, Real dt_square)
+{
+    pos_[index_i] += residue_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
+}
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape)

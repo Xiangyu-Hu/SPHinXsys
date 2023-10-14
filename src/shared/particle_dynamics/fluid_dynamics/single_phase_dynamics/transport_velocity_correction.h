@@ -111,8 +111,8 @@ class BaseTransportVelocityCorrectionComplex
   public:
     explicit BaseTransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
         : ComplexInteraction<TransportVelocityCorrection<Inner<>, ContactBoundary<>>, CommonControlTypes...>(
-              ConstructorArgs(complex_relation.getInnerRelation(), coefficient),
-              ConstructorArgs(complex_relation.getContactRelation(), coefficient)){};
+              ConstructorArgs(complex_relation.getBodyRelation(), coefficient),
+              ConstructorArgs(complex_relation.getBodyRelation(), coefficient)){};
 };
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =

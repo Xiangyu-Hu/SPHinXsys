@@ -93,8 +93,8 @@ class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public Gene
 {
   public:
     ComputeDensityErrorWithWall(ComplexRelation &complex_relation)
-        : ComputeDensityErrorInner(complex_relation.getInnerRelation()),
-          GeneralDataDelegateContactOnly(complex_relation.getContactRelation())
+        : ComputeDensityErrorInner(complex_relation.getBodyRelation()),
+          GeneralDataDelegateContactOnly(complex_relation.getBodyRelation())
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
@@ -201,7 +201,7 @@ class SplitWithMinimumDensityErrorWithWall : public SplitWithMinimumDensityError
 {
   public:
     SplitWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region, size_t body_buffer_width)
-        : SplitWithMinimumDensityErrorInner(complex_relation.getInnerRelation(), refinement_region, body_buffer_width),
+        : SplitWithMinimumDensityErrorInner(complex_relation.getBodyRelation(), refinement_region, body_buffer_width),
           compute_density_error(complex_relation){};
     virtual ~SplitWithMinimumDensityErrorWithWall(){};
 
@@ -309,7 +309,7 @@ class MergeWithMinimumDensityErrorWithWall : public MergeWithMinimumDensityError
 {
   public:
     MergeWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region)
-        : MergeWithMinimumDensityErrorInner(complex_relation.getInnerRelation(), refinement_region),
+        : MergeWithMinimumDensityErrorInner(complex_relation.getBodyRelation(), refinement_region),
           compute_density_error(complex_relation){};
     virtual ~MergeWithMinimumDensityErrorWithWall(){};
 

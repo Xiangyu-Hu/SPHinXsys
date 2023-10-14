@@ -130,7 +130,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_complex);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Computing vorticity in the flow. */
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getBodyRelation());
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));

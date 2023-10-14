@@ -35,6 +35,33 @@
 namespace SPH
 {
 /**
+ * @class MaximumNorm
+ * @brief  obtained the maximum norm of a variable
+ */
+template <typename DataType>
+class MaximumNorm : public LocalDynamicsReduce<Real, ReduceMax>,
+                    public GeneralDataDelegateSimple
+{
+  public:
+    MaximumNorm(SPHBody &sph_body, const std::string &variable_name)
+        : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+          GeneralDataDelegateSimple(sph_body),
+          variable_(*particles_->getVariableByName<DataType>(variable_name)){};
+    virtual ~MaximumNorm(){};
+    virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
+    Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
+
+  protected:
+    StdLargeVec<DataType> &variable_;
+
+    template <typename Datatype>
+    Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
+
+    template <>
+    Real getSquaredNorm<Real>(const Real &variable) { return variable * variable; };
+};
+
+/**
  * @class VelocityBoundCheck
  * @brief  check whether particle velocity within a given bound
  */

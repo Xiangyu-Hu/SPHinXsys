@@ -118,7 +118,7 @@ int main(int ac, char *av[])
 
         ReloadParticleIO write_particle_reload_files(io_environment, soil_block);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(soil_block_complex.getInnerRelation());
+        relax_dynamics::RelaxationStepInner relaxation_step_inner(soil_block_complex.getBodyRelation());
         /**
          * @brief 	Particle relaxation starts here.
          */
@@ -153,7 +153,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.1);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_complex);
-    InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_complex.getInnerRelation());
+    InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_complex.getBodyRelation());
     Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_complex);
     Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_complex);
     //----------------------------------------------------------------------

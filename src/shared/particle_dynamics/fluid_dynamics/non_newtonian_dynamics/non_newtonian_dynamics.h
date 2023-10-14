@@ -81,7 +81,7 @@ class Oldroyd_BIntegration1stHalfWithWall
   public:
     explicit Oldroyd_BIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
         : ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
 };
 
 template <typename... InteractionTypes>
@@ -128,7 +128,7 @@ class Oldroyd_BIntegration2ndHalfWithWall
   public:
     explicit Oldroyd_BIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
         : ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
 };
 
 } // namespace fluid_dynamics

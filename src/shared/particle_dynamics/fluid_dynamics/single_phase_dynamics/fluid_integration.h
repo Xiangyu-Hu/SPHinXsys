@@ -186,7 +186,7 @@ class Integration1stHalfWithWall
   public:
     explicit Integration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
         : ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, KernelCorrectionType>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
 };
 using Integration1stHalfWithWallNoRiemann = Integration1stHalfWithWall<NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, NoKernelCorrection>;
@@ -199,7 +199,7 @@ class Integration2ndHalfWithWall
   public:
     explicit Integration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
         : ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
 };
 
 using Integration2ndHalfWithWallNoRiemann = Integration2ndHalfWithWall<NoRiemannSolver>;

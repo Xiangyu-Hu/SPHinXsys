@@ -89,8 +89,8 @@ class BaseKernelCorrectionMatrixComplex
   public:
     explicit BaseKernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0))
         : ComplexInteraction<KernelCorrectionMatrix<InnerInteractionType, ContactInteractionType>>(
-              ConstructorArgs<BaseInnerRelation, Real>(complex_relation.getInnerRelation(), alpha),
-              complex_relation.getContactRelation()){};
+              ConstructorArgs<BaseInnerRelation, Real>(complex_relation.getBodyRelation(), alpha),
+              complex_relation.getBodyRelation()){};
 };
 using KernelCorrectionMatrixComplex = BaseKernelCorrectionMatrixComplex<Inner<>, Contact<>>;
 
@@ -142,7 +142,7 @@ class BaseKernelGradientCorrectionComplex
   public:
     explicit BaseKernelGradientCorrectionComplex(ComplexRelation &complex_relation)
         : ComplexInteraction<KernelGradientCorrection<InnerInteractionType, ContactInteractionType>>(
-              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+              complex_relation.getBodyRelation(), complex_relation.getBodyRelation()){};
 };
 using KernelGradientCorrectionComplex = BaseKernelGradientCorrectionComplex<Inner<>, Contact<>>;
 } // namespace SPH

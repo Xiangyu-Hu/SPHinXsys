@@ -93,7 +93,7 @@ class ViscousAccelerationWithWall
   public:
     explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
         : ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
 };
 
 template <>
