@@ -20,7 +20,7 @@ Real GetTimeStepSizeSquare::outputResult(Real reduced_value)
     return 0.0625 * h_ref_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
-void ParticleRelaxation<Inner<>>::interaction(size_t index_i, Real dt)
+void ParticleRelaxation<Inner<>>::interaction(size_t index_i, Real dt_square)
 {
     Vecd acceleration = Vecd::Zero();
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -36,7 +36,7 @@ ParticleRelaxation<Inner<LevelSetCorrection>>::
     : ParticleRelaxation<Inner<>>(inner_relation),
       level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)) {}
 //=================================================================================================//
-void ParticleRelaxation<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
+void ParticleRelaxation<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt_square)
 {
     ParticleRelaxation<Inner<>>::interaction(index_i, dt);
     Vecd acceleration = -2.0 * level_set_shape_->computeKernelGradientIntegral(
@@ -44,10 +44,9 @@ void ParticleRelaxation<Inner<LevelSetCorrection>>::interaction(size_t index_i, 
     pos_[index_i] += acceleration * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 }
 //=================================================================================================//
-void interaction(size_t index_i, Real dt)
+void ParticleRelaxation<Contact<>>::interaction(size_t index_i, Real dt_square)
 {
     Vecd acceleration = Vecd::Zero();
-    /** Contact interaction. */
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -57,7 +56,7 @@ void interaction(size_t index_i, Real dt)
         }
     }
 
-    acc_[index_i] = acceleration;
+    pos_[index_i] += acceleration * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 };
 
 //=================================================================================================//
@@ -77,6 +76,25 @@ void UpdateSmoothingLengthRatioByShape::update(size_t index_i, Real dt_square)
     Real local_spacing = particle_adaptation_->getLocalSpacing(target_shape_, pos_[index_i]);
     h_ratio_[index_i] = reference_spacing_ / local_spacing;
     Vol_[index_i] = pow(local_spacing, Dimensions);
+}
+//=================================================================================================//
+ShapeSurfaceBounding::ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
+    : BaseLocalDynamics<BodyPartByCell>(near_shape_surface),
+      RelaxDataDelegateSimple(sph_body_), pos_(particles_->pos_),
+      constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+{
+    level_set_shape_ = &near_shape_surface.level_set_shape_;
+}
+//=================================================================================================//
+void ShapeSurfaceBounding::update(size_t index_i, Real dt)
+{
+    Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
+
+    if (phi > -constrained_distance_)
+    {
+        Vecd unit_normal = level_set_shape_->findNormalDirection(pos_[index_i]);
+        pos_[index_i] -= (phi + constrained_distance_) * unit_normal;
+    }
 }
 //=================================================================================================//
 } // namespace relax_dynamics

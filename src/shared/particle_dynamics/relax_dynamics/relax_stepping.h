@@ -24,7 +24,7 @@
  * @file 	relax_stepping.h
  * @brief 	This is the classes of particle relaxation in order to produce body fitted
  * 			initial particle distribution.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Xiangyu Hu
  */
 
 #ifndef RELAX_STEPPING_H
@@ -84,7 +84,7 @@ class ParticleRelaxation<Inner<>>
     explicit ParticleRelaxation(BaseInnerRelation &inner_relation)
         : ParticleRelaxation<Base, RelaxDataDelegateInner>(inner_relation){};
     virtual ~ParticleRelaxation(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt_square);
 };
 
 template <>
@@ -93,6 +93,7 @@ class ParticleRelaxation<Inner<LevelSetCorrection>> : public ParticleRelaxation<
   public:
     explicit ParticleRelaxation(BaseInnerRelation &inner_relation);
     virtual ~ParticleRelaxation(){};
+    void interaction(size_t index_i, Real dt_square);
 
   protected:
     LevelSetShape *level_set_shape_;
@@ -105,7 +106,7 @@ class ParticleRelaxation<Contact<>>
   public:
     explicit ParticleRelaxation(BaseContactRelation &contact_relation);
     virtual ~ParticleRelaxation(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt_square);
 };
 
 class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
@@ -122,7 +123,6 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
     explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
     virtual ~UpdateSmoothingLengthRatioByShape(){};
-
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -144,238 +144,6 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     StdLargeVec<Vecd> &pos_;
     LevelSetShape *level_set_shape_;
     Real constrained_distance_;
-};
-
-/**
- * @class RelaxationStepInner
- * @brief carry out particle relaxation step of particles within the body
- */
-class RelaxationStepInner : public BaseDynamics<void>
-{
-  public:
-    explicit RelaxationStepInner(BaseInnerRelation &inner_relation,
-                                 bool level_set_correction = false);
-    virtual ~RelaxationStepInner(){};
-    SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
-    virtual void exec(Real dt = 0.0) override;
-
-  protected:
-    RealBody *real_body_;
-    BaseInnerRelation &inner_relation_;
-    NearShapeSurface near_shape_surface_;
-    UniquePtr<BaseDynamics<void>> relaxation_acceleration_inner_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
-    SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-};
-
-/**
- * @class RelaxationAccelerationComplexWithLevelSetCorrection
- * @brief compute relaxation acceleration while consider the present of contact bodies
- * with considering contact interaction
- * this is usually used for fluid like bodies
- * we constrain particles with a level-set correction function when the fluid boundary is not contacted with solid.
- */
-class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAccelerationComplex
-{
-  public:
-    RelaxationAccelerationComplexWithLevelSetCorrection(
-        ComplexRelation &complex_relation, const std::string &shape_name);
-    virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        RelaxationAccelerationComplex::interaction(index_i, dt);
-
-        acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                                   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-    };
-
-  protected:
-    LevelSetShape *level_set_shape_;
-    SPHAdaptation *sph_adaptation_;
-};
-
-/**
- * @class RelaxationStepComplex
- * @brief carry out particle relaxation step of particles within multi bodies
- */
-class RelaxationStepComplex : public BaseDynamics<void>
-{
-  public:
-    explicit RelaxationStepComplex(ComplexRelation &complex_relation,
-                                   const std::string &shape_name, bool level_set_correction = false);
-    virtual ~RelaxationStepComplex(){};
-    SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
-    virtual void exec(Real dt = 0.0) override;
-
-  protected:
-    RealBody *real_body_;
-    ComplexRelation &complex_relation_;
-    NearShapeSurface near_shape_surface_;
-    UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
-    SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-};
-
-/**
- * @class ShellMidSurfaceBounding
- * @brief constrain particles by constraining particles to mid-surface.
- * Note that level_set_refinement_ratio should be smaller than particle_spacing_ref_ / (0.05 * thickness_)
- * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
- * there will be no level set field.
- */
-class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                                public RelaxDataDelegateInner
-{
-  public:
-    ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
-                            Real thickness, Real level_set_refinement_ratio);
-    virtual ~ShellMidSurfaceBounding(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    Real constrained_distance_;
-    Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
-    LevelSetShape *level_set_shape_;
-};
-
-/**
- * @class ShellNormalDirectionPrediction
- * @brief predict the normal direction of shell particles.
- */
-class ShellNormalDirectionPrediction : public BaseDynamics<void>
-{
-    const Real convergence_criterion_;
-    const Real consistency_criterion_;
-
-    void predictNormalDirection();
-    void correctNormalDirection();
-
-  public:
-    explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
-                                            Real thickness, Real consistency_criterion = cos(Pi / 20.0));
-    virtual ~ShellNormalDirectionPrediction(){};
-    virtual void exec(Real dt = 0.0) override;
-
-  protected:
-    class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
-    {
-        Real thickness_;
-        LevelSetShape *level_set_shape_;
-        StdLargeVec<Vecd> &pos_, &n_, n_temp_;
-
-      public:
-        NormalPrediction(SPHBody &sph_body, Real thickness);
-        virtual ~NormalPrediction(){};
-        void update(size_t index_i, Real dt = 0.0);
-    };
-
-    class PredictionConvergenceCheck : public LocalDynamicsReduce<bool, ReduceAND>,
-                                       public RelaxDataDelegateSimple
-    {
-      protected:
-        const Real convergence_criterion_;
-        StdLargeVec<Vecd> &n_, &n_temp_;
-
-      public:
-        PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
-        virtual ~PredictionConvergenceCheck(){};
-
-        bool reduce(size_t index_i, Real dt = 0.0);
-    };
-
-    class ConsistencyCorrection : public LocalDynamics, public RelaxDataDelegateInner
-    {
-      public:
-        explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
-        virtual ~ConsistencyCorrection(){};
-
-        inline void interaction(size_t index_i, Real dt = 0.0)
-        {
-            mutex_modify_neighbor_.lock();
-            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                if (updated_indicator_[index_i] == 1)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    if (updated_indicator_[index_j] == 0)
-                    {
-                        updated_indicator_[index_j] = 1;
-                        if (n_[index_i].dot(n_[index_j]) < consistency_criterion_)
-                        {
-                            if (n_[index_i].dot(-n_[index_j]) < consistency_criterion_)
-                            {
-                                n_[index_j] = n_[index_i];
-                                updated_indicator_[index_j] = 2;
-                            }
-                            else
-                            {
-                                n_[index_j] = -n_[index_j];
-                                updated_indicator_[index_j] = 1;
-                            }
-                        }
-                    }
-                }
-            }
-            mutex_modify_neighbor_.unlock();
-        };
-
-      protected:
-        std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
-        const Real consistency_criterion_;
-        StdLargeVec<int> updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
-        StdLargeVec<Vecd> &n_;
-    };
-
-    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<bool, ReduceAND>,
-                                    public RelaxDataDelegateSimple
-    {
-      protected:
-        StdLargeVec<int> &updated_indicator_;
-
-      public:
-        explicit ConsistencyUpdatedCheck(SPHBody &sph_body);
-        virtual ~ConsistencyUpdatedCheck(){};
-
-        bool reduce(size_t index_i, Real dt = 0.0);
-    };
-
-    class SmoothingNormal : public ParticleSmoothing<Vecd>
-    {
-      public:
-        explicit SmoothingNormal(BaseInnerRelation &inner_relation);
-        virtual ~SmoothingNormal(){};
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-    };
-
-    SimpleDynamics<NormalPrediction> normal_prediction_;
-    ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
-    InteractionDynamics<ConsistencyCorrection, execution::SequencedPolicy> consistency_correction_;
-    ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
-    InteractionWithUpdate<SmoothingNormal> smoothing_normal_;
-};
-
-/**
- * @class ShellRelaxationStepInner
- * @brief carry out particle relaxation step of particles within the shell body
- */
-class ShellRelaxationStepInner : public RelaxationStepInner
-{
-  public:
-    explicit ShellRelaxationStepInner(BaseInnerRelation &inner_relation, Real thickness,
-                                      Real level_set_refinement_ratio, bool level_set_correction = false);
-    virtual ~ShellRelaxationStepInner(){};
-
-    SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
-    SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;
-
-    virtual void exec(Real dt = 0.0) override;
 };
 } // namespace relax_dynamics
 } // namespace SPH
