@@ -369,6 +369,9 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 }
 
     void BaseParticles::registerDeviceMemory() {
+        unsorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
+        sorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
+        sequence_device_ = allocateDeviceData<size_t>(total_real_particles_);
         registerDeviceVariable<DeviceVecd>("Position", total_real_particles_, pos_.data());
         registerDeviceVariable<DeviceVecd>("Velocity", total_real_particles_, vel_.data());
         registerDeviceVariable<DeviceVecd>("Acceleration", total_real_particles_, acc_.data());
@@ -379,6 +382,9 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
     }
 
     void BaseParticles::copyToDeviceMemory() {
+        copyDataToDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_);
+        copyDataToDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_);
+        copyDataToDevice(sequence_.data(), sequence_device_, total_real_particles_);
         copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_);
         copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_);
         copyDataToDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_);
@@ -389,6 +395,9 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
     }
 
     void BaseParticles::copyFromDeviceMemory() {
+        copyDataFromDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_);
+        copyDataFromDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_);
+        copyDataFromDevice(sequence_.data(), sequence_device_, total_real_particles_);
         copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_);
         copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_);
         copyDataFromDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_);

@@ -34,6 +34,7 @@ Neighborhood& Neighborhood::operator=(const NeighborhoodDevice &device) {
 }
 
 NeighborhoodDevice::NeighborhoodDevice() : current_size_(allocateDeviceData<size_t>(1)),
+                                           allocated_size_(28),
                                            j_(allocateDeviceData<size_t>(allocated_size_)),
                                            W_ij_(allocateDeviceData<DeviceReal>(allocated_size_)),
                                            dW_ijV_j_(allocateDeviceData<DeviceReal>(allocated_size_)),
@@ -280,5 +281,17 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
     }
 }
 //=================================================================================================//
+void NeighborBuilderInnerKernel::operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i, const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
+    {
+        DeviceVecd displacement = pos_i - pos_j;
+        DeviceReal distance_metric = sycl::dot(displacement, displacement);
+        if (distance_metric < smoothing_kernel.CutOffRadiusSqr() && index_i != index_j)
+        {
+            auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,
+                                      sycl::memory_scope::device,
+                                      sycl::access::address_space::global_space>(*neighborhood.current_size_);
+            initializeNeighbor(neighborhood, current_size_atomic++, sycl::sqrt(distance_metric), displacement, index_j, Vol_j);
+        }
+    }
 } // namespace SPH
 //=================================================================================================//

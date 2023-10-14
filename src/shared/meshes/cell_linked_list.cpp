@@ -20,14 +20,15 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
         split_cell_lists[i].clear();
 }
 
-CellLinkedListKernel::CellLinkedListKernel(BaseParticles& particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
+CellLinkedListKernel::CellLinkedListKernel(BaseParticles &particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                                            const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells)
     : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
       list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), mesh_lower_bound_(meshLowerBound), grid_spacing_(gridSpacing),
-      all_grid_points_(allGridPoints),  all_cells_(allCells), index_list_(allocateSharedData<size_t>(total_real_particles_)),
-      index_head_list_(allocateSharedData<size_t>(allCells[0] * allCells[1])){}
+      all_grid_points_(allGridPoints), all_cells_(allCells), index_list_(allocateDeviceData<size_t>(total_real_particles_)),
+      index_head_list_(allocateDeviceData<size_t>(allCells[0] * allCells[1])) {}
 
-void CellLinkedListKernel::clearCellLists() {
+void CellLinkedListKernel::clearCellLists()
+{
     // Only clear head list, since index list does not depend on its previous values
     copyDataToDevice(static_cast<size_t>(0), index_head_list_, all_cells_[0] * all_cells_[1]);
 }
@@ -35,12 +36,14 @@ void CellLinkedListKernel::clearCellLists() {
 void CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
 {
     clearCellLists();
-    auto* pos_n = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
+    auto *pos_n = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
     size_t total_real_particles = base_particles.total_real_particles_;
     executionQueue.getQueue().submit(
-                  [&, mesh_lower_bound=mesh_lower_bound_, grid_spacing=grid_spacing_, all_grid_points=all_grid_points_,
-                   all_cells=all_cells_, index_list=index_list_, index_head_list=index_head_list_](sycl::handler& cgh) {
-                        cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item) {
+                                 [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_, all_grid_points = all_grid_points_,
+                                  all_cells = all_cells_, index_list = index_list_, index_head_list = index_head_list_](sycl::handler &cgh)
+                                 {
+                                     cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item)
+                                                      {
                                  const size_t index_i = item.get_global_id();
                                  if(index_i < total_real_particles)
                                  {
@@ -61,11 +64,31 @@ void CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
                                       * index_head_list gets a new index one at a time.
                                       */
                                      index_list[index_i] = atomic_head_list.exchange(index_i + 1);
-                                 }
-                        });
-                  }).wait();
+                                 } });
+                                 })
+        .wait();
 }
-
+//=================================================================================================//
+size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
+{
+    auto *pos = baseParticles.getDeviceVariableByName<DeviceVecd>("Position");
+    auto *sequence = baseParticles.sequence_device_;
+    size_t total_real_particles = baseParticles.total_real_particles_;
+    executionQueue.getQueue().submit(
+                                 [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_,
+                                  all_grid_points = all_grid_points_](sycl::handler &cgh)
+                                 {
+                                     cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item)
+                                                      {
+                                                          size_t i = item.get_global_id();
+                                                          if(i < total_real_particles)
+                                                              sequence[i] = BaseMesh::transferMeshIndexToMortonOrder(
+                                                                  CellIndexFromPosition(pos[i], mesh_lower_bound,
+                                                                                        grid_spacing, all_grid_points)); });
+                                 })
+        .wait_and_throw();
+    return sequence;
+}
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                RealBody &real_body, SPHAdaptation &sph_adaptation)
@@ -102,16 +125,21 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
+size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-//    return computingSequence(base_particles, execution::par);
+    //    return computingSequence(base_particles, execution::par);
 
     StdLargeVec<Vecd> &pos = base_particles.pos_;
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
     particle_for(execution::ParallelPolicy(), total_real_particles, [&](size_t i)
-                 { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
-    return sequence;
+                 {
+                     sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i]));
+                 });
+    auto p = pos[19999];
+    auto meshIndex = CellIndexFromPosition(p);
+    transferMeshIndexToMortonOrder(meshIndex);
+    return sequence.data();
 }
 //=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
@@ -179,7 +207,7 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
+size_t *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
 {
     StdLargeVec<Vecd> &pos = base_particles.pos_;
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
@@ -191,7 +219,7 @@ StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &
 						 sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
 						 mesh_levels_[level]->CellIndexFromPosition(pos[i])); });
 
-    return sequence;
+    return sequence.data();
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::

@@ -252,13 +252,7 @@ class RealBody : public SPHBody
     void updateCellLinkedListWithParticleSort(size_t particle_sort_period, ExecutionPolicy execution_policy = execution::par)
     {
         if (iteration_count_ % particle_sort_period == 0)
-        {
-            if constexpr (std::is_same_v<ExecutionPolicy, execution::ParallelSYCLDevicePolicy>)
-                base_particles_->copyFromDeviceMemory();
-            base_particles_->sortParticles(getCellLinkedList(), execution_policy);
-            if constexpr (std::is_same_v<ExecutionPolicy, execution::ParallelSYCLDevicePolicy>)
-                base_particles_->copyToDeviceMemory();
-        }
+                base_particles_->sortParticles(getCellLinkedList(execution_policy), execution_policy);
 
         iteration_count_++;
         updateCellLinkedList(execution_policy);

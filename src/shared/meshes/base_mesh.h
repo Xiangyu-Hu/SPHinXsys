@@ -93,9 +93,10 @@ class BaseMesh
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t MortonCode(const size_t &i);
+    SYCL_EXTERNAL static size_t MortonCode(const size_t &i);
     /** Converts mesh index into a Morton order. */
-    size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
+    static size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
+    SYCL_EXTERNAL static size_t transferMeshIndexToMortonOrder(const DeviceArrayi &mesh_index);
 };
 
 /**

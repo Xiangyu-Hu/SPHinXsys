@@ -100,6 +100,7 @@ using DeviceArray3i = sycl::int3;
 
 template<typename Type, class Enable = void>
 struct DataTypeEquivalence {
+    static constexpr bool exists = false;
     static_assert("Type non recognized as host or device type.");
 };
 
@@ -108,30 +109,35 @@ using enable_if_is_either_t = std::enable_if_t<std::disjunction_v<std::is_same<C
 
 template<class TypeReal>
 struct DataTypeEquivalence<TypeReal, enable_if_is_either_t<TypeReal, Real, DeviceReal>> {
+    static constexpr bool exists = true;
     using host_t = Real;
     using device_t = DeviceReal;
 };
 
 template<class TypeVec2d>
 struct DataTypeEquivalence<TypeVec2d, enable_if_is_either_t<TypeVec2d, Vec2d, DeviceVec2d>> {
+    static constexpr bool exists = true;
     using host_t = Vec2d;
     using device_t = DeviceVec2d;
 };
 
 template<class TypeVec3d>
 struct DataTypeEquivalence<TypeVec3d, enable_if_is_either_t<TypeVec3d, Vec3d, DeviceVec3d>> {
+    static constexpr bool exists = true;
     using host_t = Vec3d;
     using device_t = DeviceVec3d;
 };
 
 template<class TypeArray2i>
 struct DataTypeEquivalence<TypeArray2i, enable_if_is_either_t<TypeArray2i, Array2i , DeviceArray2i >> {
+    static constexpr bool exists = true;
     using host_t = Array2i;
     using device_t = DeviceArray2i;
 };
 
 template<class TypeArray3i>
 struct DataTypeEquivalence<TypeArray3i, enable_if_is_either_t<TypeArray3i, Array3i , DeviceArray3i>> {
+    static constexpr bool exists = true;
     using host_t = Array3i;
     using device_t = DeviceArray3i;
 };

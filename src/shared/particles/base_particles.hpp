@@ -204,13 +204,22 @@ void BaseParticles::registerSortableVariable(const std::string &variable_name)
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
+
+    // add device variable if already registered
+    if constexpr(DataTypeEquivalence<DataType>::exists)
+    {
+        using DeviceDataType = typename DataTypeEquivalence<DataType>::device_t;
+        auto *device_variable = findVariableByName<DeviceDataType>(all_device_variables_, variable_name);
+        if(device_variable && !findVariableByName<DeviceDataType>(sortable_device_variables_, variable_name))
+                std::get<DataTypeIndex<DeviceDataType>::value>(sortable_device_variables_).push_back(device_variable);
+    }
 }
 //=================================================================================================//
 template <typename SequenceMethod, class ExecutionPolicy>
 void BaseParticles::sortParticles(SequenceMethod &sequence_method, ExecutionPolicy execution_policy)
 {
-    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this/*, execution_policy*/);
-    particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
+    size_t* sequence = sequence_method.computingSequence(*this);
+    particle_sorting_.sortingParticleData(sequence, total_real_particles_, execution_policy);
 }
 //=================================================================================================//
 template <typename DataType>

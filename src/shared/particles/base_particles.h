@@ -93,7 +93,11 @@ class BaseParticles
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles(){};
+    virtual ~BaseParticles(){
+        freeDeviceData(unsorted_id_device_);
+        freeDeviceData(sorted_id_device_);
+        freeDeviceData(sequence_device_);
+    };
 
     StdLargeVec<Vecd> pos_;       /**< Position */
     StdLargeVec<Vecd> vel_;       /**< Velocity */
@@ -184,6 +188,10 @@ class BaseParticles
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
     ParticleSorting particle_sorting_;
+    size_t* unsorted_id_device_;      /**< copy of unsorted ids stored inside device. */
+    size_t* sorted_id_device_;        /**< copy of sorted ids stored inside device. */
+    size_t* sequence_device_;         /**< the sequence referred for sorting within device execution. */
+    DeviceVariables sortable_device_variables_;
 
     template <typename DataType>
     void registerSortableVariable(const std::string &variable_name);

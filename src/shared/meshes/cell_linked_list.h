@@ -75,7 +75,7 @@ class BaseCellLinkedList : public BaseMeshField
     /** find the nearest list data entry */
     virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
     /** computing the sequence which indicate the order of sorted particle data */
-    virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) = 0;
+    virtual size_t* computingSequence(BaseParticles &base_particles) = 0;
     /** Tag body part by cell, call by body part */
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
@@ -95,13 +95,15 @@ class CellLinkedListKernel {
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 
+    size_t* computingSequence(BaseParticles &baseParticles);
+
     static inline DeviceArrayi CellIndexFromPosition(const DeviceVecd &position, const DeviceVecd& mesh_lower_bound,
                                                      const DeviceReal &grid_spacing, const DeviceArrayi &all_grid_points)
     {
         return sycl::min(
             sycl::max(
                 sycl::floor((position - mesh_lower_bound) / grid_spacing)
-                    .convert<int>(), DeviceArrayi{0}),
+                    .convert<int, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
             all_grid_points - DeviceArrayi{2});
     }
 
@@ -154,17 +156,7 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh,
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
-    virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
-    template<class ExecutionPolicy>
-    StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles, ExecutionPolicy)
-    {
-        /*StdLargeVec<Vecd> &pos = base_particles.pos_;
-        StdLargeVec<size_t> &sequence = base_particles.sequence_;
-        size_t total_real_particles = base_particles.total_real_particles_;
-        particle_for(execution_policy, total_real_particles, [&](size_t i, auto&& kernel)
-            { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); }, ExecutionSelector<BaseMesh, ExecutionPolicy>(this));
-        return sequence;*/
-    }
+    virtual size_t* computingSequence(BaseParticles &base_particles) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
     virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
@@ -199,7 +191,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };
-    virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
+    virtual size_t* computingSequence(BaseParticles &base_particles) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };

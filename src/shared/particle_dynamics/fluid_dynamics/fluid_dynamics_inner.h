@@ -393,7 +393,9 @@ class BaseIntegrationKernel {
         pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         acc_(particles->getDeviceVariableByName<DeviceVecd>("Acceleration")),
-        acc_prior_(particles->getDeviceVariableByName<DeviceVecd>("AccelerationPrior")) {}
+        acc_prior_(particles->getDeviceVariableByName<DeviceVecd>("AccelerationPrior")) {
+        particles->registerSortableVariable<Real>("Pressure");
+    }
         
   protected:
     FluidT fluid_;

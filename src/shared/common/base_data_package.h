@@ -141,6 +141,40 @@ struct DataAssembleOperation
         integer_operation(std::forward<OperationArgs>(operation_args)...);
     }
 };
+
+template <template <typename VariableType> typename OperationType>
+struct DeviceDataAssembleOperation
+{
+    template <class VariablesAssemble>
+    explicit DeviceDataAssembleOperation(VariablesAssemble &&assemble)
+        : scalar_operation(std::forward<VariablesAssemble>(assemble)),
+          vector2d_operation(std::forward<VariablesAssemble>(assemble)),
+          vector3d_operation(std::forward<VariablesAssemble>(assemble)) {}
+
+    DeviceDataAssembleOperation() = default;
+
+    template <typename... OperationArgs>
+    void init(OperationArgs &&...operation_args)
+    {
+        scalar_operation.init(std::forward<OperationArgs>(operation_args)...);
+        vector2d_operation.init(std::forward<OperationArgs>(operation_args)...);
+        vector3d_operation.init(std::forward<OperationArgs>(operation_args)...);
+    }
+
+    template <typename... OperationArgs>
+    std::vector<sycl::event> operator()(OperationArgs &&...operation_args) const
+    {
+        return {
+            scalar_operation(std::forward<OperationArgs>(operation_args)...),
+            vector2d_operation(std::forward<OperationArgs>(operation_args)...),
+            vector3d_operation(std::forward<OperationArgs>(operation_args)...)};
+    }
+
+  private:
+    OperationType<DeviceReal> scalar_operation;
+    OperationType<DeviceVec2d> vector2d_operation;
+    OperationType<DeviceVec3d> vector3d_operation;
+};
 } // namespace SPH
 
 #endif // BASE_DATA_PACKAGE_H
