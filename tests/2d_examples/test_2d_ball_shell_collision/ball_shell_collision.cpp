@@ -107,13 +107,12 @@ int main(int ac, char *av[])
         //	Define the methods for particle relaxation for ball.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        relax_dynamics::RelaxationStepInner ball_relaxation_step_inner(ball_inner);
+        relax_dynamics::RelaxationStepInner ball_relaxation_step(ball_inner);
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for wall boundary.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> wall_boundary_random_particles(wall_boundary);
-        relax_dynamics::ShellRelaxationStepInner
-            relaxation_step_wall_boundary_inner(wall_boundary_inner, thickness, level_set_refinement_ratio);
+        relax_dynamics::ShellRelaxationStep wall_boundary_relaxation_step(wall_boundary_inner);
         relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(wall_boundary_inner, thickness, cos(Pi / 3.75));
         wall_boundary.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
@@ -126,11 +125,10 @@ int main(int ac, char *av[])
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
         ball_random_particles.exec(0.25);
+        ball_relaxation_step.SurfaceBounding().exec();
         wall_boundary_random_particles.exec(0.25);
-
-        relaxation_step_wall_boundary_inner.mid_surface_bounding_.exec();
+        wall_boundary_relaxation_step.MidSurfaceBounding().exec();
         write_relaxed_particles.writeToFile(0);
-        wall_boundary.updateCellLinkedList();
         write_mesh_cell_linked_list.writeToFile(0);
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
@@ -139,9 +137,9 @@ int main(int ac, char *av[])
         int relax_step = 1000;
         while (ite < relax_step)
         {
-            ball_relaxation_step_inner.exec();
+            ball_relaxation_step.exec();
             for (int k = 0; k < 2; ++k)
-                relaxation_step_wall_boundary_inner.exec();
+                wall_boundary_relaxation_step.exec();
             ite += 1;
             if (ite % 100 == 0)
             {
