@@ -31,6 +31,7 @@
 #define RELAX_STEPPING_H
 
 #include "base_relax_dynamics.h"
+#include "general_constraint.h"
 
 namespace SPH
 {
@@ -142,26 +143,6 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
     void update(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class ShapeSurfaceBounding
- * @brief constrain surface particles by
- * map constrained particles to geometry face and
- * r = r + phi * norm (vector distance to face)
- */
-class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                             public RelaxDataDelegateSimple
-{
-  public:
-    ShapeSurfaceBounding(NearShapeSurface &body_part);
-    virtual ~ShapeSurfaceBounding(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    LevelSetShape *level_set_shape_;
-    Real constrained_distance_;
-};
-
 template <class RelaxationResidueType>
 class RelaxationStep : public BaseDynamics<void>
 {
@@ -181,6 +162,8 @@ class RelaxationStep : public BaseDynamics<void>
     SimpleDynamics<PositionRelaxation> position_relaxation_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
+
+using RelaxationStepLevelSetCorrectionInner = RelaxationStep<RelaxationResidue<Inner<LevelSetCorrection>>>;
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // RELAX_STEPPING_H

@@ -57,8 +57,7 @@ class MaximumNorm : public LocalDynamicsReduce<Real, ReduceMax>,
     template <typename Datatype>
     Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
 
-    template <>
-    Real getSquaredNorm<Real>(const Real &variable) { return variable * variable; };
+    Real getSquaredNorm(const Real &variable) { return variable * variable; };
 };
 
 /**

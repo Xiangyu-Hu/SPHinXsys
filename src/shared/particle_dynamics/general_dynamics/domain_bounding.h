@@ -21,19 +21,18 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_bounding.h
- * @brief 	This is the particle dynamics for domain bounding
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	domain_bounding.h
+ * @brief This is the particle dynamics for domain bounding
+ * @author Chi Zhang and Xiangyu Hu
  */
 
-#ifndef GENERAL_BOUNDING_H
-#define GENERAL_BOUNDING_H
+#ifndef DOMAIN_BOUNDING_H
+#define DOMAIN_BOUNDING_H
 
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
-
 /**
  * @class BoundingAlongAxis
  * @brief Bounding particle position in along axis.
@@ -262,4 +261,4 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
     UpdatePeriodicGhostParticles ghost_update_;
 };
 } // namespace SPH
-#endif // GENERAL_BOUNDING_H
+#endif // DOMAIN_BOUNDING_H

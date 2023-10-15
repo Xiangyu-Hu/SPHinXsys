@@ -92,9 +92,8 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
 class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public GeneralDataDelegateContactOnly
 {
   public:
-    ComputeDensityErrorWithWall(ComplexRelation &complex_relation)
-        : ComputeDensityErrorInner(complex_relation.getBodyRelation()),
-          GeneralDataDelegateContactOnly(complex_relation.getBodyRelation())
+    ComputeDensityErrorWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+        : ComputeDensityErrorInner(inner_relation), GeneralDataDelegateContactOnly(contact_relation)
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
@@ -200,9 +199,10 @@ class SplitWithMinimumDensityErrorInner : public ParticleSplitWithPrescribedArea
 class SplitWithMinimumDensityErrorWithWall : public SplitWithMinimumDensityErrorInner
 {
   public:
-    SplitWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region, size_t body_buffer_width)
-        : SplitWithMinimumDensityErrorInner(complex_relation.getBodyRelation(), refinement_region, body_buffer_width),
-          compute_density_error(complex_relation){};
+    SplitWithMinimumDensityErrorWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
+                                         Shape &refinement_region, size_t body_buffer_width)
+        : SplitWithMinimumDensityErrorInner(inner_relation, refinement_region, body_buffer_width),
+          compute_density_error(inner_relation, contact_relation){};
     virtual ~SplitWithMinimumDensityErrorWithWall(){};
 
   protected:
@@ -308,9 +308,10 @@ class MergeWithMinimumDensityErrorInner : public ParticleMergeWithPrescribedArea
 class MergeWithMinimumDensityErrorWithWall : public MergeWithMinimumDensityErrorInner
 {
   public:
-    MergeWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region)
-        : MergeWithMinimumDensityErrorInner(complex_relation.getBodyRelation(), refinement_region),
-          compute_density_error(complex_relation){};
+    MergeWithMinimumDensityErrorWithWall(BaseInnerRelation &inner_relation,
+                                         BaseContactRelation &contact_relation, Shape &refinement_region)
+        : MergeWithMinimumDensityErrorInner(inner_relation, refinement_region),
+          compute_density_error(inner_relation, contact_relation){};
     virtual ~MergeWithMinimumDensityErrorWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)

@@ -30,7 +30,8 @@
 #pragma once
 
 #include "base_general_dynamics.h"
-#include "general_bounding.h"
+#include "domain_bounding.h"
+#include "general_constraint.h"
 #include "general_geometric.h"
 #include "general_interpolation.h"
 #include "general_life_time_dynamics.h"

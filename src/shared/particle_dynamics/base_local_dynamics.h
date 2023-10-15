@@ -353,42 +353,5 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
         other_interactions_.interaction(index_i, dt);
     };
 };
-
-/**
- * @class OldComplexInteraction
- * @brief A class that integrates multiple local dynamics.
- * Typically, it includes an inner interaction and one or
- * several contact interaction ad boundary conditions.
- */
-template <typename... InteractionType>
-class OldComplexInteraction;
-
-template <>
-class OldComplexInteraction<>
-{
-  public:
-    OldComplexInteraction(){};
-
-    void interaction(size_t index_i, Real dt = 0.0){};
-};
-
-template <class FirstInteraction, class... OtherInteractions>
-class OldComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
-{
-  protected:
-    OldComplexInteraction<OtherInteractions...> other_interactions_;
-
-  public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit OldComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-        : FirstInteraction(first_parameter_set),
-          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        FirstInteraction::interaction(index_i, dt);
-        other_interactions_.interaction(index_i, dt);
-    };
-};
 } // namespace SPH
 #endif // BASE_LOCAL_DYNAMICS_H

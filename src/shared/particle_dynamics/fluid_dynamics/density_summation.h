@@ -160,15 +160,9 @@ class DensitySummation<FreeStream<InteractionType>> : public DensitySummation<In
     bool isNearFreeSurface(size_t index_i);
 };
 
-template <class InnerInteractionType, class ContactInteractionType>
-class BaseDensitySummationComplex
-    : public ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>
-{
-  public:
-    explicit BaseDensitySummationComplex(ComplexRelation &complex_relation)
-        : ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>(
-              complex_relation.getBodyRelation(), complex_relation.getBodyRelation()){};
-};
+template <class InnerInteractionType, class... ContactInteractionTypes>
+using BaseDensitySummationComplex = ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionTypes...>>;
+
 using DensitySummationComplex = BaseDensitySummationComplex<Inner<>, Contact<>>;
 using DensitySummationComplexAdaptive = BaseDensitySummationComplex<InnerAdaptive, ContactAdaptive>;
 using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>>;

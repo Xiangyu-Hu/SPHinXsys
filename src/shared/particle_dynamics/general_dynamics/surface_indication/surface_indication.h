@@ -97,13 +97,7 @@ class FreeSurfaceIndication<Inner<SpatialTemporal>>
     bool isNearPreviousFreeSurface(size_t index_i);
 };
 
-class SpatialTemporalFreeSurfaceIndicationComplex
-    : public ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>
-{
-  public:
-    explicit SpatialTemporalFreeSurfaceIndicationComplex(ComplexRelation &complex_relation)
-        : ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>(
-              complex_relation.getBodyRelation(), complex_relation.getBodyRelation()){};
-};
+using SpatialTemporalFreeSurfaceIndicationComplex =
+    ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>;
 } // namespace SPH
 #endif // SURFACE_INDICATION_H

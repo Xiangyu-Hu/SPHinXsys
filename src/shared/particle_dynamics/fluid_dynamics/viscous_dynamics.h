@@ -87,15 +87,6 @@ class ViscousAcceleration<ContactWall<>> : public InteractionWithWall<ViscousAcc
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-class ViscousAccelerationWithWall
-    : public ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>
-{
-  public:
-    explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>(
-              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
-};
-
 template <>
 class ViscousAcceleration<Contact<>> : public ViscousAcceleration<FluidContactData>
 {
@@ -108,6 +99,8 @@ class ViscousAcceleration<Contact<>> : public ViscousAcceleration<FluidContactDa
     StdVec<Real> contact_mu_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
+
+using ViscousAccelerationWithWall = ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>;
 
 /**
  * @class VorticityInner

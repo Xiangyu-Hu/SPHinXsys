@@ -30,3 +30,5 @@
 #pragma once
 
 #include "base_relax_dynamics.h"
+#include "relax_stepping.hpp"
+#include "relax_thick_shell.h"

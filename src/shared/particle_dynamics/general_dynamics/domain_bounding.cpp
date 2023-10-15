@@ -1,4 +1,4 @@
-#include "general_bounding.h"
+#include "domain_bounding.h"
 
 namespace SPH
 {

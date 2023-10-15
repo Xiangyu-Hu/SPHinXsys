@@ -31,7 +31,7 @@
 #define SHAPE_CONFINEMENT_H
 
 #include "base_fluid_dynamics.h"
-#include "relax_dynamics.h"
+#include "general_constraint.h"
 #include "riemann_solver.h"
 
 namespace SPH
@@ -104,7 +104,7 @@ class StaticConfinement
     SimpleDynamics<StaticConfinementDensity> density_summation_;
     SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
     SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-    SimpleDynamics<relax_dynamics::ShapeSurfaceBounding> surface_bounding_;
+    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 
     StaticConfinement(NearShapeSurface &near_surface);
     virtual ~StaticConfinement(){};

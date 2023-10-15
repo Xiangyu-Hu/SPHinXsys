@@ -130,6 +130,13 @@ class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
     StdVec<StdLargeVec<Real> *> contact_p_;
 };
 
+template <class RiemannSolverType, class KernelCorrectionType>
+using Integration1stHalfWithWall = ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, KernelCorrectionType>;
+
+using Integration1stHalfWithWallNoRiemann = Integration1stHalfWithWall<NoRiemannSolver, NoKernelCorrection>;
+using Integration1stHalfWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, NoKernelCorrection>;
+using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, KernelCorrection>;
+
 template <typename... InteractionTypes>
 class Integration2ndHalf;
 
@@ -165,8 +172,8 @@ class Integration2ndHalf<ContactWall<>, RiemannSolverType>
 };
 
 template <class RiemannSolverType>
-class Integration2ndHalf<Contact<>, RiemannSolverType> 
-: public BaseIntegration<FluidContactData>
+class Integration2ndHalf<Contact<>, RiemannSolverType>
+    : public BaseIntegration<FluidContactData>
 {
   public:
     explicit Integration2ndHalf(BaseContactRelation &contact_relation);
@@ -179,28 +186,8 @@ class Integration2ndHalf<Contact<>, RiemannSolverType>
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
-template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalfWithWall
-    : public ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, KernelCorrectionType>
-{
-  public:
-    explicit Integration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, KernelCorrectionType>(
-              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
-};
-using Integration1stHalfWithWallNoRiemann = Integration1stHalfWithWall<NoRiemannSolver, NoKernelCorrection>;
-using Integration1stHalfWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, NoKernelCorrection>;
-using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, KernelCorrection>;
-
 template <class RiemannSolverType>
-class Integration2ndHalfWithWall
-    : public ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>
-{
-  public:
-    explicit Integration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>(
-              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
-};
+using Integration2ndHalfWithWall = ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>;
 
 using Integration2ndHalfWithWallNoRiemann = Integration2ndHalfWithWall<NoRiemannSolver>;
 using Integration2ndHalfWithWallRiemann = Integration2ndHalfWithWall<AcousticRiemannSolver>;

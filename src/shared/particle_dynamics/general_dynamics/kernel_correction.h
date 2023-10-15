@@ -82,17 +82,7 @@ class KernelCorrectionMatrix<Contact<>>
     StdVec<StdLargeVec<Real> *> contact_mass_;
 };
 
-template <class InnerInteractionType, class ContactInteractionType>
-class BaseKernelCorrectionMatrixComplex
-    : public ComplexInteraction<KernelCorrectionMatrix<InnerInteractionType, ContactInteractionType>>
-{
-  public:
-    explicit BaseKernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0))
-        : ComplexInteraction<KernelCorrectionMatrix<InnerInteractionType, ContactInteractionType>>(
-              ConstructorArgs<BaseInnerRelation, Real>(complex_relation.getBodyRelation(), alpha),
-              complex_relation.getBodyRelation()){};
-};
-using KernelCorrectionMatrixComplex = BaseKernelCorrectionMatrixComplex<Inner<>, Contact<>>;
+using KernelCorrectionMatrixComplex = ComplexInteraction<KernelCorrectionMatrix<Inner<>, Contact<>>>;
 
 template <typename... InteractionTypes>
 class KernelGradientCorrection;
@@ -135,15 +125,6 @@ class KernelGradientCorrection<Contact<>>
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <class InnerInteractionType, class ContactInteractionType>
-class BaseKernelGradientCorrectionComplex
-    : public ComplexInteraction<KernelGradientCorrection<InnerInteractionType, ContactInteractionType>>
-{
-  public:
-    explicit BaseKernelGradientCorrectionComplex(ComplexRelation &complex_relation)
-        : ComplexInteraction<KernelGradientCorrection<InnerInteractionType, ContactInteractionType>>(
-              complex_relation.getBodyRelation(), complex_relation.getBodyRelation()){};
-};
-using KernelGradientCorrectionComplex = BaseKernelGradientCorrectionComplex<Inner<>, Contact<>>;
+using KernelGradientCorrectionComplex = ComplexInteraction<KernelGradientCorrection<Inner<>, Contact<>>>;
 } // namespace SPH
 #endif // KERNEL_CORRECTION_H

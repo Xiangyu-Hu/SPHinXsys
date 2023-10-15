@@ -21,26 +21,39 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file general_constraint.h
+ * @brief Particles are constrained on their position according to
+ * different criteria.
+ * @author	Xiangyu Hu
  */
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_H
+#ifndef GENERAL_CONSTRAINT_H
+#define GENERAL_CONSTRAINT_H
 
-#include "active_muscle_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
-#include "all_fluid_dynamics.h"
-#include "all_general_dynamics.h"
-#include "all_solid_dynamics.h"
-#include "electro_physiology.h"
-#include "external_force.h"
-#include "particle_dynamics_dissipation.h"
-#include "particle_dynamics_dissipation.hpp"
-#include "all_relax_dynamics.h"
-#include "diffusion_optimization.h"
+#include "base_general_dynamics.h"
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_H
+namespace SPH
+{
+class LevelSetShape;
+
+/**
+ * @class ShapeSurfaceBounding
+ * @brief constrain surface particles by
+ * map constrained particles to geometry face and
+ * r = r + phi * norm (vector distance to face)
+ */
+class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
+                             public GeneralDataDelegateSimple
+{
+  public:
+    ShapeSurfaceBounding(NearShapeSurface &body_part);
+    virtual ~ShapeSurfaceBounding(){};
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    LevelSetShape *level_set_shape_;
+    Real constrained_distance_;
+};
+} // namespace SPH
+#endif // GENERAL_CONSTRAINT_H

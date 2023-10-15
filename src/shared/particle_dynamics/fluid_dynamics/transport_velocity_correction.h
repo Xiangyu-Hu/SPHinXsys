@@ -105,18 +105,13 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 };
 
 template <typename... CommonControlTypes>
-class BaseTransportVelocityCorrectionComplex
-    : public ComplexInteraction<TransportVelocityCorrection<Inner<>, ContactBoundary<>>, CommonControlTypes...>
-{
-  public:
-    explicit BaseTransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
-        : ComplexInteraction<TransportVelocityCorrection<Inner<>, ContactBoundary<>>, CommonControlTypes...>(
-              ConstructorArgs(complex_relation.getBodyRelation(), coefficient),
-              ConstructorArgs(complex_relation.getBodyRelation(), coefficient)){};
-};
+using BaseTransportVelocityCorrectionComplex =
+    ComplexInteraction<TransportVelocityCorrection<Inner<>, ContactBoundary<>>, CommonControlTypes...>;
+
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
     BaseTransportVelocityCorrectionComplex<NoKernelCorrection, SingleResolution, ParticleScope>;
+
 template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
     BaseTransportVelocityCorrectionComplex<NoKernelCorrection, AdaptiveResolution, ParticleScope>;

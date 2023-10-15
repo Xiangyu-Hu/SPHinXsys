@@ -82,7 +82,8 @@ template <typename VariableType>
 class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, public DissipationDataContact
 {
   public:
-    DampingBySplittingComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
+    DampingBySplittingComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
+                              const std::string &variable_name, Real eta);
     virtual ~DampingBySplittingComplex(){};
 
   protected:
@@ -100,7 +101,8 @@ template <typename VariableType,
 class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableType>, public DissipationDataWithWall
 {
   public:
-    DampingBySplittingWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
+    DampingBySplittingWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
+                               const std::string &variable_name, Real eta);
     virtual ~DampingBySplittingWithWall(){};
 
   protected:
@@ -163,7 +165,6 @@ class DampingPairwiseWithWall : public BaseDampingPairwiseType<VariableType>,
   public:
     DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
                             BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
-    DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
     virtual ~DampingPairwiseWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);

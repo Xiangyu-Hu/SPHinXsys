@@ -63,7 +63,8 @@ namespace SPH
               public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
     {
 	public:
-		ParameterSplittingByPDEWithBoundary(ComplexRelation& complex_relation, const std::string& variable_name);
+		ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
+                            BaseContactRelation &contact_relation, const std::string& variable_name);
 		virtual ~ParameterSplittingByPDEWithBoundary() {};
 
 	protected:

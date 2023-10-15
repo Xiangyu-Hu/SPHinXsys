@@ -21,11 +21,11 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	non_newtonian_dynamics.h
- * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
+ * @file non_newtonian_dynamics.h
+ * @brief Here, we define the algorithm classes for fluid dynamics within the body.
  * @details We consider here weakly compressible fluids.
- * 			Note that, as these are local dynamics which are combined with particle dynamics
- * 			algorithms as template, the name-hiding is used for functions in the derived classes.
+ * Note that, as these are local dynamics which are combined with particle dynamics
+ * algorithms as template, the name-hiding is used for functions in the derived classes.
  * @author	Xiangyu Hu
  */
 
@@ -75,15 +75,6 @@ class Oldroyd_BIntegration1stHalf<ContactWall<>>
     StdLargeVec<Matd> &tau_;
 };
 
-class Oldroyd_BIntegration1stHalfWithWall
-    : public ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>
-{
-  public:
-    explicit Oldroyd_BIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>(
-              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
-};
-
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration2ndHalf;
 
@@ -122,15 +113,8 @@ class Oldroyd_BIntegration2ndHalf<ContactWall<>>
     Real mu_p_, lambda_;
 };
 
-class Oldroyd_BIntegration2ndHalfWithWall
-    : public ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>
-{
-  public:
-    explicit Oldroyd_BIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>(
-              fluid_wall_relation.getBodyRelation(), fluid_wall_relation.getBodyRelation()){};
-};
-
+using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>;
+using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // NON_NEWTONIAN_DYNAMICS_H
