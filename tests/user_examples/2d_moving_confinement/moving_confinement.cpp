@@ -229,6 +229,8 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
     /** Apply transport velocity formulation. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    
     /** Define the confinement condition for wall. */
     NearShapeSurface near_surface_wall(water_block, makeShared<Wall>("Wall"));
     near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
@@ -255,7 +257,8 @@ int main(int ac, char *av[])
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
     transport_velocity_correction.post_processes_.push_back(&confinement_condition_wall.transport_velocity_);
     transport_velocity_correction.post_processes_.push_back(&confinement_condition_circle.transport_velocity_);
-
+    viscous_acceleration.post_processes_.push_back(&confinement_condition_wall.viscous_acceleration_);
+    viscous_acceleration.post_processes_.push_back(&confinement_condition_circle.viscous_acceleration_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -307,6 +310,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
+            viscous_acceleration.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 

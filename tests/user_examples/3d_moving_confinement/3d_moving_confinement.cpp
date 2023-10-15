@@ -22,8 +22,9 @@ std::string full_path_to_file = "./input/propeller.stl";
 Real DL = 400.0; // Domain width.
 Real DH = 400.0;  // Domain height.
 Real DW = 400.0;  // Domain width.
-Vec3d domain_lower_bound(-200, -200.0, -200.0);
-Vec3d domain_upper_bound(0.5*DL, 0.5*DH, 0.5*DW);
+Real DH_T = 600.0; 
+Vec3d domain_lower_bound(-300, -300.0, -300.0);
+Vec3d domain_upper_bound(300, 500, 300);
 Vecd translation(0.0, 0.0, 0.0);
 Real scaling = 1.0;
 
@@ -46,6 +47,7 @@ Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+Real BW = dp_0 * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	define the imported model.
 //----------------------------------------------------------------------
@@ -65,20 +67,41 @@ class WaterBlock : public ComplexShape
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_water(0.5 * DL, 0.5 * DH, 0.5 * DW);
-        Transform translation_water(halfsize_water);
+        Transform translation_water(Vecd::Zero());
+        Vecd halfsize_cubic(0.1 * DL, 0.1 * DH, 0.1 * DW);
+        Transform translation_cubic(Vecd::Zero());
         add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
-        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+        //subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_cubic), halfsize_cubic);
     }
 };
+
+class Cubic : public ComplexShape
+{
+  public:
+    explicit Cubic(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        Vecd halfsize_cubic(0.1 * DL, 0.1 * DH, 0.1 * DW);
+        Transform translation_cubic(Vecd::Zero());
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_cubic), halfsize_cubic);
+        
+    }
+};
+
 /** create wall shape */
 class WallBoundary : public ComplexShape
 {
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-        Transform translation_wall(halfsize_inner);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
+        Vecd halfsize_inner(0.5 * DL, 0.5 * DH_T, 0.5 * DW);
+        Vecd translation_point(0.0, 100.0, 0.0);
+        Transform translation_inner(translation_point);
+        Vecd halfsize_out(0.5 * DL + BW, 0.5 * DH_T + BW, 0.5 * DW + BW);
+        Transform translation_out(translation_point);
+        
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_out), halfsize_out);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_inner), halfsize_inner);
     }
 };
 
@@ -178,15 +201,20 @@ int main()
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-
+    RealBody wall(system, makeShared<WallBoundary>("Wall"));
+    wall.defineBodyLevelSetShape();
+    wall.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall.generateParticles<ParticleGeneratorLattice>();
+    wall.addBodyStateForRecording<Vecd>("NormalDirection");
     
-    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
-    // level set shape is used for particle relaxation
-    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
-    imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<ParticleGeneratorLattice>();
+    //RealBody imported_model(system, makeShared<Cubic>("cubic"));
+    //// level set shape is used for particle relaxation
+    //imported_model.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    //imported_model.defineParticlesAndMaterial();
+    //imported_model.generateParticles<ParticleGeneratorLattice>();
   
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+   //water_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -198,31 +226,37 @@ int main()
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-
+    //ComplexRelation water_block_complex(water_block, {&wall });
     /** Initialize particle acceleration. */
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
+    //Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
+
+     RotationMovement rotation_movement(rotation_axis_1, rotation_axis_1, 0.5 * Pi);
+    //CircleMovement circle_movement(square_center, Pi);
+    //HorizontalMovement horizaontal_movement;
+    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Cubic>>("cubic"), rotation_movement);
+    near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
+
     /** Define the confinement condition for wall. */
     NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
     near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
-    RotationMovement rotation_movement(rotation_axis_1, rotation_axis_1, 0.5 * Pi);
-    //CircleMovement circle_movement(square_center, Pi);
-    //HorizontalMovement horizaontal_movement;
-    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<SolidBodyFromMesh>>("propeller"), rotation_movement);
-    near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
-    fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
+   
     
     /*NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
@@ -300,7 +334,7 @@ int main()
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
-                //body_states_recording.writeToFile();
+                body_states_recording.writeToFile();
             }
             interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -322,6 +356,7 @@ int main()
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_inner.updateConfiguration();
+            //water_block_complex.updateConfiguration();
             //fluid_observer_contact.updateConfiguration();
             near_surface_circle.updateCellList();
             interval_updating_configuration += TickCount::now() - time_instance;

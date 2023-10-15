@@ -335,6 +335,26 @@ namespace SPH
             NearShapeSurfaceTracing& near_surface_tracing_;
         };
 
+         /**
+         * @class MovingConfinementViscousAcceleration
+         * @brief Moving confinement condition for viscous acceleration
+         */
+        class MovingConfinementViscousAcceleration : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public:
+            MovingConfinementViscousAcceleration(NearShapeSurfaceTracing& near_surface_tracing);
+            virtual ~MovingConfinementViscousAcceleration() {};
+            void update(size_t index_i, Real dt = 0.0);
+
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            StdLargeVec<Real>& rho_;
+            StdLargeVec<Vecd>& vel_, &acc_prior_;
+            Real mu_;
+            LevelSetShape* level_set_shape_;
+            NearShapeSurfaceTracing& near_surface_tracing_;
+        };
+
 
         /**
         * @class MovingConfinementGeneral
@@ -351,6 +371,7 @@ namespace SPH
              SimpleDynamics<MovingConfinementBounding> surface_bounding_;
              InteractionDynamics<MovingConfinementTransportVelocity> transport_velocity_;
              InteractionDynamics<MovingConfinementFreeSurfaceIndication> free_surface_indication_;
+             SimpleDynamics<MovingConfinementViscousAcceleration> viscous_acceleration_;
              MovingConfinementGeneral(NearShapeSurfaceTracing& near_surface_tracing);
              virtual ~MovingConfinementGeneral() {};
          };

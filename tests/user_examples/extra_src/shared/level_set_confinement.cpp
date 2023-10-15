@@ -59,10 +59,10 @@ namespace SPH
 			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
 			acc_prior_[index_i] += acceleration / rho_[index_i];
 
-				std::string output_folder = "./output";
+				/*std::string output_folder = "./output";
 				std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
 				std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-				out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;
+				out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;*/
 		}
 		//=================================================================================================//
 		StaticConfinementExtendIntegration1stHalf::
@@ -271,10 +271,34 @@ namespace SPH
             }
 		}
 		//=================================================================================================//
+		MovingConfinementViscousAcceleration::MovingConfinementViscousAcceleration(NearShapeSurfaceTracing& near_surface_tracing)
+			:BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+			pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), rho_(particles_->rho_),
+			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
+			near_surface_tracing_(near_surface_tracing),
+			level_set_shape_(&near_surface_tracing.level_set_shape_) {}
+		//=================================================================================================//
+		void MovingConfinementViscousAcceleration::update(size_t index_i, Real dt)
+		{
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
+			Vecd vel_level_set_cell_j = Vecd::Zero();
+			Real rho_i = rho_[index_i];
+			/*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
+			Real phi_r_ij = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+			vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
+			Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
+			acc_prior_[index_i] += acceleration / rho_[index_i];
+
+		}
+		//=================================================================================================//
 		MovingConfinementGeneral::MovingConfinementGeneral(NearShapeSurfaceTracing& near_surface_tracing)
 		: density_summation_(near_surface_tracing), pressure_relaxation_(near_surface_tracing),
 		  density_relaxation_(near_surface_tracing), surface_bounding_(near_surface_tracing), 
-	      transport_velocity_(near_surface_tracing),free_surface_indication_(near_surface_tracing) {}
+	      transport_velocity_(near_surface_tracing),free_surface_indication_(near_surface_tracing),
+			viscous_acceleration_(near_surface_tracing)
+		{}
 	}
 	//=================================================================================================//
 	
