@@ -81,7 +81,6 @@ int main(int ac, char *av[])
     random_airfoil_particles.exec(0.25);
     relaxation_step.SurfaceBounding().exec();
     update_smoothing_length_ratio.exec();
-    airfoil.updateCellLinkedList();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
