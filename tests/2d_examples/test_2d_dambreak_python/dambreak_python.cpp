@@ -102,6 +102,8 @@ class Environment : public PreSettingCase
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
+    InnerRelation water_block_inner;
+    ContactRelation water_wall_contact;
     ComplexRelation water_block_complex;
     ContactRelation fluid_observer_contact;
     //----------------------------------------------------------------------
@@ -146,11 +148,13 @@ class Environment : public PreSettingCase
   public:
     explicit Environment(int set_restart_step)
         : PreSettingCase(),
-          water_block_complex(water_block, {&wall_boundary}),
+          water_block_inner(water_block),
+          water_wall_contact(water_block, {&wall_boundary}),
+          water_block_complex(water_block_inner, water_wall_contact),
           fluid_observer_contact(fluid_observer, {&water_block}),
-          fluid_pressure_relaxation(water_block_complex),
-          fluid_density_relaxation(water_block_complex),
-          fluid_density_by_summation(water_block_complex),
+          fluid_pressure_relaxation(water_block_inner, water_wall_contact),
+          fluid_density_relaxation(water_block_inner, water_wall_contact),
+          fluid_density_by_summation(water_block_inner, water_wall_contact),
           wall_boundary_normal_direction(wall_boundary),
           gravity_ptr(makeShared<Gravity>(Vecd(0.0, -gravity_g))),
           fluid_step_initialization(water_block, gravity_ptr),

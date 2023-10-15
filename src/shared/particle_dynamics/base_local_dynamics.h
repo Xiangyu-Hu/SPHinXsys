@@ -309,9 +309,10 @@ template <typename BodyRelationType, typename... OtherArgs>
 struct ConstructorArgs
 {
     BodyRelationType &body_relation_;
-    std::tuple<OtherArgs...> others_;
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation), others_(other_args...){};
+    std::tuple<OtherArgs &&...> others_;
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&...other_args)
+        : body_relation_(body_relation),
+          others_(std::make_tuple(std::forward<OtherArgs>(other_args)...)){};
 };
 
 /**
