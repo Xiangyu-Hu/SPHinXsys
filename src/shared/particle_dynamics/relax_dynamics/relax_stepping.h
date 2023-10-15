@@ -163,6 +163,7 @@ class RelaxationStep : public BaseDynamics<void>
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
+using RelaxationStepInner = RelaxationStep<RelaxationResidue<Inner<>>>;
 using RelaxationStepLevelSetCorrectionInner = RelaxationStep<RelaxationResidue<Inner<LevelSetCorrection>>>;
 } // namespace relax_dynamics
 } // namespace SPH

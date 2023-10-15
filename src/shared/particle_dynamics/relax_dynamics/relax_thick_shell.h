@@ -163,6 +163,7 @@ class ShellRelaxationStep : public BaseDynamics<void>
     explicit ShellRelaxationStep(BaseInnerRelation &inner_relation);
     virtual ~ShellRelaxationStep(){};
     virtual void exec(Real dt = 0.0) override;
+    SimpleDynamics<ShellMidSurfaceBounding> &MidSurfaceBounding() { return mid_surface_bounding_; };
 
   protected:
     RealBody &real_body_;
