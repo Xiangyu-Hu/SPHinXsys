@@ -71,23 +71,23 @@ class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
 
 class PressureRelaxation
 {
-public:
-    PressureRelaxation() {};
+  public:
+    PressureRelaxation(){};
 
-    Real getBackgroundForce(Matd Bi, Matd Bj) 
-    { 
-        return 2; 
+    Real getBackgroundForce(Matd Bi, Matd Bj)
+    {
+        return 2.0;
     };
 };
 
 class CorrectionMatrixRelaxation
 {
-public:
-    CorrectionMatrixRelaxation() {};
+  public:
+    CorrectionMatrixRelaxation(){};
 
-    Matd getBackgroundForce(Matd Bi, Matd Bj) 
-    { 
-        return (Bi + Bj); 
+    Matd getBackgroundForce(Matd Bi, Matd Bj)
+    {
+        return (Bi + Bj);
     };
 };
 
@@ -138,7 +138,6 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationInner<RelaxationType>::interaction(index_i, dt);
-        Real phi = level_set_shape_->findSignedDistance(this->pos_[index_i]);
         Real overlap = level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
                        sph_adaptation_->SmoothingLengthRatio(index_i));
        
@@ -151,7 +150,6 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
   protected:
     LevelSetShape *level_set_shape_;
     SPHAdaptation *sph_adaptation_;
-    Real constrained_distance_;
 };
 
 /**
@@ -246,7 +244,7 @@ class RelaxationStepInner : public BaseDynamics<void>
  */
 template <typename RelaxationType = PressureRelaxation>
 class RelaxationAccelerationComplex : public LocalDynamics,
-    public RelaxDataDelegateComplex
+                                      public RelaxDataDelegateComplex
 {
 public:
     explicit RelaxationAccelerationComplex(ComplexRelation& complex_relation);
@@ -260,7 +258,7 @@ public:
         {
             size_t index_j = inner_neighborhood.j_[n];
             acceleration -= relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) *
-                inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                            inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         }
 
         /** Contact interaction. */
@@ -272,7 +270,7 @@ public:
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 acceleration -= relaxation_type.getBackgroundForce(B_[index_i], B_k[index_j]) *
-                    contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                                contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
 
@@ -304,19 +302,17 @@ class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAcc
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationComplex<RelaxationType>::interaction(index_i, dt);
-        Real phi = level_set_shape_->findSignedDistance(this->pos_[index_i]);
         Real overlap = level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
                        sph_adaptation_->SmoothingLengthRatio(index_i));
 
         this->acc_[index_i] -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
-                         level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                         sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+                               level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
+                               sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
 
   protected:
     LevelSetShape *level_set_shape_;
     SPHAdaptation *sph_adaptation_;
-    Real constrained_distance_;
 };
 
 /**
@@ -380,7 +376,6 @@ protected:
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
     RelaxationType relaxation_type;
-    Real constrained_distance_;
 };
 
 /**
@@ -399,14 +394,15 @@ protected:
 };
 
 /**
- * @class RelaxationStepInner
+ * @class RelaxationStepInnerImplicit
  * @brief carry out the particle relaxation evolution from first order consistency within the body
  */
 template <class RelaxationType = PressureRelaxation>
 class RelaxationStepInnerImplicit : public BaseDynamics<void>
 {
 public:
-    explicit RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation);
+    explicit RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation,
+                                         bool level_set_correction = false);
     virtual ~RelaxationStepInnerImplicit() {};
     SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
@@ -443,11 +439,10 @@ protected:
     StdLargeVec<Vecd>& pos_, & acc_;
     StdLargeVec<Matd>& B_;
     StdVec<StdLargeVec<Matd>*> contact_B_;
-    StdLargeVec<Real> implicit_residual_;
+    StdLargeVec<Real> &implicit_residual_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
     RelaxationType relaxation_type;
-    Real constrained_distance_;
 };
 
 /**
@@ -473,7 +468,8 @@ template <class RelaxationType = PressureRelaxation>
 class RelaxationStepComplexImplicit : public BaseDynamics<void>
 {
 public:
-    explicit RelaxationStepComplexImplicit(ComplexRelation& complex_relation, const std::string& shape_name);
+    explicit RelaxationStepComplexImplicit(ComplexRelation& complex_relation, const std::string& shape_name,
+                                           bool level_set_correction = false);
     virtual ~RelaxationStepComplexImplicit() {};
     SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;

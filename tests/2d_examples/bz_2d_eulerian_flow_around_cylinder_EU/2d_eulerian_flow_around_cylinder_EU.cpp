@@ -131,8 +131,8 @@ int main(int ac, char *av[])
         ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
         InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_inner(cylinder_inner);
         InteractionWithUpdate<KernelCorrectionMatrixComplexWithLevelSet> kernel_correction_complex(water_block_complex, "OuterBoundary");
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
-        relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+        relax_dynamics::RelaxationStepInnerImplicit relaxation_step_inner(cylinder_inner, true);
+        relax_dynamics::RelaxationStepComplexImplicit relaxation_step_complex(water_block_complex, "OuterBoundary", true);
         SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_block_inner);
         SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_cylinder_kietic_energy(cylinder_inner);
         //----------------------------------------------------------------------
@@ -145,7 +145,7 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile(0);
 
         int ite_p = 0;
-        while (ite_p < 5000)
+        while (ite_p < 1000)
         {
             kernel_correction_inner.exec();
             relaxation_step_inner.exec();

@@ -18,8 +18,8 @@ RelaxationAccelerationInner<RelaxationType>::RelaxationAccelerationInner(BaseInn
 template <class RelaxationType>
 RelaxationAccelerationInnerWithLevelSetCorrection<RelaxationType>::
 RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerRelation& inner_relation)
-    : RelaxationAccelerationInner<RelaxationType>(inner_relation), sph_adaptation_(this->sph_body_.sph_adaptation_),
-    constrained_distance_(0.5 * this->sph_body_.sph_adaptation_->MinimumSpacing())
+    : RelaxationAccelerationInner<RelaxationType>(inner_relation), 
+    sph_adaptation_(this->sph_body_.sph_adaptation_)
 {
     level_set_shape_ = DynamicCast<LevelSetShape>(this, this->sph_body_.body_shape_);
 }
@@ -73,8 +73,8 @@ RelaxationAccelerationComplex(ComplexRelation& complex_relation)
 template <class RelaxationType>
 RelaxationAccelerationComplexWithLevelSetCorrection<RelaxationType>::
 RelaxationAccelerationComplexWithLevelSetCorrection(ComplexRelation& complex_relation, const std::string& shape_name)
-    : RelaxationAccelerationComplex<RelaxationType>(complex_relation), sph_adaptation_(this->sph_body_.sph_adaptation_),
-    constrained_distance_(0.5 * this->sph_body_.sph_adaptation_->MinimumSpacing())
+    : RelaxationAccelerationComplex<RelaxationType>(complex_relation), 
+    sph_adaptation_(this->sph_body_.sph_adaptation_)
 {
     ComplexShape& complex_shape = DynamicCast<ComplexShape>(this, *this->sph_body_.body_shape_);
     level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
@@ -108,6 +108,7 @@ void RelaxationStepComplex<RelaxationType>::exec(Real dt)
     relaxation_acceleration_complex_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
+    //surface_bounding_.exec();
 }
 //=================================================================================================//
 template <class RelaxationType>
@@ -117,8 +118,7 @@ RelaxationInnerImplicit<RelaxationType>::
     kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
     Vol_(particles_->Vol_), pos_(particles_->pos_), acc_(particles_->acc_),
     B_(*particles_->template getVariableByName<Matd>("KernelCorrectionMatrix")),
-    sph_adaptation_(sph_body_.sph_adaptation_), relaxation_type(),
-    constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+    sph_adaptation_(sph_body_.sph_adaptation_), relaxation_type()
 {
     particles_->registerVariable(implicit_residual_, "ImplicitResidual");
     particles_->addVariableToWrite<Real>("ImplicitResidual");
@@ -126,7 +126,8 @@ RelaxationInnerImplicit<RelaxationType>::
 };
 //=================================================================================================//
 template <class RelaxationType>
-ErrorAndParameters<Vecd, Matd, Matd> RelaxationInnerImplicit<RelaxationType>::computeErrorAndParameters(size_t index_i, Real dt)
+ErrorAndParameters<Vecd, Matd, Matd> RelaxationInnerImplicit<RelaxationType>::
+computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters;
     Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -135,8 +136,9 @@ ErrorAndParameters<Vecd, Matd, Matd> RelaxationInnerImplicit<RelaxationType>::co
     {
         size_t index_j = inner_neighborhood.j_[n];
         Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) *
-            inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-            kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+                           inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+                           kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * 
+                           Vol_[index_j] * dt * dt;
 
         error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) * 
                                        inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] * dt * dt;
@@ -164,7 +166,8 @@ void RelaxationInnerImplicit<RelaxationType>::updateStates(size_t index_i, Real 
         size_t index_j = inner_neighborhood.j_[n];
         Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) * 
                            inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-                           kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+                           kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * 
+                           Vol_[index_j] * dt * dt;
         pos_[index_j] -= parameter_b * parameter_k;
     }
 }
@@ -189,8 +192,8 @@ computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = 
         RelaxationInnerImplicit<RelaxationType>::computeErrorAndParameters(index_i, dt);
-    Real phi = this->level_set_shape_->findSignedDistance(this->pos_[index_i]);
-    Real overlap = this->level_set_shape_->computeKernelIntegral(this->pos_[index_i], this->sph_adaptation_->SmoothingLengthRatio(index_i));
+    Real overlap = this->level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
+                   this->sph_adaptation_->SmoothingLengthRatio(index_i));
 
     error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
                                    this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
@@ -204,9 +207,9 @@ computeErrorAndParameters(size_t index_i, Real dt)
 //=================================================================================================//
 template <class RelaxationType>
 RelaxationStepInnerImplicit<RelaxationType>::
-RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation)
-    : BaseDynamics<void>(inner_relation.getSPHBody()), real_body_(inner_relation.real_body_),
-    inner_relation_(inner_relation), time_step_size_(0.01),
+RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation, bool level_set_correction)
+    : BaseDynamics<void>(inner_relation.getSPHBody()), time_step_size_(0.01),
+    real_body_(inner_relation.real_body_), inner_relation_(inner_relation), 
     near_shape_surface_(*real_body_), get_time_step_(*real_body_),
     relaxation_evolution_inner_(inner_relation), surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//
@@ -226,9 +229,8 @@ RelaxationComplexImplicit(ComplexRelation &complex_relation, const std::string& 
     kernel_(complex_relation.getSPHBody().sph_adaptation_->getKernel()),
     Vol_(particles_->Vol_), pos_(particles_->pos_), acc_(particles_->acc_),
     B_(*particles_->template getVariableByName<Matd>("KernelCorrectionMatrix")),
-    sph_adaptation_(sph_body_.sph_adaptation_), relaxation_type(),
-    implicit_residual_(particles_->registerSharedVariable<Real>("ImplicitResidual")),
-    constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+    implicit_residual_(*particles_->registerSharedVariable<Real>("ImplicitResidual")),
+    sph_adaptation_(sph_body_.sph_adaptation_), relaxation_type()
 {
     contact_B_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -243,7 +245,8 @@ RelaxationComplexImplicit(ComplexRelation &complex_relation, const std::string& 
 };
 //=================================================================================================//
 template <class RelaxationType>
-ErrorAndParameters<Vecd, Matd, Matd> RelaxationComplexImplicit<RelaxationType>::computeErrorAndParameters(size_t index_i, Real dt)
+ErrorAndParameters<Vecd, Matd, Matd> RelaxationComplexImplicit<RelaxationType>::
+computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters;
 
@@ -252,11 +255,12 @@ ErrorAndParameters<Vecd, Matd, Matd> RelaxationComplexImplicit<RelaxationType>::
     {
         size_t index_j = inner_neighborhood.j_[n];
         Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) *
-            inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-            kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+                           inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+                           kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * 
+                           Vol_[index_j] * dt * dt;
 
         error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) *
-            inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] * dt * dt;
+                                       inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] * dt * dt;
         error_and_parameters.a_ -= parameter_b;
         error_and_parameters.c_ += parameter_b * parameter_b;
     }
@@ -270,13 +274,13 @@ ErrorAndParameters<Vecd, Matd, Matd> RelaxationComplexImplicit<RelaxationType>::
         {
             size_t index_j = contact_neighborhood.j_[n];
             Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_k[index_j]) *
-                contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
-                kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) * Vol_k[index_j] * dt * dt;
+                               contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
+                               kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) * 
+                               Vol_k[index_j] * dt * dt;
 
             error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_k[index_j]) *
-                contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
+                                           contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
             error_and_parameters.a_ -= parameter_b;
-            error_and_parameters.c_ += parameter_b * parameter_b;
         }
     }
 
@@ -299,8 +303,9 @@ void RelaxationComplexImplicit<RelaxationType>::updateStates(size_t index_i, Rea
     {
         size_t index_j = inner_neighborhood.j_[n];
         Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_j]) *
-            inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-            kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+                           inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+                           kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * 
+                           Vol_[index_j] * dt * dt;
         pos_[index_j] -= parameter_b * parameter_k;
     }
 }
@@ -325,25 +330,26 @@ computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters =
         RelaxationComplexImplicit<RelaxationType>::computeErrorAndParameters(index_i, dt);
-    Real phi = this->level_set_shape_->findSignedDistance(this->pos_[index_i]);
-    Real overlap = this->level_set_shape_->computeKernelIntegral(this->pos_[index_i], this->sph_adaptation_->SmoothingLengthRatio(index_i));
+    Real overlap = this->level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
+                   this->sph_adaptation_->SmoothingLengthRatio(index_i));
 
     error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
-        this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+                                   this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
+                                   this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
     error_and_parameters.a_ -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
-        this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
-            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+                               this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
+                               this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
 
     return error_and_parameters;
 }
 //=================================================================================================//
 template <class RelaxationType>
 RelaxationStepComplexImplicit<RelaxationType>::
-RelaxationStepComplexImplicit(ComplexRelation& complex_relation, const std::string& shape_name)
-    : BaseDynamics<void>(complex_relation.getSPHBody()), real_body_(complex_relation.getInnerRelation().real_body_),
-    complex_relation_(complex_relation), time_step_size_(0.01),
-    near_shape_surface_(*real_body_), get_time_step_(*real_body_),
+RelaxationStepComplexImplicit(ComplexRelation& complex_relation, const std::string& shape_name, 
+                              bool level_set_correction)
+    : BaseDynamics<void>(complex_relation.getSPHBody()), time_step_size_(0.01),
+    real_body_(complex_relation.getInnerRelation().real_body_), complex_relation_(complex_relation), 
+    near_shape_surface_(*real_body_, shape_name), get_time_step_(*real_body_),
     relaxation_evolution_complex_(complex_relation, shape_name), surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//
 template <class RelaxationType>
