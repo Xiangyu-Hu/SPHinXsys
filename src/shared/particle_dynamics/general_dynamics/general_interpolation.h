@@ -130,7 +130,7 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData
 template <typename DataType>
 class BaseInterpolation<DataType, true> : public LocalDynamics, public InterpolationContactData,
                                           public DeviceExecutable<BaseInterpolation<DataType, true>,
-                                              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>
+                                              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_type>>
 {
   public:
     StdLargeVec<DataType> *interpolated_quantities_;
@@ -138,14 +138,14 @@ class BaseInterpolation<DataType, true> : public LocalDynamics, public Interpola
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
           DeviceExecutable<BaseInterpolation<DataType, true>,
-                           BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>(
+                           BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_type>>(
               this, this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
               this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0,
-              particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_t>(
+              particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_type>(
                           variable_name, particles_->total_real_particles_)),
           interpolated_quantities_(nullptr)
     {
-            using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_t;
+            using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_type;
 
             contact_Vol_device_ = makeSharedDevice<StdSharedVec<DeviceReal*>>(this->contact_particles_.size(),
                                                                                execution::executionQueue.getQueue());
@@ -169,7 +169,7 @@ class BaseInterpolation<DataType, true> : public LocalDynamics, public Interpola
 
   protected:
     SharedPtr<StdSharedVec<DeviceReal*>> contact_Vol_device_;
-    SharedPtr<StdSharedVec<typename DataTypeEquivalence<DataType>::device_t*>> contact_data_device_;
+    SharedPtr<StdSharedVec<typename DataTypeEquivalence<DataType>::device_type*>> contact_data_device_;
 };
 
 /**

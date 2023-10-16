@@ -28,6 +28,15 @@ namespace SPH::execution {
             work_group_size = workGroupSize;
         }
 
+        static inline sycl::nd_range<1> getUniformNdRange(size_t global_size, size_t local_size) {
+            return {global_size % local_size ? (global_size / local_size + 1) * local_size : global_size , local_size};
+        }
+
+        inline sycl::nd_range<1> getUniformNdRange(size_t global_size) const {
+            // sycl::nd_range is trivially-copyable, no std::move required
+            return getUniformNdRange(global_size, work_group_size);
+        }
+
     private:
         ExecutionQueue() : work_group_size(32), sycl_queue() {}
 

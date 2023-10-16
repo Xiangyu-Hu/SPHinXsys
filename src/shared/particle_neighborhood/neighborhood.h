@@ -75,7 +75,7 @@ using ParticleConfiguration = StdLargeVec<Neighborhood>;
 class NeighborhoodDevice {
   public:
     size_t* current_size_;	/**< the current number of neighbors */
-    static constexpr size_t allocated_size_ = 28;  /**< the limit of neighbors does not require memory allocation  */
+    size_t allocated_size_;  /**< the limit of neighbors does not require memory allocation  */
 
     size_t *j_;  /**< index of the neighbor particle. */
     DeviceReal *W_ij_;  /**< kernel value or particle volume contribution */
@@ -143,19 +143,8 @@ class NeighborBuilderInnerKernel : public NeighborBuilderKernel {
   public:
     NeighborBuilderInnerKernel(Kernel& kernel) : NeighborBuilderKernel(kernel) {}
 
-    void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
-                    const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
-    {
-        DeviceVecd displacement = pos_i - pos_j;
-        DeviceReal distance_metric = sycl::dot(displacement, displacement);
-        if (distance_metric < smoothing_kernel.CutOffRadiusSqr() && index_i != index_j)
-        {
-            auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,
-                                      sycl::memory_scope::device,
-                                      sycl::access::address_space::global_space>(*neighborhood.current_size_);
-            initializeNeighbor(neighborhood, current_size_atomic++, sycl::sqrt(distance_metric), displacement, index_j, Vol_j);
-        }
-    }
+    SYCL_EXTERNAL void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
+                    const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const;
 };
 
 /**

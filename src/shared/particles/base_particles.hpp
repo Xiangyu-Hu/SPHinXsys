@@ -204,13 +204,22 @@ void BaseParticles::registerSortableVariable(const std::string &variable_name)
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
+
+    // add device variable if already registered
+    if constexpr(DataTypeEquivalence<DataType>::type_defined)
+    {
+        using DeviceDataType = typename DataTypeEquivalence<DataType>::device_type;
+        auto *device_variable = findVariableByName<DeviceDataType>(all_device_variables_, variable_name);
+        if(device_variable && !findVariableByName<DeviceDataType>(sortable_device_variables_, variable_name))
+                std::get<DataTypeIndex<DeviceDataType>::value>(sortable_device_variables_).push_back(device_variable);
+    }
 }
 //=================================================================================================//
 template <typename SequenceMethod, class ExecutionPolicy>
 void BaseParticles::sortParticles(SequenceMethod &sequence_method, ExecutionPolicy execution_policy)
 {
-    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this/*, execution_policy*/);
-    particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
+    size_t* sequence = sequence_method.computingSequence(*this);
+    particle_sorting_.sortingParticleData(sequence, total_real_particles_, execution_policy);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -311,8 +320,8 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
     {
         StdLargeVec<Real> &variable_data = *(std::get<type_index_Real>(all_particle_data_)[variable->IndexInContainer()]);
-        DeviceVariable<DataTypeEquivalence<Real>::device_t> *device_variable =
-            findVariableByName<DataTypeEquivalence<Real>::device_t>(all_device_variables_, variable->Name());
+        DeviceVariable<DataTypeEquivalence<Real>::device_type> *device_variable =
+            findVariableByName<DataTypeEquivalence<Real>::device_type>(all_device_variables_, variable->Name());
         if(device_variable)
             copyDataFromDevice(variable_data.data(), device_variable->VariableAddress(), total_real_particles_);
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
@@ -330,8 +339,8 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
     {
         StdLargeVec<Vecd> &variable_data = *(std::get<type_index_Vecd>(all_particle_data_)[variable->IndexInContainer()]);
-        DeviceVariable<DataTypeEquivalence<Vecd>::device_t> *device_variable =
-            findVariableByName<DataTypeEquivalence<Vecd>::device_t>(all_device_variables_, variable->Name());
+        DeviceVariable<DataTypeEquivalence<Vecd>::device_type> *device_variable =
+            findVariableByName<DataTypeEquivalence<Vecd>::device_type>(all_device_variables_, variable->Name());
         if(device_variable)
             copyDataFromDevice(variable_data.data(), device_variable->VariableAddress(), total_real_particles_);
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";

@@ -100,6 +100,7 @@ using DeviceArray3i = sycl::int3;
 
 template<typename Type, class Enable = void>
 struct DataTypeEquivalence {
+    static constexpr bool type_defined = false;
     static_assert("Type non recognized as host or device type.");
 };
 
@@ -108,37 +109,42 @@ using enable_if_is_either_t = std::enable_if_t<std::disjunction_v<std::is_same<C
 
 template<class TypeReal>
 struct DataTypeEquivalence<TypeReal, enable_if_is_either_t<TypeReal, Real, DeviceReal>> {
-    using host_t = Real;
-    using device_t = DeviceReal;
+    static constexpr bool type_defined = true;
+    using host_type = Real;
+    using device_type = DeviceReal;
 };
 
 template<class TypeVec2d>
 struct DataTypeEquivalence<TypeVec2d, enable_if_is_either_t<TypeVec2d, Vec2d, DeviceVec2d>> {
-    using host_t = Vec2d;
-    using device_t = DeviceVec2d;
+    static constexpr bool type_defined = true;
+    using host_type = Vec2d;
+    using device_type = DeviceVec2d;
 };
 
 template<class TypeVec3d>
 struct DataTypeEquivalence<TypeVec3d, enable_if_is_either_t<TypeVec3d, Vec3d, DeviceVec3d>> {
-    using host_t = Vec3d;
-    using device_t = DeviceVec3d;
+    static constexpr bool type_defined = true;
+    using host_type = Vec3d;
+    using device_type = DeviceVec3d;
 };
 
 template<class TypeArray2i>
 struct DataTypeEquivalence<TypeArray2i, enable_if_is_either_t<TypeArray2i, Array2i , DeviceArray2i >> {
-    using host_t = Array2i;
-    using device_t = DeviceArray2i;
+    static constexpr bool type_defined = true;
+    using host_type = Array2i;
+    using device_type = DeviceArray2i;
 };
 
 template<class TypeArray3i>
 struct DataTypeEquivalence<TypeArray3i, enable_if_is_either_t<TypeArray3i, Array3i , DeviceArray3i>> {
-    using host_t = Array3i;
-    using device_t = DeviceArray3i;
+    static constexpr bool type_defined = true;
+    using host_type = Array3i;
+    using device_type = DeviceArray3i;
 };
 
 template<class CheckType, class HostOrDeviceType>
-using enable_both_host_device_t = enable_if_is_either_t<CheckType, typename DataTypeEquivalence<HostOrDeviceType>::host_t,
-                                                         typename DataTypeEquivalence<HostOrDeviceType>::device_t>;
+using enable_both_host_device_t = enable_if_is_either_t<CheckType, typename DataTypeEquivalence<HostOrDeviceType>::host_type,
+                                                         typename DataTypeEquivalence<HostOrDeviceType>::device_type>;
 
 /** Unified initialize to zero for all data type. */
 /**
@@ -201,7 +207,7 @@ struct DataTypeIndex<int>
 
 template<typename DeviceType>
 using is_device_type_different_from_host =
-    std::conditional_t<std::is_same_v<DeviceType, typename DataTypeEquivalence<DeviceType>::host_t>, std::false_type, std::true_type>;
+    std::conditional_t<std::is_same_v<DeviceType, typename DataTypeEquivalence<DeviceType>::host_type>, std::false_type, std::true_type>;
 
 template <>
 struct DataTypeIndex<DeviceReal, is_device_type_different_from_host<DeviceReal>>

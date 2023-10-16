@@ -52,30 +52,34 @@ void CellLinkedListKernel::searchNeighborsByParticles(
     auto *pos = dynamics_range.getBaseParticles().template getDeviceVariableByName<DeviceVec2d>("Position");
     auto get_neighbor_relation_kernel = *get_neighbor_relation.getDeviceProxy().getKernel();
     const int search_depth = get_search_depth(0);
+    const auto loop_range = dynamics_range.LoopRange();
     executionQueue.getQueue()
         .submit(
             [&, index_list=index_list_, index_head_list=index_head_list_, list_data_pos=list_data_pos_,
              list_data_Vol=list_data_Vol_, mesh_lower_bound=mesh_lower_bound_,
              grid_spacing=grid_spacing_, all_grid_points=all_grid_points_, all_cells=all_cells_](sycl::handler &cgh) {
-                cgh.parallel_for(dynamics_range.LoopRange(), [=](sycl::item<1> it) {
-                                     const size_t index_i = it.get_id(0);
-                                     const auto& pos_i = pos[index_i];
-                                     auto &neighborhood = particle_configuration[index_i];
-                                     const auto target_cell_index = CellIndexFromPosition(pos_i, mesh_lower_bound,
-                                                                             grid_spacing, all_grid_points);
-                                     mesh_for_each(
-                                         sycl::max(DeviceArray2i{0}, DeviceArray2i{target_cell_index - search_depth}),
-                                         sycl::min(all_cells, DeviceArray2i{target_cell_index + search_depth + 1}),
-                                         [&](int l, int m) {
-                                             const auto linear_cell_index = transferCellIndexTo1D({l,m}, all_cells);
-                                             size_t index_j = index_head_list[linear_cell_index];
-                                             // Cell list ends when index_j == 0, if index_j is already zero then cell is empty.
-                                             while(index_j--) {  // abbreviates while(index_j != 0) { index_j -= 1; ... }
-                                                 get_neighbor_relation_kernel(neighborhood, pos_i, index_i, index_j, list_data_pos[index_j],
-                                                                              list_data_Vol[index_j]);
-                                                 index_j = index_list[index_j];
-                                             }
-                                         });
+                cgh.parallel_for(executionQueue.getUniformNdRange(loop_range), [=](sycl::nd_item<1> it) {
+                                     const size_t index_i = it.get_global_id(0);
+                                     if(index_i < loop_range)
+                                     {
+                                         const auto& pos_i = pos[index_i];
+                                         auto &neighborhood = particle_configuration[index_i];
+                                         const auto target_cell_index = CellIndexFromPosition(pos_i, mesh_lower_bound,
+                                                                                 grid_spacing, all_grid_points);
+                                         mesh_for_each(
+                                             sycl::max(DeviceArray2i{0}, DeviceArray2i{target_cell_index - search_depth}),
+                                             sycl::min(all_cells, DeviceArray2i{target_cell_index + search_depth + 1}),
+                                             [&](int l, int m) {
+                                                 const auto linear_cell_index = transferCellIndexTo1D({l,m}, all_cells);
+                                                 size_t index_j = index_head_list[linear_cell_index];
+                                                 // Cell list ends when index_j == 0, if index_j is already zero then cell is empty.
+                                                 while(index_j--) {  // abbreviates while(index_j != 0) { index_j -= 1; ... }
+                                                     get_neighbor_relation_kernel(neighborhood, pos_i, index_i, index_j, list_data_pos[index_j],
+                                                                                  list_data_Vol[index_j]);
+                                                     index_j = index_list[index_j];
+                                                 }
+                                             });
+                                     }
                                  });
             }).wait_and_throw();
 }
