@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	k-epsilon_turbulent_model.h
- * @brief 	Here,.
- * @details     T.
+ * @brief 	
+ * @details     
  * @author Xiangyu Hu
  */
 
@@ -39,7 +39,7 @@ namespace SPH
     {
 		/**
 		* @class BaseTurbuClosureCoeff
-		* @brief  BaseTurbuClosureCoeff
+		* @brief  Some turbulent empirical parameters
 		*/
 		class BaseTurbuClosureCoeff
 		{
@@ -52,10 +52,10 @@ namespace SPH
 			Real turbu_const_E;
 			Real C_mu;
 			Real TurbulentIntensity;
-			//K equation
+			//** Closure coefficients for K *
 			Real sigma_k;
 
-			//closure coefficients for epsilon model
+			//** Closure coefficients for Epsilon *
 			Real C_l, C_2;
 			Real sigma_E;
 		};
@@ -69,7 +69,6 @@ namespace SPH
 		public:
 			explicit BaseTurtbulentModelInner(BaseInnerRelation& inner_relation);
 			virtual ~BaseTurtbulentModelInner() {};
-			
 
 		protected:
 			StdLargeVec<Real> turbu_mu_;
@@ -94,22 +93,24 @@ namespace SPH
 			virtual ~GetTimeAverageCrossSectionData() {};
 
 			void update(size_t index_i, Real dt = 0.0);
-			void output_time_average_data();
-
+			void output_cross_section_data();
+			void get_time_average_data();
 		protected:
 			PltEngine plt_engine_;
 
 			StdLargeVec<Vecd> & pos_;
 			StdLargeVec<Real>& turbu_mu_, & turbu_k_, & turbu_epsilon_;
-			std::vector<std::vector<Real>>  data_sto_;
+			//std::vector<std::vector<Real>>  data_sto_;
+			StdLargeVec<std::vector<Real>> data_sto_, data_loaded_;
+			StdLargeVec<std::vector<Real>>  data_time_aver_sto_;
 			//ConcurrentVec<ConcurrentVec<Real>> data_sto_;
 			StdLargeVec<int> num_in_cell_;
 			Real x_min ;
 			Real x_max ;
 			int num_cell, num_data;
+			Real cutoff_time;
 			StdLargeVec<std::string> file_name_;
-			std::string file_path_output_;
-			std::vector<Real>  data_ta_sto_; //time avergae
+			std::string file_path_output_, file_path_input_;
 		};
 
 		/**
@@ -132,7 +133,6 @@ namespace SPH
 			StdLargeVec<Matd> velocity_gradient_wall;
 		};
 
-
 		/**
 		 * @class K_TurtbulentModelInner
 		 * @brief  K_TurtbulentModelInner
@@ -148,7 +148,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> dk_dt_;
 			StdLargeVec<Matd> velocity_gradient_;
-			StdLargeVec<Matd> B_;
+			//StdLargeVec<Matd> B_;
 			StdLargeVec<Real> k_production_;
 
 			StdLargeVec<int> is_near_wall_P1_; //** This is used to specially treat near wall region  *
@@ -177,6 +177,7 @@ namespace SPH
 			StdLargeVec<Real>& turbu_epsilon_;
 			StdLargeVec<Real> &k_production_;
 		};
+
 		/**
 		 * @class E_TurtbulentModelInner
 		 * @brief  E_TurtbulentModelInner
@@ -191,15 +192,10 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Vecd>& acc_prior_;
-			StdLargeVec<Matd>& B_;
 			StdLargeVec<Vecd>& pos_;
 			StdLargeVec<int>& indicator_;
 			StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
 			StdLargeVec<Vecd> test_k_grad_rslt_;
-
-			//**for test*
-			//StdLargeVec<int> &is_near_wall_P1_, &is_near_wall_P2_;
-
 		};
 
 		/**
@@ -219,7 +215,6 @@ namespace SPH
 			StdLargeVec<Vecd>& velo_friction_;
 			StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
 			StdLargeVec<Real>& distance_to_wall_;
-			StdLargeVec<Matd> shear_stress_, shear_stress_wall_;
 		};
 
 		/**
@@ -261,8 +256,8 @@ namespace SPH
 			Real advectionCFL_;
 			StdLargeVec<Real>& turbu_mu_;
 			Fluid& fluid_;
-
 		};
+
 		/**
 		 * @class   InflowTurbulentCondition
 		 * @brief   Inflow boundary condition which imposes directly to a given velocity profile.
@@ -275,9 +270,7 @@ namespace SPH
 			explicit InflowTurbulentCondition(BodyPartByCell& body_part,
 				Real CharacteristicLength, Real relaxation_rate=1.0);
 			virtual ~InflowTurbulentCondition() {};
-
 			void update(size_t index_i, Real dt = 0.0);
-
 		protected:
 			Real relaxation_rate_;
 			StdLargeVec<Real>& turbu_k_;
@@ -287,11 +280,7 @@ namespace SPH
 
 			virtual Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k);
 			virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
-
-
 		};
-
-
     }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_INNER_H

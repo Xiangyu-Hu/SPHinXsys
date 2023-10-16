@@ -4,7 +4,6 @@
  * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
-//#include "sphinxsys.h"
 #include "2d_turbulent_channel.h"
 
 using namespace SPH;
@@ -66,30 +65,22 @@ int main(int ac, char* av[])
 	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+	
 	/** Turbulent standard wall function needs normal vectors of wall. */
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref);
 
-	//** For test *
-	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner,SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner);
+	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
 
-	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData, SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
-
-
-	/** TurbulentViscous cal. includes the molecular one and the eddy viscosity one */
-	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
-	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
-
+	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
-		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex> inlet_outlet_surface_particle_indicator(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
 	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
-	/** Define the external force for turbulent startup */
-	/**to reduce instability at start-up stage, 1e-4 is from poisulle case */
+	/** Define the external force for turbulent startup to reduce instability at start-up stage, 1e-4 is from poisulle case */
 	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	
@@ -112,7 +103,6 @@ int main(int ac, char* av[])
 	
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
 	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
-
 
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
 	Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
@@ -141,7 +131,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	Real end_time = 200.0;
+	Real end_time = 200;
 	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
@@ -201,7 +191,6 @@ int main(int ac, char* av[])
 				GlobalStaticVariables::physical_time_ += dt;
 
 				//write_body_states.writeToFile();
-
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -220,9 +209,8 @@ int main(int ac, char* av[])
 			water_block_complex_relation.updateConfiguration();
 			//write_body_states.writeToFile();
 			get_time_average_cross_section_data.exec();
-			get_time_average_cross_section_data.output_time_average_data();
+			get_time_average_cross_section_data.output_cross_section_data();
 		}
-
 
 		ITER = ITER + 1;
 		//std::cout << "ITER=" << ITER << std::endl;
@@ -231,17 +219,13 @@ int main(int ac, char* av[])
 		//	output_interval = end_time /  4000.0;
 		//}
 
-
 		TickCount t2 = TickCount::now();
 		//write_body_states.writeToFile();
 		
-
-
 		//write_fluid_x_velocity.writeToFile(); //For test turbulent model
 		//write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model
 		//write_fluid_turbu_dissipation_rate.writeToFile(); //For test turbulent model
 		//write_fluid_turbu_viscosity.writeToFile(); //For test turbulent model
-
 
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
@@ -252,6 +236,9 @@ int main(int ac, char* av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << std::endl;
+
+	get_time_average_cross_section_data.get_time_average_data();
+	std::cout << "The time-average data is output " << std::endl;
 
 	return 0;
 }

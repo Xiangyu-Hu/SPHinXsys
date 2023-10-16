@@ -1,7 +1,7 @@
 /**
- * @file 	two_phase_dambreak_static_confinement.h
- * @brief 	Numerical parameters and body definition for 2D two-phase dambreak flow.
- * @author 	Yongchuan Yu and Xiangyu Hu
+ * @file 	2d_turbulent_channel.h
+ * @brief 	Numerical parameters and body definition for 2d_turbulent_channel.
+ * @author 	Xiangyu Hu
  */
 #include "sphinxsys.h" // SPHinXsys Library.
 #include "k-epsilon_turbulent_model_complex.h"
@@ -24,12 +24,12 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 //-------------------------------------------------------
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + BW));
-/** Observation locations*/
+/** Observation locations, but for channel flow, the cell-based monitoring approach is used, parameters are defined in corresponding .cpp file*/
 Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
-int num_observer_points = std::round(DH/ resolution_ref);
+int num_observer_points = std::round(DH/ resolution_ref); //Evrey particle is regarded as a cell monitor 
 Real observe_spacing = DH / num_observer_points;
 StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
@@ -63,20 +63,20 @@ std::vector<Vecd> water_block_shape
 /** the outer wall polygon. */
 std::vector<Vecd> outer_wall_shape
 {
-	Vecd(-DL_sponge - 2.0 * BW, -BW), //1
-	Vecd(-DL_sponge - 2.0 * BW, DH + BW), //2
-	Vecd(DL + 2.0 * BW , DH + BW), //3
-	Vecd(DL + 2.0 * BW , -BW), //4
-	Vecd(-DL_sponge - 2.0 * BW, -BW), //1
+	Vecd(-DL_sponge - 2.0 * BW, -BW), 
+	Vecd(-DL_sponge - 2.0 * BW, DH + BW), 
+	Vecd(DL + 2.0 * BW , DH + BW), 
+	Vecd(DL + 2.0 * BW , -BW), 
+	Vecd(-DL_sponge - 2.0 * BW, -BW), 
 };
 /** the inner wall polygon. */
 std::vector<Vecd> inner_wall_shape
 {
-	Vecd(-DL_sponge - 3.0 * BW, 0.0), //1
-	Vecd(-DL_sponge - 3.0 * BW, DH), //2
-	Vecd(DL + 3.0 * BW  , DH), //3
-	Vecd(DL + 3.0 * BW , 0.0), //4
-	Vecd(-DL_sponge - 3.0 * BW, 0.0), //1
+	Vecd(-DL_sponge - 3.0 * BW, 0.0), 
+	Vecd(-DL_sponge - 3.0 * BW, DH), 
+	Vecd(DL + 3.0 * BW  , DH), 
+	Vecd(DL + 3.0 * BW , 0.0), 
+	Vecd(-DL_sponge - 3.0 * BW, 0.0), 
 };
 //----------------------------------------------------------------------
 //	Define case dependent body shapes.
@@ -149,7 +149,6 @@ public:
 		Real run_time_ = GlobalStaticVariables::physical_time_;
 		du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 		return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
-
 	}
 };
 //----------------------------------------------------------------------

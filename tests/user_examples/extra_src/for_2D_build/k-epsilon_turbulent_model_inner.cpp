@@ -39,14 +39,13 @@ namespace SPH
 				particles_->registerSortableVariable<Real>("K_Production");
 				particles_->addVariableToWrite<Real>("K_Production");
 				
-				particles_->registerVariable(B_, "CorrectionMatrix");
-				particles_->registerSortableVariable<Matd>("CorrectionMatrix");
-				particles_->addVariableToWrite<Matd>("CorrectionMatrix");
+				//particles_->registerVariable(B_, "CorrectionMatrix");
+				//particles_->registerSortableVariable<Matd>("CorrectionMatrix");
+				//particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 
 				particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
 				particles_->registerSortableVariable<int>("IsNearWallP1");
 				particles_->addVariableToWrite<int>("IsNearWallP1");
-
 
 				//** for test */
 				particles_->registerVariable(k_diffusion_, "K_Diffusion");
@@ -58,15 +57,9 @@ namespace SPH
 				particles_->registerVariable(velocity_gradient_, "VelocityGradient");
 				particles_->registerSortableVariable<Matd>("VelocityGradient");
 				particles_->addVariableToWrite<Matd>("VelocityGradient");
-				
-				//for test
-				//particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
-				//particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
-				//particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
 
 				particles_->registerVariable(vel_x_, "Velocity_X");
 				particles_->registerSortableVariable<Real>("Velocity_X");
-				
 		}
 		//=================================================================================================//
 		GetTimeAverageCrossSectionData::GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points)
@@ -77,18 +70,21 @@ namespace SPH
 		{
 			x_min = 109;
 			x_max = 111;
+			cutoff_time = 0.0;
 			num_data = 4;
 			file_name_.push_back("vel_x_sto_");
 			file_name_.push_back("turbu_k_sto_");
 			file_name_.push_back("turbu_epsilon_sto_");
 			file_name_.push_back("turbu_mu_sto_");
+
 			num_in_cell_.resize(num_cell);
-			data_ta_sto_.resize(num_data);
-			
+			data_time_aver_sto_.resize(num_data);
 			data_sto_.resize(num_cell); //Rows
+			data_time_aver_sto_.resize(num_cell); //Rows
 			for (size_t i = 0; i != num_cell; ++i)
 			{
 				data_sto_[i].resize(num_data); //Cols
+				data_time_aver_sto_[i].resize(num_data); //Cols
 			}
 
 			for (size_t j = 0; j != num_data; ++j)
@@ -126,13 +122,13 @@ namespace SPH
 				}
 			}
 		}
-		void GetTimeAverageCrossSectionData::output_time_average_data()
+		//=================================================================================================//
+		void GetTimeAverageCrossSectionData::output_cross_section_data()
 		{
 			/** Output for .dat file. */
 			for (size_t j = 0; j != num_data; ++j)
 			{
-				file_path_output_ = "C:/Software/SPHinXsys-GitHub-FengWang-Build/tests/user_examples/2d_turbulent_channel/bin/output/"
-					+ file_name_[j] + ".dat";
+				file_path_output_ = "../bin/output/"+ file_name_[j] + ".dat";
 				std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
 				out_file << GlobalStaticVariables::physical_time_ << "   ";
 				for (size_t i = 0; i != num_cell; ++i)
@@ -142,7 +138,6 @@ namespace SPH
 				out_file << "\n";
 				out_file.close();
 			}
-
 			//** Clear data *
 			for (int i = 0; i < num_cell; i++)
 			{
@@ -152,7 +147,54 @@ namespace SPH
 					data_sto_[i][j] = 0.0;
 				}
 			}
+		}
+		//=================================================================================================//
+		void GetTimeAverageCrossSectionData::get_time_average_data()
+		{
+			/** Load .dat file. */
+			for (size_t j = 0; j != num_data; ++j)
+			{
+				data_loaded_.clear();
+				int num_line_data = 0;
+				//** Load data *
+				file_path_input_ = "../bin/output/" + file_name_[j] + ".dat";
+				std::ifstream in_file(file_path_input_.c_str());
+				bool skipFirstLine = true;
+				std::string line;
+				while (std::getline(in_file, line))
+				{
+					if (skipFirstLine)
+					{
+						skipFirstLine = false;
+						continue;
+					}
+					num_line_data++;
+					std::vector<Real> data_point;
+					std::istringstream iss(line);
+					Real value;
+					while (iss >> value)
+					{
+						data_point.push_back(value);
+					}
+					data_loaded_.push_back(data_point);
+				}
 
+				in_file.close();
+				//** Deal with data *
+				for (size_t k = 0; k != num_cell; ++k)
+				{
+					Real sum = 0.0;
+					for (size_t i = 0; i != num_line_data; ++i)
+					{
+						if (data_loaded_[i][0] > cutoff_time)
+						{
+							sum += data_loaded_[i][k + 1]; //the first col is time
+						}
+					}
+					data_time_aver_sto_[k][j] = sum / num_line_data;
+				}
+			}
+			std::cout << "The cutoff_time is "<< cutoff_time << std::endl;
 		}
 		//=================================================================================================//
 		GetVelocityGradientInner::GetVelocityGradientInner(BaseInnerRelation& inner_relation)
@@ -204,11 +246,7 @@ namespace SPH
 			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
 			indicator_(particles_->indicator_), pos_(particles_->pos_),
-			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
-			B_(*particles_->getVariableByName<Matd>("CorrectionMatrix"))//,
-			//is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")), //for test
-			//is_near_wall_P2_(*particles_->getVariableByName<int>("IsNearWallP2"))  //for test
-
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy"))
 		{
 			particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
 			particles_->addVariableToWrite<Vecd>("TkeAccInner");
@@ -230,11 +268,6 @@ namespace SPH
 			particles_->addVariableToWrite<Vecd>("ViscousAccInner");
 			particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 			particles_->addVariableToWrite<Vecd>("ViscousAccWall");
-
-			particles_->registerVariable(shear_stress_, "ShearStress");
-			//particles_->addVariableToWrite<Matd>("ShearStress");
-			particles_->registerVariable(shear_stress_wall_, "ShearStressWall");
-			//particles_->addVariableToWrite<Matd>("ShearStressWall");
 		}
 		//=================================================================================================//
 		TurbulentEddyViscosity::
@@ -251,7 +284,6 @@ namespace SPH
 		{
 			turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
 		}
-		
 		//=================================================================================================//
 		TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max* U_max),FluidDataSimple(sph_body), 

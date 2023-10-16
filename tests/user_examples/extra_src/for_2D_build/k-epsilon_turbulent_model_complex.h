@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	k-epsilon_turbulent_model.h
- * @brief 	Here,.
- * @details     T.
+ * @brief 	
+ * @details     
  * @author Xiangyu Hu
  */
 
@@ -39,8 +39,7 @@ namespace SPH
     {
 		/**
 		 * @class GetVelocityGradientComplex
-		 * @brief .
-		 * The
+		 * @brief GetVelocityGradientComplex
 		 */
 		class GetVelocityGradientComplex
 			: public BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
@@ -64,8 +63,7 @@ namespace SPH
 		};
 		/**
 		 * @class K_TurtbulentModelRelaxationWithWall
-		 * @brief .
-		 * The
+		 * @brief K_TurtbulentModelRelaxationWithWall
 		 */
 		class K_TurtbulentModelComplex 
 			: public BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
@@ -82,7 +80,6 @@ namespace SPH
 				}
 			};
 			virtual ~K_TurtbulentModelComplex() {};
-
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
 			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
@@ -90,7 +87,7 @@ namespace SPH
 
 		/**
 		 * @class E_TurtbulentModelRelaxationWithWall
-		 * @brief .
+		 * @brief E_TurtbulentModelRelaxationWithWall
 		 */
 		class E_TurtbulentModelComplex
 			: public BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>
@@ -100,13 +97,12 @@ namespace SPH
 			explicit E_TurtbulentModelComplex(Args &&...args)
 				: BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>(
 					std::forward<Args>(args)...) {};
-
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
 		 * @class TKEnergyAccComplex
-		 * @brief .
+		 * @brief TKEnergyAccComplex
 		 */
 		class TKEnergyAccComplex
 			: public BaseInteractionComplex<TKEnergyAccInner, FluidContactData>
@@ -116,13 +112,12 @@ namespace SPH
 			explicit TKEnergyAccComplex(Args &&...args)
 				: BaseInteractionComplex<TKEnergyAccInner, FluidContactData>(
 					std::forward<Args>(args)...) {};
-
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
 		 * @class BaseTurbuViscousAccWithWall
-		 * @brief  template class Turbu viscous acceleration with wall boundary
+		 * @brief BaseTurbuViscousAccWithWall
 		 */
 		template <class TurbuViscousAccInnerType>
 		class BaseTurbuViscousAccWithWall : public InteractionWithWall<TurbuViscousAccInnerType>
@@ -132,7 +127,6 @@ namespace SPH
 			BaseTurbuViscousAccWithWall(Args &&...args)
 				: InteractionWithWall<TurbuViscousAccInnerType>(std::forward<Args>(args)...){};
 			virtual ~BaseTurbuViscousAccWithWall() {};
-
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
@@ -141,7 +135,7 @@ namespace SPH
 		/**
 		* @class StandardWallFunctionCorrection
 		* @brief this function is applied to turbulent flows
-		* @brief modify the values of k and epslion near wall
+		* @brief implicitly modify the values of k and epslion near wall
 		*/
 		class StandardWallFunctionCorrection : public LocalDynamics, public FSIContactData,
 			public BaseTurbuClosureCoeff
@@ -156,41 +150,25 @@ namespace SPH
 			Real offset_dist_;
 			StdLargeVec<Real> y_p_;
 			StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
-
 			Real intial_distance_to_wall;
 			Real particle_spacing_, cutoff_radius_;
-
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Real>& turbu_epsilon_;
 			StdLargeVec<Real>& turbu_mu_;
-
 			StdVec < StdLargeVec<Vecd>*>  contact_n_;
-
 			Real mu_;
-
 			StdLargeVec<int> &is_near_wall_P1_;
 			StdLargeVec<int> is_near_wall_P2_, is_near_wall_P1_pre_, is_migrate_;
 			StdLargeVec<Real> velo_tan_;
 			StdLargeVec<Vecd> velo_friction_;
 			StdLargeVec<int> index_nearest;
 			StdLargeVec<Real> distance_to_wall_;
-
 			StdLargeVec<Vecd>& vel_, & pos_;
 			StdLargeVec<Real>& rho_;
-
 			int dimension_;
-
 			StdLargeVec<Matd> &velocity_gradient_;
 			StdLargeVec<Real> &k_production_;
-
-			virtual Real getFrictionVelo(Real left_bound, Real right_bound, Real e, Real A, Real B);
-			virtual Real WallFunc(Real x, Real CA, Real CB);
-			virtual void checkFrictionVelo(Real velo_fric, Real e, Real A, Real B);
 		};
-
-
-
-
     }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_COMPLEX_H

@@ -40,10 +40,6 @@ namespace SPH
 			particles_->registerSortableVariable<Real>("WallYstar");
 			particles_->addVariableToWrite<Real>("WallYstar");
 
-
-			//particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
-			//particles_->registerSortableVariable<int>("IsNearWallP1");
-			//particles_->addVariableToWrite<int>("IsNearWallP1");
 			particles_->registerVariable(is_near_wall_P2_, "IsNearWallP2");
 			particles_->registerSortableVariable<int>("IsNearWallP2");
 			particles_->addVariableToWrite<int>("IsNearWallP2");
@@ -77,62 +73,7 @@ namespace SPH
 				contact_n_.push_back(&(contact_particles_[k]->n_));
 			}
 		};
-
 		//=================================================================================================//
-		Real StandardWallFunctionCorrection::getFrictionVelo(Real left_bound, Real right_bound, Real e, Real A, Real B)
-		{
-			Real EPSILON = e;
-			Real left_value = WallFunc(left_bound,A,B);
-			Real right_value = WallFunc(right_bound, A, B);
-
-			if (left_value * right_value >= 0)
-			{
-				std::cout << "You have not assumed right a and b\n";
-				system("pause");
-				return 0.0;
-				exit(1);
-			}
-			Real middle = left_bound;
-			Real middle_value = 0.0;
-			while ((right_bound - left_bound) >= EPSILON)
-			{
-				// Update middle point
-				middle = (left_bound + right_bound) / 2;
-				middle_value = WallFunc(middle, A, B);
-				// Check if middle point is root
-				if (abs(middle_value) < EPSILON)
-					break;
-				// Decide the side to repeat the steps
-				else if (middle_value * left_value < 0)
-					right_bound = middle;
-				else
-					left_bound = middle;
-			}
-			//cout << "The value of root is : " << c;
-			return middle;
-		}
-		Real StandardWallFunctionCorrection::WallFunc(Real x, Real CA, Real CB)
-		{
-			return CA / x - log(CB * x);
-		}
-		//=================================================================================================//
-		void StandardWallFunctionCorrection::checkFrictionVelo(Real velo_fric, Real e, Real A, Real B)
-		{
-			Real EPSILON = e;
-			Real left_value = A / velo_fric;
-			Real right_value = log(B * velo_fric);
-			Real error = abs(left_value - right_value);
-			if (error > EPSILON && GlobalStaticVariables::physical_time_>2.0)
-			//if (error > EPSILON )
-			{
-				std::cout << "FrictionVelocity is not accurately calcualted" << std::endl;
-				std::cout << "error=" << error << std::endl;
-				std::cout << "velo_friction=" << velo_fric << std::endl;
-				//system("pause");
-			}
-		}
-		//=================================================================================================//
-
 	}
 	//=================================================================================================//
 }
