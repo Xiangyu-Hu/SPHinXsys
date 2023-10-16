@@ -293,12 +293,11 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
                 << "y, "
                 << "phi, "
                 << "n_x, "
-                << "n_y "
-                << "near_interface_id ";
+                << "n_y, "
+                << "near_interface_id, ";
     output_file << "kernel_weight, "
                 << "kernel_gradient_x, "
                 << "kernel_gradient_y "
-                << "kernel_gradient_multiply_Rij "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
@@ -393,7 +392,7 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
         output_file << " \n";
     }
 
-    for (int j = 0; j != number_of_operation[1]; ++j)
+    /*for (int j = 0; j != number_of_operation[1]; ++j)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
@@ -401,7 +400,7 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
                         << " ";
         }
         output_file << " \n";
-    }
+    }*/
 }
 //=============================================================================================//
 Real LevelSet::computeKernelIntegral(const Vecd &position)

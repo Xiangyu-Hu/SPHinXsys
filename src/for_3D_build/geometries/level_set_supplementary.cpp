@@ -299,13 +299,12 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
                 << "phi, "
                 << "n_x, "
                 << "n_y, "
-                << "n_z "
-                << "near_interface_id ";
+                << "n_z, "
+                << "near_interface_id, ";
     output_file << "kernel_weight, "
                 << "kernel_gradient_x, "
-                << "kernel_gradient_y "
+                << "kernel_gradient_y, "
                 << "kernel_gradient_z "
-                << "kernel_gradient_multiply_Rij "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
                 << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
