@@ -21,6 +21,14 @@ RelaxationResidue<Inner<LevelSetCorrection>>::
     : RelaxationResidue<Inner<>>(inner_relation), pos_(particles_->pos_),
       level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)) {}
 //=================================================================================================//
+RelaxationResidue<Inner<LevelSetCorrection>>::
+    RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name)
+    : RelaxationResidue<Inner<>>(inner_relation), pos_(particles_->pos_)
+{
+    ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *sph_body_.body_shape_);
+    level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
+}
+//=================================================================================================//
 void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
     RelaxationResidue<Inner<>>::interaction(index_i, dt);

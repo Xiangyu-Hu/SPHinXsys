@@ -17,13 +17,14 @@ RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType 
 //=================================================================================================//
 template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
-RelaxationStep<RelaxationResidueType>::RelaxationStep(FirstArg &first_arg, OtherArgs &&...other_args)
+RelaxationStep<RelaxationResidueType>::
+    RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args)
     : BaseDynamics<void>(first_arg.getSPHBody()),
       real_body_(DynamicCast<RealBody>(this, first_arg.getSPHBody())),
       body_relations_(real_body_.getBodyRelations()),
-      near_shape_surface_(real_body_),
       relaxation_residue_(first_arg, std::forward<OtherArgs>(other_args)...),
       relaxation_scaling_(real_body_), position_relaxation_(real_body_),
+      near_shape_surface_(real_body_, relaxation_residue_.getLevelSetShape()),
       surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//
 template <class RelaxationResidueType>

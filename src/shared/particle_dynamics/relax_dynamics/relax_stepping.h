@@ -73,8 +73,13 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 {
   public:
     explicit RelaxationResidue(BaseInnerRelation &inner_relation);
+    RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~RelaxationResidue(){};
     void interaction(size_t index_i, Real dt = 0.0);
+    LevelSetShape &getLevelSetShape() { return *level_set_shape_; };
 
   protected:
     StdLargeVec<Vecd> &pos_;
@@ -86,7 +91,8 @@ class RelaxationResidue<Contact<>>
     : public RelaxationResidue<Base, RelaxDataDelegateContact>
 {
   public:
-    explicit RelaxationResidue(BaseContactRelation &contact_relation);
+    explicit RelaxationResidue(BaseContactRelation &contact_relation)
+        : RelaxationResidue<Base, RelaxDataDelegateContact>(contact_relation){};
     virtual ~RelaxationResidue(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -148,7 +154,7 @@ class RelaxationStep : public BaseDynamics<void>
 {
   public:
     template <typename FirstArg, typename... OtherArgs>
-    explicit RelaxationStep(FirstArg &first_arg, OtherArgs &&...other_args);
+    explicit RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args);
     virtual ~RelaxationStep(){};
     SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
@@ -156,15 +162,17 @@ class RelaxationStep : public BaseDynamics<void>
   protected:
     RealBody &real_body_;
     StdVec<SPHRelation *> &body_relations_;
-    NearShapeSurface near_shape_surface_;
     InteractionDynamics<RelaxationResidueType> relaxation_residue_;
     ReduceDynamics<RelaxationScaling> relaxation_scaling_;
     SimpleDynamics<PositionRelaxation> position_relaxation_;
+    NearShapeSurface near_shape_surface_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
 using RelaxationStepInner = RelaxationStep<RelaxationResidue<Inner<>>>;
 using RelaxationStepLevelSetCorrectionInner = RelaxationStep<RelaxationResidue<Inner<LevelSetCorrection>>>;
+using RelaxationStepComplex = RelaxationStep<ComplexInteraction<RelaxationResidue<Inner<>, Contact<>>>>;
+using RelaxationStepLevelSetCorrectionComplex = RelaxationStep<ComplexInteraction<RelaxationResidue<Inner<LevelSetCorrection>, Contact<>>>>;
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // RELAX_STEPPING_H
