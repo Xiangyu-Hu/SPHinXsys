@@ -104,6 +104,7 @@ InteractionWithWall<BaseIntegrationType>::
         wall_vel_ave_.push_back(FluidWallData::contact_particles_[k]->AverageVelocity());
         wall_acc_ave_.push_back(FluidWallData::contact_particles_[k]->AverageAcceleration());
         wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
+        wall_B_.push_back(&(FluidWallData::contact_particles_[k]->B_));
     }
 }
 //=================================================================================================//

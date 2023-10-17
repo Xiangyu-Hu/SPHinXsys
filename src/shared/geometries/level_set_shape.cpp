@@ -81,11 +81,6 @@ Vecd LevelSetShape::computeKernelGradientIntegral(const Vecd &probe_point, Real 
     return level_set_.probeKernelGradientIntegral(probe_point, h_ratio);
 }
 //=================================================================================================//
-Vecd LevelSetShape::computeStressKernelGradientIntegral(const Vecd& probe_point, Real h_ratio)
-{
-    return level_set_.probeStressKernelGradientIntegral(probe_point, h_ratio);
-}
-//=================================================================================================//
 Matd LevelSetShape::computeKernelSecondGradientIntegral(const Vecd& probe_point, Real h_ratio)
 {
     return level_set_.probeKernelSecondGradientIntegral(probe_point, h_ratio);

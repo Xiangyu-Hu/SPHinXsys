@@ -51,6 +51,7 @@ class EulerianNoRiemannSolver
           rho0c0_i_(rho0_i_ * c0_i_), rho0c0_j_(rho0_j_ * c0_j_),
           inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
     virtual FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+    virtual FluidStarStateConsistency getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Matd &B_i, const Matd &B_j, const Vecd &e_ij);
 
   protected:
     Fluid &fluid_i_, &fluid_j_;
@@ -71,6 +72,7 @@ class EulerianAcousticRiemannSolver : public EulerianNoRiemannSolver
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_), rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
           inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij) override;
+    FluidStarStateConsistency getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Matd &B_i, const Matd &B_j, const Vecd &e_ij);
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;
@@ -95,6 +97,7 @@ class EulerianIntegration1stHalf : public BaseIntegration
     RiemannSolverType riemann_solver_;
     StdLargeVec<Vecd> &acc_prior_;
     StdLargeVec<Vecd> mom_, dmom_dt_;
+    StdLargeVec<Matd> &B_;
 };
 /** define the mostly used pressure relaxation scheme using Riemann solver */
 using EulerianIntegration1stHalfAcousticRiemann = EulerianIntegration1stHalf<EulerianAcousticRiemannSolver>;

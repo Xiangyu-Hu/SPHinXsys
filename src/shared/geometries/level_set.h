@@ -55,7 +55,6 @@ class BaseLevelSet : public BaseMeshField
     virtual Vecd probeLevelSetGradient(const Vecd &position) = 0;
     virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
     virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
-    virtual Vecd probeStressKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
     virtual Matd probeKernelSecondGradientIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
     virtual Matd probeDisplacementKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
 
@@ -99,14 +98,12 @@ class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
     virtual Vecd probeLevelSetGradient(const Vecd &position) override;
     virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
     virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
-    virtual Vecd probeStressKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
     virtual Matd probeKernelSecondGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
     virtual Matd probeDisplacementKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
     virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
     bool isWithinCorePackage(Vecd position);
     Real computeKernelIntegral(const Vecd &position);
     Vecd computeKernelGradientIntegral(const Vecd &position);
-    Vecd computeStressKernelGradientIntegral(const Vecd& position);
     Matd computeKernelSecondGradientIntegral(const Vecd& position);
     Matd computeDisplacementKernelGradientIntegral(const Vecd& position);
 
@@ -116,7 +113,6 @@ class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
     MeshVariable<Vecd> &phi_gradient_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
-    MeshVariable<Vecd> stress_kernel_gradient_;
     MeshVariable<Matd> kernel_second_gradient_;
     MeshVariable<Matd> displacement_kernel_gradient_;
     Kernel &kernel_;
@@ -173,7 +169,6 @@ class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, Refined
     virtual Vecd probeLevelSetGradient(const Vecd &position) override;
     virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
     virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
-    virtual Vecd probeStressKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
     virtual Matd probeKernelSecondGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
     virtual Matd probeDisplacementKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
 

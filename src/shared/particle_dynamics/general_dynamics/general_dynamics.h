@@ -236,6 +236,7 @@ class PositionUpperBound : public LocalDynamicsReduce<Vecd, ReduceUpperBound>,
     Vecd reduce(size_t index_i, Real dt = 0.0);
 };
 
+
 /**
  * @class QuantitySummation
  * @brief Compute the summation of  a particle variable in a body
@@ -264,6 +265,33 @@ class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<Var
 };
 
 /**
+	 * @class QuantityMaximum
+	 * @brief Compute the maximum of a particle variable in a body
+	 */
+template <typename VariableType>
+class QuantityMaximum : public LocalDynamicsReduce<VariableType, ReduceMax>,
+                        public GeneralDataDelegateSimple
+{
+  protected:
+    StdLargeVec<VariableType> &variable_;
+
+  public:
+    explicit QuantityMaximum(SPHBody &sph_body, const std::string &variable_name)
+        : LocalDynamicsReduce<VariableType, ReduceMax>(sph_body, ZeroData<VariableType>::value),
+          GeneralDataDelegateSimple(sph_body),
+          variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+    {
+        this->quantity_name_ = variable_name + "Maximum";
+    };
+    virtual ~QuantityMaximum(){};
+
+    VariableType reduce(size_t index_i, Real dt = 0.0)
+    {
+        return variable_[index_i];
+    }
+};
+
+/**
  * @class QuantityMoment
  * @brief Compute the moment of a body
  */
@@ -286,33 +314,6 @@ class QuantityMoment : public QuantitySummation<VariableType>
     {
         return mass_[index_i] * this->variable_[index_i];
     };
-};
-
-/**
- * @class QuantityMaximum
- * @brief Compute the maximum of a particle variable in a body
- */
-template <typename VariableType>
-class QuantityMaximum : public LocalDynamicsReduce<VariableType, ReduceMax>,
-    public GeneralDataDelegateSimple
-{
-protected:
-    StdLargeVec<VariableType>& variable_;
-
-public:
-    explicit QuantityMaximum(SPHBody& sph_body, const std::string& variable_name)
-        : LocalDynamicsReduce<VariableType, ReduceMax>(sph_body, ZeroData<VariableType>::value),
-        GeneralDataDelegateSimple(sph_body),
-        variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
-    {
-        this->quantity_name_ = variable_name + "Maximum";
-    };
-    virtual ~QuantityMaximum() {};
-
-    VariableType reduce(size_t index_i, Real dt = 0.0)
-    {
-        return variable_[index_i];
-    }
 };
 
 /**

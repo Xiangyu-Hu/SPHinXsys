@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 50.0;                        /**< Channel length. */
 Real DH = 30.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 6.0;      /**< Initial reference particle spacing. */
+Real resolution_ref = 1.0 / 5.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(true);
     // Handle command line arguments and override the tags for particle relaxation and reload.
@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineComponentLevelSetShape("OuterBoundary");
+    water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
@@ -102,7 +102,7 @@ int main(int ac, char *av[])
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 2.0);
-    cylinder.defineBodyLevelSetShape();
+    cylinder.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
@@ -114,7 +114,9 @@ int main(int ac, char *av[])
     //	Note that the same relation should be defined only once.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block, {&cylinder});
+    ComplexRelation water_block_complex_correction(water_block, {&cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
+    InnerRelation cylinder_inner(cylinder);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -132,9 +134,13 @@ int main(int ac, char *av[])
         InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_inner(cylinder_inner);
         InteractionWithUpdate<KernelCorrectionMatrixComplexWithLevelSet> kernel_correction_complex(water_block_complex, "OuterBoundary");
         relax_dynamics::RelaxationStepInnerImplicit relaxation_step_inner(cylinder_inner, true);
-        relax_dynamics::RelaxationStepComplexImplicit relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+        relax_dynamics::RelaxationStepComplexImplicit<CorrectionMatrixRelaxation> relaxation_step_complex(water_block_complex, "OuterBoundary", true);
         SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_block_inner);
         SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_cylinder_kietic_energy(cylinder_inner);
+        ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_block, "ParticleKineticEnergy");
+        ReduceDynamics<Average<QuantitySummation<Real>>> calculate_cylinder_average_kinetic_energy(cylinder, "ParticleKineticEnergy");
+        ReduceDynamics<QuantityMaximum<Real>> calculate_water_block_maximum_kinetic_energy(water_block, "ParticleKineticEnergy");
+        ReduceDynamics<QuantityMaximum<Real>> calculate_cylinder_maximum_kinetic_energy(cylinder, "ParticleKineticEnergy");
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -144,8 +150,11 @@ int main(int ac, char *av[])
         relaxation_step_complex.SurfaceBounding().exec();
         write_real_body_states.writeToFile(0);
 
+        Real water_block_kinetic_energy = 100.0;
+        Real cylinder_kinetic_energy = 100.0;
+
         int ite_p = 0;
-        while (ite_p < 1000)
+        while (water_block_kinetic_energy > 0.05 || cylinder_kinetic_energy > 0.05)
         {
             kernel_correction_inner.exec();
             relaxation_step_inner.exec();
@@ -156,11 +165,21 @@ int main(int ac, char *av[])
             {
                 update_water_block_kinetic_energy.exec();
                 update_cylinder_kietic_energy.exec();
+                water_block_kinetic_energy = calculate_water_block_maximum_kinetic_energy.exec();
+                cylinder_kinetic_energy = calculate_cylinder_maximum_kinetic_energy.exec();
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
                 write_real_body_states.writeToFile(ite_p);
             }
         }
         std::cout << "The physics relaxation process finish !" << std::endl;
+
+        std::cout << "Maximum residual: "
+                  << " cylinder: " << calculate_cylinder_maximum_kinetic_energy.exec()
+                  << " water_block: " << calculate_water_block_maximum_kinetic_energy.exec() << std::endl;
+
+        std::cout << "Average residual: "
+                  << " cylinder: " << calculate_cylinder_average_kinetic_energy.exec()
+                  << " water_block: " << calculate_water_block_average_kinetic_energy.exec() << std::endl;
 
         write_real_body_particle_reload_files.writeToFile(0);
 
@@ -170,10 +189,12 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex_correction);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex_correction);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix_correction(water_block_complex_correction);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
+    InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_matrix_cylinder(cylinder_inner);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
@@ -208,6 +229,7 @@ int main(int ac, char *av[])
     water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
     kernel_correction_matrix.exec();
+    kernel_correction_matrix_correction.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

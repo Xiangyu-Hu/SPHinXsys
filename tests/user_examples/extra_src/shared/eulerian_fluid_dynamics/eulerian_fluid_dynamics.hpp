@@ -11,7 +11,8 @@ template <class RiemannSolverType>
 EulerianIntegration1stHalf<RiemannSolverType>::
     EulerianIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
-      acc_prior_(particles_->acc_prior_)
+      acc_prior_(particles_->acc_prior_),
+      B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity()))
 {
     particles_->registerVariable(mom_, "Momentum");
     particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
@@ -31,9 +32,11 @@ void EulerianIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, 
 
         FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
         FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
+        FluidStarStateConsistency interface_state_consistency = riemann_solver_.getInterfaceState(state_i, state_j, B_[index_i], B_[index_j], e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
-        momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        //momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        momentum_change_rate -= 2.0 * ((rho_star * interface_state_consistency.vel_) * interface_state_consistency.vel_.transpose() + interface_state_consistency.p_B_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
     dmom_dt_[index_i] = momentum_change_rate;
 }
@@ -56,6 +59,7 @@ void EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfType>::interac
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        StdLargeVec<Matd> &B_k = *(this->wall_B_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -68,9 +72,11 @@ void EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfType>::interac
             Real rho_in_wall = state_i.rho_;
             FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
             FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
+            FluidStarStateConsistency interface_state_consistency = this->riemann_solver_.getInterfaceState(state_i, state_j, this->B_[index_i], B_k[index_j], e_ij);
             Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
-            momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+            //momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+            momentum_change_rate -= 2.0 * ((rho_star * interface_state_consistency.vel_) * interface_state_consistency.vel_.transpose() + interface_state_consistency.p_B_ * Matd::Identity()) * e_ij * dW_ijV_j;
         }
     }
     this->dmom_dt_[index_i] += momentum_change_rate;

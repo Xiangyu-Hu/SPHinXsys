@@ -41,6 +41,28 @@ namespace SPH
 class GeometryShape;
 class LevelSetShape;
 
+class PressureRelaxation
+{
+  public:
+    PressureRelaxation(){};
+
+    Real getBackgroundForce(Matd Bi, Matd Bj)
+    {
+        return 2.0;
+    };
+};
+
+class CorrectionMatrixRelaxation
+{
+  public:
+    CorrectionMatrixRelaxation(){};
+
+    Matd getBackgroundForce(Matd Bi, Matd Bj)
+    {
+        return (Bi + Bj);
+    };
+};
+
 namespace relax_dynamics
 {
 typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
@@ -67,28 +89,6 @@ class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
 
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value);
-};
-
-class PressureRelaxation
-{
-  public:
-    PressureRelaxation(){};
-
-    Real getBackgroundForce(Matd Bi, Matd Bj)
-    {
-        return 2.0;
-    };
-};
-
-class CorrectionMatrixRelaxation
-{
-  public:
-    CorrectionMatrixRelaxation(){};
-
-    Matd getBackgroundForce(Matd Bi, Matd Bj)
-    {
-        return (Bi + Bj);
-    };
 };
 
 /**
