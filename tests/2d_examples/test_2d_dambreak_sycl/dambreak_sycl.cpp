@@ -203,7 +203,30 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl).wait();
+            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl)
+                .then([&, number_of_iterations=number_of_iterations, advection_dt=advection_dt, acoustic_dt=acoustic_dt]{
+                          /** screen output, write body reduced values and restart files  */
+                          if (number_of_iterations % screen_output_interval == 0)
+                          {
+                              std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                                        << GlobalStaticVariables::physical_time_
+                                        << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
+
+                              if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                              {
+                                  time_instance = TickCount::now();
+                                  write_water_mechanical_energy.writeToFile(number_of_iterations);
+                                  write_recorded_water_pressure.writeToFile(number_of_iterations);
+                                  interval_writing_files += TickCount::now() - time_instance;
+                              }
+                              if (number_of_iterations % restart_output_interval == 0)
+                              {
+                                  time_instance = TickCount::now();
+                                  restart_io.writeToFile(number_of_iterations);
+                                  interval_writing_files += TickCount::now() - time_instance;
+                              }
+                          }
+                }).wait();
             interval_updating_configuration += TickCount::now() - time_instance;
 
             /** Submit task to copy data from device to host in preparation of next file output */
@@ -214,27 +237,6 @@ int main(int ac, char *av[])
             system_configuration_update_event = water_block_complex.updateDeviceConfiguration().add(
                 fluid_observer_contact.updateDeviceConfiguration());
 
-            /** screen output, write body reduced values and restart files  */
-            if (number_of_iterations % screen_output_interval == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
-                          << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    time_instance = TickCount::now();
-                    write_water_mechanical_energy.writeToFile(number_of_iterations);
-                    write_recorded_water_pressure.writeToFile(number_of_iterations);
-                    interval_writing_files += TickCount::now() - time_instance;
-                }
-                if (number_of_iterations % restart_output_interval == 0)
-                {
-                    time_instance = TickCount::now();
-                    restart_io.writeToFile(number_of_iterations);
-                    interval_writing_files += TickCount::now() - time_instance;
-                }
-            }
             number_of_iterations++;
         }
 
