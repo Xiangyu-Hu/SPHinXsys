@@ -53,14 +53,6 @@ struct FluidStarState
         : vel_(vel), p_(p){};
 };
 
-struct FluidStarStateConsistency
-{
-    Vecd vel_;
-    Matd p_B_;
-    FluidStarStateConsistency(Vecd vel, Matd p_B)
-        : vel_(vel), p_B_(p_B){};
-};
-
 class Fluid;
 
 /**

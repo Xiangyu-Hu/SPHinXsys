@@ -41,7 +41,6 @@ void BaseIntegration1stHalfCorrect<RiemannSolverType>::interaction(size_t index_
     this->drho_dt_[index_i] = rho_dissipation * this->rho_[index_i];
 }
 //=================================================================================================//
-//=================================================================================================//
 template <class RiemannSolverType>
 BaseIntegration1stHalfConsistencyCorrect<RiemannSolverType>::BaseIntegration1stHalfConsistencyCorrect(BaseInnerRelation& inner_relation)
     : BaseIntegration1stHalf<RiemannSolverType>(inner_relation),

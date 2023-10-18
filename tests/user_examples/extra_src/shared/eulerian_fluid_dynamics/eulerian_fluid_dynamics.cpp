@@ -18,20 +18,6 @@ FluidStarState EulerianNoRiemannSolver::getInterfaceState(const FluidState &stat
     return interface_state;
 }
 //=================================================================================================//
-FluidStarStateConsistency EulerianNoRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j,
-                                                          const Matd &B_i, const Matd &B_j, const Vecd &e_ij)
-{
-    Real ul = -e_ij.dot(state_i.vel_);
-    Real ur = -e_ij.dot(state_j.vel_);
-    Matd p_star = (rho0c0_i_ * state_j.p_ * B_j + rho0c0_j_ * state_i.p_ * B_i) * inv_rho0c0_sum_;
-    Real u_star = (rho0c0_i_ * ul + rho0c0_j_ * ur) * inv_rho0c0_sum_;
-    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) 
-        - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
-    FluidStarStateConsistency interface_state(vel_star, p_star);
-
-    return interface_state;
-};
-//=================================================================================================//
 FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
@@ -47,21 +33,25 @@ FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState
     return interface_state;
 }
 //=================================================================================================//
-FluidStarStateConsistency EulerianAcousticRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j,
-                                                                           const Matd &B_i, const Matd &B_j, const Vecd &e_ij)
+Real NoRiemannSolverEulerian::DissipativePJump(const Real &u_jump)
 {
-    Real ul = -e_ij.dot(state_i.vel_);
-    Real ur = -e_ij.dot(state_j.vel_);
-    Matd p_star = (rho0c0_i_ * state_j.p_ * B_j + rho0c0_j_ * state_i.p_ * B_i) * inv_rho0c0_sum_ + 
-                   0.5 * rho0c0_geo_ave_ * Matd::Identity() * (ul - ur) * SMIN<Real>(5.0 * SMAX<Real>((ul - ur) * inv_c_ave_, Real(0)), Real(1));
-    Real u_star = (rho0c0_i_ * ul + rho0c0_j_ * ur) * inv_rho0c0_sum_ + ((state_i.p_ - state_j.p_) * 
-                   pow(SMIN<Real>(5.0 * SMAX<Real>((ul - ur) * inv_c_ave_, Real(0)), Real(1)), 2)) * inv_rho0c0_sum_;
-    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - 
-                     e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
-    FluidStarStateConsistency interface_state(vel_star, p_star);
-
-    return interface_state;
+    return 0.0;
+};
+//=================================================================================================//
+Real NoRiemannSolverEulerian::DissipativeUJump(const Real &p_jump, const Real &u_jump)
+{
+    return 0.0;
+};
+//=================================================================================================//
+Real AcousticRiemannSolverEulerian::DissipativePJump(const Real &u_jump)
+{
+    return 0.5 * rho0c0_geo_ave_ * u_jump * SMIN<Real>(5.0 * SMAX<Real>(u_jump * inv_c_ave_, Real(0)), Real(1));
 }
+//=================================================================================================//
+Real AcousticRiemannSolverEulerian::DissipativeUJump(const Real &p_jump, const Real &u_jump)
+{
+    return p_jump * pow(SMIN<Real>(5.0 * SMAX<Real>(u_jump * inv_c_ave_, Real(0)), Real(1)), 2) * inv_rho0c0_sum_;
+};
 //=================================================================================================//
 SmearedSurfaceIndication::SmearedSurfaceIndication(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
