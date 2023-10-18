@@ -5,6 +5,18 @@ namespace SPH
 namespace relax_dynamics
 {
 //=================================================================================================//
+RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
+    : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)){};
+//=================================================================================================//
+RelaxationResidue<Inner<>>::
+    RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name)
+    : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation)
+{
+    ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *sph_body_.body_shape_);
+    level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
+}
+//=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Vecd residue = Vecd::Zero();
@@ -15,19 +27,6 @@ void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
     }
     residue_[index_i] = residue;
 };
-//=================================================================================================//
-RelaxationResidue<Inner<LevelSetCorrection>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation)
-    : RelaxationResidue<Inner<>>(inner_relation), pos_(particles_->pos_),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)) {}
-//=================================================================================================//
-RelaxationResidue<Inner<LevelSetCorrection>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name)
-    : RelaxationResidue<Inner<>>(inner_relation), pos_(particles_->pos_)
-{
-    ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *sph_body_.body_shape_);
-    level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
-}
 //=================================================================================================//
 void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
