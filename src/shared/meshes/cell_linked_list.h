@@ -67,7 +67,7 @@ class BaseCellLinkedList : public BaseMeshField
     /** access concrete cell linked list levels*/
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
     /** update the cell lists */
-    virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
+    virtual execution::ExecutionEvent UpdateCellLists(BaseParticles &base_particles) = 0;
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
     /** Insert a cell-linked_list entry of the index and particle position pair. */
@@ -88,12 +88,13 @@ class CellLinkedListKernel {
     CellLinkedListKernel(BaseParticles& particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                          const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells);
 
-    void clearCellLists();
-    void UpdateCellLists(BaseParticles &base_particles);
+    execution::ExecutionEvent clearCellLists();
+    execution::ExecutionEvent UpdateCellLists(BaseParticles &base_particles);
 
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-    void searchNeighborsByParticles(DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
-                                    GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
+    execution::ExecutionEvent searchNeighborsByParticles(DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
+                                    GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
+                                                         execution::ExecutionEvent dependency_event = {});
 
     size_t* computingSequence(BaseParticles &baseParticles);
 
@@ -152,7 +153,7 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh,
 
     void clearCellLists();
     void UpdateCellListData(BaseParticles &base_particles);
-    virtual void UpdateCellLists(BaseParticles &base_particles) override;
+    virtual execution::ExecutionEvent UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
@@ -187,7 +188,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
                              size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation);
     virtual ~MultilevelCellLinkedList(){};
 
-    virtual void UpdateCellLists(BaseParticles &base_particles) override;
+    virtual execution::ExecutionEvent UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };

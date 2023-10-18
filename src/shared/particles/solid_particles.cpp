@@ -30,16 +30,18 @@ void SolidParticles::registerDeviceMemory() {
         registerDeviceVariable<DeviceVecd>("InitialNormal", total_real_particles_, n0_.data());
 }
 
-void SolidParticles::copyToDeviceMemory() {
-    BaseParticles::copyToDeviceMemory();
-    copyDataToDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_);
-    copyDataToDevice(n0_.data(), getDeviceVariableByName<DeviceVecd>("InitialNormal"), total_real_particles_);
+execution::ExecutionEvent SolidParticles::copyToDeviceMemory() {
+    auto copy_events = BaseParticles::copyToDeviceMemory();
+    copy_events.add(copyDataToDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_));
+    copy_events.add(copyDataToDevice(n0_.data(), getDeviceVariableByName<DeviceVecd>("InitialNormal"), total_real_particles_));
+    return std::move(copy_events);
 }
 
-void SolidParticles::copyFromDeviceMemory() {
-    BaseParticles::copyFromDeviceMemory();
-    copyDataFromDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_);
-    copyDataFromDevice(n0_.data(), getDeviceVariableByName<DeviceVecd>("InitialNormal"), total_real_particles_);
+execution::ExecutionEvent SolidParticles::copyFromDeviceMemory() {
+    auto copy_events = BaseParticles::copyFromDeviceMemory();
+    copy_events.add(copyDataFromDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(n0_.data(), getDeviceVariableByName<DeviceVecd>("InitialNormal"), total_real_particles_));
+    return std::move(copy_events);
 }
 
 //=============================================================================================//

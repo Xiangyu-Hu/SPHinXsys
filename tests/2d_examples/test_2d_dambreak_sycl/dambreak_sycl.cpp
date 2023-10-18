@@ -118,8 +118,8 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists(execution::par_sycl);
-    sph_system.initializeSystemDeviceConfigurations();
+    sph_system.initializeSystemCellLinkedLists(execution::par_sycl).wait();
+    auto system_configuration_update_event = sph_system.initializeSystemDeviceConfigurations();
 
     wall_boundary_normal_direction.exec();
     wall_boundary.getBaseParticles().copyToDeviceMemory();
@@ -129,9 +129,10 @@ int main(int ac, char *av[])
     if (sph_system.RestartStep() != 0)
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList(execution::par_sycl);
-        water_block_complex.updateDeviceConfiguration();
-        fluid_observer_contact.updateDeviceConfiguration();
+        water_block.updateCellLinkedList(execution::par_sycl).wait();
+        system_configuration_update_event.wait();
+        system_configuration_update_event.add(water_block_complex.updateDeviceConfiguration())
+            .add(fluid_observer_contact.updateDeviceConfiguration());
     }
 
     //----------------------------------------------------------------------
@@ -151,11 +152,13 @@ int main(int ac, char *av[])
     TimeInterval interval_computing_time_step;
     TimeInterval interval_computing_fluid_pressure_relaxation;
     TimeInterval interval_updating_configuration;
+    TimeInterval interval_writing_files;
     TickCount time_instance;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile();
+    auto async_body_states_copy_event = body_states_recording.copyDeviceData();
+    async_body_states_copy_event.then([&] { body_states_recording.writeToFile(); }).wait();
     write_water_mechanical_energy.writeToFile(number_of_iterations);
     write_recorded_water_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
@@ -171,8 +174,16 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
-            fluid_density_by_summation.exec();
+            interval_computing_time_step += TickCount::now() - time_instance;
 
+            /** Wait on system configuration to finish updating */
+            time_instance = TickCount::now();
+            system_configuration_update_event.wait();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** Evaluation of density by summation */
+            time_instance = TickCount::now();
+            fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -190,6 +201,19 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
+            /** Update cell linked list and configuration. */
+            time_instance = TickCount::now();
+            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl).wait();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** Submit task to copy data from device to host in preparation of next file output */
+            if (integration_time >= output_interval)
+                async_body_states_copy_event = body_states_recording.copyDeviceData();
+
+            /** Submit task for system configuration update */
+            system_configuration_update_event = water_block_complex.updateDeviceConfiguration().add(
+                fluid_observer_contact.updateDeviceConfiguration());
+
             /** screen output, write body reduced values and restart files  */
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -199,30 +223,30 @@ int main(int ac, char *av[])
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
+                    time_instance = TickCount::now();
                     write_water_mechanical_energy.writeToFile(number_of_iterations);
                     write_recorded_water_pressure.writeToFile(number_of_iterations);
+                    interval_writing_files += TickCount::now() - time_instance;
                 }
                 if (number_of_iterations % restart_output_interval == 0)
+                {
+                    time_instance = TickCount::now();
                     restart_io.writeToFile(number_of_iterations);
+                    interval_writing_files += TickCount::now() - time_instance;
+                }
             }
             number_of_iterations++;
-
-            /** Update cell linked list and configuration. */
-            time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl);
-            water_block_complex.updateDeviceConfiguration();
-            fluid_observer_contact.updateDeviceConfiguration();
-            interval_updating_configuration += TickCount::now() - time_instance;
         }
 
-        body_states_recording.copyDeviceData();
-        body_states_recording.writeToFile();
+        time_instance = TickCount::now();
+        async_body_states_copy_event.then([&] { body_states_recording.writeToFile(); }).wait();
+        interval_writing_files += TickCount::now() - time_instance;
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
 
-    water_block.getBaseParticles().copyFromDeviceMemory();
+    executionQueue.getQueue().wait_and_throw();
 
     TickCount t4 = TickCount::now();
 
@@ -236,6 +260,8 @@ int main(int ac, char *av[])
               << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_writing_files = "
+              << interval_writing_files.seconds() << "\n";
 
     if (sph_system.generate_regression_data_)
     {

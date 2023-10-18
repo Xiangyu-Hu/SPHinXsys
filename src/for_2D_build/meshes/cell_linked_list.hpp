@@ -45,19 +45,21 @@ void CellLinkedList::searchNeighborsByParticles(
 }
 //=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-void CellLinkedListKernel::searchNeighborsByParticles(
+ExecutionEvent CellLinkedListKernel::searchNeighborsByParticles(
     DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
-    GetSearchDepth &get_search_depth, GetNeighborRelation& get_neighbor_relation)
+    GetSearchDepth &get_search_depth, GetNeighborRelation& get_neighbor_relation,
+    execution::ExecutionEvent dependency_event)
 {
     auto *pos = dynamics_range.getBaseParticles().template getDeviceVariableByName<DeviceVec2d>("Position");
     auto get_neighbor_relation_kernel = *get_neighbor_relation.getDeviceProxy().getKernel();
     const int search_depth = get_search_depth(0);
     const auto loop_range = dynamics_range.LoopRange();
-    executionQueue.getQueue()
+    return executionQueue.getQueue()
         .submit(
             [&, index_list=index_list_, index_head_list=index_head_list_, list_data_pos=list_data_pos_,
              list_data_Vol=list_data_Vol_, mesh_lower_bound=mesh_lower_bound_,
              grid_spacing=grid_spacing_, all_grid_points=all_grid_points_, all_cells=all_cells_](sycl::handler &cgh) {
+                cgh.depends_on(dependency_event.getEventList());
                 cgh.parallel_for(executionQueue.getUniformNdRange(loop_range), [=](sycl::nd_item<1> it) {
                                      const size_t index_i = it.get_global_id(0);
                                      if(index_i < loop_range)
@@ -81,7 +83,7 @@ void CellLinkedListKernel::searchNeighborsByParticles(
                                              });
                                      }
                                  });
-            }).wait_and_throw();
+            });
 }
 //=================================================================================================//
 } // namespace SPH

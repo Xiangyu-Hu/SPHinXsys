@@ -243,19 +243,19 @@ class RealBody : public SPHBody
     bool getUseSplitCellLists() { return use_split_cell_lists_; };
     SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
     template<class ExecutionPolicy = execution::ParallelPolicy>
-    void updateCellLinkedList(ExecutionPolicy execution_policy = execution::par)
+    execution::ExecutionEvent updateCellLinkedList(ExecutionPolicy execution_policy = execution::par)
     {
-        getCellLinkedList(execution_policy).UpdateCellLists(*base_particles_);
-        base_particles_->total_ghost_particles_ = 0;
+        return getCellLinkedList(execution_policy).UpdateCellLists(*base_particles_)
+            .then([=]() { base_particles_->total_ghost_particles_ = 0; });
     }
     template<class ExecutionPolicy = execution::ParallelPolicy>
-    void updateCellLinkedListWithParticleSort(size_t particle_sort_period, ExecutionPolicy execution_policy = execution::par)
+    execution::ExecutionEvent updateCellLinkedListWithParticleSort(size_t particle_sort_period, ExecutionPolicy execution_policy = execution::par)
     {
         if (iteration_count_ % particle_sort_period == 0)
                 base_particles_->sortParticles(getCellLinkedList(execution_policy), execution_policy);
 
         iteration_count_++;
-        updateCellLinkedList(execution_policy);
+        return updateCellLinkedList(execution_policy);
     }
 };
 } // namespace SPH

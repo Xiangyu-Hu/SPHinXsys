@@ -68,8 +68,8 @@ class SolidParticles : public BaseParticles
     virtual SolidParticles *ThisObjectPtr() override { return this; };
 
     void registerDeviceMemory() override;
-    void copyToDeviceMemory() override;
-    void copyFromDeviceMemory() override;
+    execution::ExecutionEvent copyToDeviceMemory() override;
+    execution::ExecutionEvent copyFromDeviceMemory() override;
 };
 
 /**

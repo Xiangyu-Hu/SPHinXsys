@@ -71,10 +71,12 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     writeWithFileName(padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
-void BodyStatesRecording::copyDeviceData() const {
+execution::ExecutionEvent BodyStatesRecording::copyDeviceData() const {
+    execution::ExecutionEvent copy_events;
     for(auto* body : bodies_)
         if (body->checkNewlyUpdated())
-            body->getBaseParticles().copyFromDeviceMemory();
+            copy_events.add(body->getBaseParticles().copyFromDeviceMemory());
+    return std::move(copy_events);
 }
 //=============================================================================================//
 RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)

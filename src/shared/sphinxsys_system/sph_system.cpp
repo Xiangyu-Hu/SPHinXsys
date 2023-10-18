@@ -22,10 +22,12 @@ void SPHSystem::initializeSystemCellLinkedLists()
     }
 }
 //=================================================================================================//
-void SPHSystem::initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy execution_policy)
+execution::ExecutionEvent SPHSystem::initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy execution_policy)
 {
+    execution::ExecutionEvent update_events;
     for (auto &body : real_bodies_)
-        DynamicCast<RealBody>(this, body)->updateCellLinkedList(execution_policy);
+        update_events.add(DynamicCast<RealBody>(this, body)->updateCellLinkedList(execution_policy));
+    return std::move(update_events);
 }
 //=================================================================================================//
 void SPHSystem::initializeSystemConfigurations()
@@ -39,11 +41,13 @@ void SPHSystem::initializeSystemConfigurations()
     }
 }
 //=================================================================================================//
-void SPHSystem::initializeSystemDeviceConfigurations()
+execution::ExecutionEvent SPHSystem::initializeSystemDeviceConfigurations()
 {
+    execution::ExecutionEvent update_events;
     for (auto &body : sph_bodies_)
         for (auto & body_relation : body->body_relations_)
-            body_relation->updateDeviceConfiguration();
+            update_events.add(body_relation->updateDeviceConfiguration());
+    return update_events;
 }
 //=================================================================================================//
 Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)

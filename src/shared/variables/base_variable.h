@@ -68,7 +68,7 @@ public:
             : BaseVariable(name), device_addr_(allocateDeviceData<DeviceDataType>(size)), size_(size)
     {
         if constexpr(std::negation_v<std::is_same<HostDataType, void>>)
-            copyDataToDevice(host_value, device_addr_, size);
+            copyDataToDevice(host_value, device_addr_, size).wait();
     }
     virtual ~DeviceVariable()
     {

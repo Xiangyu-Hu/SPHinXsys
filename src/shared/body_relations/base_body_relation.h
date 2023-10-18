@@ -116,7 +116,7 @@ class SPHRelation
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void resizeConfiguration() = 0;
     virtual void updateConfiguration() = 0;
-    virtual void updateDeviceConfiguration() {}
+    virtual execution::ExecutionEvent updateDeviceConfiguration() { return {}; }
 };
 
 /**
@@ -127,7 +127,7 @@ class BaseInnerRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    virtual void resetNeighborhoodDeviceCurrentSize();
+    virtual execution::ExecutionEvent resetNeighborhoodDeviceCurrentSize();
 
   public:
     RealBody *real_body_;
@@ -152,7 +152,7 @@ class BaseContactRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    virtual void resetNeighborhoodDeviceCurrentSize();
+    virtual execution::ExecutionEvent resetNeighborhoodDeviceCurrentSize();
 
   private:
     bool device_configuration_allocated_;
