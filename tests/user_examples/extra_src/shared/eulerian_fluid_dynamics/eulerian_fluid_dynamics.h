@@ -99,6 +99,7 @@ class EulerianIntegration1stHalf : public BaseIntegration
 };
 /** define the mostly used pressure relaxation scheme using Riemann solver */
 using EulerianIntegration1stHalfAcousticRiemann = EulerianIntegration1stHalf<EulerianAcousticRiemannSolver>;
+using EulerianIntegration1stHalfNoRiemann = EulerianIntegration1stHalf<EulerianNoRiemannSolver>;
 
 /**
  * @class EulerianIntegration1stHalfWithWall
@@ -118,6 +119,7 @@ class EulerianIntegration1stHalfWithWall : public InteractionWithWall<EulerianIn
     void interaction(size_t index_i, Real dt = 0.0);
 };
 using EulerianIntegration1stHalfAcousticRiemannWithWall = EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfAcousticRiemann>;
+using EulerianIntegration1stHalfNoRiemannWithWall = EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfNoRiemann>;
 
 /**
  * @class EulerianIntegration2ndHalf
@@ -136,6 +138,7 @@ class EulerianIntegration2ndHalf : public BaseIntegration
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<EulerianAcousticRiemannSolver>;
+using EulerianIntegration2ndHalfNoRiemann = EulerianIntegration2ndHalf<EulerianNoRiemannSolver>;
 
 /**
  * @class EulerianIntegration2ndHalfWithWall
@@ -155,6 +158,7 @@ class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<EulerianIn
     void interaction(size_t index_i, Real dt = 0.0);
 };
 using EulerianIntegration2ndHalfAcousticRiemannWithWall = EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfAcousticRiemann>;
+using EulerianIntegration2ndHalfNoRiemannWithWall = EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfNoRiemann>;
 
 /**
  * @class  NoRiemannSolverEulerian
@@ -236,6 +240,8 @@ class EulerianIntegration1stHalfWithWallConsistency : public InteractionWithWall
 };
 using EulerianIntegration1stHalfAcousticRiemannWithWallConsistency =
     EulerianIntegration1stHalfWithWallConsistency<EulerianIntegration1stHalfAcousticRiemannConsistency>;
+using EulerianIntegration1stHalfNoRiemannWithWallConsistency =
+    EulerianIntegration1stHalfWithWallConsistency<EulerianIntegration1stHalfNoRiemannConsistency>;
 
 /**
  * @class EulerianIntegration2ndHalfConsistency
@@ -273,8 +279,10 @@ class EulerianIntegration2ndHalfWithWallConsistency : public InteractionWithWall
     virtual ~EulerianIntegration2ndHalfWithWallConsistency(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
-using EulerianIntegration2ndHalfAcousticRiemannWithWallConsistency = 
-EulerianIntegration2ndHalfWithWallConsistency<EulerianIntegration2ndHalfAcousticRiemannConsistency>;
+using EulerianIntegration2ndHalfAcousticRiemannWithWallConsistency =
+    EulerianIntegration2ndHalfWithWallConsistency<EulerianIntegration2ndHalfAcousticRiemannConsistency>;
+using EulerianIntegration2ndHalfNoRiemannWithWallConsistency =
+    EulerianIntegration2ndHalfWithWallConsistency<EulerianIntegration2ndHalfNoRiemannConsistency>;
 
 /**
  * @class SmearedSurfaceIndication
