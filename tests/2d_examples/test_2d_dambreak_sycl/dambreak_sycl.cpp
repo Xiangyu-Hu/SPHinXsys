@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step(water_block);
 
-    water_block.getBaseParticles().copyToDeviceMemory();
+    water_block.getBaseParticles().copyToDeviceMemory().wait();
     executionQueue.setWorkGroupSize(16);
 
     //----------------------------------------------------------------------
@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     auto system_configuration_update_event = sph_system.initializeSystemDeviceConfigurations();
 
     wall_boundary_normal_direction.exec();
-    wall_boundary.getBaseParticles().copyToDeviceMemory();
+    wall_boundary.getBaseParticles().copyToDeviceMemory().wait();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
