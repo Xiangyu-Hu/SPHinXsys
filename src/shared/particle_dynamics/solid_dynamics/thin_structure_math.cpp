@@ -193,5 +193,24 @@ Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
     return correction_matrix;
 }
 //=================================================================================================//
+Real get_mean_curvature(const Matd &dn)
+{
+    return 0.5 * dn.trace();
+}
+//=================================================================================================//
+Real get_Gaussian_curvature(Real H, const Matd &dn)
+{
+    Real sum = 0;
+    for (int i = 0; i < Dimensions; i++)
+        for (int j = 0; j < Dimensions; j++)
+            sum += dn(i, j) * dn(i, j);
+    return 0.5 * (4 * H * H - sum);
+}
+//=================================================================================================//
+Real get_Gaussian_curvature(const Matd &dn)
+{
+    return get_Gaussian_curvature(get_mean_curvature(dn), dn);
+}
+//=================================================================================================//
 } // namespace thin_structure_dynamics
 } // namespace SPH

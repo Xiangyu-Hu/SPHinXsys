@@ -69,7 +69,7 @@ const int number_of_particles = 10;
 const Real resolution_ref = diameter / number_of_particles;
 const Real inflow_length = resolution_ref * 20.0; // Inflow region
 const Real wall_thickness = resolution_ref * 4.0;
-const Real shell_thickness = resolution_ref * 2.0;
+const Real shell_thickness = resolution_ref;
 const int simtk_resolution = 20;
 const Vec3d translation_fluid(0., full_length * 0.5, 0.);
 /**
@@ -79,9 +79,7 @@ const Real radius_mid_surface = fluid_radius + shell_thickness * 0.5;
 const int particle_number_mid_surface =
     int(2.0 * radius_mid_surface * Pi / resolution_ref);
 const int particle_number_height =
-    2 * int((full_length * 0.5 + wall_thickness) / resolution_ref);
-const int BWD =
-    1; /** Width of the boundary layer measured by number of particles. */
+    int((full_length + 2.0 * wall_thickness) / resolution_ref);
 
 /**
  * @brief Geometry parameters for boundary condition.
@@ -139,18 +137,14 @@ class ShellBoundary : public SurfaceParticleGenerator
         : SurfaceParticleGenerator(sph_body){};
     void initializeGeometricVariables() override
     {
-        for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
+        for (int i = 0; i < particle_number_mid_surface; i++)
         {
             for (int j = 0; j < particle_number_height; j++)
             {
-                Real x = radius_mid_surface *
-                         cos(Pi + (i - BWD + 0.5) * 2 * Pi /
-                                      (Real)particle_number_mid_surface);
-                Real y = (j - particle_number_height / 2) * resolution_ref +
-                         resolution_ref * 0.5 + full_length * 0.5;
-                Real z = radius_mid_surface *
-                         sin(Pi + (i - BWD + 0.5) * 2 * Pi /
-                                      (Real)particle_number_mid_surface);
+                Real theta = (i + 0.5) * 2 * Pi / (Real)particle_number_mid_surface;
+                Real x = radius_mid_surface * cos(theta);
+                Real y = -wall_thickness + (full_length + 2 * wall_thickness) * j / (Real)particle_number_height + 0.5 * resolution_ref;
+                Real z = radius_mid_surface * sin(theta);
                 initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
                                                        resolution_ref * resolution_ref);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
@@ -170,7 +164,7 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(U_f), t_ref_(2.0),
+        : u_ref_(U_f), t_ref_(0.05),
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
@@ -214,19 +208,16 @@ int main()
     shell_boundary.generateParticles<ShellBoundary>();
     /** topology */
     InnerRelation water_inner(water_block);
-    ComplexRelation water_block_complex(water_block, {&shell_boundary});
+    ShellContactRelation water_wall_contact(water_block, {&shell_boundary});
+    ComplexRelation water_block_complex(water_inner, water_wall_contact);
     /**
      * @brief 	Define all numerical methods which are used in this case.
      */
     /**
      * @brief 	Methods used for time stepping.
      */
-    /** Define external force. */
-    SimpleDynamics<NormalDirectionFromBodyShape> shell_boundary_normal_direction(
-        shell_boundary);
     /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(
-        water_block, makeShared<Gravity>(Vec3d(0.0, 0.0, 0.0)));
+    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /**
      * @brief 	Algorithms of fluid dynamics.
      */
@@ -240,7 +231,7 @@ int main()
         update_density_by_summation(water_block_complex);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize>
-        get_fluid_advection_time_step_size(water_block, U_max);
+        get_fluid_advection_time_step_size(water_block, 2 * U_max);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(
         water_block);
@@ -248,7 +239,7 @@ int main()
     Dynamics1Level<fluid_dynamics::FluidShellIntegration1stHalfRiemann>
         pressure_relaxation(water_block_complex);
     /** Pressure relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::FluidShellIntegration2ndHalfRiemann>
+    Dynamics1Level<fluid_dynamics::FluidShellIntegration2ndHalf>
         density_relaxation(water_block_complex);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithShell>
@@ -310,7 +301,7 @@ int main()
      */
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
-    shell_boundary_normal_direction.exec();
+
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
     /**
@@ -318,9 +309,9 @@ int main()
      */
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 10.0;   /**< End time. */
-    Real Output_Time = 0.1; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real end_time = 0.1;     /**< End time. */
+    Real Output_Time = 0.01; /**< Time stamps for output of body states. */
+    Real dt = 0.0;           /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
