@@ -45,7 +45,7 @@ void CellLinkedList::searchNeighborsByParticles(
 }
 //=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-ExecutionEvent CellLinkedListKernel::searchNeighborsByParticles(
+execution::ExecutionEvent CellLinkedListKernel::searchNeighborsByParticles(
     DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
     GetSearchDepth &get_search_depth, GetNeighborRelation& get_neighbor_relation,
     execution::ExecutionEvent dependency_event)
