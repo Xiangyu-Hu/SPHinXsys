@@ -356,17 +356,17 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
 };
 
 /**
- * @class ShellDynamicsInitialCondition
- * @brief  set initial condition for shell particles
- * This is a abstract class to be override for case specific initial conditions.
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
  */
 class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
 {
   public:
-    explicit ShellCurvature(SolidBody &body, BaseInnerRelation &inner_relation);
+    explicit ShellCurvature(BaseInnerRelation &inner_relation);
     virtual ~ShellCurvature(){};
 
     void update(size_t index_i, Real dt);
+    void compute_initial_curvature();
 
   protected:
     StdLargeVec<Vecd> &n0_;
@@ -380,8 +380,6 @@ class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::She
     StdLargeVec<Matd> dn_;
     StdLargeVec<Real> H_;
     StdLargeVec<Real> K_;
-
-    inline void compute_initial_normal_gradient();
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH

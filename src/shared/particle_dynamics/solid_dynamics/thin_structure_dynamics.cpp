@@ -289,7 +289,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-ShellCurvature::ShellCurvature(SolidBody &body, BaseInnerRelation &inner_relation)
+ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
       n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_)
@@ -298,14 +298,9 @@ ShellCurvature::ShellCurvature(SolidBody &body, BaseInnerRelation &inner_relatio
     particles_->registerVariable(dn_, "NormalGradient");
     particles_->registerVariable(H_, "MeanCurvature");
     particles_->registerVariable(K_, "GaussianCurvature");
-
-    // make sure configuration is updated before compute initial configuration
-    body.updateCellLinkedList();
-    inner_relation.updateConfiguration();
-    compute_initial_normal_gradient();
 };
 //=================================================================================================//
-void ShellCurvature::compute_initial_normal_gradient()
+void ShellCurvature::compute_initial_curvature()
 {
     particle_for(
         par,
@@ -333,7 +328,7 @@ void ShellCurvature::update(size_t index_i, Real dt)
     Matd dn_0_i = dn_0_[index_i] + transformation_matrix_[index_i].transpose() *
                                        F_bending_[index_i] * transformation_matrix_[index_i];
     Matd inverse_F = F_[index_i].inverse();
-    dn_[index_i] = dn_0_i * transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
+    dn_[index_i] = dn_0_i * transformation_matrix_[index_i].transpose() * inverse_F * transformation_matrix_[index_i];
     H_[index_i] = get_mean_curvature(dn_[index_i]);
     K_[index_i] = get_Gaussian_curvature(H_[index_i], dn_[index_i]);
 }

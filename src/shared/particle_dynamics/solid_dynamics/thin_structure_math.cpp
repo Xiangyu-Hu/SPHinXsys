@@ -195,7 +195,7 @@ Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
 //=================================================================================================//
 Real get_mean_curvature(const Matd &dn)
 {
-    return 0.5 * dn.trace();
+    return dn.trace();
 }
 //=================================================================================================//
 Real get_Gaussian_curvature(Real H, const Matd &dn)
@@ -204,7 +204,7 @@ Real get_Gaussian_curvature(Real H, const Matd &dn)
     for (int i = 0; i < Dimensions; i++)
         for (int j = 0; j < Dimensions; j++)
             sum += dn(i, j) * dn(i, j);
-    return 0.5 * (4 * H * H - sum);
+    return 0.5 * (H * H - sum);
 }
 //=================================================================================================//
 Real get_Gaussian_curvature(const Matd &dn)

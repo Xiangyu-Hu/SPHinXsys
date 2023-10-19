@@ -7,43 +7,6 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-// //----------------------------------------------------------------------
-// //	Basic geometry parameters and numerical setup.
-// //----------------------------------------------------------------------
-// const Real radius = 1;
-// const Real length = 2;
-// const Real resolution_ref = 0.1;
-// const int particle_number_mid_surface = int(2.0 * radius * Pi / resolution_ref);
-// const int particle_number_height = int(length / resolution_ref);
-// const Real shell_thickness = resolution_ref;
-// /** Domain bounds of the system. */
-// BoundingBox system_domain_bounds(Vec3d(-radius, -radius, 0), Vec3d(radius, radius, length));
-// //----------------------------------------------------------------------
-// //	Define the body shape.
-// //----------------------------------------------------------------------
-// class ShellParticleGenerator : public SurfaceParticleGenerator
-// {
-//   public:
-//     explicit ShellParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-//     virtual void initializeGeometricVariables() override
-//     {
-//         for (int i = 0; i < particle_number_mid_surface; i++)
-//         {
-//             for (int j = 0; j < particle_number_height; j++)
-//             {
-//                 Real theta = (i + 0.5) * 2 * Pi / (Real)particle_number_mid_surface;
-//                 Real x = radius * cos(theta);
-//                 Real y = radius * sin(theta);
-//                 Real z = length * j / (Real)particle_number_height + 0.5 * resolution_ref;
-//                 initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
-//                                                        resolution_ref * resolution_ref);
-//                 Vec3d n_0 = Vec3d(x / radius, y / radius, 0.0);
-//                 initializeSurfaceProperties(n_0, shell_thickness);
-//             }
-//         }
-//     }
-// };
-
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -72,7 +35,7 @@ class ShellParticleGenerator : public SurfaceParticleGenerator
         int particle_number_phi = int(2 * Pi / dphi);
         for (int i = 0; i < particle_number_phi; i++)
         {
-            Real phi = dphi * (i + 0.5);
+            Real phi = dphi * i;
             Real radius_phi = radius * sin(phi);
             Real z = radius * cos(phi);
             int particle_number_theta = int(2 * Pi * radius_phi / resolution_ref);

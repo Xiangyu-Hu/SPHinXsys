@@ -48,7 +48,7 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
         cylinder_rotation_damping(0.2, shell_inner_contact, "AngularVelocity", physical_viscosity);
     /** Compute curvature. */
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_initial_curvature(shell, shell_inner_contact);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_initial_curvature(shell_inner_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -58,6 +58,8 @@ int main(int ac, char *av[])
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
+    // compute initial curvature after B_ is computed
+    shell_initial_curvature.compute_initial_curvature();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

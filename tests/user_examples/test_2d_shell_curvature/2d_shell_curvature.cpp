@@ -26,7 +26,8 @@ int main(int ac, char *av[])
     // Contact
     //----------------------------------------------------------------------
     InnerRelation shell_inner_contact(shell);
-    SimpleDynamics<ShellInitialCurvature> shell_initial_curvature(shell_inner_contact);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_inner_contact);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_inner_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -36,7 +37,8 @@ int main(int ac, char *av[])
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
     // calculate initial curvature
-    shell_initial_curvature.exec();
+    corrected_configuration.exec();
+    shell_curvature.compute_initial_curvature();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
