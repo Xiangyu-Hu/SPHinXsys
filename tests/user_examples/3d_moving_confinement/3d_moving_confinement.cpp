@@ -94,12 +94,11 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
+        Vecd halfsize_out(0.5 * DL + BW, 0.5 * DH_T + BW, 0.5 * DW + BW);
         Vecd halfsize_inner(0.5 * DL, 0.5 * DH_T, 0.5 * DW);
         Vecd translation_point(0.0, 100.0, 0.0);
-        Transform translation_inner(translation_point);
-        Vecd halfsize_out(0.5 * DL + BW, 0.5 * DH_T + BW, 0.5 * DW + BW);
         Transform translation_out(translation_point);
-        
+        Transform translation_inner(translation_point);
         add<TransformShape<GeometricShapeBox>>(Transform(translation_out), halfsize_out);
         subtract<TransformShape<GeometricShapeBox>>(Transform(translation_inner), halfsize_inner);
     }
@@ -202,7 +201,7 @@ int main()
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody wall(system, makeShared<WallBoundary>("Wall"));
-    wall.defineBodyLevelSetShape();
+   // wall.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     wall.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall.generateParticles<ParticleGeneratorLattice>();
     wall.addBodyStateForRecording<Vecd>("NormalDirection");
@@ -214,7 +213,7 @@ int main()
     //imported_model.generateParticles<ParticleGeneratorLattice>();
   
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-   //water_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    water_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -243,7 +242,7 @@ int main()
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
     //Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 
-     RotationMovement rotation_movement(rotation_axis_1, rotation_axis_1, 0.5 * Pi);
+     RotationMovement rotation_movement(rotation_axis_1, rotation_axis_2, 0.5 * Pi);
     //CircleMovement circle_movement(square_center, Pi);
     //HorizontalMovement horizaontal_movement;
     NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Cubic>>("cubic"), rotation_movement);
@@ -251,9 +250,9 @@ int main()
     fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
 
     /** Define the confinement condition for wall. */
-    NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
-    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
-    fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
+    //NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
+    //near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    //fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
    
@@ -262,13 +261,13 @@ int main()
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);*/
     /** Push back the static confinement conditiont to corresponding dynamics. */
-    update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
+    //update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
     update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
-    pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
+    //pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -335,6 +334,8 @@ int main()
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
                 body_states_recording.writeToFile();
+
+
             }
             interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 

@@ -8,14 +8,14 @@
 using namespace SPH;
 
 // general parameters for geometry
-Real resolution_ref = 0.05;   // particle spacing
+Real resolution_ref = 0.5;   // particle spacing
 Real BW = resolution_ref * 4; // boundary width
-Real DL = 5.366;              // tank length
-Real DH = 2.0;                // tank height
-Real DW = 0.5;                // tank width
-Real LL = 2.0;                // liquid length
-Real LH = 1.0;                // liquid height
-Real LW = 0.5;                // liquid width
+Real DL = 50.0;              // tank length
+Real DH = 20.0;                // tank height
+Real DW = 20.0;                // tank width
+Real LL = 20.0;                // liquid length
+Real LH = 10.0;                // liquid height
+Real LW = 20.0;                // liquid width
 
 // for material properties of the fluid
 Real rho0_f = 1.0;
@@ -43,8 +43,8 @@ class WallBoundary : public ComplexShape
         Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
         Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
         Transform translation_wall(halfsize_inner);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
-        //subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
+        //add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
     }
 };
 
@@ -78,14 +78,15 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    water_block.defineBodyLevelSetShape();
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    /*SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
+    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");*/
 
     ObserverBody fluid_observer(system, "FluidObserver");
     fluid_observer.generateParticles<WaterObserverParticleGenerator>();
@@ -94,7 +95,8 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    //ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    InnerRelation water_block_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
@@ -102,12 +104,30 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
+    //Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    //SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
+    /** Define the confinement condition for wall. */
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
+    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
+    /** Define the confinement condition for structure. */
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
+    //update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
+    //pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -123,7 +143,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
-    wall_boundary_normal_direction.exec();
+    //wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -175,7 +195,8 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             water_block.updateCellLinkedListWithParticleSort(100);
-            water_block_complex.updateConfiguration();
+            //water_block_complex.updateConfiguration();
+            water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             write_recorded_water_pressure.writeToFile(number_of_iterations);
         }
