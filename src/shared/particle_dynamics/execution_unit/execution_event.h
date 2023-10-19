@@ -1,10 +1,7 @@
 #ifndef SPHINXSYS_EXECUTIONEVENT_HPP
 #define SPHINXSYS_EXECUTIONEVENT_HPP
 
-#include "execution_policy.h"
-#include <any>
 #include <sycl/sycl.hpp>
-#include <utility>
 
 namespace SPH::execution
 {
