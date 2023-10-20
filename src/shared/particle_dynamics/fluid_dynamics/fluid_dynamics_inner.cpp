@@ -106,7 +106,8 @@ BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
       p_(*particles_->getVariableByName<Real>("Pressure")),
       drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")),
       pos_(particles_->pos_), vel_(particles_->vel_),
-      acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
+      acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
+      B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity())) {}
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf ::
     Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)

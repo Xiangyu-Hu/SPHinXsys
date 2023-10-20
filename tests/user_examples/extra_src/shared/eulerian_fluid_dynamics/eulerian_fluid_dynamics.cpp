@@ -18,6 +18,16 @@ FluidStarState EulerianNoRiemannSolver::getInterfaceState(const FluidState &stat
     return interface_state;
 }
 //=================================================================================================//
+Real EulerianNoRiemannSolver::DissipativePJump(const Real& u_jump)
+{
+    return 0.0;
+};
+//=================================================================================================//
+Real EulerianNoRiemannSolver::DissipativeUJump(const Real& p_jump, const Real& u_jump)
+{
+    return 0.0;
+};
+//=================================================================================================//
 FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
@@ -33,22 +43,12 @@ FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState
     return interface_state;
 }
 //=================================================================================================//
-Real NoRiemannSolverEulerian::DissipativePJump(const Real &u_jump)
-{
-    return 0.0;
-};
-//=================================================================================================//
-Real NoRiemannSolverEulerian::DissipativeUJump(const Real &p_jump, const Real &u_jump)
-{
-    return 0.0;
-};
-//=================================================================================================//
-Real AcousticRiemannSolverEulerian::DissipativePJump(const Real &u_jump)
+Real EulerianAcousticRiemannSolver::DissipativePJump(const Real &u_jump)
 {
     return 0.5 * rho0c0_geo_ave_ * u_jump * SMIN<Real>(5.0 * SMAX<Real>(u_jump * inv_c_ave_, Real(0)), Real(1));
 }
 //=================================================================================================//
-Real AcousticRiemannSolverEulerian::DissipativeUJump(const Real &p_jump, const Real &u_jump)
+Real EulerianAcousticRiemannSolver::DissipativeUJump(const Real &p_jump, const Real &u_jump)
 {
     return p_jump * pow(SMIN<Real>(5.0 * SMAX<Real>(u_jump * inv_c_ave_, Real(0)), Real(1)), 2) * inv_rho0c0_sum_;
 };

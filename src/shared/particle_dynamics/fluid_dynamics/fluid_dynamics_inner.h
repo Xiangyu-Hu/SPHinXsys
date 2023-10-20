@@ -239,6 +239,8 @@ class BaseIntegration : public LocalDynamics, public FluidDataInner
     Fluid &fluid_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Matd>& B_;
+
 };
 
 /**

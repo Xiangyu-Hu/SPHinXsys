@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 50.0;                        /**< Channel length. */
 Real DH = 30.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 5.0;      /**< Initial reference particle spacing. */
+Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */
@@ -189,11 +189,15 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex_correction);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex_correction);
+    //InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWallConsistency> pressure_relaxation(water_block_complex_correction);
+    //InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWallConsistency> density_relaxation(water_block_complex_correction);
+    //InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix_correction(water_block_complex_correction);
+
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWallConsistency> pressure_relaxation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWallConsistency> density_relaxation(water_block_complex);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix_correction(water_block_complex_correction);
-    //InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
+    InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
+    
     InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_matrix_cylinder(cylinder_inner);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
@@ -229,7 +233,7 @@ int main(int ac, char *av[])
     water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
     kernel_correction_matrix.exec();
-    kernel_correction_matrix_correction.exec();
+    //kernel_correction_matrix_correction.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
