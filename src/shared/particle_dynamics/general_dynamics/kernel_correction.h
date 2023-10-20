@@ -60,7 +60,8 @@ class KernelCorrectionMatrix<Inner<>>
   public:
     explicit KernelCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
         : KernelCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
-    explicit KernelCorrectionMatrix(ConstructorArgs<BaseInnerRelation, Real> parameters)
+    template <typename BodyRelationType, typename FirstArg>
+    explicit KernelCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : KernelCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~KernelCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
