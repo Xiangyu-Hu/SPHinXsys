@@ -209,8 +209,9 @@ class NeighborBuilderContactShell : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
-    StdLargeVec<Vecd> &n_;   // normal direction of contact body
-    Real particle_distance_; // reference spacing of contact body
+    StdLargeVec<Vecd> &n_;              // normal direction of contact body
+    StdLargeVec<Real> &mean_curvature_; // mean curvature of contact body
+    Real particle_distance_;            // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         const Vecd &displacement, size_t index_j,

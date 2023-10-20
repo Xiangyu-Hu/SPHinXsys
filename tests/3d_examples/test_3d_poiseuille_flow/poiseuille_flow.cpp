@@ -58,33 +58,40 @@ using namespace SPH;
 const Real scale = 0.001;
 const Real diameter = 6.35 * scale;
 const Real fluid_radius = 0.5 * diameter;
-const Real full_length = 15 * fluid_radius;
-const int number_of_particles = 10;
+const Real full_length = 10 * fluid_radius;
+const int number_of_particles = 15;
 const Real resolution_ref = diameter / number_of_particles;
-const Real inflow_length = resolution_ref * 20.0; // Inflow region
+const Real inflow_length = resolution_ref * 10.0; // Inflow region
 const Real wall_thickness = resolution_ref * 4.0;
 const int simtk_resolution = 20;
 const Vec3d translation_fluid(0., full_length * 0.5, 0.);
 /**
  * @brief Geometry parameters for boundary condition.
  */
-const Vec3d emitter_halfsize = Vec3d(fluid_radius, resolution_ref * 2, fluid_radius);
+const Vec3d emitter_halfsize =
+    Vec3d(fluid_radius, resolution_ref * 2, fluid_radius);
 const Vec3d emitter_translation = Vec3d(0., resolution_ref * 2, 0.);
-const Vec3d emitter_buffer_halfsize = Vec3d(fluid_radius, resolution_ref * 5, fluid_radius);
-const Vec3d emitter_buffer_translation = Vec3d(0., resolution_ref * 5, 0.);
-const Vec3d disposer_halfsize = Vec3d(fluid_radius * 2, resolution_ref * 2, fluid_radius * 2);
-const Vec3d disposer_translation = Vec3d(0., full_length, 0.) - Vec3d(0., disposer_halfsize[1], 0.);
+const Vec3d emitter_buffer_halfsize =
+    Vec3d(fluid_radius, inflow_length * 0.5, fluid_radius);
+const Vec3d emitter_buffer_translation = Vec3d(0., inflow_length * 0.5, 0.);
+const Vec3d disposer_halfsize =
+    Vec3d(fluid_radius * 1.1, resolution_ref * 2, fluid_radius * 1.1);
+const Vec3d disposer_translation =
+    Vec3d(0., full_length, 0.) - Vec3d(0., disposer_halfsize[1], 0.);
 
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-diameter, 0, -diameter) - Vec3d(wall_thickness, wall_thickness, wall_thickness), Vec3d(diameter, full_length, diameter) + Vec3d(wall_thickness, wall_thickness, wall_thickness));
 /**
  * @brief Material properties of the fluid.
  */
-const Real rho0_f = 1000.0;                                          /**< Reference density of fluid. */
-const Real mu_f = 6.5e-3;                                            /**< Viscosity. */
-const Real U_f = 30.0e-6 / 60. / (M_PI / 4.0 * diameter * diameter); /**< Characteristic velocity. Average velocity */
-const Real U_max = 2.0 * U_f;                                        // parabolic inflow, Thus U_max = 2*U_f
-const Real c_f = 10.0 * U_max;                                       /**< Reference sound speed. */
+const Real rho0_f = 1000.0; /**< Reference density of fluid. */
+const Real mu_f = 6.5e-3;   /**< Viscosity. */
+const Real Re = 10;
+// const Real U_f = 30.0e-6 / 60. / (M_PI / 4.0 * diameter * diameter); /**<
+// Characteristic velocity. Average velocity */
+const Real U_f = Re / diameter * mu_f * 0.5;
+const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
+const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 /**
  * @brief Define water shape
  */
@@ -126,10 +133,7 @@ struct InflowVelocity
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = Vec3d(0, 0, 0);
-        if (aligned_box_.checkInBounds(0, position))
-        {
-            target_velocity[1] = 2.0 * U_f * (1.0 - (position[0] * position[0] + position[2] * position[2]) / fluid_radius / fluid_radius);
-        }
+        target_velocity[1] = 2.0 * U_f * (1.0 - (position[0] * position[0] + position[2] * position[2]) / fluid_radius / fluid_radius);
         return target_velocity;
     }
 };
@@ -178,7 +182,7 @@ int main()
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, 2 * U_max);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation algorithm without Riemann solver for viscous flows. */
@@ -208,6 +212,7 @@ int main()
      */
     IOEnvironment io_environment(system);
     water_block.addBodyStateForRecording<int>("PreviousSurfaceIndicator");
+    water_block.addBodyStateForRecording<Real>("Pressure");
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
     /**
@@ -234,9 +239,9 @@ int main()
      */
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 10.0;   /**< End time. */
-    Real Output_Time = 0.1; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real end_time = 0.005;   /**< End time. */
+    Real Output_Time = 0.01; /**< Time stamps for output of body states. */
+    Real dt = 0.0;           /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;

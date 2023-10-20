@@ -62,12 +62,12 @@ using namespace SPH;
  */
 
 const Real scale = 0.001;
-const Real diameter = 6.35 * scale * 1;
+const Real diameter = 6.35 * scale;
 const Real fluid_radius = 0.5 * diameter;
-const Real full_length = 15 * fluid_radius;
-const int number_of_particles = 10;
+const Real full_length = 10 * fluid_radius;
+const int number_of_particles = 15;
 const Real resolution_ref = diameter / number_of_particles;
-const Real inflow_length = resolution_ref * 20.0; // Inflow region
+const Real inflow_length = resolution_ref * 10.0; // Inflow region
 const Real wall_thickness = resolution_ref * 4.0;
 const Real shell_thickness = resolution_ref;
 const int simtk_resolution = 20;
@@ -91,7 +91,7 @@ const Vec3d emitter_buffer_halfsize =
     Vec3d(fluid_radius, inflow_length * 0.5, fluid_radius);
 const Vec3d emitter_buffer_translation = Vec3d(0., inflow_length * 0.5, 0.);
 const Vec3d disposer_halfsize =
-    Vec3d(fluid_radius * 2, resolution_ref * 2, fluid_radius * 2);
+    Vec3d(fluid_radius * 1.1, resolution_ref * 2, fluid_radius * 1.1);
 const Vec3d disposer_translation =
     Vec3d(0., full_length, 0.) - Vec3d(0., disposer_halfsize[1], 0.);
 
@@ -171,13 +171,10 @@ struct InflowVelocity
     Vec3d operator()(Vec3d &position, Vec3d &velocity)
     {
         Vec3d target_velocity = Vec3d(0, 0, 0);
-        if (aligned_box_.checkInBounds(0, position))
-        {
-            target_velocity[1] =
-                2.0 * U_f *
-                (1.0 - (position[0] * position[0] + position[2] * position[2]) /
-                           fluid_radius / fluid_radius);
-        }
+        target_velocity[1] =
+            2.0 * U_f *
+            (1.0 - (position[0] * position[0] + position[2] * position[2]) /
+                       fluid_radius / fluid_radius);
         return target_velocity;
     }
 };
@@ -208,6 +205,10 @@ int main()
     shell_boundary.generateParticles<ShellBoundary>();
     /** topology */
     InnerRelation water_inner(water_block);
+    InnerRelation shell_boundary_inner(shell_boundary);
+    // Curvature calculation
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_boundary_inner);
+    // contact
     ShellContactRelation water_wall_contact(water_block, {&shell_boundary});
     ComplexRelation water_block_complex(water_inner, water_wall_contact);
     /**
@@ -268,17 +269,19 @@ int main()
                                     disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion>
         disposer_outflow_deletion(disposer, yAxis);
-
+    /** Wall boundary configuration correction*/
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     /**
      * @brief Output.
      */
     IOEnvironment io_environment(system);
     water_block.addBodyStateForRecording<int>("PreviousSurfaceIndicator");
-
+    water_block.addBodyStateForRecording<Real>("Pressure");
     shell_boundary.addBodyStateForRecording<double>("MassiveMeasure");
     shell_boundary.addBodyStateForRecording<double>("Density");
     shell_boundary.addBodyStateForRecording<double>("VolumetricMeasure");
     shell_boundary.addBodyStateForRecording<double>("Thickness");
+    shell_boundary.addBodyStateForRecording<Real>("MeanCurvature");
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment,
                                                    system.real_bodies_);
@@ -301,6 +304,10 @@ int main()
      */
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
+    /** initial curvature*/
+    wall_corrected_configuration.exec();
+    shell_curvature.compute_initial_curvature();
+    water_wall_contact.updateConfiguration();
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
@@ -309,7 +316,7 @@ int main()
      */
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 0.1;     /**< End time. */
+    Real end_time = 0.005;   /**< End time. */
     Real Output_Time = 0.01; /**< Time stamps for output of body states. */
     Real dt = 0.0;           /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */

@@ -234,6 +234,7 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 NeighborBuilderContactShell::NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body)
     : NeighborBuilder(),
       n_(*contact_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
+      mean_curvature_(*contact_body.getBaseParticles().getVariableByName<Real>("MeanCurvature")),
       particle_distance_(contact_body.getSPHBodyResolutionRef())
 {
     Kernel *source_kernel = body.sph_adaptation_->getKernel();
@@ -276,31 +277,39 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
     Real Vol_j = std::get<2>(list_data_j);
 
     // correct normal direction, make sure it points from fluid to shell
-    const Vecd n_j_corrected = -SGN(displacement.dot(n_j)) * n_j; // sign of r_ij and n_j
+    const Real direction_corrector = -SGN(displacement.dot(n_j));
+    const Vecd n_j_corrected = direction_corrector * n_j; // sign of r_ij and n_j
+    // H is the total mean curvature
+    // for 2D, curvature=H
+    // for 3D, mean curvature=H/2
+    const Real H_j_corrected = direction_corrector * mean_curvature_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
 
     if (distance < kernel_->CutOffRadius())
     {
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
+        Real vol_ratio = 1 + 1 / (H_j_corrected + SGN(H_j_corrected) * TinyReal) / particle_distance_; // 1+R/dp
         Vecd pos_j_dummy = pos_j + n_j_corrected * particle_distance_;
         Vecd displacement_dummy = pos_i - pos_j_dummy;
         Real distance_dummy = displacement_dummy.norm();
 
         while (distance_dummy < kernel_->CutOffRadius())
         {
+            Vol_j *= std::pow(1 + 1.0 / (vol_ratio + SGN(vol_ratio) * TinyReal), Dimensions - 1);
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j;
             Vecd e_ij = displacement_dummy / (distance_dummy + TinyReal);
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
             // calculate the position and volume of the next dummy particle
+            vol_ratio += 1.0;
             pos_j_dummy += n_j_corrected * particle_distance_;
             displacement_dummy = pos_i - pos_j_dummy;
             distance_dummy = displacement_dummy.norm();
         }
 
-        Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / (dW_ijV_j_ttl + TinyReal);
+        Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_

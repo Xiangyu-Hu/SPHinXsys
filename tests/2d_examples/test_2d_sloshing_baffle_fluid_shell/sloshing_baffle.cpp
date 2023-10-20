@@ -46,6 +46,7 @@ int main(int ac, char *av[])
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation baffle_inner(shell_baffle);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(baffle_inner);
     ShellContactRelation water_shell_contact(water_block, {&shell_baffle});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
 
@@ -70,6 +71,7 @@ int main(int ac, char *av[])
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(baffle_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(baffle_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(baffle_inner);
+
     /** FSI */
     InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_shell(baffle_water_contact);
     InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
@@ -84,6 +86,8 @@ int main(int ac, char *av[])
     /**
      * @brief Output.
      */
+    shell_baffle.addBodyStateForRecording<Real>("MeanCurvature");
+    shell_baffle.addBodyStateForRecording<Real>("GaussianCurvature");
     BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, sph_system.real_bodies_);
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
     /** Output the observed displacement of baffle. */
@@ -113,6 +117,9 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     shell_corrected_configuration.exec();
+    shell_curvature.compute_initial_curvature();
+    water_shell_contact.updateConfiguration();
+
     /** Initial output. */
     // write_real_body_states_to_plt.writeToFile(0);
     write_real_body_states_to_vtp.writeToFile(0);
@@ -186,6 +193,8 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
+            shell_curvature.exec(); // update curvature before water shell contact update
+
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedList();
             shell_baffle.updateCellLinkedList();
@@ -193,6 +202,7 @@ int main(int ac, char *av[])
             water_block_inner.updateConfiguration();
             water_wall_contact.updateConfiguration();
             water_shell_contact.updateConfiguration();
+
             baffle_water_contact.updateConfiguration();
             observer_contact_with_water.updateConfiguration();
 
