@@ -142,7 +142,6 @@ class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public
   public:
     DampingPairwiseComplex(BaseInnerRelation &inner_relation,
                            BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
-    DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
     virtual ~DampingPairwiseComplex(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);

@@ -108,6 +108,7 @@ int main(int ac, char *av[])
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
+    // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
