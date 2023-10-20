@@ -138,6 +138,10 @@ inline execution::ExecutionEvent copyDataToDevice(const Vec2d* host, DeviceVec2d
     return transformAndCopyDataToDevice(host, device, size, [](auto vec) { return hostToDeviceVecd(vec); });
 }
 
+inline execution::ExecutionEvent copyDataToDevice(const Vec3d* host, DeviceVec3d* device, std::size_t size) {
+    return transformAndCopyDataToDevice(host, device, size, [](auto vec) { return hostToDeviceVecd(vec); });
+}
+
 inline execution::ExecutionEvent copyDataToDevice(const Real* host, DeviceReal* device, std::size_t size) {
     return transformAndCopyDataToDevice(host, device, size, [](Real val) { return static_cast<DeviceReal>(val); });
 }
@@ -164,6 +168,10 @@ execution::ExecutionEvent transformAndCopyDataFromDevice(HostType* host, const D
 
 
 inline execution::ExecutionEvent copyDataFromDevice(Vec2d* host, const DeviceVec2d* device, std::size_t size) {
+    return transformAndCopyDataFromDevice(host, device, size, [](auto vec) { return deviceToHostVecd(vec); });
+}
+
+inline execution::ExecutionEvent copyDataFromDevice(Vec3d* host, const DeviceVec3d* device, std::size_t size) {
     return transformAndCopyDataFromDevice(host, device, size, [](auto vec) { return deviceToHostVecd(vec); });
 }
 

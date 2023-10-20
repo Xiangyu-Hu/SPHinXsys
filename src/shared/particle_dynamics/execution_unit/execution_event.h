@@ -26,7 +26,8 @@ class ExecutionEvent
     ExecutionEvent &add(const ExecutionEvent &event);
 
     void wait();
-    ExecutionEvent &then(std::function<void()> &&func);
+    ExecutionEvent &then(std::function<void()> &&func,
+                         std::optional<std::reference_wrapper<ExecutionEvent>> host_event = {});
 
   private:
     std::vector<sycl::event> event_list_;

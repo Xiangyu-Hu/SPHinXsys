@@ -322,8 +322,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
         StdLargeVec<Real> &variable_data = *(std::get<type_index_Real>(all_particle_data_)[variable->IndexInContainer()]);
         DeviceVariable<DataTypeEquivalence<Real>::device_type> *device_variable =
             findVariableByName<DataTypeEquivalence<Real>::device_type>(all_device_variables_, variable->Name());
-        if(device_variable)
-            copyDataFromDevice(variable_data.data(), device_variable->VariableAddress(), total_real_particles_);
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
@@ -341,8 +339,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
         StdLargeVec<Vecd> &variable_data = *(std::get<type_index_Vecd>(all_particle_data_)[variable->IndexInContainer()]);
         DeviceVariable<DataTypeEquivalence<Vecd>::device_type> *device_variable =
             findVariableByName<DataTypeEquivalence<Vecd>::device_type>(all_device_variables_, variable->Name());
-        if(device_variable)
-            copyDataFromDevice(variable_data.data(), device_variable->VariableAddress(), total_real_particles_);
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)

@@ -411,5 +411,42 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         return std::move(copy_events);
     }
 //=================================================================================================//
+template <typename DataType>
+struct copyVariablesFromDeviceOperation
+{
+    void operator()(DeviceVariables &device_variables,
+                    ParticleData &particle_data,
+                    ParticleVariables &particle_variables,
+                    execution::ExecutionEvent &event) const
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        for (DiscreteVariable<DataType> *variable : std::get<type_index>(particle_variables))
+        {
+            if constexpr (DataTypeEquivalence<DataType>::type_defined)
+            {
+                DeviceVariable<typename DataTypeEquivalence<DataType>::device_type> *device_variable = findVariableByName<typename DataTypeEquivalence<DataType>::device_type>(device_variables, variable->Name());
+                if (device_variable)
+                {
+                    StdLargeVec<DataType> &variable_data = *(std::get<type_index>(particle_data)[variable->IndexInContainer()]);
+                    event.add(copyDataFromDevice(variable_data.data(), device_variable->VariableAddress(), device_variable->getSize()));
+                }
+            }
+        }
+    };
+};
+//=================================================================================================//
+execution::ExecutionEvent BaseParticles::copyVariablesFromDevice(ParticleVariables &variables)
+{
+    execution::ExecutionEvent copy_events;
+    DataAssembleOperation<copyVariablesFromDeviceOperation> copy_operation{};
+    copy_operation(all_device_variables_, all_particle_data_, variables, copy_events);
+    return std::move(copy_events);
+}
+//=================================================================================================//
+execution::ExecutionEvent BaseParticles::copyRestartVariablesFromDevice()
+{
+    return copyVariablesFromDevice(variables_to_restart_);
+}
+//=================================================================================================//
 } // namespace SPH
   //=====================================================================================================//

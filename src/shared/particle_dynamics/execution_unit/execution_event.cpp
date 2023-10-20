@@ -30,13 +30,17 @@ ExecutionEvent &ExecutionEvent::add(const SPH::execution::ExecutionEvent &event)
     event_list_.insert(event_list_.end(), new_events.begin(), new_events.end());
     return *this;
 }
-ExecutionEvent &ExecutionEvent::then(std::function<void()> &&func)
+ExecutionEvent &ExecutionEvent::then(std::function<void()> &&func,
+                                     std::optional<std::reference_wrapper<ExecutionEvent>> host_event)
 {
-    executionQueue.getQueue()
-        .submit([&](sycl::handler &cgh)
-                {
-                    cgh.depends_on(getEventList());
-                    cgh.host_task(std::move(func)); });
+    auto host_sycl_event =
+        executionQueue.getQueue()
+            .submit([&](sycl::handler &cgh)
+                    {
+                        cgh.depends_on(getEventList());
+                        cgh.host_task(std::move(func)); });
+    if(host_event)
+        host_event.value().get() = std::move(host_sycl_event);
     return *this;
 }
 

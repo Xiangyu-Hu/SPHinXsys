@@ -220,6 +220,8 @@ class BaseParticles
     virtual void registerDeviceMemory();
     virtual execution::ExecutionEvent copyToDeviceMemory();
     virtual execution::ExecutionEvent copyFromDeviceMemory();
+    virtual execution::ExecutionEvent copyVariablesFromDevice(ParticleVariables &);
+    virtual execution::ExecutionEvent copyRestartVariablesFromDevice();
 
   protected:
     SPHBody &sph_body_;
