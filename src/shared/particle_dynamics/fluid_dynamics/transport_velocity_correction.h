@@ -115,6 +115,15 @@ using TransportVelocityCorrectionComplex =
 template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
     BaseTransportVelocityCorrectionComplex<NoKernelCorrection, AdaptiveResolution, ParticleScope>;
+
+template <typename... CommonControlTypes>
+using BaseMultiPhaseTransportVelocityCorrectionComplex =
+    ComplexInteraction<TransportVelocityCorrection<Inner<>, Contact<>, ContactBoundary<>>, CommonControlTypes...>;
+
+template <class ParticleScope>
+using MultiPhaseTransportVelocityCorrectionComplex =
+    BaseMultiPhaseTransportVelocityCorrectionComplex<NoKernelCorrection, SingleResolution, ParticleScope>;
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // TRANSPORT_VELOCITY_CORRECTION_H

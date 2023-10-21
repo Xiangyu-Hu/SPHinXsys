@@ -93,7 +93,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-            KernelCorrectionType &kernel_correction_k = *this->contact_kernel_corrections_[k];
+            KernelCorrectionType &kernel_correction_k = this->contact_kernel_corrections_[k];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];

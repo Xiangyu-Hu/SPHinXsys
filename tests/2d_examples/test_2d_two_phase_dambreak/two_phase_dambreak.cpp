@@ -53,7 +53,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     //----------------------------------------------------------------------
-    ComplexRelation water_wall_complex(water_block_inner, water_wall_contact);
+    ComplexRelation water_complex(water_inner, {&water_wall_contact, &water_air_contact});
+    ComplexRelation air_complex(air_inner, {&air_wall_contact, &air_water_contact});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -64,12 +65,12 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
-        update_water_density_by_summation(water_wall_contact, water_air_complex.getBodyRelation());
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-        update_air_density_by_summation(air_wall_contact, air_water_complex);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(air_wall_contact, air_water_complex);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>, Contact<>>>
+        update_water_density_by_summation(water_inner, water_air_contact, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
+        update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
+    InteractionDynamics<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
+        air_transport_correction(air_inner, air_water_contact, air_wall_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
@@ -77,15 +78,15 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
     /** Pressure relaxation for water by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemannWithWall>
-        water_pressure_relaxation(water_wall_contact, water_air_complex);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
+        water_pressure_relaxation(water_inner, water_air_contact, water_wall_contact);
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
-        water_density_relaxation(water_wall_contact, water_air_complex);
+        water_density_relaxation(water_inner, water_air_contact, water_wall_contact);
     /** Extend Pressure relaxation is used for air. */
-    Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
-        air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
+        air_pressure_relaxation(air_inner, air_water_contact, air_wall_contact); // ConstructorArgs(air_wall_contact, 2.0));
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
-        air_density_relaxation(air_wall_contact, air_water_complex);
+        air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -147,8 +148,8 @@ int main(int ac, char *av[])
             Real Dt_a = get_air_advection_time_step_size.exec();
             Real Dt = SMIN(Dt_f, Dt_a);
 
-            update_water_density_by_summation.exec();
-            update_air_density_by_summation.exec();
+            //            update_water_density_by_summation.exec();
+            //            update_air_density_by_summation.exec();
 
             air_transport_correction.exec();
 
@@ -193,14 +194,11 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
 
             water_block.updateCellLinkedListWithParticleSort(100);
-            water_air_complex.updateConfiguration();
-            water_wall_contact.updateConfiguration();
-
             air_block.updateCellLinkedListWithParticleSort(100);
-            air_water_complex.updateConfiguration();
-            air_wall_contact.updateConfiguration();
-
+            water_complex.updateConfiguration();
+            air_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
+
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 
