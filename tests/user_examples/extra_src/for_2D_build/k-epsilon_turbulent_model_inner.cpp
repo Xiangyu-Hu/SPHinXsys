@@ -70,7 +70,7 @@ namespace SPH
 		{
 			x_min = 109;
 			x_max = 111;
-			cutoff_time = 0.0;
+			cutoff_time = 150.0;
 			num_data = 4;
 			file_name_.push_back("vel_x_sto_");
 			file_name_.push_back("turbu_k_sto_");
@@ -78,19 +78,17 @@ namespace SPH
 			file_name_.push_back("turbu_mu_sto_");
 
 			num_in_cell_.resize(num_cell);
-			data_time_aver_sto_.resize(num_data);
-			data_sto_.resize(num_cell); //Rows
 			data_time_aver_sto_.resize(num_cell); //Rows
+
+			data_sto_.resize(num_cell); //Rows
 			for (size_t i = 0; i != num_cell; ++i)
 			{
 				data_sto_[i].resize(num_data); //Cols
-				data_time_aver_sto_[i].resize(num_data); //Cols
 			}
 
 			for (size_t j = 0; j != num_data; ++j)
 			{
-				file_path_output_ = "C:/Software/SPHinXsys-GitHub-FengWang-Build/tests/user_examples/2d_turbulent_channel/bin/output/"
-					+ file_name_[j] + ".dat";
+				file_path_output_ = "../bin/output/" + file_name_[j] + ".dat";
 				std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
 				out_file << "run_time" << "   ";
 				for (size_t i = 0; i != num_cell; ++i)
@@ -151,7 +149,6 @@ namespace SPH
 		//=================================================================================================//
 		void GetTimeAverageCrossSectionData::get_time_average_data()
 		{
-			/** Load .dat file. */
 			for (size_t j = 0; j != num_data; ++j)
 			{
 				data_loaded_.clear();
@@ -184,15 +181,27 @@ namespace SPH
 				for (size_t k = 0; k != num_cell; ++k)
 				{
 					Real sum = 0.0;
+					int count = 0;
 					for (size_t i = 0; i != num_line_data; ++i)
 					{
 						if (data_loaded_[i][0] > cutoff_time)
 						{
+							count++;
 							sum += data_loaded_[i][k + 1]; //the first col is time
 						}
 					}
-					data_time_aver_sto_[k][j] = sum / num_line_data;
+					data_time_aver_sto_[k] = sum / count;
 				}
+				//** Output data *
+				file_path_output_ = "../bin/output/TimeAverageData.dat";
+				std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+				out_file << file_name_[j] << "\n";
+				for (size_t k = 0; k != num_cell; ++k)
+				{
+					plt_engine_.writeAQuantity(out_file, data_time_aver_sto_[k]);
+				}
+				out_file << "\n";
+				out_file.close();
 			}
 			std::cout << "The cutoff_time is "<< cutoff_time << std::endl;
 		}

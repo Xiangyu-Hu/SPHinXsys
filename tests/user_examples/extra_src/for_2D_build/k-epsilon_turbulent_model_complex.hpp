@@ -186,21 +186,27 @@ namespace SPH
 
 					//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
 					r_dummy_normal_temp = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
-					if (r_dummy_normal_temp <= 0.0 + TinyReal)
-					{
-						std::cout << "r_dummy_normal_temp <= 0.0" << std::endl;
-						system("pause");
-					}
-					if (r_ij < r_min)
+					
+					/*Try to find the right nearest dummy particle */
+					//if (r_dummy_normal_temp <= 0.0 + TinyReal)
+					//{
+						//r_dummy_normal_temp = 1000.0; /*if not, let it go*/????
+						//std::cout << "r_dummy_normal_temp <= 0.0" << std::endl;
+						//system("pause");
+					//}
+
+					/*but the dist. should not be negative, and two corner is excluded*/
+					if (r_ij < r_min && r_dummy_normal_temp> 0.0 + TinyReal && index_j !=2520 && index_j != 2519 )
 					{
 						r_min = r_ij; //** Find the nearest wall particle *
 						r_dummy_normal = r_dummy_normal_temp;
 						distance_to_wall_[index_i] = r_dummy_normal;
 						index_nearest[index_i] = index_j;
 					}
-					if (distance_to_wall_[index_i] <= 0.0 + TinyReal)
+					if (distance_to_wall_[index_i] < 0.0 - TinyReal)
 					{
-						std::cout << "strange" << std::endl;
+						std::cout << "distance_to_wall_[index_i] <= 0.0 + TinyReal strange" << std::endl;
+						std::cout << r_dummy_normal_temp << std::endl;
 						system("pause");
 					}
 					n_k_j_nearest = n_k[index_nearest[index_i]];
@@ -211,6 +217,7 @@ namespace SPH
 					}
 				}
 			}
+
 			if (r_dummy_normal < 1.0 * particle_spacing_ &&
 				r_dummy_normal > 0.0 * particle_spacing_ + TinyReal)
 			{

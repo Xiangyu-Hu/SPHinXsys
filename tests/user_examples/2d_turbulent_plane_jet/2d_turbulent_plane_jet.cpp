@@ -1,10 +1,10 @@
 /**
- * @file 	2d_turbulent_channel.cpp
- * @brief 	2D_turbulent_channel flow with K-Epsilon two equations RANS model.
+ * @file 	2d_turbulent_plane_jet.cpp
+ * @brief 	2d_turbulent_plane_jet flow with K-Epsilon two equations RANS model.
  * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
-#include "2d_turbulent_channel.h"
+#include "2d_turbulent_plane_jet.h"
 
 using namespace SPH;
 
@@ -69,7 +69,7 @@ int main(int ac, char* av[])
 	/** Turbulent standard wall function needs normal vectors of wall. */
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref);
 
-	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
+	//SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
 
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
@@ -81,7 +81,7 @@ int main(int ac, char* av[])
 	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
 	/** Define the external force for turbulent startup to reduce instability at start-up stage, 1e-4 is from poisulle case */
-	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
+	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	
 	/** Turbulent advection time step. */
@@ -104,8 +104,8 @@ int main(int ac, char* av[])
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
 	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
 
-	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
-	Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
+	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * (DH2+DE));
+	Vec2d disposer_up_translation = Vec2d(DL2 - BW, -0.05 * (DH2 + DE) - DE) + disposer_up_halfsize;
 	BodyAlignedBoxByCell disposer_up(
 		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
@@ -131,8 +131,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	Real end_time = 200.0;
-	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
+	Real end_time = 50.0;
+	Real output_interval = end_time / 500.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -160,6 +160,7 @@ int main(int ac, char* av[])
 			update_density_by_summation.exec();
 			
 			update_eddy_viscosity.exec();
+			
 			//viscous_acceleration.exec();
 			turbulent_viscous_acceleration.exec();
 			
@@ -208,8 +209,8 @@ int main(int ac, char* av[])
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
 			//write_body_states.writeToFile();
-			get_time_average_cross_section_data.exec();
-			get_time_average_cross_section_data.output_cross_section_data();
+			//get_time_average_cross_section_data.exec();
+			//get_time_average_cross_section_data.output_cross_section_data();
 		}
 
 		ITER = ITER + 1;
@@ -220,7 +221,7 @@ int main(int ac, char* av[])
 		//}
 
 		TickCount t2 = TickCount::now();
-		//write_body_states.writeToFile();
+		write_body_states.writeToFile();
 		
 		//write_fluid_x_velocity.writeToFile(); //For test turbulent model
 		//write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model
@@ -232,12 +233,14 @@ int main(int ac, char* av[])
 	}
 	TickCount t4 = TickCount::now();
 
+	write_body_states.writeToFile();
+	
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << std::endl;
 
-	get_time_average_cross_section_data.get_time_average_data();
+	//get_time_average_cross_section_data.get_time_average_data();
 	std::cout << "The time-average data is output " << std::endl;
 
 	return 0;

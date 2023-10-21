@@ -102,7 +102,7 @@ namespace SPH
 			StdLargeVec<Real>& turbu_mu_, & turbu_k_, & turbu_epsilon_;
 			//std::vector<std::vector<Real>>  data_sto_;
 			StdLargeVec<std::vector<Real>> data_sto_, data_loaded_;
-			StdLargeVec<std::vector<Real>>  data_time_aver_sto_;
+			StdLargeVec<Real>  data_time_aver_sto_;
 			//ConcurrentVec<ConcurrentVec<Real>> data_sto_;
 			StdLargeVec<int> num_in_cell_;
 			Real x_min ;
