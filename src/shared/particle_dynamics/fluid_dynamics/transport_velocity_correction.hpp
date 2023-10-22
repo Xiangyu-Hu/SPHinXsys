@@ -98,7 +98,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 // acceleration for transport velocity
-                acceleration_trans -= (this->kernel_correction_(index_i) * kernel_correction_k(index_j)) *
+                acceleration_trans -= (this->kernel_correction_(index_i) + kernel_correction_k(index_j)) *
                                       contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }

@@ -53,8 +53,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     //----------------------------------------------------------------------
-    ComplexRelation water_complex(water_inner, {&water_wall_contact, &water_air_contact});
-    ComplexRelation air_complex(air_inner, {&air_wall_contact, &air_water_contact});
+    ComplexRelation water_air_complex(water_inner, {&water_air_contact, &water_wall_contact});
+    ComplexRelation air_water_complex(air_inner, {&air_water_contact, &air_wall_contact});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -65,8 +65,8 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>, Contact<>>>
-        update_water_density_by_summation(water_inner, water_air_contact, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
+        update_water_density_by_summation(water_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
         update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
     InteractionDynamics<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
@@ -83,8 +83,8 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         water_density_relaxation(water_inner, water_air_contact, water_wall_contact);
     /** Extend Pressure relaxation is used for air. */
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
-        air_pressure_relaxation(air_inner, air_water_contact, air_wall_contact); // ConstructorArgs(air_wall_contact, 2.0));
+    Dynamics1Level<fluid_dynamics::ExtendedMultiPhaseIntegration1stHalfWithWallRiemann>
+        air_pressure_relaxation(air_inner, air_water_contact, ConstructorArgs(air_wall_contact, 2.0));
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     //----------------------------------------------------------------------
@@ -148,7 +148,7 @@ int main(int ac, char *av[])
             Real Dt_a = get_air_advection_time_step_size.exec();
             Real Dt = SMIN(Dt_f, Dt_a);
 
-            //            update_water_density_by_summation.exec();
+            update_water_density_by_summation.exec();
             //            update_air_density_by_summation.exec();
 
             air_transport_correction.exec();
@@ -195,8 +195,8 @@ int main(int ac, char *av[])
 
             water_block.updateCellLinkedListWithParticleSort(100);
             air_block.updateCellLinkedListWithParticleSort(100);
-            water_complex.updateConfiguration();
-            air_complex.updateConfiguration();
+            water_air_complex.updateConfiguration();
+            air_water_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
 
             interval_updating_configuration += TickCount::now() - time_instance;
