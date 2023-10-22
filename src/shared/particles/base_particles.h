@@ -189,9 +189,9 @@ class BaseParticles
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
     ParticleSorting particle_sorting_;
-    size_t* unsorted_id_device_;      /**< copy of unsorted ids stored inside device. */
-    size_t* sorted_id_device_;        /**< copy of sorted ids stored inside device. */
-    size_t* sequence_device_;         /**< the sequence referred for sorting within device execution. */
+    size_t* unsorted_id_device_ = nullptr;      /**< copy of unsorted ids stored inside device. */
+    size_t* sorted_id_device_ = nullptr;        /**< copy of sorted ids stored inside device. */
+    size_t* sequence_device_ = nullptr;         /**< the sequence referred for sorting within device execution. */
     DeviceVariables sortable_device_variables_;
 
     template <typename DataType>
