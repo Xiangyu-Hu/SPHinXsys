@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     ExecutionEvent async_real_bodies_write_event, async_regression_test_event;
-    body_states_recording.copyDeviceData()
+    body_states_recording.copyVariablesToWriteFromDevice()
         .then([&, number_of_iterations]
               { body_states_recording.writeToFile(number_of_iterations); },
               async_real_bodies_write_event);
@@ -240,8 +240,7 @@ int main(int ac, char *av[])
             {
                 time_instance = TickCount::now();
                 async_real_bodies_write_event.wait();
-                water_block.getBaseParticles()
-                    .copyRestartVariablesFromDevice()
+                restart_io.copyVariablesToRestartFromDevice()
                     .then([&, number_of_iterations]
                           { restart_io.writeToFile(number_of_iterations); },
                           async_real_bodies_write_event);
@@ -257,7 +256,7 @@ int main(int ac, char *av[])
         /** Output files */
         time_instance = TickCount::now();
         async_real_bodies_write_event.wait();
-        body_states_recording.copyDeviceData()
+        body_states_recording.copyVariablesToWriteFromDevice()
             .then([&, number_of_iterations]
                   { body_states_recording.writeToFile(number_of_iterations); },
                   async_real_bodies_write_event);

@@ -107,7 +107,7 @@ class BodyStatesRecording : public BaseIO
     /** write with filename indicated by physical time */
     void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
-    virtual execution::ExecutionEvent copyDeviceData() const;
+    virtual execution::ExecutionEvent copyVariablesToWriteFromDevice() const;
 
   protected:
     SPHBodyVector bodies_;
@@ -140,6 +140,8 @@ class RestartIO : public BaseIO
         readFromFile(restart_step);
         return readRestartTime(restart_step);
     };
+
+    virtual execution::ExecutionEvent copyVariablesToRestartFromDevice() const;
 };
 
 /**

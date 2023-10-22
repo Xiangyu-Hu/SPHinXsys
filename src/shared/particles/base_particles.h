@@ -170,6 +170,7 @@ class BaseParticles
     void addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
     template <typename DataType>
     void addVariableToWrite(const std::string &variable_name);
+    inline const ParticleVariables &getVariablesToWrite() const { return variables_to_write_; }
     template <typename DataType>
     void addVariableToRestart(const std::string &variable_name);
     inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
@@ -220,8 +221,7 @@ class BaseParticles
     virtual void registerDeviceMemory();
     virtual execution::ExecutionEvent copyToDeviceMemory();
     virtual execution::ExecutionEvent copyFromDeviceMemory();
-    virtual execution::ExecutionEvent copyVariablesFromDevice(ParticleVariables &);
-    virtual execution::ExecutionEvent copyRestartVariablesFromDevice();
+    virtual execution::ExecutionEvent copyVariablesFromDevice(const ParticleVariables &) const;
 
   protected:
     SPHBody &sph_body_;
