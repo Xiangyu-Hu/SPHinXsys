@@ -2,9 +2,9 @@
  * @file 	2d_eulerian_flow_around_cylinder.cpp
  * @brief 	This is the test file for the weakly compressible viscous flow around a cylinder.
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
- * @author 	Zhentong Wang and Xiangyu Hu
+ * @author 	Bo Zhang and Xiangyu Hu
  */
-#include "eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
+#include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 50.0;                        /**< Channel length. */
 Real DH = 30.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
+Real resolution_ref = 1.0 / 5.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */
@@ -189,12 +189,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    //InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWallConsistency> pressure_relaxation(water_block_complex_correction);
-    //InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWallConsistency> density_relaxation(water_block_complex_correction);
-    //InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix_correction(water_block_complex_correction);
-
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWallConsistency> pressure_relaxation(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWallConsistency> density_relaxation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemannWithWall> pressure_relaxation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemannWithWall> density_relaxation(water_block_complex);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
     
@@ -215,7 +211,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
@@ -233,7 +229,6 @@ int main(int ac, char *av[])
     water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
     kernel_correction_matrix.exec();
-    //kernel_correction_matrix_correction.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

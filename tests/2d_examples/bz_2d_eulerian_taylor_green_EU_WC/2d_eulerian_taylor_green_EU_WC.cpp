@@ -4,7 +4,7 @@
  * @details 2D eulerian_taylor_green vortex flow example.
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
-#include "eulerian_fluid_dynamics.hpp" // eulerian classes for compressible fluid only.
+#include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -193,8 +193,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannConsistency> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannConsistency> density_and_energy_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemann> pressure_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfHLLERiemann> density_and_energy_relaxation(water_body_inner);
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     SimpleDynamics<TimeStepInitialization> time_step_initialization(water_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
