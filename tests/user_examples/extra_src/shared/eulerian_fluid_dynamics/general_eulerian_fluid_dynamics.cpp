@@ -33,8 +33,8 @@ DissipationState HLLERiemannSolver::getDissipationState(const FluidState &state_
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
     Real clr = (this->fluid_i_.ReferenceSoundSpeed() * state_i.rho_ + this->fluid_i_.ReferenceSoundSpeed() * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-    Matd momentum_dissipation = SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ * state_j.vel_ - state_i.rho_ * state_i.vel_) * (-e_ij).transpose();
-    Vecd density_dissipation = SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ - state_i.rho_) * (-e_ij);
+    Matd momentum_dissipation = SMIN<Real>(0.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ * state_j.vel_ - state_i.rho_ * state_i.vel_) * (-e_ij).transpose();
+    Vecd density_dissipation = SMIN<Real>(0.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ - state_i.rho_) * (-e_ij);
     return DissipationState(momentum_dissipation, density_dissipation);
 };
 //=================================================================================================//

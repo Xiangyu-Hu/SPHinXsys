@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 1.0;                    /**< box length. */
 Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 25.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false); //Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);       //Tag for computation with save particles distribution
+    sph_system.setReloadParticles(true);       //Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);// handle command line arguemnts.
 #endif
@@ -202,6 +202,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix_eu(water_body_correct_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix);
     water_body.addBodyStateForRecording<Real>("Pressure");
     water_body.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");

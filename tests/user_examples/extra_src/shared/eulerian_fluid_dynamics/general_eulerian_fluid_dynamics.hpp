@@ -37,6 +37,9 @@ void ICEIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real 
         {
             Matd flux_l = rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity();
             Matd flux_r = rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity();
+
+            //Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity()) * B_[index_j];
+            //Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity()) * B_[index_i];
             DissipationState dissipation_state = riemann_solver_.getDissipationState(state_i, state_j, e_ij);
             Matd dissipation_term = s_l * s_r * dissipation_state.momentum_dissipation_ / (s_r - s_l);
             momentum_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term) * e_ij * dW_ijV_j;
@@ -70,6 +73,7 @@ void ICEIntegration1stHalfWithWall<ICEIntegration1stHalfType>::interaction(size_
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        StdLargeVec<Matd> &B_k = *(this->wall_B_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -88,8 +92,8 @@ void ICEIntegration1stHalfWithWall<ICEIntegration1stHalfType>::interaction(size_
             
             if (s_l < 0 && s_r > 0)
             {
-                Matd flux_l = this->rho_[index_i] * this->vel_[index_i] * this->vel_[index_i].transpose() + this->p_[index_i] * Matd::Identity();
-                Matd flux_r = rho_in_wall * vel_in_wall * vel_in_wall.transpose() + p_in_wall * Matd::Identity();
+                Matd flux_l = (this->rho_[index_i] * this->vel_[index_i] * this->vel_[index_i].transpose() + this->p_[index_i] * Matd::Identity()) * B_k[index_j];
+                Matd flux_r = (rho_in_wall * vel_in_wall * vel_in_wall.transpose() + p_in_wall * Matd::Identity()) * this->B_[index_i];;
                 DissipationState dissipation_state = this->riemann_solver_.getDissipationState(state_i, state_j, e_ij);
                 Matd dissipation_term = s_l * s_r * dissipation_state.momentum_dissipation_ / (s_r - s_l);
                 momentum_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term) * e_ij * dW_ijV_j;
@@ -125,6 +129,9 @@ void ICEIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real 
         {
             Vecd flux_l = rho_[index_i] * vel_[index_i];
             Vecd flux_r = rho_[index_j] * vel_[index_j];
+            
+            //Vecd flux_l = B_[index_j] * (rho_[index_i] * vel_[index_i]);
+            //Vecd flux_r = B_[index_i] * (rho_[index_j] * vel_[index_j]);
             DissipationState dissipation_state = riemann_solver_.getDissipationState(state_i, state_j, e_ij);
             Vecd dissipation_term = s_l * s_r * dissipation_state.density_dissipation_ / (s_r - s_l);
             density_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term).dot(e_ij) * dW_ijV_j;
@@ -150,6 +157,7 @@ void ICEIntegration2ndHalfWithWall<ICEIntegration2ndHalfType>::interaction(size_
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        StdLargeVec<Matd> &B_k = *(this->wall_B_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -168,8 +176,8 @@ void ICEIntegration2ndHalfWithWall<ICEIntegration2ndHalfType>::interaction(size_
 
             if (s_l < 0 && s_r > 0)
             {
-                Vecd flux_l = this->rho_[index_i] * this->vel_[index_i];
-                Vecd flux_r = rho_in_wall * vel_in_wall;
+                Vecd flux_l = B_k[index_j] * (this->rho_[index_i] * this->vel_[index_i]);
+                Vecd flux_r = this->B_[index_i] * (rho_in_wall * vel_in_wall);
                 DissipationState dissipation_state = this->riemann_solver_.getDissipationState(state_i, state_j, e_ij);
                 Vecd dissipation_term = s_l * s_r * dissipation_state.density_dissipation_ / (s_r - s_l);
                 density_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term).dot(e_ij) * dW_ijV_j;
