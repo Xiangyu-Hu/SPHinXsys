@@ -52,7 +52,9 @@ void RelaxationStepInner<RelaxationType>::exec(Real dt)
     relaxation_acceleration_inner_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
-    //surface_bounding_.exec();
+    surface_bounding_.exec();
+    real_body_->updateCellLinkedList();
+    inner_relation_.updateConfiguration();
 }
 //=================================================================================================//
 template <class RelaxationType>

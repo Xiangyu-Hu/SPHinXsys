@@ -558,7 +558,9 @@ public:
 
 protected:
     bool level_set_correction_;
-    StdLargeVec<Real>& pressure_;
+    StdLargeVec<Real>& scalar_;
+    StdLargeVec<Vecd>& vector_;
+    StdLargeVec<Matd>& matrix_;
     StdLargeVec<Vecd>& pos_;
     StdLargeVec<Matd>& B_;
     StdLargeVec<Real> relaxation_error_;
@@ -567,7 +569,9 @@ protected:
     StdLargeVec<Real> zero_order_error_norm_;
     StdLargeVec<Vecd> zero_order_error_;
     StdLargeVec<Real> reproduce_gradient_error_norm_;
-    StdLargeVec<Vecd> reproduce_gradient_;
+    StdLargeVec<Vecd> reproduce_scalar_gradient_;
+    StdLargeVec<Real> reproduce_vector_gradient_;
+    StdLargeVec<Vecd> reproduce_matrix_gradient_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };

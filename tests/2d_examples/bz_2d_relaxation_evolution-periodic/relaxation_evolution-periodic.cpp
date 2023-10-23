@@ -35,18 +35,26 @@ class TestingInitialCondition
 {
 public:
 	explicit TestingInitialCondition(SPHBody& sph_body)
-		: FluidInitialCondition(sph_body), pos_(particles_->pos_),
-		p_(*particles_->getVariableByName<Real>("Pressure")) {};
+		: FluidInitialCondition(sph_body), pos_(particles_->pos_)
+	{
+         particles_->registerVariable(scalar_, "Scaler");
+		 particles_->registerVariable(vector_, "Vector");
+         particles_->registerVariable(matrix_, "Matrix");
+	};
 
 	void update(size_t index_i, Real dt)
 	{
 		/* initial pressure distribution. */
-		p_[index_i] = (sin(pos_[index_i][0] * 2 * Pi)) / 2 / Pi;
+		scalar_[index_i] = pos_[index_i][0] + pos_[index_i][1];
+        vector_[index_i] = pos_[index_i];
+        matrix_[index_i] = Vec2d(1, 1).transpose() * pos_[index_i];
 	}
 
 protected:
 	StdLargeVec<Vecd>& pos_;
-	StdLargeVec<Real>& p_;
+	StdLargeVec<Real> scalar_;
+	StdLargeVec<Vecd> vector_;
+    StdLargeVec<Matd> matrix_;
 };
 
 int main(int ac, char* av[])
