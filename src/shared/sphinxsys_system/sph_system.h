@@ -85,10 +85,10 @@ class SPHSystem
     SolidBodyVector solid_bodies_;     /**< The bodies with inner particle configuration and acoustic time steps . */
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
-    void initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy);
+    execution::ExecutionEvent initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy);
     /** Initialize particle configuration for the SPH system. */
     void initializeSystemConfigurations();
-    void initializeSystemDeviceConfigurations();
+    execution::ExecutionEvent initializeSystemDeviceConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     /** Command line handle for Ctest. */

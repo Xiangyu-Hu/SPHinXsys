@@ -27,15 +27,17 @@ void ContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-void ContactRelation::updateDeviceConfiguration()
+execution::ExecutionEvent ContactRelation::updateDeviceConfiguration()
 {
-    resetNeighborhoodDeviceCurrentSize();
+    auto reset_event = resetNeighborhoodDeviceCurrentSize();
+    execution::ExecutionEvent update_events;
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        target_cell_linked_lists_[k]->getDeviceProxy().getKernel()->searchNeighborsByParticles(
+        update_events.add(target_cell_linked_lists_[k]->getDeviceProxy().getKernel()->searchNeighborsByParticles(
             sph_body_, contact_configuration_device_[k].data(),
-            *get_search_depths_[k], *get_contact_neighbors_[k]);
+            *get_search_depths_[k], *get_contact_neighbors_[k], reset_event));
     }
+    return std::move(update_events);
 }
 //=================================================================================================//
 SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)

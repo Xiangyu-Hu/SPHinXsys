@@ -27,21 +27,22 @@ CellLinkedListKernel::CellLinkedListKernel(BaseParticles &particles, const Devic
       all_grid_points_(allGridPoints), all_cells_(allCells), index_list_(allocateDeviceData<size_t>(total_real_particles_)),
       index_head_list_(allocateDeviceData<size_t>(allCells[0] * allCells[1])) {}
 
-void CellLinkedListKernel::clearCellLists()
+execution::ExecutionEvent CellLinkedListKernel::clearCellLists()
 {
     // Only clear head list, since index list does not depend on its previous values
-    copyDataToDevice(static_cast<size_t>(0), index_head_list_, all_cells_[0] * all_cells_[1]);
+    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, all_cells_[0] * all_cells_[1]));
 }
 
-void CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
+execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
 {
-    clearCellLists();
+    auto clear_event = clearCellLists();
     auto *pos_n = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
     size_t total_real_particles = base_particles.total_real_particles_;
-    executionQueue.getQueue().submit(
+    return executionQueue.getQueue().submit(
                                  [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_, all_grid_points = all_grid_points_,
                                   all_cells = all_cells_, index_list = index_list_, index_head_list = index_head_list_](sycl::handler &cgh)
                                  {
+                                     cgh.depends_on(clear_event.getEventList());
                                      cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item)
                                                       {
                                  const size_t index_i = item.get_global_id();
@@ -65,8 +66,7 @@ void CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
                                       */
                                      index_list[index_i] = atomic_head_list.exchange(index_i + 1);
                                  } });
-                                 })
-        .wait();
+                                 });
 }
 //=================================================================================================//
 size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
@@ -101,7 +101,7 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
     single_cell_linked_list_level_.push_back(this);
 }
 //=================================================================================================//
-void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
+execution::ExecutionEvent CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     clearCellLists();
     StdLargeVec<Vecd> &pos_n = base_particles.pos_;
@@ -123,6 +123,8 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     {
         updateSplitCellLists(real_body_.getSplitCellLists());
     }
+
+    return {};
 }
 //=================================================================================================//
 size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
@@ -177,7 +179,7 @@ void MultilevelCellLinkedList::
     mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position, volumetric);
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
+execution::ExecutionEvent MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     for (size_t level = 0; level != total_levels_; ++level)
         mesh_levels_[level]->clearCellLists();
@@ -205,6 +207,8 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     {
         updateSplitCellLists(real_body_.getSplitCellLists());
     }
+
+    return {};
 }
 //=================================================================================================//
 size_t *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)

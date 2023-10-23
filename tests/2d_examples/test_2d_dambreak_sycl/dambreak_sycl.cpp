@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step(water_block);
 
-    water_block.getBaseParticles().copyToDeviceMemory();
+    water_block.getBaseParticles().copyToDeviceMemory().wait();
     executionQueue.setWorkGroupSize(16);
 
     //----------------------------------------------------------------------
@@ -118,20 +118,21 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists(execution::par_sycl);
-    sph_system.initializeSystemDeviceConfigurations();
+    sph_system.initializeSystemCellLinkedLists(execution::par_sycl).wait();
+    auto system_configuration_update_event = sph_system.initializeSystemDeviceConfigurations();
 
     wall_boundary_normal_direction.exec();
-    wall_boundary.getBaseParticles().copyToDeviceMemory();
+    wall_boundary.getBaseParticles().copyToDeviceMemory().wait();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList(execution::par_sycl);
-        water_block_complex.updateDeviceConfiguration();
-        fluid_observer_contact.updateDeviceConfiguration();
+        water_block.updateCellLinkedList(execution::par_sycl).wait();
+        system_configuration_update_event.wait();
+        system_configuration_update_event.add(water_block_complex.updateDeviceConfiguration())
+            .add(fluid_observer_contact.updateDeviceConfiguration());
     }
 
     //----------------------------------------------------------------------
@@ -151,13 +152,22 @@ int main(int ac, char *av[])
     TimeInterval interval_computing_time_step;
     TimeInterval interval_computing_fluid_pressure_relaxation;
     TimeInterval interval_updating_configuration;
+    TimeInterval interval_writing_files;
     TickCount time_instance;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile();
-    write_water_mechanical_energy.writeToFile(number_of_iterations);
-    write_recorded_water_pressure.writeToFile(number_of_iterations);
+    ExecutionEvent async_real_bodies_write_event, async_regression_test_event;
+    body_states_recording.copyDeviceData()
+        .then([&, number_of_iterations]
+              { body_states_recording.writeToFile(number_of_iterations); },
+              async_real_bodies_write_event);
+    ExecutionEvent()
+        .then([&, number_of_iterations]
+              {
+                  write_water_mechanical_energy.writeToFile(number_of_iterations);
+                  write_recorded_water_pressure.writeToFile(number_of_iterations); },
+              async_regression_test_event);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -171,8 +181,16 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
-            fluid_density_by_summation.exec();
+            interval_computing_time_step += TickCount::now() - time_instance;
 
+            /** Wait on system configuration to finish updating */
+            time_instance = TickCount::now();
+            system_configuration_update_event.wait();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** Evaluation of density by summation */
+            time_instance = TickCount::now();
+            fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -190,39 +208,66 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-            /** screen output, write body reduced values and restart files  */
-            if (number_of_iterations % screen_output_interval == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
-                          << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    write_water_mechanical_energy.writeToFile(number_of_iterations);
-                    write_recorded_water_pressure.writeToFile(number_of_iterations);
-                }
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
-            }
-            number_of_iterations++;
-
-            /** Update cell linked list and configuration. */
+            /** Update cell linked list */
             time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl);
-            water_block_complex.updateDeviceConfiguration();
-            fluid_observer_contact.updateDeviceConfiguration();
+            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl)
+                .then([&, number_of_iterations, advection_dt, acoustic_dt, physical_time=GlobalStaticVariables::physical_time_]
+                      {
+                          /** Screen output */
+                          if (number_of_iterations % screen_output_interval == 0)
+                          {
+                              std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                                        << physical_time
+                                        << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
+                          } })
+                .then([&, number_of_iterations, async_regression_test_event]
+                      {
+                          /** Write body reduced values */
+                          if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                          {
+                              time_instance = TickCount::now();
+                              write_water_mechanical_energy.writeToFile(number_of_iterations);
+                              ExecutionEvent(async_regression_test_event).wait();
+                              write_recorded_water_pressure.writeToFile(number_of_iterations);
+                              interval_writing_files += TickCount::now() - time_instance;
+                          } },
+                      async_regression_test_event)
+                .wait();
             interval_updating_configuration += TickCount::now() - time_instance;
-        }
 
-        body_states_recording.copyDeviceData();
-        body_states_recording.writeToFile();
+            /** Write restart files */
+            if (number_of_iterations % restart_output_interval == 0)
+            {
+                time_instance = TickCount::now();
+                async_real_bodies_write_event.wait();
+                water_block.getBaseParticles()
+                    .copyRestartVariablesFromDevice()
+                    .then([&, number_of_iterations]
+                          { restart_io.writeToFile(number_of_iterations); },
+                          async_real_bodies_write_event);
+                interval_writing_files += TickCount::now() - time_instance;
+            }
+
+            /** Submit task for system configuration update */
+            system_configuration_update_event = water_block_complex.updateDeviceConfiguration().add(
+                fluid_observer_contact.updateDeviceConfiguration());
+
+            number_of_iterations++;
+        }
+        /** Output files */
+        time_instance = TickCount::now();
+        async_real_bodies_write_event.wait();
+        body_states_recording.copyDeviceData()
+            .then([&, number_of_iterations]
+                  { body_states_recording.writeToFile(number_of_iterations); },
+                  async_real_bodies_write_event);
+        interval_writing_files += TickCount::now() - time_instance;
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
 
-    water_block.getBaseParticles().copyFromDeviceMemory();
+    executionQueue.getQueue().wait_and_throw();
 
     TickCount t4 = TickCount::now();
 
@@ -236,7 +281,10 @@ int main(int ac, char *av[])
               << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_writing_files = "
+              << interval_writing_files.seconds() << "\n";
 
+    water_block.getBaseParticles().copyFromDeviceMemory().wait();
     if (sph_system.generate_regression_data_)
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);

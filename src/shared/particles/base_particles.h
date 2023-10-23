@@ -218,8 +218,10 @@ class BaseParticles
     virtual Real ParticleMass(size_t index) { return mass_[index]; }
 
     virtual void registerDeviceMemory();
-    virtual void copyToDeviceMemory();
-    virtual void copyFromDeviceMemory();
+    virtual execution::ExecutionEvent copyToDeviceMemory();
+    virtual execution::ExecutionEvent copyFromDeviceMemory();
+    virtual execution::ExecutionEvent copyVariablesFromDevice(ParticleVariables &);
+    virtual execution::ExecutionEvent copyRestartVariablesFromDevice();
 
   protected:
     SPHBody &sph_body_;

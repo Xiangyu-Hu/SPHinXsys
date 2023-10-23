@@ -71,10 +71,19 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     writeWithFileName(padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
-void BodyStatesRecording::copyDeviceData() const {
-    for(auto* body : bodies_)
+execution::ExecutionEvent BodyStatesRecording::copyDeviceData() const
+{
+    execution::ExecutionEvent copy_events;
+    for (auto *body : bodies_)
         if (body->checkNewlyUpdated())
-            body->getBaseParticles().copyFromDeviceMemory();
+        {
+            auto &particles = body->getBaseParticles();
+            auto size = particles.total_real_particles_;
+            copy_events.add(copyDataFromDevice(particles.unsorted_id_.data(), particles.unsorted_id_device_, size));
+            copy_events.add(copyDataFromDevice(particles.pos_.data(), particles.getDeviceVariableByName<DeviceVecd>("Position"), size));
+            copy_events.add(copyDataFromDevice(particles.vel_.data(), particles.getDeviceVariableByName<DeviceVecd>("Velocity"), size));
+        }
+    return std::move(copy_events);
 }
 //=============================================================================================//
 RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)

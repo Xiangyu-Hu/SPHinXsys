@@ -381,31 +381,72 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         registerDeviceVariable<DeviceReal>("Volume", total_real_particles_, Vol_.data());
     }
 
-    void BaseParticles::copyToDeviceMemory() {
-        copyDataToDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_);
-        copyDataToDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_);
-        copyDataToDevice(sequence_.data(), sequence_device_, total_real_particles_);
-        copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_);
-        copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_);
-        copyDataToDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_);
-        copyDataToDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_);
-        copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_);
-        copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_);
-        copyDataToDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_);
+    execution::ExecutionEvent BaseParticles::copyToDeviceMemory() {
+        execution::ExecutionEvent copy_events;
+        copy_events.add(copyDataToDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_));
+        copy_events.add(copyDataToDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_));
+        copy_events.add(copyDataToDevice(sequence_.data(), sequence_device_, total_real_particles_));
+        copy_events.add(copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
+        copy_events.add(copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
+        copy_events.add(copyDataToDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_));
+        copy_events.add(copyDataToDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_));
+        copy_events.add(copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
+        copy_events.add(copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
+        copy_events.add(copyDataToDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
+        return std::move(copy_events);
     }
 
-    void BaseParticles::copyFromDeviceMemory() {
-        copyDataFromDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_);
-        copyDataFromDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_);
-        copyDataFromDevice(sequence_.data(), sequence_device_, total_real_particles_);
-        copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_);
-        copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_);
-        copyDataFromDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_);
-        copyDataFromDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_);
-        copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_);
-        copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_);
-        copyDataFromDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_);
+    execution::ExecutionEvent BaseParticles::copyFromDeviceMemory() {
+        execution::ExecutionEvent copy_events;
+        copy_events.add(copyDataFromDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_));
+        copy_events.add(copyDataFromDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_));
+        copy_events.add(copyDataFromDevice(sequence_.data(), sequence_device_, total_real_particles_));
+        copy_events.add(copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
+        return std::move(copy_events);
     }
+//=================================================================================================//
+template <typename DataType>
+struct copyVariablesFromDeviceOperation
+{
+    void operator()(DeviceVariables &device_variables,
+                    ParticleData &particle_data,
+                    ParticleVariables &particle_variables,
+                    execution::ExecutionEvent &event) const
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        for (DiscreteVariable<DataType> *variable : std::get<type_index>(particle_variables))
+        {
+            if constexpr (DataTypeEquivalence<DataType>::type_defined)
+            {
+                DeviceVariable<typename DataTypeEquivalence<DataType>::device_type> *device_variable = findVariableByName<typename DataTypeEquivalence<DataType>::device_type>(device_variables, variable->Name());
+                if (device_variable)
+                {
+                    StdLargeVec<DataType> &variable_data = *(std::get<type_index>(particle_data)[variable->IndexInContainer()]);
+                    event.add(copyDataFromDevice(variable_data.data(), device_variable->VariableAddress(), device_variable->getSize()));
+                }
+            }
+        }
+    };
+};
+//=================================================================================================//
+execution::ExecutionEvent BaseParticles::copyVariablesFromDevice(ParticleVariables &variables)
+{
+    execution::ExecutionEvent copy_events;
+    DataAssembleOperation<copyVariablesFromDeviceOperation> copy_operation{};
+    copy_operation(all_device_variables_, all_particle_data_, variables, copy_events);
+    return std::move(copy_events);
+}
+//=================================================================================================//
+execution::ExecutionEvent BaseParticles::copyRestartVariablesFromDevice()
+{
+    return copyVariablesFromDevice(variables_to_restart_);
+}
 //=================================================================================================//
 } // namespace SPH
   //=====================================================================================================//

@@ -23,13 +23,13 @@ void Neighborhood::removeANeighbor(size_t neighbor_n)
 }
 
 Neighborhood& Neighborhood::operator=(const NeighborhoodDevice &device) {
-    copyDataFromDevice(&current_size_, device.current_size_, 1);
-    copyDataFromDevice(j_.data(), device.j_, current_size_);
-    copyDataFromDevice(W_ij_.data(), device.W_ij_, current_size_);
-    copyDataFromDevice(dW_ijV_j_.data(), device.dW_ijV_j_, current_size_);
-    copyDataFromDevice(r_ij_.data(), device.r_ij_, current_size_);
-    copyDataFromDevice(e_ij_.data(), device.e_ij_, current_size_);
-
+    copyDataFromDevice(&current_size_, device.current_size_, 1)
+        .add(copyDataFromDevice(j_.data(), device.j_, current_size_))
+        .add(copyDataFromDevice(W_ij_.data(), device.W_ij_, current_size_))
+        .add(copyDataFromDevice(dW_ijV_j_.data(), device.dW_ijV_j_, current_size_))
+        .add(copyDataFromDevice(r_ij_.data(), device.r_ij_, current_size_))
+        .add(copyDataFromDevice(e_ij_.data(), device.e_ij_, current_size_))
+        .wait();
     return *this;
 }
 
@@ -54,14 +54,13 @@ NeighborhoodDevice& NeighborhoodDevice::operator=(const Neighborhood &host) {
     if(allocated_size_ < host.current_size_)
         throw std::runtime_error("NeighborhoodDevice allocation size (" + std::to_string(allocated_size_) +
                                  ") is smaller than host Neighborhood size (" + std::to_string(host.current_size_) + ")");
-    copyDataToDevice(host.j_.data(), j_, host.current_size_);
-    copyDataToDevice(host.W_ij_.data(), W_ij_, host.current_size_);
-    copyDataToDevice(host.dW_ijV_j_.data(), dW_ijV_j_, host.current_size_);
-    copyDataToDevice(host.r_ij_.data(), r_ij_, host.current_size_);
-    copyDataToDevice(host.e_ij_.data(), e_ij_, host.current_size_);
-
-    copyDataToDevice(&host.current_size_, current_size_, 1);
-
+    copyDataToDevice(host.j_.data(), j_, host.current_size_)
+        .add(copyDataToDevice(host.W_ij_.data(), W_ij_, host.current_size_))
+        .add(copyDataToDevice(host.dW_ijV_j_.data(), dW_ijV_j_, host.current_size_))
+        .add(copyDataToDevice(host.r_ij_.data(), r_ij_, host.current_size_))
+        .add(copyDataToDevice(host.e_ij_.data(), e_ij_, host.current_size_))
+        .add(copyDataToDevice(&host.current_size_, current_size_, 1))
+        .wait();
     return *this;
 }
 

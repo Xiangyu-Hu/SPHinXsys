@@ -45,11 +45,11 @@ namespace SPH
 			ap);
 	}
         //=================================================================================================//
-        void BaseInnerRelation::resetNeighborhoodDeviceCurrentSize()
+        execution::ExecutionEvent BaseInnerRelation::resetNeighborhoodDeviceCurrentSize()
         {
                 const auto total_real_particles = base_particles_.total_real_particles_;
                 NeighborhoodDevice *inner_configuration_device = inner_configuration_device_->data();
-                execution::executionQueue.getQueue()
+                return execution::executionQueue.getQueue()
                     .submit(
                         [&](sycl::handler &cgh) {
                             cgh.parallel_for(execution::executionQueue.getUniformNdRange(total_real_particles),
@@ -58,7 +58,7 @@ namespace SPH
                                                      *inner_configuration_device[it.get_global_id()].current_size_ = 0;
                                                  }
                                              });
-                        }).wait();
+                        });
         }
 
     void BaseInnerRelation::allocateInnerConfigurationDevice() {
@@ -110,13 +110,14 @@ namespace SPH
 		}
 	}
         //=================================================================================================//
-        void BaseContactRelation::resetNeighborhoodDeviceCurrentSize()
+        execution::ExecutionEvent BaseContactRelation::resetNeighborhoodDeviceCurrentSize()
         {
+                execution::ExecutionEvent reset_events;
                 for (size_t k = 0; k != contact_bodies_.size(); ++k)
                 {
                         const auto total_real_particles = base_particles_.total_real_particles_;
                         NeighborhoodDevice *contact_configuration_device = contact_configuration_device_.at(k).data();
-                        execution::executionQueue.getQueue()
+                        reset_events.add(execution::executionQueue.getQueue()
                             .submit(
                                 [&](sycl::handler &cgh) {
                                     cgh.parallel_for(execution::executionQueue.getUniformNdRange(total_real_particles),
@@ -125,8 +126,9 @@ namespace SPH
                                                              *contact_configuration_device[it.get_global_id()].current_size_ = 0;
                                                          }
                                                      });
-                                }).wait();
+                                }));
                 }
+                return reset_events;
         }
 	//=================================================================================================//
 }

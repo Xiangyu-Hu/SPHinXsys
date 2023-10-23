@@ -49,7 +49,7 @@ class InnerRelation : public BaseInnerRelation
     virtual ~InnerRelation(){};
 
     virtual void updateConfiguration() override;
-    virtual void updateDeviceConfiguration() override;
+    virtual execution::ExecutionEvent updateDeviceConfiguration() override;
 };
 
 /**

@@ -67,7 +67,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
         if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
             auto* device_data = this->getParticles()->
                                 template getDeviceVariableByName<typename DataTypeEquivalence<VariableType>::device_type>(quantity_name_);
-            copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_);
+            copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_).wait();
         }
 
         /** Output for .dat file. */
@@ -93,7 +93,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
         if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
             auto* device_data = this->getParticles()->
                                 template getDeviceVariableByName<typename DataTypeEquivalence<VariableType>::device_type>(quantity_name_);
-            copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_);
+            copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_).wait();
         }
 
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
