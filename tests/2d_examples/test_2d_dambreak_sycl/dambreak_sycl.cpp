@@ -208,9 +208,9 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-            /** Update cell linked list */
+            /** Submit for cell linked list update */
             time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl).wait();
+            auto cell_linked_list_update_event = water_block.updateCellLinkedListWithParticleSort(100, execution::par_sycl);
             interval_updating_configuration += TickCount::now() - time_instance;
 
             /** Screen output */
@@ -220,6 +220,11 @@ int main(int ac, char *av[])
                           << GlobalStaticVariables::physical_time_
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
             }
+
+            /** Wait for cell linked-list update to finish */
+            time_instance = TickCount::now();
+            cell_linked_list_update_event.wait();
+            interval_updating_configuration += TickCount::now() - time_instance;
 
             /** Write body reduced values */
             if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
