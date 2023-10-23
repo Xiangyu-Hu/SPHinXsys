@@ -90,7 +90,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
+    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -114,7 +114,6 @@ int main(int ac, char *av[])
         }
     }
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-
 
     return 0;
 }

@@ -48,7 +48,7 @@ class TimeDependentGravity : public Gravity
   public:
     explicit TimeDependentGravity(Vecd gravity_vector)
         : Gravity(gravity_vector) {}
-    virtual Vecd InducedAcceleration(Vecd &position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real current_time = GlobalStaticVariables::physical_time_;
         return current_time < time_to_full_gravity ? current_time * global_acceleration_ / time_to_full_gravity : global_acceleration_;
@@ -174,7 +174,6 @@ int main(int ac, char *av[])
     {
         write_displacement.testResult();
     }
-
 
     return 0;
 }

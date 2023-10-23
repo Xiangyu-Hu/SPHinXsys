@@ -206,25 +206,6 @@ using ElectroPhysiologyDiffusionRelaxationComplex =
                                    KernelGradientInner, KernelGradientContact,
                                    ContactInteractionTypes...>;
 
-/**
- * @class ElectroPhysiologyDiffusionRelaxationComplex
- * @brief Compute the diffusion relaxation process
- */
-/*
-class ElectroPhysiologyDiffusionRelaxationComplex
-    : public DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-          Inner<ElectroPhysiologyParticles, KernelGradientInner>,
-          Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>>>
-{
-  public:
-    explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-              Inner<ElectroPhysiologyParticles, KernelGradientInner>,
-              Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>>>(
-              inner_relation, contact_relation){};
-    virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
-};
-*/
 /** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 using ElectroPhysiologyReactionRelaxationForward =
     SimpleDynamics<ReactionRelaxationForward<ElectroPhysiologyParticles>>;
