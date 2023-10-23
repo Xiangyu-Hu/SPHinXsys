@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 50.0;                        /**< Channel length. */
 Real DH = 30.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
+Real resolution_ref = 1.0 / 5.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */

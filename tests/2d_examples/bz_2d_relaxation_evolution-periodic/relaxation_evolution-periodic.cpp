@@ -93,25 +93,15 @@ int main(int ac, char* av[])
 		ReloadParticleIO write_particle_reload_files(io_environment, { &body });
 
 		/* Relaxation method: including based on the 0th and 1st order consistency. */
-		relax_dynamics::RelaxationStepInner relaxation_0th_inner(insert_body_inner, false);
-		relax_dynamics::RelaxationStepImplicitInner relaxation_0th_implicit_inner(insert_body_inner, false);
-		InteractionDynamics<relax_dynamics::CalculateCorrectionMatrix> calculate_correction_matrix(insert_body_inner, false);
-		relax_dynamics::RelaxationStepByCMInner relaxation_1st_inner(insert_body_inner, false);
-		relax_dynamics::RelaxationStepByCMImplicitInner relaxation_1st_implicit_inner(insert_body_inner, false);
-
+		relax_dynamics::RelaxationStepInner relaxation_inner(insert_body_inner, false);
+		relax_dynamics::RelaxationStepInnerImplicit relaxation_inner_implicit(insert_body_inner, false);
+		InteractionDynamics<KernelCorrectionMatrixInner> calculate_correction_matrix(insert_body_inner, false);
 		PeriodicConditionUsingCellLinkedList periodic_condition_x(body, body.getBodyShapeBounds(), xAxis);
 		PeriodicConditionUsingCellLinkedList periodic_condition_y(body, body.getBodyShapeBounds(), yAxis);
 
 		/* Update the relaxation residual. */
 		InteractionDynamics<relax_dynamics::CheckConsistencyRealization> check_consistency_realization(insert_body_inner, false);
-		ReduceAverage<QuantitySummation<Real>> calculate_relaxation_error(body, "RelaxationErrorNorm");
-		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient(body, "PressureGradientErrorNorm");
-		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error(body, "ZeroOrderErrorNorm");
-		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient(body, "ReproduceGradientErrorNorm");
 		InteractionDynamics<relax_dynamics::CheckReverseConsistencyRealization> check_reverse_consistency_realization(insert_body_inner, false);
-		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient_reverse(body, "PressureGradientErrorNormReverse");
-		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error_reverse(body, "ZeroOrderErrorNormReverse");
-		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient_reverse(body, "ReproduceGradientErrorNormReverse");
 		SimpleDynamics<TestingInitialCondition> testing_initial_condition(body);
 		//----------------------------------------------------------------------  
 		//	Particle relaxation starts here.
@@ -134,7 +124,7 @@ int main(int ac, char* av[])
 
 		GlobalStaticVariables::physical_time_ = ite;
 		/* The procedure to obtain uniform particle distribution that satisfies the 0th order consistency. */
-		while (ite < 50000)
+		while (ite < 5)
 		{
 			periodic_condition_x.bounding_.exec();
 			periodic_condition_y.bounding_.exec();
@@ -143,9 +133,7 @@ int main(int ac, char* av[])
 			periodic_condition_y.update_cell_linked_list_.exec();
 			insert_body_inner.updateConfiguration();
 
-			relaxation_0th_inner.exec();
-			//calculate_correction_matrix.exec();
-			//relaxation_1st_inner.exec();
+			relaxation_inner.exec();
 
 			periodic_condition_x.bounding_.exec();
 			periodic_condition_y.bounding_.exec();
@@ -161,11 +149,6 @@ int main(int ac, char* av[])
 				calculate_correction_matrix.exec();
 				check_consistency_realization.exec();
 				check_reverse_consistency_realization.exec();
-				out_file_all_information << std::fixed << std::setprecision(12) << ite << "   " <<
-					calculate_pressure_gradient.exec() << "   " << calculate_pressure_gradient_reverse.exec() << "   " << 
-					calculate_zero_order_error.exec() << "   "  << calculate_zero_order_error_reverse.exec() << "   " << 
-					calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "   " <<
-					calculate_relaxation_error.exec() << "\n";
 				std::cout << std::fixed << std::setprecision(9) << "The 0th relaxation steps for the body N = " << ite << "\n";
 				
 				write_insert_body_to_vtp.writeToFile(ite);
