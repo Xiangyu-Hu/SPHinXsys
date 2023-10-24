@@ -14,6 +14,60 @@
 #include <gtest/gtest.h>
 using namespace SPH;
 
+class CheckKernelCompleteness
+{
+  private:
+    BaseParticles *particles_;
+    std::vector<SPH::ShellParticles *> contact_particles_;
+    ParticleConfiguration *inner_configuration_;
+    std::vector<ParticleConfiguration *> contact_configuration_;
+
+    StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
+
+  public:
+    CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+        : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
+    {
+        for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
+        {
+            auto *ptr = dynamic_cast<SPH::ShellParticles *>(&contact_relation.contact_bodies_[i]->getBaseParticles());
+            if (ptr == nullptr)
+            {
+                std::cout << "CheckKernelCompleteness: Contact body is not a shell!" << std::endl;
+                exit(0);
+            }
+            contact_particles_.push_back(ptr);
+            contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
+        }
+        inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
+    }
+
+    inline void exec()
+    {
+        particle_for(
+            par,
+            particles_->total_real_particles_,
+            [&, this](size_t index_i)
+            {
+                Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
+                const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
+                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+                    dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+                for (size_t k = 0; k < contact_configuration_.size(); ++k)
+                {
+                    const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
+                    for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+                    {
+                        size_t index_j = wall_neighborhood.j_[n];
+                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * contact_particles_[k]->thickness_[index_j];
+                    }
+                }
+                dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
+            });
+    }
+};
+
 class ObersverAxial : public ObserverParticleGenerator
 {
   public:
@@ -65,7 +119,7 @@ const Real scale = 0.001;
 const Real diameter = 6.35 * scale;
 const Real fluid_radius = 0.5 * diameter;
 const Real full_length = 10 * fluid_radius;
-const int number_of_particles = 15;
+const int number_of_particles = 20;
 const Real resolution_ref = diameter / number_of_particles;
 const Real inflow_length = resolution_ref * 10.0; // Inflow region
 const Real wall_thickness = resolution_ref * 4.0;
@@ -110,7 +164,7 @@ const Real mu_f = 6.5e-3;   /**< Viscosity. */
 const Real Re = 10;
 // const Real U_f = 30.0e-6 / 60. / (M_PI / 4.0 * diameter * diameter); /**<
 // Characteristic velocity. Average velocity */
-const Real U_f = Re / diameter * mu_f * 0.5;
+const Real U_f = Re * mu_f / rho0_f / diameter;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 /**
@@ -164,7 +218,7 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(U_f), t_ref_(0.05),
+        : u_ref_(U_f), t_ref_(1.0),
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
@@ -200,6 +254,7 @@ int main()
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
+    shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, 1.0);
     shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(
         rho0_f, 1e3, 0.45);
     shell_boundary.generateParticles<ShellBoundary>();
@@ -309,16 +364,23 @@ int main()
     shell_curvature.compute_initial_curvature();
     water_wall_contact.updateConfiguration();
 
+    // Check dWijVjeij
+    CheckKernelCompleteness check_kernel_completeness(water_inner, water_wall_contact);
+    check_kernel_completeness.exec();
+    water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
+
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
+    exit(0);
+
     /**
      * @brief 	Basic parameters.
      */
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 0.005;   /**< End time. */
-    Real Output_Time = 0.01; /**< Time stamps for output of body states. */
-    Real dt = 0.0;           /**< Default acoustic time step sizes. */
+    Real end_time = 2.0;               /**< End time. */
+    Real Output_Time = end_time / 100; /**< Time stamps for output of body states. */
+    Real dt = 0.0;                     /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
@@ -366,7 +428,6 @@ int main()
                           << "N=" << number_of_iterations
                           << "	Time = " << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                body_states_recording.writeToFile();
             }
             number_of_iterations++;
             /** Update cell linked list and configuration. */
@@ -381,6 +442,7 @@ int main()
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         TickCount t2 = TickCount::now();
+        body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
 

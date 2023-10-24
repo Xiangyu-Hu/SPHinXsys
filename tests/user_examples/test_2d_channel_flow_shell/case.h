@@ -7,12 +7,52 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
+class CheckKernelCompleteness
+{
+  private:
+    BaseParticles *particles_;
+    ParticleConfiguration *inner_configuration_;
+    std::vector<ParticleConfiguration *> contact_configuration_;
+
+    StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
+
+  public:
+    CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+        : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
+    {
+        for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
+            contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
+        inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
+    }
+
+    inline void exec(double thickness = 1.0)
+    {
+        particle_for(
+            par,
+            particles_->total_real_particles_,
+            [&, this](size_t index_i)
+            {
+                Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
+                const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
+                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+                    dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+                for (size_t k = 0; k < contact_configuration_.size(); ++k)
+                {
+                    const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
+                    for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * thickness;
+                }
+                dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
+            });
+    }
+};
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 10.0;                         /**< Channel length. */
 Real DH = 2.0;                          /**< Channel height. */
-Real resolution_ref = 0.05;              /**< Global reference resolution. */
+Real resolution_ref = 0.05;             /**< Global reference resolution. */
 Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = resolution_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
 Real wall_thickness = resolution_ref;   /*<Thickness of wall boundary, same as global resolution>*/

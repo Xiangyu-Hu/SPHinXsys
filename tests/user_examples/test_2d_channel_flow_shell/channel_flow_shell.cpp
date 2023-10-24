@@ -35,6 +35,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
+    InnerRelation shell_boundary_inner(wall_boundary);
+    // Curvature calculation
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_boundary_inner);
     /** Must construct ShellContactRelation first! Otherwise ComplexRelation creates ContactRelation*/
     ShellContactRelation water_wall_contact(water_block, {&wall_boundary});
     ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
@@ -66,9 +69,12 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+    /** Wall boundary configuration correction*/
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    wall_boundary.addBodyStateForRecording<Real>("MeanCurvature");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
@@ -83,6 +89,17 @@ int main(int ac, char *av[])
     periodic_condition.update_cell_linked_list_.exec();
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
+
+    /** initial curvature*/
+    // wall_corrected_configuration.exec();
+    // shell_curvature.compute_initial_curvature();
+    // water_wall_contact.updateConfiguration();
+
+    // Check dWijVjeij
+    CheckKernelCompleteness check_kernel_completeness(water_block_inner, water_wall_contact);
+    check_kernel_completeness.exec(wall_thickness);
+    water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
+
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -151,6 +168,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         /** write run-time observation into file */
+        check_kernel_completeness.exec(wall_thickness);
         compute_vorticity.exec();
         write_real_body_states.writeToFile();
         fluid_observer_contact.updateConfiguration();
