@@ -137,7 +137,7 @@ class TimeDependentAcceleration : public Gravity
     explicit TimeDependentAcceleration(Vecd gravity_vector)
         : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.00), du_ave_dt_(0) {}
 
-    virtual Vecd InducedAcceleration(Vecd &position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real run_time_ = GlobalStaticVariables::physical_time_;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
