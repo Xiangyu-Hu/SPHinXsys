@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(false); //Tag for run particle relaxation for body-fitted distribution
+    sph_system.setRunParticleRelaxation(true); //Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);       //Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);// handle command line arguemnts.
@@ -92,6 +92,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+    water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -118,10 +119,13 @@ int main(int ac, char *av[])
 
         /* Relaxation method: including based on the 0th and 1st order consistency. */
         InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_inner(water_body_inner);
-        relax_dynamics::RelaxationStepInnerImplicit relaxation_step_inner(water_body_inner);
-
+        relax_dynamics::RelaxationStepInnerImplicit<CorrectionMatrixRelaxation> relaxation_step_inner(water_body_inner);
+        SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_body_inner);
         PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
         PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
+        ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_body, "ParticleKineticEnergy");
+        ReduceDynamics<QuantityMaximum<Real>> calculate_water_block_maximum_kinetic_energy(water_body, "ParticleKineticEnergy"); 
+        water_body.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
         //----------------------------------------------------------------------  
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -131,46 +135,40 @@ int main(int ac, char *av[])
         periodic_condition_y.update_cell_linked_list_.exec();
         sph_system.initializeSystemConfigurations();
         write_water_body_to_vtp.writeToFile(0);
+        Real water_block_kinetic_energy = 100.0;
 
         //----------------------------------------------------------------------
         //	Relax particles of the insert body.
         //----------------------------------------------------------------------
         TickCount t1 = TickCount::now();
-
         int ite = 0; //iteration step for the total relaxation step.
-
-        Real last_zero_maximum_residual = 1;
-        Real last_zero_average_residual = 1;
-        Real last_first_maximum_residual = 1;
-        Real last_first_average_residual = 1;
-
-        Real current_zero_maximum_residual = 1;
-        Real current_zero_average_residual = 1;
-        Real current_first_maximum_residaul = 1;
-        Real current_first_average_residaul = 1;
-
         GlobalStaticVariables::physical_time_ = ite;
         /* The procedure to obtain uniform particle distribution that satisfies the 0ht order consistency. */
-        while (current_zero_maximum_residual > 0.0001)
+        while (water_block_kinetic_energy > 1e-8)
         {
+            kernel_correction_inner.exec();
+            relaxation_step_inner.exec();
+
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
             water_body.updateCellLinkedList();
             periodic_condition_x.update_cell_linked_list_.exec();
             periodic_condition_y.update_cell_linked_list_.exec();
             water_body_inner.updateConfiguration();
-
-
             ite++;
 
             if (ite % 100 == 0)
             {
-                std::cout << std::fixed << std::setprecision(9) << "The 0th relaxation steps for the body N = " << ite << "\n";
-                std::cout << "The 0th consistency error: maximum = " << current_zero_maximum_residual << ": average = " << current_zero_average_residual << std::endl;
+                update_water_block_kinetic_energy.exec();
+                water_block_kinetic_energy = calculate_water_block_maximum_kinetic_energy.exec();
+               std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
                 write_water_body_to_vtp.writeToFile(ite);
             }
         }
-        std::cout << "The 0th consistency error: maximum = " << current_zero_maximum_residual << ": average = " << current_zero_average_residual << std::endl;
+
+        std::cout << "Residual: "
+                  << " maximum: " << calculate_water_block_maximum_kinetic_energy.exec()
+                  << " average: " << calculate_water_block_average_kinetic_energy.exec() << std::endl;
 
         ite++;
         write_water_body_to_vtp.writeToFile(ite);
@@ -193,8 +191,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemann> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfHLLERiemann> density_and_energy_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemann> pressure_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemann> density_and_energy_relaxation(water_body_inner);
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     SimpleDynamics<TimeStepInitialization> time_step_initialization(water_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);

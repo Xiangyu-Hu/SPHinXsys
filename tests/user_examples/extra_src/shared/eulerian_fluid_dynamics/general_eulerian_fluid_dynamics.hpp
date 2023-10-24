@@ -19,6 +19,14 @@ ICEIntegration1stHalf<RiemannSolverType>::ICEIntegration1stHalf(BaseInnerRelatio
 template <class RiemannSolverType>
 void ICEIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
+    Vecd r0 = Vecd::Zero();
+    Vecd r1 = Vecd::Zero();
+    Vecd r2 = Vecd::Zero();
+    Vecd r3 = Vecd::Zero();
+    Vecd r4 = Vecd::Zero();
+    Vecd r5 = Vecd::Zero();
+    Vecd r6 = Vecd::Zero();
+
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Vecd momentum_change_rate = Vecd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -35,14 +43,27 @@ void ICEIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real 
 
         if (s_l < 0 && s_r > 0)
         {
-            //Matd flux_l = rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity();
-            //Matd flux_r = rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity();
+            Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() * (B_[index_i] + B_[index_i]) / 2 + p_[index_i] * (B_[index_j] + B_[index_j]) / 2);
+            Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() * (B_[index_j] + B_[index_j]) / 2 + p_[index_j] * (B_[index_i] + B_[index_i]) / 2);
 
-            Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() * B_[index_i] + p_[index_i] * Matd::Identity() * B_[index_j]);
-            Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() * B_[index_j] + p_[index_j] * Matd::Identity() * B_[index_i]);
             DissipationState dissipation_state = riemann_solver_.getDissipationState(state_i, state_j, e_ij);
             Matd dissipation_term = s_l * s_r * dissipation_state.momentum_dissipation_ / (s_r - s_l);
             momentum_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term) * e_ij * dW_ijV_j;
+
+            //if (index_i == 85)
+            //{
+            //    //std::cout << (flux_l + flux_r) * (B_[index_i] + B_[index_j] ) / 2 * e_ij * dW_ijV_j << std::endl;
+            //    /*std::cout << "1 is " << (-flux_l * (B_[index_i] + B_[index_j])) * e_ij * dW_ijV_j << std::endl;
+            //    std::cout << "2 is " << ((flux_l - flux_r) * B_[index_i] / 2) * e_ij * dW_ijV_j << std::endl;
+            //    std::cout << "3 is " << ((flux_l - flux_r) * B_[index_j] / 2) * e_ij * dW_ijV_j << std::endl;*/
+            //    r0 += (B_[index_i] + B_[index_j]) * e_ij * dW_ijV_j;
+            //    r1 += (-rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() * (B_[index_i] + B_[index_j])) * e_ij * dW_ijV_j;
+            //    r2 += ((rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() - rho_[index_j] * vel_[index_j] * vel_[index_j].transpose()) * B_[index_i] / 2) * e_ij * dW_ijV_j;
+            //    r3 += ((rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() - rho_[index_j] * vel_[index_j] * vel_[index_j].transpose()) * B_[index_j] / 2) * e_ij * dW_ijV_j;
+            //    r4 += (-p_[index_i] * Matd::Identity()* (B_[index_i] + B_[index_j])) * e_ij * dW_ijV_j;
+            //    r5 += ((p_[index_i] * Matd::Identity() - p_[index_j] * Matd::Identity()) * B_[index_i] / 2) * e_ij * dW_ijV_j;
+            //    r6 += ((p_[index_i] * Matd::Identity() - p_[index_j] * Matd::Identity()) * B_[index_j] / 2) * e_ij * dW_ijV_j;
+            //}
         }
         else if(s_l > 0)
         {
@@ -53,6 +74,18 @@ void ICEIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real 
             std::cout << "s_r is smaller than 0" << std::endl;
         }
     }
+    //if (index_i == 85)
+    //{
+
+    //    std::cout << "r0 is " << r0 << std::endl;
+    //    std::cout << "r1 is " << r1 << std::endl;
+    //    std::cout << "r2 is " << r2 << std::endl;
+    //    std::cout << "r3 is " << r3 << std::endl;
+    //    std::cout << "r4 is " << r4 << std::endl;
+    //    std::cout << "r5 is " << r5 << std::endl;
+    //    std::cout << "r6 is " << r6 << std::endl;
+    //}
+
     dmom_dt_[index_i] = momentum_change_rate;
 };
 //=================================================================================================//
@@ -111,6 +144,11 @@ ICEIntegration2ndHalf<RiemannSolverType>::
 template<class RiemannSolverType>
 void ICEIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
+    Vecd r0 = Vecd::Zero();
+    Real r1 = Real(0.0);
+    Real r2 = Real(0.0);
+    Real r3 = Real(0.0);
+
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Real density_change_rate = 0.0;
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -127,16 +165,31 @@ void ICEIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real 
 
         if (s_l < 0 && s_r > 0)
         {
-            //Vecd flux_l = rho_[index_i] * vel_[index_i];
-            //Vecd flux_r = rho_[index_j] * vel_[index_j];
-            
-            Vecd flux_l = (rho_[index_i] * vel_[index_i]) * e_ij.transpose() * B_[index_i] * e_ij;
-            Vecd flux_r = (rho_[index_j] * vel_[index_j]) * e_ij.transpose() * B_[index_j] * e_ij;
+            Real flux_l = (rho_[index_i] * vel_[index_i]).transpose() * ((B_[index_i] + B_[index_i]) / 2 * e_ij);
+            Real flux_r = (rho_[index_j] * vel_[index_j]).transpose() * ((B_[index_j] + B_[index_j]) / 2 * e_ij);
+
             DissipationState dissipation_state = riemann_solver_.getDissipationState(state_i, state_j, e_ij);
             Vecd dissipation_term = s_l * s_r * dissipation_state.density_dissipation_ / (s_r - s_l);
-            density_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term).dot(e_ij) * dW_ijV_j;
+            density_change_rate -= 2 * ((s_r * flux_l - s_l * flux_r) / (s_r - s_l) + dissipation_term.dot(e_ij)) * dW_ijV_j;
+
+            //if (index_i == 105)
+            //{
+            //    r0 += (B_[index_i] + B_[index_j]) * e_ij * dW_ijV_j;
+            //    r1 += -(rho_[index_i] * vel_[index_i]).transpose() * ((B_[index_i] + B_[index_i]) * e_ij);
+            //    r2 += (rho_[index_i] * vel_[index_i] - rho_[index_j] * vel_[index_j]).dot(B_[index_i] * e_ij) * dW_ijV_j;
+            //    r3 += (rho_[index_i] * vel_[index_i] - rho_[index_j] * vel_[index_j]).dot(B_[index_j] * e_ij) * dW_ijV_j;
+            //}
         }
     }
+
+    //if (index_i == 105)
+    //{
+    //    std::cout << "r0 is " << r0 << std::endl;
+    //    std::cout << "r1 is " << r1 << std::endl;
+    //    std::cout << "r2 is " << r2 << std::endl;
+    //    std::cout << "r3 is " << r3 << std::endl;
+    //}
+
     drho_dt_[index_i] = density_change_rate;
 };
 //=================================================================================================//

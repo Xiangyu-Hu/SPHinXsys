@@ -44,7 +44,7 @@ public:
 		/* initial pressure distribution. */
 		scalar_[index_i] = pos_[index_i][0];
         vector_[index_i] = pos_[index_i];
-        matrix_[index_i] = Vec2d(1,0) * pos_[index_i].transpose();
+        matrix_[index_i] = Vec2d(1,1) * pos_[index_i].transpose();
 	}
 
 protected:
