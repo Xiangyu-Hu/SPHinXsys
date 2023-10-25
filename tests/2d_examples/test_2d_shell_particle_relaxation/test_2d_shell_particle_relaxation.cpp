@@ -63,15 +63,14 @@ int main(int ac, char *av[])
     /** Random reset the particle position. */
     SimpleDynamics<RandomizeParticlePosition> random_pipe_body_particles(pipe_body);
     /** A  Physics relaxation step. */
-    relax_dynamics::ShellRelaxationStepInner
-        relaxation_step_pipe_body_inner(pipe_body_inner, thickness, level_set_refinement_ratio);
+    relax_dynamics::ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner);
     relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
     pipe_body.addBodyStateForRecording<int>("UpdatedIndicator");
     /**
      * @brief 	Particle relaxation starts here.
      */
     random_pipe_body_particles.exec(0.25);
-    relaxation_step_pipe_body_inner.mid_surface_bounding_.exec();
+    relaxation_step_pipe_body_inner.MidSurfaceBounding().exec();
     write_real_body_states.writeToFile(0.0);
     pipe_body.updateCellLinkedList();
     write_mesh_cell_linked_list.writeToFile(0.0);
@@ -91,7 +90,6 @@ int main(int ac, char *av[])
     shell_normal_prediction.exec();
     write_real_body_states.writeToFile(ite_p);
     std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
-
 
     return 0;
 }
