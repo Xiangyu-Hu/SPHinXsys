@@ -98,7 +98,7 @@ class DiscreteVariable : public BaseVariable
 };
 
 template <typename DataType, template <typename VariableDataType> class VariableType>
-VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<VariableType> &assemble,
+VariableType<DataType> *findVariableByName(const DataContainerAddressAssemble<VariableType> &assemble,
                                            const std::string &name)
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
