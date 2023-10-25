@@ -243,10 +243,10 @@ NeighborBuilderContactShell::NeighborBuilderContactShell(SPHBody &body, SPHBody 
 }
 //=================================================================================================//
 void NeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                 const Vecd &displacement, size_t index_j, const Real &dW_ijV_j, const Vecd &e_ij)
+                                                 size_t index_j, const Real &W_ij, const Real &dW_ijV_j, const Vecd &e_ij)
 {
     neighborhood.j_.push_back(index_j);
-    neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
+    neighborhood.W_ij_.push_back(W_ij);
     neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(e_ij);
@@ -254,11 +254,11 @@ void NeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, con
 }
 //=================================================================================================//
 void NeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                     const Vecd &displacement, size_t index_j, const Real &dW_ijV_j, const Vecd &e_ij)
+                                                     size_t index_j, const Real &W_ij, const Real &dW_ijV_j, const Vecd &e_ij)
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
-    neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
+    neighborhood.W_ij_[current_size] = W_ij;
     neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = e_ij;
@@ -286,6 +286,7 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
 
     if (distance < kernel_->CutOffRadius())
     {
+        Real W_ij_ttl = kernel_->W(distance, displacement);
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
@@ -299,6 +300,7 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
             Vol_j *= std::pow(1 + 1.0 / (vol_ratio + SGN(vol_ratio) * TinyReal), Dimensions - 1);
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j;
             Vecd e_ij = displacement_dummy / (distance_dummy + TinyReal);
+            W_ij_ttl += kernel_->W(distance_dummy, displacement_dummy);
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
@@ -313,8 +315,8 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_
-            ? createNeighbor(neighborhood, distance, displacement, index_j, dW_ijV_j_ttl, e_ij_corrected)
-            : initializeNeighbor(neighborhood, distance, displacement, index_j, dW_ijV_j_ttl, e_ij_corrected);
+            ? createNeighbor(neighborhood, distance, index_j, W_ij_ttl, dW_ijV_j_ttl, e_ij_corrected)
+            : initializeNeighbor(neighborhood, distance, index_j, W_ij_ttl, dW_ijV_j_ttl, e_ij_corrected);
         neighborhood.current_size_++;
     }
 };

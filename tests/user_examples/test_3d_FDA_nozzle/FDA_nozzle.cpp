@@ -1,7 +1,21 @@
 #include "sphinxsys.h"
-#include <iostream>
 
 using namespace SPH;
+
+class ObersverAxial : public ObserverParticleGenerator
+{
+  public:
+    ObersverAxial(SPHBody &sph_body, double full_length, Vec3d translation) : ObserverParticleGenerator(sph_body)
+    {
+        int nx = 51;
+        for (int i = 0; i < nx; i++)
+        {
+            double x = full_length / (nx - 1) * i;
+            Vec3d point_coordinate(x, 0.0, 0.0);
+            positions_.emplace_back(point_coordinate + translation);
+        }
+    }
+};
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -24,7 +38,7 @@ BoundingBox system_domain_bounds(Vec3d(-upstream_length - wall_thickness, -diame
 //----------------------------------------------------------------------
 const Real rho0_f = 1056.0;                                   // blood density
 const Real mu_f = 3.5e-3;                                     // blood viscosity
-const Real Re = 10;                                           /**< Reynolds number. */
+const Real Re = 500;                                          /**< Reynolds number. */
 const Real U_f_throat = Re * mu_f / rho0_f / throat_diameter; /**< Average velocity at throat. */
 const Real c_f = 20.0 * U_f_throat;                           /**< Speed of sound. */
 const Real U_f = U_f_throat * pow(throat_diameter / diameter, 2);
@@ -84,6 +98,7 @@ struct InflowVelocity
 
 int main(int ac, char *av[])
 {
+    std::cout << "Inlet Re = " << rho0_f * diameter * U_f / mu_f << std::endl;
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
@@ -117,7 +132,7 @@ int main(int ac, char *av[])
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_complex);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid_block, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid_block, 2 * U_f_throat);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
     /** Pressure relaxation using verlet time stepping. */
@@ -140,7 +155,17 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     fluid_block.addBodyStateForRecording<Real>("Pressure");
+    fluid_block.addBodyStateForRecording<Real>("Density");
+    fluid_block.addBodyStateForRecording<Real>("VolumetricMeasure");
+    fluid_block.addBodyStateForRecording<Real>("MassiveMeasure");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    /**
+     * @brief OBSERVER.
+     */
+    ObserverBody observer_axial(sph_system, "fluid_observer_axial");
+    observer_axial.generateParticles<ObersverAxial>(upstream_length + downstream_length, Vec3d(-upstream_length, 0, 0));
+    ContactRelation observer_contact_axial(observer_axial, {&fluid_block});
+    ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", io_environment, observer_contact_axial);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -226,6 +251,9 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
+        /** Update observer and write output of observer. */
+        observer_contact_axial.updateConfiguration();
+        write_fluid_velocity_axial.writeToFile(number_of_iterations);
     }
     TickCount t4 = TickCount::now();
 

@@ -214,10 +214,10 @@ class NeighborBuilderContactShell : public NeighborBuilder
     Real particle_distance_;            // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t index_j,
+                        size_t index_j, const Real &W_ij,
                         const Real &dW_ijV_j, const Vecd &e_ij);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t index_j,
+                            size_t index_j, const Real &W_ij,
                             const Real &dW_ijV_j, const Vecd &e_ij);
 };
 
