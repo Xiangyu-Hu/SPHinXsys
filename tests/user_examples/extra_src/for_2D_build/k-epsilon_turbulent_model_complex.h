@@ -142,12 +142,17 @@ namespace SPH
 		{
 		public:
 			StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
-				BaseContactRelation& contact_relation, Real offset_dist);
-			explicit StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist);
+				BaseContactRelation& contact_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface);
+			explicit StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface);
 			virtual ~StandardWallFunctionCorrection() {};
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
+
+			LevelSetShape* level_set_shape_;
+			StdLargeVec<Real> distance_to_wall_ls_;
+
 			Real offset_dist_;
+			StdVec<int> id_exclude_;
 			StdLargeVec<Real> y_p_;
 			StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
 			Real intial_distance_to_wall;

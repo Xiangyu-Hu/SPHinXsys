@@ -21,6 +21,7 @@ Real DL = 120;						  /**< Reference length. */
 Real DH = 2 - 2.0 * offset_dist_ref;  /**< Reference and the height of main channel. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
+StdVec<int> id_exclude;
 //-------------------------------------------------------
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + BW));

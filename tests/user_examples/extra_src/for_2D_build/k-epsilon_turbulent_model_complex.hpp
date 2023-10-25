@@ -122,14 +122,17 @@ namespace SPH
 					direc_matrix = e_tau * e_n.transpose() + (e_tau * e_n.transpose()).transpose();
 
 					//** This is to check whether the wall-sub-nearest fluid particles fric, velo. is zero *
-					if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) <= 0.0+TinyReal&& contact_neighborhood.current_size_>2)
-					{
-						system("pause");
-						std::cout << index_j << std::endl;
-						std::cout << vel_fric_i << std::endl;
-						std::cout << y_p << std::endl;
-						std::cout << contact_neighborhood.current_size_ << std::endl;
-					}
+					 //** But we think this gap may not be so important
+					//if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 0.1 && vel_fric_i.dot(vel_fric_i) <= 0.0+TinyReal)
+					//{
+					//	std::cout << index_j << std::endl;
+					//	std::cout << vel_fric_i << std::endl;
+					//	std::cout << y_p << std::endl;
+					//	std::cout << contact_neighborhood.current_size_ << std::endl;
+					//	
+					//	system("pause");
+					//	std::cout << "Strange" << std::endl;
+					//}
 
 					Vecd acc_j = -1.0 * -1.0 * 2.0 * vel_fric_i.dot(vel_fric_i) * direc_matrix * e_ij * contact_neighborhood.dW_ijV_j_[n];
 					acceleration += acc_j;
@@ -142,6 +145,7 @@ namespace SPH
 		//=================================================================================================//
 		void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
 		{
+			distance_to_wall_ls_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
 			if (is_migrate_[index_i] == 1) //If this particle has started migrating 
 			{
 				if (is_near_wall_P2_[index_i] == 1) //if it is in P2 region
@@ -172,6 +176,7 @@ namespace SPH
 			Vecd e_n = Vecd::Zero();
 			Vecd n_k_j_nearest = Vecd::Zero();
 			Matd direc_matrix = Matd::Zero();
+
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
@@ -179,7 +184,23 @@ namespace SPH
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
+					bool is_index_j_valid = true;
 					size_t index_j = contact_neighborhood.j_[n];
+					
+					/*Specific wall particles are excluded*/
+					for (int ii = 0; ii != id_exclude_.size(); ++ii)
+					{
+						if (index_j == id_exclude_[ii])
+						{
+							is_index_j_valid = false;
+							break;
+						}
+					}
+					if (is_index_j_valid == false)
+					{
+						continue;
+					}
+
 					Real r_ij = contact_neighborhood.r_ij_[n];
 					Vecd& e_ij = contact_neighborhood.e_ij_[n];
 					Vecd& n_k_j = n_k[index_j];
@@ -187,35 +208,36 @@ namespace SPH
 					//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
 					r_dummy_normal_temp = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
 					
-					/*Try to find the right nearest dummy particle */
-					//if (r_dummy_normal_temp <= 0.0 + TinyReal)
-					//{
-						//r_dummy_normal_temp = 1000.0; /*if not, let it go*/????
-						//std::cout << "r_dummy_normal_temp <= 0.0" << std::endl;
-						//system("pause");
-					//}
-
-					/*but the dist. should not be negative, and two corner is excluded*/
-					if (r_ij < r_min && r_dummy_normal_temp> 0.0 + TinyReal && index_j !=2520 && index_j != 2519 )
+					/*The distance to wall should not be negative*/
+					if (r_ij < r_min && r_dummy_normal_temp > 0.0 + TinyReal )
 					{
 						r_min = r_ij; //** Find the nearest wall particle *
 						r_dummy_normal = r_dummy_normal_temp;
+						n_k_j_nearest = n_k[index_j];
+						if (dimension_ == 2)
+						{
+							e_ij_t[0] = n_k_j_nearest[1];
+							e_ij_t[1] = n_k_j_nearest[0] * (-1.0);
+						}
+						/*For testing*/
 						distance_to_wall_[index_i] = r_dummy_normal;
 						index_nearest[index_i] = index_j;
 					}
+					/*Double checking*/
 					if (distance_to_wall_[index_i] < 0.0 - TinyReal)
 					{
 						std::cout << "distance_to_wall_[index_i] <= 0.0 + TinyReal strange" << std::endl;
 						std::cout << r_dummy_normal_temp << std::endl;
 						system("pause");
 					}
-					n_k_j_nearest = n_k[index_nearest[index_i]];
-					if (dimension_ == 2)
-					{
-						e_ij_t[0] = n_k_j_nearest[1];
-						e_ij_t[1] = n_k_j_nearest[0] * (-1.0);
-					}
 				}
+			}
+			if (distance_to_wall_[index_i] < 0.1 * particle_spacing_&&distance_to_wall_[index_i] > 0.0)
+			{
+				std::cout << "There is a particle too close to wall" << std::endl;
+				std::cout << "index_i="<< index_i << std::endl; 
+				std::cout << "DistanceToDummyInterface="<< distance_to_wall_[index_i] << std::endl;
+				system("pause");
 			}
 
 			if (r_dummy_normal < 1.0 * particle_spacing_ &&

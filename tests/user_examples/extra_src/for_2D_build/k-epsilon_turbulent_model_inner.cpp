@@ -68,6 +68,7 @@ namespace SPH
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")), plt_engine_()
 		{
+			/*Input mannually*/
 			x_min = 109;
 			x_max = 111;
 			cutoff_time = 150.0;

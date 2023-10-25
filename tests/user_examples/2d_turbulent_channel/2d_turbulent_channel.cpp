@@ -67,7 +67,9 @@ int main(int ac, char* av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref);
+	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
+	near_surface.level_set_shape_.writeLevelSet(io_environment);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref, id_exclude, near_surface);
 
 	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
 
@@ -207,9 +209,11 @@ int main(int ac, char* av[])
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
-			//write_body_states.writeToFile();
+			
 			get_time_average_cross_section_data.exec();
 			get_time_average_cross_section_data.output_cross_section_data();
+			//if(GlobalStaticVariables::physical_time_>5.8)
+				//write_body_states.writeToFile();
 		}
 
 		ITER = ITER + 1;
@@ -220,7 +224,7 @@ int main(int ac, char* av[])
 		//}
 
 		TickCount t2 = TickCount::now();
-		//write_body_states.writeToFile();
+		write_body_states.writeToFile();
 		
 		//write_fluid_x_velocity.writeToFile(); //For test turbulent model
 		//write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model

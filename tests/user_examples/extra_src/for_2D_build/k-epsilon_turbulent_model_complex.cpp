@@ -9,14 +9,15 @@ namespace SPH
 		//=================================================================================================//
 //=================================================================================================//
 		StandardWallFunctionCorrection::
-			StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist)
+			StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface)
 			: StandardWallFunctionCorrection(complex_relation.getInnerRelation(),
-				complex_relation.getContactRelation(), offset_dist) {}
+				complex_relation.getContactRelation(), offset_dist, id_exclude, near_surface) {}
 		//=================================================================================================//
 		StandardWallFunctionCorrection::
 			StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
-				BaseContactRelation& contact_relation, Real offset_dist)
-			: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
+				BaseContactRelation& contact_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface)
+			: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation), id_exclude_(id_exclude), 
+			level_set_shape_(&near_surface.level_set_shape_),
 			offset_dist_(offset_dist),vel_(particles_->vel_),pos_(particles_->pos_),dimension_(Vecd(0).size()),
 			rho_(particles_->rho_), mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()) ,
 			particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
@@ -28,6 +29,11 @@ namespace SPH
 			velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 			k_production_(*particles_->getVariableByName<Real>("K_Production"))
 		{
+			
+			particles_->registerVariable(distance_to_wall_ls_, "DistanceToWallLS");
+			particles_->registerSortableVariable<Real>("DistanceToWallLS");
+			particles_->addVariableToWrite<Real>("DistanceToWallLS");
+
 			particles_->registerVariable(y_p_, "Y_P");
 			particles_->registerSortableVariable<Real>("Y_P");
 			particles_->addVariableToWrite<Real>("Y_P");
@@ -66,12 +72,20 @@ namespace SPH
 			particles_->registerSortableVariable<Real>("DistanceToWall");
 			particles_->addVariableToWrite<Real>("DistanceToWall");
 
-			//definition of near wall particles
+			/*definition of near wall particles*/
 			intial_distance_to_wall = 1.5 * particle_spacing_; //changed
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(contact_particles_[k]->n_));
 			}
+			/*definition the specific particles where normal vectors do not exist*/
+			std::cout << "The id of excluded wall particle is: " << std::endl;
+			for (int i = 0; i != id_exclude_.size(); ++i)
+			{
+				std::cout << id_exclude_[i] << std::endl;
+			}
+			std::cout << "Are you sure? " << std::endl;
+			system("pause");
 		};
 		//=================================================================================================//
 	}

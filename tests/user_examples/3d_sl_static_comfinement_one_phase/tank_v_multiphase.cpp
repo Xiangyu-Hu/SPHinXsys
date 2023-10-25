@@ -28,7 +28,7 @@ int main(int ac, char* av[])
 	IOEnvironment in_output(system);
 
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 

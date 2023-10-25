@@ -14,6 +14,12 @@ int main(int ac, char* av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
+	
+	/** Tag for run particle relaxation for the initial body fitted distribution. */
+	system.setRunParticleRelaxation(false);
+	/** Tag for computation start with relaxed body fitted particles distribution. */
+	system.setReloadParticles(true);
+
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
@@ -25,8 +31,13 @@ int main(int ac, char* av[])
 	//water_block.defineAdaptationRatios(1.4);
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineBodyLevelSetShape();
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	
+	//wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
+		? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
+		: wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.defineAdaptationRatios(0.0, 1.0);
@@ -49,6 +60,48 @@ int main(int ac, char* av[])
 	ComplexRelation water_block_complex_relation(water_block_inner, { &wall_boundary });
 	ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
 	//----------------------------------------------------------------------
+	//	Run particle relaxation for body-fitted distribution if chosen.
+	//----------------------------------------------------------------------
+	if (system.RunParticleRelaxation())
+	{
+		/** body topology only for particle relaxation */
+		InnerRelation wall_inner(wall_boundary);
+		//----------------------------------------------------------------------
+		//	Methods used for particle relaxation.
+		//----------------------------------------------------------------------
+		/** Random reset the insert body particle position. */
+		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
+		/** Write the body state to Vtp file. */
+		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &wall_boundary });
+		/** Write the particle reload files. */
+		ReloadParticleIO write_particle_reload_files(io_environment, wall_boundary);
+		/** A  Physics relaxation step. */
+		relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_inner);
+		//----------------------------------------------------------------------
+		//	Particle relaxation starts here.
+		//----------------------------------------------------------------------
+		random_inserted_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
+		write_inserted_body_to_vtp.writeToFile(0);
+
+		int ite_p = 0;
+		while (ite_p < 1000)
+		{
+			relaxation_step_inner.exec();
+			ite_p += 1;
+			if (ite_p % 200 == 0)
+			{
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				write_inserted_body_to_vtp.writeToFile(ite_p);
+			}
+		}
+		std::cout << "The physics relaxation process of the wall finish !" << std::endl;
+
+		/** Output results. */
+		write_particle_reload_files.writeToFile(0);
+		return 0;
+	}
+	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
@@ -67,7 +120,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref, id_exclude);
 
 	//SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
 
@@ -83,7 +136,8 @@ int main(int ac, char* av[])
 	/** Define the external force for turbulent startup to reduce instability at start-up stage, 1e-4 is from poisulle case */
 	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
-	
+	//SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+
 	/** Turbulent advection time step. */
 	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
 	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
@@ -105,7 +159,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
 
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * (DH2+DE));
-	Vec2d disposer_up_translation = Vec2d(DL2 - BW, -0.05 * (DH2 + DE) - DE) + disposer_up_halfsize;
+	Vec2d disposer_up_translation = Vec2d(DL2 - BW + outlet_length, -0.05 * (DH2 + DE) - DE) + disposer_up_halfsize;
 	BodyAlignedBoxByCell disposer_up(
 		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
@@ -126,6 +180,7 @@ int main(int ac, char* av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.exec();
+	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
@@ -190,8 +245,8 @@ int main(int ac, char* av[])
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-
-				//write_body_states.writeToFile();
+				//if(GlobalStaticVariables::physical_time_ >0.75)
+					//write_body_states.writeToFile();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
