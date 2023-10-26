@@ -161,7 +161,7 @@ InteractionWithWall<BaseIntegrationType>::
         wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
         
         // Device variables
-        wall_inv_rho0_device_.at(k) = 1.0f / static_cast<DeviceReal>(rho0_k);
+        wall_inv_rho0_device_.at(k) = static_cast<DeviceReal>(1.0) / static_cast<DeviceReal>(rho0_k);
         wall_mass_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Mass");;
         wall_vel_ave_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Velocity");
         wall_acc_ave_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Acceleration");;
@@ -189,7 +189,7 @@ BaseDensitySummationComplex<DensitySummationInnerType>::
         contact_mass_.at(k) = &(this->contact_particles_[k]->mass_);
 
 	// Device variables
-	contact_inv_rho0_device_.at(k) = 1.0f / static_cast<DeviceReal>(rho0_k);
+	contact_inv_rho0_device_.at(k) = static_cast<DeviceReal>(1.0) / static_cast<DeviceReal>(rho0_k);
         contact_mass_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Mass");
     }
 }
