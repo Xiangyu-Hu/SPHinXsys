@@ -21,23 +21,29 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_fluid_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          fluid dynamics used in SPHinXsys.
- * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
- *          then algorithm interacting with wall is defined, further algorithms
- *          for multiphase flow interaction built upon these basic algorithms.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	smeared_surface_indication.h
+ * @brief 	Here, we define methods for smear material surface,
+ * i.e. the surface is smeared to the thickness of a cutoff radius.
+ * @author	Xiangyu Hu
  */
+#ifndef SMEARED_SURFACE_INDICATION_H
+#define SMEARED_SURFACE_INDICATION_H
 
-#pragma once
+#include "base_general_dynamics.h"
 
-#include "density_summation.hpp"
-#include "all_fluid_boundaries.h"
-#include "all_eulerian_fluid_dynamics.h"
-#include "fluid_integration.hpp"
-#include "fluid_time_step.h"
-#include "non_newtonian_dynamics.h"
-#include "shape_confinement.h"
-#include "transport_velocity_correction.hpp"
-#include "viscous_dynamics.hpp"
+namespace SPH
+{
+class SmearedSurfaceIndication : public LocalDynamics, public FluidDataInner
+{
+  public:
+    explicit SmearedSurfaceIndication(BaseInnerRelation &inner_relation);
+    virtual ~SmearedSurfaceIndication(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<int> &indicator_;
+    StdLargeVec<int> &smeared_surface_;
+};
+} // namespace SPH
+#endif // SMEARED_SURFACE_INDICATION_H

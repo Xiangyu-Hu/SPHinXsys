@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "all_surface_indication.h"
 #include "base_general_dynamics.h"
 #include "domain_bounding.h"
 #include "general_constraint.h"
@@ -39,5 +40,4 @@
 #include "general_refinement.h"
 #include "kernel_correction.hpp"
 #include "particle_smoothing.hpp"
-#include "surface_indication.hpp"
 #include "time_step_initialization.h"

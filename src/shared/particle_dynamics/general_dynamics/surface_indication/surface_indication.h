@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file surface indication.h
+ * @file surface_indication.h
  * @brief Here, we define the algorithm classes for indicating material surfaces.
  * @details Note that, SPHinXsys does not require surface indication
  * for simulating general free surface flow problems.

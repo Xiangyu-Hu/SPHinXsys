@@ -32,12 +32,5 @@
 
 #pragma once
 
-#include "density_summation.hpp"
-#include "all_fluid_boundaries.h"
-#include "all_eulerian_fluid_dynamics.h"
-#include "fluid_integration.hpp"
-#include "fluid_time_step.h"
-#include "non_newtonian_dynamics.h"
-#include "shape_confinement.h"
-#include "transport_velocity_correction.hpp"
-#include "viscous_dynamics.hpp"
+#include "fluid_boundary.h"
+#include "non_reflective_boundary.h"

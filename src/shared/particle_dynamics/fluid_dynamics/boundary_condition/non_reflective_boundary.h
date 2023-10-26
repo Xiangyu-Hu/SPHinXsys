@@ -21,23 +21,40 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_fluid_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          fluid dynamics used in SPHinXsys.
- * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
- *          then algorithm interacting with wall is defined, further algorithms
- *          for multiphase flow interaction built upon these basic algorithms.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file non_reflective_boundary.h
+ * @brief Here, we define the non-reflective boundary condition at
+ * fluid surface particles. //TODO: extend the method so that it works for
+ * both eulerian and lagrangian formulations.
+ * @author	Zhentong Wang and Xiangyu Hu
  */
+#ifndef EULERIAN_FLUID_INTEGRATION_H
+#define EULERIAN_FLUID_INTEGRATION_H
 
-#pragma once
+#include "base_fluid_dynamics.h"
 
-#include "density_summation.hpp"
-#include "all_fluid_boundaries.h"
-#include "all_eulerian_fluid_dynamics.h"
-#include "fluid_integration.hpp"
-#include "fluid_time_step.h"
-#include "non_newtonian_dynamics.h"
-#include "shape_confinement.h"
-#include "transport_velocity_correction.hpp"
-#include "viscous_dynamics.hpp"
+namespace SPH
+{
+namespace fluid_dynamics
+{
+class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegateInner<BaseParticles>
+{
+  public:
+    NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation);
+    virtual ~NonReflectiveBoundaryCorrection(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Fluid &fluid_;
+    Real rho_farfield_, sound_speed_;
+    Vecd vel_farfield_;
+    StdLargeVec<Real> &rho_, &p_, &Vol_;
+    StdLargeVec<Vecd> &vel_, &mom_, &pos_;
+    StdLargeVec<Real> inner_weight_summation_, rho_average_, vel_normal_average_;
+    StdLargeVec<Vecd> vel_tangential_average_, vel_average_;
+    StdLargeVec<int> &indicator_, smeared_surface_;
+    StdLargeVec<Vecd> &n_;
+};
+} // namespace fluid_dynamics
+} // namespace SPH
+#endif // EULERIAN_FLUID_INTEGRATION_H

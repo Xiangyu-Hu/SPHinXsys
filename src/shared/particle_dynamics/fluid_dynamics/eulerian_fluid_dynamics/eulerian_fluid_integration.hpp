@@ -1,24 +1,28 @@
-#pragma once
+#ifndef EULERIAN_FLUID_INTEGRATION_HPP
+#define EULERIAN_FLUID_INTEGRATION_HPP
 
-#include "eulerian_fluid_dynamics.h"
+#include "eulerian_fluid_integration.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class RiemannSolverType>
-EulerianIntegration1stHalfInner<RiemannSolverType>::
-    EulerianIntegration1stHalfInner(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : BaseIntegration<FluidDataInner>(inner_relation),
-      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter)
-{
-    particles_->registerVariable(mom_, "Momentum");
-    particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-}
+template <class DataDelegationType>
+template <class BaseRelationType>
+EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &base_relation)
+    : BaseIntegration<DataDelegationType>(base_relation),
+      mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
+      dmom_dt_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration1stHalfInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
+EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::
+    EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
+    : EulerianIntegration<FluidDataInner>(inner_relation),
+      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter) {}
+//=================================================================================================//
+template <class RiemannSolverType>
+void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Vecd momentum_change_rate = Vecd::Zero();
@@ -32,28 +36,27 @@ void EulerianIntegration1stHalfInner<RiemannSolverType>::interaction(size_t inde
         FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
         FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-
-        momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        Matd convect_flux = rho_star * interface_state.vel_ * interface_state.vel_.transpose();
+        momentum_change_rate -= 2.0 * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
     dmom_dt_[index_i] = momentum_change_rate;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration1stHalfInner<RiemannSolverType>::update(size_t index_i, Real dt)
+void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
     mom_[index_i] += (dmom_dt_[index_i] + rho_[index_i] * acc_prior_[index_i]) * dt;
     vel_[index_i] = mom_[index_i] / rho_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-EulerianIntegration1stHalfWithWall<RiemannSolverType>::
-    EulerianIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
-    : InteractionWithWall<BaseIntegration>(wall_contact_relation),
-      riemann_solver_(fluid_, fluid_, limiter_parameter),
-      dmom_dt_(particles_->getVariableByName<Vecd>("MomentumChangeRate")){};
+EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>::
+    EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
+    : InteractionWithWall<EulerianIntegration>(wall_contact_relation),
+      riemann_solver_(fluid_, fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Vecd momentum_change_rate = Vecd::Zero();
@@ -73,21 +76,21 @@ void EulerianIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t i
             FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
             FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
             Real rho_star = fluid_.DensityFromPressure(interface_state.p_);
-
-            momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+            Matd convect_flux = rho_star * interface_state.vel_ * interface_state.vel_.transpose();
+            momentum_change_rate -= 2.0 * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
         }
     }
     dmom_dt_[index_i] += momentum_change_rate;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-EulerianIntegration2ndHalf<RiemannSolverType>::
+EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
     : BaseIntegration<FluidDataInner>(inner_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Real density_change_rate = 0.0;
@@ -108,20 +111,20 @@ void EulerianIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, 
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
+void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt;
     p_[index_i] = fluid_.getPressure(rho_[index_i]);
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-EulerianIntegration2ndHalfWithWall<RiemannSolverType>::
-    EulerianIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
-    : InteractionWithWall<EulerianIntegration2ndHalfType>(wall_contact_relation, base_body_relation),
+EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::
+    EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
+    : InteractionWithWall<EulerianIntegration>(wall_contact_relation, base_body_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter){};
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration2ndHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
     Real density_change_rate = 0.0;
@@ -151,3 +154,4 @@ void EulerianIntegration2ndHalfWithWall<RiemannSolverType>::interaction(size_t i
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
+#endif // EULERIAN_FLUID_INTEGRATION_HPP
