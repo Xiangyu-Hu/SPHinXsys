@@ -121,9 +121,10 @@ const Real fluid_radius = 0.5 * diameter;
 const Real full_length = 10 * fluid_radius;
 const int number_of_particles = 20;
 const Real resolution_ref = diameter / number_of_particles;
+const Real resolution_shell = 2 * resolution_ref;
 const Real inflow_length = resolution_ref * 10.0; // Inflow region
 const Real wall_thickness = resolution_ref * 4.0;
-const Real shell_thickness = resolution_ref;
+const Real shell_thickness = resolution_shell;
 const int simtk_resolution = 20;
 const Vec3d translation_fluid(0., full_length * 0.5, 0.);
 /**
@@ -131,9 +132,9 @@ const Vec3d translation_fluid(0., full_length * 0.5, 0.);
  */
 const Real radius_mid_surface = fluid_radius + shell_thickness * 0.5;
 const int particle_number_mid_surface =
-    int(2.0 * radius_mid_surface * Pi / resolution_ref);
+    int(2.0 * radius_mid_surface * Pi / resolution_shell);
 const int particle_number_height =
-    int((full_length + 2.0 * wall_thickness) / resolution_ref);
+    int((full_length + 2.0 * wall_thickness) / resolution_shell);
 
 /**
  * @brief Geometry parameters for boundary condition.
@@ -197,10 +198,10 @@ class ShellBoundary : public SurfaceParticleGenerator
             {
                 Real theta = (i + 0.5) * 2 * Pi / (Real)particle_number_mid_surface;
                 Real x = radius_mid_surface * cos(theta);
-                Real y = -wall_thickness + (full_length + 2 * wall_thickness) * j / (Real)particle_number_height + 0.5 * resolution_ref;
+                Real y = -wall_thickness + (full_length + 2 * wall_thickness) * j / (Real)particle_number_height + 0.5 * resolution_shell;
                 Real z = radius_mid_surface * sin(theta);
                 initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
-                                                       resolution_ref * resolution_ref);
+                                                       resolution_shell * resolution_shell);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
                 initializeSurfaceProperties(n_0, shell_thickness);
             }
@@ -254,9 +255,8 @@ int main()
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
-    shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, 1.0);
-    shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(
-        rho0_f, 1e3, 0.45);
+    shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
+    shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_f, 1e3, 0.45);
     shell_boundary.generateParticles<ShellBoundary>();
     /** topology */
     InnerRelation water_inner(water_block);
@@ -287,7 +287,7 @@ int main()
         update_density_by_summation(water_block_complex);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize>
-        get_fluid_advection_time_step_size(water_block, 2 * U_max);
+        get_fluid_advection_time_step_size(water_block, U_max);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(
         water_block);
@@ -330,7 +330,7 @@ int main()
      * @brief Output.
      */
     IOEnvironment io_environment(system);
-    water_block.addBodyStateForRecording<int>("PreviousSurfaceIndicator");
+    water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
     shell_boundary.addBodyStateForRecording<double>("MassiveMeasure");
     shell_boundary.addBodyStateForRecording<double>("Density");
@@ -371,7 +371,6 @@ int main()
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
-    exit(0);
 
     /**
      * @brief 	Basic parameters.

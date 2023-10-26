@@ -99,10 +99,11 @@ const Real scale = 0.001;
 const Real diameter = 6.35 * scale;
 const Real fluid_radius = 0.5 * diameter;
 const Real full_length = 10 * fluid_radius;
-const int number_of_particles = 10;
+const int number_of_particles = 20;
 const Real resolution_ref = diameter / number_of_particles;
+const Real resolution_wall = 2 * resolution_ref;
 const Real inflow_length = resolution_ref * 10.0; // Inflow region
-const Real wall_thickness = resolution_ref * 4.0;
+const Real wall_thickness = resolution_wall * 4.0;
 const int simtk_resolution = 20;
 const Vec3d translation_fluid(0., full_length * 0.5, 0.);
 /**
@@ -199,7 +200,7 @@ int main()
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, 1.0);
+    wall_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_wall);
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
     /** topology */
@@ -222,7 +223,7 @@ int main()
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, 2 * U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation algorithm without Riemann solver for viscous flows. */
@@ -251,7 +252,7 @@ int main()
      * @brief Output.
      */
     IOEnvironment io_environment(system);
-    water_block.addBodyStateForRecording<int>("PreviousSurfaceIndicator");
+    water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
