@@ -387,8 +387,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_fluid_phi.testResult();
-
+    if (sph_system.GenerateRegressionData())
+    {
+        write_fluid_phi.generateDataBase(1.0e-3, 1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_fluid_phi.testResult();
+    }
 
     return 0;
 }
