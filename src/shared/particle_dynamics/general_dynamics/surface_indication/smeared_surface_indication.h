@@ -33,7 +33,7 @@
 
 namespace SPH
 {
-class SmearedSurfaceIndication : public LocalDynamics, public FluidDataInner
+class SmearedSurfaceIndication : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
     explicit SmearedSurfaceIndication(BaseInnerRelation &inner_relation);

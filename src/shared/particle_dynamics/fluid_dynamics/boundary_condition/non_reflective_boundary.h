@@ -27,8 +27,8 @@
  * both eulerian and lagrangian formulations.
  * @author	Zhentong Wang and Xiangyu Hu
  */
-#ifndef EULERIAN_FLUID_INTEGRATION_H
-#define EULERIAN_FLUID_INTEGRATION_H
+#ifndef NON_REFLECTIVE_BOUNDARY_H
+#define NON_REFLECTIVE_BOUNDARY_H
 
 #include "base_fluid_dynamics.h"
 
@@ -57,4 +57,4 @@ class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegat
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // EULERIAN_FLUID_INTEGRATION_H
+#endif // NON_REFLECTIVE_BOUNDARY_H

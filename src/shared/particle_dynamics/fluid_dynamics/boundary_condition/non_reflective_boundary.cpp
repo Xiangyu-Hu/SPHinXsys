@@ -1,5 +1,6 @@
 #include "non_reflective_boundary.h"
 
+#include "weakly_compressible_fluid.h"
 namespace SPH
 {
 namespace fluid_dynamics
