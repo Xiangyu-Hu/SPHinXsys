@@ -97,11 +97,14 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
-        Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-        Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity) * relaxation_rate_ +
-                                      frame_velocity * (1.0 - relaxation_rate_);
-        vel_[index_i] = transform_.xformFrameVecToBase(relaxed_frame_velocity);
+        if (aligned_box_.checkInBounds(0, pos_[index_i]))
+        {
+            Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
+            Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
+            Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity) * relaxation_rate_ +
+                                          frame_velocity * (1.0 - relaxation_rate_);
+            vel_[index_i] = transform_.xformFrameVecToBase(relaxed_frame_velocity);
+        }
     };
 
   protected:

@@ -151,7 +151,7 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGra
     {
         Real diff_coeff_ij =
             this->all_diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_i, e_ij);
-        Real phi_ij = (*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
+        Real phi_ij = 2.0 * (*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
         (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
