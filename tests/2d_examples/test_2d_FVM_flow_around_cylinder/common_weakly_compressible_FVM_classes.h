@@ -28,8 +28,9 @@
 
 #ifndef COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
 #define COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
+#include "base_fluid_dynamics.h"
 #include "common_shared_FVM_classes.h"
-#include "eulerian_fluid_dynamics.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

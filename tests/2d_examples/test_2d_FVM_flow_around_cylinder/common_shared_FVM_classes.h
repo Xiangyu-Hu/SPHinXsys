@@ -28,11 +28,10 @@
 #ifndef COMMON_SHARED_FVM_CLASSES_H
 #define COMMON_SHARED_FVM_CLASSES_H
 
+#include "base_fluid_dynamics.h"
 #include "base_particle_generator.h"
 #include "compressible_fluid.h"
 #include "fluid_body.h"
-#include "fluid_dynamics_inner.h"
-#include "base_general_dynamics.h"
 #include "io_vtk.h"
 using namespace std;
 namespace SPH
