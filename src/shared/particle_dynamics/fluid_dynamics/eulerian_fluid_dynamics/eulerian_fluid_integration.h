@@ -81,7 +81,7 @@ class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration1stHalfInnerAcousticRiemann = EulerianIntegration1stHalf<Inner<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, EulerianAcousticRiemannSolver>;
 
 template <class RiemannSolverType>
 class EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>
@@ -98,7 +98,8 @@ class EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration1stHalfWithWallAcousticRiemann = EulerianIntegration1stHalf<ContactWall<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration1stHalfWithWallRiemann =
+    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, ContactWall<>>, EulerianAcousticRiemannSolver>;
 
 template <typename... InteractionTypes>
 class EulerianIntegration2ndHalf;
@@ -119,7 +120,7 @@ class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<Inner<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<>, EulerianAcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration2ndHalfWithWall
@@ -140,7 +141,8 @@ class EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration2ndHalfWithWallAcousticRiemann = EulerianIntegration2ndHalf<ContactWall<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration2ndHalfWithWallRiemann =
+    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, ContactWall<>>, EulerianAcousticRiemannSolver>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_FLUID_INTEGRATION_H

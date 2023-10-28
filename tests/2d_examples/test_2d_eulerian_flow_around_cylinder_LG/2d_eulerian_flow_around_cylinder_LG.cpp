@@ -4,7 +4,6 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -115,8 +114,15 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //	Note that the same relation should be defined only once.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&cylinder});
+    InnerRelation water_block_inner(water_block);
+    ContactRelation water_block_contact(water_block, {&cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_wall_complex(water_block_inner, water_block_contact);
+    //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -130,8 +136,9 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
         ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
-        relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
+        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
+            ConstructorArgs(water_block_inner, "OuterBoundary"), water_block_contact);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -163,18 +170,18 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
-    InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_inner, water_block_contact);
+    InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
-    InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getBodyRelation());
-    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex);
-    InteractionDynamics<fluid_dynamics::SmearedSurfaceIndication> smeared_surface(water_block_complex.getBodyRelation());
+    InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
+    InteractionWithUpdate<FreeSurfaceIndicationComplex> surface_indicator(water_block_inner, water_block_contact);
+    InteractionDynamics<SmearedSurfaceIndication> smeared_surface(water_block_inner);
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
