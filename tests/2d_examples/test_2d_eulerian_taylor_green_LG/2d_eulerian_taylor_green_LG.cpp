@@ -4,7 +4,6 @@
  * @details 2D eulerian_taylor_green vortex flow example.
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
-#include "common_compressible_eulerian_classes.hpp" // eulerian classes for compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
@@ -115,15 +114,15 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
-    SimpleDynamics<EulerianCompressibleTimeStepInitialization> time_step_initialization(water_body);
+    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> time_step_initialization(water_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
-    ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
-    InteractionWithUpdate<Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
-    InteractionDynamics<EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
+    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
+    InteractionDynamics<fluid_dynamics::EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
-    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix);
+    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(water_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
