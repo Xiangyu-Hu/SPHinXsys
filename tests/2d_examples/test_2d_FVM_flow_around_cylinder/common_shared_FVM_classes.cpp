@@ -118,22 +118,8 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
         cout << "Error:Total number of node points does not match data!" << endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     }
-
-    /*--- Read the elements of the problem ---*/
-    /** boundary condition types
-     * bc-type==2, interior boundary condition.
-     * bc-type==3, wall boundary condition.
-     * bc-type==9, pressure-far-field boundary condition.
-     * Note that Cell0 means boundary condition.
-     * mesh_type==3, unstructured mesh.
-     * mesh_type==4, structured mesh.
-     * mesh_topology_
-     * {[(neighbor_cell_index, bc_type, node1_of_face, node2_of_face), (....), (.....)], []..... }.
-     * {inner_neighbor1, inner_neighbor2, ..... }.
-     */
-    size_t boundary_type(0);
+    /*--- Read the total number of elements ---*/
     size_t number_of_elements(0);
-    size_t mesh_type = 3;
     while (getline(mesh_file, text_line))
     {
         text_line.erase(0, 1);
@@ -150,33 +136,51 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
             break;
         }
     };
+    /*--- Initialize mesh topology ---*/
+    /** mesh_topology_
+     * {[(neighbor_cell_index, bc_type, node1_of_face, node2_of_face), (....), (.....)], []..... }.
+     * {inner_neighbor1, inner_neighbor2, ..... }.
+     */
+    size_t mesh_type = 3;
     mesh_topology_.resize(number_of_elements + 1);
     for (std::size_t a = 0; a != number_of_elements + 1; ++a)
     {
         mesh_topology_[a].resize(mesh_type);
-        for (std::vector<std::vector<long unsigned int>>::size_type b = 0; b != mesh_topology_[a].size(); ++b)
+        for (std::size_t b = 0; b != mesh_topology_[a].size(); ++b)
         {
             mesh_topology_[a][b].resize(dimension + 2);
-            for (std::vector<long unsigned int>::size_type c = 0; c != mesh_topology_[a][b].size(); ++c)
+            for (std::size_t c = 0; c != mesh_topology_[a][b].size(); ++c)
             {
-                mesh_topology_[a][b][c] = -1;
+                mesh_topology_[a][b][c] = MaxSize_t;
             }
         }
     }
-    /*--- reinitialize the number of elements ---*/
+    /*--- Initialize the number of elements ---*/
     elements_nodes_connection_.resize(number_of_elements + 1);
-    elements_neighbors_connection_.resize(number_of_elements + 1);
     mesh_topology_.resize(number_of_elements + 1);
     for (std::size_t element = 0; element != number_of_elements + 1; ++element)
     {
         elements_nodes_connection_[element].resize(3);
-        for (std::vector<long unsigned int>::size_type node = 0; node != elements_nodes_connection_[element].size(); ++node)
+        for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
         {
-            elements_nodes_connection_[element][node] = -1;
+            elements_nodes_connection_[element][node] = MaxSize_t;
         }
     }
 
+    /*--- Read the elements of the problem ---*/
+    /** boundary condition types
+     * bc-type==2, interior boundary condition.
+     * bc-type==3, wall boundary condition.
+     * bc-type==9, pressure-far-field boundary condition.
+     * Note that Cell0 means boundary condition.
+     * mesh_type==3, unstructured mesh.
+     * mesh_type==4, structured mesh.
+     * mesh_topology_
+     * {[(neighbor_cell_index, bc_type, node1_of_face, node2_of_face), (....), (.....)], []..... }.
+     * {inner_neighbor1, inner_neighbor2, ..... }.
+     */
     /*--- find the elements lines ---*/
+    size_t boundary_type(0);
     while (getline(mesh_file, text_line))
     {
         if (text_line.find("(13", 0) != string::npos && text_line.find(")(", 0) != string::npos)
@@ -392,17 +396,17 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
 //=================================================================================================//
 void ANSYSMesh::getElementCenterCoordinates()
 {
-    elements_centroids.resize(elements_nodes_connection_.size());
+    elements_centroids_.resize(elements_nodes_connection_.size());
     elements_volumes_.resize(elements_nodes_connection_.size());
-    for (std::vector<std::vector<long unsigned int>>::size_type element = 1; element != elements_nodes_connection_.size(); ++element)
+    for (std::size_t element = 1; element != elements_nodes_connection_.size(); ++element)
     {
         Vecd center_coordinate = Vecd::Zero();
-        for (std::vector<long unsigned int>::size_type node = 0; node != elements_nodes_connection_[element].size(); ++node)
+        for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
         {
             center_coordinate += Vecd(node_coordinates_[elements_nodes_connection_[element][node]][0] / 3.0,
                                       node_coordinates_[elements_nodes_connection_[element][node]][1] / 3.0);
         }
-        elements_centroids[element] = center_coordinate;
+        elements_centroids_[element] = center_coordinate;
 
         // calculating each volume of element
         // get nodes position
@@ -422,7 +426,7 @@ void ANSYSMesh::getElementCenterCoordinates()
         elements_volumes_[element] = element_volume;
     }
     elements_volumes_.erase(elements_volumes_.begin());
-    elements_centroids.erase(elements_centroids.begin());
+    elements_centroids_.erase(elements_centroids_.begin());
     elements_nodes_connection_.erase(elements_nodes_connection_.begin());
 }
 //=================================================================================================//
@@ -432,7 +436,7 @@ void ANSYSMesh::gerMinimumDistanceBetweenNodes()
     all_data_of_distance_between_nodes.resize(0);
     for (size_t element_index = 0; element_index != elements_volumes_.size(); ++element_index)
     {
-        for (std::vector<std::vector<long unsigned int>>::size_type neighbor = 0; neighbor != mesh_topology_[element_index].size(); ++neighbor)
+        for (std::size_t neighbor = 0; neighbor != mesh_topology_[element_index].size(); ++neighbor)
         {
             size_t interface_node1_index = mesh_topology_[element_index][neighbor][2];
             size_t interface_node2_index = mesh_topology_[element_index][neighbor][3];
@@ -484,14 +488,14 @@ void BaseInnerRelationInFVM::resizeConfiguration()
 }
 //=================================================================================================//
 ParticleGeneratorInFVM::ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh)
-    : ParticleGenerator(sph_body), elements_centroids(ansys_mesh.elements_centroids),
+    : ParticleGenerator(sph_body), elements_centroids_(ansys_mesh.elements_centroids_),
       elements_volumes_(ansys_mesh.elements_volumes_) {}
 //=================================================================================================//
 void ParticleGeneratorInFVM::initializeGeometricVariables()
 {
-    for (size_t particle_index = 0; particle_index != elements_centroids.size(); ++particle_index)
+    for (size_t particle_index = 0; particle_index != elements_centroids_.size(); ++particle_index)
     {
-        initializePositionAndVolumetricMeasure(elements_centroids[particle_index], elements_volumes_[particle_index]);
+        initializePositionAndVolumetricMeasure(elements_centroids_[particle_index], elements_volumes_[particle_index]);
     }
 }
 //=================================================================================================//
@@ -536,7 +540,7 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                 Real &Vol_i = Vol_n[index_i];
 
                 Neighborhood &neighborhood = particle_configuration[index_i];
-                for (std::vector<std::vector<long unsigned int>>::size_type neighbor = 0; neighbor != mesh_topology_[index_i].size(); ++neighbor)
+                for (std::size_t neighbor = 0; neighbor != mesh_topology_[index_i].size(); ++neighbor)
                 {
                     size_t index_j = mesh_topology_[index_i][neighbor][0] - 1;
                     size_t boundary_type = mesh_topology_[index_i][neighbor][1];
