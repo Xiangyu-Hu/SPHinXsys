@@ -13,7 +13,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    readMeshFile read_mesh_data(double_mach_reflection_mesh_fullpath);
+    ANSYSMesh read_mesh_data(double_mach_reflection_mesh_fullpath);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
@@ -26,16 +26,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
-    wave_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
+    wave_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_centroids, read_mesh_data.elements_volumes_);
     wave_block.addBodyStateForRecording<Real>("Density");
     wave_block.addBodyStateForRecording<Real>("Pressure");
     /** Initial condition and register variables*/
     SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
-    GhostCreationFromMesh ghost_creation(wave_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
+    GhostCreationFromMesh ghost_creation(wave_block, read_mesh_data.cell_lists_, read_mesh_data.node_coordinates_);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
-    InnerRelationInFVM water_block_inner(wave_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
+    InnerRelationInFVM water_block_inner(wave_block, read_mesh_data.cell_lists_, read_mesh_data.node_coordinates_);
     water_block_inner.updateConfiguration();
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
@@ -53,7 +53,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
     // Visualization in FVM with date in cell.
     BodyStatesRecordingInMeshToVtp write_real_body_states(
-        io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
+        io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.node_coordinates_);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(io_environment, wave_block);
     //----------------------------------------------------------------------

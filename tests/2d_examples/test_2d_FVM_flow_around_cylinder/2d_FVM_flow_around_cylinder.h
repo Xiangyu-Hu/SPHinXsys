@@ -33,7 +33,7 @@ Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string zero_three_flow_around_cylinder_mesh_file_fullpath = "./input/fluent_0.3.msh";
+std::string ansys_mesh_file_path = "./input/fluent_0.3.msh";
 //
 //	Define geometries and body shapes
 //----------------------------------------------------------------------

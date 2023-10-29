@@ -14,7 +14,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    readMeshFile read_mesh_data(zero_three_flow_around_cylinder_mesh_file_fullpath);
+    ANSYSMesh ansys_mesh(ansys_mesh_file_path);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
@@ -27,13 +27,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
+    water_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
     water_block.addBodyStateForRecording<Real>("Density");
-    GhostCreationFromMesh ghost_creation(water_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
+    GhostCreationFromMesh ghost_creation(water_block, ansys_mesh);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
-    InnerRelationInFVM water_block_inner(water_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
+    InnerRelationInFVM water_block_inner(water_block, ansys_mesh);
     water_block_inner.updateConfiguration();
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
@@ -48,7 +48,7 @@ int main(int ac, char *av[])
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
+    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, ansys_mesh.min_distance_between_nodes_);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 
     //----------------------------------------------------------------------
@@ -60,7 +60,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     // visualization in FVM with data in cell
-    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
+    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, water_block, ansys_mesh);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>

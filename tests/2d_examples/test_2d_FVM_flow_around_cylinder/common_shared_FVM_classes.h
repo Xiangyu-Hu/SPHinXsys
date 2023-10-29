@@ -37,34 +37,30 @@ using namespace std;
 namespace SPH
 {
 /**
- * @class readMeshFile
+ * @class ANSYSMesh
  * @brief ANASYS mesh.file parser class
  */
-class readMeshFile
+class ANSYSMesh
 {
   public:
-    readMeshFile(std::string full_path)
-    {
-        full_path_ = full_path;
-        getDataFromMeshFile();
-        getElementCenterCoordinates();
-        gerMinimumDistanceBetweenNodes();
-    };
-    virtual ~readMeshFile(){};
+    ANSYSMesh(const std::string &full_path);
+    virtual ~ANSYSMesh(){};
 
-    void getDataFromMeshFile();
-    void getElementCenterCoordinates();
-    void gerMinimumDistanceBetweenNodes();
-    string full_path_;
-    vector<size_t> types_of_boundary_condition_;
-    vector<vector<Real>> point_coordinates_2D_;
-    vector<vector<Real>> point_coordinates;
-    StdLargeVec<Vecd> elements_center_coordinates_;
+    StdVec<size_t> types_of_boundary_condition_;
+    StdLargeVec<Vecd> node_coordinates_;
+    StdLargeVec<Vecd> elements_centroids;
     StdLargeVec<Real> elements_volumes_;
     vector<vector<size_t>> elements_nodes_connection_;
     StdLargeVec<Vec3d> elements_neighbors_connection_;
-    vector<vector<vector<size_t>>> cell_lists_;
+    vector<vector<vector<size_t>>> mesh_topology_;
     double min_distance_between_nodes_;
+
+  protected:
+    void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates);
+    void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec3d> &node_coordinates);
+    void getDataFromMeshFile(const std::string &full_path);
+    void getElementCenterCoordinates();
+    void gerMinimumDistanceBetweenNodes();
 };
 
 /**
@@ -78,9 +74,10 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 
   public:
     RealBody *real_body_;
-    vector<vector<vector<size_t>>> all_needed_data_from_mesh_file_;
-    vector<vector<Real>> nodes_coordinates_;
-    explicit BaseInnerRelationInFVM(RealBody &real_body, vector<vector<vector<size_t>>> data_inpute, vector<vector<Real>> nodes_coordinates);
+    StdLargeVec<Vecd> &node_coordinates_;
+    vector<vector<vector<size_t>>> &mesh_topology_;
+
+    explicit BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
     virtual ~BaseInnerRelationInFVM(){};
 
     virtual void resizeConfiguration() override;
@@ -93,16 +90,14 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 class ParticleGeneratorInFVM : public ParticleGenerator
 {
   public:
-    explicit ParticleGeneratorInFVM(SPHBody &sph_body)
-        : ParticleGenerator(sph_body){};
-    ParticleGeneratorInFVM(SPHBody &sph_body, const StdLargeVec<Vecd> &positions, const StdLargeVec<Real> &elements_volumes);
+    ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
     virtual ~ParticleGeneratorInFVM(){};
     /** Initialize geometrical variable for observe particles. */
     virtual void initializeGeometricVariables() override;
 
   protected:
-    StdLargeVec<Vecd> elements_center_coordinates_;
-    StdLargeVec<Real> elements_volumes_;
+    StdLargeVec<Vecd> &elements_centroids;
+    StdLargeVec<Real> &elements_volumes_;
 };
 
 /**
@@ -160,7 +155,7 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
     NeighborBuilderInnerInFVM get_inner_neighbor_;
 
   public:
-    explicit InnerRelationInFVM(RealBody &real_body, vector<vector<vector<size_t>>> data_inpute, vector<vector<Real>> nodes_coordinates);
+    explicit InnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
     virtual ~InnerRelationInFVM(){};
 
     /** generalized particle search algorithm */
@@ -177,17 +172,7 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
 class GhostCreationFromMesh : public GeneralDataDelegateSimple
 {
   public:
-    GhostCreationFromMesh(RealBody &real_body, vector<vector<vector<size_t>>> &data_inpute, vector<vector<Real>> nodes_coordinates)
-        : GeneralDataDelegateSimple(real_body), all_needed_data_from_mesh_file_(data_inpute), nodes_coordinates_(nodes_coordinates),
-          pos_(particles_->pos_), Vol_(particles_->Vol_), total_ghost_particles_(particles_->total_ghost_particles_),
-          real_particles_bound_(particles_->real_particles_bound_)
-    {
-        each_boundary_type_with_all_ghosts_index_.resize(50);
-        each_boundary_type_with_all_ghosts_eij_.resize(50);
-        each_boundary_type_contact_real_index_.resize(50);
-        ghost_particles_.resize(1);
-        addGhostParticleAndSetInConfiguration();
-    }
+    GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh);
     virtual ~GhostCreationFromMesh(){};
     vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
     vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
@@ -195,82 +180,14 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
 
   protected:
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
-    vector<vector<vector<size_t>>> &all_needed_data_from_mesh_file_;
-    vector<vector<Real>> nodes_coordinates_;
+    StdLargeVec<Vecd> &node_coordinates_;
+    vector<vector<vector<size_t>>> &mesh_topology_;
     StdLargeVec<Vecd> &pos_;
     StdVec<IndexVector> ghost_particles_;
     StdLargeVec<Real> &Vol_;
     size_t &total_ghost_particles_;
     size_t &real_particles_bound_;
-
-    void addGhostParticleAndSetInConfiguration()
-    {
-        for (size_t i = 0; i != ghost_particles_.size(); ++i)
-            ghost_particles_[i].clear();
-
-        for (size_t index_i = 0; index_i != real_particles_bound_; ++index_i)
-        {
-            for (size_t neighbor_index = 0; neighbor_index != all_needed_data_from_mesh_file_[index_i].size(); ++neighbor_index)
-            {
-                size_t boundary_type = all_needed_data_from_mesh_file_[index_i][neighbor_index][1];
-                if (all_needed_data_from_mesh_file_[index_i][neighbor_index][1] != 2)
-                {
-                    mutex_create_ghost_particle_.lock();
-                    size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
-                    size_t node1_index = all_needed_data_from_mesh_file_[index_i][neighbor_index][2];
-                    size_t node2_index = all_needed_data_from_mesh_file_[index_i][neighbor_index][3];
-                    Vecd node1_position = Vecd(nodes_coordinates_[node1_index][0], nodes_coordinates_[node1_index][1]);
-                    Vecd node2_position = Vecd(nodes_coordinates_[node2_index][0], nodes_coordinates_[node2_index][1]);
-                    Vecd ghost_particle_position = 0.5 * (node1_position + node2_position);
-
-                    all_needed_data_from_mesh_file_[index_i][neighbor_index][0] = ghost_particle_index + 1;
-                    ghost_particles_[0].push_back(ghost_particle_index);
-                    pos_[ghost_particle_index] = ghost_particle_position;
-                    mutex_create_ghost_particle_.unlock();
-
-                    all_needed_data_from_mesh_file_.resize(ghost_particle_index);
-                    std::vector<std::vector<size_t>> new_element;
-
-                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
-                    std::vector<size_t> sub_element1 = {index_i + 1, boundary_type, node1_index, node2_index};
-                    new_element.push_back(sub_element1);
-
-                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
-                    std::vector<size_t> sub_element2 = {index_i + 1, boundary_type, node1_index, node2_index};
-                    new_element.push_back(sub_element2);
-
-                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
-                    std::vector<size_t> sub_element3 = {index_i + 1, boundary_type, node1_index, node2_index};
-                    new_element.push_back(sub_element3);
-
-                    // Add the new element to all_needed_data_from_mesh_file_
-                    all_needed_data_from_mesh_file_.push_back(new_element);
-                    // all_needed_data_from_mesh_file_[ghost_particle_index][0][0].push_back(size_t(0);
-
-                    // creating the boundary files with ghost particle index
-                    each_boundary_type_with_all_ghosts_index_[boundary_type].push_back(ghost_particle_index);
-
-                    // creating the boundary files with contact real particle index
-                    each_boundary_type_contact_real_index_[boundary_type].push_back(index_i);
-
-                    // creating the boundary files with ghost eij
-                    Vecd interface_area_vector = node1_position - node2_position;
-                    Real interface_area_size = interface_area_vector.norm();
-                    Vecd unit_vector = interface_area_vector / interface_area_size;
-                    // normal unit vector
-                    Vecd normal_vector = Vecd(unit_vector[1], -unit_vector[0]);
-                    // judge the direction
-                    Vecd particle_position = pos_[index_i];
-                    Vecd node1_to_center_direction = particle_position - node1_position;
-                    if (node1_to_center_direction.dot(normal_vector) < 0)
-                    {
-                        normal_vector = -normal_vector;
-                    };
-                    each_boundary_type_with_all_ghosts_eij_[boundary_type].push_back(normal_vector);
-                }
-            }
-        }
-    };
+    void addGhostParticleAndSetInConfiguration();
 };
 
 /**
@@ -281,16 +198,13 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
 class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, vector<vector<size_t>> elements_nodes_connection, vector<vector<Real>> nodes_coordinates)
-        : BodyStatesRecording(io_environment, body), elements_nodes_connection_(elements_nodes_connection), nodes_coordinates_(nodes_coordinates){};
-    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBodyVector bodies, vector<vector<size_t>> elements_nodes_connection, vector<vector<Real>> nodes_coordinates)
-        : BodyStatesRecording(io_environment, bodies), elements_nodes_connection_(elements_nodes_connection), nodes_coordinates_(nodes_coordinates){};
+    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, ANSYSMesh &ansys_mesh);
     virtual ~BodyStatesRecordingInMeshToVtp(){};
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
-    vector<vector<size_t>> elements_nodes_connection_;
-    vector<vector<Real>> nodes_coordinates_;
+    StdLargeVec<Vecd> &node_coordinates_;
+    vector<vector<size_t>> &elements_nodes_connection_;
 };
 } // namespace SPH
 #endif // COMMON_SHARED_FVM_CLASSES_H
