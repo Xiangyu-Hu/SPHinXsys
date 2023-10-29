@@ -113,6 +113,7 @@ class KernelGradientCorrection<Inner<>>
     virtual ~KernelGradientCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
+using KernelGradientCorrectionInner = KernelGradientCorrection<Inner<>>;
 
 template <>
 class KernelGradientCorrection<Contact<>>
