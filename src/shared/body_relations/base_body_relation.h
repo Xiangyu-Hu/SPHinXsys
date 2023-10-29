@@ -29,10 +29,11 @@
 #ifndef BASE_BODY_RELATION_H
 #define BASE_BODY_RELATION_H
 
+#include "base_body.h"
+#include "base_body_part.h"
 #include "base_geometry.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "complex_body.h"
 #include "neighborhood.h"
 
 namespace SPH

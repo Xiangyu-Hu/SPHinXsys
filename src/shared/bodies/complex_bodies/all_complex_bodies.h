@@ -21,19 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_bodies.h
+ * @file 	all_complex_bodies.h
  * @brief 	This is the header file that user code should include to pick up all
  *          bodies used in SPHinXsys.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef ALL_BODIES_H
-#define ALL_BODIES_H
+#ifndef ALL_COMPLEX_BODIES_H
+#define ALL_COMPLEX_BODIES_H
 
-#pragma once
+#include "tree_body.h"
+#include "unstructured_mesh.h"
 
-#include "base_body_part.h"
-#include "all_complex_bodies.h"
-#include "fluid_body.h"
-#include "observer_body.h"
-#include "solid_body.h"
-#endif // ALL_BODIES_H
+#endif // ALL_COMPLEX_BODIES_H

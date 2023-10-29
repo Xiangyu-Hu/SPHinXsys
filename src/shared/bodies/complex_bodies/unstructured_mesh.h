@@ -21,12 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	common_shared_FVM_classes.h
+ * @file 	unstructured_mesh.h
  * @brief 	Here, we define the common shared classes for FVM.
  * @author	Zhentong Wang and Xiangyu Hu
  */
-#ifndef COMMON_SHARED_FVM_CLASSES_H
-#define COMMON_SHARED_FVM_CLASSES_H
+#ifndef UNSTRUCTURED_MESH_H
+#define UNSTRUCTURED_MESH_H
 
 #include "base_fluid_dynamics.h"
 #include "base_particle_generator.h"
@@ -206,4 +206,4 @@ class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
     StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
 };
 } // namespace SPH
-#endif // COMMON_SHARED_FVM_CLASSES_H
+#endif // UNSTRUCTURED_MESH_H

@@ -1,4 +1,5 @@
-#include "complex_body.h"
+#include "tree_body.h"
+
 #include "adaptation.h"
 #include "base_material.h"
 #include "base_particle_dynamics.h"

@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	complex_body.h
+ * @file 	secondary_structure.h
  * @brief 	A complex body is characterized with a secondary structure,
  * 			which can be imported externally or created according to specific rules.
  * 			The secondary structure will be used or even created by the corresponding
@@ -29,8 +29,8 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef COMPLEX_BODY_H
-#define COMPLEX_BODY_H
+#ifndef SECONDARY_STRUCTURE_H
+#define SECONDARY_STRUCTURE_H
 
 #include "base_body.h"
 #include "base_body_part.h"
@@ -52,80 +52,5 @@ class SecondaryStructure
 
     virtual void buildParticleConfiguration(ParticleConfiguration &particle_configuration) = 0;
 };
-
-/**
- * @class TreeBody
- * @brief The tree is composed of a root (the first branch)
- * and other branch generated sequentially.
- */
-class TreeBody : public SecondaryStructure, public RealBody
-{
-  public:
-    class Branch;
-
-  private:
-    UniquePtrsKeeper<Branch> branches_ptr_keeper_;
-
-  public:
-    StdVec<Branch *> branches_;    /**< Container of all branches */
-    IndexVector branch_locations_; /**< in which branch are the particles located */
-    size_t last_branch_id_;
-    Branch *root_;
-
-    template <typename... Args>
-    TreeBody(Args &&...args)
-        : SecondaryStructure(), RealBody(std::forward<Args>(args)...), last_branch_id_(0)
-    {
-        root_ = branches_ptr_keeper_.createPtr<Branch>(this);
-    };
-    virtual ~TreeBody(){};
-
-    Branch *createANewBranch(size_t parent_id)
-    {
-        return branches_ptr_keeper_.createPtr<Branch>(parent_id, this);
-    };
-    size_t BranchLocation(size_t particle_idx);
-    Branch *LastBranch() { return branches_[last_branch_id_]; };
-
-    virtual void buildParticleConfiguration(ParticleConfiguration &particle_configuration) override;
-    size_t ContainerSize() { return branches_.size(); };
-};
-
-/**
- * @class TreeBody::Branch
- * @brief Each branch (except the root) has a parent and several children, and geometric information.
- * It is a realized edge and has multi inner particles.
- * The first is the last particle from the parent or root,
- * and the last is the first particle of all its child branches.
- * Many connected branches compose a tree. */
-class TreeBody::Branch : public Edge<size_t, IndexVector>
-{
-  public:
-    /** construct the root branch  */
-    explicit Branch(TreeBody *tree);
-    /** construct an branch connecting with its parent */
-    Branch(size_t parent_id, TreeBody *tree);
-    virtual ~Branch(){};
-
-    Vecd end_direction_; /**< the direction pointing to the last particle */
-    /** The indexes of particle within this branch.
-     * The first is the last particle from the parent or root,
-     * and the last is the first of all its child branches. */
-    IndexVector inner_particles_;
-    bool is_terminated_; /**< whether is an terminate branch or not */
-};
-
-/**
- * @class TreeTerminates
- * @brief A  body part with the collection of particles as the terminates of the tree.
- */
-class TreeTerminates : public BodyPartByParticle
-{
-  public:
-    TreeBody &tree_;
-
-    explicit TreeTerminates(SPHBody &sph_body);
-    virtual ~TreeTerminates(){};
-};
 } // namespace SPH
-#endif // COMPLEX_BODY_H
+#endif // SECONDARY_STRUCTURE_H

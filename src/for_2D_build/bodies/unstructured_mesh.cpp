@@ -1,5 +1,6 @@
 
-#include "common_shared_FVM_classes.h"
+#include "unstructured_mesh.h"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -403,17 +404,15 @@ void ANSYSMesh::getElementCenterCoordinates()
         Vecd center_coordinate = Vecd::Zero();
         for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
         {
-            center_coordinate += Vecd(node_coordinates_[elements_nodes_connection_[element][node]][0] / 3.0,
-                                      node_coordinates_[elements_nodes_connection_[element][node]][1] / 3.0);
+            center_coordinate += node_coordinates_[elements_nodes_connection_[element][node]] / 3.0;
         }
         elements_centroids_[element] = center_coordinate;
 
         // calculating each volume of element
         // get nodes position
-        Vec3d nodes = Vec3d(elements_nodes_connection_[element][0], elements_nodes_connection_[element][1], elements_nodes_connection_[element][2]);
-        Vecd node1_coordinate = Vecd(node_coordinates_[nodes[0]][0], node_coordinates_[nodes[0]][1]);
-        Vecd node2_coordinate = Vecd(node_coordinates_[nodes[1]][0], node_coordinates_[nodes[1]][1]);
-        Vecd node3_coordinate = Vecd(node_coordinates_[nodes[2]][0], node_coordinates_[nodes[2]][1]);
+        Vecd node1_coordinate = node_coordinates_[elements_nodes_connection_[element][0]];
+        Vecd node2_coordinate = node_coordinates_[elements_nodes_connection_[element][1]];
+        Vecd node3_coordinate = node_coordinates_[elements_nodes_connection_[element][2]];
         // get each line length
         Real first_side_length = (node1_coordinate - node2_coordinate).norm();
         Real second_side_length = (node1_coordinate - node3_coordinate).norm();
@@ -440,8 +439,8 @@ void ANSYSMesh::gerMinimumDistanceBetweenNodes()
         {
             size_t interface_node1_index = mesh_topology_[element_index][neighbor][2];
             size_t interface_node2_index = mesh_topology_[element_index][neighbor][3];
-            Vecd node1_position = Vecd(node_coordinates_[interface_node1_index][0], node_coordinates_[interface_node1_index][1]);
-            Vecd node2_position = Vecd(node_coordinates_[interface_node2_index][0], node_coordinates_[interface_node2_index][1]);
+            Vecd node1_position = node_coordinates_[interface_node1_index];
+            Vecd node2_position = node_coordinates_[interface_node2_index];
             Vecd interface_area_vector = node1_position - node2_position;
             Real interface_area_size = interface_area_vector.norm();
             all_data_of_distance_between_nodes.push_back(interface_area_size);

@@ -7,7 +7,6 @@
 
 #ifndef FVM_FLOW_AROUND_CYLINDER_H
 #define FVM_FLOW_AROUND_CYLINDER_H
-#include "common_shared_FVM_classes.h"              // shared classes for weakly-compressible and compressible fluid in FVM.
 #include "common_weakly_compressible_FVM_classes.h" // classes for weakly compressible fluid only in FVM.
 using namespace SPH;
 using namespace std;

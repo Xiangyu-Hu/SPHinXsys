@@ -1,9 +1,10 @@
 
 #include "common_weakly_compressible_FVM_classes.h"
 
+using namespace std;
 namespace SPH
 {
-    namespace fluid_dynamics
+namespace fluid_dynamics
 {
 //=================================================================================================//
 WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL)
@@ -46,5 +47,5 @@ void ViscousForceFromFluidInFVM::interaction(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-}
+} // namespace fluid_dynamics
 } // namespace SPH
