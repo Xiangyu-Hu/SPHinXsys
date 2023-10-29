@@ -33,26 +33,6 @@
 
 namespace SPH
 {
-/**
- * @struct FluidState
- * @brief  Struct for stored states of Riemann solver in weakly-compressible flow.
- */
-struct FluidState
-{
-    Vecd &vel_;
-    Real &rho_, &p_;
-    FluidState(Real &rho, Vecd &vel, Real &p)
-        : vel_(vel), rho_(rho), p_(p){};
-};
-
-struct FluidStarState
-{
-    Vecd vel_;
-    Real p_;
-    FluidStarState(Vecd vel, Real p)
-        : vel_(vel), p_(p){};
-};
-
 class Fluid;
 
 /**

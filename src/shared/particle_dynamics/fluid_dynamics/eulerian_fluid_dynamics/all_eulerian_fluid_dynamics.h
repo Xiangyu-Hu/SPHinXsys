@@ -32,4 +32,5 @@
 
 #pragma once
 
+#include "eulerian_compressible_fluid_integration.hpp"
 #include "eulerian_fluid_integration.hpp"

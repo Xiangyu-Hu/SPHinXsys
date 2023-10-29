@@ -29,27 +29,12 @@
 #define EULERIAN_FLUID_INTEGRATION_H
 
 #include "fluid_integration.hpp"
-#include "riemann_solver.h"
+#include "eulerian_riemann_solver.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @struct EulerianAcousticRiemannSolver
- * @brief  Acoustic RiemannSolver for Eulerian weakly-compressible flow.
- */
-class EulerianAcousticRiemannSolver
-{
-    Fluid &fluid_i_, &fluid_j_;
-    Real limiter_parameter_;
-
-  public:
-    EulerianAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j, Real limiter_parameter = 15.0)
-        : fluid_i_(fluid_i), fluid_j_(fluid_j), limiter_parameter_(limiter_parameter){};
-    FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
-};
-
 template <class DataDelegationType>
 class EulerianIntegration : public BaseIntegration<DataDelegationType>
 {
