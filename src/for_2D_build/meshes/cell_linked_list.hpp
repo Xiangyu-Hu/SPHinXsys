@@ -69,8 +69,8 @@ execution::ExecutionEvent CellLinkedListKernel::searchNeighborsByParticles(
                                          const auto target_cell_index = CellIndexFromPosition(pos_i, mesh_lower_bound,
                                                                                  grid_spacing, all_grid_points);
                                          mesh_for_each(
-                                             sycl::max(DeviceArray2i{0}, DeviceArray2i{target_cell_index - search_depth}),
-                                             sycl::min(all_cells, DeviceArray2i{target_cell_index + search_depth + 1}),
+                                             VecdMax(DeviceArray2i{0}, DeviceArray2i{target_cell_index - search_depth}),
+                                             VecdMin(all_cells, DeviceArray2i{target_cell_index + search_depth + 1}),
                                              [&](int l, int m) {
                                                  const auto linear_cell_index = transferCellIndexTo1D({l,m}, all_cells);
                                                  size_t index_j = index_head_list[linear_cell_index];

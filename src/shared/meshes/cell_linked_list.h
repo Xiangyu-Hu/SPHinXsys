@@ -98,14 +98,26 @@ class CellLinkedListKernel {
 
     size_t* computingSequence(BaseParticles &baseParticles);
 
-    static inline DeviceArrayi CellIndexFromPosition(const DeviceVecd &position, const DeviceVecd& mesh_lower_bound,
-                                                     const DeviceReal &grid_spacing, const DeviceArrayi &all_grid_points)
+    template<class Type, int Dim>
+    static inline DeviceArrayi CellIndexFromPosition(const sycl::vec<Type,Dim> &position, const sycl::vec<Type,Dim>& mesh_lower_bound,
+                                                     const Type &grid_spacing, const sycl::vec<int,Dim> &all_grid_points)
     {
         return sycl::min(
             sycl::max(
                 sycl::floor((position - mesh_lower_bound) / grid_spacing)
-                    .convert<int, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
+                    .template convert<int, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
             all_grid_points - DeviceArrayi{2});
+    }
+
+    template<class Type, int Dim>
+    static inline DeviceArrayi CellIndexFromPosition(const Eigen::Matrix<Type,Dim,1> &position,
+                                                     const Eigen::Matrix<Type,Dim,1>& mesh_lower_bound,
+                                                     const Type &grid_spacing, const Eigen::Array<int,Dim,1> &all_grid_points)
+    {
+        return floor((position - mesh_lower_bound).array() / grid_spacing)
+                .template cast<int>()
+                .max(Arrayi::Zero())
+                .min(all_grid_points - 2 * Arrayi::Ones());
     }
 
     static inline size_t transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArrayi &all_cells)
