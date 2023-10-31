@@ -82,12 +82,12 @@ const Real unit_density = 1e3;   // g.cm-3 to kg.m-3
  */
 const Real fluid_radius = 0.5 * unit_length;
 const Real diameter = 2.0 * fluid_radius;
-const int number_of_particles = 20;
+const int number_of_particles = 10;
 const Real resolution_fluid = diameter / Real(number_of_particles);
 const Real emitter_length = resolution_fluid * 4.0;
-const Real inflow_length = resolution_fluid * 10.0; // Region to impose velocity
-const Real resolution_wall = resolution_fluid;
-const Real wall_thickness = resolution_wall;
+const Real inflow_length = resolution_fluid * 5.0; // Region to impose velocity
+const Real wall_thickness = 0.1 * unit_length;
+const Real resolution_wall = wall_thickness;
 const Real wall_radius = fluid_radius + wall_thickness;
 const Real full_length = 5 * unit_length;
 const int simtk_resolution = 20;
@@ -99,7 +99,7 @@ const Vec3d emitter_halfsize(fluid_radius, emitter_length * 0.5, fluid_radius);
 const Vec3d emitter_translation(0., emitter_length * 0.5, 0.);
 const Vec3d buffer_halfsize(fluid_radius, inflow_length * 0.5, fluid_radius);
 const Vec3d buffer_translation(0., inflow_length * 0.5, 0.);
-const Vec3d disposer_halfsize(fluid_radius * 1.1, resolution_fluid * 2, fluid_radius * 1.1);
+const Vec3d disposer_halfsize(fluid_radius * 2.0, resolution_fluid * 2, fluid_radius * 2.0);
 const Vec3d disposer_translation(0., full_length - disposer_halfsize[1], 0.);
 
 /** Domain bounds of the system. */
@@ -110,7 +110,7 @@ BoundingBox system_domain_bounds(Vec3d(-diameter, 0, -diameter) - Vec3d(wall_thi
  */
 const Real rho0_f = 1.0 * unit_density;  /**< Reference density of fluid. */
 const Real mu_f = 0.03 * unit_viscosity; /**< Viscosity. */
-const Real U_f = 0.5;
+const Real U_f = 0.025;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 /**
@@ -118,46 +118,17 @@ const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
  */
 const Real rho0_s = 1.0 * unit_density; /**< Reference density.*/
 const Real poisson = 0.3;               /**< Poisson ratio.*/
-const Real Youngs_modulus = 3e6 * unit_force / unit_length / unit_length;
+const Real Youngs_modulus = 3e3 * unit_force / unit_length / unit_length;
 /**
  * @brief Define water shape
  */
+const std::string path_to_fluid_file = "./input/water_block.stl";
 class WaterBlock : public ComplexShape
 {
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius, full_length * 0.5, simtk_resolution, translation_fluid);
-    }
-};
-/**
- * @brief Define wall shape
- */
-const Real radius_mid_surface = fluid_radius + wall_thickness * 0.5;
-const int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi / resolution_wall);
-const int particle_number_height = int((full_length + 2.0 * wall_thickness) / resolution_wall);
-class ShellBoundary : public SurfaceParticleGenerator
-{
-  public:
-    explicit ShellBoundary(SPHBody &sph_body)
-        : SurfaceParticleGenerator(sph_body){};
-    void initializeGeometricVariables() override
-    {
-        for (int i = 0; i < particle_number_mid_surface; i++)
-        {
-            for (int j = 0; j < particle_number_height; j++)
-            {
-                const Real DT = 4 * resolution_fluid;
-                Real theta = (i + 0.5) * 2 * Pi / (Real)particle_number_mid_surface;
-                Real x = radius_mid_surface * cos(theta);
-                Real y = -DT + (full_length + 2 * DT) * j / (Real)particle_number_height + 0.5 * resolution_wall;
-                Real z = radius_mid_surface * sin(theta);
-                initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
-                                                       resolution_wall * resolution_wall);
-                Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                initializeSurfaceProperties(n_0, wall_thickness);
-            }
-        }
+        add<TriangleMeshShapeSTL>(path_to_fluid_file, Vecd::Zero(), unit_length);
     }
 };
 /** create the wall constrain shape. */
@@ -169,11 +140,11 @@ class FixedShape : public ComplexShape
         Vec3d inlet_fixation_halfsize(wall_radius, 0.5 * (wall_thickness + inflow_length), wall_radius);
         Vec3d inlet_fixation_translation(0, inflow_length - inlet_fixation_halfsize[1], 0);
 
-        Vec3d outlet_fixation_halfsize(wall_radius, wall_thickness, wall_radius);
-        Vec3d outlet_fixation_translation(0, full_length, 0);
+        // Vec3d outlet_fixation_halfsize(wall_radius, wall_thickness, wall_radius);
+        // Vec3d outlet_fixation_translation(0, full_length, 0);
 
         add<TriangleMeshShapeBrick>(inlet_fixation_halfsize, simtk_resolution, inlet_fixation_translation);
-        add<TriangleMeshShapeBrick>(outlet_fixation_halfsize, simtk_resolution, outlet_fixation_translation);
+        // add<TriangleMeshShapeBrick>(outlet_fixation_halfsize, simtk_resolution, outlet_fixation_translation);
     }
 };
 
@@ -227,7 +198,7 @@ int main()
     SolidBody wall_boundary(system, makeShared<DefaultShape>("wall_boundary"));
     wall_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_fluid / resolution_wall);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<ShellBoundary>();
+    wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation wall_boundary_inner(wall_boundary);
@@ -285,7 +256,7 @@ int main()
     /** Compute time step size of elastic solid. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> wall_boundary_computing_time_step_size(wall_boundary);
     /** Stress relaxation for the inserted body. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> wall_boundary_stress_relaxation_first_half(wall_boundary_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> wall_boundary_stress_relaxation_first_half(wall_boundary_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> wall_boundary_stress_relaxation_second_half(wall_boundary_inner);
     /** Constrain region of the inserted body. */
     auto wall_fixed_shape = makeShared<FixedShape>("wall_fixation_shape");
@@ -295,9 +266,9 @@ int main()
     const Real shape_constant = 0.4;
     const Real physical_viscosity = shape_constant / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * wall_thickness;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
-        wall_position_damping(0.2, wall_boundary_inner, "Velocity", physical_viscosity);
+        wall_position_damping(0.2, wall_boundary_inner, "Velocity", 10 * physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
-        wall_rotation_damping(0.2, wall_boundary_inner, "AngularVelocity", physical_viscosity);
+        wall_rotation_damping(0.2, wall_boundary_inner, "AngularVelocity", 10 * physical_viscosity);
     /**
      * @brief Output.
      */
@@ -333,7 +304,7 @@ int main()
      */
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 5;
-    Real end_time = 1.0;               /**< End time. */
+    Real end_time = 2.0;               /**< End time. */
     Real Output_Time = end_time / 100; /**< Time stamps for output of body states. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
