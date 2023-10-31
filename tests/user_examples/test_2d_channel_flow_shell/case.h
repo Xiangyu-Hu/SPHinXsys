@@ -11,39 +11,71 @@ class CheckKernelCompleteness
 {
   private:
     BaseParticles *particles_;
+    std::vector<SPH::ShellParticles *> contact_particles_;
     ParticleConfiguration *inner_configuration_;
     std::vector<ParticleConfiguration *> contact_configuration_;
 
+    StdLargeVec<Real> W_ijV_j_ttl;
     StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
+    StdLargeVec<int> number_of_inner_neighbor;
+    StdLargeVec<int> number_of_contact_neighbor;
 
   public:
     CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
         : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
     {
         for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
+        {
+            auto *ptr = dynamic_cast<SPH::ShellParticles *>(&contact_relation.contact_bodies_[i]->getBaseParticles());
+            if (ptr == nullptr)
+            {
+                std::cout << "CheckKernelCompleteness: Contact body is not a shell!" << std::endl;
+                exit(0);
+            }
+            contact_particles_.push_back(ptr);
             contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
+        }
+        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
         inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
+        inner_relation.base_particles_.registerVariable(number_of_inner_neighbor, "InnerNeighborNumber");
+        inner_relation.base_particles_.registerVariable(number_of_contact_neighbor, "ContactNeighborNumber");
     }
 
-    inline void exec(double thickness = 1.0)
+    inline void exec()
     {
         particle_for(
             par,
             particles_->total_real_particles_,
             [&, this](size_t index_i)
             {
+                int N_inner_number = 0;
+                int N_contact_number = 0;
+                Real W_ijV_j_ttl_i = 0;
                 Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
                 const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+                {
+                    size_t index_j = inner_neighborhood.j_[n];
+                    W_ijV_j_ttl_i += inner_neighborhood.W_ij_[n] * particles_->Vol_[index_j];
                     dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                    N_inner_number++;
+                }
 
                 for (size_t k = 0; k < contact_configuration_.size(); ++k)
                 {
                     const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
                     for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * thickness;
+                    {
+                        size_t index_j = wall_neighborhood.j_[n];
+                        W_ijV_j_ttl_i += wall_neighborhood.W_ij_[n] * contact_particles_[k]->Vol_[index_j] * contact_particles_[k]->thickness_[index_j];
+                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * contact_particles_[k]->thickness_[index_j];
+                        N_contact_number++;
+                    }
                 }
+                W_ijV_j_ttl[index_i] = W_ijV_j_ttl_i;
                 dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
+                number_of_inner_neighbor[index_i] = N_inner_number;
+                number_of_contact_neighbor[index_i] = N_contact_number;
             });
     }
 };

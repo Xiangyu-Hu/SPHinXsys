@@ -91,15 +91,17 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
 
     /** initial curvature*/
-    // wall_corrected_configuration.exec();
-    // shell_curvature.compute_initial_curvature();
-    // water_wall_contact.updateConfiguration();
+    wall_corrected_configuration.exec();
+    shell_curvature.compute_initial_curvature();
+    water_wall_contact.updateConfiguration();
 
     // Check dWijVjeij
     CheckKernelCompleteness check_kernel_completeness(water_block_inner, water_wall_contact);
-    check_kernel_completeness.exec(wall_thickness);
+    check_kernel_completeness.exec();
+    water_block.addBodyStateForRecording<Real>("TotalKernel");
     water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
-
+    water_block.addBodyStateForRecording<int>("InnerNeighborNumber");
+    water_block.addBodyStateForRecording<int>("ContactNeighborNumber");
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -116,6 +118,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+    exit(0);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -168,7 +171,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         /** write run-time observation into file */
-        check_kernel_completeness.exec(wall_thickness);
+        check_kernel_completeness.exec();
         compute_vorticity.exec();
         write_real_body_states.writeToFile();
         fluid_observer_contact.updateConfiguration();

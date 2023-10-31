@@ -19,18 +19,28 @@ class CheckKernelCompleteness
 {
   private:
     BaseParticles *particles_;
+    std::vector<SPH::BaseParticles *> contact_particles_;
     ParticleConfiguration *inner_configuration_;
     std::vector<ParticleConfiguration *> contact_configuration_;
 
+    StdLargeVec<Real> W_ijV_j_ttl;
     StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
+    StdLargeVec<int> number_of_inner_neighbor;
+    StdLargeVec<int> number_of_contact_neighbor;
 
   public:
     CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
         : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
     {
         for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
+        {
+            contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
             contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
+        }
+        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
         inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
+        inner_relation.base_particles_.registerVariable(number_of_inner_neighbor, "InnerNeighborNumber");
+        inner_relation.base_particles_.registerVariable(number_of_contact_neighbor, "ContactNeighborNumber");
     }
 
     inline void exec()
@@ -40,21 +50,39 @@ class CheckKernelCompleteness
             particles_->total_real_particles_,
             [&, this](size_t index_i)
             {
+                int N_inner_number = 0;
+                int N_contact_number = 0;
+                Real W_ijV_j_ttl_i = 0;
                 Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
                 const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+                {
+                    size_t index_j = inner_neighborhood.j_[n];
+                    W_ijV_j_ttl_i += inner_neighborhood.W_ij_[n] * particles_->ParticleVolume(index_j);
                     dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                    N_inner_number++;
+                }
 
                 for (size_t k = 0; k < contact_configuration_.size(); ++k)
                 {
                     const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
                     for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
+                    {
+                        size_t index_j = wall_neighborhood.j_[n];
+                        W_ijV_j_ttl_i += wall_neighborhood.W_ij_[n] * contact_particles_[k]->ParticleVolume(index_j);
+                        Real thickness = contact_particles_[k]->ParticleVolume(index_j) / contact_particles_[k]->Vol_[index_j];
+                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * thickness;
+                        N_contact_number++;
+                    }
                 }
+                W_ijV_j_ttl[index_i] = W_ijV_j_ttl_i;
                 dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
+                number_of_inner_neighbor[index_i] = N_inner_number;
+                number_of_contact_neighbor[index_i] = N_contact_number;
             });
     }
 };
+
 class ObersverAxial : public ObserverParticleGenerator
 {
   public:
@@ -101,7 +129,7 @@ const Real fluid_radius = 0.5 * diameter;
 const Real full_length = 10 * fluid_radius;
 const int number_of_particles = 20;
 const Real resolution_ref = diameter / number_of_particles;
-const Real resolution_wall = 2 * resolution_ref;
+const Real resolution_wall = resolution_ref;
 const Real inflow_length = resolution_ref * 10.0; // Inflow region
 const Real wall_thickness = resolution_wall * 4.0;
 const int simtk_resolution = 20;
@@ -141,7 +169,7 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius, full_length * 0.5, simtk_resolution, translation_fluid);
+        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius, full_length * 0.5, simtk_resolution, translation_fluid, "OuterBoundary");
     }
 };
 /**
@@ -188,23 +216,70 @@ int main()
      * @brief Build up -- a SPHSystem --
      */
     SPHSystem system(system_domain_bounds, resolution_ref);
+    // Tag for run particle relaxation for the initial body fitted distribution.
+    system.setRunParticleRelaxation(true);
+    // Tag for computation start with relaxed body fitted particles distribution.
+    system.setReloadParticles(false);
+    IOEnvironment io_environment(system);
     /** Set the starting time. */
     GlobalStaticVariables::physical_time_ = 0.0;
     /**
      * @brief Material property, particles and body creation of fluid.
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    (!system.RunParticleRelaxation() && system.ReloadParticles())
+        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
+        : water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.generateParticles<ParticleGeneratorLattice>();
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_wall);
+    wall_boundary.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    (!system.RunParticleRelaxation() && system.ReloadParticles())
+        ? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
+        : wall_boundary.generateParticles<ParticleGeneratorLattice>();
     /** topology */
     ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    // relaxation
+    if (system.RunParticleRelaxation())
+    {
+        InnerRelation wall_inner(wall_boundary); // extra body topology only for particle relaxation
+        //----------------------------------------------------------------------
+        //	Methods used for particle relaxation.
+        //----------------------------------------------------------------------
+        SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
+        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
+        ReloadParticleIO write_real_body_particle_reload_files(io_environment, system.real_bodies_);
+        relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_inner, true);
+        relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+        //----------------------------------------------------------------------
+        //	Particle relaxation starts here.
+        //----------------------------------------------------------------------
+        random_inserted_body_particles.exec(0.25);
+        random_water_body_particles.exec(0.25);
+        relaxation_step_inner.SurfaceBounding().exec();
+        relaxation_step_complex.SurfaceBounding().exec();
+
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            relaxation_step_inner.exec();
+            relaxation_step_complex.exec();
+            ite_p += 1;
+            if (ite_p % 200 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+            }
+        }
+        std::cout << "The physics relaxation process finish !" << std::endl;
+
+        write_real_body_particle_reload_files.writeToFile(0);
+    }
     /**
      * @brief 	Define all numerical methods which are used in this case.
      */
@@ -251,7 +326,6 @@ int main()
     /**
      * @brief Output.
      */
-    IOEnvironment io_environment(system);
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
     /** Output the body states. */
@@ -278,9 +352,12 @@ int main()
     CheckKernelCompleteness check_kernel_completeness(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
     check_kernel_completeness.exec();
     water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
-
+    water_block.addBodyStateForRecording<Real>("TotalKernel");
+    water_block.addBodyStateForRecording<int>("InnerNeighborNumber");
+    water_block.addBodyStateForRecording<int>("ContactNeighborNumber");
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
+    exit(0);
     /**
      * @brief 	Basic parameters.
      */

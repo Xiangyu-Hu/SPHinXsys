@@ -5,11 +5,14 @@ class CheckKernelCompleteness
 {
   private:
     BaseParticles *particles_;
-    std::vector<SPH::ShellParticles *> contact_particles_;
+    std::vector<SPH::BaseParticles *> contact_particles_;
     ParticleConfiguration *inner_configuration_;
     std::vector<ParticleConfiguration *> contact_configuration_;
 
+    StdLargeVec<Real> W_ijV_j_ttl;
     StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
+    StdLargeVec<int> number_of_inner_neighbor;
+    StdLargeVec<int> number_of_contact_neighbor;
 
   public:
     CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
@@ -17,16 +20,13 @@ class CheckKernelCompleteness
     {
         for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
         {
-            auto *ptr = dynamic_cast<SPH::ShellParticles *>(&contact_relation.contact_bodies_[i]->getBaseParticles());
-            if (ptr == nullptr)
-            {
-                std::cout << "CheckKernelCompleteness: Contact body is not a shell!" << std::endl;
-                exit(0);
-            }
-            contact_particles_.push_back(ptr);
+            contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
             contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
         }
+        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
         inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
+        inner_relation.base_particles_.registerVariable(number_of_inner_neighbor, "InnerNeighborNumber");
+        inner_relation.base_particles_.registerVariable(number_of_contact_neighbor, "ContactNeighborNumber");
     }
 
     inline void exec()
@@ -36,10 +36,18 @@ class CheckKernelCompleteness
             particles_->total_real_particles_,
             [&, this](size_t index_i)
             {
+                int N_inner_number = 0;
+                int N_contact_number = 0;
+                Real W_ijV_j_ttl_i = 0;
                 Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
                 const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+                {
+                    size_t index_j = inner_neighborhood.j_[n];
+                    W_ijV_j_ttl_i += inner_neighborhood.W_ij_[n] * particles_->ParticleVolume(index_j);
                     dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                    N_inner_number++;
+                }
 
                 for (size_t k = 0; k < contact_configuration_.size(); ++k)
                 {
@@ -47,10 +55,16 @@ class CheckKernelCompleteness
                     for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
                     {
                         size_t index_j = wall_neighborhood.j_[n];
-                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * contact_particles_[k]->thickness_[index_j];
+                        W_ijV_j_ttl_i += wall_neighborhood.W_ij_[n] * contact_particles_[k]->ParticleVolume(index_j);
+                        Real thickness = contact_particles_[k]->ParticleVolume(index_j) / contact_particles_[k]->Vol_[index_j];
+                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n] * thickness;
+                        N_contact_number++;
                     }
                 }
+                W_ijV_j_ttl[index_i] = W_ijV_j_ttl_i;
                 dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
+                number_of_inner_neighbor[index_i] = N_inner_number;
+                number_of_contact_neighbor[index_i] = N_contact_number;
             });
     }
 };
@@ -151,6 +165,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidShape>("fluid"));
+    fluid_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     fluid_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     fluid_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -158,6 +173,41 @@ int main(int ac, char *av[])
     wall_boundary.defineAdaptationRatios(1.15, resolution_fluid / resolution_shell);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0); // dummy material parameters
     wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
+    // relax fluid particles
+    // {
+    //     //----------------------------------------------------------------------
+    //     //	Define body relation map used for particle relaxation.
+    //     //----------------------------------------------------------------------
+    //     InnerRelation fluid_inner(fluid_block);
+    //     //----------------------------------------------------------------------
+    //     //	Methods used for particle relaxation.
+    //     //----------------------------------------------------------------------
+    //     /** Random reset the insert body particle position. */
+    //     SimpleDynamics<RandomizeParticlePosition> random_fluid_particles(fluid_block);
+    //     /** Write the particle reload files. */
+    //     ReloadParticleIO write_particle_reload_files(io_environment, {&fluid_block});
+    //     /** A  Physics relaxation step. */
+    //     relax_dynamics::RelaxationStepInner relaxation_step_inner(fluid_inner);
+    //     //----------------------------------------------------------------------
+    //     //	Particle relaxation starts here.
+    //     //----------------------------------------------------------------------
+    //     random_fluid_particles.exec(0.25);
+    //     relaxation_step_inner.SurfaceBounding().exec();
+    //     //----------------------------------------------------------------------
+    //     //	Relax particles of the insert body.
+    //     //----------------------------------------------------------------------
+    //     int ite_p = 0;
+    //     while (ite_p < 1000)
+    //     {
+    //         relaxation_step_inner.exec();
+    //         ite_p += 1;
+    //         if (ite_p % 200 == 0)
+    //             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+    //     }
+    //     std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
+    //     /** Output results. */
+    //     write_particle_reload_files.writeToFile(0);
+    // }
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -207,6 +257,7 @@ int main(int ac, char *av[])
     fluid_block.addBodyStateForRecording<Real>("VolumetricMeasure");
     fluid_block.addBodyStateForRecording<Real>("MassiveMeasure");
     wall_boundary.addBodyStateForRecording<Real>("MeanCurvature");
+    wall_boundary.addBodyStateForRecording<Real>("Thickness");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     /**
      * @brief OBSERVER.
@@ -233,7 +284,10 @@ int main(int ac, char *av[])
     //  Check dWijVjeij
     CheckKernelCompleteness check_kernel_completeness(fluid_block_inner, fluid_wall_contact);
     check_kernel_completeness.exec();
+    fluid_block.addBodyStateForRecording<Real>("TotalKernel");
     fluid_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
+    fluid_block.addBodyStateForRecording<int>("InnerNeighborNumber");
+    fluid_block.addBodyStateForRecording<int>("ContactNeighborNumber");
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -250,6 +304,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+    exit(0);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
