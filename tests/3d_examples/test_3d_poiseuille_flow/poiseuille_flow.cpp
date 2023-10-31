@@ -217,9 +217,9 @@ int main()
      */
     SPHSystem system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    system.setRunParticleRelaxation(true);
+    system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
-    system.setReloadParticles(false);
+    system.setReloadParticles(true);
     IOEnvironment io_environment(system);
     /** Set the starting time. */
     GlobalStaticVariables::physical_time_ = 0.0;
@@ -232,7 +232,6 @@ int main()
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
-    water_block.generateParticles<ParticleGeneratorLattice>();
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
@@ -249,22 +248,28 @@ int main()
     if (system.RunParticleRelaxation())
     {
         InnerRelation wall_inner(wall_boundary); // extra body topology only for particle relaxation
-        //----------------------------------------------------------------------
-        //	Methods used for particle relaxation.
-        //----------------------------------------------------------------------
-        SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
+        /**
+         * @brief 	Methods used for particle relaxation.
+         */
+        /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
+        SimpleDynamics<RandomizeParticlePosition> random_wall_body_particles(wall_boundary);
+
+        /** Write the particle reload files. */
         ReloadParticleIO write_real_body_particle_reload_files(io_environment, system.real_bodies_);
+
+        /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_inner, true);
         relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
-        //----------------------------------------------------------------------
-        //	Particle relaxation starts here.
-        //----------------------------------------------------------------------
-        random_inserted_body_particles.exec(0.25);
+        /**
+         * @brief 	Particle relaxation starts here.
+         */
+        random_wall_body_particles.exec(0.25);
         random_water_body_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
         relaxation_step_complex.SurfaceBounding().exec();
 
+        /** relax particles of the insert body. */
         int ite_p = 0;
         while (ite_p < 1000)
         {
@@ -273,11 +278,12 @@ int main()
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
             }
         }
-        std::cout << "The physics relaxation process finish !" << std::endl;
+        std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
 
+        /** Output results. */
         write_real_body_particle_reload_files.writeToFile(0);
     }
     /**
