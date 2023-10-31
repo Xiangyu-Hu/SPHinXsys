@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for reload initially relaxed particles. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
@@ -170,7 +170,7 @@ int main(int ac, char *av[])
     TreeInnerRelation pkj_inner(pkj_body);
 
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     /** Time step size calculation. */
     electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
     /** Diffusion process for diffusion body. */
@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
     /** Active mechanics. */
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_contraction(mechanics_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_heart_inner);
     /** Observer Dynamics */
     InteractionDynamics<CorrectInterpolationKernelWeights>
         correct_kernel_weights_for_interpolation(mechanics_heart_contact);
@@ -353,7 +353,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

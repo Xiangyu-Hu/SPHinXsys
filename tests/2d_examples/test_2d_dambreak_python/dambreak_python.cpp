@@ -98,6 +98,9 @@ class Environment : public PreSettingCase
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex;
     ContactRelation fluid_observer_contact;
@@ -119,7 +122,7 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording;
     RestartIO restart_io;
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy;
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure;

@@ -124,6 +124,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation structure_inner(structure);
@@ -159,8 +162,8 @@ int main(int ac, char *av[])
     // Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 2, 0.4);
-    InteractionWithUpdate<CorrectedConfigurationInner> structure_corrected_configuration(structure_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.1);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Damp waves */
@@ -267,7 +270,8 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
-    ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>> wave_gauge(io_environment, wave_probe_buffer);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
@@ -465,7 +469,6 @@ int main(int ac, char *av[])
         write_str_displacement.testResult();
         write_recorded_pressure_fp1.testResult();
     }
-
 
     return 0;
 }

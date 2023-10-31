@@ -31,6 +31,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ComplexRelation water_block_complex(water_block_inner, {&wall_boundary});
@@ -57,7 +60,8 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
                                                         Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>> wave_gauge(io_environment, wave_probe_buffer);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
+        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -152,7 +156,6 @@ int main(int ac, char *av[])
     {
         wave_gauge.testResult();
     }
-
 
     return 0;
 }

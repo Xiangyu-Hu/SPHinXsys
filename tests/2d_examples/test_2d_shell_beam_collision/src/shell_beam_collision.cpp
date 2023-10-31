@@ -83,9 +83,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -118,6 +118,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation beam_inner(beam);
     SurfaceContactRelation shell_contact(shell, {&beam});
@@ -135,8 +138,7 @@ int main(int ac, char *av[])
         //	Define the methods for particle relaxation for wall boundary.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
-        relax_dynamics::ShellRelaxationStepInner
-            relaxation_step_shell_inner(shell_inner, thickness, level_set_refinement_ratio);
+        relax_dynamics::ShellRelaxationStepInner relaxation_step_shell_inner(shell_inner);
         relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
         shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
@@ -182,7 +184,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Define external force.*/
     SimpleDynamics<TimeStepInitialization> beam_initialize_timestep(beam);
-    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
     /** stress relaxation for the walls. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> beam_stress_relaxation_first_half(beam_inner);
@@ -302,7 +304,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

@@ -93,6 +93,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation muscle_body_inner_relation(muscle_body);
     ContactRelation voltage_observer_contact_relation(voltage_observer, {&muscle_body});
@@ -101,7 +104,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(muscle_body_inner_relation);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(muscle_body_inner_relation);
     electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
     // Diffusion process for diffusion body.
     electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation);

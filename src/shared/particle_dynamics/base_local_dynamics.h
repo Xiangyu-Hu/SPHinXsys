@@ -79,6 +79,36 @@ class NotIndicatedParticles
     };
 };
 
+template <typename DataType>
+class ParticlesPairAverageInner
+{
+    StdLargeVec<DataType> &variable_;
+
+  public:
+    ParticlesPairAverageInner(StdLargeVec<DataType> &variable)
+        : variable_(variable){};
+    DataType operator()(size_t index_i, size_t index_j)
+    {
+        return 0.5 * (variable_[index_i] + variable_[index_j]);
+    };
+};
+
+template <typename DataType>
+class ParticlesPairAverageContact
+{
+    StdLargeVec<DataType> &inner_variable_;
+    StdLargeVec<DataType> &contact_variable_;
+
+  public:
+    ParticlesPairAverageContact(StdLargeVec<DataType> &inner_variable,
+                                StdLargeVec<DataType> &contact_variable)
+        : inner_variable_(inner_variable), contact_variable_(contact_variable){};
+    DataType operator()(size_t index_i, size_t index_j)
+    {
+        return 0.5 * (inner_variable_[index_i] + contact_variable_[index_j]);
+    };
+};
+
 //----------------------------------------------------------------------
 // Particle reduce functors
 //----------------------------------------------------------------------
@@ -175,6 +205,27 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 };
 template <typename ReturnType, typename Operation>
 using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
+
+/**
+ * @class Average
+ * @brief Derives class for computing particle-wise averages.
+ */
+template <class ReduceSumType>
+class Average : public ReduceSumType
+{
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    Average(DynamicsIdentifier &identifier, Args &&...args)
+        : ReduceSumType(identifier, std::forward<Args>(args)...){};
+    virtual ~Average(){};
+    using ReturnType = typename ReduceSumType::ReduceReturnType;
+
+    virtual ReturnType outputResult(ReturnType reduced_value)
+    {
+        ReturnType sum = ReduceSumType::outputResult(reduced_value);
+        return sum / Real(this->getDynamicsIdentifier().SizeOfLoopRange());
+    }
+};
 
 /**
  * @class LocalDynamicsParameters

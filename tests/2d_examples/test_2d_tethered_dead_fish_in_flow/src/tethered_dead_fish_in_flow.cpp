@@ -187,10 +187,7 @@ struct InflowVelocity
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
         Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(0, position))
-        {
-            target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
-        }
+        target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         return target_velocity;
     }
 };
@@ -206,7 +203,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    system.setReloadParticles(true);
+    system.setReloadParticles(false);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 
@@ -297,7 +294,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration.*/
-    InteractionWithUpdate<CorrectedConfigurationInner>
+    InteractionWithUpdate<KernelCorrectionMatrixInner>
         fish_body_corrected_configuration(fish_body_inner);
     /**
      * Common particle dynamics.
@@ -402,7 +399,7 @@ int main(int ac, char *av[])
         constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
     BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-    ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
         write_total_force_on_fish(io_environment, fluid_force_on_fish_body, "TotalPressureForceOnSolid");
     ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
     /**

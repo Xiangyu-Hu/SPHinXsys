@@ -88,6 +88,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_cube_inner(free_cube);
     SurfaceContactRelation free_cube_contact(free_cube, {&wall_boundary});
@@ -101,7 +104,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
     SimpleDynamics<TimeStepInitialization> free_cube_initialize_timestep(free_cube, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Kernel correction. */
-    InteractionWithUpdate<CorrectedConfigurationInner> free_cube_corrected_configuration(free_cube_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     /** Time step size. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     /** stress relaxation for the solid body. */

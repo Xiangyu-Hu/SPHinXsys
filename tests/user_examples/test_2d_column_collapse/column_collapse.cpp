@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 	IOEnvironment io_environment(sph_system);
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
 		write_mechanical_energy(io_environment, soil_block, gravity_ptr);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

@@ -39,6 +39,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_air_complex(water_block, {&air_block});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
@@ -84,7 +87,7 @@ int main(int ac, char *av[])
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     /** Output the mechanical energy of fluid body. */
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
     /** output the observed data from fluid body. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
