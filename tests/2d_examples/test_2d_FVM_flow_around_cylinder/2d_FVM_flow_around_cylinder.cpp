@@ -34,7 +34,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //----------------------------------------------------------------------
     InnerRelationInFVM water_block_inner(water_block, ansys_mesh);
-    water_block_inner.updateConfiguration();
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -66,6 +65,11 @@ int main(int ac, char *av[])
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
         write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    water_block_inner.updateConfiguration();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------

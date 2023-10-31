@@ -6,6 +6,7 @@
  */
 #include "2d_FVM_double_mach_reflection.h"
 #include "sphinxsys.h"
+
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -13,7 +14,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh read_mesh_data(double_mach_reflection_mesh_fullpath);
+    ANSYSMesh ansys_mesh(double_mach_reflection_mesh_fullpath);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
@@ -26,17 +27,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
-    wave_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_centroids_, read_mesh_data.elements_volumes_);
+    wave_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
     wave_block.addBodyStateForRecording<Real>("Density");
     wave_block.addBodyStateForRecording<Real>("Pressure");
     /** Initial condition and register variables*/
     SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
-    GhostCreationFromMesh ghost_creation(wave_block, read_mesh_data.cell_lists_, read_mesh_data.node_coordinates_);
+    GhostCreationFromMesh ghost_creation(wave_block, ansys_mesh);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
-    InnerRelationInFVM water_block_inner(wave_block, read_mesh_data.cell_lists_, read_mesh_data.node_coordinates_);
-    water_block_inner.updateConfiguration();
+    InnerRelationInFVM water_block_inner(wave_block, ansys_mesh);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -44,21 +44,21 @@ int main(int ac, char *av[])
     /** Boundary conditions set up */
     DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
-    SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
+    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, read_mesh_data.min_distance_between_nodes_, 0.2);
+    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, ansys_mesh.min_distance_between_nodes_, 0.2);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
-    InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
-    InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
     // Visualization in FVM with date in cell.
-    BodyStatesRecordingInMeshToVtp write_real_body_states(
-        io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.node_coordinates_);
+    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, wave_block, ansys_mesh);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(io_environment, wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.
     //----------------------------------------------------------------------
+    water_block_inner.updateConfiguration();
     initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

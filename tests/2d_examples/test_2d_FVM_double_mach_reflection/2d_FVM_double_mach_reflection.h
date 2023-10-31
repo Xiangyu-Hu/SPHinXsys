@@ -7,9 +7,7 @@
 
 #ifndef FVM_DOUBLE_MACH_REFLECTION_H
 #define FVM_DOUBLE_MACH_REFLECTION_H
-#include "common_compressible_FVM_classes.h"        // eulerian classes for compressible fluid in FVM only.
-#include "common_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
-#include "common_shared_FVM_classes.h"              // shared eulerian classes for weakly-compressible and compressible fluid in FVM.
+#include "common_compressible_FVM_classes.h" // classes for compressible fluid only in FVM.
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
@@ -212,5 +210,4 @@ class DMFBoundaryConditionSetup : public fluid_dynamics::FluidDataInner
     vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
     vector<vector<size_t>> each_boundary_type_contact_real_index_;
 };
-
 #endif // FVM_DOUBLE_MACH_REFLECTION_H
