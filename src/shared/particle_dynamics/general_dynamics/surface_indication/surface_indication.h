@@ -96,6 +96,7 @@ class FreeSurfaceIndication<Inner<SpatialTemporal>>
     StdLargeVec<int> previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
 };
+using SpatialTemporalFreeSurfaceIndicationInner = FreeSurfaceIndication<Inner<SpatialTemporal>>;
 
 using FreeSurfaceIndicationComplex =
     ComplexInteraction<FreeSurfaceIndication<Inner<>, Contact<>>>;
