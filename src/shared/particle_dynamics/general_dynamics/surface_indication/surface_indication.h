@@ -72,17 +72,6 @@ class FreeSurfaceIndication<Inner<>>
 };
 
 template <>
-class FreeSurfaceIndication<Contact<>>
-    : public FreeSurfaceIndication<GeneralDataDelegateContact>
-{
-  public:
-    explicit FreeSurfaceIndication(BaseContactRelation &contact_relation)
-        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation){};
-    virtual ~FreeSurfaceIndication(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-template <>
 class FreeSurfaceIndication<Inner<SpatialTemporal>>
     : public FreeSurfaceIndication<Inner<>>
 {
@@ -98,10 +87,46 @@ class FreeSurfaceIndication<Inner<SpatialTemporal>>
 };
 using SpatialTemporalFreeSurfaceIndicationInner = FreeSurfaceIndication<Inner<SpatialTemporal>>;
 
+template <>
+class FreeSurfaceIndication<Contact<>>
+    : public FreeSurfaceIndication<GeneralDataDelegateContact>
+{
+  public:
+    explicit FreeSurfaceIndication(BaseContactRelation &contact_relation)
+        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation){};
+    virtual ~FreeSurfaceIndication(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class NonWetting
+ * @brief Non wetting surface particles include free-surface ones and interfacial ones near the non-wetted structure.
+ * @brief Even the position divergence of interfacial fluid particles has satisfied with the threshold of spatial-temporal
+   identification approach to be identified as internal ones,they will remain as free-surface ones if without
+   any wetted neighboring solid particles.
+ */
+class NonWetting;
+
+template <>
+class FreeSurfaceIndication<Contact<NonWetting>>
+    : public FreeSurfaceIndication<GeneralDataDelegateContact>
+{
+  public:
+    FreeSurfaceIndication(BaseContactRelation &contact_relation);
+    virtual ~FreeSurfaceIndication(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_phi_;
+};
+
 using FreeSurfaceIndicationComplex =
     ComplexInteraction<FreeSurfaceIndication<Inner<>, Contact<>>>;
 
 using SpatialTemporalFreeSurfaceIndicationComplex =
     ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>;
+
+using WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex =
+    ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<NonWetting>>>;
 } // namespace SPH
 #endif // SURFACE_INDICATION_H

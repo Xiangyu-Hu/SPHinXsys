@@ -43,20 +43,6 @@ bool FreeSurfaceIndication<Inner<>>::isVeryNearFreeSurface(size_t index_i)
     return is_near_surface;
 }
 //=================================================================================================//
-void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
-{
-    Real pos_div = 0.0;
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
-    {
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-        {
-            pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
-        }
-    }
-    pos_div_[index_i] += pos_div;
-}
-//=================================================================================================//
 FreeSurfaceIndication<Inner<SpatialTemporal>>::
     FreeSurfaceIndication(BaseInnerRelation &inner_relation)
     : FreeSurfaceIndication<Inner<>>(inner_relation)
@@ -96,5 +82,44 @@ void FreeSurfaceIndication<Inner<SpatialTemporal>>::update(size_t index_i, Real 
 
     previous_surface_indicator_[index_i] = indicator_[index_i];
 }
+//=================================================================================================//
+void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
+{
+    Real pos_div = 0.0;
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    {
+        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+        }
+    }
+    pos_div_[index_i] += pos_div;
+}
+//=================================================================================================//
+FreeSurfaceIndication<Contact<NonWetting>>::FreeSurfaceIndication(BaseContactRelation &contact_relation)
+    : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation)
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_phi_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Phi"));
+    }
+}
+//=================================================================================================//
+void FreeSurfaceIndication<Contact<NonWetting>>::interaction(size_t index_i, Real dt)
+{
+    Real pos_div = 0.0;
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Real> &wetting_k = *(contact_phi_[k]);
+        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            pos_div -= wetting_k[index_j] * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+        }
+    }
+    pos_div_[index_i] += pos_div;
+};
 //=================================================================================================//
 } // namespace SPH

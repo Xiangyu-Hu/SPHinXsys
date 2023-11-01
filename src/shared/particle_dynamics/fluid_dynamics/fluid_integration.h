@@ -83,6 +83,7 @@ class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
 };
+using Integration1stHalfInnerNoRiemann = Integration1stHalf<Inner<>, NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfCorrectionInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, KernelCorrection>;
 
