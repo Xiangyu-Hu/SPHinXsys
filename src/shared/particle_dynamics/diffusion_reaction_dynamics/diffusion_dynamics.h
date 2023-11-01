@@ -74,6 +74,8 @@ class BaseDiffusionRelaxation
     explicit BaseDiffusionRelaxation(SPHBody &sph_body);
     virtual ~BaseDiffusionRelaxation(){};
     StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+    /** So that contact diffusion can be integrated independently without inner interaction. */
+    void initialization(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -278,8 +280,8 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
   protected:
     StdVec<StdLargeVec<Real>> diffusion_species_s_; /**< Intermediate state */
     SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-    InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
-    InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+    Dynamics1Level<FirstStageType> rk2_1st_stage_;
+    Dynamics1Level<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
     StdVec<BaseDiffusion *> all_diffusions_;
 
   public:

@@ -13,16 +13,18 @@ using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real insert_cylinder_radius = 0.055;                             /**< Cylinder radius. */
-Real DL = 8.0 * insert_cylinder_radius;                          /**< Water tank length. */
-Real DH = 7.0 * insert_cylinder_radius;                          /**< Water tank height. */
-Real LL = DL;                                                    /**< Water column length. */
-Real LH = 3.0 * insert_cylinder_radius;                          /**< Water column height. */
-Real particle_spacing_ref = 2.0 * insert_cylinder_radius / 40.0; /**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4;                              /**< Thickness of tank wall. */
-Vec2d insert_cylinder_center(0.5 * DL, LH + 0.15);               /**< Location of the cylinder center. */
-Vecd tethering_point(0.5 * DL, DH);                              /**< The tethering point. */
-StdVec<Vecd> observer_location = {insert_cylinder_center};       /**< Observation point. */
+Real cylinder_radius = 0.055;                             /**< Cylinder radius. */
+Real DL = 8.0 * cylinder_radius;                          /**< Water tank length. */
+Real DH = 7.0 * cylinder_radius;                          /**< Water tank height. */
+Real LL = DL;                                             /**< Water column length. */
+Real LH = 3.0 * cylinder_radius;                          /**< Water column height. */
+Real particle_spacing_ref = 2.0 * cylinder_radius / 40.0; /**< Initial reference particle spacing. */
+Real BW = particle_spacing_ref * 4;                       /**< Thickness of tank wall. */
+Vec2d cylinder_center(0.5 * DL, LH + 0.15);               /**< Location of the cylinder center. */
+Vecd tethering_point(0.5 * DL, DH);                       /**< The tethering point. */
+StdVec<Vecd> observer_location = {cylinder_center};       /**< Displacement observation point. */
+StdVec<Vecd> wetting_observer_location =
+    {cylinder_center - Vecd(0.0, cylinder_radius)}; /**< wetting observation point. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -158,7 +160,7 @@ class WettingCylinderBody : public MultiPolygonShape
   public:
     explicit WettingCylinderBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(insert_cylinder_center, insert_cylinder_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     }
 };
 class WettingCylinderBodyMaterial : public DiffusionReaction<Solid>
@@ -208,7 +210,7 @@ class ThermalRelaxationComplex
 MultiPolygon createSimbodyConstrainShape(SPHBody &sph_body)
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(insert_cylinder_center, insert_cylinder_radius, 100, ShapeBooleanOps::add);
+    multi_polygon.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -222,7 +224,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     GlobalStaticVariables::physical_time_ = 0.0;
     IOEnvironment io_environment(sph_system);
@@ -248,6 +250,9 @@ int main(int ac, char *av[])
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
     cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+
+    ObserverBody wetting_observer(sph_system, "WettingObserver");
+    wetting_observer.generateParticles<ObserverParticleGenerator>(wetting_observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -261,6 +266,7 @@ int main(int ac, char *av[])
     ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
     ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder});
+    ContactRelation wetting_observer_contact(wetting_observer, {&cylinder});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -388,6 +394,8 @@ int main(int ac, char *av[])
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_displacement("Position", io_environment, cylinder_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+        write_cylinder_wetting("Phi", io_environment, wetting_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -437,6 +445,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
     write_cylinder_displacement.writeToFile(number_of_iterations);
+    write_cylinder_wetting.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -491,6 +500,7 @@ int main(int ac, char *av[])
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
                     write_cylinder_displacement.writeToFile(number_of_iterations);
+                    write_cylinder_wetting.writeToFile(number_of_iterations);
                 }
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);
@@ -530,10 +540,12 @@ int main(int ac, char *av[])
     if (sph_system.GenerateRegressionData())
     {
         write_cylinder_displacement.generateDataBase(1.0e-3);
+        write_cylinder_wetting.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_cylinder_displacement.testResult();
+        write_cylinder_wetting.testResult();
     }
 
     return 0;
