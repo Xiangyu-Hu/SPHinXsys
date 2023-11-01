@@ -126,7 +126,7 @@ using FreeSurfaceIndicationComplex =
 using SpatialTemporalFreeSurfaceIndicationComplex =
     ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>>>;
 
-using WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex =
+using WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex =
     ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<NonWetting>>>;
 } // namespace SPH
 #endif // SURFACE_INDICATION_H

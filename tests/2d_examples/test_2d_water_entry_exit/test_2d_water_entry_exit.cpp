@@ -7,9 +7,7 @@
  * @author  Shuoguo Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
-#include "wetting_coupled_spatial_temporal_method.h"
-
-using namespace SPH; // Namespace cite here.
+using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -35,10 +33,10 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
-Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
-Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
-Real wall_moisture = 1.0;                                    /**< wall moisture. */
+Real diffusion_coeff = 1.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
+Real fluid_moisture = 1.0;                                 /**< fluid moisture. */
+Real cylinder_moisture = 0.0;                              /**< cylinder moisture. */
+Real wall_moisture = 1.0;                                  /**< wall moisture. */
 //----------------------------------------------------------------------
 //	Definition for water body
 //----------------------------------------------------------------------
@@ -192,16 +190,8 @@ class WettingCylinderBodyInitialCondition
 //----------------------------------------------------------------------
 //	Set topology for wetting bodies
 //----------------------------------------------------------------------
-using CylinderFluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionCylinderParticles, DiffusionFluidParticles>;
-class ThermalRelaxationComplex
-    : public DiffusionRelaxationRK2<
-          OldComplexInteraction<CylinderFluidDiffusionDirichlet>>
-{
-  public:
-    explicit ThermalRelaxationComplex(BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<OldComplexInteraction<CylinderFluidDiffusionDirichlet>>(body_contact_relation_Dirichlet){};
-    virtual ~ThermalRelaxationComplex(){};
-};
+using CylinderFluidDiffusionDirichlet =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Dirichlet<DiffusionCylinderParticles, DiffusionFluidParticles, KernelGradientContact>>>;
 //------------------------------------------------------------------------------
 // Constrained part for Simbody
 //------------------------------------------------------------------------------
@@ -258,9 +248,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation cylinder_inner(cylinder);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &cylinder});
+    ContactRelation water_block_contact(water_block, {&wall_boundary, &cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
     ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -310,19 +305,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-    InteractionWithUpdate<fluid_dynamics::WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex>
-        free_stream_surface_indicator(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_block_contact);
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");
     cylinder.addBodyStateForRecording<Real>("Density");
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define the wetting diffusion dynamics used in the simulation.
     //----------------------------------------------------------------------
@@ -330,7 +323,8 @@ int main(int ac, char *av[])
     SimpleDynamics<WettingWallBodyInitialCondition> Wetting_wall_initial_condition(wall_boundary);
     SimpleDynamics<WettingCylinderBodyInitialCondition> Wetting_cylinder_initial_condition(cylinder);
     GetDiffusionTimeStepSize<DiffusionCylinderParticles> get_thermal_time_step(cylinder);
-    ThermalRelaxationComplex thermal_relaxation_complex(cylinder_contact);
+    CylinderFluidDiffusionDirichlet wetting_diffusion_dirichlet(cylinder_contact);
+    InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
@@ -467,7 +461,7 @@ int main(int ac, char *av[])
                 fluid_pressure_relaxation.exec(dt);
                 fluid_pressure_force_on_inserted_body.exec();
                 fluid_density_relaxation.exec(dt);
-                thermal_relaxation_complex.exec(dt);
+                wetting_diffusion_dirichlet.exec(dt);
 
                 integ.stepBy(dt);
                 SimTK::State &state_for_update = integ.updAdvancedState();
