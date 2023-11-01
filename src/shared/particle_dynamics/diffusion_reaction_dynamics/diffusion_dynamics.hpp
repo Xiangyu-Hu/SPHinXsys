@@ -45,6 +45,15 @@ BaseDiffusionRelaxation<ParticlesType>::
 }
 //=================================================================================================//
 template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::initialization(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_dt_[m])[index_i] = 0;
+    }
+}
+//=================================================================================================//
+template <class ParticlesType>
 void BaseDiffusionRelaxation<ParticlesType>::update(size_t index_i, Real dt)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -82,7 +91,7 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::interaction(si
             Real phi_ij = gradient_species[index_i] - gradient_species[index_j];
             d_species += diff_coeff_ij * phi_ij * surface_area_ij;
         }
-        (*this->diffusion_dt_[m])[index_i] = d_species;
+        (*this->diffusion_dt_[m])[index_i] += d_species;
     }
 }
 //=================================================================================================//
@@ -151,7 +160,7 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGra
     {
         Real diff_coeff_ij =
             this->all_diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_i, e_ij);
-        Real phi_ij = 2.0 * (*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
+        Real phi_ij = 2.0 * ((*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j]);
         (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
