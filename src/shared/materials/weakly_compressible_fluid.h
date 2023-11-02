@@ -58,9 +58,9 @@ class WeaklyCompressibleFluid : public Fluid
     virtual WeaklyCompressibleFluid *ThisObjectPtr() override { return this; };
 
     DeviceReal getPressure_Device(DeviceReal rho) const {
-        return static_cast<DeviceReal>(p0_) * (rho / static_cast<DeviceReal>(rho0_) - 1.0f);
+        return static_cast<DeviceReal>(p0_) * (rho / static_cast<DeviceReal>(rho0_) - static_cast<DeviceReal>(1.0));
     }
-    DeviceReal getSoundSpeed_Device(DeviceReal p = 0.0f, DeviceReal rho = 1.0f) const {
+    DeviceReal getSoundSpeed_Device(DeviceReal p = 0.0, DeviceReal rho = 1.0) const {
         return static_cast<DeviceReal>(c0_);
     }
 };

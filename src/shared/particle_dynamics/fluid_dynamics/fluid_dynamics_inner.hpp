@@ -243,8 +243,7 @@ void BaseIntegration2ndHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
     DeviceKernel::interaction(index_i, dt, rho_.data(), drho_dt_.data(), vel_.data(),
-                              acc_.data(), inner_configuration_.data(), riemann_solver_,
-                              [](const Vecd& v1, const Vecd& v2) { return v1.dot(v2); });
+                              acc_.data(), inner_configuration_.data(), riemann_solver_);
 };
 //=================================================================================================//
 } // namespace fluid_dynamics

@@ -92,7 +92,7 @@ using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
 using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 /** Device data types. */
-using DeviceReal = float;
+using DeviceReal = Real;
 using DeviceVec2d = sycl::vec<DeviceReal, 2>;
 using DeviceVec3d = sycl::vec<DeviceReal, 3>;
 using DeviceArray2i = sycl::int2;

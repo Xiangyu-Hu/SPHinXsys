@@ -71,7 +71,7 @@ class Gravity : public ExternalForce
         return global_acceleration_device_;
     }
     DeviceReal getPotential(const DeviceVecd &position) const {
-        return sycl::dot(InducedAcceleration(position), zero_potential_reference_device_ - position);
+        return VecdDot(InducedAcceleration(position), DeviceVecd(zero_potential_reference_device_ - position));
     }
 };
 } // namespace SPH

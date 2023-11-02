@@ -68,8 +68,7 @@ AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
 Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     return decltype(device_proxy)::Kernel::reduce(index_i, dt, fluid_, p_.data(), rho_.data(), vel_.data(),
-                   [](Fluid& fluid, Real p_i, Real rho_i) { return fluid.getSoundSpeed(p_i, rho_i); },
-                   [](const Vecd& vel) { return vel.norm(); });
+                   [](Fluid& fluid, Real p_i, Real rho_i) { return fluid.getSoundSpeed(p_i, rho_i); });
 }
 //=================================================================================================//
 Real AcousticTimeStepSize::outputResult(Real reduced_value)
@@ -88,8 +87,7 @@ AdvectionTimeStepSizeForImplicitViscosity::
 //=================================================================================================//
 Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 {
-    return AdvectionTimeStepSizeForImplicitViscosityKernel::reduce(index_i, dt, vel_.data(),
-                                           [](const Vecd& vel) { return vel.squaredNorm(); });
+    return AdvectionTimeStepSizeForImplicitViscosityKernel::reduce(index_i, dt, vel_.data());
 }
 //=================================================================================================//
 Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)

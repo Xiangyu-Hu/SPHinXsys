@@ -283,7 +283,7 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 void NeighborBuilderInnerKernel::operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i, const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
     {
         DeviceVecd displacement = pos_i - pos_j;
-        DeviceReal distance_metric = sycl::dot(displacement, displacement);
+        DeviceReal distance_metric = VecdSquareNorm(displacement);
         if (distance_metric < smoothing_kernel.CutOffRadiusSqr() && index_i != index_j)
         {
             auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,

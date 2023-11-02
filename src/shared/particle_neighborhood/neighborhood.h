@@ -200,7 +200,7 @@ class NeighborBuilderContactKernel : public NeighborBuilderKernel {
                     const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
     {
         const DeviceVecd displacement = pos_i - pos_j;
-        const DeviceReal distance = sycl::length(displacement);
+        const DeviceReal distance = VecdNorm(displacement);
         if (distance < smoothing_kernel.CutOffRadius())
         {
             auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,

@@ -92,7 +92,8 @@ DeviceReal DeviceKernelWendlandC2::W(const DeviceReal &r_ij, const DeviceVec3d &
 //=================================================================================================//
 DeviceReal DeviceKernelWendlandC2::W_1D(const DeviceReal q) const
 {
-    return sycl::pow(1.0f - 0.5f * q, 4.0f) * (1.0f + 2.0f * q);
+    return sycl::pow(static_cast<DeviceReal>(1.0) - static_cast<DeviceReal>(0.5) * q,
+                     static_cast<DeviceReal>(4.0)) * (static_cast<DeviceReal>(1.0) + static_cast<DeviceReal>(2.0) * q);
 }
 //=================================================================================================//
 DeviceReal DeviceKernelWendlandC2::W_2D(const DeviceReal q) const
@@ -126,7 +127,7 @@ DeviceReal DeviceKernelWendlandC2::dW(const DeviceReal &r_ij, const DeviceVec3d 
 //=================================================================================================//
 DeviceReal DeviceKernelWendlandC2::dW_1D(const DeviceReal q) const
 {
-    return 0.625f * sycl::pow(q - 2.0f, 3.0f) * q;
+    return 0.625f * sycl::pow(q - static_cast<DeviceReal>(2.0), static_cast<DeviceReal>(3.0)) * q;
 }
 //=================================================================================================//
 DeviceReal DeviceKernelWendlandC2::dW_2D(const DeviceReal q) const
@@ -141,7 +142,8 @@ DeviceReal DeviceKernelWendlandC2::dW_3D(const DeviceReal q) const
 //=================================================================================================//
 DeviceReal DeviceKernelWendlandC2::d2W_1D(const DeviceReal q) const
 {
-    return 1.25f * sycl::pow(q - 2.0f, 2.0f) * (2.0f * q - 1.0f);
+    return 1.25f * sycl::pow(q - static_cast<DeviceReal>(2.0), static_cast<DeviceReal>(2.0))
+           * (static_cast<DeviceReal>(2.0) * q - static_cast<DeviceReal>(1.0));
 }
 //=================================================================================================//
 DeviceReal DeviceKernelWendlandC2::d2W_2D(const DeviceReal q) const

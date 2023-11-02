@@ -269,12 +269,11 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                                          wall_acc_ave_(wall_acc_ave) {}
 
     template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
-             class NonConservativeAccFunc, class WallAccAveFunc, class DotFunc>
+             class NonConservativeAccFunc, class WallAccAveFunc>
     static void interaction(size_t index_i, Real dt, RealType *p, RealType *rho, RealType *drho_dt, VecType *acc,
                             RiemannSolver& riemann_solver, std::size_t contact_configuration_size,
                             NonConservativeAccFunc&& computeNonConservativeAcceleration,
-                            WallAccAveFunc&& getWallAccAve, WallNeighborhoodFunc&& getWallNeighborhood,
-                            DotFunc&& dot) {
+                            WallAccAveFunc&& getWallAccAve, WallNeighborhoodFunc&& getWallNeighborhood) {
         const VecType acc_prior_i = computeNonConservativeAcceleration(index_i);
         VecType acceleration = VecdZero<VecType>();
         RealType rho_dissipation{0}, min_external_acc{0};
@@ -289,7 +288,7 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                 const auto& dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
                 const auto& r_ij = wall_neighborhood.r_ij_[n];
 
-                const RealType face_wall_external_acceleration = dot(acc_prior_i - acc_ave_k[index_j], -e_ij);
+                const RealType face_wall_external_acceleration = VecdDot(VecType(acc_prior_i - acc_ave_k[index_j]), VecType(-e_ij));
                 const auto p_in_wall = p[index_i] + rho[index_i] * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
                 acceleration -= (p[index_i] + p_in_wall) * dW_ijV_j * e_ij;
                 rho_dissipation += riemann_solver.DissipativeUJump(p[index_i] - p_in_wall) * dW_ijV_j;
@@ -306,8 +305,7 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                     contact_configuration_.size(), [&](auto index_i){ return this->acc_prior_[index_i]; },
                     [&](auto k){ return this->wall_acc_ave_[k]; },
                     [&](auto k, auto index_i) -> const NeighborhoodDevice&
-                        { return this->contact_configuration_[k][index_i]; },
-                    [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
+                        { return this->contact_configuration_[k][index_i]; });
     }
   private:
     StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
@@ -397,11 +395,11 @@ class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
             wall_vel_ave_(wall_vel_ave), wall_n_(wall_n) {}
 
     template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
-             class WallVelAveFunc, class WallNormalFunc, class DotFunc>
+             class WallVelAveFunc, class WallNormalFunc>
     static void interaction(size_t index_i, Real dt, RealType *rho, RealType *drho_dt, VecType* vel, VecType *acc,
                             RiemannSolver& riemann_solver, std::size_t contact_configuration_size,
                             WallVelAveFunc&& getWallVelAve, WallNormalFunc&& getWallNormal,
-                            WallNeighborhoodFunc&& getWallNeighborhood, DotFunc&& dot) {
+                            WallNeighborhoodFunc&& getWallNeighborhood) {
         RealType density_change_rate{0};
         auto p_dissipation = VecdZero<VecType>();
         for (size_t k = 0; k < contact_configuration_size; ++k)
@@ -416,8 +414,8 @@ class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
                 const auto &dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
                 const VecType vel_in_wall = static_cast<RealType>(2.0) * vel_ave_k[index_j] - vel[index_i];
-                density_change_rate += dot(vel[index_i] - vel_in_wall, e_ij) * dW_ijV_j;
-                const RealType u_jump = static_cast<RealType>(2.0) * dot(vel[index_i] - vel_ave_k[index_j], n_k[index_j]);
+                density_change_rate += VecdDot(VecType(vel[index_i] - vel_in_wall), e_ij) * dW_ijV_j;
+                const RealType u_jump = static_cast<RealType>(2.0) * VecdDot(VecType(vel[index_i] - vel_ave_k[index_j]), n_k[index_j]);
                 p_dissipation += static_cast<RealType>(riemann_solver.DissipativePJump(u_jump)) * dW_ijV_j * n_k[index_j];
             }
         }
@@ -432,8 +430,7 @@ class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
                     contact_configuration_.size(), [&](auto k){ return this->wall_vel_ave_[k]; },
                     [&](auto k){ return this->wall_n_[k]; },
                     [&](auto k, auto index_i) -> const NeighborhoodDevice&
-                        { return this->contact_configuration_[k][index_i]; },
-                    [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
+                        { return this->contact_configuration_[k][index_i]; });
     }
   private:
     StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
