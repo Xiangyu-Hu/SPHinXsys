@@ -14,7 +14,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh ansys_mesh(double_mach_reflection_mesh_fullpath);
+    ANSYSMesh ansys_mesh(double_mach_reflection_mesh1_fullpath);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------

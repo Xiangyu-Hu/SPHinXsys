@@ -751,6 +751,51 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
         body->setNotNewlyUpdated();
     }
 }
+//=================================================================================================//
+BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+                                                         vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(particles_->vel_), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
+      real_particles_bound_(particles_->real_particles_bound_),
+      each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
+      each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),
+      each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+//=================================================================================================//
+void BoundaryConditionSetupInFVM::resetBoundaryConditions()
+{
+    for (size_t boundary_type = 0; boundary_type < each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
+    {
+        if (!each_boundary_type_with_all_ghosts_index_[boundary_type].empty())
+        {
+            for (size_t ghost_number = 0; ghost_number != each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
+            {
+                size_t ghost_index = each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
+                size_t index_i = each_boundary_type_contact_real_index_[boundary_type][ghost_number];
+                Vecd e_ij = each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
+
+                // Dispatch the appropriate boundary condition
+                switch (boundary_type)
+                {
+                case 3: // this refer to the different types of wall boundary condtions
+                    applyNonSlipWallBoundary(ghost_index, index_i);
+                    applyReflectiveWallBoundary(ghost_index, index_i, e_ij);
+                    break;
+                case 10:
+                    applyGivenValueInletFlow(ghost_index);
+                    break;
+                case 36:
+                    applyOutletBoundary(ghost_index, index_i);
+                    break;
+                case 4:
+                    applyTopBoundary(ghost_index, index_i);
+                    break;
+                case 9:
+                    applyFarFieldBoundary(ghost_index);
+                    break;
+                }
+            }
+        }
+    }
+}
 //=============================================================================================//
 } // namespace SPH
-  //=================================================================================================//

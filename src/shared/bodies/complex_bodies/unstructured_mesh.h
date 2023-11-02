@@ -205,5 +205,34 @@ class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
     StdLargeVec<Vecd> &node_coordinates_;
     StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
 };
+
+//----------------------------------------------------------------------
+//	BoundaryConditionSetupInFVM
+//----------------------------------------------------------------------
+class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
+{
+  public:
+    BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+                                vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index);
+    virtual ~BoundaryConditionSetupInFVM(){};
+
+    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
+    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyGivenValueInletFlow(size_t ghost_index){};
+    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyFarFieldBoundary(size_t ghost_index){};
+    // Common functionality for resetting boundary conditions
+    void resetBoundaryConditions();
+
+  protected:
+    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Vecd> &vel_, &pos_;
+    size_t &total_ghost_particles_;
+    size_t &real_particles_bound_;
+    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
+    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
+    vector<vector<size_t>> each_boundary_type_contact_real_index_;
+};
 } // namespace SPH
 #endif // UNSTRUCTURED_MESH_H
