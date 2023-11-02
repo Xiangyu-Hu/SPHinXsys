@@ -74,7 +74,7 @@ class CompositeSolid : public ElasticSolid
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
     virtual Matd StressPK1(Matd &deformation, size_t index_i) override;
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t index_i) override;
     virtual Real VolumetricKirchhoff(Real J) override { return 0.0; };
     virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
 

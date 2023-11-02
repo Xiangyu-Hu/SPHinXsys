@@ -14,7 +14,7 @@ using namespace SPH;
 
 Real to_rad(Real angle) { return angle * Pi / 180; }
 
-void relax_shell(RealBody &plate_body, Real thickness, Real level_set_refinement_ratio)
+void relax_shell(RealBody &plate_body, Real thickness)
 {
     // BUG: apparently only works if dp > thickness, otherwise ShellNormalDirectionPrediction::correctNormalDirection() throws error
 
