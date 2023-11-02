@@ -272,7 +272,7 @@ namespace SPH
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 			wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
 			velo_friction_(*particles_->getVariableByName<Vecd>("FrictionVelocity")),
-			distance_to_wall_(*particles_->getVariableByName<Real>("DistanceToWall"))
+			y_p_(*particles_->getVariableByName<Real>("Y_P"))
 		{
 			particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 			particles_->addVariableToWrite<Vecd>("ViscousAccInner");

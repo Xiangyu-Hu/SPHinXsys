@@ -214,7 +214,7 @@ namespace SPH
 			StdLargeVec<Real>& wall_Y_plus_;
 			StdLargeVec<Vecd>& velo_friction_;
 			StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
-			StdLargeVec<Real>& distance_to_wall_;
+			StdLargeVec<Real>& y_p_;
 		};
 
 		/**

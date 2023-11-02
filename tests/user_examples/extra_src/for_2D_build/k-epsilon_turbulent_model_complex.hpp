@@ -96,7 +96,7 @@ namespace SPH
 			const Vecd& vel_fric_i = this->velo_friction_[index_i];
 			Vecd e_tau = vel_fric_i.normalized();
 			Real y_plus_i = this->wall_Y_plus_[index_i];
-			Real y_p = this->distance_to_wall_[index_i];
+			Real y_p = this->y_p_[index_i];
 
 			Real u_plus_i =0.0;
 			Real mu_w = 0.0;
@@ -145,7 +145,6 @@ namespace SPH
 		//=================================================================================================//
 		void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
 		{
-			distance_to_wall_ls_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
 			if (is_migrate_[index_i] == 1) //If this particle has started migrating 
 			{
 				if (is_near_wall_P2_[index_i] == 1) //if it is in P2 region
@@ -163,11 +162,13 @@ namespace SPH
 			velo_friction_[index_i] = Vecd::Zero();
 			wall_Y_plus_[index_i] = 0.0;
 			wall_Y_star_[index_i] = 0.0;
-			distance_to_wall_[index_i] = 0.0;
+			dist_to_dmy_interface_[index_i] = 0.0;
+			dist_to_dmy_itfc_ls_[index_i] = 0.0;
+			dist_to_dmy_itfc_aver_[index_i] = 0.0;
 			is_near_wall_P1_[index_i] = 0;
 			y_p_[index_i] = 0.0;
 			Real r_dummy_normal = 0.0;
-			Real r_dummy_normal_temp = 0.0;
+			Real r_dmy_n_j = 0.0;
 			Real r_min = 1.0e3;
 			Real velo_fric(0.0);
 			const Vecd& vel_i = vel_[index_i];
@@ -176,17 +177,34 @@ namespace SPH
 			Vecd e_n = Vecd::Zero();
 			Vecd n_k_j_nearest = Vecd::Zero();
 			Matd direc_matrix = Matd::Zero();
+			Real ttl_weight(0);
+			Real r_dmy_itfc_n_sum(0);
+			Real exclude_ttl_weight(0);
+			Real exclude_r_dmy_itfc_n_sum(0);
+			int count_average(0);
+			//if (index_i == 4297 && GlobalStaticVariables::physical_time_ > 1.35)
+			//{
+			//	system("pause");
+			//}
 
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
+				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
-
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+				if (contact_neighborhood.current_size_!=0)
+				{
+					//** For multi-comtact problems, this would be more complicated *
+					//r_dummy_normal = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+					dist_to_dmy_itfc_ls_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+					//dist_to_dmy_itfc_ls_[index_i] = r_dummy_normal;
+				}
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					bool is_index_j_valid = true;
 					size_t index_j = contact_neighborhood.j_[n];
-					
+					Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+
 					/*Specific wall particles are excluded*/
 					for (int ii = 0; ii != id_exclude_.size(); ++ii)
 					{
@@ -206,13 +224,33 @@ namespace SPH
 					Vecd& n_k_j = n_k[index_j];
 
 					//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
-					r_dummy_normal_temp = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
+					r_dmy_n_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
 					
-					/*The distance to wall should not be negative*/
-					if (r_ij < r_min && r_dummy_normal_temp > 0.0 + TinyReal )
+					//if (index_i == 185 && GlobalStaticVariables::physical_time_ > 1.486)
+					//{
+					//	std::cout << "index_j=" << index_j << std::endl;
+					//	std::cout << "r_dmy_n_j=" << r_dmy_n_j << std::endl;
+					//	std::cout << "e_ij=" << e_ij << std::endl;
+					//	std::cout << "n_k_j=" << n_k_j << std::endl;
+					//	std::cout << "------------------" <<  std::endl;
+					//	system("pause");
+					//}
+
+					if (r_ij>=100.0* particle_spacing_)
+					{
+						//** Sum the projection distances according to the kernel approx. *  
+						exclude_r_dmy_itfc_n_sum += weight_j * r_dmy_n_j;
+						exclude_ttl_weight += weight_j;
+					}
+
+					/*Get the minimum distance, the distance to wall should not be negative*/
+					if (r_ij < r_min && r_dmy_n_j > 0.0 + TinyReal )
 					{
 						r_min = r_ij; //** Find the nearest wall particle *
-						r_dummy_normal = r_dummy_normal_temp;
+						
+						//**If use level-set,this would not func.*
+						r_dummy_normal = r_dmy_n_j; 
+						
 						n_k_j_nearest = n_k[index_j];
 						if (dimension_ == 2)
 						{
@@ -220,31 +258,87 @@ namespace SPH
 							e_ij_t[1] = n_k_j_nearest[0] * (-1.0);
 						}
 						/*For testing*/
-						distance_to_wall_[index_i] = r_dummy_normal;
+						dist_to_dmy_interface_[index_i] = r_dummy_normal;
 						index_nearest[index_i] = index_j;
 					}
 					/*Double checking*/
-					if (distance_to_wall_[index_i] < 0.0 - TinyReal)
+					if (r_dummy_normal < 0.0 - TinyReal)
 					{
-						std::cout << "distance_to_wall_[index_i] <= 0.0 + TinyReal strange" << std::endl;
-						std::cout << r_dummy_normal_temp << std::endl;
+						std::cout << "dist_to_dmy_interface_[index_i] <= 0.0 + TinyReal strange" << std::endl;
+						std::cout << r_dmy_n_j << std::endl;
 						system("pause");
 					}
+					//** Only average the bigger value or itself*
+					if (r_dmy_n_j - r_dummy_normal >(-1.0 * TinyReal))
+					{
+						count_average++;
+						//** Sum the projection distances according to the kernel approx. *  
+						r_dmy_itfc_n_sum += weight_j * r_dmy_n_j;
+						ttl_weight += weight_j;
+					}
+				}
+			} //This for statement is to calculate nearest info.
+			
+			//** Classify the near wall and sub-near wall paritcles *
+			if (r_dummy_normal < (cutoff_radius_ - 0.5 * particle_spacing_) + TinyReal &&
+				r_dummy_normal > 0.0 * particle_spacing_ + TinyReal)
+			{
+				is_near_wall_P2_[index_i] = 10;
+				if (r_dummy_normal < 1.0 * particle_spacing_)
+				{
+					is_near_wall_P1_[index_i] = 1;
 				}
 			}
-			if (distance_to_wall_[index_i] < 0.1 * particle_spacing_&&distance_to_wall_[index_i] > 0.0)
+
+			//** Average the distance to wall *
+			//** Note! the denominator should not be added with TinyReal, because the weight can be extremely small, a TinyReal will affect the value largely *
+			if (is_near_wall_P2_[index_i] == 10 && ttl_weight!=0.0)
+			{
+				//** Check the function *
+				if (r_dmy_itfc_n_sum <= 0.0)
+				{
+					std::cout << "r_dmy_itfc_n_sum is almost zero" << std::endl;
+					std::cout << "count="<<count_average << std::endl;
+					system("pause");
+				}
+				if (is_near_wall_P1_[index_i] == 1) // ** Different searching area *
+				{
+					//** Average the projection distances according to the kernel approx. *  
+					if (abs(r_dmy_itfc_n_sum - exclude_r_dmy_itfc_n_sum) >= TinyReal)
+					{
+						r_dummy_normal = (r_dmy_itfc_n_sum - exclude_r_dmy_itfc_n_sum) / (ttl_weight - exclude_ttl_weight );
+						dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
+						//dist_to_dmy_itfc_aver_[index_i] = (r_dmy_itfc_n_sum - exclude_r_dmy_itfc_n_sum) / (ttl_weight - exclude_ttl_weight + TinyReal);
+					}
+					else
+					{
+						r_dummy_normal = r_dmy_itfc_n_sum / ttl_weight;
+						dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
+						//dist_to_dmy_itfc_aver_[index_i] = r_dmy_itfc_n_sum / (ttl_weight + TinyReal);
+					}
+				}
+				else
+				{
+					r_dummy_normal = r_dmy_itfc_n_sum / (ttl_weight);
+					dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
+					//dist_to_dmy_itfc_aver_[index_i] = r_dmy_itfc_n_sum / (ttl_weight + TinyReal);
+				}
+				//std::cout << "r_dummy_normal=" << r_dummy_normal << std::endl;
+			}
+
+			if (r_dummy_normal < 0.05 * particle_spacing_ && r_dummy_normal > 0.0)
 			{
 				std::cout << "There is a particle too close to wall" << std::endl;
-				std::cout << "index_i="<< index_i << std::endl; 
-				std::cout << "DistanceToDummyInterface="<< distance_to_wall_[index_i] << std::endl;
+				std::cout << "index_i=" << index_i << std::endl;
+				std::cout << "DistanceToDummyInterface=" << dist_to_dmy_interface_[index_i] << std::endl;
+				std::cout << "DistanceToDummyInterface/dp=" << dist_to_dmy_interface_[index_i] / particle_spacing_ << std::endl;
+				std::cout << "DistanceToDummyInterfaceLS=" << dist_to_dmy_itfc_ls_[index_i] << std::endl;
+				std::cout << "DistanceToDummyInterfaceLS/dp=" << dist_to_dmy_itfc_ls_[index_i] / particle_spacing_ << std::endl;
+				std::cout << "DistanceToDummyInterfaceAver=" << dist_to_dmy_itfc_aver_[index_i] << std::endl;
+				std::cout << "DistanceToDummyInterfaceAver/dp=" << dist_to_dmy_itfc_aver_[index_i] / particle_spacing_ << std::endl;
 				system("pause");
 			}
 
-			if (r_dummy_normal < 1.0 * particle_spacing_ &&
-				r_dummy_normal > 0.0 * particle_spacing_ + TinyReal)
-			{
-				is_near_wall_P1_[index_i] = 1;
-			}
 			if (r_dummy_normal < (cutoff_radius_ - 0.5 * particle_spacing_)+TinyReal &&
 				r_dummy_normal > 0.0 * particle_spacing_ + TinyReal)
 			{
@@ -252,7 +346,8 @@ namespace SPH
 				Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
 				velo_tan = abs(e_ij_t.dot(vel_i));
 				velo_tan_[index_i] = velo_tan;
-
+				
+		//** Key statement for Offset Model *
 				y_p_[index_i] = r_dummy_normal + offset_dist_;
 
 				velo_fric = sqrt(abs(Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /

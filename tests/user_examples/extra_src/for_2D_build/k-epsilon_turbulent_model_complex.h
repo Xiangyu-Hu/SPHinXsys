@@ -149,7 +149,9 @@ namespace SPH
 		protected:
 
 			LevelSetShape* level_set_shape_;
-			StdLargeVec<Real> distance_to_wall_ls_;
+			StdLargeVec<Real> dist_to_dmy_itfc_ls_;
+
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
 
 			Real offset_dist_;
 			StdVec<int> id_exclude_;
@@ -167,7 +169,7 @@ namespace SPH
 			StdLargeVec<Real> velo_tan_;
 			StdLargeVec<Vecd> velo_friction_;
 			StdLargeVec<int> index_nearest;
-			StdLargeVec<Real> distance_to_wall_;
+			StdLargeVec<Real> dist_to_dmy_interface_, dist_to_dmy_itfc_aver_;
 			StdLargeVec<Vecd>& vel_, & pos_;
 			StdLargeVec<Real>& rho_;
 			int dimension_;

@@ -1,10 +1,10 @@
 /**
- * @file 	2d_turbulent_channel.cpp
- * @brief 	2D_turbulent_channel flow with K-Epsilon two equations RANS model.
+ * @file 	2d_turbulent_flow_around_cylinder.cpp
+ * @brief 	2d_turbulent_flow_around_cylinder flow with K-Epsilon two equations RANS model.
  * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
-#include "2d_turbulent_channel.h"
+#include "2d_turbulent_flow_around_cylinder.h"
 
 using namespace SPH;
 

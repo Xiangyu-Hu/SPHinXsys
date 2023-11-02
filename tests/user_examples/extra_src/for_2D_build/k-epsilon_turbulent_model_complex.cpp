@@ -30,9 +30,13 @@ namespace SPH
 			k_production_(*particles_->getVariableByName<Real>("K_Production"))
 		{
 			
-			particles_->registerVariable(distance_to_wall_ls_, "DistanceToWallLS");
-			particles_->registerSortableVariable<Real>("DistanceToWallLS");
-			particles_->addVariableToWrite<Real>("DistanceToWallLS");
+			particles_->registerVariable(dist_to_dmy_itfc_ls_, "DistanceToDummyInterfaceLS");
+			particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceLS");
+			particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceLS");
+
+			particles_->registerVariable(dist_to_dmy_itfc_aver_, "DistanceToDummyInterfaceAver");
+			particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceAver");
+			particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceAver");
 
 			particles_->registerVariable(y_p_, "Y_P");
 			particles_->registerSortableVariable<Real>("Y_P");
@@ -68,15 +72,16 @@ namespace SPH
 			particles_->registerSortableVariable<int>("NearestIndex");
 			particles_->addVariableToWrite<int>("NearestIndex");
 
-			particles_->registerVariable(distance_to_wall_, "DistanceToWall");
-			particles_->registerSortableVariable<Real>("DistanceToWall");
-			particles_->addVariableToWrite<Real>("DistanceToWall");
+			particles_->registerVariable(dist_to_dmy_interface_, "DistanceToDummyInterface");
+			particles_->registerSortableVariable<Real>("DistanceToDummyInterface");
+			particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
 
 			/*definition of near wall particles*/
 			intial_distance_to_wall = 1.5 * particle_spacing_; //changed
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(contact_particles_[k]->n_));
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			}
 			/*definition the specific particles where normal vectors do not exist*/
 			std::cout << "The id of excluded wall particle is: " << std::endl;
@@ -84,8 +89,8 @@ namespace SPH
 			{
 				std::cout << id_exclude_[i] << std::endl;
 			}
-			std::cout << "Are you sure? " << std::endl;
-			system("pause");
+			//std::cout << "Are you sure? " << std::endl;
+			//system("pause");
 		};
 		//=================================================================================================//
 	}

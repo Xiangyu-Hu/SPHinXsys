@@ -120,7 +120,9 @@ int main(int ac, char* av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref, id_exclude);
+	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
+	near_surface.level_set_shape_.writeLevelSet(io_environment);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref, id_exclude, near_surface);
 
 	//SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
 
@@ -245,7 +247,7 @@ int main(int ac, char* av[])
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				//if(GlobalStaticVariables::physical_time_ >0.75)
+				//if(GlobalStaticVariables::physical_time_ >1.83)
 					//write_body_states.writeToFile();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
