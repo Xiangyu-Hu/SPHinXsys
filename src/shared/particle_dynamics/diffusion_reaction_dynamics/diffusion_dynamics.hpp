@@ -45,15 +45,6 @@ DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-void BaseDiffusionRelaxation<ParticlesType>::initialization(size_t index_i, Real dt)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_dt_[m])[index_i] = 0;
-    }
-}
-//=================================================================================================//
 template <template <typename... T> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
 void DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>::
     initialization(size_t index_i, Real dt)
