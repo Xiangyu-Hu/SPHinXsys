@@ -182,7 +182,7 @@ int main(int ac, char *av[])
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
     // impose transport velocity
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
         transport_velocity_correction(fluid_block_inner, fluid_block_contact);
     // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);

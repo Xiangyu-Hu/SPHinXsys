@@ -1,8 +1,8 @@
 /**
  * @file 	droplet.cpp
  * @brief 	A square droplet deforms to circle due to surface tension.
- * @details A momentum-conservative formulation for surface twnsion is used here 
- *          to reach a long-rerm stable simulation.
+ * @details A momentum-conservative formulation for surface tension is used here
+ *          to reach a long-term stable simulation.
  * @author Shuaihao Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -33,20 +33,20 @@ Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
 Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
-Vecd air_halfsize = inner_wall_halfsize; // local center at origin
-Vecd air_translation = inner_wall_translation;   // translation to global coordinates
+Vecd air_halfsize = inner_wall_halfsize;       // local center at origin
+Vecd air_translation = inner_wall_translation; // translation to global coordinates
 
 Vecd droplet_center(DL / 2, DH / 2);
-Real drolet_radius = LL / 2;
-Vecd droplet_halfsize = Vec2d(drolet_radius, drolet_radius); // local center at origin
-Vecd droplet_translation = droplet_center;   // translation to global coordinates
+Real droplet_radius = LL / 2;
+Vecd droplet_halfsize = Vec2d(droplet_radius, droplet_radius); // local center at origin
+Vecd droplet_translation = droplet_center;                     // translation to global coordinates
 //----------------------------------------------------------------------
 // Water body shape definition.
 //----------------------------------------------------------------------
 class WaterBlock : public ComplexShape
 {
-public:
-    explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         add<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
     }
@@ -56,8 +56,8 @@ public:
 //----------------------------------------------------------------------/**
 class AirBlock : public ComplexShape
 {
-public:
-    explicit AirBlock(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit AirBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
@@ -69,176 +69,12 @@ public:
 //----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
 {
-public:
-    explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
-};
-
-typedef DataDelegateContact<BaseParticles, BaseParticles> BaseDataContact;
-class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
-{
-public:
-    explicit SurfaceTensionStress(BaseContactRelation& conact_relation, StdVec<Real> contact_surface_tension)
-        : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation)
-    {
-        particles_->registerVariable(color_gradient_, "ColorGradient");
-        particles_->registerSortableVariable<Vecd>("ColorGradient");
-        particles_->addVariableToWrite<Vecd>("ColorGradient");
-        particles_->registerVariable(surface_tension_stress_, "SurfaceTensionStress");
-        particles_->registerSortableVariable<Matd>("SurfaceTensionStress");
-        particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
-        Real rho0 = getSPHBody().base_material_->ReferenceDensity();
-        for (size_t k = 0; k != contact_particles_.size(); ++k)
-        {
-            contact_surface_tension_.push_back(contact_surface_tension[k]);
-            Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
-            contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
-        }
-    };
-    virtual ~SurfaceTensionStress() {};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        color_gradient_[index_i] = ZeroData<Vecd>::value;
-        surface_tension_stress_[index_i] = ZeroData<Matd>::value;
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            Vecd weighted_color_gradeint = ZeroData<Vecd>::value;
-            Real contact_fraction_k = contact_fraction_[k];
-            Real surface_tension_k = contact_surface_tension_[k];
-            const Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                weighted_color_gradeint -= contact_fraction_k *
-                    contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            }
-            color_gradient_[index_i] = weighted_color_gradeint;
-            Real norm = weighted_color_gradeint.norm();
-            surface_tension_stress_[index_i] += surface_tension_k / (norm + Eps) *
-                (norm * norm * Matd::Identity() -
-                    weighted_color_gradeint * weighted_color_gradeint.transpose());
-        }
-    };
-
-protected:
-    StdLargeVec<Vecd> color_gradient_;
-    StdLargeVec<Matd> surface_tension_stress_;
-    StdVec<Real> contact_surface_tension_, contact_fraction_;
-};
-
-using fluid_dynamics::FluidDataInner;
-class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInner
-{
-public:
-    SurfaceStressAccelerationInner(BaseInnerRelation& inner_relation)
-        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-        rho_(particles_->rho_), acc_prior_(particles_->acc_prior_),
-        color_gradient_(*particles_->getVariableByName<Vecd>("ColorGradient")),
-        surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress")) {};
-    virtual ~SurfaceStressAccelerationInner() {};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd summation = ZeroData<Vecd>::value;
-        const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            summation += inner_neighborhood.dW_ijV_j_[n] *
-                (surface_tension_stress_[index_i] + surface_tension_stress_[index_j]) *
-                inner_neighborhood.e_ij_[n];
-        }
-        acc_prior_[index_i] += summation / rho_[index_i];
-    };
-
-protected:
-    StdLargeVec<Real>& rho_;
-    StdLargeVec<Vecd>& acc_prior_;
-    StdLargeVec<Vecd>& color_gradient_;
-    StdLargeVec<Matd>& surface_tension_stress_;
-};
-
-class SurfaceStressAccelerationContact : public LocalDynamics, public BaseDataContact
-{
-public:
-    explicit SurfaceStressAccelerationContact(BaseContactRelation& conact_relation)
-        : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation),
-        rho_(particles_->rho_), acc_prior_(particles_->acc_prior_),
-        color_gradient_(*particles_->getVariableByName<Vecd>("ColorGradient")),
-        surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress"))
-    {
-        Real rho0 = getSPHBody().base_material_->ReferenceDensity();
-        for (size_t k = 0; k != contact_particles_.size(); ++k)
-        {
-            Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
-            contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
-            contact_color_gradient_.push_back(
-                contact_particles_[k]->getVariableByName<Vecd>("ColorGradient"));
-            contact_surface_tension_stress_.push_back(
-                contact_particles_[k]->getVariableByName<Matd>("SurfaceTensionStress"));
-        }
-    };
-    virtual ~SurfaceStressAccelerationContact() {};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd summation = ZeroData<Vecd>::value;
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            Real contact_fraction_k = contact_fraction_[k];
-            StdLargeVec<Vecd>& contact_color_gradient_k = *(contact_color_gradient_[k]);
-            StdLargeVec<Matd>& contact_surface_tension_stress_k = *(contact_surface_tension_stress_[k]);
-            const Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = contact_neighborhood.j_[n];
-                Real r_ij = contact_neighborhood.r_ij_[n];
-                Vecd e_ij = contact_neighborhood.e_ij_[n];
-                Real mismatch = 1.0 - 0.5 * (color_gradient_[index_i] + contact_color_gradient_k[index_j]).dot(e_ij) * r_ij;
-                summation += contact_neighborhood.dW_ijV_j_[n] *
-                    (-0.1 * mismatch * Matd::Identity() +
-                        (Real(1) - contact_fraction_k) * surface_tension_stress_[index_i] +
-                        contact_surface_tension_stress_k[index_j] * contact_fraction_k) *
-                    contact_neighborhood.e_ij_[n];
-            }
-        }
-        acc_prior_[index_i] += summation / rho_[index_i];
-    };
-
-protected:
-    StdLargeVec<Real>& rho_;
-    StdLargeVec<Vecd>& acc_prior_;
-    StdLargeVec<Vecd>& color_gradient_;
-    StdLargeVec<Matd>& surface_tension_stress_;
-    StdVec<StdLargeVec<Vecd>*> contact_color_gradient_;
-    StdVec<StdLargeVec<Matd>*> contact_surface_tension_stress_;
-    StdVec<Real> contact_surface_tension_, contact_fraction_;
-};
-
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsType, ExecutionPolicy>
-{
-public:
-    template <typename... Args>
-    InteractionWithInitialization(Args &&...args)
-        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
-    {
-        static_assert(!has_update<LocalDynamicsType>::value,
-            "LocalDynamicsType does not fulfill InteractionWithInitialization requirements");
-    }
-    virtual ~InteractionWithInitialization() {};
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        particle_for(ExecutionPolicy(),
-            this->identifier_.LoopRange(),
-            [&](size_t i)
-        { this->initialization(i, dt); });
-        InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
-    };
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -275,10 +111,18 @@ int main()
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    ComplexRelation water_air_complex(water_block, { &air_block });
-    ContactRelation water_wall_contact(water_block, { &wall_boundary });
-    ComplexRelation air_water_complex(air_block, { &water_block });
-    ContactRelation air_wall_contact(air_block, { &wall_boundary });
+    InnerRelation water_inner(water_block);
+    ContactRelation water_air_contact(water_block, {&air_block});
+    ContactRelation water_wall_contact(water_block, {&wall_boundary});
+    InnerRelation air_inner(air_block);
+    ContactRelation air_water_contact(air_block, {&water_block});
+    ContactRelation air_wall_contact(air_block, {&wall_boundary});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_air_complex(water_inner, {&water_air_contact, &water_wall_contact});
+    ComplexRelation air_water_complex(air_inner, {&air_water_contact, &air_wall_contact});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
@@ -286,45 +130,40 @@ int main()
     SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-        update_air_density_by_summation(air_wall_contact, air_water_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-        update_water_density_by_summation(water_wall_contact, water_air_complex);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(air_wall_contact, air_water_complex, 0.02);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        water_transport_correction(water_air_complex, 0.02);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
+        update_water_density_by_summation(water_inner, water_air_contact, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
+        update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
+        air_transport_correction(ConstructorArgs(air_inner, 0.02), air_water_contact, air_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
+        water_transport_correction(ConstructorArgs(water_inner, 0.02), water_air_contact, water_wall_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
-    /** Pressure relaxation for water by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemannWithWall>
-        water_pressure_relaxation(water_wall_contact, water_air_complex);
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-        water_density_relaxation(water_wall_contact, water_air_complex);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
+        water_pressure_relaxation(water_inner, water_air_contact, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
+        water_density_relaxation(water_inner, water_air_contact, water_wall_contact);
     /** Extend Pressure relaxation is used for air. */
-    Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
-        air_pressure_relaxation(air_wall_contact, air_water_complex, 1.0);
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-        air_density_relaxation(air_wall_contact, air_water_complex);
+    Dynamics1Level<fluid_dynamics::ExtendedMultiPhaseIntegration1stHalfWithWallRiemann>
+        air_pressure_relaxation(air_inner, air_water_contact, ConstructorArgs(air_wall_contact, 1.0));
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
+        air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     /** Viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall>
-        air_viscous_acceleration(air_wall_contact, air_water_complex);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall>
-        water_viscous_acceleration(water_wall_contact, water_air_complex);
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, ContactWall<>>>>
+        water_viscous_acceleration(water_inner, water_air_contact, water_wall_contact);
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, ContactWall<>>>>
+        air_viscous_acceleration(air_inner, air_water_contact, air_wall_contact);
     /** Surface tension. */
-    InteractionDynamics<SurfaceTensionStress>
-        water_surface_tension_stress(water_air_complex.getContactRelation(), StdVec<Real>{Real(1.0)});
-    InteractionDynamics<SurfaceTensionStress>
-        air_surface_tension_stress(air_water_complex.getContactRelation(), StdVec<Real>{Real(1.0e-3)});
-    InteractionDynamics<ComplexInteraction<SurfaceStressAccelerationInner, SurfaceStressAccelerationContact>>
-        water_surface_tension_acceleration(water_air_complex.getInnerRelation(), water_air_complex.getContactRelation());
+    InteractionDynamics<fluid_dynamics::SurfaceTensionStress> water_surface_tension_stress(water_air_contact, StdVec<Real>{Real(1.0)});
+    InteractionDynamics<fluid_dynamics::SurfaceTensionStress> air_surface_tension_stress(air_water_contact, StdVec<Real>{Real(1.0e-3)});
+    InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
-    InteractionDynamics<ComplexInteraction<SurfaceStressAccelerationInner, SurfaceStressAccelerationContact>>
-        air_surface_tension_acceleration(air_water_complex.getInnerRelation(), air_water_complex.getContactRelation());
+    InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
     air_block.addBodyStateForRecording<Vecd>("PriorAcceleration");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -347,7 +186,7 @@ int main()
     int screen_output_interval = 500;
     Real end_time = 10.0;
     Real output_interval = end_time / 50; /**< Time stamps for output of body states. */
-    Real dt = 0.0;               /**< Default acoustic time step sizes. */
+    Real dt = 0.0;                        /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
@@ -417,8 +256,8 @@ int main()
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                    << GlobalStaticVariables::physical_time_
-                    << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                          << GlobalStaticVariables::physical_time_
+                          << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
 
@@ -447,13 +286,13 @@ int main()
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
-        << " seconds." << std::endl;
+              << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-        << interval_computing_time_step.seconds() << "\n";
+              << interval_computing_time_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-        << interval_computing_pressure_relaxation.seconds() << "\n";
+              << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-        << interval_updating_configuration.seconds() << "\n";
+              << interval_updating_configuration.seconds() << "\n";
 
     if (sph_system.GenerateRegressionData())
     {

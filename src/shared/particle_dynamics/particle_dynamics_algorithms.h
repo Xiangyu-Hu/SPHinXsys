@@ -290,6 +290,33 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
 };
 
 /**
+ * @class InteractionWithInitialization
+ * @brief This class includes an interaction and an initialization steps
+ */
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsType, ExecutionPolicy>
+{
+  public:
+    template <typename... Args>
+    InteractionWithInitialization(Args &&...args)
+        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
+    {
+        static_assert(!has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionWithInitialization requirements");
+    }
+    virtual ~InteractionWithInitialization(){};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        particle_for(ExecutionPolicy(),
+                     this->identifier_.LoopRange(),
+                     [&](size_t i)
+                     { this->initialization(i, dt); });
+        InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
+    };
+};
+
+/**
  * @class Dynamics1Level
  * @brief This class includes three steps, including initialization, interaction and update.
  * It is the most complex particle dynamics type,

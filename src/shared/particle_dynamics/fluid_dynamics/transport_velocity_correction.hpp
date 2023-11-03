@@ -7,23 +7,23 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class DataDelegationType, class KernelCorrectionType, class ResolutionType, class ParticleScope>
+template <class DataDelegationType, class KernelCorrectionType, class ParticleScope>
 template <class BaseRelationType>
-TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ResolutionType, ParticleScope>::
-    TransportVelocityCorrection(BaseRelationType &base_relation, Real coefficient)
+TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>::
+    TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      correction_scaling_(coefficient * pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-      pos_(this->particles_->pos_), kernel_correction_(this->particles_), h_ratio_(this->particles_),
-      checkWithinScope(this->particles_) {}
+      transport_acc_(*this->particles_->template registerSharedVariable<Vecd>("TransportAcceleration")),
+      kernel_correction_(this->particles_), checkWithinScope(this->particles_) {}
 //=================================================================================================//
-template <typename... CommonControlTypes>
-TransportVelocityCorrection<Inner<>, CommonControlTypes...>::
+template <class ResolutionType, typename... CommonControlTypes>
+TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
-    : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(
-          inner_relation, coefficient) {}
+    : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(inner_relation),
+      correction_scaling_(coefficient * pow(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+      pos_(this->particles_->pos_), h_ratio_(this->particles_) {}
 //=================================================================================================//
-template <typename... CommonControlTypes>
-void TransportVelocityCorrection<Inner<>, CommonControlTypes...>::
+template <class ResolutionType, typename... CommonControlTypes>
+void TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
@@ -37,17 +37,25 @@ void TransportVelocityCorrection<Inner<>, CommonControlTypes...>::
             acceleration_trans -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
                                   inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         }
-
-        Real inv_h_ratio = 1.0 / this->h_ratio_(index_i);
-        this->pos_[index_i] += this->correction_scaling_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
+        this->transport_acc_[index_i] = acceleration_trans;
+    }
+}
+//=================================================================================================//
+template <class ResolutionType, typename... CommonControlTypes>
+void TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
+    update(size_t index_i, Real dt)
+{
+    if (this->checkWithinScope(index_i))
+    {
+        Real inv_h_ratio = 1.0 / h_ratio_(index_i);
+        pos_[index_i] += correction_scaling_ * this->transport_acc_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
 TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
-    TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
-    : TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>(
-          contact_relation, coefficient) {}
+    TransportVelocityCorrection(BaseContactRelation &contact_relation)
+    : TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>(contact_relation) {}
 //=================================================================================================//
 template <typename... CommonControlTypes>
 void TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
@@ -66,16 +74,15 @@ void TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
                                       contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
-        Real inv_h_ratio = 1.0 / this->h_ratio_(index_i);
-        this->pos_[index_i] += this->correction_scaling_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
+        this->transport_acc_[index_i] += acceleration_trans;
     }
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... CommonControlTypes>
 TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>::
-    TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
+    TransportVelocityCorrection(BaseContactRelation &contact_relation)
     : TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>(
-          contact_relation, coefficient)
+          contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
@@ -102,8 +109,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
                                       contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
-        Real inv_h_ratio = 1.0 / this->h_ratio_(index_i);
-        this->pos_[index_i] += this->correction_scaling_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
+        this->transport_acc_[index_i] += acceleration_trans;
     }
 }
 //=================================================================================================//

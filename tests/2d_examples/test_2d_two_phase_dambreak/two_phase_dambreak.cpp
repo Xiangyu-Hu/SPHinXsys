@@ -69,7 +69,7 @@ int main(int ac, char *av[])
         update_water_density_by_summation(water_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
         update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
-    InteractionDynamics<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
+    InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
         air_transport_correction(air_inner, air_water_contact, air_wall_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);

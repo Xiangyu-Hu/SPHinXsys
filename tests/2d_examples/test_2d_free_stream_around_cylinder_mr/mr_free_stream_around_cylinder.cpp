@@ -151,7 +151,7 @@ int main(int ac, char *av[])
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_contact);
     /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplexAdaptive<BulkParticles>>
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplexAdaptive<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_contact);
     /** compute the vorticity. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
