@@ -13,7 +13,8 @@ namespace SPH
 //=================================================================================================//
 template <class ParticlesType, typename VariableType>
 TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
-    TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name) : OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
+    TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name)
+    : OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
 //=================================================================================================//
 template <class ParticlesType, typename VariableType>
 ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
@@ -125,18 +126,19 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<Particles
     return error_and_parameters;
 }
 //=================================================================================================//
-template <typename TemperatureSplittingType, typename BaseBodyRelationType, typename VariableType>
-UpdateTemperaturePDEResidual<TemperatureSplittingType, BaseBodyRelationType, VariableType>::
-    UpdateTemperaturePDEResidual(BaseBodyRelationType &body_relation, const std::string &variable_name) : TemperatureSplittingType(body_relation, variable_name){};
+template <typename TemperatureSplittingType>
+template <typename... Args>
+UpdateTemperaturePDEResidual<TemperatureSplittingType>::
+    UpdateTemperaturePDEResidual(Args &&...args)
+    : TemperatureSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
-template <typename TemperatureSplittingType, typename BaseBodyRelationType, typename VariableType>
-void UpdateTemperaturePDEResidual<TemperatureSplittingType, BaseBodyRelationType, VariableType>::
+template <typename TemperatureSplittingType>
+void UpdateTemperaturePDEResidual<TemperatureSplittingType>::
     interaction(size_t index_i, Real dt)
 {
-    ErrorAndParameters<VariableType> error_and_parameters = this->computeErrorAndParameters(index_i, dt);
+    auto error_and_parameters = this->computeErrorAndParameters(index_i, dt);
     this->residual_T_global_[index_i] = error_and_parameters.error_;
 }
 //=================================================================================================//
 } // namespace SPH
-
 #endif // DIFFUSION_SPLITTING_STATE_HPP

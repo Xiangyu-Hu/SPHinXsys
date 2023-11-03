@@ -191,14 +191,20 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the range of bodies to build neighbor particle lists.
-    ComplexRelation diffusion_body_complex(diffusion_body, {&wall_boundary});
+    InnerRelation diffusion_body_inner(diffusion_body);
+    ContactRelation diffusion_body_contact(diffusion_body, {&wall_boundary});
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation diffusion_body_complex(diffusion_body_inner, diffusion_body_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
-        temperature_splitting(diffusion_body_complex, "Phi");
+        temperature_splitting(diffusion_body_inner, diffusion_body_contact, "Phi");
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionBodyInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition(wall_boundary);

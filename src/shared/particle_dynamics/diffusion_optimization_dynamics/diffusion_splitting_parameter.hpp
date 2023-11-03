@@ -149,8 +149,8 @@ template <class ParticlesType, class ContactParticlesType, typename VariableType
 ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
-    ErrorAndParameters<VariableType> error_and_parameters = 
-	ParameterSplittingByPDEInner<ParticlesType, VariableType>::computeErrorAndParameters(index_i, dt);
+    ErrorAndParameters<VariableType> error_and_parameters =
+        ParameterSplittingByPDEInner<ParticlesType, VariableType>::computeErrorAndParameters(index_i, dt);
 
     VariableType &variable_i = this->variable_[index_i];
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -184,16 +184,15 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
     return error_and_parameters;
 }
 //=================================================================================================//
-template <typename ParameterSplittingType, typename BaseBodyRelationType, typename VariableType>
-UpdateParameterPDEResidual<ParameterSplittingType, BaseBodyRelationType, VariableType>::
-    UpdateParameterPDEResidual(BaseBodyRelationType &body_relation, const std::string &variable_name) 
-	: ParameterSplittingType(body_relation, variable_name){};
+template <typename ParameterSplittingType>
+template <typename... Args>
+UpdateParameterPDEResidual<ParameterSplittingType>::UpdateParameterPDEResidual(Args &&...args)
+    : ParameterSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
-template <typename ParameterSplittingType, typename BaseBodyRelationType, typename VariableType>
-void UpdateParameterPDEResidual<ParameterSplittingType, BaseBodyRelationType, VariableType>::
-    interaction(size_t index_i, Real dt)
+template <typename ParameterSplittingType>
+void UpdateParameterPDEResidual<ParameterSplittingType>::interaction(size_t index_i, Real dt)
 {
-    ErrorAndParameters<VariableType> error_and_parameters = this->computeErrorAndParameters(index_i, dt);
+    auto error_and_parameters = this->computeErrorAndParameters(index_i, dt);
     error_and_parameters.error_ = error_and_parameters.error_ - this->residual_T_local_[index_i];
     this->residual_k_global_[index_i] = error_and_parameters.error_;
 }

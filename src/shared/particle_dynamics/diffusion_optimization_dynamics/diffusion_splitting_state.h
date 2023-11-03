@@ -79,11 +79,12 @@ class TemperatureSplittingByPDEWithBoundary
  * @class UpdateTemperaturePDEResidual
  * @brief Update the global residual from temperature after one splitting loop finished.
  */
-template <typename TemperatureSplittingType, typename BaseBodyRelationType, typename VariableType>
+template <typename TemperatureSplittingType>
 class UpdateTemperaturePDEResidual : public TemperatureSplittingType
 {
   public:
-    UpdateTemperaturePDEResidual(BaseBodyRelationType &body_relation, const std::string &variable_name);
+    template <typename... Args>
+    UpdateTemperaturePDEResidual(Args &&...args);
     virtual ~UpdateTemperaturePDEResidual(){};
 
   protected:
