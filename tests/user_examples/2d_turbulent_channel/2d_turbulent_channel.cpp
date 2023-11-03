@@ -30,15 +30,6 @@ int main(int ac, char* av[])
 
 	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.defineAdaptationRatios(0.0, 1.0);
-
-	for (int j = 0; j < num_observer_points_x; ++j)
-	{
-		for (int i = 0; i < num_observer_points; ++i)
-		{
-			observation_locations.push_back(Vecd(x_observe_start + j * observe_spacing_x,
-				i * observe_spacing + 0.5 * resolution_ref));
-		}
-	}
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

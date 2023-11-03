@@ -1,6 +1,6 @@
 /**
- * @file 	2d_turbulent_channel.h
- * @brief 	Numerical parameters and body definition for 2d_turbulent_channel.
+ * @file 	2d_turbulent_flow_around_cylinder.h
+ * @brief 	Numerical parameters and body definition for 2d_turbulent_flow_around_cylinder.
  * @author 	Xiangyu Hu
  */
 #include "sphinxsys.h" // SPHinXsys Library.
@@ -10,21 +10,30 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Global parameters on the turbulent properties
 //----------------------------------------------------------------------
-Real y_p_theo = 0.05;                 /**< Theoretical distance from the first particle P to wall  */
-Real resolution_ref = 0.082609;			  /**< Initial reference particle spacing. */
-Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref;
-//Real offset_dist_ref = 0.0;
+Real resolution_ref = 0.2;		       	                  /**< Initial reference particle spacing. */
+//Real y_p_theo = 0.05;                                   /**< Turbulent: Theoretical distance from the first particle P to wall  */
+Real y_p_theo = 0.0;                                      /**< Turbulent: Theoretical distance from the first particle P to wall  */
+//Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref; /**< Turbulent: offset distance for keeping y+ unchanged */
+Real offset_dist_ref = 0.0;  
+/** If this offset value is zero, that means the distance to dummy interface will be real y_p */
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120;						  /**< Reference length. */
-Real DH = 2 - 2.0 * offset_dist_ref;  /**< Reference and the height of main channel. */
-Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
-Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
+Real DL = 30.0;						    		          /**< Reference length. */
+Real DH = 16.0 - 2.0 * offset_dist_ref;                   /**< Reference and the height of main channel. */
+Real BW = resolution_ref * 4;		                      /**< Reference size of the emitter. */
+Real DL_sponge = resolution_ref * 20;                     /**< Reference size of the emitter buffer to impose inflow condition. */
+Vec2d insert_circle_center(10.0, 0.5 * DH);   /**< Location of the cylinder center. */
+Real insert_circle_radius = 1.0;              /**< Radius of the cylinder. */
 StdVec<int> id_exclude;
+// Observation locations
+Vec2d point_coordinate_1(3.0, 5.0);
+Vec2d point_coordinate_2(4.0, 5.0);
+Vec2d point_coordinate_3(5.0, 5.0);
+StdVec<Vecd> observation_locations = { point_coordinate_1, point_coordinate_2, point_coordinate_3 };
 //-------------------------------------------------------
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + BW));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 /** Observation locations, but for channel flow, the cell-based monitoring approach is used, parameters are defined in corresponding .cpp file*/
 Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
@@ -32,7 +41,6 @@ Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
 int num_observer_points = std::round(DH/ resolution_ref); //Evrey particle is regarded as a cell monitor 
 Real observe_spacing = DH / num_observer_points;
-StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -40,9 +48,9 @@ Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f;
-Real Re = 40000.0;					/**< Reynolds number. */
-//Real Re = 100.0;
-Real mu_f = rho0_f * U_f * (DH + 2.0 * offset_dist_ref) / Re; /**< Dynamics viscosity. */
+//Real Re = 40000.0;					/**< Reynolds number. */
+Real Re = 100.0;
+Real mu_f = rho0_f * U_f * (2.0 * (insert_circle_radius + 2.0 * offset_dist_ref)) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
@@ -51,7 +59,8 @@ Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
-
+Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
+Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 /** the water block . */
 std::vector<Vecd> water_block_shape
 {
@@ -59,25 +68,7 @@ std::vector<Vecd> water_block_shape
 	Vecd(-DL_sponge, DH),
 	Vecd(DL, DH),
 	Vecd(DL, 0.0),
-	Vecd(-DL_sponge, 0.0)
-};
-/** the outer wall polygon. */
-std::vector<Vecd> outer_wall_shape
-{
-	Vecd(-DL_sponge - 2.0 * BW, -BW), 
-	Vecd(-DL_sponge - 2.0 * BW, DH + BW), 
-	Vecd(DL + 2.0 * BW , DH + BW), 
-	Vecd(DL + 2.0 * BW , -BW), 
-	Vecd(-DL_sponge - 2.0 * BW, -BW), 
-};
-/** the inner wall polygon. */
-std::vector<Vecd> inner_wall_shape
-{
-	Vecd(-DL_sponge - 3.0 * BW, 0.0), 
-	Vecd(-DL_sponge - 3.0 * BW, DH), 
-	Vecd(DL + 3.0 * BW  , DH), 
-	Vecd(DL + 3.0 * BW , 0.0), 
-	Vecd(-DL_sponge - 3.0 * BW, 0.0), 
+	Vecd(-DL_sponge, 0.0),
 };
 //----------------------------------------------------------------------
 //	Define case dependent body shapes.
@@ -88,16 +79,34 @@ public:
 	explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
 	}
 };
-
-class WallBoundary : public MultiPolygonShape
+class Cylinder : public MultiPolygonShape
 {
 public:
-	explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit Cylinder(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
-		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+	}
+};
+//----------------------------------------------------------------------
+//	Free-stream velocity
+//----------------------------------------------------------------------
+struct FreeStreamVelocity
+{
+	Real u_ref_, t_ref_;
+
+	template <class BoundaryConditionType>
+	FreeStreamVelocity(BoundaryConditionType& boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0) {}
+
+	Vecd operator()(Vecd& position, Vecd& velocity)
+	{
+		Vecd target_velocity = Vecd::Zero();
+		Real run_time = GlobalStaticVariables::physical_time_;
+		target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		return target_velocity;
 	}
 };
 //----------------------------------------------------------------------
@@ -123,13 +132,13 @@ struct InflowVelocity
 		if (aligned_box_.checkInBounds(0, position))
 		{
 			/* Fully-developed velocity inlet */
-			target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+			//target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			
 			/* Uniform velocity inlet */
-			//target_velocity[0] = u_ave;
+			target_velocity[0] = u_ave;
 			
 			/* Fix velocity in Y direction */
-			target_velocity[1] = 0.0;
+			//target_velocity[1] = 0.0;
 		}
 		return target_velocity;
 	}
