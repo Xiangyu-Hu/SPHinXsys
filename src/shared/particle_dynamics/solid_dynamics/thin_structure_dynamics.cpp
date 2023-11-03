@@ -32,8 +32,8 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
     Real time_setp_1 = SMIN((Real)sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
                             Real(1.0) / (angular_vel_[index_i].norm() + TinyReal));
     Real time_setp_2 = smoothing_length_ * (Real)sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
-                                                (2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
-                                                           (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
+                                                      (2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
+                                                                 (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
     return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 }
 //=================================================================================================//
@@ -144,7 +144,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
         /** correct out-plane numerical damping. */
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
-                                                                                                                        elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+                                                                                                      elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -287,6 +287,50 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
         Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
         acc_prior_[index_i] += force / particles_->ParticleMass(index_i);
     }
+}
+//=================================================================================================//
+ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
+      n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
+      n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_)
+{
+    particles_->registerVariable(dn_0_, "InitialNormalGradient");
+    particles_->registerVariable(dn_, "NormalGradient");
+    particles_->registerVariable(H_, "MeanCurvature");
+    particles_->registerVariable(K_, "GaussianCurvature");
+};
+//=================================================================================================//
+void ShellCurvature::compute_initial_curvature()
+{
+    particle_for(
+        par,
+        particles_->total_real_particles_,
+        [this](size_t index_i)
+        {
+            Matd dn_0_i = Matd::Zero();
+            // transform initial local B_ to global B_
+            const Matd B_global_i = transformation_matrix_[index_i].transpose() * B_[index_i] * transformation_matrix_[index_i];
+            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                const size_t index_j = inner_neighborhood.j_[n];
+                const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                dn_0_i -= (n0_[index_i] - n0_[index_j]) * gradW_ijV_j.transpose();
+            }
+            dn_0_[index_i] = dn_0_i * B_global_i;
+            H_[index_i] = get_mean_curvature(dn_0_[index_i]);
+            K_[index_i] = get_Gaussian_curvature(H_[index_i], dn_0_[index_i]);
+        });
+}
+//=================================================================================================//
+void ShellCurvature::update(size_t index_i, Real dt)
+{
+    Matd dn_0_i = dn_0_[index_i] + transformation_matrix_[index_i].transpose() *
+                                       F_bending_[index_i] * transformation_matrix_[index_i];
+    Matd inverse_F = F_[index_i].inverse();
+    dn_[index_i] = dn_0_i * transformation_matrix_[index_i].transpose() * inverse_F * transformation_matrix_[index_i];
+    H_[index_i] = get_mean_curvature(dn_[index_i]);
+    K_[index_i] = get_Gaussian_curvature(H_[index_i], dn_[index_i]);
 }
 //=================================================================================================//
 } // namespace thin_structure_dynamics

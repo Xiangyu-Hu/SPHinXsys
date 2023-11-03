@@ -79,6 +79,11 @@ Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const
 /** get the correction matrix. */
 Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one);
 Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one);
+
+/** get curvature. */
+Real get_mean_curvature(const Matd &dn);
+Real get_Gaussian_curvature(Real H, const Matd &dn);
+Real get_Gaussian_curvature(const Matd &dn);
 } // namespace thin_structure_dynamics
 } // namespace SPH
 #endif // THIN_STRUCTURE_MATH_H

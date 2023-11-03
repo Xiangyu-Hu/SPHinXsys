@@ -145,7 +145,7 @@ class NeighborBuilderContact : public NeighborBuilder
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContact(){};
-    void operator()(Neighborhood &neighborhood,
+    virtual void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 };
 
@@ -196,5 +196,29 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
     Real relative_h_ref_;
 };
 
+/**
+ * @class NeighborBuilderContactShell
+ * @brief A contact neighbor builder functor for contact relation between fluid and shell.
+ */
+class NeighborBuilderContactShell : public NeighborBuilderContact
+{
+  public:
+    NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body);
+    virtual ~NeighborBuilderContactShell(){};
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
+
+  private:
+    StdLargeVec<Vecd> &n_;              // normal direction of contact body
+    StdLargeVec<Real> &mean_curvature_; // mean curvature of contact body
+    Real particle_distance_;            // reference spacing of contact body
+
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+                        size_t index_j, const Real &W_ij,
+                        const Real &dW_ijV_j, const Vecd &e_ij);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+                            size_t index_j, const Real &W_ij,
+                            const Real &dW_ijV_j, const Vecd &e_ij);
+};
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

@@ -217,7 +217,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                                            transformation_matrix_[index_i].transpose() * F_bending_[index_i] * transformation_matrix_[index_i],
                                                            pseudo_n_variation_j,
                                                            transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
-                Real limiter_pseudo_n = SMIN(2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i- pseudo_n_variation_j).norm() + Eps), 1.0);
+                Real limiter_pseudo_n = SMIN(2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i - pseudo_n_variation_j).norm() + Eps), 1.0);
                 pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
                                               inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 2) * limiter_pseudo_n;
             }
@@ -353,6 +353,33 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
 
     virtual void setupDynamics(Real dt = 0.0) override;
     void update(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
+ */
+class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
+{
+  public:
+    explicit ShellCurvature(BaseInnerRelation &inner_relation);
+    virtual ~ShellCurvature(){};
+
+    void update(size_t index_i, Real dt);
+    void compute_initial_curvature();
+
+  protected:
+    StdLargeVec<Vecd> &n0_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Matd> &F_;
+    StdLargeVec<Matd> &F_bending_;
+
+    StdLargeVec<Matd> dn_0_;
+    StdLargeVec<Matd> dn_;
+    StdLargeVec<Real> H_;
+    StdLargeVec<Real> K_;
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH
