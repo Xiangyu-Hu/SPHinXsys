@@ -92,8 +92,8 @@ class WaterBlock : public MultiPolygonShape
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
         //multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
-        //multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -116,8 +116,8 @@ class Triangle : public MultiPolygonShape
     explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
        // multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
-       // multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
     }
 };
 
@@ -131,7 +131,7 @@ class HorizontalMovement: public BaseTracingMethod
      {
          Real run_time = GlobalStaticVariables::physical_time_;
          Vecd current_position (0.0, 0.0);
-         current_position[0]= previous_position[0] - 0.1 * run_time;
+         current_position[0]= previous_position[0] - 0.2 * run_time;
          //current_position[1] = previous_position[1];
          if(run_time <= 10.0)
          {
@@ -228,7 +228,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
     /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+    //InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
     
     /** Define the confinement condition for wall. */
@@ -237,9 +237,9 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinementGeneral confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
-    CircleMovement circle_movement(square_center, Pi);
-    //HorizontalMovement horizaontal_movement;
-    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), circle_movement);
+    //CircleMovement circle_movement(square_center, Pi);
+    HorizontalMovement horizaontal_movement;
+    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), horizaontal_movement);
     near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
     
@@ -248,15 +248,15 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);*/
     /** Push back the static confinement conditiont to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
-    update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_summation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
-    transport_velocity_correction.post_processes_.push_back(&confinement_condition_wall.transport_velocity_);
-    transport_velocity_correction.post_processes_.push_back(&confinement_condition_circle.transport_velocity_);
+    //transport_velocity_correction.post_processes_.push_back(&confinement_condition_wall.transport_velocity_);
+    //transport_velocity_correction.post_processes_.push_back(&confinement_condition_circle.transport_velocity_);
     viscous_acceleration.post_processes_.push_back(&confinement_condition_wall.viscous_acceleration_);
     viscous_acceleration.post_processes_.push_back(&confinement_condition_circle.viscous_acceleration_);
     //----------------------------------------------------------------------
@@ -280,7 +280,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 10.0;       /**< End time. */
+    Real end_time = 20.0;       /**< End time. */
     Real output_interval = 0.1; /**< Time stamps for output of body states. */
     Real dt = 0.0;              /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
@@ -311,7 +311,7 @@ int main(int ac, char *av[])
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_acceleration.exec();
-            transport_velocity_correction.exec();
+            //transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             /** Dynamics including pressure relaxation. */

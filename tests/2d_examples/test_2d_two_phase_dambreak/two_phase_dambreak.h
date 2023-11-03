@@ -12,7 +12,7 @@ Real DL = 5.3;                      /**< Tank length. */
 Real DH = 2.0;                      /**< Tank height. */
 Real LL = 2.0;                      /**< Liquid column length. */
 Real LH = 1.0;                      /**< Liquid column height. */
-Real particle_spacing_ref = 0.05;   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.025;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));

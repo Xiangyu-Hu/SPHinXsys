@@ -99,8 +99,8 @@ class WallBoundary : public ComplexShape
         Vecd translation_point(0.0, 100.0, 0.0);
         Transform translation_out(translation_point);
         Transform translation_inner(translation_point);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_out), halfsize_out);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_inner), halfsize_inner);
+        //add<TransformShape<GeometricShapeBox>>(Transform(translation_out), halfsize_out);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_inner), halfsize_inner);
     }
 };
 
@@ -187,6 +187,47 @@ protected:
     Vecd axis_point_2_;
 };
 
+class ThreeDRotation : public BaseTracingMethod
+{
+public:
+    ThreeDRotation(Vecd axis_point_1, Vecd axis_point_2, Real rotation_velocity) :
+        axis_point_A_(axis_point_1), angular_v_(rotation_velocity)
+    {
+        axis_ = (axis_point_1 - axis_point_2).normalized();
+        
+    }
+
+    virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
+    {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        Eigen::Quaterniond rotation_position;
+        rotation_position = Eigen::AngleAxisd(angular_v_ * run_time_, axis_);
+        Eigen::Quaterniond point_quaternion_previos(0, previous_position.x() - axis_point_A_.x(), previous_position.y() - axis_point_A_.y(), previous_position.z() - axis_point_A_.z());
+        Eigen::Quaterniond rotated_point_quaternion = rotation_position * point_quaternion_previos * rotation_position.conjugate();
+        Vecd new_position(rotated_point_quaternion.x() + axis_point_A_.x(),
+            rotated_point_quaternion.y() + axis_point_A_.y(),
+            rotated_point_quaternion.z() + axis_point_A_.z());
+        return new_position;
+    }
+
+    virtual Vecd updateNormalForVector(Vecd previous_vector) override
+    {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        Eigen::Quaterniond rotation_vector;
+        rotation_vector = Eigen::AngleAxisd(angular_v_ * run_time_, axis_);
+        Eigen::Quaterniond vector_quaternion_previous(0, previous_vector.x(), previous_vector.y(), previous_vector.z());
+        Eigen::Quaterniond rotated_quaternion = rotation_vector * vector_quaternion_previous * rotation_vector.conjugate();
+        Vecd new_vector(rotated_quaternion.x(), rotated_quaternion.y(), rotated_quaternion.z());
+        return new_vector;
+    }
+protected:
+    Vecd axis_;
+    Vecd axis_point_A_;
+    Real angular_v_;
+    
+    
+};
+
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
@@ -242,7 +283,8 @@ int main()
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
     //Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 
-     RotationMovement rotation_movement(rotation_axis_1, rotation_axis_2, 0.5 * Pi);
+    //RotationMovement rotation_movement(rotation_axis_1, rotation_axis_2, 0.5 * Pi);
+    ThreeDRotation rotation_movement(rotation_axis_1, rotation_axis_2, 0.5 * Pi);
     //CircleMovement circle_movement(square_center, Pi);
     //HorizontalMovement horizaontal_movement;
     NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Cubic>>("cubic"), rotation_movement);
@@ -250,9 +292,9 @@ int main()
     fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
 
     /** Define the confinement condition for wall. */
-    //NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
-    //near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
-    //fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
+    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
    
@@ -261,13 +303,13 @@ int main()
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);*/
     /** Push back the static confinement conditiont to corresponding dynamics. */
-    //update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
     update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
-    //pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
-    //density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
-    //density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -333,7 +375,7 @@ int main()
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
-                body_states_recording.writeToFile();
+                //body_states_recording.writeToFile();
 
 
             }
