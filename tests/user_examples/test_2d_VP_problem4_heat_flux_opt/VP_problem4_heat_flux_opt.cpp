@@ -227,8 +227,12 @@ TEST(test_optimization, test_problem4_optimized)
     //	Basically the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner(diffusion_body);
-    ComplexRelation diffusion_body_complex(diffusion_body, {&wall_boundary});
-    ComplexRelation wall_boundary_complex(wall_boundary, {&diffusion_body});
+    ContactRelation diffusion_body_contact(diffusion_body, {&wall_boundary});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation diffusion_body_complex(diffusion_body_inner, diffusion_body_contact);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
@@ -279,18 +283,16 @@ TEST(test_optimization, test_problem4_optimized)
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
-        temperature_splitting_pde_complex(diffusion_body_complex, "Phi");
-    InteractionSplit<UpdateTemperaturePDEResidual<TemperatureSplittingByPDEWithBoundary<DiffusionParticles,
-                                                                                        WallParticles, Real>,
-                                                  ComplexRelation, Real>>
-        update_temperature_pde_residual(diffusion_body_complex, "Phi");
+        temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "Phi");
+    InteractionSplit<UpdateTemperaturePDEResidual<
+        TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>>
+        update_temperature_pde_residual(diffusion_body_inner, diffusion_body_contact, "Phi");
     SimpleDynamics<ImposeObjectiveFunction> impose_objective_function(diffusion_body);
     InteractionSplit<ParameterSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
-        parameter_splitting_pde_complex(diffusion_body_complex, "ThermalConductivity");
-    InteractionSplit<UpdateParameterPDEResidual<ParameterSplittingByPDEWithBoundary<DiffusionParticles,
-                                                                                    WallParticles, Real>,
-                                                ComplexRelation, Real>>
-        update_parameter_pde_residual(diffusion_body_complex, "ThermalConductivity");
+        parameter_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "ThermalConductivity");
+    InteractionSplit<UpdateParameterPDEResidual<
+        ParameterSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>>
+        update_parameter_pde_residual(diffusion_body_inner, diffusion_body_contact, "ThermalConductivity");
     InteractionSplit<RegularizationByDiffusionAnalogy<DiffusionParticles, Real>>
         thermal_diffusivity_regularization(diffusion_body_inner, "ThermalConductivity",
                                            initial_eta_regularization, maximum_variation_current_global);
