@@ -28,16 +28,11 @@ typedef DataDelegateContact<PlasticContinuumParticles, SolidParticles> PlasticFS
  * @brief Base class adding interaction with wall to general relaxation process
  */
 template <class BaseIntegrationType>
-class InteractionWithWall : public BaseIntegrationType, public FluidWallData
+class InteractionWithWall : public BaseIntegrationType, public FSIContactData
 {
   public:
     template <class BaseBodyRelationType, typename... Args>
-    InteractionWithWall(BaseContactRelation &wall_contact_relation,
-                        BaseBodyRelationType &base_body_relation, Args &&...args);
-    template <typename... Args>
-    InteractionWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
-        : InteractionWithWall(fluid_wall_relation.getContactRelation(),
-                              fluid_wall_relation.getInnerRelation(), std::forward<Args>(args)...) {}
+    InteractionWithWall(BaseBodyRelationType &base_body_relation, BaseContactRelation &wall_contact_relation, Args &&...args);
     virtual ~InteractionWithWall(){};
 
   protected:
@@ -74,7 +69,7 @@ class BaseShearStressRelaxation2ndHalfWithWall : public InteractionWithWall<Base
   public:
     template <typename... Args>
     BaseShearStressRelaxation2ndHalfWithWall(Args &&...args)
-        : fluid_dynamics::InteractionWithWall<BaseShearStressRelaxation2ndHalfType>(std::forward<Args>(args)...){};
+        : InteractionWithWall<BaseShearStressRelaxation2ndHalfType>(std::forward<Args>(args)...){};
     virtual ~BaseShearStressRelaxation2ndHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -82,12 +77,12 @@ class BaseShearStressRelaxation2ndHalfWithWall : public InteractionWithWall<Base
 using ShearStressRelaxation2ndHalfWithWall = BaseShearStressRelaxation2ndHalfWithWall<ShearStressRelaxation2ndHalf>;
 
 template <class BaseStressRelaxation1stHalfType>
-class BaseStressRelaxation1stHalfWithWall : public fluid_dynamics::InteractionWithWall<BaseStressRelaxation1stHalfType>
+class BaseStressRelaxation1stHalfWithWall : public InteractionWithWall<BaseStressRelaxation1stHalfType>
 {
   public:
     template <typename... Args>
     BaseStressRelaxation1stHalfWithWall(Args &&...args)
-        : fluid_dynamics::InteractionWithWall<BaseStressRelaxation1stHalfType>(std::forward<Args>(args)...){};
+        : InteractionWithWall<BaseStressRelaxation1stHalfType>(std::forward<Args>(args)...){};
     virtual ~BaseStressRelaxation1stHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
 

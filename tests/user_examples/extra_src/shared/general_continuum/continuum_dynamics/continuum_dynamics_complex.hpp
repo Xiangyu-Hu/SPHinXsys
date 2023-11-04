@@ -11,10 +11,10 @@ namespace continuum_dynamics
 template <class BaseIntegrationType>
 template <class BaseBodyRelationType, typename... Args>
 InteractionWithWall<BaseIntegrationType>::
-    InteractionWithWall(BaseContactRelation &wall_contact_relation,
-                        BaseBodyRelationType &base_body_relation, Args &&...args)
+    InteractionWithWall(BaseBodyRelationType &base_body_relation,
+                        BaseContactRelation &wall_contact_relation, Args &&...args)
     : BaseIntegrationType(base_body_relation, std::forward<Args>(args)...),
-      FluidWallData(wall_contact_relation)
+      FSIContactData(wall_contact_relation)
 {
     if (&base_body_relation.getSPHBody() != &wall_contact_relation.getSPHBody())
     {
@@ -23,14 +23,14 @@ InteractionWithWall<BaseIntegrationType>::
         exit(1);
     }
 
-    for (size_t k = 0; k != FluidWallData::contact_particles_.size(); ++k)
+    for (size_t k = 0; k != FSIContactData::contact_particles_.size(); ++k)
     {
-        Real rho0_k = FluidWallData::contact_bodies_[k]->base_material_->ReferenceDensity();
+        Real rho0_k = FSIContactData::contact_bodies_[k]->base_material_->ReferenceDensity();
         wall_inv_rho0_.push_back(1.0 / rho0_k);
-        wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
-        wall_vel_ave_.push_back(FluidWallData::contact_particles_[k]->AverageVelocity());
-        wall_acc_ave_.push_back(FluidWallData::contact_particles_[k]->AverageAcceleration());
-        wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
+        wall_mass_.push_back(&(FSIContactData::contact_particles_[k]->mass_));
+        wall_vel_ave_.push_back(FSIContactData::contact_particles_[k]->AverageVelocity());
+        wall_acc_ave_.push_back(FSIContactData::contact_particles_[k]->AverageAcceleration());
+        wall_n_.push_back(&(FSIContactData::contact_particles_[k]->n_));
     }
 }
 //=================================================================================================//
@@ -44,12 +44,12 @@ void BaseShearStressRelaxation1stHalfWithWall<BaseShearStressRelaxation1stHalfTy
     Real rho_i = this->rho_[index_i];
     Real rho_in_wall = this->continuum_.getDensity();
     Vecd acceleration = Vecd::Zero();
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k) // There may be several wall bodies.
+    for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k) // There may be several wall bodies.
     {
         StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
         StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        Neighborhood &wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
@@ -75,12 +75,12 @@ void BaseShearStressRelaxation2ndHalfWithWall<BaseShearStressRelaxation2ndHalfTy
     Vecd vel_i = this->vel_[index_i];
     Matd velocity_gradient = Matd::Zero();
     Real rho_in_wall = this->continuum_.getDensity();
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
 
         StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        Neighborhood &wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
@@ -114,14 +114,14 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
 
     Matd stress_tensor_i = this->reduceTensor(this->stress_tensor_3D_[index_i]);
 
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd>& acc_ave_k = *(this->wall_acc_ave_[k]);
-        Neighborhood& wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
+        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd& e_ij = wall_neighborhood.e_ij_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
@@ -146,19 +146,19 @@ void BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::inter
     Vecd vel_i = this->vel_[index_i];
     Matd velocity_gradient = Matd::Zero();
 
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
-        StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
+        StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
+        StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 
-        Neighborhood& wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd& e_ij = wall_neighborhood.e_ij_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-            Vecd vel_in_wall = 1.9 * vel_ave_k[index_j] - 0.9 *vel_i;
+            Vecd vel_in_wall = 1.9 * vel_ave_k[index_j] - 0.9 * vel_i;
             Matd velocity_gradient_ij = -(vel_i - vel_in_wall) * nablaW_ijV_j.transpose();
             velocity_gradient += velocity_gradient_ij;
 
@@ -183,9 +183,9 @@ void BaseStressDiffusionWithWall<BaseStressDiffusionType>::interaction(size_t in
     Mat3d diffusion_stress_rate_ = Mat3d::Zero();
     Mat3d diffusion_stress_ = Mat3d::Zero();
     Mat3d stress_tensor_i = this->stress_tensor_3D_[index_i];
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
-        Neighborhood& wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
@@ -193,7 +193,7 @@ void BaseStressDiffusionWithWall<BaseStressDiffusionType>::interaction(size_t in
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
             Real y_ij = this->pos_[index_i](1, 0) - this->pos_[index_j](1, 0);
-            //stress boundary condition
+            // stress boundary condition
             Mat3d stress_tensor_j = stress_tensor_i;
             diffusion_stress_ = stress_tensor_i - stress_tensor_j;
             diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(this->fai_)) * density * gravity * y_ij;

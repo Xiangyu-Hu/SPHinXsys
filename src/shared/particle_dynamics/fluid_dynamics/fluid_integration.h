@@ -165,6 +165,7 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
 };
 using Integration2ndHalfInnerRiemann = Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
 using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSolver>;
+using Integration2ndHalfInnerDissipativeRiemann = Integration2ndHalf<Inner<>, DissipativeRiemannSolver>;
 
 template <class RiemannSolverType>
 class Integration2ndHalf<ContactWall<>, RiemannSolverType>
