@@ -13,12 +13,12 @@ using namespace SPH;
 // general parameters for geometry
 Real resolution_ref = 0.5;   // particle spacing
 Real BW = resolution_ref * 4; // boundary width
-Real DL = 20.0;              // tank length
-Real DH = 40.0;                // tank height
-Real DW = 20.0;                // tank width
-Real LL = 20.0;                // liquid length
-Real LH = 20.0;                // liquid height
-Real LW = 20.0;                // liquid width
+Real DL = 30.0;              // tank length
+Real DH = 50.0;                // tank height
+Real DW = 30.0;                // tank width
+Real LL = 30.0;                // liquid length
+Real LH = 30.0;                // liquid height
+Real LW = 30.0;                // liquid width
 Real CL = 5.0;                // liquid length
 Real CH = 5.0;                // liquid height
 Real CW = 5.0;                // liquid width
@@ -31,6 +31,9 @@ Real c_f = 10.0 * U_f;
 
 Vecd axis_point_1 (0.0, 0.0, -0.5 * LW);
 Vecd axis_point_2 (0.0, 0.0, 0.5 * LW);
+
+Vecd ball_center(0.0, 0.0, 0.0);
+Real ball_radius = 5.0;
 //	define the water block shape
 class WaterBlock : public ComplexShape
 {
@@ -45,7 +48,8 @@ class WaterBlock : public ComplexShape
         add<GeometricShapeBox>(halfsize_water);
         //subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
         //subtract<TransformShape<GeometricShapeBox>>(Transform(translation_start_point), halfsize_cubic);
-        subtract<GeometricShapeBox>(halfsize_cubic);
+        //subtract<GeometricShapeBox>(halfsize_cubic);
+        subtract<GeometricShapeBall>(ball_center, ball_radius);
     }
 };
 //	define the static solid wall boundary shape
@@ -76,7 +80,8 @@ class Cubic : public ComplexShape
         Transform translation_water(halfsize_water);
         //add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_cubic);
         //add<TransformShape<GeometricShapeBox>>(Transform(translation_start_point), halfsize_cubic);
-        add<GeometricShapeBox>(halfsize_cubic);
+        //add<GeometricShapeBox>(halfsize_cubic);
+        add<GeometricShapeBall>(ball_center, ball_radius);
     }
 };
 
@@ -124,41 +129,6 @@ class HorizontalMovement: public BaseTracingMethod
      }
 };
 
-//class CircleMovement : public BaseTracingMethod
-//{
-//public:
-//    CircleMovement(Vecd rotation_center, Real rotation_velocity) : rotation_center_(rotation_center), rotation_v_(rotation_velocity){};
-//    virtual ~CircleMovement() {};
-//   
-//    virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
-//    {
-//
-//        Real rho = (previous_position - rotation_center_).norm();
-//        Real theta = atan2(previous_position[0] - rotation_center_[0], previous_position[1] - rotation_center_[1]);
-//        Real run_time = GlobalStaticVariables::physical_time_;
-//        Vecd current_position(0.0, 0.0);
-//        current_position[0] = rotation_center_[0] + cos(theta + rotation_v_ * run_time) * rho;
-//        current_position[1] = rotation_center_[1] + sin(theta + rotation_v_ * run_time) * rho;
-//       
-//        return current_position;
-//    }
-//
-//    virtual Vecd updateNormalForVector(Vecd previous_position) override
-//    {
-//        Real run_time = GlobalStaticVariables::physical_time_;
-//        Real magnitude = previous_position.norm();
-//        Real theta = atan2(previous_position[0], previous_position[1]);
-//        Vecd current_vector(0.0, 0.0);
-//        current_vector[0] = magnitude * cos(theta + run_time * rotation_v_);
-//        current_vector[1] = magnitude * sin(theta + run_time * rotation_v_);
-//
-//        return current_vector;
-//    }
-//
-//protected:
-//        Vecd rotation_center_;
-//        Real rotation_v_;
-//};
 
 class RotationMovement : public BaseTracingMethod
 {
@@ -272,7 +242,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vecd(-40.0, -40.0, -40.0), Vecd(40.0, 40.0, 40.0));
+    BoundingBox system_domain_bounds(Vecd(-50.0, -50.0, -50.0), Vecd(50.0, 50.0, 50.0));
     SPHSystem system(system_domain_bounds, resolution_ref);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
@@ -329,7 +299,7 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinementGeneral confinement_condition_wall(near_surface_wall);
 
     //RotationMovement circle_movement(axis_point_1, axis_point_2, 0.2*Pi);
-    ThreeDRotation circle_movement(axis_point_1, axis_point_2, 0.01*Pi);
+    ThreeDRotation circle_movement(axis_point_1, axis_point_2, 0.05*Pi);
     //HorizontalMovement horizaontal_movement;
     NearShapeSurfaceTracing near_surface_cubic(water_block, makeShared<InverseShape<Cubic>>("Cubic"), circle_movement);
     near_surface_cubic.level_set_shape_.writeLevelSet(io_environment);
@@ -369,7 +339,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 50.0;
+    Real end_time = 60.0;
     Real output_interval = end_time / 20.0;
     Real dt = 0.0; // default acoustic time step sizes
     //----------------------------------------------------------------------
@@ -393,14 +363,14 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            //viscous_acceleration.exec();
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
 
                 pressure_relaxation.exec(dt);
                 density_relaxation.exec(dt);
-                dt = 0.5 * get_fluid_time_step_size.exec();
+                dt = get_fluid_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
