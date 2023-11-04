@@ -23,7 +23,7 @@ GetDiffusionTimeStepSize<ParticlesType>::
                           .getDiffusionTimeStepSize(smoothing_length);
 }
 //=================================================================================================//
-template <template <typename... T> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
+template <template <typename...> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
 template <class DynamicsIdentifier>
 DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>::
     DiffusionRelaxation(DynamicsIdentifier &identifier)
@@ -45,7 +45,7 @@ DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType
     }
 }
 //=================================================================================================//
-template <template <typename... T> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
+template <template <typename...> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
 void DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>::
     initialization(size_t index_i, Real dt)
 {
@@ -55,7 +55,7 @@ void DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticle
     }
 }
 //=================================================================================================//
-template <template <typename... T> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
+template <template <typename...> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
 void DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>::
     update(size_t index_i, Real dt)
 {

@@ -58,7 +58,7 @@ typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
  * @brief Base class adding interaction with wall to general relaxation process
  */
 
-template <template <class DataDelegationType> class BaseInteractionType>
+template <template <typename...> class BaseInteractionType>
 class InteractionWithWall : public BaseInteractionType<FSIContactData>
 {
   public:

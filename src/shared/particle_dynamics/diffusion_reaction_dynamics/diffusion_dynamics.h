@@ -55,7 +55,7 @@ class GetDiffusionTimeStepSize
 template <typename... InteractionTypes>
 class DiffusionRelaxation;
 
-template <template <typename... T> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
+template <template <typename...> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
 class DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>
     : public LocalDynamics,
       public DataDelegationType<ParticlesType, ContactParticlesType...>

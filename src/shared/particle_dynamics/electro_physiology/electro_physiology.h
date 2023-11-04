@@ -200,7 +200,7 @@ class ElectroPhysiologyDiffusionInnerRK2
 using DiffusionRelaxationWithDirichletContact =
     DiffusionRelaxation<Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>;
 
-template <template <typename... Parameters> typename... ContactInteractionTypes>
+template <template <typename...> typename... ContactInteractionTypes>
 using ElectroPhysiologyDiffusionRelaxationComplex =
     DiffusionBodyRelaxationComplex<ElectroPhysiologyParticles, ElectroPhysiologyParticles,
                                    KernelGradientInner, KernelGradientContact,

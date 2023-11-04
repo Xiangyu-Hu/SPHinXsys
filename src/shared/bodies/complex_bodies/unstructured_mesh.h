@@ -69,7 +69,7 @@ class ANSYSMesh
 class BaseInnerRelationInFVM : public BaseInnerRelation
 {
   protected:
-    virtual void resetNeighborhoodCurrentSize();
+    virtual void resetNeighborhoodCurrentSize() override;
 
   public:
     RealBody *real_body_;
