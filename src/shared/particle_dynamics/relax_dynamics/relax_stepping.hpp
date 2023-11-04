@@ -15,6 +15,11 @@ RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType 
       sph_adaptation_(sph_body_.sph_adaptation_),
       residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
+template <typename... Args>
+RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
+    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...), pos_(particles_->pos_),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())){};
+//=================================================================================================//
 template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
 RelaxationStep<RelaxationResidueType>::
@@ -24,7 +29,7 @@ RelaxationStep<RelaxationResidueType>::
       body_relations_(real_body_.getBodyRelations()),
       relaxation_residue_(first_arg, std::forward<OtherArgs>(other_args)...),
       relaxation_scaling_(real_body_), position_relaxation_(real_body_),
-      near_shape_surface_(real_body_, relaxation_residue_.getLevelSetShape()),
+      near_shape_surface_(real_body_, DynamicCast<LevelSetShape>(this, relaxation_residue_.getRelaxShape())),
       surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//
 template <class RelaxationResidueType>

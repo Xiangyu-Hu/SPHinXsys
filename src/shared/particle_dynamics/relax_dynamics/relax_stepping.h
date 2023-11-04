@@ -65,11 +65,11 @@ class RelaxationResidue<Inner<>>
     explicit RelaxationResidue(BaseInnerRelation &inner_relation);
     RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name);
     virtual ~RelaxationResidue(){};
-    LevelSetShape &getLevelSetShape() { return *level_set_shape_; };
+    Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    LevelSetShape *level_set_shape_;
+    Shape &relax_shape_;
 };
 
 template <>
@@ -77,8 +77,7 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 {
   public:
     template <typename... Args>
-    RelaxationResidue(Args &&...args)
-        : RelaxationResidue<Inner<>>(std::forward<Args>(args)...), pos_(particles_->pos_){};
+    RelaxationResidue(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
     explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
@@ -87,6 +86,7 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 
   protected:
     StdLargeVec<Vecd> &pos_;
+    LevelSetShape &level_set_shape_;
 };
 
 template <>

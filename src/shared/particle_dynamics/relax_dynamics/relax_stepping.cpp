@@ -7,15 +7,12 @@ namespace relax_dynamics
 //=================================================================================================//
 RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
     : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)){};
+      relax_shape_(*sph_body_.body_shape_){};
 //=================================================================================================//
 RelaxationResidue<Inner<>>::
     RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name)
-    : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation)
-{
-    ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *sph_body_.body_shape_);
-    level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
-}
+    : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
+      relax_shape_(*DynamicCast<ComplexShape>(this, *sph_body_.body_shape_).getShapeByName(shape_name)) {}
 //=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -31,7 +28,7 @@ void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
     RelaxationResidue<Inner<>>::interaction(index_i, dt);
-    residue_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+    residue_[index_i] -= 2.0 * level_set_shape_.computeKernelGradientIntegral(
                                    pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 }
 //=================================================================================================//
