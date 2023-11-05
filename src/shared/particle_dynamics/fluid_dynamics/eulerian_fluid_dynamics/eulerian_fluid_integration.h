@@ -68,9 +68,10 @@ class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
 };
 using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, EulerianAcousticRiemannSolver>;
 
+using BaseEulerianIntegrationWithWall = InteractionWithWall<EulerianIntegration>;
 template <class RiemannSolverType>
 class EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>
-    : public InteractionWithWall<EulerianIntegration>
+    : public BaseEulerianIntegrationWithWall
 {
   public:
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
@@ -113,7 +114,7 @@ using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<
  */
 template <class RiemannSolverType>
 class EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>
-    : public InteractionWithWall<EulerianIntegration>
+    : public BaseEulerianIntegrationWithWall
 {
   public:
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);

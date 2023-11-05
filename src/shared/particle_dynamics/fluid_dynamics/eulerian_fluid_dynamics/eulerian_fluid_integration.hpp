@@ -52,7 +52,7 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>::
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
-    : InteractionWithWall<EulerianIntegration>(wall_contact_relation),
+    : BaseEulerianIntegrationWithWall(wall_contact_relation),
       riemann_solver_(fluid_, fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -120,7 +120,7 @@ void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index
 template <class RiemannSolverType>
 EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
-    : InteractionWithWall<EulerianIntegration>(wall_contact_relation),
+    : BaseEulerianIntegrationWithWall(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter){};
 //=================================================================================================//
 template <class RiemannSolverType>
