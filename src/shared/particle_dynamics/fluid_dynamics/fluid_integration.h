@@ -87,9 +87,13 @@ using Integration1stHalfInnerNoRiemann = Integration1stHalf<Inner<>, NoRiemannSo
 using Integration1stHalfInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfCorrectionInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, KernelCorrection>;
 
+// The following is used to avoid the C3200 error triggered in Visual Studio.
+// Please refer: https://developercommunity.visualstudio.com/t/c-invalid-template-argument-for-template-parameter/831128
+using BaseIntegrationWithWall = InteractionWithWall<BaseIntegration>;
+
 template <class RiemannSolverType, class KernelCorrectionType>
 class Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
-    : public InteractionWithWall<BaseIntegration>
+    : public BaseIntegrationWithWall
 {
   public:
     explicit Integration1stHalf(BaseContactRelation &wall_contact_relation);
@@ -169,7 +173,7 @@ using Integration2ndHalfInnerDissipativeRiemann = Integration2ndHalf<Inner<>, Di
 
 template <class RiemannSolverType>
 class Integration2ndHalf<ContactWall<>, RiemannSolverType>
-    : public InteractionWithWall<BaseIntegration>
+    : public BaseIntegrationWithWall
 {
   public:
     explicit Integration2ndHalf(BaseContactRelation &wall_contact_relation);
