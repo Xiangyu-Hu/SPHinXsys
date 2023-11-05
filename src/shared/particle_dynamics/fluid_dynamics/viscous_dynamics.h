@@ -77,12 +77,13 @@ class ViscousAcceleration<AngularConservative<Inner<>>>
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
+using BaseViscousAccelerationWithWall = InteractionWithWall<ViscousAcceleration>;
 template <>
-class ViscousAcceleration<ContactWall<>> : public InteractionWithWall<ViscousAcceleration>
+class ViscousAcceleration<ContactWall<>> : public BaseViscousAccelerationWithWall
 {
   public:
     explicit ViscousAcceleration(BaseContactRelation &wall_contact_relation)
-        : InteractionWithWall<ViscousAcceleration>(wall_contact_relation){};
+        : BaseViscousAccelerationWithWall(wall_contact_relation){};
     virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
