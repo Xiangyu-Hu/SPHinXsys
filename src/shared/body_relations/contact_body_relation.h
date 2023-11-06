@@ -152,23 +152,5 @@ class AdaptiveContactRelation : public BaseContactRelation
 
     virtual void updateConfiguration() override;
 };
-
-/**
- * @class ShellContactRelation
- * @brief The relation between a SPH body and its contact shell SPH bodies
- */
-class ShellAndWallContactRelation : public ContactRelationCrossResolution
-{
-  private:
-    UniquePtrsKeeper<NeighborBuilderContact> neighbor_builder_contact_ptrs_keeper_;
-
-  public:
-    ShellAndWallContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
-    virtual ~ShellAndWallContactRelation(){};
-    void updateConfiguration() override;
-
-  private:
-    StdVec<NeighborBuilderContact *> get_contact_neighbors_;
-};
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H

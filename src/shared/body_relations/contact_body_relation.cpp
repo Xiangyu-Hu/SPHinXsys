@@ -11,9 +11,13 @@ ContactRelation::ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodie
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        get_contact_neighbors_.push_back(
-            neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContact>(
-                sph_body_, *contact_bodies_[k]));
+        const auto *ptr = dynamic_cast<ShellParticles *>(&contact_bodies_[k]->getBaseParticles());
+        ptr == nullptr ? get_contact_neighbors_.push_back(
+                             neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContact>(
+                                 sph_body_, *contact_bodies_[k]))
+                       : get_contact_neighbors_.push_back(
+                             neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContactShell>(
+                                 sph_body_, *contact_bodies_[k]));
     }
 }
 //=================================================================================================//
@@ -125,32 +129,6 @@ void AdaptiveContactRelation::updateConfiguration()
                 sph_body_, contact_configuration_[k],
                 *get_multi_level_search_range_[k][l], *get_contact_neighbors_adaptive_[k][l]);
         }
-    }
-}
-//=================================================================================================//
-ShellAndWallContactRelation::ShellAndWallContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
-    : ContactRelationCrossResolution(sph_body, contact_bodies)
-{
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        const auto *ptr = dynamic_cast<ShellParticles *>(&contact_bodies_[k]->getBaseParticles());
-        ptr == nullptr ? get_contact_neighbors_.push_back(
-                             neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContact>(
-                                 sph_body_, *contact_bodies_[k]))
-                       : get_contact_neighbors_.push_back(
-                             neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContactShell>(
-                                 sph_body_, *contact_bodies_[k]));
-    }
-}
-//=================================================================================================//
-void ShellAndWallContactRelation::updateConfiguration()
-{
-    resetNeighborhoodCurrentSize();
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        target_cell_linked_lists_[k]->searchNeighborsByParticles(
-            sph_body_, contact_configuration_[k],
-            *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
 }
 //=================================================================================================//
