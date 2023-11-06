@@ -263,7 +263,6 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
                                              const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 {
     size_t index_j = std::get<0>(list_data_j);
-    // const Vecd n_j = n_[index_j]; // normal direction of shell particle in cell linked list with index j
 
     const Vecd pos_j = std::get<1>(list_data_j);
     const Vecd displacement = pos_i - pos_j;
@@ -272,15 +271,15 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
     const Real Vol_j = std::get<2>(list_data_j);
 
     // correct normal direction, make sure it points from fluid to shell
-    // const Real direction_corrector = -displacement.dot(n_j) >= 0 ? 1 : -1;
-    // const Vecd n_j_corrected = direction_corrector * n_j; // sign of r_ij and n_j
+    const Vecd n_j = n_[index_j]; // normal direction of shell particle in cell linked list with index j
+    const Real direction_corrector = -displacement.dot(n_j) >= 0 ? 1 : -1;
+    const Vecd n_j_corrected = direction_corrector * n_j; // sign of r_ij and n_j
     // H is the total mean curvature
     // for 2D, curvature=H
     // for 3D, mean curvature=H/2
-    // const Real H_j_corrected = direction_corrector * mean_curvature_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
-    // const Real radius = H_j_corrected != 0 ? 1 / H_j_corrected : Infinity;
+    const Real H_j_corrected = direction_corrector * mean_curvature_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
 
-    // const int N_MAX = int(kernel_->CutOffRadius() / particle_distance_) + 1;
+    const int N_MAX = int(kernel_->CutOffRadius() / particle_distance_) + 1;
 
     if (distance < kernel_->CutOffRadius())
     {
@@ -288,36 +287,33 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
-        // Real vol_ratio = 1 + radius / particle_distance_; // 1+R/dp
-        // Real Vol_j_dummy = Vol_j;
-        // Vecd pos_j_dummy = pos_j + n_j_corrected * particle_distance_;
-        // Vecd displacement_dummy = pos_i - pos_j_dummy;
-        // Real distance_dummy = displacement_dummy.norm();
+        Vecd pos_j_dummy = pos_j + n_j_corrected * particle_distance_;
+        Vecd displacement_dummy = pos_i - pos_j_dummy;
+        Real distance_dummy = displacement_dummy.norm();
 
-        // int counter = 0;
-        // while (distance_dummy < kernel_->CutOffRadius())
-        // {
-        //     counter++;
-        //     if (counter > N_MAX)
-        //     {
-        //         std::cout << "NeighborBuilderContactShell: number of ghost particles has exceeded upper limit."
-        //                   << std::endl;
-        //         exit(0);
-        //     }
-        //     // const Real dVol = vol_ratio != 0 ? 1.0 + 1.0 / vol_ratio : Infinity;
-        //     // Vol_j_dummy *= std::pow(dVol, Dimensions - 1);
-        //     Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
-        //     Vecd e_ij = displacement_dummy / (distance_dummy + TinyReal);
-        //     W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
-        //     dW_ijV_j_ttl += dW_ijV_j;
-        //     dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
+        int counter = 0;
+        while (distance_dummy < kernel_->CutOffRadius())
+        {
+            counter++;
+            if (counter > N_MAX)
+            {
+                std::cout << "NeighborBuilderContactShell: number of ghost particles has exceeded upper limit."
+                          << std::endl;
+                exit(0);
+            }
+            const Real Vol_j_dummy = Vol_j * std::pow(1 + counter * H_j_corrected * particle_distance_, Dimensions - 1);
+            Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
+            Vecd e_ij = displacement_dummy / distance_dummy;
+            W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
+            dW_ijV_j_ttl += dW_ijV_j;
+            dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
-        //     // calculate the position and volume of the next dummy particle
-        //     // vol_ratio += 1.0;
-        //     pos_j_dummy += n_j_corrected * particle_distance_;
-        //     displacement_dummy = pos_i - pos_j_dummy;
-        //     distance_dummy = displacement_dummy.norm();
-        // }
+            // calculate the position and volume of the next dummy particle
+            pos_j_dummy += n_j_corrected * particle_distance_;
+            displacement_dummy = pos_i - pos_j_dummy;
+            distance_dummy = displacement_dummy.norm();
+        }
+
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
         Real W_ij_corrected = W_ijV_j_ttl / Vol_j * particle_distance_; // from surface area to volume
         Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;    // from surface area to volume
