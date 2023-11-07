@@ -115,7 +115,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] <= insert_square_center[0] + insert_square_halflength + 2 * particle_spacing_ref)
+        if (base_particles_.pos_[index_i][0] <= insert_square_center[0] + insert_square_halflength + 4 * particle_spacing_beam)
         {
             body_part_particles_.push_back(index_i);
         }

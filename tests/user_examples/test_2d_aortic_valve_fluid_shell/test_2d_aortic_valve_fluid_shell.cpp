@@ -1,11 +1,11 @@
 /**
- * @file 	channel_flow_shell.cpp
- * @brief 	This is a test of fluid-shell interaction.
- * @author 	Weiyi Kong
+ * @file 	test_2d_aortic_valve_fluid_shell.cpp
+ * @brief 	2D fluid-shell interaction test case.
+ * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
  */
 #include "sphinxsys.h"
 
-#include "case.h" //	case file to setup the test case
+#include "test_2d_aortic_valve_fluid_shell.h" //	case file to setup the test case
 using namespace SPH;
 
 int main(int ac, char *av[])
@@ -14,52 +14,48 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    std::cout << "System established..." << std::endl;
+#ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-    std::cout << "handleCommandlineOptions..." << std::endl;
+#endif
     IOEnvironment io_environment(sph_system);
-    std::cout << "io_environment..." << std::endl;
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    std::cout << "Body generation starts..." << std::endl;
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
-    std::cout << "Fluid generation finished..." << std::endl;
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    std::cout << "Wall generation finished..." << std::endl;
 
-    SolidBody valve(sph_system, makeShared<DefaultShape>("Valve"));
-    valve.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_valve);
-    valve.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    valve.generateParticles<ValveParticleGenerator>();
-    valve.addBodyStateForRecording<Vecd>("PseudoNormal");
-    std::cout << "Valve generation finished..." << std::endl;
+    SolidBody beam(sph_system, makeShared<DefaultShape>("Beam"));
+    beam.defineAdaptationRatios(1.15, resolution_ref / resolution_beam);
+    beam.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam.generateParticles<BeamParticleGenerator>();
+
+    ObserverBody beam_observer(sph_system, "BeamObserver");
+    beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
+    fluid_observer.generateParticles<FluidObserverParticleGenerator>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
-    // Curvature calculation must be constructed before fluid-shell contact
-    InnerRelation valve_inner(valve);
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> valve_curvature(valve_inner);
-
-    InnerRelation water_inner(water_block);
-    ShellAndWallContactRelation water_solid_contact(water_block, RealBodyVector{&wall_boundary, &valve});
-    ComplexRelation water_block_complex(water_inner, water_solid_contact);
-    ContactRelation valve_water_contact(valve, {&water_block});
-    std::cout << "Contact relation finished..." << std::endl;
+    InnerRelation beam_inner(beam);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> beam_curvature(beam_inner);
+    ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &beam});
+    ContactRelation beam_contact(beam, {&water_block});
+    ContactRelation beam_observer_contact(beam_observer, {&beam});
+    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** wall norm */
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Evaluation of density by summation approach. */
@@ -75,74 +71,76 @@ int main(int ac, char *av[])
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_complex);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    /** Computing vorticity in the flow. */
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
-    std::cout << "Fluid algs finished..." << std::endl;
-    /** Algorithms for solid. */
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> valve_time_step_size(valve);
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> valve_corrected_configuration(valve_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> valve_stress_relaxation_first(valve_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> valve_stress_relaxation_second(valve_inner);
-    std::cout << "Solid algs finished..." << std::endl;
-    /** FSI */
-    InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_valve(valve_water_contact);
-    InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate> fluid_force_on_valve_update(valve_water_contact, viscous_force_on_valve);
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(valve);
-    std::cout << "Fsi algs finished..." << std::endl;
-    /** constraint and damping */
-    BoundaryGeometry valve_boundary_geometry(valve, "BoundaryGeometry");
-    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> valve_constrain(valve_boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        baffle_position_damping(0.2, valve_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        baffle_rotation_damping(0.2, valve_inner, "AngularVelocity", physical_viscosity);
-    std::cout << "Constraint and damping finished..." << std::endl;
+    //----------------------------------------------------------------------
+    //	Algorithms of FSI.
+    //----------------------------------------------------------------------
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    /** Corrected configuration for the elastic insert body. */
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> beam_corrected_configuration(beam_inner);
+    /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
+    InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_solid(beam_contact);
+    InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate>
+        fluid_force_on_solid_update(beam_contact, viscous_force_on_solid);
+    /** Compute the average velocity of the insert body. */
+    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(beam);
+    //----------------------------------------------------------------------
+    //	Algorithms of solid dynamics.
+    //----------------------------------------------------------------------
+    /** Compute time step size of elastic solid. */
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> beam_computing_time_step_size(beam);
+    /** Stress relaxation for the inserted body. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> beam_stress_relaxation_first_half(beam_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> beam_stress_relaxation_second_half(beam_inner);
+    /** Constrain region of the inserted body. */
+    BoundaryGeometry beam_boundary_geometry(beam, "BoundaryGeometry");
+    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constraint_beam_base(beam_boundary_geometry);
+    /** damping */
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
+        beam_position_damping(0.2, beam_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
+        beam_rotation_damping(0.2, beam_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    valve.addBodyStateForRecording<Real>("MeanCurvature");
+    beam.addBodyStateForRecording<Real>("MeanCurvature");
+    beam.addBodyStateForRecording<Vecd>("ForceFromFluid");
+    beam.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd>
+        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
+    ObservedQuantityRecording<Vecd>
+        write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     /** initialize cell linked lists for all bodies. */
     sph_system.initializeSystemCellLinkedLists();
-    std::cout << "Cell link finished..." << std::endl;
     /** periodic condition applied after the mesh cell linked list build up
      * but before the configuration build up. */
     periodic_condition.update_cell_linked_list_.exec();
-    std::cout << "Periodic condition finished..." << std::endl;
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
-    std::cout << "water valve contact finished..." << std::endl;
-    /**wall normal*/
+    /** computing surface normal direction for the wall. */
     wall_boundary_normal_direction.exec();
-    std::cout << "Wall normal finished..." << std::endl;
-    /** initial curvature*/
-    valve_corrected_configuration.exec();
-    valve_curvature.compute_initial_curvature();
-    water_block_complex.updateConfiguration();
-    std::cout << "Curvature finished..." << std::endl;
-
-    // Check dWijVjeij
-    CheckKernelCompleteness check_kernel_completeness(water_block_complex.getInnerRelation(),
-                                                      water_block_complex.getContactRelation());
-    check_kernel_completeness.exec();
-    water_block.addBodyStateForRecording<Real>("TotalKernel");
-    water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
-    water_block.addBodyStateForRecording<int>("InnerNeighborNumber");
-    water_block.addBodyStateForRecording<int>("ContactNeighborNumber");
+    /** computing linear reproducing configuration for the insert body. */
+    beam_corrected_configuration.exec();
+    beam_curvature.compute_initial_curvature();
+    water_block_complex.getContactRelation().updateConfiguration();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 2.0;
+    Real end_time = 4.0;
     Real output_interval = end_time / 200.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -153,6 +151,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+    write_beam_tip_displacement.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -168,8 +167,9 @@ int main(int ac, char *av[])
             viscous_acceleration.exec();
             transport_correction.exec();
 
-            viscous_force_on_valve.exec();
-
+            /** FSI for viscous force. */
+            viscous_force_on_solid.exec();
+            /** Update normal direction on elastic body.*/
             size_t inner_ite_dt = 0;
             size_t inner_ite_dt_s = 0;
             Real relaxation_time = 0.0;
@@ -178,23 +178,24 @@ int main(int ac, char *av[])
                 Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
                 /** Fluid pressure relaxation */
                 pressure_relaxation.exec(dt);
-                /**FSI for pressure force*/
-                fluid_force_on_valve_update.exec();
-                /** velocity */
-                parabolic_inflow.exec();
+                /** FSI for pressure force. */
+                fluid_force_on_solid_update.exec();
                 /** Fluid density relaxation */
                 density_relaxation.exec(dt);
 
-                /** Solid dynamics time stepping. */
+                /** Solid dynamics. */
                 inner_ite_dt_s = 0;
                 Real dt_s_sum = 0.0;
                 average_velocity_and_acceleration.initialize_displacement_.exec();
                 while (dt_s_sum < dt)
                 {
-                    Real dt_s = std::min({valve_time_step_size.exec(), dt - dt_s_sum, 0.2 * dt});
-                    valve_stress_relaxation_first.exec(dt_s);
-                    valve_constrain.exec();
-                    valve_stress_relaxation_second.exec(dt_s);
+                    Real dt_s = SMIN(beam_computing_time_step_size.exec(), dt - dt_s_sum);
+                    beam_stress_relaxation_first_half.exec(dt_s);
+                    constraint_beam_base.exec();
+                    beam_position_damping.exec();
+                    beam_rotation_damping.exec();
+                    constraint_beam_base.exec();
+                    beam_stress_relaxation_second_half.exec(dt_s);
                     dt_s_sum += dt_s;
                     inner_ite_dt_s++;
                 }
@@ -203,7 +204,7 @@ int main(int ac, char *av[])
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
-
+                parabolic_inflow.exec();
                 inner_ite_dt++;
             }
 
@@ -211,30 +212,31 @@ int main(int ac, char *av[])
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
-                          << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt
-                          << "	dt / dt_s = " << inner_ite_dt_s
-                          << "\n";
+                          << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
             }
             number_of_iterations++;
 
+            beam_curvature.exec();
+
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-            // update curvature before water shell contact update
-            valve_curvature.exec();
-            /** Update cell linked list and configuration. */
+
             water_block.updateCellLinkedListWithParticleSort(100);
-            valve.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
-
             water_block_complex.updateConfiguration();
-
-            valve_water_contact.updateConfiguration();
+            /** one need update configuration after periodic condition. */
+            beam.updateCellLinkedList();
+            beam_contact.updateConfiguration();
+            /** write run-time observation into file */
+            write_beam_tip_displacement.writeToFile(number_of_iterations);
         }
 
         TickCount t2 = TickCount::now();
         /** write run-time observation into file */
-        check_kernel_completeness.exec();
+        compute_vorticity.exec();
         write_real_body_states.writeToFile();
+        fluid_observer_contact.updateConfiguration();
+        write_fluid_velocity.writeToFile(number_of_iterations);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
