@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> beam_corrected_configuration(beam_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_solid(beam_contact);
-    InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate>
+    InteractionDynamics<solid_dynamics::FluidForceOnShellUpdateRiemann>
         fluid_force_on_solid_update(beam_contact, viscous_force_on_solid);
     /** Compute the average velocity of the insert body. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(beam);
@@ -139,8 +139,8 @@ int main(int ac, char *av[])
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
-    int screen_output_interval = 100;
-    Real end_time = 4.0;
+    int screen_output_interval = 10;
+    Real end_time = 2.0;
     Real output_interval = end_time / 200.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -192,8 +192,8 @@ int main(int ac, char *av[])
                     Real dt_s = SMIN(beam_computing_time_step_size.exec(), dt - dt_s_sum);
                     beam_stress_relaxation_first_half.exec(dt_s);
                     constraint_beam_base.exec();
-                    beam_position_damping.exec();
-                    beam_rotation_damping.exec();
+                    beam_position_damping.exec(dt_s);
+                    beam_rotation_damping.exec(dt_s);
                     constraint_beam_base.exec();
                     beam_stress_relaxation_second_half.exec(dt_s);
                     dt_s_sum += dt_s;
@@ -222,10 +222,12 @@ int main(int ac, char *av[])
             periodic_condition.bounding_.exec();
 
             water_block.updateCellLinkedListWithParticleSort(100);
-            periodic_condition.update_cell_linked_list_.exec();
-            water_block_complex.updateConfiguration();
-            /** one need update configuration after periodic condition. */
             beam.updateCellLinkedList();
+
+            periodic_condition.update_cell_linked_list_.exec();
+
+            /** one need update configuration after periodic condition. */
+            water_block_complex.updateConfiguration();
             beam_contact.updateConfiguration();
             /** write run-time observation into file */
             write_beam_tip_displacement.writeToFile(number_of_iterations);
