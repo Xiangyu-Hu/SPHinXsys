@@ -21,7 +21,7 @@ void InnerRelation::updateConfiguration()
 execution::ExecutionEvent InnerRelation::updateDeviceConfiguration()
 {
     auto reset_event = resetNeighborhoodDeviceCurrentSize();
-    return cell_linked_list_.getDeviceProxy().getKernel()->searchNeighborsByParticles(
+    return cell_linked_list_.device_kernel.get_ptr()->searchNeighborsByParticles(
         sph_body_, inner_configuration_device_->data(),
         get_single_search_depth_, get_inner_neighbor_, std::move(reset_event));
 }

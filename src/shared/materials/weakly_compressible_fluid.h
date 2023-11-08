@@ -32,9 +32,24 @@
 #define WEAKLY_COMPRESSIBLE_FLUID_H
 
 #include "base_material.h"
+#include "device_implementation.hpp"
 
 namespace SPH
 {
+class WeaklyCompressibleFluidKernel
+{
+  public:
+    WeaklyCompressibleFluidKernel(Real p0, Real c0, Real rho0) : p0_(p0), c0_(c0), rho0_(rho0) {}
+
+    inline DeviceReal getPressure(DeviceReal rho) const { return p0_ * (rho / rho0_ - static_cast<DeviceReal>(1.0)); }
+    inline DeviceReal getSoundSpeed(DeviceReal p = 0.0, DeviceReal rho = 1.0) const { return c0_; }
+    inline DeviceReal ReferenceDensity() const { return rho0_; }
+    inline DeviceReal ReferenceSoundSpeed() { return c0_; };
+
+  private:
+    DeviceReal p0_, c0_, rho0_;
+};
+
 /**
  * @class WeaklyCompressibleFluid
  * @brief Linear equation of state (EOS).
@@ -45,7 +60,7 @@ class WeaklyCompressibleFluid : public Fluid
     Real p0_; /**< reference pressure */
   public:
     explicit WeaklyCompressibleFluid(Real rho0, Real c0, Real mu = 0.0)
-        : Fluid(rho0, c0, mu), p0_(rho0 * c0 * c0)
+        : Fluid(rho0, c0, mu), p0_(rho0 * c0 * c0), device_kernel(p0_, c0_, rho0_)
     {
         material_type_name_ = "WeaklyCompressibleFluid";
     };
@@ -57,12 +72,7 @@ class WeaklyCompressibleFluid : public Fluid
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
     virtual WeaklyCompressibleFluid *ThisObjectPtr() override { return this; };
 
-    DeviceReal getPressure_Device(DeviceReal rho) const {
-        return static_cast<DeviceReal>(p0_) * (rho / static_cast<DeviceReal>(rho0_) - static_cast<DeviceReal>(1.0));
-    }
-    DeviceReal getSoundSpeed_Device(DeviceReal p = 0.0, DeviceReal rho = 1.0) const {
-        return static_cast<DeviceReal>(c0_);
-    }
+    execution::DeviceImplementation<WeaklyCompressibleFluidKernel> device_kernel;
 };
 
 /**

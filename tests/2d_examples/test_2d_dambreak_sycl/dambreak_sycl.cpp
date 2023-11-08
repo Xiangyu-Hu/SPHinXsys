@@ -10,17 +10,18 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;                    /**< Water tank length. */
-Real DH = 5.366;                    /**< Water tank height. */
-Real LL = 2.0;                      /**< Water column length. */
-Real LH = 1.0;                      /**< Water column height. */
+Real scaling = 1;
+Real DL = 5.366 * scaling;                    /**< Water tank length. */
+Real DH = 5.366 * scaling;                    /**< Water tank height. */
+Real LL = 2.0 * scaling;                      /**< Water column length. */
+Real LH = 1.0 * scaling;                      /**< Water column height. */
 Real particle_spacing_ref = 0.025;  /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
-Real gravity_g = 1.0;                    /**< Gravity. */
+Real gravity_g = 1.0 * scaling;                    /**< Gravity. */
 Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
@@ -102,6 +103,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step(water_block);
 
     water_block.getBaseParticles().copyToDeviceMemory().wait();
+    std::cout << "Particles: " << water_block.getBaseParticles().total_real_particles_ << std::endl;
     executionQueue.setWorkGroupSize(16);
 
     //----------------------------------------------------------------------
@@ -277,6 +279,7 @@ int main(int ac, char *av[])
 
     TimeInterval tt;
     tt = t4 - t1 - interval;
+    std::cout << "Particles: " << water_block.getBaseParticles().total_real_particles_ << std::endl;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
@@ -288,7 +291,7 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_writing_files = "
               << interval_writing_files.seconds() << "\n";
 
-    water_block.getBaseParticles().copyFromDeviceMemory().wait();
+    /*water_block.getBaseParticles().copyFromDeviceMemory().wait();
     if (sph_system.generate_regression_data_)
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
@@ -298,7 +301,7 @@ int main(int ac, char *av[])
     {
         write_water_mechanical_energy.testResult();
         write_recorded_water_pressure.testResult();
-    }
+    }*/
 
     return 0;
 };

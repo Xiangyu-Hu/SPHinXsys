@@ -33,7 +33,7 @@
 #include "base_body.h"
 #include "base_particles.h"
 #include "external_force.h"
-#include "execution_unit/device_executable.hpp"
+#include "device_implementation.hpp"
 
 #include <limits>
 
@@ -92,19 +92,13 @@ class TimeStepInitialization
   protected:
     StdLargeVec<Vecd> &pos_, &acc_prior_;
 
-    ExecutionProxy<TimeStepInitialization, TimeStepInitializationKernel> device_proxy;
-
   public:
     TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
     virtual ~TimeStepInitialization(){};
 
     void update(size_t index_i, Real dt = 0.0);
 
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
-
-    using Proxy = decltype(device_proxy);
+    execution::DeviceImplementation<TimeStepInitializationKernel> device_kernel;
 };
 
 /**
@@ -338,8 +332,7 @@ private:
  */
 class TotalMechanicalEnergy
     : public LocalDynamicsReduce<Real, ReduceSum<Real>>,
-      public GeneralDataDelegateSimple,
-      public DeviceExecutable<TotalMechanicalEnergy, TotalMechanicalEnergyKernel>
+      public GeneralDataDelegateSimple
 {
   private:
     SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
@@ -354,6 +347,8 @@ class TotalMechanicalEnergy
     virtual ~TotalMechanicalEnergy(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
+
+    execution::DeviceImplementation<TotalMechanicalEnergyKernel> device_kernel;
 };
 } // namespace SPH
 #endif // GENERAL_DYNAMICS_H

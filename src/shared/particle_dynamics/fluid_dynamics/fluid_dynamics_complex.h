@@ -35,7 +35,7 @@
 #include "fluid_dynamics_inner.hpp"
 #include "solid_body.h"
 #include "solid_particles.h"
-#include "execution_unit/device_executable.hpp"
+#include "device_implementation.hpp"
 
 namespace SPH
 {
@@ -132,13 +132,10 @@ class BaseDensitySummationComplex
     StdVec<StdLargeVec<Real> *> contact_mass_;
     StdSharedVec<DeviceReal*> contact_mass_device_;
 
-    ExecutionProxy<BaseDensitySummationComplex, BaseDensitySummationComplexKernel> device_proxy;
-
     Real ContactSummation(size_t index_i);
 
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
+  public:
+    execution::DeviceImplementation<BaseDensitySummationComplexKernel> device_kernel;
 };
 
 class DensitySummationComplexKernel : public BaseDensitySummationComplexKernel, public DensitySummationInnerKernel {
@@ -176,18 +173,13 @@ class DensitySummationComplex
     template <typename... Args>
     explicit DensitySummationComplex(Args &&...args)
         : BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...),
-          device_proxy(this, *BaseDensitySummationComplex<DensitySummationInner>::getDeviceProxy().getKernel(),
-                       *DensitySummationInner::getDeviceProxy().getKernel()){};
+          device_kernel(*BaseDensitySummationComplex<DensitySummationInner>::device_kernel.get_ptr(),
+                       *DensitySummationInner::device_kernel.get_ptr()){};
     virtual ~DensitySummationComplex(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
 
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
-
-    private:
-        ExecutionProxy<DensitySummationComplex, DensitySummationComplexKernel> device_proxy;
+    execution::DeviceImplementation<DensitySummationComplexKernel> device_kernel;
 };
 
 /**
@@ -317,24 +309,24 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
  * @brief  template class pressure relaxation scheme together with wall boundary
  */
 template <class BaseIntegration1stHalfType>
-class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration1stHalfType>,
-public DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>,
-                        BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>>
+class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration1stHalfType>
 {
+    using BaseIntegration1stHalfTypeKernel = typename decltype(BaseIntegration1stHalfType::device_kernel)::KernelType;
+
   public:
     template <typename... Args>
     BaseIntegration1stHalfWithWall(Args &&...args)
         : InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...),
-          DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>,
-                           BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>>(this,
-                           *this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
-                           BaseIntegration1stHalfType::particles_,
-                           BaseIntegration1stHalfType::inner_configuration_device_ ?
-                           BaseIntegration1stHalfType::inner_configuration_device_->data() : nullptr,
-                           this->riemann_solver_) {};
+          device_kernel(*this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
+                        BaseIntegration1stHalfType::particles_,
+                        BaseIntegration1stHalfType::inner_configuration_device_ ?
+                            BaseIntegration1stHalfType::inner_configuration_device_->data() : nullptr,
+                        this->riemann_solver_) {};
     virtual ~BaseIntegration1stHalfWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
+
+    execution::DeviceImplementation<BaseIntegration1stHalfWithWallKernel<BaseIntegration1stHalfTypeKernel>> device_kernel;
 
   protected:
     virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
@@ -444,23 +436,24 @@ class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
  * The difference from the free surface version is that no Riemann problem is applied
  */
 template <class BaseIntegration2ndHalfType>
-class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>,
-   public DeviceExecutable<BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>,
-                           BaseIntegration2ndHalfWithWallKernel<typename BaseIntegration2ndHalfType::DeviceKernel>>
+class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
 {
+    using BaseIntegration2ndHalfTypeKernel = typename decltype(BaseIntegration2ndHalfType::device_kernel)::KernelType;
+
   public:
     template <typename... Args>
     BaseIntegration2ndHalfWithWall(Args &&...args)
         : InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...),
-          DeviceExecutable<BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>,
-                  BaseIntegration2ndHalfWithWallKernel<typename BaseIntegration2ndHalfType::DeviceKernel>>(this,
-                    *this->contact_configuration_device_, this->wall_vel_ave_device_.data(),
-                    this->wall_n_device_.data(), BaseIntegration2ndHalfType::particles_,
-                    BaseIntegration2ndHalfType::inner_configuration_device_ ?
-                    BaseIntegration2ndHalfType::inner_configuration_device_->data() : nullptr, this->riemann_solver_) {};
+          device_kernel(*this->contact_configuration_device_, this->wall_vel_ave_device_.data(),
+                        this->wall_n_device_.data(), BaseIntegration2ndHalfType::particles_,
+                        BaseIntegration2ndHalfType::inner_configuration_device_ ?
+                            BaseIntegration2ndHalfType::inner_configuration_device_->data() : nullptr,
+                        this->riemann_solver_) {};
     virtual ~BaseIntegration2ndHalfWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
+
+    execution::DeviceImplementation<BaseIntegration2ndHalfWithWallKernel<BaseIntegration2ndHalfTypeKernel>> device_kernel;
 };
 
 using Integration2ndHalfWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalf>;

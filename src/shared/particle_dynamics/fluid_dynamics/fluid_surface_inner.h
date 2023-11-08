@@ -111,28 +111,23 @@ class DensitySummationFreeSurfaceKernel : public DensitySummationKernel {
 template <class DensitySummationType>
 class DensitySummationFreeSurface : public DensitySummationType
 {
+    using DensitySummationKernel = typename decltype(DensitySummationType::device_kernel)::KernelType;
+
   public:
     template <typename... ConstructorArgs>
     explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
         : DensitySummationType(std::forward<ConstructorArgs>(args)...),
-          device_proxy(this, *DensitySummationType::getDeviceProxy().getKernel()) {}
+          device_kernel(*DensitySummationType::device_kernel.get_ptr()) {}
     virtual ~DensitySummationFreeSurface(){};
     void update(size_t index_i, Real dt = 0.0);
 
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
+    execution::DeviceImplementation<DensitySummationFreeSurfaceKernel<DensitySummationKernel>> device_kernel;
 
   protected:
     Real ReinitializedDensity(Real rho_sum, Real rho_0)
     {
         return SMAX(rho_sum, rho_0);
     };
-  private:
-    using DensitySummationKernel =
-                   std::remove_pointer_t<decltype(std::declval<DensitySummationType>().getDeviceProxy().getKernel())>;
-    ExecutionProxy<DensitySummationFreeSurface<DensitySummationType>,
-                   DensitySummationFreeSurfaceKernel<DensitySummationKernel>> device_proxy;
 };
 
 using DensitySummationFreeSurfaceInner = DensitySummationFreeSurface<DensitySummationInner>;
