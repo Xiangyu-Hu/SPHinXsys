@@ -150,6 +150,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
 
     // pressure boundary condition
     auto apply_pressure = [&]()
@@ -246,7 +247,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
                 initialize_external_force.exec(dt);
                 if (pressure > TinyReal)
+                {
+                    normal_update.exec();
                     apply_pressure();
+                }
 
                 dt = computing_time_step_size.exec();
                 { // checking for excessive time step reduction
