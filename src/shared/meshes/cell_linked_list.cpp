@@ -93,9 +93,9 @@ size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                RealBody &real_body, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      execution::DeviceExecutable<CellLinkedList, CellLinkedListKernel>(this, real_body_.getBaseParticles(),
-                                                                        hostToDeviceVecd(mesh_lower_bound_), DeviceReal(grid_spacing_),
-                                                                        hostToDeviceArrayi(all_grid_points_), hostToDeviceArrayi(all_cells_))
+      device_kernel(real_body_.getBaseParticles(),
+                    hostToDeviceVecd(mesh_lower_bound_), DeviceReal(grid_spacing_),
+                    hostToDeviceArrayi(all_grid_points_), hostToDeviceArrayi(all_cells_))
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);

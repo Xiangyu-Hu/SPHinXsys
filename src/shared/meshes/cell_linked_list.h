@@ -132,8 +132,7 @@ class CellLinkedListKernel {
  * @brief Defining a mesh cell linked list for a body.
  * 		  The meshes for all bodies share the same global coordinates.
  */
-class CellLinkedList : public BaseCellLinkedList, public Mesh,
-                       public execution::DeviceExecutable<CellLinkedList, CellLinkedListKernel>
+class CellLinkedList : public BaseCellLinkedList, public Mesh
 {
     StdVec<CellLinkedList *> single_cell_linked_list_level_;
 
@@ -167,6 +166,8 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh,
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
+
+    execution::DeviceImplementation<CellLinkedListKernel> device_kernel;
 };
 
 /**

@@ -39,6 +39,7 @@
 #include "fluid_body.h"
 #include "riemann_solver.h"
 #include "weakly_compressible_fluid.h"
+#include "device_implementation.hpp"
 
 namespace SPH
 {
@@ -127,13 +128,9 @@ class DensitySummationInner : public BaseDensitySummationInner
 
     inline void interaction(size_t index_i, Real dt = 0.0);
 
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
-
   protected:
     Real W0_;
-    ExecutionProxy<DensitySummationInner, DensitySummationInnerKernel> device_proxy;
+    execution::DeviceImplementation<DensitySummationInnerKernel> device_kernel;
 };
 
 /**
@@ -239,32 +236,30 @@ class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public Fl
     const Real coefficient_;
 };
 
-template<class FluidT>
+template<class MaterialType>
 class AcousticTimeStepSizeKernel {
   public:
     explicit AcousticTimeStepSizeKernel(BaseParticles* particles) :
         rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
         p_(particles->registerDeviceVariable<DeviceReal>("Pressure", particles->total_real_particles_)),
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
-        fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())) {}
+        fluid_(*DynamicCast<MaterialType>(this, particles->getBaseMaterial()).device_kernel.get_ptr()) {}
 
-    template<class RealType, class VecType, class FluidType, class SoundSpeedFunc>
-    static RealType reduce(size_t index_i, Real dt, FluidType&& fluid, RealType* p, RealType* rho, VecType* vel,
-                        SoundSpeedFunc&& getSoundSpeed) {
-        return getSoundSpeed(fluid, p[index_i], rho[index_i]) + VecdNorm(vel[index_i]);
+    template<class RealType, class VecType, class FluidType>
+    static RealType reduce(size_t index_i, Real dt, FluidType&& fluid, RealType* p, RealType* rho, VecType* vel) {
+        return fluid.getSoundSpeed(p[index_i], rho[index_i]) + VecdNorm(vel[index_i]);
     }
 
     DeviceReal reduce(size_t index_i, Real dt = 0.0) const {
-        return reduce(index_i, dt, fluid_, p_, rho_, vel_,
-                      [](const FluidT& fluid, DeviceReal p_i, DeviceReal rho_i) {
-                          return fluid.getSoundSpeed_Device(p_i, rho_i);
-                      });
+        return reduce(index_i, dt, fluid_, p_, rho_, vel_);
     }
 
   private:
+    using MaterialTypeKernel = typename decltype(MaterialType::device_kernel)::KernelType;
+
     DeviceReal *rho_, *p_;
     DeviceVecd *vel_;
-    FluidT fluid_;
+    MaterialTypeKernel fluid_;
 };
 
 /**
@@ -279,9 +274,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
+    execution::DeviceImplementation<AcousticTimeStepSizeKernel<WeaklyCompressibleFluid>> device_kernel;
 
   protected:
     Fluid &fluid_;
@@ -289,9 +282,6 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public
     StdLargeVec<Vecd> &vel_;
     Real smoothing_length_min_;
     Real acousticCFL_;
-
-  private:
-    ExecutionProxy<AcousticTimeStepSize, AcousticTimeStepSizeKernel<WeaklyCompressibleFluid>> device_proxy;
 };
 
 using namespace execution;
@@ -329,20 +319,12 @@ class AdvectionTimeStepSizeForImplicitViscosity
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
+    execution::DeviceImplementation<AdvectionTimeStepSizeForImplicitViscosityKernel> device_kernel;
+
   protected:
     StdLargeVec<Vecd> &vel_;
     Real smoothing_length_min_;
     Real advectionCFL_;
-
-    ExecutionProxy<AdvectionTimeStepSizeForImplicitViscosity,
-                   AdvectionTimeStepSizeForImplicitViscosityKernel> device_proxy;
-
-  public:
-    auto& getDeviceProxy() {
-        return device_proxy;
-    }
-
-    using Proxy = decltype(device_proxy);
 };
 
 /**
@@ -377,11 +359,13 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
     StdLargeVec<AngularVecd> vorticity_;
 };
 
-template<class FluidT>
+template<class MaterialType>
 class BaseIntegrationKernel {
+    using MaterialTypeKernel = typename decltype(MaterialType::device_kernel)::KernelType;
+
   public:
-    BaseIntegrationKernel(BaseParticles *particles) :
-        fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())),
+    explicit BaseIntegrationKernel(BaseParticles *particles) :
+        fluid_(*DynamicCast<MaterialType>(this, particles->getBaseMaterial()).device_kernel.get_ptr()),
         rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
         p_(particles->registerDeviceVariable<DeviceReal>("Pressure", particles->total_real_particles_)),
         drho_dt_(particles->registerDeviceVariable<DeviceReal>("DensityChangeRate", particles->total_real_particles_)),
@@ -390,12 +374,10 @@ class BaseIntegrationKernel {
         pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         acc_(particles->getDeviceVariableByName<DeviceVecd>("Acceleration")),
-        acc_prior_(particles->getDeviceVariableByName<DeviceVecd>("AccelerationPrior")) {
-        particles->registerSortableVariable<Real>("Pressure");
-    }
+        acc_prior_(particles->getDeviceVariableByName<DeviceVecd>("AccelerationPrior")) {}
         
   protected:
-    FluidT fluid_;
+    MaterialTypeKernel fluid_;
     DeviceReal *rho_, *p_, *drho_dt_, *Vol_, *mass_;
     DeviceVecd *pos_, *vel_, *acc_, *acc_prior_;
 };
@@ -416,20 +398,20 @@ class BaseIntegration : public LocalDynamics, public FluidDataInner
     StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 };
 
-template<class RiemannSolverType>
-class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<WeaklyCompressibleFluid> {
+template<class RiemannSolverType, class MaterialType>
+class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<MaterialType> {
   public:
     BaseIntegration1stHalfKernel(BaseParticles* particles, NeighborhoodDevice* inner_configuration,
                                  const RiemannSolverType& riemannSolver) :
-                                 BaseIntegrationKernel<WeaklyCompressibleFluid>(particles),
+                                 BaseIntegrationKernel<MaterialType>(particles),
                                  riemann_solver_(this->fluid_, this->fluid_),
                                  inner_configuration_(inner_configuration){}
 
-    template<class RealType, class VecType, class FluidType, class PressureFunc>
+    template<class RealType, class VecType, class FluidType>
     static void initialization(size_t index_i, Real dt, RealType* rho, const RealType *drho_dt, RealType *p, VecType* pos,
-                               VecType *vel, FluidType&& fluid, PressureFunc&& getPressure) {
+                               VecType *vel, FluidType&& fluid) {
         rho[index_i] += drho_dt[index_i] * dt * 0.5;
-        p[index_i] = getPressure(fluid, rho[index_i]);
+        p[index_i] = fluid.getPressure(rho[index_i]);
         pos[index_i] += vel[index_i] * dt * 0.5;
     }
     
@@ -458,17 +440,15 @@ class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<WeaklyCompress
     }
     
     void initialization(size_t index_i, Real dt = 0.0) {
-        initialization(index_i, dt, rho_, drho_dt_, p_, pos_, vel_, fluid_, [](const auto& fluid, DeviceReal rho) {
-            return fluid.getPressure_Device(rho);
-        });
+        initialization(index_i, dt, this->rho_, this->drho_dt_, this->p_, this->pos_, this->vel_, this->fluid_);
     }
 
     void update(size_t index_i, Real dt = 0.0) {
-        update(index_i, dt, vel_, acc_prior_, acc_);
+        update(index_i, dt, this->vel_, this->acc_prior_, this->acc_);
     }
     
     void interaction(size_t index_i, Real dt = 0.0) {
-        interaction(index_i, dt, p_, rho_, drho_dt_, acc_, inner_configuration_, riemann_solver_);
+        interaction(index_i, dt, this->p_, this->rho_, this->drho_dt_, this->acc_, inner_configuration_, riemann_solver_);
     }
     
   protected:
@@ -494,7 +474,7 @@ class BaseIntegration1stHalf : public BaseIntegration
 
     void update(size_t index_i, Real dt = 0.0);
 
-    using DeviceKernel = BaseIntegration1stHalfKernel<RiemannSolverType>;
+    execution::DeviceImplementation<BaseIntegration1stHalfKernel<RiemannSolverType, WeaklyCompressibleFluid>> device_kernel;
 
   protected:
     virtual Vecd computeNonConservativeAcceleration(size_t index_i);
@@ -505,12 +485,12 @@ using Integration1stHalfRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
 using Integration1stHalfDissipativeRiemann = BaseIntegration1stHalf<DissipativeRiemannSolver>;
 
 
-template<class RiemannSolverType>
-class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<WeaklyCompressibleFluid> {
+template<class RiemannSolverType, class FluidKernel>
+class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<FluidKernel> {
   public:
     BaseIntegration2ndHalfKernel(BaseParticles* particles, NeighborhoodDevice* inner_configuration,
                                  const RiemannSolverType& riemannSolver) :
-            BaseIntegrationKernel<WeaklyCompressibleFluid>(particles),
+            BaseIntegrationKernel<FluidKernel>(particles),
             riemann_solver_(this->fluid_, this->fluid_),
             inner_configuration_(inner_configuration){}
 
@@ -546,15 +526,15 @@ class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<WeaklyCompress
     }
 
     void initialization(size_t index_i, Real dt = 0.0) {
-        initialization(index_i, dt, pos_, vel_);
+        initialization(index_i, dt, this->pos_, this->vel_);
     }
 
     void update(size_t index_i, Real dt = 0.0) {
-        update(index_i, dt, rho_, drho_dt_, Vol_, mass_);
+        update(index_i, dt, this->rho_, this->drho_dt_, this->Vol_, this->mass_);
     }
 
     void interaction(size_t index_i, Real dt = 0.0) {
-        interaction(index_i, dt, rho_, drho_dt_, vel_, acc_, inner_configuration_, riemann_solver_);
+        interaction(index_i, dt, this->rho_, this->drho_dt_, this->vel_, this->acc_, inner_configuration_, riemann_solver_);
     }
 
   protected:
@@ -580,7 +560,7 @@ class BaseIntegration2ndHalf : public BaseIntegration
 
     void update(size_t index_i, Real dt = 0.0);
 
-    using DeviceKernel = BaseIntegration2ndHalfKernel<RiemannSolverType>;
+    execution::DeviceImplementation<BaseIntegration2ndHalfKernel<RiemannSolverType, WeaklyCompressibleFluid>> device_kernel;
 
   protected:
     StdLargeVec<Real> &Vol_, &mass_;

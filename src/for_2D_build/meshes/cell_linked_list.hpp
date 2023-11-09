@@ -51,7 +51,7 @@ execution::ExecutionEvent CellLinkedListKernel::searchNeighborsByParticles(
     execution::ExecutionEvent dependency_event)
 {
     auto *pos = dynamics_range.getBaseParticles().template getDeviceVariableByName<DeviceVec2d>("Position");
-    auto get_neighbor_relation_kernel = *get_neighbor_relation.getDeviceProxy().getKernel();
+    auto get_neighbor_relation_kernel = *get_neighbor_relation.device_kernel.get_ptr();
     const int search_depth = get_search_depth(0);
     const auto loop_range = dynamics_range.LoopRange();
     return executionQueue.getQueue()

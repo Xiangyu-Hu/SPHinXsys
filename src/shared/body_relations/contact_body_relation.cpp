@@ -33,7 +33,7 @@ execution::ExecutionEvent ContactRelation::updateDeviceConfiguration()
     execution::ExecutionEvent update_events;
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        update_events.add(target_cell_linked_lists_[k]->getDeviceProxy().getKernel()->searchNeighborsByParticles(
+        update_events.add(target_cell_linked_lists_[k]->device_kernel.get_ptr()->searchNeighborsByParticles(
             sph_body_, contact_configuration_device_[k].data(),
             *get_search_depths_[k], *get_contact_neighbors_[k], reset_event));
     }
