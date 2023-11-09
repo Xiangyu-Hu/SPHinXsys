@@ -24,4 +24,9 @@ size_t BaseMesh::transferMeshIndexToMortonOrder(const Array3i &mesh_index)
 {
     return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
 }
+//=================================================================================================//
+size_t BaseMesh::transferMeshIndexToMortonOrder(const DeviceArray3i &mesh_index)
+{
+    return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
+}
 } // namespace SPH

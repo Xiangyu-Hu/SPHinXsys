@@ -25,12 +25,12 @@ CellLinkedListKernel::CellLinkedListKernel(BaseParticles &particles, const Devic
     : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
       list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), mesh_lower_bound_(meshLowerBound), grid_spacing_(gridSpacing),
       all_grid_points_(allGridPoints), all_cells_(allCells), index_list_(allocateDeviceData<size_t>(total_real_particles_)),
-      index_head_list_(allocateDeviceData<size_t>(allCells[0] * allCells[1])) {}
+      index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(all_cells_))) {}
 
 execution::ExecutionEvent CellLinkedListKernel::clearCellLists()
 {
     // Only clear head list, since index list does not depend on its previous values
-    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, all_cells_[0] * all_cells_[1]));
+    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, VecdFoldProduct(all_cells_)));
 }
 
 execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)

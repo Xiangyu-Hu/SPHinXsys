@@ -35,7 +35,9 @@
 namespace SPH
 {
 using Arrayi = Array3i;
+using DeviceArrayi = DeviceArray3i;
 using Vecd = Vec3d;
+using DeviceVecd = DeviceVec3d;
 using Matd = Mat3d;
 using AlignedBox = AlignedBox3d;
 using AngularVecd = Vec3d;
