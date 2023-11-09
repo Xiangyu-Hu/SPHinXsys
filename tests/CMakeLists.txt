@@ -31,3 +31,7 @@ if(SPHINXSYS_3D AND SPHINXSYS_BUILD_3D_EXAMPLES)
         ADD_SUBDIRECTORY(webassembly_models)
     endif()
 endif()
+
+if(SPHINXSYS_BUILD_USER_EXAMPLES)
+	ADD_SUBDIRECTORY(user_examples)
+endif()
