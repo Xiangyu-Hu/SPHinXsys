@@ -194,15 +194,6 @@ class WaterBlock : public ComplexShape
 /**
  * @brief Define wall shape
  */
-class WallBoundary : public ComplexShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), radius_mid_surface, full_length * 0.5 + wall_thickness, simtk_resolution, translation_fluid);
-        subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius, full_length * 0.5 + wall_thickness, simtk_resolution, translation_fluid);
-    }
-};
 class ShellBoundary : public SurfaceParticleGenerator
 {
   public:
