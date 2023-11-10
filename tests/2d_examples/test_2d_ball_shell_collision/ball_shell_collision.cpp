@@ -1,8 +1,8 @@
 /**
- * @file 	ball_shell_collision.cpp
- * @brief 	an elastic ball bouncing within a confined shell boundary
+ * @file ball_shell_collision.cpp
+ * @brief an elastic ball bouncing within a confined shell boundary
  * @details This is a case to test elasticSolid -> shell impact/collision.
- * @author 	Massoud Rezavand, Virtonomy GmbH
+ * @author Massoud Rezavand and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Define external force.*/
-    SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+    SimpleDynamics<TimeStepInitialization> ball_initialize_time_step(ball, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
     /** stress relaxation for the balls. */
@@ -219,7 +219,7 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                ball_initialize_timestep.exec();
+                ball_initialize_time_step.exec();
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
@@ -241,8 +241,7 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
             }
-
-            write_ball_center_displacement.writeToFile(ite);
+            io_environment.writeAllObservables(ite);
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(ite);

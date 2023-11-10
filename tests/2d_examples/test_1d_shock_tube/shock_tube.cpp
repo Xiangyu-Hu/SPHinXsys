@@ -1,18 +1,17 @@
 /**
- * @file 	shock_tube.cpp
- * @brief 	This is a test to show the standard Sod shock tube case.
+ * @file shock_tube.cpp
+ * @brief This is a test to show the standard Sod shock tube case.
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
- * @author 	Zhentong Wang and Xiangyu Hu
+ * @author Zhentong Wang and Xiangyu Hu
  */
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
+//	Basic geometry parameters and simulation setup.
 //----------------------------------------------------------------------
 Real DL = 5.0;                           /**< Tube length. */
 Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
 Real DH = particle_spacing_ref * 4;      /**< Tube height. */
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;              /**< initial density of left state. */
 Real rho0_r = 0.125;            /**< initial density of right state. */
@@ -178,7 +177,7 @@ int main(int ac, char *av[])
 
             if (number_of_iterations % screen_output_interval == 0)
             {
-                write_maximum_speed.writeToFile(number_of_iterations);
+                io_environment.writeAllObservables(number_of_iterations);
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	dt = " << dt << "\n";
