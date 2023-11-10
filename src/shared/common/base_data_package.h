@@ -85,7 +85,7 @@ constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
 constexpr int lastAxis = Dimensions - 1;
 
 /** Generalized data container assemble type */
-template <template <typename DataType> typename DataContainerType>
+template <template <typename> typename DataContainerType>
 using DataContainerAssemble =
     std::tuple<StdVec<DataContainerType<Real>>,
                StdVec<DataContainerType<Vec2d>>,
@@ -94,7 +94,7 @@ using DataContainerAssemble =
                StdVec<DataContainerType<Mat3d>>,
                StdVec<DataContainerType<int>>>;
 /** Generalized data container address assemble type */
-template <template <typename DataType> typename DataContainerType>
+template <template <typename> typename DataContainerType>
 using DataContainerAddressAssemble =
     std::tuple<StdVec<DataContainerType<Real> *>,
                StdVec<DataContainerType<Vec2d> *>,
@@ -103,7 +103,7 @@ using DataContainerAddressAssemble =
                StdVec<DataContainerType<Mat3d> *>,
                StdVec<DataContainerType<int> *>>;
 /** Generalized data container unique pointer assemble type */
-template <template <typename DataType> typename DataContainerType>
+template <template <typename> typename DataContainerType>
 using DataContainerUniquePtrAssemble =
     std::tuple<UniquePtrsKeeper<DataContainerType<Real>>,
                UniquePtrsKeeper<DataContainerType<Vec2d>>,
@@ -113,7 +113,7 @@ using DataContainerUniquePtrAssemble =
                UniquePtrsKeeper<DataContainerType<int>>>;
 
 /** a type irrelevant operation on the data assembles  */
-template <template <typename VariableType> typename OperationType>
+template <template <typename> typename OperationType>
 struct DataAssembleOperation
 {
     OperationType<Real> scalar_operation;

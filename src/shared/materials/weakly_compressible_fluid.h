@@ -68,9 +68,9 @@ class WeaklyCompressibleFluidFreeSurface : public WeaklyCompressibleFluidType
     Real cutoff_pressure_, cutoff_density_;
 
   public:
-    template <typename... ConstructorArgs>
-    explicit WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure, ConstructorArgs &&...args)
-        : WeaklyCompressibleFluidType(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    explicit WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure, Args &&...args)
+        : WeaklyCompressibleFluidType(std::forward<Args>(args)...),
           cutoff_pressure_(cutoff_pressure),
           cutoff_density_(WeaklyCompressibleFluidType::DensityFromPressure(cutoff_pressure))
     {

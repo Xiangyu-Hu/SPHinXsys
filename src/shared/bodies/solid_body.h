@@ -46,9 +46,9 @@ class SolidParticles;
 class SolidBody : public RealBody
 {
   public:
-    template <typename... ConstructorArgs>
-    SolidBody(ConstructorArgs &&...args)
-        : RealBody(std::forward<ConstructorArgs>(args)...)
+    template <typename... Args>
+    SolidBody(Args &&...args)
+        : RealBody(std::forward<Args>(args)...)
     {
         sph_system_.solid_bodies_.push_back(this);
         defineAdaptation<SPHAdaptation>(1.15);

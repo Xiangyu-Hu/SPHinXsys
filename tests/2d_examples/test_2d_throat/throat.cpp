@@ -151,33 +151,39 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_block_inner(fluid_block);
-    ComplexRelation fluid_block_complex(fluid_block_inner, {&wall_boundary});
+    ContactRelation fluid_block_contact(fluid_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&fluid_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation fluid_block_complex(fluid_block_inner, fluid_block_contact);
     //-------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
     // evaluation of density by summation approach
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
     // time step size without considering sound wave speed and viscosity
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
     // time step size with considering sound wave speed
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
     // pressure relaxation using verlet time stepping
-    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_complex);
+    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_complex);
+    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     // define external force
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_complex);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
     // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-        implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
+        implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
     // impose transport velocity
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_complex);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+        transport_velocity_correction(fluid_block_inner, fluid_block_contact);
     // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
     //----------------------------------------------------------------------
@@ -286,7 +292,6 @@ int main(int ac, char *av[])
         write_fluid_mechanical_energy.testResult();
         write_recorded_fluid_pressure.testResult();
     }
-
 
     return 0;
 }

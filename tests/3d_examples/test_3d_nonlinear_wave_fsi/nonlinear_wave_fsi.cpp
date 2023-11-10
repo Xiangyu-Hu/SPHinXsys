@@ -36,7 +36,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structure_fit);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(structure_adaptive_inner, true);
+    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
     SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
     /** Write the particle reload files. */
     ReloadParticleIO write_particle_reload_files(io_environment_fit, structure_fit);
@@ -130,19 +130,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation structure_inner(structure);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &structure});
+    ContactRelation water_block_contact(water_block, {&wall_boundary, &structure});
     ContactRelation structure_contact(structure, {&water_block});
     ContactRelation observer_contact_with_water(observer, {&water_block});
     ContactRelation observer_contact_with_structure(observer, {&structure});
     ContactRelation WMobserver_contact_with_water(WMobserver, {&water_block});
     ContactRelation WMobserver_contact_with_wall(WMobserver, {&wall_boundary});
-
     ContactRelation fp1_contact_s(fp1, {&structure});
     ContactRelation bp1_contact_s(bp1, {&structure});
-
     ContactRelation fp1_contact_w(fp1, {&water_block});
     ContactRelation bp1_contact_w(bp1, {&water_block});
-
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
@@ -152,20 +154,19 @@ int main(int ac, char *av[])
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
     /** time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** pressure relaxation using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> pressure_relaxation(water_block_complex);
-    // Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.1);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
     InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
+    /** pressure relaxation using Verlet time stepping. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);

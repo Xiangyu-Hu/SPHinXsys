@@ -1,7 +1,7 @@
 /**
 * @file 	particle_generator_single_resolution.cpp
-* @brief 	This is the test of using levelset to generate particles with single resolution and relax particles.
-* @details	We use this case to test the particle generation and relaxation by levelset for a complex geometry (2D).
+* @brief 	This is the test of using level set to generate particles with single resolution and relax particles.
+* @details	We use this case to test the particle generation and relaxation by level set for a complex geometry (2D).
 *			Before particle generation, we clean the level set, then do re-initialization.
 
 * @author 	Yongchuan Yu and Xiangyu Hu
@@ -68,7 +68,7 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     SimpleDynamics<RandomizeParticlePosition> random_input_body_particles(input_body);
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(input_body_inner, true);
+    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -101,7 +101,6 @@ int main(int ac, char *av[])
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;
-
 
     return 0;
 }

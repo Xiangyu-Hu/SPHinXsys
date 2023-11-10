@@ -16,7 +16,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
         {
             BaseParticles &base_particles = body->getBaseParticles();
             base_particles.computeDerivedVariables();
-            
+
             if (state_recording_)
             {
                 std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
@@ -50,7 +50,6 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 // write header of particles data
                 out_file << "   <PointData  Vectors=\"vector\">\n";
                 body->writeParticlesToVtpFile(out_file);
-
                 out_file << "   </PointData>\n";
 
                 // write empty cells
@@ -74,7 +73,6 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 out_file << "   </Verts>\n";
 
                 out_file << "  </Piece>\n";
-
                 out_file << " </PolyData>\n";
                 out_file << "</VTKFile>\n";
 

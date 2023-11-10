@@ -32,12 +32,13 @@
 
 #pragma once
 
-#include "fluid_boundary.h"
-#include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_complex_correction.hpp"
-#include "fluid_dynamics_inner.hpp"
-#include "fluid_dynamics_inner_correction.hpp"
-#include "fluid_dynamics_multi_phase.hpp"
-#include "fluid_surface_complex.h"
-#include "fluid_surface_inner.hpp"
-#include "transport_velocity_correction.h"
+#include "density_summation.hpp"
+#include "all_fluid_boundaries.h"
+#include "all_eulerian_fluid_dynamics.h"
+#include "fluid_integration.hpp"
+#include "fluid_time_step.h"
+#include "non_newtonian_dynamics.h"
+#include "shape_confinement.h"
+#include "transport_velocity_correction.hpp"
+#include "viscous_dynamics.hpp"
+#include "surface_tension.h"

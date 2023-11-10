@@ -22,10 +22,10 @@
  * ------------------------------------------------------------------------- */
 
 /**
-* @file 	diffusion_splitting_state.h
-* @brief 	This is the splitting method for solving state field in optimization problem.
-* @author   Bo Zhang and Xiangyu H
-*/
+ * @file 	diffusion_splitting_state.h
+ * @brief 	This is the splitting method for solving state field in optimization problem.
+ * @author   Bo Zhang and Xiangyu H
+ */
 
 #ifndef DIFFUSION_SPLITTING_STATE_H
 #define DIFFUSION_SPLITTING_STATE_H
@@ -35,58 +35,61 @@
 
 namespace SPH
 {
-	/**
-	 * @class TemperatureSplittingByPDEInner
-	 * @brief The temperature on each particle will be modified innerly to satisfy the PDEs.
-	 */
-	template <class ParticlesType, typename VariableType>
-	class TemperatureSplittingByPDEInner
-		: public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
-	{
-	public:
-		TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
-		virtual ~TemperatureSplittingByPDEInner(){};
-	
-	protected:
-		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-		virtual void updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
-		virtual void interaction(size_t index_i, Real dt = 0.0) override;
+/**
+ * @class TemperatureSplittingByPDEInner
+ * @brief The temperature on each particle will be modified innerly to satisfy the PDEs.
+ */
+template <class ParticlesType, typename VariableType>
+class TemperatureSplittingByPDEInner
+    : public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
+{
+  public:
+    TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
+    virtual ~TemperatureSplittingByPDEInner(){};
+
+  protected:
+    virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    virtual void updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
+    virtual void interaction(size_t index_i, Real dt = 0.0) override;
 };
 
-	/**
-	 * @class TemperatureSplittingByPDEWithBoundary
-	 * @brief The temperature on each particle will be modified with boundary to satisfy the PDEs.
-	 */
-	template <class ParticlesType, class ContactParticlesType, typename VariableType>
-	class TemperatureSplittingByPDEWithBoundary
-		: public TemperatureSplittingByPDEInner<ParticlesType, VariableType>,
-		  public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
-	{
-	public:
-		TemperatureSplittingByPDEWithBoundary(ComplexRelation &complex_relation, const std::string &variable_name);
-		virtual ~TemperatureSplittingByPDEWithBoundary(){};
+/**
+ * @class TemperatureSplittingByPDEWithBoundary
+ * @brief The temperature on each particle will be modified with boundary to satisfy the PDEs.
+ */
+template <class ParticlesType, class ContactParticlesType, typename VariableType>
+class TemperatureSplittingByPDEWithBoundary
+    : public TemperatureSplittingByPDEInner<ParticlesType, VariableType>,
+      public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
+{
+  public:
+    TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
+                                          BaseContactRelation &contact_relation,
+                                          const std::string &variable_name);
+    virtual ~TemperatureSplittingByPDEWithBoundary(){};
 
-	protected:
-		StdVec<StdLargeVec<VariableType> *> boundary_variable_;
-		StdVec<StdLargeVec<Real> *> boundary_heat_flux_;
-		StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
-		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
-	};
+  protected:
+    StdVec<StdLargeVec<VariableType> *> boundary_variable_;
+    StdVec<StdLargeVec<Real> *> boundary_heat_flux_;
+    StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
+    virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
+};
 
-	/**
-	 * @class UpdateTemperaturePDEResidual
-	 * @brief Update the global residual from temperature after one splitting loop finished.
-	 */
-	template <typename TemperatureSplittingType, typename BaseBodyRelationType, typename VariableType>
-        class UpdateTemperaturePDEResidual : public TemperatureSplittingType
-    {
-	public:
-		UpdateTemperaturePDEResidual(BaseBodyRelationType& body_relation, const std::string& variable_name);
-		virtual ~UpdateTemperaturePDEResidual() {};
+/**
+ * @class UpdateTemperaturePDEResidual
+ * @brief Update the global residual from temperature after one splitting loop finished.
+ */
+template <typename TemperatureSplittingType>
+class UpdateTemperaturePDEResidual : public TemperatureSplittingType
+{
+  public:
+    template <typename... Args>
+    UpdateTemperaturePDEResidual(Args &&...args);
+    virtual ~UpdateTemperaturePDEResidual(){};
 
-	protected:
-		virtual void interaction(size_t index_i, Real dt = 0.0) override;
-    };
-}
+  protected:
+    virtual void interaction(size_t index_i, Real dt = 0.0) override;
+};
+} // namespace SPH
 
-#endif //DIFFUSION_SPLITTING_STATE_H
+#endif // DIFFUSION_SPLITTING_STATE_H

@@ -95,6 +95,7 @@ class SelfSurfaceContactRelation : public BaseInnerRelation
     virtual void resetNeighborhoodCurrentSize() override;
 };
 
+class TreeBody;
 /**
  * @class TreeInnerRelation
  * @brief The relation within a reduced SPH body, viz. network
@@ -105,9 +106,7 @@ class TreeInnerRelation : public InnerRelation
     TreeBody &generative_tree_;
 
   public:
-    explicit TreeInnerRelation(RealBody &real_body)
-        : InnerRelation(real_body),
-          generative_tree_(DynamicCast<TreeBody>(this, real_body)){};
+    explicit TreeInnerRelation(RealBody &real_body);
     virtual ~TreeInnerRelation(){};
 
     virtual void updateConfiguration() override;

@@ -126,8 +126,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> free_ball_random_particles(free_ball);
         SimpleDynamics<RandomizeParticlePosition> damping_ball_random_particles(damping_ball);
-        relax_dynamics::RelaxationStepInner free_ball_relaxation_step_inner(free_ball_inner);
-        relax_dynamics::RelaxationStepInner damping_ball_relaxation_step_inner(damping_ball_inner);
+        relax_dynamics::RelaxationStepInner free_ball_relaxation_step(free_ball_inner);
+        relax_dynamics::RelaxationStepInner damping_ball_relaxation_step(damping_ball_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -146,8 +146,8 @@ int main(int ac, char *av[])
         int relax_step = 1000;
         while (ite < relax_step)
         {
-            free_ball_relaxation_step_inner.exec();
-            damping_ball_relaxation_step_inner.exec();
+            free_ball_relaxation_step.exec();
+            damping_ball_relaxation_step.exec();
             ite += 1;
             if (ite % 100 == 0)
             {

@@ -43,11 +43,18 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    ComplexRelation water_air_complex(water_block, {&air_block});
+    InnerRelation water_inner(water_block);
+    ContactRelation water_air_contact(water_block, {&air_block});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ComplexRelation air_water_complex(air_block, {&water_block});
+    InnerRelation air_inner(air_block);
+    ContactRelation air_water_contact(air_block, {&water_block});
     ContactRelation air_wall_contact(air_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, RealBodyVector{&water_block, &air_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation water_air_complex(water_inner, {&water_air_contact, &water_wall_contact});
+    ComplexRelation air_water_complex(air_inner, {&air_water_contact, &air_wall_contact});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -58,12 +65,12 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-        update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-        update_air_density_by_summation(air_wall_contact, air_water_complex);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(air_wall_contact, air_water_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
+        update_water_density_by_summation(water_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
+        update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
+        air_transport_correction(air_inner, air_water_contact, air_wall_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
@@ -71,15 +78,15 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
     /** Pressure relaxation for water by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemannWithWall>
-        water_pressure_relaxation(water_wall_contact, water_air_complex);
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-        water_density_relaxation(water_wall_contact, water_air_complex);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
+        water_pressure_relaxation(water_inner, water_air_contact, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
+        water_density_relaxation(water_inner, water_air_contact, water_wall_contact);
     /** Extend Pressure relaxation is used for air. */
-    Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
-        air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
-    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-        air_density_relaxation(air_wall_contact, air_water_complex);
+    Dynamics1Level<fluid_dynamics::ExtendedMultiPhaseIntegration1stHalfWithWallRiemann>
+        air_pressure_relaxation(air_inner, air_water_contact, ConstructorArgs(air_wall_contact, 2.0));
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
+        air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -142,7 +149,7 @@ int main(int ac, char *av[])
             Real Dt = SMIN(Dt_f, Dt_a);
 
             update_water_density_by_summation.exec();
-            update_air_density_by_summation.exec();
+            //            update_air_density_by_summation.exec();
 
             air_transport_correction.exec();
 
@@ -187,14 +194,11 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
 
             water_block.updateCellLinkedListWithParticleSort(100);
-            water_air_complex.updateConfiguration();
-            water_wall_contact.updateConfiguration();
-
             air_block.updateCellLinkedListWithParticleSort(100);
+            water_air_complex.updateConfiguration();
             air_water_complex.updateConfiguration();
-            air_wall_contact.updateConfiguration();
-
             fluid_observer_contact.updateConfiguration();
+
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 
@@ -219,7 +223,6 @@ int main(int ac, char *av[])
 
     write_water_mechanical_energy.testResult();
     write_recorded_pressure.testResult();
-
 
     return 0;
 }

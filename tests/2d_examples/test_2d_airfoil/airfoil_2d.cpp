@@ -72,16 +72,15 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
+    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step(airfoil_inner);
     SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(airfoil);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     random_airfoil_particles.exec(0.25);
-    relaxation_step_inner.SurfaceBounding().exec();
+    relaxation_step.SurfaceBounding().exec();
     update_smoothing_length_ratio.exec();
-    airfoil.updateCellLinkedList();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
@@ -94,7 +93,7 @@ int main(int ac, char *av[])
     while (ite_p < 2000)
     {
         update_smoothing_length_ratio.exec();
-        relaxation_step_inner.exec();
+        relaxation_step.exec();
         ite_p += 1;
         if (ite_p % 100 == 0)
         {

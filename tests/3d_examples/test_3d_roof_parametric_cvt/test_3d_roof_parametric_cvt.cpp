@@ -20,13 +20,13 @@ void relax_shell(RealBody &plate_body, Real thickness)
 
     InnerRelation imported_model_inner(plate_body);
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(plate_body);
-    relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner);
+    relax_dynamics::ShellRelaxationStep relaxation_step_inner(imported_model_inner);
     relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_imported_model_particles.exec(0.25);
-    relaxation_step_inner.mid_surface_bounding_.exec();
+    relaxation_step_inner.MidSurfaceBounding().exec();
     plate_body.updateCellLinkedList();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
