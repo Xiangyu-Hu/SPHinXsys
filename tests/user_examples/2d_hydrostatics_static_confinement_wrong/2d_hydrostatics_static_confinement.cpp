@@ -90,7 +90,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> fluid_pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_block_inner);
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, gravity_g));
     //SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
@@ -166,7 +166,7 @@ int main(int ac, char *av[])
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
             
-            transport_velocity_correction.exec();
+            //transport_velocity_correction.exec();
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;

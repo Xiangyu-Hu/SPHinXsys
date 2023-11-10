@@ -8,6 +8,7 @@
 #include "body_part_by_cell_tracing.h"
 #include "level_set_confinement.h"
 #include "math.h"
+#include "time_step_size_moving_velocity.h"
 using namespace SPH;
 
 // general parameters for geometry
@@ -34,6 +35,7 @@ Vecd axis_point_2 (0.0, 0.0, 0.5 * LW);
 
 Vecd ball_center(0.0, 0.0, 0.0);
 Real ball_radius = 5.0;
+Real angular_velocity = 0.2 * Pi;
 //	define the water block shape
 class WaterBlock : public ComplexShape
 {
@@ -48,8 +50,8 @@ class WaterBlock : public ComplexShape
         add<GeometricShapeBox>(halfsize_water);
         //subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
         //subtract<TransformShape<GeometricShapeBox>>(Transform(translation_start_point), halfsize_cubic);
-        //subtract<GeometricShapeBox>(halfsize_cubic);
-        subtract<GeometricShapeBall>(ball_center, ball_radius);
+        subtract<GeometricShapeBox>(halfsize_cubic);
+        //subtract<GeometricShapeBall>(ball_center, ball_radius);
     }
 };
 //	define the static solid wall boundary shape
@@ -80,8 +82,8 @@ class Cubic : public ComplexShape
         Transform translation_water(halfsize_water);
         //add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_cubic);
         //add<TransformShape<GeometricShapeBox>>(Transform(translation_start_point), halfsize_cubic);
-        //add<GeometricShapeBox>(halfsize_cubic);
-        add<GeometricShapeBall>(ball_center, ball_radius);
+        add<GeometricShapeBox>(halfsize_cubic);
+        //add<GeometricShapeBall>(ball_center, ball_radius);
     }
 };
 
@@ -288,8 +290,10 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
     //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    //ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeMovingVelocity> get_fluid_advection_time_step_size(water_block, U_f, angular_velocity);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSizeMovingVelocity> get_fluid_time_step_size(water_block, angular_velocity, 0.2);
     //SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 
@@ -299,7 +303,7 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinementGeneral confinement_condition_wall(near_surface_wall);
 
     //RotationMovement circle_movement(axis_point_1, axis_point_2, 0.2*Pi);
-    ThreeDRotation circle_movement(axis_point_1, axis_point_2, 0.05*Pi);
+    ThreeDRotation circle_movement(axis_point_1, axis_point_2, angular_velocity);
     //HorizontalMovement horizaontal_movement;
     NearShapeSurfaceTracing near_surface_cubic(water_block, makeShared<InverseShape<Cubic>>("Cubic"), circle_movement);
     near_surface_cubic.level_set_shape_.writeLevelSet(io_environment);
@@ -363,7 +367,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            //viscous_acceleration.exec();
+            viscous_acceleration.exec();
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
