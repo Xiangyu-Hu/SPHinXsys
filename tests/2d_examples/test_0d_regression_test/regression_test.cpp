@@ -247,9 +247,6 @@ int main(int ac, char *av[])
     setup_diffusion_initial_condition.exec();
     left_boundary_condition.exec();
     other_boundary_condition.exec();
-    /** Output global basic parameters. */
-    write_states.writeToFile(0);
-    write_solid_temperature.writeToFile(0);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -264,6 +261,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_states.writeToFile(0);
+    io_environment.writeAllObservables(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -293,8 +295,7 @@ int main(int ac, char *av[])
 
                 if (ite % 100 == 0)
                 {
-                    write_solid_temperature.writeToFile(ite);
-                    write_solid_average_temperature_part.writeToFile(ite);
+                    io_environment.writeAllObservables(ite);
                     write_states.writeToFile(ite);
                 }
             }
@@ -310,7 +311,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     //----------------------------------------------------------------------
     //	@ensemble_average_method.
-    //	The first argument is the threshold of meanvalue convergence.
+    //	The first argument is the threshold of mean value convergence.
     //	The second argument is the threshold of variance convergence.
     //----------------------------------------------------------------------
     write_solid_temperature.generateDataBase(0.001, 0.001);

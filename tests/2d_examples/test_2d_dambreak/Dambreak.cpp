@@ -151,8 +151,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_water_mechanical_energy.writeToFile(number_of_iterations);
-    write_recorded_water_pressure.writeToFile(number_of_iterations);
+    io_environment.writeAllObservables(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -193,8 +192,7 @@ int main(int ac, char *av[])
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_water_mechanical_energy.writeToFile(number_of_iterations);
-                    write_recorded_water_pressure.writeToFile(number_of_iterations);
+                    io_environment.writeAllObservables(number_of_iterations);
                 }
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);

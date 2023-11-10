@@ -257,8 +257,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_fluid_mechanical_energy.writeToFile(number_of_iterations);
-                    write_recorded_fluid_pressure.writeToFile(number_of_iterations);
+                    io_environment.writeAllObservables(number_of_iterations);
                 }
             }
             number_of_iterations++;

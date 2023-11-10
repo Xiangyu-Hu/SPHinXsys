@@ -119,10 +119,9 @@ class ReducedQuantityRecording : public BaseIO
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    template <class DynamicsIdentifier, typename... Args>
-    ReducedQuantityRecording(IOEnvironment &io_environment, DynamicsIdentifier &identifier, Args &&...args)
-        : BaseIO(io_environment, identifier), plt_engine_(),
-          reduce_method_(identifier, std::forward<Args>(args)...),
+    template <typename... Args>
+    ReducedQuantityRecording(IOEnvironment &io_environment, Args &&...args)
+        : BaseIO(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {

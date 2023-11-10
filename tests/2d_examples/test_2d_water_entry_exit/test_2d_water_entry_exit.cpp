@@ -327,9 +327,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the wetting diffusion dynamics used in the simulation.
     //----------------------------------------------------------------------
-    SimpleDynamics<WettingFluidBodyInitialCondition> Wetting_water_initial_condition(water_block);
-    SimpleDynamics<WettingWallBodyInitialCondition> Wetting_wall_initial_condition(wall_boundary);
-    SimpleDynamics<WettingCylinderBodyInitialCondition> Wetting_cylinder_initial_condition(cylinder);
+    SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
+    SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
+    SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
     GetDiffusionTimeStepSize<DiffusionCylinderParticles> get_thermal_time_step(cylinder);
     CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
     //----------------------------------------------------------------------
@@ -399,9 +399,9 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     cylinder_normal_direction.exec();
-    Wetting_water_initial_condition.exec();
-    Wetting_wall_initial_condition.exec();
-    Wetting_cylinder_initial_condition.exec();
+    wetting_water_initial_condition.exec();
+    wetting_wall_initial_condition.exec();
+    wetting_cylinder_initial_condition.exec();
     Real dt_thermal = get_thermal_time_step.exec();
     free_stream_surface_indicator.exec();
     //----------------------------------------------------------------------
@@ -439,8 +439,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_cylinder_displacement.writeToFile(number_of_iterations);
-    write_cylinder_wetting.writeToFile(number_of_iterations);
+    io_environment.writeAllObservables(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -494,8 +493,7 @@ int main(int ac, char *av[])
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_cylinder_displacement.writeToFile(number_of_iterations);
-                    write_cylinder_wetting.writeToFile(number_of_iterations);
+                    io_environment.writeAllObservables(number_of_iterations);
                 }
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);
