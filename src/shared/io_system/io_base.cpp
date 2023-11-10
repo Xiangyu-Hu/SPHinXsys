@@ -55,6 +55,17 @@ ParameterizationIO &IOEnvironment::defineParameterizationIO()
     return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
 }
 //=============================================================================================//
+void IOEnvironment::addObservableIO(BaseIO *base_io)
+{
+    all_observables_.push_back(base_io);
+}
+//=============================================================================================//
+void IOEnvironment::writeAllObservables(size_t iteration_step)
+{
+    std::for_each(all_observables_.begin(), all_observables_.end(), [&](BaseIO *base_io)
+                  { base_io->writeToFile(iteration_step); });
+}
+//=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
     int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);

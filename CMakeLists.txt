@@ -28,11 +28,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 add_library(sphinxsys_core INTERFACE)
 
 # ------ Local properties
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_features(sphinxsys_core INTERFACE cxx_std_20) # Requires a compiler supporting at least C++20 in MSVC
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
-endif()
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+
 # ## Generic properties below enabled for INTERFACE targets only for CMake>=3.19
 # set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
 # set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional

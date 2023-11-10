@@ -63,6 +63,8 @@ class ObservedQuantityRecording : public BodyStatesRecording,
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
+        io_environment_.addObservableIO(this); // Register for collective output
+
         /** Output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
@@ -102,10 +104,9 @@ class ObservedQuantityRecording : public BodyStatesRecording,
  * @brief write reduced quantity of a body
  */
 template <class LocalReduceMethodType>
-class ReducedQuantityRecording
+class ReducedQuantityRecording : public BaseIO
 {
   protected:
-    IOEnvironment &io_environment_;
     PltEngine plt_engine_;
     ReduceDynamics<LocalReduceMethodType> reduce_method_;
     std::string dynamics_identifier_name_;
@@ -118,12 +119,15 @@ class ReducedQuantityRecording
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    template <typename... Args>
-    ReducedQuantityRecording(IOEnvironment &io_environment, Args &&...args)
-        : io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
+    template <class DynamicsIdentifier, typename... Args>
+    ReducedQuantityRecording(IOEnvironment &io_environment, DynamicsIdentifier &identifier, Args &&...args)
+        : BaseIO(io_environment, identifier), plt_engine_(),
+          reduce_method_(identifier, std::forward<Args>(args)...),
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {
+        io_environment_.addObservableIO(this); // Register for collective output
+
         /** output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name_ + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
@@ -135,7 +139,7 @@ class ReducedQuantityRecording
     };
     virtual ~ReducedQuantityRecording(){};
 
-    virtual void writeToFile(size_t iteration_step = 0)
+    virtual void writeToFile(size_t iteration_step = 0) override
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << GlobalStaticVariables::physical_time_ << "   ";
