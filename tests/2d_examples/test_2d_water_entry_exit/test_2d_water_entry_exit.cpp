@@ -439,7 +439,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    io_environment.writeAllObservables(number_of_iterations);
+    write_cylinder_displacement.writeToFile(number_of_iterations);
+    write_cylinder_wetting.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -493,7 +494,8 @@ int main(int ac, char *av[])
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    io_environment.writeAllObservables(number_of_iterations);
+                    write_cylinder_displacement.writeToFile(number_of_iterations);
+                    write_cylinder_wetting.writeToFile(number_of_iterations);
                 }
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);

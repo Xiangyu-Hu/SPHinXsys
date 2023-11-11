@@ -177,7 +177,7 @@ int main(int ac, char *av[])
 
             if (number_of_iterations % screen_output_interval == 0)
             {
-                io_environment.writeAllObservables(number_of_iterations);
+                write_maximum_speed.writeToFile(number_of_iterations);
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	dt = " << dt << "\n";

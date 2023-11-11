@@ -250,7 +250,7 @@ int main(int ac, char *av[])
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile();
-    io_environment.writeAllObservables(number_of_iterations);
+    write_beam_tip_displacement.writeToFile(number_of_iterations);
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
@@ -282,7 +282,7 @@ int main(int ac, char *av[])
         }
 
         TickCount t2 = TickCount::now();
-        io_environment.writeAllObservables(number_of_iterations);
+        write_beam_tip_displacement.writeToFile(number_of_iterations);
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

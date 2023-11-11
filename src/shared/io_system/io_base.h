@@ -64,11 +64,6 @@ class IOEnvironment
     explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
     virtual ~IOEnvironment(){};
     ParameterizationIO &defineParameterizationIO();
-    void addObservableIO(BaseIO *base_io);
-    void writeAllObservables(size_t iteration_step);
-
-  protected:
-    StdVec<BaseIO *> all_observables_;
 };
 
 /**

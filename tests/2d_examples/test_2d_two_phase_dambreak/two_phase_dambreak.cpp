@@ -126,7 +126,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    io_environment.writeAllObservables(number_of_iterations);
+    write_water_mechanical_energy.writeToFile(number_of_iterations);
+    write_recorded_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -181,7 +182,8 @@ int main(int ac, char *av[])
 
                 if (number_of_iterations != 0 && number_of_iterations % observation_sample_interval == 0)
                 {
-                    io_environment.writeAllObservables(number_of_iterations);
+                    write_water_mechanical_energy.writeToFile(number_of_iterations);
+                    write_recorded_pressure.writeToFile(number_of_iterations);
                 }
             }
             number_of_iterations++;

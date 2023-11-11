@@ -231,7 +231,7 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
             }
-            io_environment.writeAllObservables(ite);
+            write_ball_center_displacement.writeToFile(ite);
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(ite);

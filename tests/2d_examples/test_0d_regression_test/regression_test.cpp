@@ -262,7 +262,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile(0);
-    io_environment.writeAllObservables(ite);
+    write_solid_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -292,7 +292,7 @@ int main(int ac, char *av[])
 
                 if (ite % 100 == 0)
                 {
-                    io_environment.writeAllObservables(ite);
+                    write_solid_temperature.writeToFile(ite);
                     write_states.writeToFile(ite);
                 }
             }

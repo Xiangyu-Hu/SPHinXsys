@@ -63,8 +63,6 @@ class ObservedQuantityRecording : public BodyStatesRecording,
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
-        io_environment_.addObservableIO(this); // Register for collective output
-
         /** Output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
@@ -125,8 +123,6 @@ class ReducedQuantityRecording : public BaseIO
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {
-        io_environment_.addObservableIO(this); // Register for collective output
-
         /** output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name_ + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
