@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     SurfaceContactRelation ball_contact(ball, {&rigid_shell});
     ContactRelation ball_observer_contact(ball_observer, {&ball});
     //----------------------------------------------------------------------
-    //	Define the simulation methods used in the simulation.
+    //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TimeStepInitialization> ball_initialize_time_step(ball, makeShared<Gravity>(gravity));
