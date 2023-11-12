@@ -293,6 +293,7 @@ int main(int ac, char *av[])
                 if (ite % 100 == 0)
                 {
                     write_solid_temperature.writeToFile(ite);
+                    write_solid_average_temperature_part.writeToFile(ite);
                     write_states.writeToFile(ite);
                 }
             }
