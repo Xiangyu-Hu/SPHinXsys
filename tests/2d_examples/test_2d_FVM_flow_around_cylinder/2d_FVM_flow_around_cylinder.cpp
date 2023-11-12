@@ -4,27 +4,102 @@
  * @details We consider a flow passing by a cylinder in 2D in FVM framework.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-
-#include "2d_FVM_flow_around_cylinder.h"
+#include "common_weakly_compressible_FVM_classes.h"
 #include "sphinxsys.h"
 using namespace SPH;
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
+Real DL = 50.0;                  /**< Channel length. */
+Real DH = 30.0;                  /**< Channel height. */
+Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
+Real DL_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
+Real DH_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
+Real cylinder_radius = 1.0;      /**< Radius of the cylinder. */
+//----------------------------------------------------------------------
+//	Material properties of the fluid.
+//----------------------------------------------------------------------
+Real rho0_f = 1.0;                                       /**< Density. */
+Real U_f = 1.0;                                          /**< freestream velocity. */
+Real c_f = 10.0 * U_f;                                   /**< Speed of sound. */
+Real Re = 100.0;                                         /**< Reynolds number. */
+Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity. */
+//----------------------------------------------------------------------
+//	Set the file path to the data file.
+//----------------------------------------------------------------------
+std::string ansys_mesh_file_path = "./input/fluent_0.3.msh";
+//----------------------------------------------------------------------
+//	Define geometries and body shapes
+//----------------------------------------------------------------------
+std::vector<Vecd> createWaterBlockShape()
+{
+    std::vector<Vecd> water_block_shape;
+    water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
+    water_block_shape.push_back(Vecd(-DL_sponge, DH + DH_sponge));
+    water_block_shape.push_back(Vecd(DL, DH + DH_sponge));
+    water_block_shape.push_back(Vecd(DL, -DH_sponge));
+    water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
+
+    return water_block_shape;
+}
+class WaterBlock : public ComplexShape
+{
+  public:
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        MultiPolygon water_block(createWaterBlockShape());
+        add<MultiPolygonShape>(water_block, "WaterBlock");
+    }
+};
+//----------------------------------------------------------------------
+//	Case dependent boundary condition
+//----------------------------------------------------------------------
+class FACBoundaryConditionSetup : public BoundaryConditionSetupInFVM
+{
+  public:
+    FACBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
+        : BoundaryConditionSetupInFVM(inner_relation, each_boundary_type_with_all_ghosts_index,
+                                      each_boundary_type_with_all_ghosts_eij_, each_boundary_type_contact_real_index),
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())){};
+    virtual ~FACBoundaryConditionSetup(){};
+
+    void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) override
+    {
+        vel_[ghost_index] = -vel_[index_i];
+        p_[ghost_index] = p_[index_i];
+        rho_[ghost_index] = rho_[index_i];
+    }
+    void applyFarFieldBoundary(size_t ghost_index) override
+    {
+        Vecd far_field_velocity(1.0, 0.0);
+        Real far_field_density = 1.0;
+        Real far_field_pressure = fluid_.getPressure(far_field_density);
+
+        vel_[ghost_index] = far_field_velocity;
+        p_[ghost_index] = far_field_pressure;
+        rho_[ghost_index] = far_field_density;
+    }
+
+  protected:
+    Fluid &fluid_;
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    // read data from ANSYS mesh.file
-    ANSYSMesh ansys_mesh(ansys_mesh_file_path);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
+    BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
+    ANSYSMesh ansys_mesh(ansys_mesh_file_path);
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
@@ -42,14 +117,11 @@ int main(int ac, char *av[])
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 200.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 200.0);
-    /** Boundary conditions set up */
     FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
-    /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, ansys_mesh.min_distance_between_nodes_);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
-
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
@@ -58,7 +130,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    // visualization in FVM with data in cell
     BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, water_block, ansys_mesh);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
@@ -124,6 +195,7 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+
     write_total_viscous_force_on_inserted_body.testResult();
 
     return 0;

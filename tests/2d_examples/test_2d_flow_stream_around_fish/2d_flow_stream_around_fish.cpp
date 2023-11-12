@@ -1,7 +1,7 @@
 /**
- * @file    2d_flow_stream_around_fish.cpp
- * @brief   fish swimming driven by active muscles
- * @author  Yaru Ren and Xiangyu Hu
+ * @file 2d_flow_stream_around_fish.cpp
+ * @brief fish swimming driven by active muscles
+ * @author Yaru Ren and Xiangyu Hu
  */
 #include "2d_flow_stream_around_fish.h"
 #include "sphinxsys.h"
@@ -12,26 +12,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
+    BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     // handle command line arguments
-#ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
-#endif
     //----------------------------------------------------------------------
-    //	Creating body, materials and particles.
-    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
-    /**
-     * @brief   Particles and body creation for fish.
-     */
+
     SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
@@ -45,8 +41,6 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fish_inner(fish_body);
     InnerRelation water_block_inner(water_block);
@@ -62,26 +56,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        /**
-         * @brief 	Methods used for particle relaxation.
-         */
-        /** Random reset the insert body particle position. */
+        //----------------------------------------------------------------------
+        //	Methods used for particle relaxation.
+        //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
-        /** Write the body state to Vtp file. */
         BodyStatesRecordingToVtp write_fish_body(io_environment, fish_body);
-        /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(io_environment, {&fish_body});
-
-        /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_inner);
-        /**
-         * @brief 	Particle relaxation starts here.
-         */
+        //----------------------------------------------------------------------
+        //	Particle relaxation starts here.
+        //----------------------------------------------------------------------
         random_fish_body_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
         write_fish_body.writeToFile();
 
-        /** relax particles of the insert body. */
         int ite_p = 0;
         while (ite_p < 1000)
         {
@@ -94,8 +82,6 @@ int main(int ac, char *av[])
             }
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
-
-        /** Output results. */
         write_particle_reload_files.writeToFile();
         return 0;
     }
@@ -104,17 +90,14 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<TimeDependentAcceleration>(Vec2d::Zero()));
-    BodyAlignedBoxByParticle emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
     /** Emitter buffer inflow condition. */
-    BodyAlignedBoxByCell emitter_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
-    BodyAlignedBoxByCell disposer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
+    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
-    /** time-space method to detect surface particles. */
+    /** Time-space method to detect surface particles. */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
     /** Evaluation of density by freestream approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_inner, water_block_contact);
@@ -129,7 +112,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
     /** Pressure relaxation using verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    /** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
+    /** Correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
     pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
