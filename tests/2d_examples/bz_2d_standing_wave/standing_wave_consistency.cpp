@@ -5,16 +5,16 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
-#define PI 3.1415926
+#define PI 3.141592653
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.0;                      /**< Tank length. */
-Real DH = 2.0;                      /**< Tank height. */
-Real LL = 2.0;                      /**< Liquid column length. */
-Real LH = 1.0;                      /**< Liquid column height. */
+Real DL = 2.0;                        /**< Tank length. */
+Real DH = 2.0;                        /**< Tank height. */
+Real LL = 2.0;                        /**< Liquid column length. */
+Real LH = 1.0;                        /**< Liquid column height. */
 Real particle_spacing_ref = 0.0025;   /**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
+Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -124,6 +124,8 @@ int main(int ac, char* av[])
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.addBodyStateForRecording<Real>("Pressure");
+    water_block.addBodyStateForRecording<Real>("Density");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
@@ -151,7 +153,7 @@ int main(int ac, char* av[])
         /**
          * @brief 	Methods used for particle relaxation.
          */
-         /** Random reset the insert body particle position. */
+        /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         SimpleDynamics<RandomizeParticlePosition> random_wall_body_particles(wall_boundary);
         /** Write the body state to Vtp file. */
@@ -197,21 +199,15 @@ int main(int ac, char* av[])
      /** time-space method to detect surface particles. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrectWithWall> fluid_pressure_relaxation_consistency_correct(water_block_complex);
-
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation_consistency(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
-    InteractionWithUpdate<ConsistencyCorrectedConfigurationComplex> consistency_corrected_configuration_fluid(water_block_complex, 0.1);
-
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.1);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    /** We can output a method-specific particle data for debug */
-    water_block.addBodyStateForRecording<Real>("Pressure");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -278,13 +274,9 @@ int main(int ac, char* av[])
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
-
-            //configuration_fluid.exec();
-            //corrected_configuration_fluid.exec(); //WKGC2
-            consistency_corrected_configuration_fluid.exec(); //WKGC1
+            corrected_configuration_fluid.exec();
 
             interval_computing_time_step += TickCount::now() - time_instance;
-
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
@@ -295,8 +287,7 @@ int main(int ac, char* av[])
 
                 //fluid_pressure_relaxation.exec(acoustic_dt);
                 //fluid_pressure_relaxation_correct.exec(acoustic_dt);
-                fluid_pressure_relaxation_consistency_correct.exec(acoustic_dt);
-
+                fluid_pressure_relaxation_consistency.exec(acoustic_dt);
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -356,7 +347,6 @@ int main(int ac, char* av[])
         write_water_mechanical_energy.testResult();
         wave_probe.testResult();
     }
-
 
     return 0;
 };

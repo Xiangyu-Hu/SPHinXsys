@@ -42,18 +42,18 @@ void BaseIntegration1stHalfCorrect<RiemannSolverType>::interaction(size_t index_
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-BaseIntegration1stHalfConsistencyCorrect<RiemannSolverType>::BaseIntegration1stHalfConsistencyCorrect(BaseInnerRelation& inner_relation)
+BaseIntegration1stHalfConsistency<RiemannSolverType>::BaseIntegration1stHalfConsistency(BaseInnerRelation& inner_relation)
     : BaseIntegration1stHalf<RiemannSolverType>(inner_relation),
     B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity())) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration1stHalfConsistencyCorrect<RiemannSolverType>::initialization(size_t index_i, Real dt)
+void BaseIntegration1stHalfConsistency<RiemannSolverType>::initialization(size_t index_i, Real dt)
 {
     BaseIntegration1stHalf<RiemannSolverType>::initialization(index_i, dt);
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration1stHalfConsistencyCorrect<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void BaseIntegration1stHalfConsistency<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);

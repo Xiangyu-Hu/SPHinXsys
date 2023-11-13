@@ -11,7 +11,7 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 Real DL = 1.0;                     /**< box length. */
 Real DH = 1.0;                     /**< box height. */
-Real resolution_ref = 1.0 / 100;  /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 100;   /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -101,9 +101,8 @@ int main(int ac, char* av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(io_environment, { &water_block });
         /** A  Physics relaxation step. */
-        InteractionWithUpdate<ConfigurationInner> configuration_fluid(water_block_inner);
-        relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner(water_block_inner);
-        relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_cm_inner(water_block_inner);
+        InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_block_inner);
+        relax_dynamics::RelaxationStepInnerImplicit relaxation_step_inner(water_block_inner);
         PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
         PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
         //----------------------------------------------------------------------
@@ -124,8 +123,9 @@ int main(int ac, char* av[])
             periodic_condition_x.update_cell_linked_list_.exec();
             periodic_condition_y.update_cell_linked_list_.exec();
             water_block_inner.updateConfiguration();
-            configuration_fluid.exec();
-            relaxation_step_cm_inner.exec();
+            kernel_correction_matrix.exec();
+            relaxation_step_inner.exec();
+
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
@@ -150,7 +150,6 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
     SimpleDynamics<TimeStepInitialization> time_step_initialization(water_block);
-
     /** Pressure relaxation algorithm by using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous.
      * The other reason is that we are using transport velocity formulation,
@@ -161,8 +160,7 @@ int main(int ac, char* av[])
     /** Density relaxation algorithm by using verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
 
-    InteractionWithUpdate<ConfigurationInner> configuration_fluid(water_block_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_block_inner, 0.3);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_inner(water_block_inner);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
@@ -222,7 +220,7 @@ int main(int ac, char* av[])
             update_density_by_summation.exec();
             viscous_acceleration.exec();
 
-            configuration_fluid.exec();
+            kernel_correction_inner.exec();
             //transport_velocity_correction.exec();
             transport_velocity_consistency.exec();
 

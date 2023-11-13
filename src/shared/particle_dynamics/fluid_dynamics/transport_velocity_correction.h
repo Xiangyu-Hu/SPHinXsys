@@ -170,16 +170,16 @@ class TransportVelocityCorrectionComplexAdaptive
  * @class TransportVelocityConsistencyCorrectionInner
  */
 template <class ParticleScopeType>
-class TransportVelocityConsistencyCorrectionInner : public LocalDynamics, public FluidDataInner
+class TransportVelocityConsistencyInner : public LocalDynamics, public FluidDataInner
 {
 public:
-    explicit TransportVelocityConsistencyCorrectionInner(BaseInnerRelation& inner_relation, Real coefficient = 0.2)
+    explicit TransportVelocityConsistencyInner(BaseInnerRelation& inner_relation, Real coefficient = 0.2)
         : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-        pos_(particles_->pos_), B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")),
+        pos_(particles_->pos_), B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")),
         indicator_(*particles_->getVariableByName<int>("Indicator")),
         smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
         coefficient_(coefficient), checkWithinScope(particles_) {};
-    virtual ~TransportVelocityConsistencyCorrectionInner() {};
+    virtual ~TransportVelocityConsistencyInner() {};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -210,19 +210,19 @@ protected:
 };
 
 template <class ParticleScopeType>
-class TransportVelocityConsistencyCorrectionComplex
-    : public BaseInteractionComplex<TransportVelocityConsistencyCorrectionInner<ParticleScopeType>, FluidContactOnly>
+class TransportVelocityConsistencyComplex
+    : public BaseInteractionComplex<TransportVelocityConsistencyInner<ParticleScopeType>, FluidContactOnly>
 {
 public:
     template <typename... Args>
-    TransportVelocityConsistencyCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityConsistencyCorrectionInner<ParticleScopeType>, FluidContactOnly>(
+    TransportVelocityConsistencyComplex(Args &&...args)
+        : BaseInteractionComplex<TransportVelocityConsistencyInner<ParticleScopeType>, FluidContactOnly>(
             std::forward<Args>(args)...) {};
-    virtual ~TransportVelocityConsistencyCorrectionComplex() {};
+    virtual ~TransportVelocityConsistencyComplex() {};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
-        TransportVelocityConsistencyCorrectionInner<ParticleScopeType>::interaction(index_i, dt);
+        TransportVelocityConsistencyInner<ParticleScopeType>::interaction(index_i, dt);
 
         if (this->checkWithinScope(index_i))
         {

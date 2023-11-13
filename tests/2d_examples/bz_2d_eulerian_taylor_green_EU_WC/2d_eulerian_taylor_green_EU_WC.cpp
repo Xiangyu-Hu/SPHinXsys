@@ -4,7 +4,7 @@
  * @details 2D eulerian_taylor_green vortex flow example.
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
-#include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for compressible fluid only.
+#include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for fluid.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -129,7 +129,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------  
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
-        random_water_body_particles.exec(0.15);
+        random_water_body_particles.exec(0.25);
         sph_system.initializeSystemCellLinkedLists();
         periodic_condition_x.update_cell_linked_list_.exec();
         periodic_condition_y.update_cell_linked_list_.exec();
@@ -144,19 +144,18 @@ int main(int ac, char *av[])
         int ite = 0; //iteration step for the total relaxation step.
         GlobalStaticVariables::physical_time_ = ite;
         /* The procedure to obtain uniform particle distribution that satisfies the 0ht order consistency. */
-        while (water_block_kinetic_energy > 1e-8)
+        while (water_block_kinetic_energy > 1e-5)
         {
             kernel_correction_inner.exec();
             relaxation_step_inner.exec();
-
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
             water_body.updateCellLinkedList();
             periodic_condition_x.update_cell_linked_list_.exec();
             periodic_condition_y.update_cell_linked_list_.exec();
             water_body_inner.updateConfiguration();
+            
             ite++;
-
             if (ite % 100 == 0)
             {
                 update_water_block_kinetic_energy.exec();
