@@ -8,14 +8,14 @@ First we check if the shell particle itself is in the support of fluid particle 
 
 Then we calculate the contribution of the k-th ghost particle. The distance between ghost particles is the reference spacing of shell $dp_s$. The position of the k-th particle is then:
 
-$$\mathbf{r}_{ij}^k=\mathbf{r}_{ij}^0 + k\cdot dp_s \cdot \mathbf{n}_j=\mathbf{r}_{ij}^{k-1}+dp_s \cdot \mathbf{n}$$
+$$\mathbf{r_{ij}^k}=\mathbf{r_{ij}^0} + k\cdot dp_s \cdot \mathbf{n_j}=\mathbf{r_{ij}^{k-1}}+dp_s \cdot \mathbf{n}$$
 
-where $\mathbf{n}_j$ is the corrected normal direction of shell particle j, which points from fluid to shell, i.e. opposite to $\mathbf{e}_{ij}$. If $e_{ij} \cdot n_j=-1$, $\mathbf{n}_{corrected} = \mathbf{n}_j$. If $e_{ij} \cdot n_j=1 \text{ or } 0$, $\mathbf{n}_{corrected} = -\mathbf{n}_j$.
+where $\mathbf{n_j}$ is the corrected normal direction of shell particle j, which points from fluid to shell, i.e. opposite to $\mathbf{e_{ij}}$. If $\mathbf{e_{ij}} \cdot \mathbf{n_j}=-1$, $\mathbf{n_{corrected}} = \mathbf{n_j}$. If $\mathbf{e_{ij}} \cdot \mathbf{n_j}=1 \text{ or } 0$, $\mathbf{n_{corrected}} = -\mathbf{n_j}$.
 
-If the distance $r_{ij}^k=\|\mathbf{r}_{ij}^k\|$ is less than the cut-off radius of fluid particle, we will sum up the force provided by this ghost particle $\nabla W_{ij}^nA_j$. The process is repeated until $r_{ij}^N$ becomes greater than the cut-off radius. Then the equavilent force can be calculated as:
+If the distance $r_{ij}^k=\|\mathbf{r_{ij}^k}\|$ is less than the cut-off radius of fluid particle, we will sum up the force provided by this ghost particle $\nabla W_{ij}^nA_j$. The process is repeated until $r_{ij}^N$ becomes greater than the cut-off radius. Then the equavilent force can be calculated as:
 
 $$\overline{dW_{ij}A_j}=\sum_{k=0}^N dW_{ij}^k A_j^k$$
-$$\overline{\mathbf{e}_{ij}}=\frac{\sum_{k=0}^N dW_{ij}^k A_j^k\mathbf{e}_{ij}^k}{\sum_{k=0}^N dW_{ij}^k A_j^k}$$
+$$\overline{\mathbf{e_{ij}}}=\frac{\sum_{k=0}^N dW_{ij}^k A_j^k\mathbf{e_{ij}^k}}{\sum_{k=0}^N dW_{ij}^k A_j^k}$$
 
 To transform the area to volume, we have:
 $$\overline{dW_{ij}V_j}=\overline{dW_{ij}A_j} \cdot dp_s$$
@@ -51,8 +51,9 @@ Here $\nabla^0$ is the gradient in the initial global coordinate.
 
 Note that the bending deformation tensor in the current global configuration is defined as:
 
-$$\mathbb{F}_2=-\sum_j[(\mathbf{n}_i-\mathbf{n}_i^0)-(\mathbf{n}_j-\mathbf{n}_j^0)] \times \nabla^0W_{ij}V_j^0
-=\nabla^0{\mathbf{n}}-\nabla^0{\mathbf{n}^0}$$
+$$\mathbb{F}_2=-\sum_j [(\mathbf{n_i}-\mathbf{n_i^0})-(\mathbf{n_j}-\mathbf{n_j^0})]$$
+
+$$ \times \nabla^0W_{ij}V_j^0 =\nabla^0{\mathbf{n}}-\nabla^0{\mathbf{n}^0}$$
 
 The $\mathbf{n}$ used in the calculation of bending deformation is actually the pseudo normal, but here we assume that the changing of real and pseudo normal is very close to each other.
 
@@ -66,10 +67,12 @@ Calculating in the initial global configuration instead of the current one will 
 
 The gradient in the current configuration can be computed by:
 
-$$\nabla{\mathbf{n}}=(F_1^{-T}\nabla^0){\mathbf{n}}=-\sum_j(\mathbf{n}_i-\mathbf{n}_j)
- \times F_m^{-T} \cdot \mathbf{e}_{ij}^0dW_{ij}^0V_j^0=
--\sum_j(\mathbf{n}_i-\mathbf{n}_j)
- \cdot [dW_{ij}^0V_j^0(\mathbf{e}_{ij}^0)^T \cdot F_m^{-1}] $$
+$$\nabla{\mathbf{n}}=(F_1^{-T}\nabla^0){\mathbf{n}}$$
+
+$$=-\sum_j(\mathbf{n_i}-\mathbf{n_j})\times F_m^{-T} \cdot \mathbf{e_{ij}^0} dW_{ij}^0 V_j^0$$
+
+$$=-\sum_j(\mathbf{n_i}-\mathbf{n_j})
+ \cdot [dW_{ij}^0V_j^0(\mathbf{e_{ij}^0})^T \cdot F_m^{-1}]$$
  
 $$F_1^{-1}=(\mathbb{Q}^0)^T \cdot (\mathbb{F}_1^L)^{-1} \cdot \mathbb{Q}^0$$
 
