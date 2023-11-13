@@ -26,7 +26,7 @@ $$\overline{W_{ij}}=\frac{1}{A_j^0}\sum_{k=0}^N W_{ij}^k A_j^k \cdot dp_s$$
 
 This term is also multiplied by $dp_s$, since in `DensitySummationComplex`, the mass of contact shell `this->contact_particles_[k]->mass_` is actually the area mass. To avoid changing of codes, we turn the weight to a volumetric one here.
 
-Unlike the force, which is integrated in the kernel support, the density ghost particles are summed up within shell thickness, i.e. until $(k+1)\cdot dp_s<t$, where $t$ is the thickness of shell. (Not modified yet)
+Unlike the force, which is integrated in the kernel support, the density ghost particles are summed up within shell thickness, i.e. until $(k+1)\cdot dp_s \lt t$, where $t$ is the thickness of shell. (Not modified yet)
 
 The method is illustrated in the graph below:
 
