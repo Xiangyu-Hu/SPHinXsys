@@ -97,16 +97,42 @@ void BaseShearStressRelaxation2ndHalfWithWall<BaseShearStressRelaxation2ndHalfTy
     this->velocity_gradient_[index_i] += velocity_gradient;
 }
 
-template <class BaseStressRelaxation1stHalfType>
-Vecd BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::computeNonConservativeAcceleration(size_t index_i)
-{
-    return this->acc_prior_[index_i];
-}
-
+//=================================================================================================//
+//============================Plastic:BaseStressRelaxationWithWall=================================//
+//=================================================================================================//
 template <class BaseStressRelaxation1stHalfType>
 void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::interaction(size_t index_i, Real dt)
 {
     BaseStressRelaxation1stHalfType::interaction(index_i, dt);
+    Vecd vel_i = this->vel_[index_i];
+    Matd velocity_gradient = Matd::Zero();
+
+    for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
+        Neighborhood& wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = wall_neighborhood.j_[n];
+            Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_i;
+            Matd velocity_gradient_ij = -(vel_i - vel_in_wall) * nablaW_ijV_j.transpose();
+            velocity_gradient += velocity_gradient_ij;
+        }
+    }
+    this->velocity_gradient_[index_i] += velocity_gradient;;
+}
+//=================================================================================================//
+template <class BaseStressRelaxation2ndHalfType>
+Vecd BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::computeNonConservativeAcceleration(size_t index_i)
+{
+    return this->acc_prior_[index_i];
+}
+
+template <class BaseStressRelaxation2ndHalfType>
+void BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::interaction(size_t index_i, Real dt)
+{
+    BaseStressRelaxation2ndHalfType::interaction(index_i, dt);
 
     Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
     Vecd acceleration = acc_prior_i;
@@ -116,12 +142,12 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
 
     for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
-        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd>& acc_ave_k = *(this->wall_acc_ave_[k]);
+        Neighborhood& wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            Vecd& e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
@@ -135,40 +161,33 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
     this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 }
 //=================================================================================================//
-template <class BaseStressRelaxation2ndHalfType>
-void BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::interaction(size_t index_i, Real dt)
+template <class BaseStressRelaxation3rdHalfType>
+void BaseStressRelaxation3rdHalfWithWall<BaseStressRelaxation3rdHalfType>::interaction(size_t index_i, Real dt)
 {
-    BaseStressRelaxation2ndHalfType::interaction(index_i, dt);
+    BaseStressRelaxation3rdHalfType::interaction(index_i, dt);
 
     Real density_change_rate = 0.0;
     Vecd p_dissipation = Vecd::Zero();
 
-    Vecd vel_i = this->vel_[index_i];
-    Matd velocity_gradient = Matd::Zero();
-
     for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
-        StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
+        StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
 
-        Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
+        Neighborhood& wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            Vecd& e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-            Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-            Vecd vel_in_wall = 1.9 * vel_ave_k[index_j] - 0.9 * vel_i;
-            Matd velocity_gradient_ij = -(vel_i - vel_in_wall) * nablaW_ijV_j.transpose();
-            velocity_gradient += velocity_gradient_ij;
 
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
             density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
-            Vecd u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]);
-            p_dissipation += this->riemann_solver_.DissipativePJumpExtra(u_jump, n_k[index_j]) * dW_ijV_j;
+            Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
+            p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }
     }
     this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
-    this->velocity_gradient_[index_i] += velocity_gradient;
     this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 }
 

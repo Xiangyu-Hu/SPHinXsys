@@ -281,60 +281,62 @@ class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataI
 };
 
 //=================================================================================================//
-//===============================BaseStressRelaxation1stHalf======================================//
+//===================================Plastic: BaseStressRelaxation=================================//
 //=================================================================================================//
-/**
- * @class BaseIntegration1stHalf
- * @brief Template class for pressure relaxation scheme with the Riemann solver
- * as template variable
- */
 template <class RiemannSolverType>
 class BaseStressRelaxation1stHalf : public BaseRelaxationPlastic
 {
-  public:
-    explicit BaseStressRelaxation1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseStressRelaxation1stHalf(){};
-    RiemannSolverType riemann_solver_;
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i);
-
-    StdLargeVec<Matd> &velocity_gradient_;
+    public:
+        explicit BaseStressRelaxation1stHalf(BaseInnerRelation& inner_relation);
+        virtual ~BaseStressRelaxation1stHalf() {};
+        RiemannSolverType riemann_solver_;
+        void initialization(size_t index_i, Real dt = 0.0);
+        void interaction(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
+    protected:
+        StdLargeVec<Matd>& velocity_gradient_;
+        StdLargeVec<Real>& acc_deviatoric_plastic_strain_, & vertical_stress_;
+        Real E_, nu_;
 };
 using StressRelaxation1stHalf = BaseStressRelaxation1stHalf<NoRiemannSolver>;
-using StressRelaxation1stHalfRiemann = BaseStressRelaxation1stHalf<AcousticRiemannSolverExtra>;
-using StressRelaxation1stHalfDissipativeRiemann = BaseStressRelaxation1stHalf<DissipativeRiemannSolverExtra>;
 
-//=================================================================================================//
-//===============================BaseStressRelaxation2ndHalf======================================//
-//=================================================================================================//
-/**
- * @class BaseIntegration2ndHalf
- * @brief  Template density relaxation scheme with different Riemann solver
- */
 template <class RiemannSolverType>
 class BaseStressRelaxation2ndHalf : public BaseRelaxationPlastic
 {
-  public:
-    explicit BaseStressRelaxation2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseStressRelaxation2ndHalf(){};
-    RiemannSolverType riemann_solver_;
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
+    public:
+        explicit BaseStressRelaxation2ndHalf(BaseInnerRelation& inner_relation);
+        virtual ~BaseStressRelaxation2ndHalf() {};
+        RiemannSolverType riemann_solver_;
+        void interaction(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
 
-  protected:
-    StdLargeVec<Matd> &velocity_gradient_;
-    StdLargeVec<Real> &Vol_, &mass_, &von_mises_stress_;
-    StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
-    Real E_, nu_;
+    protected:
+        virtual Vecd computeNonConservativeAcceleration(size_t index_i);
+
+        StdLargeVec<Matd>& velocity_gradient_;
 };
+
 using StressRelaxation2ndHalf = BaseStressRelaxation2ndHalf<NoRiemannSolver>;
 using StressRelaxation2ndHalfRiemann = BaseStressRelaxation2ndHalf<AcousticRiemannSolverExtra>;
-using StressRelaxation2ndHalfDissipativeRiemann = BaseStressRelaxation2ndHalf<DissipativeRiemannSolverExtra>;
+
+template <class RiemannSolverType>
+class BaseStressRelaxation3rdHalf : public BaseRelaxationPlastic
+{
+    public:
+        explicit BaseStressRelaxation3rdHalf(BaseInnerRelation& inner_relation);
+        virtual ~BaseStressRelaxation3rdHalf() {};
+        RiemannSolverType riemann_solver_;
+        void initialization(size_t index_i, Real dt = 0.0);
+        void interaction(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
+
+    protected:
+        StdLargeVec<Matd>& velocity_gradient_;
+        StdLargeVec<Real>& Vol_, & mass_;
+        Real E_, nu_;
+};
+using StressRelaxation3rdHalf = BaseStressRelaxation3rdHalf<NoRiemannSolver>;
+using StressRelaxation3rdHalfRiemann = BaseStressRelaxation3rdHalf<AcousticRiemannSolverExtra>;
 /**
  * @class StressDiffusion
  */
