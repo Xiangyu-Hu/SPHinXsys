@@ -44,7 +44,7 @@ void BaseIntegration1stHalfCorrect<RiemannSolverType>::interaction(size_t index_
 template <class RiemannSolverType>
 BaseIntegration1stHalfConsistency<RiemannSolverType>::BaseIntegration1stHalfConsistency(BaseInnerRelation& inner_relation)
     : BaseIntegration1stHalf<RiemannSolverType>(inner_relation),
-    B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity())) {}
+    B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity())) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration1stHalfConsistency<RiemannSolverType>::initialization(size_t index_i, Real dt)

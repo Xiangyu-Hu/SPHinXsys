@@ -177,6 +177,72 @@ void CheckCorrectedFirstOrderConsistency::interaction(size_t index_i, Real dt)
 	corrected_first_order_error_norm_[index_i] = (acceleration - Matd::Identity()).norm();
 }
 //=================================================================================================//
+CheckL2NormError::
+CheckL2NormError(BaseInnerRelation& inner_relation, bool level_set_correction) :
+    LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+    level_set_correction_(level_set_correction), 
+    scalar_(*particles_->template getVariableByName<Real>("Scalar")), 
+    pos_(particles_->pos_),
+    B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")),
+    sph_adaptation_(sph_body_.sph_adaptation_),
+    constrained_distance_(4 * sph_body_.sph_adaptation_->MinimumSpacing())
+{
+    particles_->addVariableToWrite<Real>("Scalar");
+    particles_->registerVariable(average_label_, "AverageLabel");
+    particles_->addVariableToWrite<Real>("AverageLabel");
+    particles_->registerVariable(analytical_, "Analytical");
+    particles_->addVariableToWrite<Real>("Analytical");
+    particles_->registerVariable(L2_NKGC_, "NKGCError");
+    particles_->addVariableToWrite<Real>("NKGCError");
+    particles_->registerVariable(L2_SKGC_, "SKGCError");
+    particles_->addVariableToWrite<Real>("SKGCError");
+    particles_->registerVariable(L2_CKGC_, "CKGCError");
+    particles_->addVariableToWrite<Real>("CKGCError");
+    level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
+}
+//=================================================================================================//
+void CheckL2NormError::interaction(size_t index_i, Real dt)
+{
+    Vecd NKGC_error_ = Vecd::Zero();
+    Vecd SKGC_error_ = Vecd::Zero();
+    Vecd CKGC_error_ = Vecd::Zero();
+     
+    Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd& e_ij = inner_neighborhood.e_ij_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+
+        NKGC_error_ += (scalar_[index_i] + scalar_[index_j]) * e_ij * dW_ijV_j;
+        SKGC_error_ += (scalar_[index_i] * B_[index_i] + scalar_[index_j] * B_[index_j]) * e_ij * dW_ijV_j;
+        CKGC_error_ += (scalar_[index_i] * B_[index_j] + scalar_[index_j] * B_[index_i]) * e_ij * dW_ijV_j;
+    }
+
+    //analytical_[index_i] = 2 * Pi * cos(2 * Pi * pos_[index_i][0]);
+    analytical_[index_i] = -2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1);
+    Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
+
+    if (phi < -constrained_distance_)
+    {
+        average_label_[index_i] = 1.0;
+        //L2_NKGC_[index_i] = (NKGC_error_ - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+        //L2_SKGC_[index_i] = (SKGC_error_ - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+        //L2_CKGC_[index_i] = (CKGC_error_ - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+
+        L2_NKGC_[index_i] = (NKGC_error_ - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+        L2_SKGC_[index_i] = (SKGC_error_ - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+        L2_CKGC_[index_i] = (CKGC_error_ - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    }
+    else
+    {
+        average_label_[index_i] = 0.0;
+        L2_NKGC_[index_i] = 0.0;
+        L2_SKGC_[index_i] = 0.0;
+        L2_CKGC_[index_i] = 0.0;
+    }
+};
+//=================================================================================================//
 CheckConsistencyRealization::
 CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_correction) :
     LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
@@ -187,25 +253,25 @@ CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_co
     B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")),
     sph_adaptation_(sph_body_.sph_adaptation_)
 {
-    particles_->registerVariable(relaxation_error_, "RelaxationErrorNorm");
-    particles_->addVariableToWrite<Real>("RelaxationErrorNorm");
-    particles_->registerVariable(pressure_gradient_error_norm_, "PressureGradientErrorNorm");
-    particles_->addVariableToWrite<Real>("PressureGradientErrorNorm");
-    particles_->registerVariable(pressure_gradient_, "PressureGradient");
-    particles_->addVariableToWrite<Vecd>("PressureGradient");
-    particles_->registerVariable(zero_order_error_norm_, "ZeroOrderErrorNorm");
-    particles_->addVariableToWrite<Real>("ZeroOrderErrorNorm");
-    particles_->registerVariable(zero_order_error_, "ZeroOrderError");
-    particles_->addVariableToWrite<Vecd>("ZeroOrderError");
-    particles_->registerVariable(reproduce_gradient_error_norm_, "ReproduceGradientErrorNorm");
-    particles_->addVariableToWrite<Real>("ReproduceGradientErrorNorm");
-
     particles_->registerVariable(reproduce_scalar_gradient_, "ReproduceScalarGradient");
     particles_->addVariableToWrite<Vecd>("ReproduceScalarGradient");
     particles_->registerVariable(reproduce_vector_gradient_, "ReproduceVectorGradient");
     particles_->addVariableToWrite<Real>("ReproduceVectorGradient");
     particles_->registerVariable(reproduce_matrix_gradient_, "ReproduceMatrixGradient");
     particles_->addVariableToWrite<Vecd>("ReproduceMatrixGradient");
+
+    particles_->registerVariable(ACterm_norm_, "ACTERMNORM");
+    particles_->addVariableToWrite<Real>("ACTERMNORM");
+    particles_->registerVariable(ACterm_, "ACTERM");
+    particles_->addVariableToWrite<Vecd>("ACTERM");
+    particles_->registerVariable(ASterm_norm_, "ASTERMNORM");
+    particles_->addVariableToWrite<Real>("ASTERMNORM");
+    particles_->registerVariable(ASterm_, "ASTERM");
+    particles_->addVariableToWrite<Vecd>("ASTERM");
+    particles_->registerVariable(Cterm_norm_, "CTERMNORM");
+    particles_->addVariableToWrite<Real>("CTERMNORM");
+    particles_->registerVariable(Cterm_, "CTERM");
+    particles_->addVariableToWrite<Vecd>("CTERM");
 
     particles_->addVariableToWrite<Real>("Scalar");
     particles_->addVariableToWrite<Vecd>("Vector");
@@ -216,12 +282,12 @@ CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_co
 //=================================================================================================//
 void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
 {
-    Vecd relaxation_error = Vecd::Zero();
-    Vecd pressure_gradient = Vecd::Zero();
-    Vecd zero_order_error = Vecd::Zero();
-    Vecd reproduce_scalar_gradient = Vecd::Zero();
-    Real reproduce_vector_gradient = Real(0.0);
-    Vecd reproduce_matrix_gradient = Vecd::Zero();
+    Vecd AC = Vecd::Zero();
+    Vecd C = Vecd::Zero();
+    Vecd AS = Vecd::Zero();
+    //Vecd reproduce_scalar_gradient = Vecd::Zero();
+    //Real reproduce_vector_gradient = Real(0.0);
+    //Vecd reproduce_matrix_gradient = Vecd::Zero();
     Neighborhood& inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -229,76 +295,74 @@ void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
-        relaxation_error += scalar_[index_i] * e_ij * dW_ijV_j;
-        pressure_gradient += (scalar_[index_i] * B_[index_i] + scalar_[index_j] * B_[index_j]) * e_ij * dW_ijV_j;
-        zero_order_error += scalar_[index_i] * (B_[index_i] + B_[index_j]) * e_ij * dW_ijV_j;
-
-        reproduce_scalar_gradient -= (scalar_[index_i] - scalar_[index_j]) * B_[index_i] * e_ij * dW_ijV_j;
-        reproduce_vector_gradient -= (vector_[index_i] - vector_[index_j]).dot(B_[index_i] * e_ij) * dW_ijV_j;
-        reproduce_matrix_gradient -= (matrix_[index_i] - matrix_[index_j]) * B_[index_i] * e_ij * dW_ijV_j;
+        AC += (scalar_[index_i] * B_[index_i] + scalar_[index_j] * B_[index_j]) * e_ij * dW_ijV_j;
+        AS += scalar_[index_i] * (B_[index_i] + B_[index_j]) * e_ij * dW_ijV_j;
+        C -= (scalar_[index_i] - scalar_[index_j]) * B_[index_j] * e_ij * dW_ijV_j;
+       
+        //reproduce_scalar_gradient -= (scalar_[index_i] - scalar_[index_j]) * B_[index_i] * e_ij * dW_ijV_j;
+        //reproduce_vector_gradient -= (vector_[index_i] - vector_[index_j]).dot(B_[index_i] * e_ij) * dW_ijV_j;
+        //reproduce_matrix_gradient -= (matrix_[index_i] - matrix_[index_j]) * B_[index_i] * e_ij * dW_ijV_j;
     }
     
-    relaxation_error_[index_i] = relaxation_error.norm();
-    pressure_gradient_[index_i] = pressure_gradient;
-    pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((pressure_gradient[1] - 0), 2));
-    zero_order_error_[index_i] = zero_order_error;
-    zero_order_error_norm_[index_i] = zero_order_error.norm();
+    ACterm_[index_i] = AC;
+    ACterm_norm_[index_i] = (AC - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    ASterm_[index_i] = AS;
+    ASterm_norm_[index_i] = AS.norm();
+    Cterm_[index_i] = C;
+    Cterm_norm_[index_i] = (C - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
 
-    reproduce_scalar_gradient_[index_i] = reproduce_scalar_gradient;
-    reproduce_vector_gradient_[index_i] = reproduce_vector_gradient;
-    reproduce_matrix_gradient_[index_i] = reproduce_matrix_gradient;
+    //reproduce_scalar_gradient_[index_i] = reproduce_scalar_gradient;
+    //reproduce_vector_gradient_[index_i] = reproduce_vector_gradient;
+    //reproduce_matrix_gradient_[index_i] = reproduce_matrix_gradient;
    
-    reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_scalar_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((reproduce_scalar_gradient[1] - 0), 2));
 }
 //=================================================================================================//
 CheckReverseConsistencyRealization::
 CheckReverseConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_correction) :
     LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
     level_set_correction_(level_set_correction), pos_(particles_->pos_),
-    pressure_(*particles_->template getVariableByName<Real>("Pressure")),
-    B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
+    scalar_(*particles_->template getVariableByName<Real>("Scalar")),
+    B_(*particles_->template getVariableByName<Matd>("KernelCorrectionMatrix")),
     sph_adaptation_(sph_body_.sph_adaptation_)
 {
-    particles_->registerVariable(pressure_gradient_error_norm_, "PressureGradientErrorNormReverse");
-    particles_->addVariableToWrite<Real>("PressureGradientErrorNormReverse");
-    particles_->registerVariable(pressure_gradient_, "PressureGradientReverse");
-    particles_->addVariableToWrite<Vecd>("PressureGradientReverse");
-    particles_->registerVariable(zero_order_error_norm_, "ZeroOrderErrorNormReverse");
-    particles_->addVariableToWrite<Real>("ZeroOrderErrorNormReverse");
-    particles_->registerVariable(zero_order_error_, "ZeroOrderErrorReverse");
-    particles_->addVariableToWrite<Vecd>("ZeroOrderErrorReverse");
-    particles_->registerVariable(reproduce_gradient_error_norm_, "ReproduceGradientErrorNormReverse");
-    particles_->addVariableToWrite<Real>("ReproduceGradientErrorNormReverse");
-    particles_->registerVariable(reproduce_gradient_, "ReproduceGradientReverse");
-    particles_->addVariableToWrite<Vecd>("ReproduceGradientReverse");
+    particles_->registerVariable(ABterm_norm_, "ABTERMNORM");
+    particles_->addVariableToWrite<Real>("ABTERMNORM");
+    particles_->registerVariable(ABterm_, "ABTERM");
+    particles_->addVariableToWrite<Vecd>("ABTERM");
+    particles_->registerVariable(ARterm_norm_, "ARTERMNORM");
+    particles_->addVariableToWrite<Real>("ARTERMNORM");
+    particles_->registerVariable(ARterm_, "ARTERM");
+    particles_->addVariableToWrite<Vecd>("ARTERM");
+    particles_->registerVariable(Bterm_norm_, "BTERMNORM");
+    particles_->addVariableToWrite<Real>("BTERMNORM");
+    particles_->registerVariable(Bterm_, "BTERM");
+    particles_->addVariableToWrite<Vecd>("BTERM");
     level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
 }
 //=================================================================================================//
 void CheckReverseConsistencyRealization::interaction(size_t index_i, Real dt)
 {
     Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-    Vecd pressure_gradient = Vecd::Zero();
-    Vecd zero_order_error = Vecd::Zero();
-    Vecd reproduce_gradient = Vecd::Zero();
+    Vecd AB = Vecd::Zero();
+    Vecd B = Vecd::Zero();
+    Vecd AR = Vecd::Zero();
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        pressure_gradient += (pressure_[index_i] * B_[index_j] + pressure_[index_j] * B_[index_i]) * 
-                             inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
-        zero_order_error += pressure_[index_i] * (B_[index_i] + B_[index_j]) *
-                            inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
-        reproduce_gradient -= (pressure_[index_i] - pressure_[index_j]) * B_[index_i] * gradW_ij;
+        Vecd& e_ij = inner_neighborhood.e_ij_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+
+        AB += (scalar_[index_i] * B_[index_j] + scalar_[index_j] * B_[index_i]) * e_ij * dW_ijV_j;
+        AR += scalar_[index_i] * (B_[index_i] + B_[index_j]) * e_ij * dW_ijV_j;
+        B -= (scalar_[index_i] - scalar_[index_j]) * B_[index_i] * e_ij * dW_ijV_j;
     }
 
-    pressure_gradient_[index_i] = pressure_gradient;
-    //pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - 1), 2) + pow((pressure_gradient[1] - 0), 2));
-    pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((pressure_gradient[1] - 0), 2));
-    zero_order_error_[index_i] = zero_order_error;
-    zero_order_error_norm_[index_i] = zero_order_error.norm();
-    reproduce_gradient_[index_i] = reproduce_gradient;
-    //reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - 1), 2) + pow((reproduce_gradient[1] - 0), 2));
-    reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((reproduce_gradient[1] - 0), 2));
+    ABterm_[index_i] = AB;
+    ABterm_norm_[index_i] = (AB - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    ARterm_[index_i] = AR;
+    ARterm_norm_[index_i] = AR.norm();
+    Bterm_[index_i] = B;
+    Bterm_norm_[index_i] = (B - Vec2d(-2 * pos_[index_i][0] / 0.1 * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
 }
 //=================================================================================================//
 ShellMidSurfaceBounding::

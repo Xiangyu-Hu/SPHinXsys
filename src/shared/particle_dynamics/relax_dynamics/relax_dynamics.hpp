@@ -220,8 +220,8 @@ void RelaxationStepInnerImplicit<RelaxationType>::exec(Real dt)
 {
     time_step_size_ = sqrt(get_time_step_.exec());
     relaxation_evolution_inner_.exec(time_step_size_);
-    //real_body_->updateCellLinkedList();
-    //inner_relation_.updateConfiguration();
+    real_body_->updateCellLinkedList();
+    inner_relation_.updateConfiguration();
 }
 //=================================================================================================//
 template <class RelaxationType>

@@ -265,9 +265,37 @@ class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<Var
 };
 
 /**
-	 * @class QuantityMaximum
-	 * @brief Compute the maximum of a particle variable in a body
-	 */
+ * @class QuantitySummationPartly
+ * @
+ */
+template <typename VariableType, class DynamicsIdentifier>
+class QuantitySummationPartly
+    : public BaseLocalDynamicsReduce<VariableType, ReduceSum<VariableType>, DynamicsIdentifier>,
+      public GeneralDataDelegateSimple
+{
+protected:
+    StdLargeVec<VariableType>& variable_;
+
+public:
+    QuantitySummationPartly(DynamicsIdentifier& identifier, const std::string& variable_name)
+        : BaseLocalDynamicsReduce<VariableType, ReduceSum<VariableType>, DynamicsIdentifier>(identifier, ZeroData<VariableType>::value),
+        GeneralDataDelegateSimple(identifier.getSPHBody()),
+        variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+    {
+        this->quantity_name_ = variable_name + "Summation";
+    };
+    virtual ~QuantitySummationPartly() {};
+
+    Real reduce(size_t index_i, Real dt = 0.0)
+    {
+        return variable_[index_i];
+    };
+};
+
+/**
+ * @class QuantityMaximum
+ * @brief Compute the maximum of a particle variable in a body
+ */
 template <typename VariableType>
 class QuantityMaximum : public LocalDynamicsReduce<VariableType, ReduceMax>,
                         public GeneralDataDelegateSimple

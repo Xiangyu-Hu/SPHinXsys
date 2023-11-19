@@ -413,7 +413,7 @@ protected:
     BaseInnerRelation& inner_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationInnerImplicit<RelaxationType>> relaxation_evolution_inner_;
+    InteractionSplit<RelaxationInnerWithLevelSetCorrectionImplicit<RelaxationType>> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
@@ -546,6 +546,32 @@ protected:
 };
 
 /**
+ * @class CheckL2NormError
+ * @brief
+ */
+class CheckL2NormError : public LocalDynamics, public GeneralDataDelegateInner
+{
+public:
+    CheckL2NormError(BaseInnerRelation& inner_relation, bool level_set_correction = false);
+    virtual ~CheckL2NormError() {};
+    void interaction(size_t index_i, Real dt);
+
+protected:
+    bool level_set_correction_;
+    StdLargeVec<Real>& scalar_;
+    StdLargeVec<Real> average_label_;
+    StdLargeVec<Real> analytical_;
+    StdLargeVec<Real> L2_NKGC_;
+    StdLargeVec<Real> L2_SKGC_;
+    StdLargeVec<Real> L2_CKGC_;
+    StdLargeVec<Matd>& B_;
+    StdLargeVec<Vecd>& pos_;
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
+    Real constrained_distance_;
+};
+
+/**
  * @class CheckConsistencyRealization
  * @brief check the consistency of SPH conservative formulation.
  */
@@ -563,15 +589,15 @@ protected:
     StdLargeVec<Matd>& matrix_;
     StdLargeVec<Vecd>& pos_;
     StdLargeVec<Matd>& B_;
-    StdLargeVec<Real> relaxation_error_;
-    StdLargeVec<Real> pressure_gradient_error_norm_;
-    StdLargeVec<Vecd> pressure_gradient_;
-    StdLargeVec<Real> zero_order_error_norm_;
-    StdLargeVec<Vecd> zero_order_error_;
-    StdLargeVec<Real> reproduce_gradient_error_norm_;
     StdLargeVec<Vecd> reproduce_scalar_gradient_;
     StdLargeVec<Real> reproduce_vector_gradient_;
     StdLargeVec<Vecd> reproduce_matrix_gradient_;
+    StdLargeVec<Real> ACterm_norm_;
+    StdLargeVec<Vecd> ACterm_;
+    StdLargeVec<Real> ASterm_norm_;
+    StdLargeVec<Vecd> ASterm_;
+    StdLargeVec<Real> Cterm_norm_;
+    StdLargeVec<Vecd> Cterm_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };
@@ -588,15 +614,15 @@ public:
 
 protected:
     bool level_set_correction_;
-    StdLargeVec<Real>& pressure_;
+    StdLargeVec<Real>& scalar_;
     StdLargeVec<Vecd>& pos_;
     StdLargeVec<Matd>& B_;
-    StdLargeVec<Real> pressure_gradient_error_norm_;
-    StdLargeVec<Vecd> pressure_gradient_;
-    StdLargeVec<Real> zero_order_error_norm_;
-    StdLargeVec<Vecd> zero_order_error_;
-    StdLargeVec<Real> reproduce_gradient_error_norm_;
-    StdLargeVec<Vecd> reproduce_gradient_;
+    StdLargeVec<Real> ABterm_norm_;
+    StdLargeVec<Vecd> ABterm_;
+    StdLargeVec<Real> ARterm_norm_;
+    StdLargeVec<Vecd> ARterm_;
+    StdLargeVec<Real> Bterm_norm_;
+    StdLargeVec<Vecd> Bterm_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };

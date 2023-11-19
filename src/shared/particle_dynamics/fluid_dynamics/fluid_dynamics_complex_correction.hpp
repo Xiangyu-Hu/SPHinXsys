@@ -19,6 +19,7 @@ void BaseIntegration1stHalfCorrectWithWall<BaseIntegration1stHalfCorrectType>::i
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
+        StdLargeVec<Matd>& wall_B_k = *(this->wall_B_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -29,7 +30,7 @@ void BaseIntegration1stHalfCorrectWithWall<BaseIntegration1stHalfCorrectType>::i
 
             Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration -= (this->p_[index_i] + p_in_wall) * this->B_[index_i] * e_ij * dW_ijV_j;
+            acceleration -= (this->p_[index_i] * this->B_[index_i] + p_in_wall * this->B_[index_i]) * e_ij * dW_ijV_j;
             rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
@@ -50,6 +51,7 @@ void BaseIntegration1stHalfConsistencyWithWall<BaseIntegration1stHalfConsistency
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd>& acc_ave_k = *(this->wall_acc_ave_[k]);
+        StdLargeVec<Matd>& wall_B_k = *(this->wall_B_[k]);
         Neighborhood& wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -60,7 +62,7 @@ void BaseIntegration1stHalfConsistencyWithWall<BaseIntegration1stHalfConsistency
 
             Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration -= (this->p_[index_i] + p_in_wall) * this->B_[index_i] * e_ij * dW_ijV_j;
+            acceleration -= (this->p_[index_i] * Matd::Identity() + p_in_wall * this->B_[index_i]) * e_ij * dW_ijV_j;
             rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }

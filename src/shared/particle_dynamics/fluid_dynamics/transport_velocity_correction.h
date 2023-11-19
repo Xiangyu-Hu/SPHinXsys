@@ -42,6 +42,19 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
+    template <typename ErrorDataType, typename ParameterADataType, typename ParameterCDataType>
+    struct ErrorAndParameters
+    {
+        ErrorDataType error_;
+        ParameterADataType a_;
+        ParameterCDataType c_;
+
+        ErrorAndParameters<ErrorDataType, ParameterADataType, ParameterCDataType>() :
+            error_(ZeroData<ErrorDataType>::value),
+            a_(ZeroData<ParameterADataType>::value),
+            c_(ZeroData<ParameterCDataType>::value) {};
+    };
+
 /**
  * @class TransportVelocityCorrectionInner
  * @brief The particle positions are corrected for more uniformed distribution
@@ -53,6 +66,7 @@ namespace fluid_dynamics
  * If single (acoustic) time step is used, the coefficient should be decrease
  * to about 1/4 of the default value.
  */
+
 template <class ParticleScopeType>
 class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 {
@@ -211,13 +225,19 @@ protected:
 
 template <class ParticleScopeType>
 class TransportVelocityConsistencyComplex
-    : public BaseInteractionComplex<TransportVelocityConsistencyInner<ParticleScopeType>, FluidContactOnly>
+    : public BaseInteractionComplex<TransportVelocityConsistencyInner<ParticleScopeType>, FluidContactWall>
 {
 public:
     template <typename... Args>
     TransportVelocityConsistencyComplex(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityConsistencyInner<ParticleScopeType>, FluidContactOnly>(
-            std::forward<Args>(args)...) {};
+        : BaseInteractionComplex<TransportVelocityConsistencyInner<ParticleScopeType>, FluidContactWall>(
+            std::forward<Args>(args)...) 
+    {
+        for (size_t k = 0; k != FluidContactWall::contact_particles_.size(); ++k)
+        {
+            wall_B_.push_back(&(FluidContactWall::contact_particles_[k]->B_));
+        }
+    };
     virtual ~TransportVelocityConsistencyComplex() {};
 
     void interaction(size_t index_i, Real dt = 0.0)
@@ -229,19 +249,155 @@ public:
             Vecd acceleration_trans = Vecd::Zero();
             for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
             {
+                StdLargeVec<Matd>& wall_B_k = *(wall_B_[k]);
                 Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
                 for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
                 {
+                    size_t index_j = contact_neighborhood.j_[n];
                     Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
                     // acceleration for transport velocity
-                    acceleration_trans -= 2 * this->B_[index_i] * nablaW_ijV_j;
+                    acceleration_trans -= (this->B_[index_i] + Matd::Identity()) * nablaW_ijV_j;
                 }
             }
 
             this->pos_[index_i] += this->coefficient_ * this->smoothing_length_sqr_ * acceleration_trans;
         }
     };
+
+protected:
+    StdVec<StdLargeVec<Matd>*> wall_B_;
+};
+
+/**
+ * @class TransportVelocityConsistencyInnerImplicit
+ */
+template <class ParticleScopeType>
+class TransportVelocityConsistencyInnerImplicit : public LocalDynamics, public FluidDataInner
+{
+public:
+    explicit TransportVelocityConsistencyInnerImplicit(BaseInnerRelation& inner_relation, Real coefficient = 0.2)
+        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+        kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
+        Vol_(particles_->Vol_), pos_(particles_->pos_), 
+        B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")),
+        indicator_(*particles_->getVariableByName<int>("Indicator")),
+        smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+        coefficient_(coefficient), checkWithinScope(particles_) {};
+    virtual ~TransportVelocityConsistencyInnerImplicit() {};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        if (checkWithinScope(index_i))
+        {
+            ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
+            updateStates(index_i, dt, error_and_parameters);
+        }
+    };
+
+protected:
+    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = smoothing_length_sqr_)
+    {
+        ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters;
+        Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Matd parameter_b = (B_[index_i] + B_[index_j]) *
+                inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+                kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) *
+                Vol_[index_j] * dt * dt;
+
+            error_and_parameters.error_ += (B_[index_i] + B_[index_j]) *
+                inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] * dt * dt;
+            error_and_parameters.a_ -= parameter_b;
+            error_and_parameters.c_ += parameter_b * parameter_b;
+        }
+
+        Matd evolution = Matd::Identity();
+        error_and_parameters.a_ -= evolution;
+        return error_and_parameters;
+    };
+    virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters)
+    {
+        Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
+        Vecd parameter_k = parameter_l.inverse() * error_and_parameters.error_;
+
+        pos_[index_i] += error_and_parameters.a_ * parameter_k;
+
+        Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Matd parameter_b = (B_[index_i] + B_[index_j]) *
+                inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+                kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) *
+                Vol_[index_j] * dt * dt;
+            pos_[index_j] -= parameter_b * parameter_k;
+        }
+    };
+    
+    Kernel* kernel_;
+    StdLargeVec<Real>& Vol_;
+    StdLargeVec<Vecd>& pos_;
+    StdLargeVec<Matd>& B_;
+    StdLargeVec<int>& indicator_;
+    Real smoothing_length_sqr_;
+    const Real coefficient_;
+    ParticleScopeType checkWithinScope;
+};
+
+/**
+ * @class TransportVelocityConsistencyComplexImplicit
+ */
+template <class ParticleScopeType>
+class TransportVelocityConsistencyComplexImplicit
+    : public BaseInteractionComplex<TransportVelocityConsistencyInnerImplicit<ParticleScopeType>, FluidContactWall>
+{
+public:
+    template <typename... Args>
+    TransportVelocityConsistencyComplexImplicit(Args &&...args)
+        : BaseInteractionComplex<TransportVelocityConsistencyInnerImplicit<ParticleScopeType>, FluidContactWall>(
+            std::forward<Args>(args)...)
+    {
+        for (size_t k = 0; k != FluidContactWall::contact_particles_.size(); ++k)
+        {
+            wall_B_.push_back(&(FluidContactWall::contact_particles_[k]->B_));
+            contact_Vol_.push_back(&(FluidContactWall::contact_particles_[k]->Vol_));
+        }
+    };
+    virtual ~TransportVelocityConsistencyComplexImplicit() {};
+
+    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = this->smoothing_length_sqr_)
+    {
+        ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = 
+            TransportVelocityConsistencyInnerImplicit<ParticleScopeType>::computeErrorAndParameters(index_i, dt);
+
+        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+        {
+            StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+            StdLargeVec<Matd>& B_k = *(wall_B_[k]);
+            Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Matd parameter_b = (this->B_[index_i], this->B_[index_i]) *
+                    contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
+                    this->kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) *
+                    Vol_k[index_j] * dt * dt;
+
+                error_and_parameters.error_ += (this->B_[index_i] + this->B_[index_i]) *
+                    contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
+                error_and_parameters.a_ -= parameter_b;
+            }
+        }
+
+        return error_and_parameters;
+    };
+
+protected:
+    StdVec<StdLargeVec<Matd>*> wall_B_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 } // namespace fluid_dynamics

@@ -163,7 +163,6 @@ int main(int ac, char *av[])
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
-                
                 update_cylinder_kietic_energy.exec();
                 water_block_kinetic_energy = calculate_water_block_maximum_kinetic_energy.exec();
                 cylinder_kinetic_energy = calculate_cylinder_maximum_kinetic_energy.exec();
