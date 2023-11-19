@@ -185,22 +185,22 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_body_inner(water_body);
-    InnerRelation water_body_correct_inner(water_body);
+    InnerRelation water_body_inner_corrected(water_body);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemann> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemann> density_and_energy_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemann> pressure_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfHLLERiemann> density_and_energy_relaxation(water_body_inner);
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     SimpleDynamics<TimeStepInitialization> time_step_initialization(water_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_correct_inner);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_inner_corrected);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix_eu(water_body_correct_inner);
-    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix_eu);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix_corrected(water_body_inner_corrected);
+    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix_corrected);
     water_body.addBodyStateForRecording<Real>("Pressure");
     water_body.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
     //----------------------------------------------------------------------
@@ -224,7 +224,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     initial_condition.exec();
     kernel_correction_matrix.exec();
-    kernel_correction_matrix_eu.exec();
+    kernel_correction_matrix_corrected.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

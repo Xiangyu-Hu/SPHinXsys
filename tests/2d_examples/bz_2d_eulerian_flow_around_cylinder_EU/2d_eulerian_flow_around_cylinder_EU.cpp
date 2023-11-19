@@ -187,10 +187,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
-    //----------------------------------------------------------------------
-    //InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemannWithWall> pressure_relaxation(water_block_complex);
-    //InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemannWithWall> density_relaxation(water_block_complex);
-    
+    //----------------------------------------------------------------------    
     InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemannWithWall> pressure_relaxation(water_block_complex_correction);
     InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemannWithWall> density_relaxation(water_block_complex_correction);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix_correction(water_block_complex_correction);

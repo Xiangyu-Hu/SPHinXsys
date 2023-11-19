@@ -282,7 +282,7 @@ public:
         Vol_(particles_->Vol_), pos_(particles_->pos_), 
         B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")),
         indicator_(*particles_->getVariableByName<int>("Indicator")),
-        smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+        smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 1)),
         coefficient_(coefficient), checkWithinScope(particles_) {};
     virtual ~TransportVelocityConsistencyInnerImplicit() {};
 
@@ -321,7 +321,7 @@ protected:
     virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters)
     {
         Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
-        Vecd parameter_k = parameter_l.inverse() * error_and_parameters.error_;
+        Vecd parameter_k = coefficient_ * parameter_l.inverse() * error_and_parameters.error_;
 
         pos_[index_i] += error_and_parameters.a_ * parameter_k;
 
@@ -381,13 +381,13 @@ public:
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];
-                Matd parameter_b = (this->B_[index_i], this->B_[index_i]) *
+                Matd parameter_b = (this->B_[index_i] + this->B_[index_i]) *
                     contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
                     this->kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) *
                     Vol_k[index_j] * dt * dt;
 
                 error_and_parameters.error_ += (this->B_[index_i] + this->B_[index_i]) *
-                    contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
+                                                contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
                 error_and_parameters.a_ -= parameter_b;
             }
         }

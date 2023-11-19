@@ -238,8 +238,8 @@ int main(int ac, char *av[])
 	InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_complex(water_block_complex);
 	InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_complex_wall(wall_boundary_complex);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_complex);
-	InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyComplex<AllParticles>> transport_velocity_consistency(water_block_complex, 0.05);
-	InteractionSplit<fluid_dynamics::TransportVelocityConsistencyComplexImplicit<AllParticles>> transport_velocity_consistency_implicit(water_block_complex, 0.2);
+	InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyComplex<AllParticles>> transport_velocity_consistency(water_block_complex, 0.25);
+	InteractionSplit<fluid_dynamics::TransportVelocityConsistencyComplexImplicit<AllParticles>> transport_velocity_consistency_implicit(water_block_complex, 10);
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
@@ -270,7 +270,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	Real End_Time = 35.0; /**< End time. */
+	Real End_Time = 100.0; /**< End time. */
 	Real output_interval = 0.1;
 	Real dt = 1.0;	      /**< Time stamps for output of body states. */
 	//----------------------------------------------------------------------
@@ -297,9 +297,9 @@ int main(int ac, char *av[])
 			viscous_acceleration.exec();
 			
 			kernel_correction_complex.exec();
-			//transport_velocity_correction.exec();
+			transport_velocity_correction.exec();
 			//transport_velocity_consistency.exec();
-			transport_velocity_consistency_implicit.exec();
+			//transport_velocity_consistency_implicit.exec();
 			
 			Real relaxation_time = 0.0;
 			while(relaxation_time < Dt)
@@ -329,7 +329,7 @@ int main(int ac, char *av[])
 		}
 		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		if (GlobalStaticVariables::physical_time_ > 25)
+		if (GlobalStaticVariables::physical_time_ > 90)
 		{
 			write_horizontal_velocity.writeToFile(number_of_iterations);
 			write_vertical_velocity.writeToFile(number_of_iterations);
