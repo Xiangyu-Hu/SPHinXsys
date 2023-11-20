@@ -467,7 +467,7 @@ jobs:
 
   macOS-test:
     needs: macOS-build
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -485,7 +485,10 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja
+            ninja \
+            zip \
+            unzip \
+            fontconfig # for opencascade
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
