@@ -414,7 +414,8 @@ jobs:
             cmake \
             ninja \
             zip \
-            unzip
+            unzip \
+            fontconfig # for opencascade
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -427,7 +428,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
             eigen3 \
             tbb \
             boost-program-options \
@@ -435,8 +436,9 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11 \
-            opencascade
+            pybind11
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
+            opencascade # not officially supported, macos support should be upstreamed if it works
 
       - name: Generate buildsystem
         run: |
