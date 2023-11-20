@@ -394,7 +394,7 @@ jobs:
   ###############################################################################
 
   macOS-build:
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
