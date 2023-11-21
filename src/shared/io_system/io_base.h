@@ -42,6 +42,8 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
+class BaseIO;
+
 /**
  * @class IOEnvironment
  * @brief The base class which defines folders for output,

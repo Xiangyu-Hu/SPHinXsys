@@ -1,9 +1,10 @@
 /**
- * @file 	test_3d_sphere_compression.cpp
- * @brief 	Shell verification  incl. refinement study
+ * @file test_3d_sphere_compression.cpp
+ * @brief Shell verification  incl. refinement study
  * @details Circular plastic shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
- * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH051: Bending of a Circular Plate Using Axis symmetric Elements
+ * @ref ANSYS Workbench Verification Manual, Release 15.0, November 2013,
+ * VMMECH051: Bending of a Circular Plate Using Axis symmetric Elements
  */
 
 #include "sphinxsys.h"
@@ -20,7 +21,8 @@ class ShellSphereParticleGenerator : public SurfaceParticleGenerator
     const Real thickness_;
 
   public:
-    explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
+    explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
+                                          const Vec3d &center, Real particle_area, Real thickness)
         : SurfaceParticleGenerator(sph_body),
           pos_0_(pos_0),
           center_(center),
@@ -270,8 +272,6 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 ++ite;
                 integral_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
-
-                // shell_body.updateCellLinkedList();
 
                 { // checking if any position has become nan
                     for (const auto &pos : shell_body.getBaseParticles().pos_)

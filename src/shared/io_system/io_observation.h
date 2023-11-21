@@ -102,10 +102,9 @@ class ObservedQuantityRecording : public BodyStatesRecording,
  * @brief write reduced quantity of a body
  */
 template <class LocalReduceMethodType>
-class ReducedQuantityRecording
+class ReducedQuantityRecording : public BaseIO
 {
   protected:
-    IOEnvironment &io_environment_;
     PltEngine plt_engine_;
     ReduceDynamics<LocalReduceMethodType> reduce_method_;
     std::string dynamics_identifier_name_;
@@ -120,7 +119,7 @@ class ReducedQuantityRecording
   public:
     template <typename... Args>
     ReducedQuantityRecording(IOEnvironment &io_environment, Args &&...args)
-        : io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
+        : BaseIO(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {
@@ -135,7 +134,7 @@ class ReducedQuantityRecording
     };
     virtual ~ReducedQuantityRecording(){};
 
-    virtual void writeToFile(size_t iteration_step = 0)
+    virtual void writeToFile(size_t iteration_step = 0) override
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << GlobalStaticVariables::physical_time_ << "   ";

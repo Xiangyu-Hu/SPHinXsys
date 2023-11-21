@@ -481,10 +481,6 @@ jobs:
             cmake \
             ninja
 
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ github.job }}
-
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:
           committish: ${{ env.VCPKG_VERSION }}

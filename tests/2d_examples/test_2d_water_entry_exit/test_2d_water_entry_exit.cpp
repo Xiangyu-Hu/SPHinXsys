@@ -327,9 +327,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the wetting diffusion dynamics used in the simulation.
     //----------------------------------------------------------------------
-    SimpleDynamics<WettingFluidBodyInitialCondition> Wetting_water_initial_condition(water_block);
-    SimpleDynamics<WettingWallBodyInitialCondition> Wetting_wall_initial_condition(wall_boundary);
-    SimpleDynamics<WettingCylinderBodyInitialCondition> Wetting_cylinder_initial_condition(cylinder);
+    SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
+    SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
+    SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
     GetDiffusionTimeStepSize<DiffusionCylinderParticles> get_thermal_time_step(cylinder);
     CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
     //----------------------------------------------------------------------
@@ -399,9 +399,9 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     cylinder_normal_direction.exec();
-    Wetting_water_initial_condition.exec();
-    Wetting_wall_initial_condition.exec();
-    Wetting_cylinder_initial_condition.exec();
+    wetting_water_initial_condition.exec();
+    wetting_wall_initial_condition.exec();
+    wetting_cylinder_initial_condition.exec();
     Real dt_thermal = get_thermal_time_step.exec();
     free_stream_surface_indicator.exec();
     //----------------------------------------------------------------------

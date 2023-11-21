@@ -1,8 +1,8 @@
 /**
- * @file 	fsi2.h
- * @brief 	This is the case file for the test of fluid - structure interaction.
- * @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
- * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
+ * @file fsi2.h
+ * @brief This is the case file for the test of fluid - structure interaction.
+ * @details We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
+ * @author Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FSI2_CASE_H
@@ -20,11 +20,8 @@ Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow cond
 Real BW = resolution_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
 Vec2d insert_circle_center(2.0, 2.0);   /**< Location of the cylinder center. */
 Real insert_circle_radius = 0.5;        /**< Radius of the cylinder. */
-/** Beam related parameters. */
-Real bh = 0.4 * insert_circle_radius; /**< Height of the beam. */
-Real bl = 7.0 * insert_circle_radius; /**< Length of the beam. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
+Real bh = 0.4 * insert_circle_radius;   /**< Height of the beam. */
+Real bl = 7.0 * insert_circle_radius;   /**< Length of the beam. */
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -62,8 +59,6 @@ Vec2d BLB(insert_circle_center[0], insert_circle_center[1] - hbh);
 Vec2d BLT(insert_circle_center[0], insert_circle_center[1] + hbh);
 Vec2d BRB(insert_circle_center[0] + insert_circle_radius + bl, insert_circle_center[1] - hbh);
 Vec2d BRT(insert_circle_center[0] + insert_circle_radius + bl, insert_circle_center[1] + hbh);
-// Beam observer location
-StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
 std::vector<Vecd> createBeamShape()
 {
     std::vector<Vecd> beam_shape;
@@ -87,9 +82,7 @@ std::vector<Vecd> createOuterWallShape()
 
     return outer_wall_shape;
 }
-/**
- * @brief create inner wall shape
- */
+/** create inner wall shape  */
 std::vector<Vecd> createInnerWallShape()
 {
     std::vector<Vecd> inner_wall_shape;
@@ -101,6 +94,7 @@ std::vector<Vecd> createInnerWallShape()
 
     return inner_wall_shape;
 }
+/** inflow buffer parameters */
 Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 //----------------------------------------------------------------------
@@ -184,5 +178,4 @@ class FluidObserverParticleGenerator : public ObserverParticleGenerator
         }
     }
 };
-
 #endif // FSI2_CASE_H
