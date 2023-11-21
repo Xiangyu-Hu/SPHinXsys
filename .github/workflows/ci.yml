@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_VERSION: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1" # 29/05/2023 commit at https://github.com/microsoft/vcpkg/pull/29067
+  VCPKG_VERSION: "2023.10.19"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -412,9 +412,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja \
-            zip \
-            unzip
+            ninja
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -427,7 +425,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
             eigen3 \
             tbb \
             boost-program-options \
@@ -435,8 +433,7 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11 \
-            opencascade
+            pybind11
 
       - name: Generate buildsystem
         run: |
@@ -445,7 +442,6 @@ jobs:
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_CI=ON \
             -D TEST_STATE_RECORDING=OFF \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
@@ -500,8 +496,7 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11 \
-            opencascade
+            pybind11
 
       - uses: actions/download-artifact@v3
         with:
