@@ -97,11 +97,8 @@ inline Vec3d deviceToHostVecd(const DeviceVec3d& device) { return {device[0], de
 
 /** Initialize Vecd of zeros for host or device */
 template<class V> inline V VecdZero();
-template<> inline DeviceVec2d VecdZero() { return { static_cast<DeviceReal>(0.0),
-                                                        static_cast<DeviceReal>(0.0) }; }
-template<> inline DeviceVec3d VecdZero() { return { static_cast<DeviceReal>(0.0),
-                                                        static_cast<DeviceReal>(0.0),
-                                                        static_cast<DeviceReal>(0.0) }; }
+template<> inline DeviceVec2d VecdZero() { return DeviceVec2d{0}; }
+template<> inline DeviceVec3d VecdZero() { return DeviceVec3d{0}; }
 template<> inline Vec2d VecdZero() { return Vec2d::Zero(); }
 template<> inline Vec3d VecdZero() { return Vec3d::Zero(); }
 
@@ -129,6 +126,15 @@ inline RealType VecdSquareNorm(const sycl::vec<RealType,Dimension>& vec) {
 template<class RealType, int Dimension>
 inline RealType VecdSquareNorm(const Eigen::Matrix<RealType,Dimension,1>& vec) {
     return vec.squaredNorm();
+}
+
+template<class VecType, std::size_t ...Index>
+inline auto VecdFoldingProd_impl(const VecType& vec, std::index_sequence<Index...>) {
+    return ( vec[Index] * ... );
+}
+template<class Type, int Dimension>
+inline Type VecdFoldProduct(const sycl::vec<Type,Dimension>& vec) {
+    return VecdFoldingProd_impl(vec, std::make_index_sequence<Dimension>());
 }
 
 /* SYCL memory transfer utilities */

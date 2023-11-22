@@ -108,9 +108,16 @@ class CellLinkedListKernel {
             all_grid_points - DeviceArrayi{2});
     }
 
-    static inline size_t transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArrayi &all_cells)
+    static inline size_t transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArray2i &all_cells)
     {
         return cell_index[0] * all_cells[1] + cell_index[1];
+    }
+
+    static inline size_t transferCellIndexTo1D(const DeviceArray3i &cell_index, const DeviceArray3i &all_cells)
+    {
+        return cell_index[0] * all_cells[1] * all_cells[2] +
+               cell_index[1] * all_cells[2] +
+               cell_index[2];
     }
 
   private:
