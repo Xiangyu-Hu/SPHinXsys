@@ -1,20 +1,17 @@
-/* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D anisotropic beam example-one body version           *
- * ----------------------------------------------------------------------------*
- * This is a test cases using ASPH method with anisotropic kerne for            *
- *  simulating solid. Particle space is anisotropic in different directions in this beam.  *
- * @author	Xiaojing Tang
- * ----------------------------------------------------------------------------*/
+/**
+ * @file test_2d_anisotropic_beam.cpp
+ * @brief This is a test cases using anisotropic kernel for simulating solid.
+ * Particle space is anisotropic in different directions of the beam.
+ * @author Xiaojing Tang and Xiangyu Hu
+ */
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
-Real PL = 0.2;  // beam length
-Real PH = 0.02; // beam width
-Real SL = 0.02; // constrained length
-
-//   particle spacings and particle numbers
+Real PL = 0.2;                                       // beam length
+Real PH = 0.02;                                      // beam width
+Real SL = 0.02;                                      // constrained length
 int y_num = 10;                                      // particle number in y direction
 Real ratio_ = 4.0;                                   // anisotropic ratio, also dp_x / dp_y
 Real resolution_ref = PH / y_num;                    // particle spacing in y direction
@@ -24,14 +21,13 @@ int x_num = Total_PL / resolution_ref_large;         // particle number in x dir
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
-
 //----------------------------------------------------------------------
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
 class AnisotropicParticleGenerator : public ParticleGenerator
 {
   public:
- AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator(sph_body){};
+    AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator(sph_body){};
 
     virtual void initializeGeometricVariables() override
     {
@@ -211,7 +207,7 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    // corrected strong configuration 
+    // corrected strong configuration
     InteractionWithUpdate<AnisotropicCorrectConfiguration> beam_corrected_configuration(beam_body_inner);
     beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
     // time step size calculation
@@ -219,7 +215,7 @@ int main(int ac, char *av[])
     // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    // clamping a solid body part.  
+    // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
@@ -239,7 +235,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
-    int ite = 0;
+    int number_of_iterations = 0;
     Real T0 = 1.0;
     Real end_time = T0;
     // time step size for output file
@@ -253,9 +249,8 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
-    write_beam_states.writeToFile(0);
-    write_beam_tip_displacement.writeToFile(0);
-
+    write_beam_states.writeToFile();
+    write_beam_tip_displacement.writeToFile(number_of_iterations);
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
@@ -271,23 +266,23 @@ int main(int ac, char *av[])
                 constraint_beam_base.exec();
                 stress_relaxation_second_half.exec(dt);
 
-                ite++;
+                number_of_iterations++;
                 dt = scaling_factor * computing_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
 
-                if (ite % 100 == 0)
+                if (number_of_iterations % 100 == 0)
                 {
-                    std::cout << "N=" << ite << " Time: "
+                    std::cout << "N=" << number_of_iterations << " Time: "
                               << GlobalStaticVariables::physical_time_ << "	dt: "
                               << dt << "\n";
                 }
             }
         }
 
-        write_beam_tip_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();
+        write_beam_tip_displacement.writeToFile(number_of_iterations);
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

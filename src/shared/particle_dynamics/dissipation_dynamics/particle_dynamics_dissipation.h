@@ -82,7 +82,8 @@ template <typename VariableType>
 class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, public DissipationDataContact
 {
   public:
-    DampingBySplittingComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
+    DampingBySplittingComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
+                              const std::string &variable_name, Real eta);
     virtual ~DampingBySplittingComplex(){};
 
   protected:
@@ -100,7 +101,8 @@ template <typename VariableType,
 class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableType>, public DissipationDataWithWall
 {
   public:
-    DampingBySplittingWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
+    DampingBySplittingWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
+                               const std::string &variable_name, Real eta);
     virtual ~DampingBySplittingWithWall(){};
 
   protected:
@@ -140,7 +142,6 @@ class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public
   public:
     DampingPairwiseComplex(BaseInnerRelation &inner_relation,
                            BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
-    DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
     virtual ~DampingPairwiseComplex(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
@@ -163,7 +164,6 @@ class DampingPairwiseWithWall : public BaseDampingPairwiseType<VariableType>,
   public:
     DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
                             BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
-    DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
     virtual ~DampingPairwiseWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
@@ -211,8 +211,8 @@ class DampingWithRandomChoice : public DampingAlgorithmType
     bool RandomChoice();
 
   public:
-    template <typename... ConstructorArgs>
-    DampingWithRandomChoice(Real random_ratio, ConstructorArgs &&...args);
+    template <typename... Args>
+    DampingWithRandomChoice(Real random_ratio, Args &&...args);
     virtual ~DampingWithRandomChoice(){};
 
     virtual void exec(Real dt = 0.0) override;

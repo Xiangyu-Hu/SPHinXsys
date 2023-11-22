@@ -62,6 +62,24 @@ class ShellDynamicsInitialCondition : public LocalDynamics, public ShellDataSimp
 };
 
 /**
+ * @class UpdateShellNormalDirection
+ * @brief update particle normal directions for shell
+ */
+class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
+{
+  protected:
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Matd> &F_;
+    StdLargeVec<Matd> &transformation_matrix_;
+
+  public:
+    explicit UpdateShellNormalDirection(SPHBody &sph_body);
+    virtual ~UpdateShellNormalDirection(){};
+
+    void update(size_t index_i, Real dt = 0.0);
+};
+
+/**
  * @class ShellAcousticTimeStepSize
  * @brief Computing the acoustic time step size for shell
  */
@@ -239,7 +257,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
   protected:
     ElasticSolid &elastic_solid_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
-    StdLargeVec<Vecd> &global_shear_stress_, &n_;
+    StdLargeVec<Vecd> &global_shear_stress_;
     Real rho0_, inv_rho0_;
     Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;

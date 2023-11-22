@@ -198,6 +198,7 @@ class NearShapeSurface : public BodyPartByCell
 
     /** for the case that the body part shape is not that of the body */
     NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr);
+    NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     /** for the case that the body part shape is the surface of the body shape */
     explicit NearShapeSurface(RealBody &real_body);
     /** for the case that the body part shape is one part of the surface of the body shape */

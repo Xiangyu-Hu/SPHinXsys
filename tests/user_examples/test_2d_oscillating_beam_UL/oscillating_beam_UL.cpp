@@ -143,12 +143,12 @@ int main(int ac, char *av[])
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfDissipativeRiemann> beam_density_relaxation(beam_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
         beam_shear_acceleration_angular_conservative(beam_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
-    // for dual timestep
+    // for dual time step
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
@@ -240,7 +240,6 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }

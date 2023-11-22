@@ -46,9 +46,9 @@ class InverseShape : public BaseShapeType
 
   public:
     /** template constructor for general shapes. */
-    template <typename... ConstructorArgs>
-    explicit InverseShape(ConstructorArgs &&...args)
-        : BaseShapeType(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    explicit InverseShape(Args &&...args)
+        : BaseShapeType(std::forward<Args>(args)...){};
 
     virtual ~InverseShape(){};
 
@@ -75,9 +75,9 @@ class ExtrudeShape : public BaseShapeType
     };
 
   public:
-    template <typename... ConstructorArgs>
-    explicit ExtrudeShape(Real thickness, ConstructorArgs &&...args)
-        : BaseShapeType(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    explicit ExtrudeShape(Real thickness, Args &&...args)
+        : BaseShapeType(std::forward<Args>(args)...),
           thickness_(thickness), thickness_sqr_(thickness * thickness){};
     virtual ~ExtrudeShape(){};
 

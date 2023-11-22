@@ -1,19 +1,17 @@
 /**
- * @file 	shock_tube.cpp
- * @brief 	This is a test to show the standard Sod shock tube case.
+ * @file shock_tube.cpp
+ * @brief This is a test to show the standard Sod shock tube case.
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
- * @author 	Zhentong Wang and Xiangyu Hu
+ * @author Zhentong Wang and Xiangyu Hu
  */
-#include "common_compressible_eulerian_classes.hpp" // eulerian classes for compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
+//	Basic geometry parameters and simulation setup.
 //----------------------------------------------------------------------
 Real DL = 5.0;                           /**< Tube length. */
 Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
 Real DH = particle_spacing_ref * 4;      /**< Tube height. */
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;              /**< initial density of left state. */
 Real rho0_r = 0.125;            /**< initial density of right state. */
@@ -120,13 +118,13 @@ int main(int ac, char *av[])
     SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
     wave_body.addBodyStateForRecording<Real>("TotalEnergy");
     wave_body.addBodyStateForRecording<Real>("Density");
-    SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
+    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
-    ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
-    InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
-    InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
+    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
-    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix);
+    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(wave_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.

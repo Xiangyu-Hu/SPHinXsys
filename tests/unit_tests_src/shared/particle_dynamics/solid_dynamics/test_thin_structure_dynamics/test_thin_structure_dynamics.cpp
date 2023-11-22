@@ -148,6 +148,7 @@ int main(int ac, char *av[])
         stress_relaxation_first_half(plate_body_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
         stress_relaxation_second_half(plate_body_inner);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** Constrain the Boundary. */
     ControledGeometry controled_geometry(plate_body, "ControledGeometry");
     SimpleDynamics<ControledRotation> controled_rotaton(controled_geometry);
@@ -218,6 +219,9 @@ int main(int ac, char *av[])
         rondom_index.push_back((double)rand() / (RAND_MAX)*shell_particles->total_real_particles_);
         von_mises_strain.push_back(shell_particles->getVonMisesStrain(rondom_index[i]));
     }
+
+    update_normal.exec();
+
     pseudo_normal = shell_particles->pseudo_n_;
     normal = shell_particles->n_;
 

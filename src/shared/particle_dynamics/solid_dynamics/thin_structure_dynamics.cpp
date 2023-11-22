@@ -11,6 +11,17 @@ ShellDynamicsInitialCondition::ShellDynamicsInitialCondition(SPHBody &sph_body)
       n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
       pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
+UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
+    : LocalDynamics(sph_body), ShellDataSimple(sph_body),
+      n_(particles_->n_), F_(particles_->F_),
+      transformation_matrix_(particles_->transformation_matrix_) {}
+//=========================================================================================//
+void UpdateShellNormalDirection::update(size_t index_i, Real dt)
+{
+    /** Calculate the current normal direction of mid-surface. */
+    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
+}
+//=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
       ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
@@ -75,7 +86,6 @@ ShellStressRelaxationFirstHalf::
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       numerical_damping_scaling_(particles_->numerical_damping_scaling_),
       global_shear_stress_(particles_->global_shear_stress_),
-      n_(particles_->n_),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
@@ -121,8 +131,6 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     rho_[index_i] = rho0_ / J;
 
-    /** Calculate the current normal direction of mid-surface. */
-    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
     /** Get transformation matrix from global coordinates to current local coordinates. */
     Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i]);
 

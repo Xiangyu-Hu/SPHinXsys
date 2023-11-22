@@ -38,7 +38,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/half-sphere.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_twisting_column/twisting_column.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
 
 ### Fully compatible to classical FVM method
@@ -47,15 +47,15 @@ Through the unified computational framework in SPHinXsys,
 the algorithms for particle methods are full compatible to those in the classical finite volume method (FVM).
 The following gives an example of the flow around cylinder problem solved by FVM in SPHinXsys.
 
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fvm-sphinxsys-flow-around-cylinder.gif" height="168px"></a>
 
 Note that the code for FVM algorithm is exact the same one for particle interaction in SPHinXsys.
 The only difference is that SPHinXsys reads a predefined mesh, other than generate particles, before the computation.
 
-## Journal publications
+## Publications
 
-Main Reference:
+Main publication on the library:
 
 1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu,
 "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
@@ -121,6 +121,9 @@ Volume 236, (2021) 109540
 
 14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, 490, 112303, 2023.  
 [![Free Stream](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2023.112303-d45815.svg)](https://doi.org/10.1016/j.jcp.2023.112303)
+
+15. Yaru Ren, Pengzhi Lin, Chi Zhang, Xiangyu Hu, "An efficient weighted correction method in Riemann SPH for the simulation of general free surface flows", Computer Methods in Applied Mechanics and Engineering, in press. 2023.  
+[![Correction Method](https://img.shields.io/badge/doi-10.1016%2FarXiv.2304.14865-d45815.svg)](https://doi.org/10.48550/arXiv.2304.14865)
 
 ## Software Architecture
 

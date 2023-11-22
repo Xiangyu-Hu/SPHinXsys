@@ -30,7 +30,7 @@
 #define COMPLEX_SOLID_H
 
 #include "elastic_solid.h"
-#include <general_dynamics.h>
+#include "base_general_dynamics.h"
 
 namespace SPH
 {
@@ -45,8 +45,8 @@ class ActiveMuscle : public MuscleType
     StdLargeVec<Real> active_contraction_stress_; /**<  active contraction stress */
 
   public:
-    template <typename... ConstructorArgs>
-    explicit ActiveMuscle(ConstructorArgs &&...args);
+    template <typename... Args>
+    explicit ActiveMuscle(Args &&...args);
     virtual ~ActiveMuscle(){};
 
     /** initialize the local properties, fiber and sheet direction. */

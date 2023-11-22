@@ -9,62 +9,43 @@ namespace SPH
 ComplexRelation::
     ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
     : SPHRelation(inner_relation.getSPHBody()),
-      inner_relation_(inner_relation),
-      contact_relation_(contact_relation),
-      contact_bodies_(contact_relation_.contact_bodies_),
-      inner_configuration_(inner_relation_.inner_configuration_),
-      contact_configuration_(contact_relation_.contact_configuration_)
+      inner_relation_(inner_relation)
 {
-    resizeConfiguration();
-}
-//=================================================================================================//
-ComplexRelation::ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies)
-    : SPHRelation(real_body),
-      inner_relation_(base_inner_relation_ptr_keeper_.createRef<InnerRelation>(real_body)),
-      contact_relation_(base_contact_relation_ptr_keeper_
-                            .createRef<ContactRelation>(real_body, contact_bodies)),
-      contact_bodies_(contact_relation_.contact_bodies_),
-      inner_configuration_(inner_relation_.inner_configuration_),
-      contact_configuration_(contact_relation_.contact_configuration_)
-{
+    contact_relations_.push_back(&contact_relation);
     resizeConfiguration();
 }
 //=================================================================================================//
 ComplexRelation::
-    ComplexRelation(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies)
+    ComplexRelation(BaseInnerRelation &inner_relation, StdVec<BaseContactRelation *> contact_relations)
     : SPHRelation(inner_relation.getSPHBody()),
-      inner_relation_(inner_relation),
-      contact_relation_(base_contact_relation_ptr_keeper_.createRef<ContactRelation>(
-          DynamicCast<RealBody>(this, sph_body_), contact_bodies)),
-      contact_bodies_(contact_relation_.contact_bodies_),
-      inner_configuration_(inner_relation_.inner_configuration_),
-      contact_configuration_(contact_relation_.contact_configuration_)
+      inner_relation_(inner_relation)
 {
-    resizeConfiguration();
-}
-//=================================================================================================//
-ComplexRelation::ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts)
-    : SPHRelation(real_body),
-      inner_relation_(base_inner_relation_ptr_keeper_.createRef<InnerRelation>(real_body)),
-      contact_relation_(base_contact_relation_ptr_keeper_
-                            .createRef<ContactRelationToBodyPart>(real_body, contact_body_parts)),
-      contact_bodies_(contact_relation_.contact_bodies_),
-      inner_configuration_(inner_relation_.inner_configuration_),
-      contact_configuration_(contact_relation_.contact_configuration_)
-{
+    for (size_t k = 0; k != contact_relations.size(); ++k)
+    {
+        if (&inner_relation.getSPHBody() != &contact_relations[k]->getSPHBody())
+        {
+            std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+
+        contact_relations_.push_back(contact_relations[k]);
+    }
     resizeConfiguration();
 }
 //=================================================================================================//
 void ComplexRelation::resizeConfiguration()
 {
     inner_relation_.resizeConfiguration();
-    contact_relation_.resizeConfiguration();
+    for (size_t k = 0; k != contact_relations_.size(); ++k)
+        contact_relations_[k]->resizeConfiguration();
 }
 //=================================================================================================//
 void ComplexRelation::updateConfiguration()
 {
     inner_relation_.updateConfiguration();
-    contact_relation_.updateConfiguration();
+    for (size_t k = 0; k != contact_relations_.size(); ++k)
+        contact_relations_[k]->updateConfiguration();
 }
 //=================================================================================================//
 } // namespace SPH
