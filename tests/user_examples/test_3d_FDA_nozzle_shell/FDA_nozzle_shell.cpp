@@ -182,9 +182,11 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     // Must construct ShellCurvature before ShellContactRelation
+    InnerRelation fluid_block_inner(fluid_block);
     InnerRelation wall_boundary_inner(wall_boundary);
     SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(wall_boundary_inner);
-    ComplexRelation fluid_block_complex(fluid_block, {&wall_boundary});
+    ContactRelationToShell fluid_wall_contact(fluid_block, {&wall_boundary});
+    ComplexRelation fluid_block_complex(fluid_block_inner, fluid_wall_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -192,20 +194,20 @@ int main(int ac, char *av[])
     /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_wall_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid_block, 2 * U_f_throat);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
     /** Pressure relaxation using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(fluid_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(fluid_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_block_inner, fluid_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_block_inner, fluid_wall_contact);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(fluid_block_complex);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_complex);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(fluid_block_inner, fluid_wall_contact);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_wall_contact);
     /** Computing vorticity in the flow. */
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_complex.getInnerRelation());
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
         fluid_block, makeShared<AlignedBoxShape>(Transform(Vec3d(buffer_translation)), buffer_halfsize));
@@ -245,9 +247,9 @@ int main(int ac, char *av[])
     /** initial curvature*/
     wall_corrected_configuration.exec();
     shell_curvature.compute_initial_curvature();
-    fluid_block_complex.getContactRelation().updateConfiguration();
+    fluid_block_complex.updateConfiguration();
     //   Check dWijVjeij
-    CheckKernelCompleteness check_kernel_completeness(fluid_block_complex.getInnerRelation(), fluid_block_complex.getContactRelation());
+    CheckKernelCompleteness check_kernel_completeness(fluid_block_inner, fluid_wall_contact);
     check_kernel_completeness.exec();
     fluid_block.addBodyStateForRecording<Real>("TotalKernel");
     fluid_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");

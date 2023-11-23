@@ -169,11 +169,10 @@ const BoundingBox system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter
 /**
  * @brief Material properties of the fluid.
  */
-const Real rho0_f = 1000.0; /**< Reference density of fluid. */
-const Real mu_f = 6.5e-3;   /**< Viscosity. */
+const Real rho0_f = 1050.0; /**< Reference density of fluid. */
+const Real mu_f = 3.6e-3;   /**< Viscosity. */
 const Real Re = 100;
-// const Real U_f = 30.0e-6 / 60. / (M_PI / 4.0 * diameter * diameter); /**<
-// Characteristic velocity. Average velocity */
+/**< Characteristic velocity. Average velocity */
 const Real U_f = Re * mu_f / rho0_f / diameter;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
@@ -270,11 +269,17 @@ int main()
     shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_f, 1e3, 0.45);
     shell_boundary.generateParticles<ShellBoundary>();
     /** topology */
+    InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(shell_boundary);
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_boundary_inner);
     // contact
-    ComplexRelation water_block_complex(water_block, {&shell_boundary});
+    ContactRelationToShell water_block_contact(water_block, {&shell_boundary});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     /**
      * @brief 	Define all numerical methods which are used in this case.
      */
@@ -288,12 +293,11 @@ int main()
      */
     /** time-space method to detect surface particles. (Important for
      * DensitySummationFreeSurfaceComplex work correctly.)*/
-    InteractionWithUpdate<
-        fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
-        inlet_outlet_surface_particle_indicator(water_block_complex);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
+        inlet_outlet_surface_particle_indicator(water_block_inner, water_block_contact);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-        update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex>
+        update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize>
         get_fluid_advection_time_step_size(water_block, U_max);
@@ -301,17 +305,17 @@ int main()
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(
         water_block);
     /** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
-        pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann>
+        pressure_relaxation(water_block_inner, water_block_contact);
     /** Pressure relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall>
-        density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann>
+        density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall>
-        viscous_acceleration(water_block_complex);
+        viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
-        transport_velocity_correction(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
+        transport_velocity_correction(water_block_inner, water_block_contact);
     /**
      * @brief 	Boundary conditions. Inflow & Outflow in Y-direction
      */
@@ -374,7 +378,7 @@ int main()
     water_block_complex.updateConfiguration();
 
     // Check dWijVjeij
-    CheckKernelCompleteness check_kernel_completeness(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
+    CheckKernelCompleteness check_kernel_completeness(water_block_inner, water_block_contact);
     check_kernel_completeness.exec();
     water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
     water_block.addBodyStateForRecording<Real>("TotalKernel");
