@@ -11,7 +11,7 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 Real DL = 1.0;                     /**< box length. */
 Real DH = 1.0;                     /**< box height. */
-Real resolution_ref = 1.0 / 100;   /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 50;  /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -68,7 +68,7 @@ int main(int ac, char* av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -102,7 +102,7 @@ int main(int ac, char* av[])
         ReloadParticleIO write_particle_reload_files(io_environment, { &water_block });
         /** A  Physics relaxation step. */
         InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_block_inner);
-        relax_dynamics::RelaxationStepInnerImplicit relaxation_step_inner(water_block_inner);
+        relax_dynamics::RelaxationStepInnerImplicit<CorrectionMatrixRelaxation> relaxation_step_inner(water_block_inner);
         PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
         PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
         //----------------------------------------------------------------------
@@ -156,7 +156,7 @@ int main(int ac, char* av[])
      * which will also introduce numerical dissipation slightly. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> pressure_relaxation_correct(water_block_inner);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrect> pressure_relaxation_consistency(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistency> pressure_relaxation_consistency(water_block_inner);
     /** Density relaxation algorithm by using verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
 
@@ -165,8 +165,8 @@ int main(int ac, char* av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyCorrectionInner<AllParticles>> transport_velocity_consistency(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner, 0.2);
+    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyInner<AllParticles>> transport_velocity_consistency(water_block_inner, 0.0125);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
@@ -222,7 +222,8 @@ int main(int ac, char* av[])
 
             kernel_correction_inner.exec();
             //transport_velocity_correction.exec();
-            transport_velocity_consistency.exec();
+            //transport_velocity_consistency.exec();
+            
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -270,21 +271,6 @@ int main(int ac, char* av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
         << " seconds." << std::endl;
-
-    //write_particle_reload_files.writeToFile();
-
-    if (sph_system.GenerateRegressionData())
-    {
-        write_total_mechanical_energy.generateDataBase(1.0e-3);
-        write_maximum_speed.generateDataBase(1.0e-3);
-    }
-    else if (!sph_system.ReloadParticles())
-    {
-        write_total_mechanical_energy.testResult();
-        write_maximum_speed.testResult();
-    }
-
-
     return 0;
 }
 

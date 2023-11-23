@@ -144,7 +144,7 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
         /* A scaling is adopted to handle the particle overlap. */
         this->acc_[index_i] -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) * 
                          level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                         sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+                         sph_adaptation_->SmoothingLengthRatio(index_i)) * (1);
     };
 
   protected:
@@ -480,7 +480,7 @@ protected:
     ComplexRelation& complex_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationComplexWithLevelSetCorrectionImplicit<RelaxationType>> relaxation_evolution_complex_;
+    InteractionSplit<RelaxationComplexImplicit<RelaxationType>> relaxation_evolution_complex_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 

@@ -4,7 +4,7 @@
  * @details 2D eulerian_Lid_driven_cavity example.
  * @author 	Zhentong Wang
  */
-#include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for fluid.
+#include "eulerian_fluid_dynamics.hpp" // eulerian classes for fluid.
 #include "sphinxsys.h" //	SPHinXsys Library.
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -22,26 +22,33 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Real rho0_f = 1.0;					/**< Reference density of fluid. */
 Real U_f = 1.0;						/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;				/**< Reference sound speed. */
-Real Re = 400.0;						/**< Reynolds number. */
+Real Re = 1000.0;						/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
+std::vector<Vecd> createWaterBlockShape()
+{
+	/** Geometry definition. */
+	std::vector<Vecd> water_body_shape;
+	water_body_shape.push_back(Vecd(0.0, 0.0));
+	water_body_shape.push_back(Vecd(0.0, DH));
+	water_body_shape.push_back(Vecd(DL, DH));
+	water_body_shape.push_back(Vecd(DL, 0.0));
+	water_body_shape.push_back(Vecd(0.0, 0.0));
+
+	return water_body_shape;
+}
+class WaterBlock : public ComplexShape
 {
 public:
-	explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
 	{
-		/** Geometry definition. */
-		std::vector<Vecd> water_body_shape;
-		water_body_shape.push_back(Vecd(0.0, 0.0));
-		water_body_shape.push_back(Vecd(0.0, DH));
-		water_body_shape.push_back(Vecd(DL, DH));
-		water_body_shape.push_back(Vecd(DL, 0.0));
-		water_body_shape.push_back(Vecd(0.0, 0.0));
-		multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
+		MultiPolygon outer_boundary(createWaterBlockShape());
+		add<MultiPolygonShape>(outer_boundary, "InnerWaterBlock");
 	}
 };
+
 /**
  * @brief 	Wall boundary body definition.
  */
@@ -93,27 +100,6 @@ protected:
 	StdLargeVec<Real>& Vol_;
 };
 //----------------------------------------------------------------------
-//	Case-dependent initial condition.
-//----------------------------------------------------------------------
-class WeaklyCompressibleFluidInitialCondition
-	: public fluid_dynamics::FluidInitialCondition
-{
-public:
-	explicit WeaklyCompressibleFluidInitialCondition(SPHBody& sph_body)
-		: FluidInitialCondition(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
-	{
-		particles_->registerVariable(mom_, "Momentum");
-		particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-		particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-	};
-
-	void update(size_t index_i, Real dt) {};
-
-protected:
-	StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-	StdLargeVec<Real>& rho_, & p_;
-};
-//----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
 class VelocityXObserverParticleGenerator : public ObserverParticleGenerator
@@ -122,9 +108,9 @@ public:
 	explicit VelocityXObserverParticleGenerator(SPHBody& sph_body)
 		: ObserverParticleGenerator(sph_body)
 	{
-		size_t number_of_observation_point = 51;
-		Real range_of_measure = 1.0;
-		Real start_of_measure = 0.0;
+		size_t number_of_observation_point = DL / resolution_ref;
+		Real range_of_measure = DL - resolution_ref;
+		Real start_of_measure = 0.5 * resolution_ref;
 
 		for (size_t i = 0; i < number_of_observation_point; ++i)
 		{
@@ -139,9 +125,9 @@ public:
 	explicit VelocityYObserverParticleGenerator(SPHBody& sph_body)
 		: ObserverParticleGenerator(sph_body)
 	{
-		size_t number_of_observation_point = 51;
-		Real range_of_measure = 1.0;
-		Real start_of_measure = 0.0;
+		size_t number_of_observation_point = DL / resolution_ref;
+		Real range_of_measure = DL - resolution_ref;
+		Real start_of_measure = 0.5 * resolution_ref;
 
 		for (size_t i = 0; i < number_of_observation_point; ++i)
 		{
@@ -171,7 +157,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_body.defineBodyLevelSetShape();
+	water_body.defineComponentLevelSetShape("InnerWaterBlock")->writeLevelSet(io_environment);
 	water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_body.generateParticles<ParticleGeneratorReload>(io_environment, water_body.getName())
@@ -207,40 +193,75 @@ int main(int ac, char *av[])
 	if (sph_system.RunParticleRelaxation())
 	{
 		/** body topology only for particle relaxation */
-		InnerRelation cylinder_inner(water_body);
+		InnerRelation water_body_inner(water_body);
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
 		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(water_body);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &water_body });
+		BodyStatesRecordingToVtp write_water_body_to_vtp(io_environment, { &water_body });
 		/** Write the particle reload files. */
 		ReloadParticleIO write_particle_reload_files(io_environment, water_body);
-		/** A  Physics relaxation step. */
-		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
+
+		/* Relaxation method: including based on the 0th and 1st order consistency. */
+		InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_complex(water_block_complex);
+
+		//relax_dynamics::RelaxationStepComplexImplicit relaxation_step_complex(water_block_complex, "InnerWaterBlock");
+		relax_dynamics::RelaxationStepComplexImplicit<CorrectionMatrixRelaxation> relaxation_step_complex(water_block_complex, "InnerWaterBlock");
+		SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_body_inner);
+		ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_body, "ParticleKineticEnergy");
+		ReduceDynamics<QuantityMaximum<Real>> calculate_water_block_maximum_kinetic_energy(water_body, "ParticleKineticEnergy");
+		water_body.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
 		random_inserted_body_particles.exec(0.25);
-		relaxation_step_inner.SurfaceBounding().exec();
-		write_inserted_body_to_vtp.writeToFile(0);
-
-		int ite_p = 0;
-		while (ite_p < 1000)
+		sph_system.initializeSystemCellLinkedLists();
+		sph_system.initializeSystemConfigurations();
+		relaxation_step_complex.SurfaceBounding().exec();
+		write_water_body_to_vtp.writeToFile(0);
+		Real water_block_average_kinetic_energy = 100.0;
+		Real water_block_maximum_kinetic_energy = 100.0;
+		//----------------------------------------------------------------------
+		//	Relax particles of the insert body.
+		//----------------------------------------------------------------------
+		TickCount t1 = TickCount::now();
+		int ite = 0; //iteration step for the total relaxation step.
+		GlobalStaticVariables::physical_time_ = ite;
+		while (ite < 200)
 		{
-			relaxation_step_inner.exec();
-			ite_p += 1;
-			if (ite_p % 200 == 0)
+			kernel_correction_complex.exec();
+			relaxation_step_complex.exec();
+
+			ite += 1;
+			if (ite % 200 == 0)
 			{
-				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-				write_inserted_body_to_vtp.writeToFile(ite_p);
+				update_water_block_kinetic_energy.exec();
+				water_block_average_kinetic_energy = calculate_water_block_average_kinetic_energy.exec();
+				water_block_maximum_kinetic_energy = calculate_water_block_maximum_kinetic_energy.exec();
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
+				std::cout << "Body: "
+					      << " Average: " << water_block_average_kinetic_energy
+					      << " Maximum: " << water_block_maximum_kinetic_energy << std::endl;
+				write_water_body_to_vtp.writeToFile(ite);
 			}
 		}
+
+		std::cout << "Residual: "
+			      << " maximum: " << calculate_water_block_maximum_kinetic_energy.exec()
+			      << " average: " << calculate_water_block_average_kinetic_energy.exec() << std::endl;
+
 		std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
 
-		/** Output results. */
+		ite++;
+		write_water_body_to_vtp.writeToFile(ite);
 		write_particle_reload_files.writeToFile(0);
+
+		TickCount t2 = TickCount::now();
+		TickCount::interval_t tt;
+		tt = t2 - t1;
+		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 		return 0;
 	}
 	//----------------------------------------------------------------------
@@ -249,7 +270,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** Initial condition with momentum and energy field */
 	SimpleDynamics<MovingWallInitialCondition>  solid_initial_condition(wall_boundary);
-	SimpleDynamics<WeaklyCompressibleFluidInitialCondition> fluid_initial_condition(water_body);
+	SimpleDynamics<NormalDirectionFromBodyShape> boundary_normal_direction(wall_boundary);
 	/** Initialize a time step. */
 	SimpleDynamics<TimeStepInitialization> time_step_initialization(water_body);
 	InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_maxtrix(water_block_complex);
@@ -259,9 +280,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_corrected);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
-	InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemannWithWall> pressure_relaxation(water_block_complex, 0.0);
-	InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemannWithWall> density_and_energy_relaxation(water_block_complex, 0.0);
-	//InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::VorticityInner> vorticity_inner(water_body_inner);
+	InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex_corrected);
+	InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> density_and_energy_relaxation(water_block_complex_corrected);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -277,9 +297,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	//wall_boundary_normal_direction.parallel_exec();
-	fluid_initial_condition.exec();
 	solid_initial_condition.exec();
+	boundary_normal_direction.exec();
 	body_states_recording.writeToFile();
 	kernel_correction_maxtrix.exec();
 	kernel_correction_maxtrix_corrected.exec();
@@ -335,11 +354,8 @@ int main(int ac, char *av[])
 
 		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		if (GlobalStaticVariables::physical_time_ > 40)
-		{
-			write_horizontal_velocity.writeToFile(number_of_iterations);
-			write_vertical_velocity.writeToFile(number_of_iterations);
-		}
+		write_horizontal_velocity.writeToFile(number_of_iterations);
+		write_vertical_velocity.writeToFile(number_of_iterations);
 		TickCount t3 = TickCount::now();
         interval += t3 - t2;
 	}

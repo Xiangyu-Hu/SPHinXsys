@@ -7,22 +7,22 @@ namespace fluid_dynamics
 //=================================================================================================//
 Vec2d NoRiemannSolverGE::getBoundingWaveSpeeds(const FluidState &state_i, const FluidState &state_j, const Vecd e_ij)
 {
-    Real s_r = 1;
     Real s_l = -1;
+    Real s_r = 1;
     return Vec2d(s_l, s_r);
 };
 //=================================================================================================//
 DissipationState NoRiemannSolverGE::getDissipationState(const FluidState &state_i, const FluidState &state_j, const Vecd e_ij)
 {
-    return DissipationState();
+    return DissipationState(); //default return zero.
 }
 //=================================================================================================//
 Vec2d HLLERiemannSolver::getBoundingWaveSpeeds(const FluidState &state_i, const FluidState &state_j, const Vecd e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
-    Real cl = this->fluid_i_.ReferenceSoundSpeed();
-    Real cr = this->fluid_i_.ReferenceSoundSpeed();
+    Real cl = this->fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+    Real cr = this->fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
     Real s_l = SMIN(ul - cl, ur - cr);
     Real s_r = SMAX(ul + cl, ur + cr);
     return Vec2d(s_l, s_r);
@@ -32,9 +32,28 @@ DissipationState HLLERiemannSolver::getDissipationState(const FluidState &state_
 {
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
-    Real clr = (this->fluid_i_.ReferenceSoundSpeed() * state_i.rho_ + this->fluid_i_.ReferenceSoundSpeed() * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-    Matd momentum_dissipation = SMIN<Real>(0.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ * state_j.vel_ - state_i.rho_ * state_i.vel_) * (-e_ij).transpose();
-    Vecd density_dissipation = SMIN<Real>(0.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ - state_i.rho_) * (-e_ij);
+    Real cl = this->fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+    Real cr = this->fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+    Real clr = (cl * state_i.rho_ + cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
+    
+    Real s_l = SMIN(ul - cl, ur - cr);
+    Real s_r = SMAX(ul + cl, ur + cr);
+    Matd flux_lm = (state_i.rho_ * state_i.vel_ * state_i.vel_.transpose() + state_i.p_ * Matd::Identity());
+    Matd flux_rm = (state_j.rho_ * state_j.vel_ * state_j.vel_.transpose() + state_j.p_ * Matd::Identity());
+    Vecd state_lm = state_i.rho_ * state_i.vel_;
+    Vecd state_rm = state_j.rho_ * state_j.vel_;
+    Vecd flux_ld = (state_i.rho_ * state_i.vel_);
+    Vecd flux_rd = (state_j.rho_ * state_j.vel_);
+    Real state_ld = state_i.rho_;
+    Real state_rd = state_j.rho_;
+
+    Matd momentum_dissipation = SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) *
+        (0.5 * (s_r + s_l) / (s_r - s_l) * (flux_lm - flux_rm) + s_r * s_l * (state_rm - state_lm) * (-e_ij).transpose() / (s_r - s_l));
+    Vecd density_dissipation = SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) *
+        ((0.5 * (s_r + s_l) / (s_r - s_l) * (flux_ld - flux_rd)) + s_r * s_l * (state_rd - state_ld) / (s_r - s_l) * (-e_ij));
+
+    //Matd momentum_dissipation = SMIN<Real>(15 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ * state_j.vel_ - state_i.rho_ * state_i.vel_) * (-e_ij).transpose();
+    //Vecd density_dissipation = SMIN<Real>(15 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ - state_i.rho_) * (-e_ij);
     return DissipationState(momentum_dissipation, density_dissipation);
 };
 //=================================================================================================//

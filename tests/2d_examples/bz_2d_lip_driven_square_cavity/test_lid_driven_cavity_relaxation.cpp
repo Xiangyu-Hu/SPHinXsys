@@ -11,7 +11,7 @@ using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 1.0;					  /**< box length. */
 Real DH = 1.0;					  /**< box height. */
-Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 25.0; /**< Global reference resolution. */
 Real BW = resolution_ref * 6;	  /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));

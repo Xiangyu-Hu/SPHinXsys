@@ -257,7 +257,7 @@ public:
                     Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
                     // acceleration for transport velocity
-                    acceleration_trans -= (this->B_[index_i] + Matd::Identity()) * nablaW_ijV_j;
+                    acceleration_trans -= (this->B_[index_i] + this->B_[index_i]) * nablaW_ijV_j;
                 }
             }
 

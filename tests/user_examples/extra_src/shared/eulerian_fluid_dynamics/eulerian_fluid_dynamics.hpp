@@ -295,6 +295,7 @@ void EulerianIntegration2ndHalfWithWallConsistency<EulerianIntegration2ndHalfTyp
     Vecd vel_i = this->vel_[index_i];
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Vecd>& vel_ave_k = *(this->wall_acc_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
         StdLargeVec<Matd> &B_k = *(this->wall_B_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
@@ -304,7 +305,7 @@ void EulerianIntegration2ndHalfWithWallConsistency<EulerianIntegration2ndHalfTyp
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
-            Vecd vel_in_wall = -this->vel_[index_i];
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
             Real p_in_wall = this->p_[index_i];
             Real rho_in_wall = this->rho_[index_i];
 

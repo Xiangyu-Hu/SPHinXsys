@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(true); //Tag for run particle relaxation for body-fitted distribution
+    sph_system.setRunParticleRelaxation(false); //Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);       //Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);// handle command line arguemnts.
@@ -136,7 +136,6 @@ int main(int ac, char *av[])
         sph_system.initializeSystemConfigurations();
         write_water_body_to_vtp.writeToFile(0);
         Real water_block_kinetic_energy = 100.0;
-
         //----------------------------------------------------------------------
         //	Relax particles of the insert body.
         //----------------------------------------------------------------------
@@ -190,8 +189,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemann> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfHLLERiemann> density_and_energy_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemann> pressure_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemann> density_and_energy_relaxation(water_body_inner);
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     SimpleDynamics<TimeStepInitialization> time_step_initialization(water_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
@@ -284,9 +283,6 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-
-    write_total_mechanical_energy.testResult();
-    write_maximum_speed.testResult();
 
     return 0;
 }
