@@ -83,34 +83,65 @@ namespace SPH
 		};
 
 		/** Note this is a temporary treatment *
-		* @class GetTimeAverageCrossSectionData
-		* @brief  GetTimeAverageCrossSectionData
+		* @class BaseGetTimeAverageData
+		* @brief  BaseGetTimeAverageData
 		*/
-		class GetTimeAverageCrossSectionData : public BaseTurtbulentModelInner
+		class BaseGetTimeAverageData : public BaseTurtbulentModelInner
 		{
 		public:
-			explicit GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points);
-			virtual ~GetTimeAverageCrossSectionData() {};
+			explicit BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points);
+			virtual ~BaseGetTimeAverageData() {};
 
-			void update(size_t index_i, Real dt = 0.0);
-			void output_cross_section_data();
-			void get_time_average_data();
+			//void update(size_t index_i, Real dt = 0.0);
+			void output_time_history_data(Real cutoff_time);
+			void get_time_average_data(Real cutoff_time);
 		protected:
 			PltEngine plt_engine_;
 
-			StdLargeVec<Vecd> & pos_;
+			StdLargeVec<Vecd>& pos_;
 			StdLargeVec<Real>& turbu_mu_, & turbu_k_, & turbu_epsilon_;
 			//std::vector<std::vector<Real>>  data_sto_;
 			StdLargeVec<std::vector<Real>> data_sto_, data_loaded_;
 			StdLargeVec<Real>  data_time_aver_sto_;
 			//ConcurrentVec<ConcurrentVec<Real>> data_sto_;
 			StdLargeVec<int> num_in_cell_;
-			Real x_min ;
-			Real x_max ;
 			int num_cell, num_data;
-			Real cutoff_time;
 			StdLargeVec<std::string> file_name_;
 			std::string file_path_output_, file_path_input_;
+		};
+
+		/** Note this is a temporary treatment *
+		* @class GetTimeAverageCrossSectionData
+		* @brief  GetTimeAverageCrossSectionData
+		*/
+		class GetTimeAverageCrossSectionData : public BaseGetTimeAverageData
+		{
+		public:
+			explicit GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points, const StdVec<Real>& bound_x);
+			virtual ~GetTimeAverageCrossSectionData() {};
+
+			void update(size_t index_i, Real dt = 0.0);
+		protected:
+			Real x_min ;
+			Real x_max ;
+
+		};
+		/** Note this is a temporary treatment *
+		* @class GetTimeAverageCenterLineData
+		* @brief  GetTimeAverageCenterLineData
+		*/
+		class GetTimeAverageCenterLineData : public BaseGetTimeAverageData
+		{
+		public:
+			explicit GetTimeAverageCenterLineData(BaseInnerRelation& inner_relation, int num_observer_points,Real observe_x_ratio, 
+				const StdVec<Real>& bound_y, const StdVec<Real>& bound_x_f, const StdVec<Real>& bound_x_b);
+			virtual ~GetTimeAverageCenterLineData() {};
+
+			void update(size_t index_i, Real dt = 0.0);
+			void output_monitor_x_coordinate();
+		protected:
+			Real observe_x_ratio_, observe_x_spacing_;
+			StdVec<Real> bound_x_f_, bound_x_b_, bound_y_;
 		};
 
 		/**

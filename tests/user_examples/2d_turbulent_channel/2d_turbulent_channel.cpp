@@ -25,6 +25,7 @@ int main(int ac, char* av[])
 	//water_block.defineAdaptationRatios(1.4);
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineAdaptationRatios(1.15, 4.0);
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
@@ -62,7 +63,7 @@ int main(int ac, char* av[])
 	near_surface.level_set_shape_.writeLevelSet(io_environment);
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref, id_exclude, near_surface);
 
-	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points);
+	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points, monitoring_bound);
 
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
@@ -136,6 +137,7 @@ int main(int ac, char* av[])
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
 	write_body_states.writeToFile();
+	//get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
 	//----------------------------------------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------------------------------------
@@ -202,7 +204,7 @@ int main(int ac, char* av[])
 			water_block_complex_relation.updateConfiguration();
 			
 			get_time_average_cross_section_data.exec();
-			get_time_average_cross_section_data.output_cross_section_data();
+			get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
 			//if(GlobalStaticVariables::physical_time_>5.8)
 				//write_body_states.writeToFile();
 		}
@@ -232,7 +234,7 @@ int main(int ac, char* av[])
 	std::cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << std::endl;
 
-	get_time_average_cross_section_data.get_time_average_data();
+	get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
 	std::cout << "The time-average data is output " << std::endl;
 
 	return 0;
