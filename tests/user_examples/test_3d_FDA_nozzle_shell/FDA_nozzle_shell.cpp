@@ -184,7 +184,6 @@ int main(int ac, char *av[])
     // Must construct ShellCurvature before ShellContactRelation
     InnerRelation fluid_block_inner(fluid_block);
     InnerRelation wall_boundary_inner(wall_boundary);
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(wall_boundary_inner);
     ContactRelationToShell fluid_wall_contact(fluid_block, {&wall_boundary});
     ComplexRelation fluid_block_complex(fluid_block_inner, fluid_wall_contact);
     //----------------------------------------------------------------------
@@ -216,6 +215,8 @@ int main(int ac, char *av[])
     PeriodicConditionUsingCellLinkedList periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
     /** Wall boundary configuration correction*/
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(wall_boundary_inner);
+    // wall curvature
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(wall_boundary_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -223,7 +224,7 @@ int main(int ac, char *av[])
     fluid_block.addBodyStateForRecording<Real>("Density");
     fluid_block.addBodyStateForRecording<Real>("VolumetricMeasure");
     fluid_block.addBodyStateForRecording<Real>("MassiveMeasure");
-    wall_boundary.addBodyStateForRecording<Real>("MeanCurvature");
+    wall_boundary.addBodyStateForRecording<Real>("TotalMeanCurvature");
     wall_boundary.addBodyStateForRecording<Real>("Thickness");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     /**

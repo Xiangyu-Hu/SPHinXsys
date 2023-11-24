@@ -234,7 +234,7 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 NeighborBuilderContactShell::NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body)
     : NeighborBuilderContact(body, contact_body),
       n_(*contact_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
-      mean_curvature_(*contact_body.getBaseParticles().getVariableByName<Real>("MeanCurvature")),
+      H_(*contact_body.getBaseParticles().registerSharedVariable<Real>("TotalMeanCurvature")),
       particle_distance_(contact_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void NeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -277,7 +277,7 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
     // H is the total mean curvature
     // for 2D, curvature=H
     // for 3D, mean curvature=H/2
-    const Real H_j_corrected = direction_corrector * mean_curvature_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
+    const Real H_j_corrected = direction_corrector * H_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
 
     const int N_MAX = int(kernel_->CutOffRadius() / particle_distance_) + 1;
 

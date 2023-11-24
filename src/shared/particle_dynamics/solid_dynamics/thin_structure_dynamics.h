@@ -394,10 +394,11 @@ class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::She
     StdLargeVec<Matd> &F_;
     StdLargeVec<Matd> &F_bending_;
 
+    StdLargeVec<Real> &H_;
+    StdLargeVec<Real> &K_;
+
     StdLargeVec<Matd> dn_0_;
     StdLargeVec<Matd> dn_;
-    StdLargeVec<Real> H_;
-    StdLargeVec<Real> K_;
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH

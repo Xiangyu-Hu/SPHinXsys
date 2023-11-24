@@ -300,12 +300,12 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
       n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
-      n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_)
+      n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
+      H_(*particles_->registerSharedVariable<Real>("TotalMeanCurvature")),
+      K_(*particles_->registerSharedVariable<Real>("GaussianCurvature"))
 {
     particles_->registerVariable(dn_0_, "InitialNormalGradient");
     particles_->registerVariable(dn_, "NormalGradient");
-    particles_->registerVariable(H_, "MeanCurvature");
-    particles_->registerVariable(K_, "GaussianCurvature");
 };
 //=================================================================================================//
 void ShellCurvature::compute_initial_curvature()

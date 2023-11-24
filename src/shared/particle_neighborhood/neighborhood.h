@@ -146,7 +146,7 @@ class NeighborBuilderContact : public NeighborBuilder
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContact(){};
     virtual void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 };
 
 /**
@@ -209,9 +209,9 @@ class NeighborBuilderContactShell : public NeighborBuilderContact
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   private:
-    StdLargeVec<Vecd> &n_;              // normal direction of contact body
-    StdLargeVec<Real> &mean_curvature_; // mean curvature of contact body
-    Real particle_distance_;            // reference spacing of contact body
+    StdLargeVec<Vecd> &n_;   // normal direction of contact body
+    StdLargeVec<Real> &H_;   // summation of mean curvature of contact body
+    Real particle_distance_; // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         size_t index_j, const Real &W_ij,
