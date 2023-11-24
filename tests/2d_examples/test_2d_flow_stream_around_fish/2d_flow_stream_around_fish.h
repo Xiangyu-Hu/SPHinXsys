@@ -12,18 +12,24 @@ Real DH = 0.4;                                /**< Channel height. */
 Real particle_spacing_ref = 0.0025;           /**< Initial reference particle spacing. */
 Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = particle_spacing_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
-
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+
+Real cx = 0.3 * DL;           /**< Center of fish in x direction. */
+Real cy = DH / 2;             /**< Center of fish in y direction. */
+Real fish_length = 0.2;       /**< Length of fish. */
+Real fish_thickness = 0.03;   /**< The maximum fish thickness. */
+Real muscle_thickness = 0.02; /**< The maximum fish thickness. */
+Real head_length = 0.03;      /**< Length of fish bone. */
+Real bone_thickness = 0.003;  /**< Length of fish bone. */
+Real fish_shape_resolution = particle_spacing_ref * 0.5;
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -35,37 +41,24 @@ Real mu_f = rho0_f * U_f * 0.3 / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
-//----------------------------------------------------------------------
-Real cx = 0.3 * DL;           /**< Center of fish in x direction. */
-Real cy = DH / 2;             /**< Center of fish in y direction. */
-Real fish_length = 0.2;       /**< Length of fish. */
-Real fish_thickness = 0.03;   /**< The maximum fish thickness. */
-Real muscle_thickness = 0.02; /**< The maximum fish thickness. */
-Real head_length = 0.03;      /**< Length of fish bone. */
-Real bone_thickness = 0.003;  /**< Length of fish bone. */
-Real fish_shape_resolution = particle_spacing_ref * 0.5;
-
 Real rho0_s = 1050.0;
 Real Youngs_modulus1 = 0.8e6;
 Real Youngs_modulus2 = 0.5e6;
 Real Youngs_modulus3 = 1.1e6;
 Real poisson = 0.49;
-
-Real a1 = 1.22 * fish_thickness / fish_length;
-Real a2 = 3.19 * fish_thickness / fish_length / fish_length;
-Real a3 = -15.73 * fish_thickness / pow(fish_length, 3);
-Real a4 = 21.87 * fish_thickness / pow(fish_length, 4);
-Real a5 = -10.55 * fish_thickness / pow(fish_length, 5);
-
-Real b1 = 1.22 * muscle_thickness / fish_length;
-Real b2 = 3.19 * muscle_thickness / fish_length / fish_length;
-Real b3 = -15.73 * muscle_thickness / pow(fish_length, 3);
-Real b4 = 21.87 * muscle_thickness / pow(fish_length, 4);
-Real b5 = -10.55 * muscle_thickness / pow(fish_length, 5);
 //----------------------------------------------------------------------
-//	SPH bodies with cases-dependent geometries (ComplexShape).
+//	SPH bodies with cases dependent geometries.
 //----------------------------------------------------------------------
-/** create a water block shape */
+class FishBody : public MultiPolygonShape
+{
+
+  public:
+    explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    {
+        std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
+        multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
+    }
+};
 std::vector<Vecd> createWaterBlockShape()
 {
     // geometry
@@ -78,24 +71,6 @@ std::vector<Vecd> createWaterBlockShape()
 
     return water_block_shape;
 }
-
-/**
- * Fish body with tethering constraint.
- */
-class FishBody : public MultiPolygonShape
-{
-
-  public:
-    explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
-    }
-};
-//----------------------------------------------------------------------
-//	Define case dependent bodies material, constraint and boundary conditions.
-//----------------------------------------------------------------------
-/** Fluid body definition */
 class WaterBlock : public ComplexShape
 {
   public:
@@ -108,8 +83,9 @@ class WaterBlock : public ComplexShape
         subtract<MultiPolygonShape>(fish);
     }
 };
-
-/** Case dependent inflow boundary condition. */
+//----------------------------------------------------------------------
+//	Define case dependent bodies material, constraint and boundary conditions.
+//----------------------------------------------------------------------
 struct FreeStreamVelocity
 {
     Real u_ref_, t_ref_;
@@ -145,8 +121,9 @@ class TimeDependentAcceleration : public Gravity
         return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
     }
 };
-
-// Material ID
+//----------------------------------------------------------------------
+//	Case dependent composite material
+//----------------------------------------------------------------------
 class FishBodyComposite : public CompositeSolid
 {
   public:
@@ -160,6 +137,18 @@ class FishBodyComposite : public CompositeSolid
 //----------------------------------------------------------------------
 //	Case dependent initialization material ids
 //----------------------------------------------------------------------
+Real a1 = 1.22 * fish_thickness / fish_length;
+Real a2 = 3.19 * fish_thickness / fish_length / fish_length;
+Real a3 = -15.73 * fish_thickness / pow(fish_length, 3);
+Real a4 = 21.87 * fish_thickness / pow(fish_length, 4);
+Real a5 = -10.55 * fish_thickness / pow(fish_length, 5);
+
+Real b1 = 1.22 * muscle_thickness / fish_length;
+Real b2 = 3.19 * muscle_thickness / fish_length / fish_length;
+Real b3 = -15.73 * muscle_thickness / pow(fish_length, 3);
+Real b4 = 21.87 * muscle_thickness / pow(fish_length, 4);
+Real b5 = -10.55 * muscle_thickness / pow(fish_length, 5);
+
 class FishMaterialInitialization
     : public MaterialIdInitialization
 {
@@ -191,10 +180,10 @@ class FishMaterialInitialization
         }
     };
 };
-
-// imposing active strain to fish muscle
-class ImposingActiveStrain
-    : public solid_dynamics::ElasticDynamicsInitialCondition
+//----------------------------------------------------------------------
+//	imposing active strain to fish muscle
+//----------------------------------------------------------------------
+class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondition
 {
   public:
     explicit ImposingActiveStrain(SolidBody &solid_body)

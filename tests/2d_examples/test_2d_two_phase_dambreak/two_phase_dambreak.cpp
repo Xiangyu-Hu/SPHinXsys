@@ -107,14 +107,6 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     inner_normal_direction.exec();
     //----------------------------------------------------------------------
-    //	First output before the main loop.
-    //----------------------------------------------------------------------
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile(0);
-    /** Output the Hydrostatic mechanical energy of fluid. */
-    write_water_mechanical_energy.writeToFile(0);
-    write_recorded_pressure.writeToFile(0);
-    //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
@@ -130,6 +122,12 @@ int main(int ac, char *av[])
     TimeInterval interval_computing_pressure_relaxation;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile();
+    write_water_mechanical_energy.writeToFile(number_of_iterations);
+    write_recorded_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------

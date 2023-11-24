@@ -38,7 +38,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/half-sphere.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_twisting_column/twisting_column.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
 
 ### Fully compatible to classical FVM method
@@ -47,15 +47,15 @@ Through the unified computational framework in SPHinXsys,
 the algorithms for particle methods are full compatible to those in the classical finite volume method (FVM).
 The following gives an example of the flow around cylinder problem solved by FVM in SPHinXsys.
 
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fvm-sphinxsys-flow-around-cylinder.gif" height="168px"></a>
 
 Note that the code for FVM algorithm is exact the same one for particle interaction in SPHinXsys.
 The only difference is that SPHinXsys reads a predefined mesh, other than generate particles, before the computation.
 
-## Journal publications
+## Publications
 
-Main Reference:
+Main publication on the library:
 
 1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu,
 "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",

@@ -81,7 +81,8 @@ class RegressionTestBase : public ObserveMethodType
 
   public:
     template <typename... Args>
-    explicit RegressionTestBase(Args &&...args) : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
+    explicit RegressionTestBase(Args &&...args) 
+    : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
                                                              observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
                                                              result_xml_engine_in_("result_xml_engine_in", "result"),
                                                              result_xml_engine_out_("result_xml_engine_out", "result")

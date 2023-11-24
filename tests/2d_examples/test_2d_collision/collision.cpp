@@ -216,7 +216,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Initial states output.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(0);
+    body_states_recording.writeToFile();
     free_ball_displacement_recording.writeToFile(0);
     damping_ball_displacement_recording.writeToFile(0);
     //----------------------------------------------------------------------

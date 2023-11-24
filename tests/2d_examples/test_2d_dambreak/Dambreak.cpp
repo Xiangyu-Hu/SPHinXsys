@@ -1,9 +1,9 @@
 /**
- * @file	dambreak.cpp
- * @brief	2D dambreak example.
- * @details	This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for fluid simulation.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @file dambreak.cpp
+ * @brief 2D dambreak example.
+ * @details This is the one of the basic test cases, also the first case for
+ * understanding SPH method for free surface flow simulation.
+ * @author Luhui Han, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
@@ -51,11 +51,12 @@ class WallBoundary : public ComplexShape
 int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
-    //	Build up an SPHSystem.
+    //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
+
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -79,8 +80,6 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
@@ -184,7 +183,7 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-            /** screen output, write body reduced values and restart files  */
+            /** screen output, write body observables and restart files  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
