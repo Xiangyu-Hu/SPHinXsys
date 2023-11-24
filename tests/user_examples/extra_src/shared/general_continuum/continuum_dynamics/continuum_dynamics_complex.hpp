@@ -1,6 +1,5 @@
 #pragma once
 #include "continuum_dynamics_complex.h"
-
 //=================================================================================================//
 namespace SPH
 {

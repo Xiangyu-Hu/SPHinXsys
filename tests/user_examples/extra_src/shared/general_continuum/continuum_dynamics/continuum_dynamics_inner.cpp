@@ -28,8 +28,6 @@ namespace SPH
               pos_(particles_->pos_), vel_(particles_->vel_),
               acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
         //=================================================================================================//
-        //===============================ArtificialStressRelaxation======================================//
-        //=================================================================================================//
         BaseArtificialStressRelaxation ::
             BaseArtificialStressRelaxation(BaseInnerRelation &inner_relation, Real epsilon)
             : BaseRelaxation(inner_relation), smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
@@ -90,10 +88,7 @@ namespace SPH
             }
             acc_shear_[index_i] = acceleration;
         }
-
         //=================================================================================================//
-        //===============================ShearStressRelaxation1stHalf======================================//
-        //=================================================================================================/
         ShearStressRelaxation1stHalf ::
             ShearStressRelaxation1stHalf(BaseInnerRelation &inner_relation)
             : BaseRelaxation(inner_relation),
@@ -126,8 +121,6 @@ namespace SPH
             vel_[index_i] += acc_shear_[index_i] * dt;
         }
         //=================================================================================================//
-        //===============================ShearStressRelaxation2ndHalf======================================//
-        //=================================================================================================//
         ShearStressRelaxation2ndHalf ::
             ShearStressRelaxation2ndHalf(BaseInnerRelation &inner_relation)
             : BaseRelaxation(inner_relation),
@@ -157,8 +150,6 @@ namespace SPH
             Matd stress_tensor_i = shear_stress_[index_i] + p_[index_i] * Matd::Identity();
             von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
         }
-        //=================================================================================================//
-        //===================================Non-hourglass formulation=====================================//
         //=================================================================================================//
         ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation& inner_relation)
             : BaseRelaxation(inner_relation),
@@ -281,8 +272,6 @@ namespace SPH
             vel_[index_i] -= velocity_correction_;
         }
         //=================================================================================================//
-        //================================================Plastic==========================================//
-        //=================================================================================================//
         BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation& inner_relation)
             : LocalDynamics(inner_relation.getSPHBody()), PlasticContinuumDataInner(inner_relation),
             plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_),
@@ -314,8 +303,6 @@ namespace SPH
             }
             return tensor_3d;
         }
-        //====================================================================================//
-        //===============================StressDiffusion======================================//
         //====================================================================================//
         StressDiffusion::StressDiffusion(BaseInnerRelation& inner_relation)
             : BaseRelaxationPlastic(inner_relation), fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()), smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),

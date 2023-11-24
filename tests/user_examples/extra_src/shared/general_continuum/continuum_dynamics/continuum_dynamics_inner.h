@@ -115,10 +115,6 @@ class ShearStressRelaxation2ndHalf : public BaseRelaxation
     StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
     StdLargeVec<Real> &von_mises_stress_;
 };
-
-//=================================================================================================//
-//===================================Non-hourglass formulation=====================================//
-//=================================================================================================//
 /**
  * @class Integration1stHalf
  * @brief Pressure relaxation scheme with the mostly used Riemann solver.
@@ -259,11 +255,7 @@ class ConstrainSolidBodyMassCenter : public LocalDynamics, public ContinuumDataS
 
     void update(size_t index_i, Real dt = 0.0);
 };
-
 //=================================================================================================//
-//================================================Plastic==========================================//
-//=================================================================================================//
-
 class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataInner
 {
   public:

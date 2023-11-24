@@ -24,9 +24,6 @@ namespace SPH
         {
             this->vel_[index_i] += (this->acc_prior_[index_i] + this->acc_[index_i] + this->acc_shear_[index_i]) * dt;
         }
-
-		//=================================================================================================//
-		//====================================Plastic: BaseStressRelaxation================================//
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseStressRelaxation1stHalf<RiemannSolverType>::BaseStressRelaxation1stHalf(BaseInnerRelation& inner_relation)
