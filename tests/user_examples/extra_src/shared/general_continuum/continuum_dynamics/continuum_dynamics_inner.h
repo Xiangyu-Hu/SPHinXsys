@@ -281,8 +281,6 @@ class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataI
 };
 
 //=================================================================================================//
-//===================================Plastic: BaseStressRelaxation=================================//
-//=================================================================================================//
 template <class RiemannSolverType>
 class BaseStressRelaxation1stHalf : public BaseRelaxationPlastic
 {

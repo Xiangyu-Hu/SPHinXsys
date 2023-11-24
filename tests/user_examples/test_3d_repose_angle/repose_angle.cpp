@@ -285,7 +285,6 @@ int main(int ac, char *av[])
               << interval_updating_configuration.seconds() << "\n";
     std::cout << "total time steps = " << number_of_iterations << "\n";
 
-    //sph_system.setGenerateRegressionData(true);
     if (sph_system.GenerateRegressionData())
     {
         write_soil_mechanical_energy.generateDataBase(1.0e-3);

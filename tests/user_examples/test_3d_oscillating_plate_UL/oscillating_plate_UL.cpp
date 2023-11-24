@@ -239,14 +239,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
-    {
-        write_kinetic_energy.generateDataBase(1.0e-3);
-    }
-    else
-    {
-        write_kinetic_energy.testResult();
-    }
+    write_kinetic_energy.testResult();
 
     return 0;
 }
