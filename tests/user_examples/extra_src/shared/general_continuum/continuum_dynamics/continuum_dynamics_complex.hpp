@@ -109,8 +109,7 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
             size_t index_j = wall_neighborhood.j_[n];
             Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
             Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_i;
-            Matd velocity_gradient_ij -= (vel_i - vel_in_wall) * nablaW_ijV_j.transpose();
-            velocity_gradient += velocity_gradient_ij;
+            velocity_gradient -= (vel_i - vel_in_wall) * nablaW_ijV_j.transpose();
         }
     }
     this->velocity_gradient_[index_i] += velocity_gradient;;
