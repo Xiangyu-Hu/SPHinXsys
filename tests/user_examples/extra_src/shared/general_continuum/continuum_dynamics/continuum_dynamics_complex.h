@@ -76,36 +76,49 @@ class BaseShearStressRelaxation2ndHalfWithWall : public InteractionWithWall<Base
 
 using ShearStressRelaxation2ndHalfWithWall = BaseShearStressRelaxation2ndHalfWithWall<ShearStressRelaxation2ndHalf>;
 
+/**
+ * @class Plastic:BaseStressRelaxationWithWall
+ */
 template <class BaseStressRelaxation1stHalfType>
 class BaseStressRelaxation1stHalfWithWall : public InteractionWithWall<BaseStressRelaxation1stHalfType>
 {
-  public:
+public:
     template <typename... Args>
     BaseStressRelaxation1stHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseStressRelaxation1stHalfType>(std::forward<Args>(args)...){};
-    virtual ~BaseStressRelaxation1stHalfWithWall(){};
+        : InteractionWithWall<BaseStressRelaxation1stHalfType>(std::forward<Args>(args)...) {};
+    virtual ~BaseStressRelaxation1stHalfWithWall() {};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 };
 using StressRelaxation1stHalfWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalf>;
-using StressRelaxation1stHalfRiemannWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalfRiemann>;
-using StressRelaxation1stHalfDissipativeRiemannWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalfDissipativeRiemann>;
 
 template <class BaseStressRelaxation2ndHalfType>
 class BaseStressRelaxation2ndHalfWithWall : public InteractionWithWall<BaseStressRelaxation2ndHalfType>
 {
-  public:
+public:
     template <typename... Args>
     BaseStressRelaxation2ndHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseStressRelaxation2ndHalfType>(std::forward<Args>(args)...){};
-    virtual ~BaseStressRelaxation2ndHalfWithWall(){};
+        : InteractionWithWall<BaseStressRelaxation2ndHalfType>(std::forward<Args>(args)...) {};
+    virtual ~BaseStressRelaxation2ndHalfWithWall() {};
     void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 };
 using StressRelaxation2ndHalfWithWall = BaseStressRelaxation2ndHalfWithWall<StressRelaxation2ndHalf>;
 using StressRelaxation2ndHalfRiemannWithWall = BaseStressRelaxation2ndHalfWithWall<StressRelaxation2ndHalfRiemann>;
-using StressRelaxation2ndHalfDissipativeRiemannWithWall = BaseStressRelaxation2ndHalfWithWall<StressRelaxation2ndHalfDissipativeRiemann>;
+
+template <class BaseStressRelaxation3rdHalfType>
+class BaseStressRelaxation3rdHalfWithWall : public InteractionWithWall<BaseStressRelaxation3rdHalfType>
+{
+public:
+    template <typename... Args>
+    BaseStressRelaxation3rdHalfWithWall(Args &&...args)
+        : InteractionWithWall<BaseStressRelaxation3rdHalfType>(std::forward<Args>(args)...) {};
+    virtual ~BaseStressRelaxation3rdHalfWithWall() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+using StressRelaxation3rdHalfWithWall = BaseStressRelaxation3rdHalfWithWall<StressRelaxation3rdHalf>;
+using StressRelaxation3rdHalfRiemannWithWall = BaseStressRelaxation3rdHalfWithWall<StressRelaxation3rdHalfRiemann>;
 
 /**
  * @class StressDiffusionWithWall

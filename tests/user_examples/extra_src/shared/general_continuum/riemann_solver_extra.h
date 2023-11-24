@@ -11,16 +11,8 @@ namespace SPH
 		template <class FluidI, class FluidJ>
 		AcousticRiemannSolverExtra(FluidI& fluid_i, FluidJ& fluid_j)
 			: AcousticRiemannSolver(fluid_i, fluid_j) {};
-		Vecd DissipativePJumpExtra(const Vecd& u_jump, const Vecd& e_ij);
+		Real DissipativePJump(const Real& u_jump);
 	};
 
-	class DissipativeRiemannSolverExtra : public DissipativeRiemannSolver
-	{
-	public:
-		template <class FluidI, class FluidJ>
-		DissipativeRiemannSolverExtra(FluidI& fluid_i, FluidJ& fluid_j)
-			: DissipativeRiemannSolver(fluid_i, fluid_j) {};
-		Vecd DissipativePJumpExtra(const Vecd& u_jump, const Vecd& e_ij);
-	};
 } // namespace SPH
 #endif // RIEMANN_SOLVER_EXTRA_H

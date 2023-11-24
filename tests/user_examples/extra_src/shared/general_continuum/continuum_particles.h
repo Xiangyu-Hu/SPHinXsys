@@ -65,6 +65,32 @@ namespace SPH
         virtual void initializeOtherVariables() override;
         virtual ContinuumParticles* ThisObjectPtr() override { return this; };
     };
+
+    //=================================================================================================//
+    //===================================J2PlasticicityParticles=======================================//
+    //=================================================================================================//
+    class J2PlasticicityParticles : public ContinuumParticles
+    {
+    public:
+
+        StdLargeVec<int> plastic_indicator_;
+
+        StdLargeVec<Mat3d> shear_stress_3D_;
+        StdLargeVec<Mat3d> shear_strain_3D_;
+        StdLargeVec<Mat3d> shear_stress_rate_3D_;
+        StdLargeVec<Mat3d> shear_strain_rate_3D_;
+
+        StdLargeVec<Mat3d> strain_tensor_3D_;
+        StdLargeVec<Mat3d> strain_rate_3D_;
+
+        J2Plasticity& J2_plasticity_;
+
+        J2PlasticicityParticles(SPHBody& sph_body, J2Plasticity* J2_plasticity);
+        virtual ~J2PlasticicityParticles() {};
+
+        virtual void initializeOtherVariables() override;
+        virtual ContinuumParticles* ThisObjectPtr() override { return this; };
+    };
 } // namespace SPH
 
 #endif // CONTINUUM_PARTICLES_H

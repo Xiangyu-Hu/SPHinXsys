@@ -33,3 +33,4 @@
 
 #include "continuum_dynamics_complex.hpp"
 #include "continuum_dynamics_inner.hpp"
+#include "continuum_contact_dynamics.h"
