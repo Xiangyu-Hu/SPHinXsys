@@ -57,12 +57,13 @@ namespace SPH
 			vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
 			Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
 			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
+			//divide an extral rho ??
 			acc_prior_[index_i] += acceleration / rho_[index_i];
 
-				/*std::string output_folder = "./output";
-				std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
-				std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-				out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;*/
+			/*std::string output_folder = "./output";
+			std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
+			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+			out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;*/
 		}
 		//=================================================================================================//
 		StaticConfinementExtendIntegration1stHalf::
