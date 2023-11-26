@@ -489,14 +489,14 @@ namespace SPH
         {
             particles_->registerVariable(acc_hourglass_, "AccelerationHourglass");
             particles_->registerSortableVariable<Vecd>("AccelerationHourglass");
-            //
+
             particles_->registerVariable(scale_coef_, "ScaleCoefficient");
             particles_->registerSortableVariable<Matd>("ScaleCoefficient");
             particles_->addVariableToWrite<Matd>("ScaleCoefficient");
-            //
+
             particles_->registerVariable(plastic_strain_tensor_3D_, "PlasticStrainTensor3D");
             particles_->registerSortableVariable<Mat3d>("PlasticStrainTensor3D");
-            //
+
             particles_->registerVariable(hardening_parameter_, "HardeningParameter");
             particles_->registerSortableVariable<Real>("HardeningParameter");
             particles_->addVariableToWrite<Real>("HardeningParameter");
@@ -512,10 +512,7 @@ namespace SPH
                 const Vecd& e_ij = inner_neighborhood.e_ij_[n];
                 Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
                 Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-                //Matd velocity_gradient_ij = -(vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
-                //hourglass control
                 Matd velocity_gradient_ij = -(vel_i - vel_[index_j]) * (B_[index_i] * e_ij * dW_ijV_j).transpose();
-                //std::cout << B_[index_i] << std::endl;
                 velocity_gradient += velocity_gradient_ij;
             }
             velocity_gradient_[index_i] = velocity_gradient;
@@ -525,13 +522,11 @@ namespace SPH
             Real G_ = J2_plasticity_.getShearModulus(J2_plasticity_.getYoungsModulus(), J2_plasticity_.getPoissonRatio());
             Mat3d velocity_gradient = increaseTensor(velocity_gradient_[index_i]);
             shear_stress_rate_3D_[index_i] = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient, shear_stress_3D_[index_i]);
-            //shear_stress_rate_3D_[index_i] = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient, shear_stress_3D_[index_i], hardening_parameter_[index_i]);
             shear_stress_3D_[index_i] += shear_stress_rate_3D_[index_i] * dt;
 
             //For plasticity
             plastic_indicator_[index_i] = J2_plasticity_.PlasticIndicator(shear_stress_3D_[index_i]);
-            shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_3D_[index_i]);
-            //shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_3D_[index_i], hardening_parameter_[index_i]);
+            //shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_3D_[index_i]);
 
             Mat3d stress_tensor_i = shear_stress_3D_[index_i] - p_[index_i] * Mat3d::Identity();
             von_mises_stress_[index_i] = getVonMisesStressFromMatrix(reduceTensor(stress_tensor_i));
@@ -541,7 +536,6 @@ namespace SPH
             // shear strain
             Mat3d strain_tensor_i = strain_tensor_3D_[index_i];
             shear_strain_3D_[index_i] = strain_tensor_i - Mat3d::Identity() * strain_tensor_i.trace() / 3.0;
-            //
             // calculate scale matrix
             if (plastic_indicator_[index_i])
             {
@@ -569,9 +563,6 @@ namespace SPH
             Real rho_dissipation(0);
             Real rho_i = rho_[index_i];
             Matd shear_stress_i = reduceTensor(shear_stress_3D_[index_i]);
-            //Matd shear_strain_i = reduceTensor(shear_strain_3D_[index_i]) + Eps * Matd::Identity();
-            Matd shear_strain_i = reduceTensor(shear_strain_3D_[index_i]);
-            Matd strain_i = reduceTensor(strain_tensor_3D_[index_i]);
             const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -581,48 +572,16 @@ namespace SPH
                 Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 const Vecd& e_ij = inner_neighborhood.e_ij_[n];
                 Matd shear_stress_j = reduceTensor(shear_stress_3D_[index_j]);
-                //Matd shear_strain_j = reduceTensor(shear_strain_3D_[index_j]) + Eps * Matd::Identity();
-                Matd shear_strain_j = reduceTensor(shear_strain_3D_[index_j]);
-                Matd strain_j = reduceTensor(strain_tensor_3D_[index_j]);
                 acceleration += ((shear_stress_i + shear_stress_j) / rho_i) * nablaW_ijV_j;
-
                 //hourglass control
                 Vecd v_ij = vel_[index_i] - vel_[index_j];
                 Real r_ij = inner_neighborhood.r_ij_[n];
                 Vecd v_ij_correction = v_ij - 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_j]) * r_ij * e_ij;
                 Real coef = 3.0;
-                //acceleration_hourglass += coef * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
                 acceleration_hourglass += coef * 0.5 * (scale_coef_[index_i] + scale_coef_[index_j]) * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
-                
-                //if ((shear_strain_i.determinant() < TinyReal) || (shear_strain_j.determinant() < TinyReal))
-                ////if (shear_strain_i.determinant() < TinyReal)
-                ////if ((shear_strain_i.determinant() < 1.0e-5) || (shear_strain_j.determinant() < 1.0e-5))
-                ////if ((shear_strain_i.determinant() < 1.0e-10) || (shear_strain_j.determinant() < 1.0e-10))
-                ////if (!plastic_indicator_[index_i])
-                //{
-                //    scale_coef_[index_i] = Matd::Identity();
-
-                //    //Matd shear_strain__i_inverse = shear_strain_[index_i].completeOrthogonalDecomposition().pseudoInverse();
-                //    //Matd shear_strain__j_inverse = shear_strain_[index_j].completeOrthogonalDecomposition().pseudoInverse();
-                //    //scale_coef_[index_i] = (shear_stress_3D_[index_i] * shear_strain__i_inverse + shear_stress_3D_[index_j] * shear_strain__j_inverse) / (4.0 * G_);
-                //}
-                //else
-                //{
-                //    Matd shear_strain__i_inverse = shear_strain_i.inverse();
-                //    Matd shear_strain__j_inverse = shear_strain_j.inverse();
-                //    //Matd shear_strain__i_inverse = shear_strain_i.completeOrthogonalDecomposition().pseudoInverse();
-                //    //Matd shear_strain__j_inverse = shear_strain_j.completeOrthogonalDecomposition().pseudoInverse();
-                //    scale_coef_[index_i] = (shear_stress_i * shear_strain__i_inverse + shear_stress_j * shear_strain__j_inverse) / (4.0 * G_);
-                //    //scale_coef_[index_i] = (shear_stress_i * shear_strain__i_inverse) / (2.0 * G_);
-                //}
-
-                //acceleration_hourglass += coef * scale_coef_[index_j] * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
-                ////acceleration_hourglass += coef * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
             }
-            //hourglass control
             acc_hourglass_[index_i] += acceleration_hourglass;
             acc_shear_[index_i] = acceleration + acc_hourglass_[index_i];
-            //acc_shear_[index_i] = acceleration;
         }
     } // namespace continuum_dynamics
 } // namespace SPH
