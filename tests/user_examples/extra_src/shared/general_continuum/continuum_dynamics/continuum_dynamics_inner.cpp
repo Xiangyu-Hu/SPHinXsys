@@ -526,7 +526,7 @@ namespace SPH
 
             //For plasticity
             plastic_indicator_[index_i] = J2_plasticity_.PlasticIndicator(shear_stress_3D_[index_i]);
-            //shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_3D_[index_i]);
+            shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_3D_[index_i]);
 
             Mat3d stress_tensor_i = shear_stress_3D_[index_i] - p_[index_i] * Mat3d::Identity();
             von_mises_stress_[index_i] = getVonMisesStressFromMatrix(reduceTensor(stress_tensor_i));
