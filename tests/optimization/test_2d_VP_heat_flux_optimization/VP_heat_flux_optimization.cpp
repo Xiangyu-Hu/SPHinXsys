@@ -287,9 +287,6 @@ TEST(test_optimization, test_problem4_optimized)
     SimpleDynamics<ImposeObjectiveFunction> impose_objective_function(diffusion_body);
     InteractionSplit<ParameterSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
         parameter_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "ThermalConductivity");
-    InteractionSplit<UpdateParameterPDEResidual<
-        ParameterSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>>
-        update_parameter_pde_residual(diffusion_body_inner, diffusion_body_contact, "ThermalConductivity");
     InteractionSplit<RegularizationByDiffusionAnalogy<DiffusionParticles, Real>>
         thermal_diffusivity_regularization(diffusion_body_inner, "ThermalConductivity",
                                            initial_eta_regularization, maximum_variation_current_global);
@@ -300,15 +297,7 @@ TEST(test_optimization, test_problem4_optimized)
     SimpleDynamics<ThermalConductivityConstrain<DiffusionParticles>>
         thermal_diffusivity_constrain(diffusion_body, "ThermalConductivity");
     ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
-        calculate_temperature_local_residual(diffusion_body, "ResidualTLocal");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
-        calculate_thermal_diffusivity_local_residual(diffusion_body, "ResidualKLocal");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
-        calculate_regularization_local_variation(diffusion_body, "VariationLocal");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
         calculate_temperature_global_residual(diffusion_body, "ResidualTGlobal");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
-        calculate_thermal_diffusivity_global_residual(diffusion_body, "ResidualKGlobal");
     ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
         calculate_regularization_global_variation(diffusion_body, "VariationGlobal");
     ReduceDynamics<ComputeMaximumError<SPHBody, DiffusionParticles>>
@@ -429,12 +418,7 @@ TEST(test_optimization, test_problem4_optimized)
                 update_temperature_pde_residual.exec(dt_ratio_t * dt);
                 averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
 
-                update_parameter_pde_residual.exec(dt_ratio_k * dt);
-                averaged_residual_k_current_local = calculate_thermal_diffusivity_local_residual.exec();
-                averaged_residual_k_current_global = calculate_thermal_diffusivity_global_residual.exec();
-
                 update_regularization_global_variation.exec(dt_ratio_rg * dt);
-                averaged_variation_current_local = calculate_regularization_local_variation.exec();
                 averaged_variation_current_global = calculate_regularization_global_variation.exec();
                 maximum_variation_current_global = calculate_maximum_variation.exec();
             }
@@ -454,7 +438,6 @@ TEST(test_optimization, test_problem4_optimized)
             temperature_splitting_pde_complex.exec(dt_ratio_t * dt);
 
             update_temperature_pde_residual.exec(dt_ratio_t * dt);
-            averaged_residual_T_current_local = calculate_temperature_local_residual.exec();
             averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
         }
 
