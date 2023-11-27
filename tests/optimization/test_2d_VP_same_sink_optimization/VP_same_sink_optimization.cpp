@@ -243,12 +243,8 @@ TEST(test_optimization, test_problem1_optimized)
     Real dt = get_time_step_size.exec();
     Real averaged_residual_T_last_global(10.0);
     Real averaged_variation_last_global(10.0);
-    Real averaged_residual_T_current_local(0.0);
     Real averaged_residual_T_current_global(0.0);
     Real averaged_residual_k_current_local(0.0);
-    Real averaged_residual_k_current_global(0.0);
-    Real averaged_variation_current_local(0.0);
-    Real averaged_variation_current_global(0.0);
     Real maximum_variation_current_global(10.0);
     Real opt_averaged_temperature = 0.0;
     Real nonopt_averaged_temperature = Infinity;
