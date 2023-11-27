@@ -14,14 +14,14 @@
 
 ## Description
 
-SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle Hydrodynamics for industrial compleX systems.
-It provides C++ APIs for physical accurate simulation and aims to model coupled industrial dynamic systems including fluid, solid, multi-body dynamics
-and beyond with SPH (smoothed particle hydrodynamics), a meshless computational method using particle discretization.
-For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
-
-SPHinXsys is a multi-physics, multi-resolution SPH library based on a unified computational framework in which strong couplings are achieved for all involved physics.
-Although it is not a standalone application itself,
+SPHinXsys (pronunciation: s'finksis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
+The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underline numerical discretization method
+for both particle-based and mesh-based formulations.
+Due to the unified computational framework, SPHinXsys is able to carry out classical simulation and optimization at the same time.
+Although SPHinXsys is not a standalone application itself,
 many examples designated for the specific type of applications are provided.
+
+For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
 
 ## Examples at a glance
 
@@ -52,6 +52,18 @@ The following gives an example of the flow around cylinder problem solved by FVM
 
 Note that the code for FVM algorithm is exact the same one for particle interaction in SPHinXsys.
 The only difference is that SPHinXsys reads a predefined mesh, other than generate particles, before the computation.
+
+### Target-driven optimization
+
+The unique target-driven optimization is able to achieve the optimization target and physical solution all-in-once, 
+which is able to accelerate optimization greatly.
+The following gives an example of optimizing the conductivity distribution 
+for a thermal domain problem targeting minimum average temperature.
+
+Note that the physical solution of the thermal domain and the optimal distribution of conductivity 
+are obtained at the same time when optimization is finished. 
+Also note that the entire optimization process is very fast and 
+only several times slower than that for a single physical solution with given conductivity distribution.  
 
 ## Publications
 
