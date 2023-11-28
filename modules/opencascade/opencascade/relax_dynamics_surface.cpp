@@ -82,13 +82,13 @@ void SurfaceNormalDirection::update(size_t index_i, Real dt)
 ConstrainSurfaceBodyRegion::
     ConstrainSurfaceBodyRegion(BodyPartByParticle &body_part)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), RelaxDataDelegateSimple(sph_body_),
-      acc_(particles_->acc_)
+      force_(particles_->force_)
 {
 }
 //=================================================================================================//
 void ConstrainSurfaceBodyRegion::update(size_t index_i, Real dt)
 {
-    acc_[index_i] = Vecd::Zero();
+    force_[index_i] = Vecd::Zero();
 }
 //=================================================================================================//
 } // namespace relax_dynamics
