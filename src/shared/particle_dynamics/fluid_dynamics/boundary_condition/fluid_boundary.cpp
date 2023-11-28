@@ -33,7 +33,7 @@ EmitterInflowCondition::
     EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
+      pos_(particles_->pos_), vel_(particles_->vel_), force_(particles_->force_),
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
       inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),

@@ -38,7 +38,7 @@ class InteractionWithWall : public BaseIntegrationType, public FSIContactData
   protected:
     StdVec<Real> wall_inv_rho0_;
     StdVec<StdLargeVec<Real> *> wall_mass_;
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_acc_ave_, wall_n_;
 };
 
 /**
@@ -87,7 +87,7 @@ class BaseStressRelaxation1stHalfWithWall : public InteractionWithWall<BaseStres
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
+    virtual Vecd computeNonConservativeForce(size_t index_i) override;
 };
 using StressRelaxation1stHalfWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalf>;
 using StressRelaxation1stHalfRiemannWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalfRiemann>;

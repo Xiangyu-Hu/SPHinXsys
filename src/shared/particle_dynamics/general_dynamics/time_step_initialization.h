@@ -60,7 +60,8 @@ class TimeStepInitialization
       public GeneralDataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &acc_prior_;
+    StdLargeVec<Vecd> &pos_, &force_prior_;
+    StdLargeVec<Real> &mass_;
 
   public:
     explicit TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));

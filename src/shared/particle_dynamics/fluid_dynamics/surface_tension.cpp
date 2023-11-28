@@ -49,7 +49,7 @@ void SurfaceTensionStress::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 SurfaceStressAcceleration<Inner<>>::SurfaceStressAcceleration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      rho_(particles_->rho_), acc_prior_(particles_->acc_prior_),
+      rho_(particles_->rho_), mass_(particles_->mass_), force_prior_(particles_->force_prior_),
       color_gradient_(*particles_->getVariableByName<Vecd>("ColorGradient")),
       surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress")) {}
 //=================================================================================================//
@@ -60,16 +60,16 @@ void SurfaceStressAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        summation += inner_neighborhood.dW_ijV_j_[n] *
+        summation += mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] *
                      (surface_tension_stress_[index_i] + surface_tension_stress_[index_j]) *
                      inner_neighborhood.e_ij_[n];
     }
-    acc_prior_[index_i] += summation / rho_[index_i];
+    force_prior_[index_i] += summation / rho_[index_i];
 }
 //=================================================================================================//
 SurfaceStressAcceleration<Contact<>>::SurfaceStressAcceleration(BaseContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()), FluidContactData(contact_relation),
-      rho_(particles_->rho_), acc_prior_(particles_->acc_prior_),
+      rho_(particles_->rho_), mass_(particles_->mass_), force_prior_(particles_->force_prior_),
       color_gradient_(*particles_->getVariableByName<Vecd>("ColorGradient")),
       surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress"))
 {
@@ -100,14 +100,14 @@ void SurfaceStressAcceleration<Contact<>>::interaction(size_t index_i, Real dt)
             Real r_ij = contact_neighborhood.r_ij_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
             Real mismatch = 1.0 - 0.5 * (color_gradient_[index_i] + contact_color_gradient_k[index_j]).dot(e_ij) * r_ij;
-            summation += contact_neighborhood.dW_ijV_j_[n] *
+            summation += mass_[index_i] * contact_neighborhood.dW_ijV_j_[n] *
                          (-0.1 * mismatch * Matd::Identity() +
                           (Real(1) - contact_fraction_k) * surface_tension_stress_[index_i] +
                           contact_surface_tension_stress_k[index_j] * contact_fraction_k) *
                          contact_neighborhood.e_ij_[n];
         }
     }
-    acc_prior_[index_i] += summation / rho_[index_i];
+    force_prior_[index_i] += summation / rho_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

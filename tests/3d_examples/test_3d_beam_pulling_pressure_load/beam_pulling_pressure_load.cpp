@@ -47,7 +47,7 @@ class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dyn
     LoadForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           solid_dynamics::ElasticSolidDataSimple(sph_body_),
-          acc_prior(particles_->acc_prior_),
+          force_prior(particles_->force_prior_),
           mass_n_(particles_->mass_),
           Vol_(particles_->Vol_),
           F_(particles_->F_),
@@ -74,11 +74,11 @@ class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dyn
         // current_area = J * area_0 * current_normal_norm
         Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
 
-        acc_prior[index_i] += (mean_force_ / mass_n_[index_i]) * normal;
+        force_prior[index_i] += mean_force_ * normal;
     }
 
   protected:
-    StdLargeVec<Vecd> &acc_prior;
+    StdLargeVec<Vecd> &force_prior;
     StdLargeVec<Real> &mass_n_;
     StdLargeVec<Real> area_0_;
     StdLargeVec<Real> &Vol_;

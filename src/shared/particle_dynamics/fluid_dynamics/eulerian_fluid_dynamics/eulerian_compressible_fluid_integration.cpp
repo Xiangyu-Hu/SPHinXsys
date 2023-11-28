@@ -8,15 +8,15 @@ namespace fluid_dynamics
 //=================================================================================================//
 EulerianCompressibleTimeStepInitialization::
     EulerianCompressibleTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
-    : TimeStepInitialization(sph_body, gravity_ptr), rho_(particles_->rho_),
+    : TimeStepInitialization(sph_body, gravity_ptr), rho_(particles_->rho_), mass_(particles_->mass_),
       pos_(particles_->pos_), vel_(particles_->vel_),
       dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
       dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")){};
 //=================================================================================================//
 void EulerianCompressibleTimeStepInitialization::update(size_t index_i, Real dt)
 {
-    dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
-    dE_dt_prior_[index_i] = rho_[index_i] * (gravity_->InducedAcceleration(pos_[index_i])).dot(vel_[index_i]);
+    dmom_dt_prior_[index_i] = mass_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
+    dE_dt_prior_[index_i] = mass_[index_i] * (gravity_->InducedAcceleration(pos_[index_i])).dot(vel_[index_i]);
 }
 //=================================================================================================//
 EulerianCompressibleAcousticTimeStepSize::
@@ -47,7 +47,7 @@ void EulerianCompressibleViscousAccelerationInner::interaction(size_t index_i, R
     Real rho_i = rho_[index_i];
     const Vecd &vel_i = vel_[index_i];
 
-    Vecd acceleration = Vecd::Zero();
+    Vecd force = Vecd::Zero();
     Vecd vel_derivative = Vecd::Zero();
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -55,10 +55,10 @@ void EulerianCompressibleViscousAccelerationInner::interaction(size_t index_i, R
         size_t index_j = inner_neighborhood.j_[n];
         // viscous force
         vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-        acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
+        force += 2.0 * mass_[index_i] * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
     }
-    dmom_dt_prior_[index_i] += rho_[index_i] * acceleration;
-    dE_dt_prior_[index_i] += rho_[index_i] * acceleration.dot(vel_[index_i]);
+    dmom_dt_prior_[index_i] += force;
+    dE_dt_prior_[index_i] += force.dot(vel_[index_i]);
 }
 //=================================================================================================//
 BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &inner_relation)
@@ -69,7 +69,8 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
       dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
-      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
+      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
+      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")){};
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
