@@ -15,9 +15,9 @@
 ## Description
 
 SPHinXsys (pronunciation: s'finksis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
-The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underline numerical discretization method
-for both particle-based and mesh-based formulations.
-Due to the unified computational framework, SPHinXsys is able to carry out classical simulation and optimization at the same time.
+The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underlying numerical method
+for both particle-based and mesh-based discretization.
+Due to the unified computational framework, SPHinXsys is able to carry out simulation and optimization at the same time.
 Although SPHinXsys is not a standalone application itself,
 many examples designated for the specific type of applications are provided.
 
@@ -56,14 +56,14 @@ The only difference is that SPHinXsys reads a predefined mesh, other than genera
 ### Target-driven optimization
 
 The unique target-driven optimization is able to achieve the optimization target and physical solution all-in-once, 
-which is able to accelerate optimization greatly.
+which is able to accelerate optimization process greatly.
 The following gives an example of optimizing the conductivity distribution 
 for a thermal domain problem targeting minimum average temperature.
 
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/optimization/test_2d_VP_heat_flux_optimization/VP_heat_flux_optimization.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/optimization.gif" height="192px"></a>
 
-Note that the physical solution of the thermal domain and the optimal distribution of conductivity 
+Note that the physical solution of the thermal domain (right) and the optimal distribution of conductivity (left)
 are obtained at the same time when optimization is finished. 
 Also note that the entire optimization process is very fast and 
 only several times slower than that for a single physical solution with given conductivity distribution.  
