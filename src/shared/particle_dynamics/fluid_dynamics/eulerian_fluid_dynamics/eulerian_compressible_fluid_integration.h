@@ -57,7 +57,7 @@ class EulerianCompressibleTimeStepInitialization : public TimeStepInitialization
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_;
+    StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Vecd> &pos_, &vel_;
     StdLargeVec<Vecd> &dmom_dt_prior_;
     StdLargeVec<Real> &dE_dt_prior_;
@@ -105,7 +105,7 @@ class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
 
   protected:
     CompressibleFluid compressible_fluid_;
-    StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dE_dt_prior_;
+    StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dE_dt_prior_, &dmass_dt_;
     StdLargeVec<Vecd> &mom_, &dmom_dt_, &dmom_dt_prior_;
 };
 

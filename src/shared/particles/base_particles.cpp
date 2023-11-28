@@ -36,8 +36,8 @@ void BaseParticles::initializeOtherVariables()
     //		register non-geometric data
     //----------------------------------------------------------------------
     registerVariable(vel_, "Velocity");
-    registerVariable(acc_, "Acceleration");
-    registerVariable(acc_prior_, "PriorAcceleration");
+    registerVariable(force_, "Force");
+    registerVariable(force_prior_, "PriorForce");
     registerVariable(rho_, "Density", base_material_.ReferenceDensity());
     registerVariable(mass_, "MassiveMeasure",
                      [&](size_t i) -> Real
@@ -52,7 +52,7 @@ void BaseParticles::initializeOtherVariables()
      */
     addVariableToList<Vecd>(variables_to_restart_, "Position");
     addVariableToList<Vecd>(variables_to_restart_, "Velocity");
-    addVariableToList<Vecd>(variables_to_restart_, "Acceleration");
+    addVariableToList<Vecd>(variables_to_restart_, "Force");
     addVariableToList<Real>(variables_to_restart_, "VolumetricMeasure");
     //----------------------------------------------------------------------
     //		initialize unregistered data

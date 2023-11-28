@@ -49,8 +49,8 @@ class ViscousAcceleration<DataDelegationType>
     virtual ~ViscousAcceleration(){};
 
   protected:
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Vecd> &vel_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &vel_, &force_prior_;
     Real mu_;
     Real smoothing_length_;
 };

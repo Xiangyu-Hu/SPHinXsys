@@ -67,14 +67,15 @@ class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, publi
         : BaseLocalDynamics<DynamicsIdentifier>(identifier), SolidDataSimple(identifier.getSPHBody()),
           pos_(particles_->pos_), pos0_(particles_->pos0_),
           n_(particles_->n_), n0_(particles_->n0_),
-          vel_(particles_->vel_), acc_(particles_->acc_){};
+          vel_(particles_->vel_), force_(particles_->force_), mass_(particles_->mass_){};
 
     virtual ~BaseMotionConstraint(){};
 
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_;
     StdLargeVec<Vecd> &n_, &n0_;
-    StdLargeVec<Vecd> &vel_, &acc_;
+    StdLargeVec<Vecd> &vel_, &force_;
+    StdLargeVec<Real> &mass_;
 };
 
 /**@class FixConstraint
@@ -296,7 +297,7 @@ class TotalForceForSimBody
 {
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &acc_, &acc_prior_, &pos_;
+    StdLargeVec<Vecd> &force_, &force_prior_, &pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
@@ -310,7 +311,7 @@ class TotalForceForSimBody
         : BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(
               identifier, SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0))),
           SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
-          acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
+          force_(particles_->force_), force_prior_(particles_->force_prior_),
           pos_(particles_->pos_),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
@@ -328,7 +329,7 @@ class TotalForceForSimBody
 
     SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
     {
-        Vecd force = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
+        Vecd force = force_[index_i] + force_prior_[index_i];
         SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
         SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
         SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);

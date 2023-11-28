@@ -57,12 +57,12 @@ UpdateAverageVelocityAndAcceleration::
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
       pos_temp_(pos_temp), pos_(particles_->pos_),
       vel_ave_(particles_->vel_ave_),
-      acc_ave_(particles_->acc_ave_) {}
+      force_ave_(particles_->force_ave_), mass_(particles_->mass_) {}
 //=================================================================================================//
 void UpdateAverageVelocityAndAcceleration::update(size_t index_i, Real dt)
 {
     Vecd updated_vel_ave = (pos_[index_i] - pos_temp_[index_i]) / (dt + Eps);
-    acc_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
+    force_ave_[index_i] = mass_[index_i] * (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
     vel_ave_[index_i] = updated_vel_ave;
 }
 //=================================================================================================//

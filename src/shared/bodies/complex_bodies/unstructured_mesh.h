@@ -226,8 +226,8 @@ class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
     void resetBoundaryConditions();
 
   protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_, &pos_;
+    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
+    StdLargeVec<Vecd> &vel_, &pos_, &mom_;
     size_t &total_ghost_particles_;
     size_t &real_particles_bound_;
     vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;

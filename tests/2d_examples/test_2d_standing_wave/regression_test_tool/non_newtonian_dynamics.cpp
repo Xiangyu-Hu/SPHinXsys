@@ -26,7 +26,7 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Integration1stHalfInnerDissipative::interaction(index_i, dt);
 
-    Vecd acceleration = Vecd::Zero();
+    Vecd force = Vecd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -34,10 +34,10 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
         // elastic force
-        acceleration += (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
+        force += mass_[index_i] * (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
     }
 
-    acc_[index_i] += acceleration / rho_[index_i];
+    force_[index_i] += force / rho_[index_i];
 }
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf<ContactWall<>>::
