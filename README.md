@@ -61,7 +61,7 @@ The following gives an example of optimizing the conductivity distribution
 for a thermal domain problem targeting minimum average temperature.
 
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/optimization/test_2d_VP_heat_flux_optimization/VP_heat_flux_optimization.cpp">
-<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/optimization.gif" height="168px"></a>
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/optimization.gif" height="200px"></a>
 
 Note that the physical solution of the thermal domain and the optimal distribution of conductivity 
 are obtained at the same time when optimization is finished. 
