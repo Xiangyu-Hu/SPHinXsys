@@ -67,10 +67,10 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
       Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")),
       dE_dt_(*particles_->getVariableByName<Real>("TotalEnergyChangeRate")),
       dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")),
+      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
-      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
-      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")){};
+      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

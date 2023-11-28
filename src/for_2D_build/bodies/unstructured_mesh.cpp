@@ -757,7 +757,7 @@ BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM 
     vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
     : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
       p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(particles_->vel_), mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_), 
+      vel_(particles_->vel_), pos_(particles_->pos_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       total_ghost_particles_(particles_->total_ghost_particles_),
       real_particles_bound_(particles_->real_particles_bound_),
       each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
