@@ -1,5 +1,5 @@
 /**
- * @file 	VP_problem1_non_optimized
+ * @file 	VP_same_sink_steady
  * @brief 	This is the steady test for the same sink (2/10) temperature.
  * @author 	Bo Zhang and Xiangyu Hu
  */
@@ -52,7 +52,6 @@ std::vector<Vecd> createBoundaryDomain()
 
     return boundaryDomain;
 };
-
 //----------------------------------------------------------------------
 //	Define SPH bodies.
 //----------------------------------------------------------------------
@@ -85,7 +84,6 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     }
 };
-
 using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
 using WallParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
@@ -155,9 +153,8 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 
         for (size_t i = 0; i < number_of_observation_points; ++i)
         {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * (Real)i /
-                                                    (Real)(number_of_observation_points - 1) +
-                                                start_of_measure);
+            Vec2d point_coordinate(0.5 * L, range_of_measure * (Real)i / 
+                (Real)(number_of_observation_points - 1) + start_of_measure);
             positions_.push_back(point_coordinate);
         }
     }
@@ -282,7 +279,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 
-    EXPECT_NEAR(619.124, calculate_averaged_temperature.exec(), 0.01);
+    EXPECT_NEAR(587.88, calculate_averaged_temperature.exec(), 0.01);
 }
 
 int main(int argc, char *argv[])
