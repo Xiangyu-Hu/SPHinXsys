@@ -286,36 +286,37 @@ class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataI
 template <class RiemannSolverType>
 class BaseStressRelaxation1stHalf : public BaseRelaxationPlastic
 {
-    public:
-        explicit BaseStressRelaxation1stHalf(BaseInnerRelation& inner_relation);
-        virtual ~BaseStressRelaxation1stHalf() {};
-        RiemannSolverType riemann_solver_;
-        void initialization(size_t index_i, Real dt = 0.0);
-        void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
-    protected:
-        StdLargeVec<Matd>& velocity_gradient_;
-        StdLargeVec<Real>& acc_deviatoric_plastic_strain_, & vertical_stress_;
-        Real E_, nu_;
-        StdLargeVec<Matd>& B_;
+  public:
+    explicit BaseStressRelaxation1stHalf(BaseInnerRelation &inner_relation);
+    virtual ~BaseStressRelaxation1stHalf(){};
+    RiemannSolverType riemann_solver_;
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &velocity_gradient_;
+    StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
+    Real E_, nu_;
+    StdLargeVec<Matd> &B_;
 };
 using StressRelaxation1stHalf = BaseStressRelaxation1stHalf<NoRiemannSolver>;
 
 template <class RiemannSolverType>
 class BaseStressRelaxation2ndHalf : public BaseRelaxationPlastic
 {
-    public:
-        explicit BaseStressRelaxation2ndHalf(BaseInnerRelation& inner_relation);
-        virtual ~BaseStressRelaxation2ndHalf() {};
-        RiemannSolverType riemann_solver_;
-        void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
+  public:
+    explicit BaseStressRelaxation2ndHalf(BaseInnerRelation &inner_relation);
+    virtual ~BaseStressRelaxation2ndHalf(){};
+    RiemannSolverType riemann_solver_;
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
 
-    protected:
-        virtual Vecd computeNonConservativeAcceleration(size_t index_i);
+  protected:
+    virtual Vecd computeNonConservativeAcceleration(size_t index_i);
 
-        StdLargeVec<Matd>& velocity_gradient_;
-        StdLargeVec<Vecd> acc_hourglass_;
+    StdLargeVec<Matd> &velocity_gradient_;
+    StdLargeVec<Vecd> acc_hourglass_;
 };
 
 using StressRelaxation2ndHalf = BaseStressRelaxation2ndHalf<NoRiemannSolver>;
@@ -324,18 +325,18 @@ using StressRelaxation2ndHalfRiemann = BaseStressRelaxation2ndHalf<AcousticRiema
 template <class RiemannSolverType>
 class BaseStressRelaxation3rdHalf : public BaseRelaxationPlastic
 {
-    public:
-        explicit BaseStressRelaxation3rdHalf(BaseInnerRelation& inner_relation);
-        virtual ~BaseStressRelaxation3rdHalf() {};
-        RiemannSolverType riemann_solver_;
-        void initialization(size_t index_i, Real dt = 0.0);
-        void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
+  public:
+    explicit BaseStressRelaxation3rdHalf(BaseInnerRelation &inner_relation);
+    virtual ~BaseStressRelaxation3rdHalf(){};
+    RiemannSolverType riemann_solver_;
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
 
-    protected:
-        StdLargeVec<Matd>& velocity_gradient_;
-        StdLargeVec<Real>& Vol_, & mass_;
-        Real E_, nu_;
+  protected:
+    StdLargeVec<Matd> &velocity_gradient_;
+    StdLargeVec<Real> &Vol_, &mass_;
+    Real E_, nu_;
 };
 using StressRelaxation3rdHalf = BaseStressRelaxation3rdHalf<NoRiemannSolver>;
 using StressRelaxation3rdHalfRiemann = BaseStressRelaxation3rdHalf<AcousticRiemannSolverExtra>;
@@ -361,22 +362,22 @@ class StressDiffusion : public BaseRelaxationPlastic
  */
 class ShearStressRelaxationHourglassControl : public BaseRelaxation
 {
-public:
-    explicit ShearStressRelaxationHourglassControl(BaseInnerRelation& inner_relation, int hourglass_control = 1);
-    //explicit ShearStressRelaxationHourglassControl(BaseInnerRelation& inner_relation);
-    virtual ~ShearStressRelaxationHourglassControl() {};
+  public:
+    explicit ShearStressRelaxationHourglassControl(BaseInnerRelation &inner_relation, int hourglass_control = 1);
+    // explicit ShearStressRelaxationHourglassControl(BaseInnerRelation& inner_relation);
+    virtual ~ShearStressRelaxationHourglassControl(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
-protected:
-    StdLargeVec<Matd>& shear_stress_, & shear_stress_rate_, & velocity_gradient_;
-    StdLargeVec<Vecd>& acc_shear_, acc_hourglass_;
-    StdLargeVec<Real>& von_mises_stress_;
-    StdLargeVec<Matd>& B_;
-    StdLargeVec<Vecd>& pos0_;
+  protected:
+    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_;
+    StdLargeVec<Vecd> &acc_shear_, acc_hourglass_;
+    StdLargeVec<Real> &von_mises_stress_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Vecd> &pos0_;
     int hourglass_control_;
     StdLargeVec<Matd> scale_coef_;
-    StdLargeVec<Matd>& strain_tensor_rate_, & strain_tensor_, shear_strain_;
+    StdLargeVec<Matd> &strain_tensor_rate_, &strain_tensor_, shear_strain_;
 };
 //=============================================================================================//
 //====================================J2Plasticity=============================================//
@@ -385,40 +386,41 @@ typedef DataDelegateSimple<J2PlasticicityParticles> J2PlasticicityDataSimple;
 typedef DataDelegateInner<J2PlasticicityParticles> J2PlasticicityDataInner;
 class BaseRelaxationJ2Plasticity : public LocalDynamics, public J2PlasticicityDataInner
 {
-public:
-    explicit BaseRelaxationJ2Plasticity(BaseInnerRelation& inner_relation);
-    virtual ~BaseRelaxationJ2Plasticity() {};
+  public:
+    explicit BaseRelaxationJ2Plasticity(BaseInnerRelation &inner_relation);
+    virtual ~BaseRelaxationJ2Plasticity(){};
     Matd reduceTensor(Mat3d tensor_3d);
     Mat3d increaseTensor(Matd tensor_2d);
-protected:
-    J2Plasticity& J2_plasticity_;
-    StdLargeVec<Real>& rho_, & p_, & drho_dt_;
-    StdLargeVec<Vecd>& pos_, & vel_, & acc_, & acc_prior_;
+
+  protected:
+    J2Plasticity &J2_plasticity_;
+    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
+    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 };
 
 class ShearStressRelaxationHourglassControlJ2Plasticity : public BaseRelaxationJ2Plasticity
 {
-public:
-    explicit ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation& inner_relation, int hourglass_control = 1);
-    virtual ~ShearStressRelaxationHourglassControlJ2Plasticity() {};
+  public:
+    explicit ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation &inner_relation, int hourglass_control = 1);
+    virtual ~ShearStressRelaxationHourglassControlJ2Plasticity(){};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
-protected:
-    StdLargeVec<Mat3d>& shear_stress_3D_, & shear_stress_rate_3D_, & shear_strain_3D_, & shear_strain_rate_3D_;
-    StdLargeVec<int>& plastic_indicator_;
-    StdLargeVec<Matd>& velocity_gradient_;
-    StdLargeVec<Vecd>& acc_shear_;
-    StdLargeVec<Real>& von_mises_stress_;
-    StdLargeVec<Matd>& B_;
-    StdLargeVec<Mat3d>& strain_tensor_3D_, & strain_rate_3D_;
+  protected:
+    StdLargeVec<Mat3d> &shear_stress_3D_, &shear_stress_rate_3D_, &shear_strain_3D_, &shear_strain_rate_3D_;
+    StdLargeVec<int> &plastic_indicator_;
+    StdLargeVec<Matd> &velocity_gradient_;
+    StdLargeVec<Vecd> &acc_shear_;
+    StdLargeVec<Real> &von_mises_stress_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Mat3d> &strain_tensor_3D_, &strain_rate_3D_;
     int hourglass_control_;
-    Real E_, nu_, G_;
+    Real E_, nu_;
     StdLargeVec<Matd> scale_coef_;
     StdLargeVec<Vecd> acc_hourglass_;
     StdLargeVec<Mat3d> plastic_strain_tensor_3D_;
-    StdLargeVec<Real> hardening_parameter_;    /**< hardening parameter */
+    StdLargeVec<Real> hardening_parameter_; /**< hardening parameter */
     StdLargeVec<Matd> shear_strain_, shear_strain_return_map_;
     StdLargeVec<Matd> shear_strain_pre_, shear_strain_pre_return_map_;
     StdLargeVec<Matd> shear_strain_rate_, shear_strain_rate_return_map_;
