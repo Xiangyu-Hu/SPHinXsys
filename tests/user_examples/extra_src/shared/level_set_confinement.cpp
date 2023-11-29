@@ -44,7 +44,9 @@ namespace SPH
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), rho_(particles_->rho_),
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
-			level_set_shape_(&near_surface.level_set_shape_) {}
+			level_set_shape_(&near_surface.level_set_shape_),
+			Vol_(particles_->Vol_)
+		{}
 		//=================================================================================================//
         void StaticConfinementViscousAcceleration::update(size_t index_i, Real dt)
 		{
@@ -56,14 +58,36 @@ namespace SPH
 			Real phi_r_ij = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
 			vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
 			Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
-			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
+			acceleration = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
 			//divide an extral rho ??
-			acc_prior_[index_i] += acceleration / rho_[index_i];
+			acc_prior_[index_i] = acceleration;
+			/*for debuging*/
+			Vecd force = Vecd::Zero();
+			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;
 
 			/*std::string output_folder = "./output";
 			std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
 			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
 			out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;*/
+
+			/*std::string output_folder = "./output";
+			std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
+			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+			out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << force[0] << " " << force[1]<<" "  << force.norm() << std::endl;*/
+		}
+		//=================================================================================================//
+		BaseForceFromFluidStaticConfinement::BaseForceFromFluidStaticConfinement(NearShapeSurface& near_surface)
+			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
+			level_set_shape_(&near_surface.level_set_shape_), Vol_(particles_->Vol_)
+		{
+
+		}
+		//=================================================================================================//
+		ViscousForceFromFluidStaticConfinement::ViscousForceFromFluidStaticConfinement(NearShapeSurface& near_surface)
+			:BaseForceFromFluidStaticConfinement(near_surface), pos_(particles_->pos_), rho_(particles_->rho_),
+			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_)
+		{
+			particles_->registerVariable(force_from_fluid_, "ViscousForceFromFluid");
 		}
 		//=================================================================================================//
 		StaticConfinementExtendIntegration1stHalf::

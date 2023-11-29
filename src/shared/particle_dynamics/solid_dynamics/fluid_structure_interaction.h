@@ -89,7 +89,8 @@ class ViscousForceFromFluid : public BaseForceFromFluid
                 Vecd vel_derivative = 2.0 * (vel_ave_i - vel_n_k[index_j]) /
                                       (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
-                force += 2.0 * mu_k * vel_derivative * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+                //force += 2.0 * mu_k * vel_derivative * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+                force += 2.0 * mu_k * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
             }
         }
 

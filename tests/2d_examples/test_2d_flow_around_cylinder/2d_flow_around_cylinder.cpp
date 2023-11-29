@@ -182,7 +182,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_acceleration.exec(GlobalStaticVariables::physical_time_);
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */

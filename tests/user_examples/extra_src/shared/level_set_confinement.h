@@ -78,9 +78,46 @@ namespace SPH
             StdLargeVec<Vecd>& vel_, &acc_prior_;
             Real mu_;
             LevelSetShape* level_set_shape_;
+            /*for debuging*/
+            StdLargeVec<Real>&Vol_;
         };
 
+        class BaseForceFromFluidStaticConfinement : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public: 
+            explicit BaseForceFromFluidStaticConfinement(NearShapeSurface& near_surface);
+            virtual ~BaseForceFromFluidStaticConfinement() {};
+            StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
 
+        protected:
+            StdLargeVec<Vecd> force_from_fluid_;
+            LevelSetShape* level_set_shape_;
+            StdLargeVec<Real> &Vol_;
+        };
+
+        class ViscousForceFromFluidStaticConfinement : public BaseForceFromFluidStaticConfinement
+        {
+        public:
+            explicit ViscousForceFromFluidStaticConfinement(NearShapeSurface& near_surface);
+            virtual ~ViscousForceFromFluidStaticConfinement() {};
+            inline void interaction(size_t index_i, Real dt = 0.0)
+            {
+			    Vecd acceleration = Vecd::Zero();
+			    Vecd vel_derivative = Vecd::Zero();
+			    Vecd vel_level_set_cell_j = Vecd::Zero();
+			    Real rho_i = rho_[index_i];
+			    /*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
+			    vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
+			    Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
+			    //force_from_fluid_[index_i]= -2.0 * mu_ * Vol_[index_i] * kernel_gradient_divide_Rij * vel_derivative ;
+                force_from_fluid_[index_i]= -2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative ;
+            }
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            StdLargeVec<Real>& rho_;
+            StdLargeVec<Vecd>& vel_;
+            Real mu_;
+        };
         /**
         * @class StaticConfinementIntegration1stHalf
         * @brief static confinement condition for pressure relaxation
@@ -203,7 +240,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
             InteractionDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            SimpleDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
+            SimpleDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
             InteractionDynamics<StaticConfinementFreeSurfaceIndication> free_surface_indication_;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
 

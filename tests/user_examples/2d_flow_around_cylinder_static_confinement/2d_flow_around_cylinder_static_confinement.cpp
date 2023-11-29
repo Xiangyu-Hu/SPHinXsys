@@ -74,7 +74,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
     /** Computing viscous acceleration with wall. */
     //InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_complex.getInnerRelation());
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner, SequencedPolicy> viscous_acceleration(water_block_inner);
     /** Impose transport velocity. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
     /** Computing vorticity in the flow. */
@@ -82,12 +82,7 @@ int main(int ac, char *av[])
     /** free stream boundary condition. */
     BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
     SimpleDynamics<FreeStreamCondition> freestream_condition(free_stream_buffer);
-    //----------------------------------------------------------------------
-    //	Algorithms of FSI.
-    //----------------------------------------------------------------------
-    /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-    //InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_cylinder(cylinder_contact);
-    //InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> pressure_force_on_cylinder(cylinder_contact);
+   
     
     NearShapeSurface near_surface(water_block, makeShared<InverseShape<Cylinder>>("Cylinder"));
     near_surface.level_set_shape_.writeLevelSet(io_environment);
@@ -99,15 +94,22 @@ int main(int ac, char *av[])
     density_relaxation.post_processes_.push_back(&confinement_condition.surface_bounding_);
     transport_velocity_correction.post_processes_.push_back(&confinement_condition.transport_velocity_);
     viscous_acceleration.post_processes_.push_back(&confinement_condition.viscous_acceleration_);
+    
+    //----------------------------------------------------------------------
+    //	Algorithms of FSI.
+    //----------------------------------------------------------------------
+    /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
+    InteractionDynamics<fluid_dynamics::ViscousForceFromFluidStaticConfinement> viscous_force_on_cylinder(near_surface);
+    //InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> pressure_force_on_cylinder(cylinder_contact);
 
     /** Computing viscous force acting on wall with wall model. */
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    /*RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
-        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_cylinder, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_cylinder, "TotalViscousForceOnSolid");
+    /*ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
         write_total_force_on_inserted_body(io_environment, pressure_force_on_cylinder, "TotalPressureForceOnSolid");*/
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
@@ -154,7 +156,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_acceleration.exec(GlobalStaticVariables::physical_time_);
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */
@@ -201,7 +203,7 @@ int main(int ac, char *av[])
         /** write run-time observation into file */
         compute_vorticity.exec();
         write_real_body_states.writeToFile();
-        //write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
+        write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
         //write_total_force_on_inserted_body.writeToFile(number_of_iterations);
         fluid_observer_contact.updateConfiguration();
         write_fluid_velocity.writeToFile(number_of_iterations);
