@@ -62,8 +62,8 @@ class SurfaceStressAcceleration<Inner<>> : public LocalDynamics, public FluidDat
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &force_prior_;
     StdLargeVec<Vecd> &color_gradient_;
     StdLargeVec<Matd> &surface_tension_stress_;
 };
@@ -77,8 +77,8 @@ class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidC
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &force_prior_;
     StdLargeVec<Vecd> &color_gradient_;
     StdLargeVec<Matd> &surface_tension_stress_;
     StdVec<StdLargeVec<Vecd> *> contact_color_gradient_;

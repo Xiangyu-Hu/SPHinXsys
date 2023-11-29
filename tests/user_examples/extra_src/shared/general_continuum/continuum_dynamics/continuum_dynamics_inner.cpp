@@ -23,10 +23,10 @@ namespace SPH
         //=================================================================================================//
         BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
             : LocalDynamics(inner_relation.getSPHBody()), ContinuumDataInner(inner_relation),
-              continuum_(particles_->continuum_), rho_(particles_->rho_),
+              continuum_(particles_->continuum_), rho_(particles_->rho_), mass_(particles_->mass_),
               p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
               pos_(particles_->pos_), vel_(particles_->vel_),
-              acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
+              force_(particles_->force_), force_prior_(particles_->force_prior_) {}
         //=================================================================================================//
         //===============================ArtificialStressRelaxation======================================//
         //=================================================================================================//
@@ -285,8 +285,9 @@ namespace SPH
         //=================================================================================================//
         BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation& inner_relation)
             : LocalDynamics(inner_relation.getSPHBody()), PlasticContinuumDataInner(inner_relation),
-            plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_),
-            p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
+            plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_), mass_(particles_->mass_),
+            p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), pos_(particles_->pos_), 
+            vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
             stress_tensor_3D_(particles_->stress_tensor_3D_), strain_tensor_3D_(particles_->strain_tensor_3D_),
             stress_rate_3D_(particles_->stress_rate_3D_), strain_rate_3D_(particles_->strain_rate_3D_),
             elastic_strain_tensor_3D_(particles_->elastic_strain_tensor_3D_), elastic_strain_rate_3D_(particles_->elastic_strain_rate_3D_) {}
@@ -322,7 +323,8 @@ namespace SPH
             sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
         void StressDiffusion::interaction(size_t index_i, Real dt)
         {
-            Real gravity = abs(acc_prior_[index_i](1, 0));
+            Vecd acc_prior_i = force_prior_[index_i] / mass_[index_i];
+            Real gravity = abs(acc_prior_i(1, 0));
             Real density = plastic_continuum_.getDensity();
             Mat3d diffusion_stress_rate_ = Mat3d::Zero();
             Mat3d diffusion_stress_ = Mat3d::Zero();

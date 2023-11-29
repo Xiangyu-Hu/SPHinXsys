@@ -50,7 +50,8 @@ class TaylorGreenInitialCondition
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
+          rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_), 
+        p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");
         particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
@@ -70,14 +71,15 @@ class TaylorGreenInitialCondition
                            sin(2.0 * Pi * pos_[index_i][1]);
         vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
                            cos(2.0 * Pi * pos_[index_i][1]);
-        mom_[index_i] = rho_[index_i] * vel_[index_i];
+        mass_[index_i] = rho_[index_i] * Vol_[index_i];
+        mom_[index_i] = mass_[index_i] * vel_[index_i];
         Real rho_e = p_[index_i] / (gamma_ - 1.0);
-        E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
+        E_[index_i] = rho_e * Vol_[index_i] + 0.5 * mass_[index_i] * vel_[index_i].squaredNorm();
     }
 
   protected:
     StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Real> &rho_, &mass_, &Vol_, &p_;
     StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
     StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
     Real gamma_;

@@ -158,10 +158,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     auto apply_pressure = [&]()
     {
         Real pressure_MPa = pressure * pow(unit_mm, 2);
-        for (size_t i = 0; i < shell_particles->acc_prior_.size(); ++i)
+        for (size_t i = 0; i < shell_particles->force_prior_.size(); ++i)
         {
             // opposite to normals
-            shell_particles->acc_prior_[i] -= pressure_MPa * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
+            shell_particles->force_prior_[i] -= shell_particles->mass_[i] * pressure_MPa * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
         }
     };
 

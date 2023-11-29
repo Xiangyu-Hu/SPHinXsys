@@ -68,7 +68,8 @@ class DMFInitialCondition
   public:
     explicit DMFInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
+          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
+          p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");
         particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
@@ -84,28 +85,30 @@ class DMFInitialCondition
         {
             /** initial left wave pressure,momentum and energy profile */
             rho_[index_i] = rho0_another;
+            mass_[index_i] = rho_[index_i] * Vol_[index_i];
             p_[index_i] = p_another;
             Real rho_e = p_[index_i] / (gamma_ - 1.0);
             vel_[index_i][0] = u_another;
             vel_[index_i][1] = v_another;
-            mom_[index_i] = rho_[index_i] * vel_[index_i];
-            E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
+            mom_[index_i] = mass_[index_i] * vel_[index_i];
+            E_[index_i] = rho_e * Vol_[index_i] + 0.5 * mass_[index_i] * vel_[index_i].squaredNorm();
         }
         else
         {
             rho_[index_i] = rho0_one;
+            mass_[index_i] = rho_[index_i] * Vol_[index_i];
             p_[index_i] = p_one;
             Real rho_e = p_[index_i] / (gamma_ - 1.0);
             vel_[index_i][0] = u_one;
             vel_[index_i][1] = v_one;
-            mom_[index_i] = rho_[index_i] * vel_[index_i];
-            E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
+            mom_[index_i] = mass_[index_i] * vel_[index_i];
+            E_[index_i] = rho_e * Vol_[index_i] + 0.5 * mass_[index_i] * vel_[index_i].squaredNorm();
         }
     }
 
   protected:
     StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
     StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
     StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
     Real gamma_;
@@ -127,9 +130,11 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
     // Override these methods to define the specific boundary conditions
     void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override
     {
-        vel_[ghost_index] = (vel_[index_i] - e_ij.dot(vel_[index_i]) * e_ij) - e_ij.dot(vel_[index_i]) * e_ij;
-        p_[ghost_index] = p_[index_i];
         rho_[ghost_index] = rho_[index_i];
+        mass_[ghost_index] = rho_[ghost_index] * Vol_[ghost_index];
+        vel_[ghost_index] = (vel_[index_i] - e_ij.dot(vel_[index_i]) * e_ij) - e_ij.dot(vel_[index_i]) * e_ij;
+        mom_[ghost_index] = mass_[ghost_index] * vel_[ghost_index];
+        p_[ghost_index] = p_[index_i];
         E_[ghost_index] = E_[index_i];
     }
 
@@ -140,19 +145,25 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
         vel_another[1] = v_another;
         Real p_another = 140.2 / 1.2;
         Real rho_e_another = p_another / (1.4 - 1.0);
-        Real E_inlet_another = rho_e_another + 0.5 * rho0_another * vel_another.squaredNorm();
+        Real mass_another = rho_e_another * Vol_[ghost_index];
+        Vecd momentum_another = mass_another * vel_another;
+        Real E_inlet_another = (rho_e_another + 0.5 * rho0_another * vel_another.squaredNorm()) * Vol_[ghost_index];
 
         rho_[ghost_index] = rho0_another;
+        mass_[ghost_index] = mass_another;
         p_[ghost_index] = p_another;
         vel_[ghost_index] = vel_another;
+        mom_[ghost_index] = momentum_another;
         E_[ghost_index] = E_inlet_another;
     }
 
     void applyOutletBoundary(size_t ghost_index, size_t index_i) override
     {
-        vel_[ghost_index] = vel_[index_i];
-        p_[ghost_index] = p_[index_i];
         rho_[ghost_index] = rho_[index_i];
+        mass_[ghost_index] = mass_[index_i];
+        vel_[ghost_index] = vel_[index_i];
+        mom_[ghost_index] = mom_[index_i];
+        p_[ghost_index] = p_[index_i];
         E_[ghost_index] = E_[index_i];
     }
 
@@ -163,24 +174,28 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - x_1))
         {
             rho_[ghost_index] = rho0_another;
+            mass_[ghost_index] = rho_[ghost_index] * Vol_[ghost_index];
             p_[ghost_index] = p_another;
             Real rho_e = p_[ghost_index] / (heat_capacity_ratio - 1.0);
             Vecd vel_another(0.0, 0.0);
             vel_another[0] = u_another;
             vel_another[1] = v_another;
             vel_[ghost_index] = vel_another;
-            E_[ghost_index] = rho_e + 0.5 * rho_[ghost_index] * vel_[ghost_index].squaredNorm();
+            mom_[ghost_index] = mass_[ghost_index] * vel_[ghost_index];
+            E_[ghost_index] = (rho_e + 0.5 * rho_[ghost_index] * vel_[ghost_index].squaredNorm()) * Vol_[ghost_index];
         }
         else
         {
             rho_[ghost_index] = rho0_one;
+            mass_[ghost_index] = rho_[ghost_index] * Vol_[ghost_index];
             p_[ghost_index] = p_one;
             Real rho_e = p_[ghost_index] / (heat_capacity_ratio - 1.0);
             Vecd vel_one(0.0, 0.0);
             vel_one[0] = u_one;
             vel_one[1] = v_one;
             vel_[ghost_index] = vel_one;
-            E_[ghost_index] = rho_e + 0.5 * rho_[ghost_index] * vel_[ghost_index].squaredNorm();
+            mom_[ghost_index] = mass_[ghost_index] * vel_[ghost_index];
+            E_[ghost_index] = (rho_e + 0.5 * rho_[ghost_index] * vel_[ghost_index].squaredNorm()) * Vol_[ghost_index];
         }
     }
 

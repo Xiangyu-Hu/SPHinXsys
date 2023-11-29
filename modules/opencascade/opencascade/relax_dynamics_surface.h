@@ -109,7 +109,7 @@ class ConstrainSurfaceBodyRegion : public BaseLocalDynamics<BodyPartByParticle>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &acc_;
+    StdLargeVec<Vecd> &force_;
 };
 
 } // namespace relax_dynamics

@@ -49,8 +49,8 @@ class BaseRelaxation : public LocalDynamics, public ContinuumDataInner
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
 };
 
 /**
@@ -197,14 +197,14 @@ class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, publi
         : BaseLocalDynamics<DynamicsIdentifier>(identifier), ContinuumDataSimple(identifier.getSPHBody()),
           pos_(particles_->pos_), pos0_(particles_->pos0_),
           n_(particles_->n_), n0_(particles_->n0_),
-          vel_(particles_->vel_), acc_(particles_->acc_){};
+          vel_(particles_->vel_), force_(particles_->force_){};
 
     virtual ~BaseMotionConstraint(){};
 
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_;
     StdLargeVec<Vecd> &n_, &n0_;
-    StdLargeVec<Vecd> &vel_, &acc_;
+    StdLargeVec<Vecd> &vel_, &force_;
 };
 /**@class FixConstraint
  * @brief Constraint with zero velocity.
@@ -274,8 +274,8 @@ class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataI
 
   protected:
     PlasticContinuum &plastic_continuum_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Mat3d> &stress_tensor_3D_, &strain_tensor_3D_, &stress_rate_3D_, &strain_rate_3D_;
     StdLargeVec<Mat3d> &elastic_strain_tensor_3D_, &elastic_strain_rate_3D_;
 };
@@ -300,7 +300,7 @@ class BaseStressRelaxation1stHalf : public BaseRelaxationPlastic
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i);
+    virtual Vecd computeNonConservativeForce(size_t index_i);
 
     StdLargeVec<Matd> &velocity_gradient_;
 };

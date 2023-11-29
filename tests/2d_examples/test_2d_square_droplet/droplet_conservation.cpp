@@ -164,7 +164,7 @@ int main()
     InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
     InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
-    air_block.addBodyStateForRecording<Vecd>("PriorAcceleration");
+    air_block.addBodyStateForRecording<Vecd>("PriorForce");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
