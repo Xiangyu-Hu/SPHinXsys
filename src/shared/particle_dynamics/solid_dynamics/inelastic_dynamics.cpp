@@ -55,9 +55,6 @@ void DecomposedPlasticIntegration1stHalf::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-
-    Kernel* kernel_ = sph_body_.sph_adaptation_->getKernel();
-
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];

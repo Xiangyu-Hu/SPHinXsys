@@ -100,6 +100,8 @@ int main(int ac, char *av[])
     //	Output
     //----------------------------------------------------------------------
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+        write_velocity("Velocity", io_environment, my_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", io_environment, my_observer_contact);
 
     //----------------------------------------------------------------------
@@ -128,6 +130,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_states.writeToFile();
     write_displacement.writeToFile(0);
+    write_velocity.writeToFile(0);
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -145,6 +148,7 @@ int main(int ac, char *av[])
                 if (ite != 0 && ite % observation_sample_interval == 0)
                 {
                     write_displacement.writeToFile(ite);
+                    write_velocity.writeToFile(ite);
                 }
             }
             column_wall_contact_force.exec(dt);
@@ -173,10 +177,12 @@ int main(int ac, char *av[])
     if (sph_system.GenerateRegressionData())
     {
         write_displacement.generateDataBase(1.0e-2);
+        write_velocity.generateDataBase(1.0e-2);
     }
     else
     {
         write_displacement.testResult();
+        write_velocity.testResult();
     }
 
 

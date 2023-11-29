@@ -194,7 +194,6 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real output_interval = 0.01 * T0;
-    Real Dt = 0.1 * output_interval;
     Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -244,7 +243,7 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        cream_displacement_recording.generateDataBase(0.1);
+        cream_displacement_recording.generateDataBase(0.05);
     }
     else
     {
