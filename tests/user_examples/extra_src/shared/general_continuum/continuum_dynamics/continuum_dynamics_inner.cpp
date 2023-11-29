@@ -485,7 +485,7 @@ namespace SPH
             von_mises_stress_(particles_->von_mises_stress_),
             B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")),
             strain_tensor_3D_(particles_->strain_tensor_3D_), strain_rate_3D_(particles_->strain_rate_3D_),
-            hourglass_control_(hourglass_control), E_(J2_plasticity_.getYoungsModulus()), nu_(J2_plasticity_.getPoissonRatio())
+            hourglass_control_(hourglass_control), E_(J2_plasticity_.getYoungsModulus()), nu_(J2_plasticity_.getPoissonRatio()), G_(J2_plasticity_.getShearModulus(J2_plasticity_.getYoungsModulus(), J2_plasticity_.getPoissonRatio()))
         {
             particles_->registerVariable(acc_hourglass_, "AccelerationHourglass");
             particles_->registerSortableVariable<Vecd>("AccelerationHourglass");
@@ -500,6 +500,22 @@ namespace SPH
             particles_->registerVariable(hardening_parameter_, "HardeningParameter");
             particles_->registerSortableVariable<Real>("HardeningParameter");
             particles_->addVariableToWrite<Real>("HardeningParameter");
+
+            particles_->registerVariable(shear_strain_, "ShearStrain");
+            particles_->registerSortableVariable<Matd>("ShearStrain");
+            particles_->addVariableToWrite<Matd>("ShearStrain");
+            particles_->registerVariable(shear_strain_return_map_, "ShearStrainReturnMap");
+            particles_->registerSortableVariable<Matd>("ShearStrainReturnMap");
+            particles_->addVariableToWrite<Matd>("ShearStrainReturnMap");
+
+            particles_->registerVariable(shear_strain_pre_, "ShearStrainPre");
+            particles_->registerSortableVariable<Matd>("ShearStrainPre");
+            particles_->registerVariable(shear_strain_pre_return_map_, "ShearStrainPreReturnMap");
+            particles_->registerSortableVariable<Matd>("ShearStrainPreReturnMap");
+            particles_->registerVariable(shear_strain_rate_, "ShearStrainRate");
+            particles_->registerSortableVariable<Matd>("ShearStrainRate");
+            particles_->registerVariable(shear_strain_rate_return_map_, "ShearStrainRateReturnMap");
+            particles_->registerSortableVariable<Matd>("ShearStrainRateReturnMap");
         }
         void ShearStressRelaxationHourglassControlJ2Plasticity::initialization(size_t index_i, Real dt)
         {
@@ -519,40 +535,43 @@ namespace SPH
         }
         void ShearStressRelaxationHourglassControlJ2Plasticity::interaction(size_t index_i, Real dt)
         {
-            Real G_ = J2_plasticity_.getShearModulus(J2_plasticity_.getYoungsModulus(), J2_plasticity_.getPoissonRatio());
-            Mat3d velocity_gradient = increaseTensor(velocity_gradient_[index_i]);
-            shear_stress_rate_3D_[index_i] = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient, shear_stress_3D_[index_i]);
+            Mat3d velocity_gradient_i = increaseTensor(velocity_gradient_[index_i]);
+            shear_stress_rate_3D_[index_i] = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient_i, shear_stress_3D_[index_i]);
             shear_stress_3D_[index_i] += shear_stress_rate_3D_[index_i] * dt;
-
-            //For plasticity
+            //For perfect plasticity
             plastic_indicator_[index_i] = J2_plasticity_.PlasticIndicator(shear_stress_3D_[index_i]);
             shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_3D_[index_i]);
-
+            //von Mises stress
             Mat3d stress_tensor_i = shear_stress_3D_[index_i] - p_[index_i] * Mat3d::Identity();
             von_mises_stress_[index_i] = getVonMisesStressFromMatrix(reduceTensor(stress_tensor_i));
             // strain tensor
-            strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
+            strain_rate_3D_[index_i] = 0.5 * (velocity_gradient_i + velocity_gradient_i.transpose());
             strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
-            // shear strain
-            Mat3d strain_tensor_i = strain_tensor_3D_[index_i];
-            shear_strain_3D_[index_i] = strain_tensor_i - Mat3d::Identity() * strain_tensor_i.trace() / 3.0;
-            // calculate scale matrix
+            shear_strain_3D_[index_i] = strain_tensor_3D_[index_i] - Mat3d::Identity() * strain_tensor_3D_[index_i].trace() / 3.0;
+            /*shear strain and shear strain rate befor and after return mapping*/
+            shear_strain_[index_i] = reduceTensor(shear_strain_3D_[index_i]);
+            shear_strain_return_map_[index_i] = reduceTensor(shear_stress_3D_[index_i]) / (2.0 * G_);
+            //calculate the shear_strain_rate_return_map_ based on the strain increment between time step n and n-1
+            Real hydrostatic_strain_rate_i = strain_rate_3D_[index_i].trace() / 3.0;
+            shear_strain_rate_return_map_[index_i] = (shear_strain_return_map_[index_i] - shear_strain_pre_return_map_[index_i]) / dt;
+            //calculate total strain rate
+            Matd total_strain_rate_i = reduceTensor(strain_rate_3D_[index_i]);
+            Matd total_strain_rate_i_return_map = shear_strain_rate_return_map_[index_i] + hydrostatic_strain_rate_i * Matd::Identity();
+            //shear strain in the time step n-1
+            shear_strain_pre_return_map_[index_i] = shear_strain_return_map_[index_i];
+
+            /*calculate scale matrix*/
             if (plastic_indicator_[index_i])
             {
-                scale_coef_[index_i] = reduceTensor(shear_stress_3D_[index_i]) * reduceTensor(shear_strain_3D_[index_i]).inverse() / (2.0 * G_);
+                //previous formulation
+                //scale_coef_[index_i] = shear_strain_[index_i].inverse() * shear_strain_return_map_[index_i];
+                //current formulation
+                scale_coef_[index_i] = total_strain_rate_i.inverse() * total_strain_rate_i_return_map;
             }
             else
             {
                 scale_coef_[index_i] = Matd::Identity();
             }
-            //calculate elastic strain
-            Mat3d deviatoric_stress = shear_stress_3D_[index_i];
-            Real hydrostatic_pressure = - p_[index_i];
-            Mat3d elastic_strain_tensor_3D = deviatoric_stress / (2 * J2_plasticity_.getShearModulus(E_, nu_)) + hydrostatic_pressure * Mat3d::Identity() / (9 * J2_plasticity_.getBulkModulus(E_, nu_));
-            plastic_strain_tensor_3D_[index_i] = strain_tensor_3D_[index_i] - elastic_strain_tensor_3D;
-            Real J2_plastic_strain = 0.5 * (plastic_strain_tensor_3D_[index_i].cwiseProduct(plastic_strain_tensor_3D_[index_i].transpose())).sum();
-            hardening_parameter_[index_i] = sqrt(2.0 / 3.0) * sqrt(2.0 * J2_plastic_strain);
-
         }
         void ShearStressRelaxationHourglassControlJ2Plasticity::update(size_t index_i, Real dt)
         {
@@ -577,7 +596,10 @@ namespace SPH
                 Vecd v_ij = vel_[index_i] - vel_[index_j];
                 Real r_ij = inner_neighborhood.r_ij_[n];
                 Vecd v_ij_correction = v_ij - 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_j]) * r_ij * e_ij;
-                Real coef = 3.0;
+                Real coef = 1.0;
+                //elastic correction
+                //acceleration_hourglass += coef * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
+                //plastic correction
                 acceleration_hourglass += coef * 0.5 * (scale_coef_[index_i] + scale_coef_[index_j]) * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
             }
             acc_hourglass_[index_i] += acceleration_hourglass;

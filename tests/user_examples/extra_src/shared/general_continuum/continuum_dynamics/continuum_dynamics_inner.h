@@ -414,12 +414,14 @@ protected:
     StdLargeVec<Matd>& B_;
     StdLargeVec<Mat3d>& strain_tensor_3D_, & strain_rate_3D_;
     int hourglass_control_;
-    Real E_, nu_;
+    Real E_, nu_, G_;
     StdLargeVec<Matd> scale_coef_;
     StdLargeVec<Vecd> acc_hourglass_;
     StdLargeVec<Mat3d> plastic_strain_tensor_3D_;
     StdLargeVec<Real> hardening_parameter_;    /**< hardening parameter */
-    
+    StdLargeVec<Matd> shear_strain_, shear_strain_return_map_;
+    StdLargeVec<Matd> shear_strain_pre_, shear_strain_pre_return_map_;
+    StdLargeVec<Matd> shear_strain_rate_, shear_strain_rate_return_map_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

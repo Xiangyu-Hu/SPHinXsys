@@ -120,9 +120,9 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     SimpleDynamics<InitialCondition> initial_condition(column);
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
-    Dynamics1Level<continuum_dynamics::Integration1stHalfRiemann> column_pressure_relaxation(column_inner);
+    Dynamics1Level<continuum_dynamics::Integration1stHalf> column_pressure_relaxation(column_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxationHourglassControlJ2Plasticity> column_shear_stress_relaxation(column_inner, 1);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> column_density_relaxation(column_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> column_density_relaxation(column_inner);
     ReduceDynamics<continuum_dynamics::ContinuumAcousticTimeStepSize> computing_time_step_size(column, 0.3);
     InteractionDynamics<continuum_dynamics::DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);

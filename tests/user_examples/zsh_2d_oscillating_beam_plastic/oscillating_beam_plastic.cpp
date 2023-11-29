@@ -147,9 +147,9 @@ int main(int ac, char* av[])
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
-    Dynamics1Level<continuum_dynamics::Integration1stHalfRiemann> beam_pressure_relaxation(beam_body_inner);
+    Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxationHourglassControlJ2Plasticity> beam_shear_stress_relaxation(beam_body_inner, if_hourglass_control);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> beam_density_relaxation(beam_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
 
     ReduceDynamics<continuum_dynamics::ContinuumAcousticTimeStepSize> computing_time_step_size(beam_body);
     // clamping a solid body part.
