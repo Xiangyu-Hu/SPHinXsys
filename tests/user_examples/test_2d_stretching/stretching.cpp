@@ -177,7 +177,7 @@ int main(int ac, char *av[])
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    system.setReloadParticles(false);
+    system.setReloadParticles(true);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 
@@ -256,7 +256,7 @@ int main(int ac, char *av[])
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
-    Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
+    Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
 

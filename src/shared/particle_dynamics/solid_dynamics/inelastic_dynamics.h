@@ -52,5 +52,24 @@ class PlasticIntegration1stHalf
   protected:
     PlasticSolid &plastic_solid_;
 };
+
+/**
+ * @class DecomposedPlasticIntegration1stHalf
+ * @brief Generalized essentially non-hourglass control formulation based on volumetric-deviatoric stress decomposition.
+ */
+class DecomposedPlasticIntegration1stHalf
+    : public DecomposedIntegration1stHalf
+{
+public:
+    DecomposedPlasticIntegration1stHalf(BaseInnerRelation& inner_relation);
+    virtual ~DecomposedPlasticIntegration1stHalf() {};
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    PlasticSolid& plastic_solid_;
+    StdLargeVec<Matd> scaling_matrix_, inverse_F_;
+    Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
+};
 } // namespace solid_dynamics
 } // namespace SPH

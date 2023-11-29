@@ -103,8 +103,43 @@ public:
 		inverse_plastic_strain_[index_i] = inverse_normalized_F * normalized_be * inverse_normalized_F_T;
 		
 		return (deviatoric_PK + VolumetricKirchhoff(F.determinant()) * Matd::Identity()) * inverse_normalized_F_T;
-	
 	};
+
+	/** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
+	virtual Matd ElasticLeftCauchy(const Matd& F, size_t index_i, Real dt = 0.0) override
+	{
+		Matd normalized_F = F * pow(F.determinant(), -OneOverDimensions);
+		Matd normalized_be = normalized_F * inverse_plastic_strain_[index_i] * normalized_F.transpose();
+		Real normalized_be_isentropic = normalized_be.trace() * OneOverDimensions;
+		Matd deviatoric_PK = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
+		Real deviatoric_PK_norm = deviatoric_PK.norm();
+
+		Real relax_increment = 0.0;
+		Real trial_function = deviatoric_PK_norm - sqrt_2_over_3_ * NonlinearHardening(hardening_parameter_[index_i]);
+		if (trial_function > 0.0)
+		{
+			Real renormalized_shear_modulus = normalized_be_isentropic * G0_;
+			while (trial_function > 0.0)
+			{
+				Real function_relax_increment_derivative = -2.0 * renormalized_shear_modulus
+					* (1.0 + NonlinearHardeningDerivative(hardening_parameter_[index_i] + sqrt_2_over_3_ * relax_increment) / 3.0 / renormalized_shear_modulus);
+				relax_increment -= trial_function / function_relax_increment_derivative;
+
+				trial_function = deviatoric_PK_norm
+					- sqrt_2_over_3_ * NonlinearHardening(hardening_parameter_[index_i] + sqrt_2_over_3_ * relax_increment)
+					- 2.0 * renormalized_shear_modulus * relax_increment;
+			}
+			hardening_parameter_[index_i] += sqrt_2_over_3_ * relax_increment;
+			deviatoric_PK -= 2.0 * renormalized_shear_modulus * relax_increment * deviatoric_PK / deviatoric_PK_norm;
+			normalized_be = deviatoric_PK / G0_ + normalized_be_isentropic * Matd::Identity();
+		}
+
+		Matd inverse_normalized_F = normalized_F.inverse();
+		Matd inverse_normalized_F_T = inverse_normalized_F.transpose();
+		inverse_plastic_strain_[index_i] = inverse_normalized_F * normalized_be * inverse_normalized_F_T;
+
+		return normalized_be;
+	}
 
 	virtual NonLinearHardeningPlasticSolid *ThisObjectPtr() override { return this; };
 };

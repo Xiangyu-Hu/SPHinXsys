@@ -15,7 +15,8 @@ int main(int ac, char *av[])
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
+    sph_system.setGenerateRegressionData(false);
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
 #endif
@@ -88,18 +89,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	All numerical methods will be used in this case.
     //----------------------------------------------------------------------
-    Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
+    Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
     InteractionDynamics<solid_dynamics::DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     SimpleDynamics<InitialCondition> initial_condition(column);
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.3);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.2);
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_velocity("Velocity", io_environment, my_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", io_environment, my_observer_contact);
 
@@ -129,7 +128,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_states.writeToFile();
     write_displacement.writeToFile(0);
-    write_velocity.writeToFile(0);
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -147,7 +145,6 @@ int main(int ac, char *av[])
                 if (ite != 0 && ite % observation_sample_interval == 0)
                 {
                     write_displacement.writeToFile(ite);
-                    write_velocity.writeToFile(ite);
                 }
             }
             column_wall_contact_force.exec(dt);
@@ -171,10 +168,16 @@ int main(int ac, char *av[])
 
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl; 
 
-    write_displacement.testResult();
-    write_velocity.testResult();
+    if (sph_system.GenerateRegressionData())
+    {
+        write_displacement.generateDataBase(1.0e-2);
+    }
+    else
+    {
+        write_displacement.testResult();
+    }
 
 
     return 0;

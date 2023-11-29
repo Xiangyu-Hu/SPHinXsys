@@ -55,6 +55,8 @@ class PlasticSolid : public NeoHookeanSolid
     Real YieldStress() { return yield_stress_; };
     /** compute the stress through deformation, and plastic relaxation. */
     virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
+    /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
+    virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) = 0;
 
     virtual PlasticSolid *ThisObjectPtr() override { return this; };
 };
@@ -84,6 +86,8 @@ class HardeningPlasticSolid : public PlasticSolid
     Real HardeningModulus() { return hardening_modulus_; };
     /** compute the stress through deformation, and plastic relaxation. */
     virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
+    /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
+    virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
 
     virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
 };

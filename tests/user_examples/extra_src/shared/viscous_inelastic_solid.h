@@ -62,6 +62,7 @@ class ViscousPlasticSolid : public PlasticSolid
 		
 	};
     Real ViscousModulus() { return viscous_modulus_; };
+
     /** compute the stress through deformation, and plastic relaxation. */
     virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) 
 	{
@@ -108,8 +109,54 @@ class ViscousPlasticSolid : public PlasticSolid
 		inverse_plastic_strain_[index_i] = inverse_F * be * inverse_F_T;
 
 		return (deviatoric_PK + VolumetricKirchhoff(F.determinant()) * Matd::Identity()) * inverse_F_T;
-	 
 	};
+
+    /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
+    virtual Matd ElasticLeftCauchy(const Matd& F, size_t index_i, Real dt = 0.0) override
+    {
+        Matd be = F * inverse_plastic_strain_[index_i] * F.transpose();
+        Matd normalized_be = be * pow(be.determinant(), -OneOverDimensions);
+        Real normalized_be_isentropic = normalized_be.trace() * OneOverDimensions;
+        Matd deviatoric_PK = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
+        Real deviatoric_PK_norm = deviatoric_PK.norm();
+        Real trial_function = deviatoric_PK_norm - sqrt_2_over_3_ * yield_stress_;
+        if (trial_function > 0.0)
+        {
+            Real renormalized_shear_modulus = normalized_be_isentropic * G0_;
+            Real deviatoric_PK_norm_Mid = 0.0;
+            Real deviatoric_PK_norm_Max = deviatoric_PK_norm;
+            Real deviatoric_PK_norm_Min = sqrt_2_over_3_ * yield_stress_;
+            Real predicted_func = 0.0;
+            Real Precision = 1.0e-6;
+            Real Relative_Error;
+            do
+            {
+                deviatoric_PK_norm_Mid = (deviatoric_PK_norm_Max + deviatoric_PK_norm_Min) / 2.0;
+                predicted_func = pow(viscous_modulus_, 1.0 / Herschel_Bulkley_power_) * (deviatoric_PK_norm_Mid - deviatoric_PK_norm) +
+                    2.0 * renormalized_shear_modulus * dt * pow((deviatoric_PK_norm_Mid - sqrt_2_over_3_ * yield_stress_), 1.0 / Herschel_Bulkley_power_);
+                if (predicted_func < 0.0)
+                {
+                    deviatoric_PK_norm_Min = deviatoric_PK_norm_Mid;
+                }
+                else
+                {
+                    deviatoric_PK_norm_Max = deviatoric_PK_norm_Mid;
+                }
+                Relative_Error = predicted_func / deviatoric_PK_norm;
+            } while (fabs(Relative_Error) >= Precision);
+
+            deviatoric_PK = deviatoric_PK_norm_Mid * deviatoric_PK / deviatoric_PK_norm;
+            Matd relaxed_be = deviatoric_PK / G0_ + normalized_be_isentropic * Matd::Identity();
+            normalized_be = relaxed_be * pow(relaxed_be.determinant(), -OneOverDimensions);
+        }
+
+        Matd inverse_F = F.inverse();
+        Matd inverse_F_T = inverse_F.transpose();
+        be = pow(F.determinant(), (2.0 / 3.0)) * normalized_be;
+        inverse_plastic_strain_[index_i] = inverse_F * be * inverse_F_T;
+
+        return normalized_be;
+    };
 
     virtual ViscousPlasticSolid *ThisObjectPtr() override { return this; };
 };

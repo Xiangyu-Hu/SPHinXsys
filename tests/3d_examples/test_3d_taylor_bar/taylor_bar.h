@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real PL = 0.0032; /**< X-direction domain. */
 Real PW = 0.0324; /**< Z-direction domain. */
-Real particle_spacing_ref = PL / 10.0;
+Real particle_spacing_ref = PL / 5.0;
 /** YOU can try PW = 0.2 and particle_spacing_ref = PH / 10.0 to see an interesting test. */
 Real SL = particle_spacing_ref * 4.0; /**< Length of the holder is one layer particle. */
 Real inner_circle_radius = PL;
