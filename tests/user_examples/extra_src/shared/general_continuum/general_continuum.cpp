@@ -89,20 +89,19 @@ namespace SPH
     //=================================================================================================//
     //=====================================J2Plasticity================================================//
     //=================================================================================================//
-    Mat3d J2Plasticity::ConstitutiveRelationShearStress(Mat3d& velocity_gradient, Mat3d& shear_stress)
+    Matd J2Plasticity::ConstitutiveRelationShearStress(Matd& velocity_gradient, Matd& shear_stress)
     {
-        Real dim = 3.0;
-        Mat3d strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
-        Mat3d spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
-        Mat3d deviatoric_strain_rate = strain_rate - (1.0 / dim) * strain_rate.trace() * Mat3d::Identity();
+        Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
+        Matd spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
+        Matd deviatoric_strain_rate = strain_rate - (1.0 / (Real)Dimensions) * strain_rate.trace() * Matd::Identity();
         //consider the elastic part
-        Mat3d shear_stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate;
+        Matd shear_stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
         //consider the plastic part
-        Mat3d deviatoric_stress_tensor = shear_stress;
+        Matd deviatoric_stress_tensor = shear_stress;
         Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
         Real f = sqrt(2.0 * stress_tensor_J2) - sqrt(2.0 / 3.0) * yield_stress_;
         Real lambda_dot_ = 0;
-        Mat3d g = Mat3d::Zero();
+        Matd g = Matd::Zero();
         if (f > TinyReal)
         {
             Real deviatoric_stress_times_strain_rate = (deviatoric_stress_tensor.cwiseProduct(strain_rate)).sum();
@@ -113,63 +112,24 @@ namespace SPH
         //return shear_stress_rate_elastic;
     }
     //=================================================================================================//
-    Mat3d J2Plasticity::ConstitutiveRelationShearStress(Mat3d& velocity_gradient, Mat3d& shear_stress, Real hardening_parameter)
+    Matd J2Plasticity::ReturnMappingShearStress(Matd& shear_stress)
     {
-        Real dim = 3.0;
-        Mat3d strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
-        Mat3d spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
-        Mat3d deviatoric_strain_rate = strain_rate - (1.0 / dim) * strain_rate.trace() * Mat3d::Identity();
-        //consider the elastic part
-        Mat3d shear_stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate;
-        //consider the plastic part
-        Mat3d deviatoric_stress_tensor = shear_stress;
-        Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
-        //Real f = sqrt(2.0 * stress_tensor_J2) - sqrt(2.0 / 3.0) * yield_stress_;
-        Real f = sqrt(2.0 * stress_tensor_J2) - sqrt(2.0 / 3.0) * (hardening_modulus_ * hardening_parameter + yield_stress_);
-        Real lambda_dot_ = 0;
-        Mat3d g = Mat3d::Zero();
-        if (f > TinyReal)
-        {
-            Real deviatoric_stress_times_strain_rate = (deviatoric_stress_tensor.cwiseProduct(strain_rate)).sum();
-            lambda_dot_ = deviatoric_stress_times_strain_rate / sqrt(2.0 * stress_tensor_J2);
-            g = lambda_dot_ * (sqrt(2.0) * G_ * deviatoric_stress_tensor / (sqrt(stress_tensor_J2)));
-        }
-        return shear_stress_rate_elastic - g;
-    }
-    //=================================================================================================//
-    Mat3d J2Plasticity::ReturnMappingShearStress(Mat3d& shear_stress)
-    {
-        Mat3d deviatoric_stress_tensor = shear_stress;
+        Matd deviatoric_stress_tensor = shear_stress;
         Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
         Real r = 0;
         if (sqrt(2.0 * stress_tensor_J2) - sqrt(2.0 / 3.0) * yield_stress_ > TinyReal)
         {
-            
+
             r = (sqrt(2.0 / 3.0) * yield_stress_) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
             shear_stress = r * deviatoric_stress_tensor;
         }
         return shear_stress;
     }
     //=================================================================================================//
-    Mat3d J2Plasticity::ReturnMappingShearStress(Mat3d& shear_stress, Real hardening_parameter)
-    {
-        Mat3d deviatoric_stress_tensor = shear_stress;
-        Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
-        Real r = 0;
-        Real f = sqrt(2.0 * stress_tensor_J2) - sqrt(2.0 / 3.0) * (hardening_modulus_ * hardening_parameter + yield_stress_);
-        if (f > TinyReal)
-        {
-
-            r = (sqrt(2.0 / 3.0) * (hardening_modulus_ * hardening_parameter + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
-            shear_stress = r * deviatoric_stress_tensor;
-        }
-        return shear_stress;
-    }
-    //=================================================================================================//
-    int J2Plasticity::PlasticIndicator(Mat3d& shear_stress)
+    int J2Plasticity::PlasticIndicator(Matd& shear_stress)
     {
         int indicator = 0;
-        Mat3d deviatoric_stress_tensor = shear_stress;
+        Matd deviatoric_stress_tensor = shear_stress;
         Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
         if (sqrt(2.0 * stress_tensor_J2) - sqrt(2.0 / 3.0) * yield_stress_ > TinyReal)
         {

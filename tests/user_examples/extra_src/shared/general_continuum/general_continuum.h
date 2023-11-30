@@ -90,12 +90,9 @@ public:
     Real YieldStress() { return yield_stress_; };
     Real HardeningModulus() { return hardening_modulus_; };
 
-    virtual Mat3d ConstitutiveRelationShearStress(Mat3d& velocity_gradient, Mat3d& shear_stress);
-    virtual Mat3d ConstitutiveRelationShearStress(Mat3d& velocity_gradient, Mat3d& shear_stress, Real hardening_parameter);
-    //virtual Mat3d ConstitutiveRelationShearStress(Mat3d& velocity_gradient, Mat3d& shear_stress, size_t index_i);
-    virtual Mat3d ReturnMappingShearStress(Mat3d& shear_stress);
-    virtual Mat3d ReturnMappingShearStress(Mat3d& shear_stress, Real hardening_parameter);
-    virtual int PlasticIndicator(Mat3d& shear_stress);
+    virtual Matd ConstitutiveRelationShearStress(Matd& velocity_gradient, Matd& shear_stress);
+    virtual Matd ReturnMappingShearStress(Matd& shear_stress);
+    virtual int PlasticIndicator(Matd& shear_stress);
 
     virtual J2Plasticity* ThisObjectPtr() override { return this; };
 };

@@ -34,11 +34,10 @@ int main(int ac, char *av[])
     //column.addBodyStateForRecording<Real>("Density");
 
     RealBody column(system, makeShared<Column>("Column"));
-    column.defineParticlesAndMaterial<J2PlasticicityParticles, J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
+    column.defineParticlesAndMaterial<ContinuumParticles, J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     column.generateParticles<ParticleGeneratorLattice>();
     column.addBodyStateForRecording<Vecd>("NormalDirection");
     column.addBodyStateForRecording<Real>("VonMisesStress");
-    column.addBodyStateForRecording<int>("PlasticIndicator");
     column.addBodyStateForRecording<Real>("Pressure");
     column.addBodyStateForRecording<Real>("Density");
 

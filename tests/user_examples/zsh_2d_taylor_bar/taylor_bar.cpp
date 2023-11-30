@@ -92,14 +92,11 @@ int main(int ac, char* av[])
     IOEnvironment io_environment(system);
 
     RealBody column(system, makeShared<Column>("Column"));
-    column.defineParticlesAndMaterial<J2PlasticicityParticles, J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
+    column.defineParticlesAndMaterial<ContinuumParticles, J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     column.generateParticles<ParticleGeneratorLattice>();
     column.addBodyStateForRecording<Real>("VonMisesStress");
-    column.addBodyStateForRecording<int>("PlasticIndicator");
     column.addBodyStateForRecording<Real>("Pressure");
     column.addBodyStateForRecording<Real>("Density");
-    column.addBodyStateForRecording<Mat3d>("ShearStrain3D");
-    column.addBodyStateForRecording<Mat3d>("ShearStress3D");
 
     SolidBody wall(system, makeShared<Wall>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);

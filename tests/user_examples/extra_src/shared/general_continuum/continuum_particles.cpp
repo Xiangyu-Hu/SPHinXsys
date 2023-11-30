@@ -87,35 +87,4 @@ namespace SPH
         Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
         return sqrt(sum * 2 / 3);
     }
-    //=================================================================================================//
-    //==================================J2PlasticicityParticles========================================//
-    //=================================================================================================//
-    J2PlasticicityParticles::
-        J2PlasticicityParticles(SPHBody& sph_body, J2Plasticity* J2_plasticity)
-        : ContinuumParticles(sph_body, J2_plasticity), J2_plasticity_(*J2_plasticity) {}
-    //=================================================================================================//
-    void J2PlasticicityParticles::initializeOtherVariables()
-    {
-        ContinuumParticles::initializeOtherVariables();
-
-        registerVariable(shear_stress_3D_, "ShearStress3D");
-        registerVariable(shear_strain_3D_, "ShearStrain3D");
-        registerVariable(shear_stress_rate_3D_, "ShearStressRate3D");
-        registerVariable(shear_strain_rate_3D_, "ShearStrainRate3D");
-        registerVariable(strain_rate_3D_, "StrainRate3D");
-        registerVariable(strain_tensor_3D_, "StrainTensor3D");
-        registerVariable(plastic_indicator_, "PlasticIndicator");
-        //----------------------------------------------------------------------
-        //		register sortable particle data
-        //----------------------------------------------------------------------
-
-        registerSortableVariable<Mat3d>("ShearStress3D");
-        registerSortableVariable<Mat3d>("ShearStrain3D");
-        registerSortableVariable<Mat3d>("ShearStressRate3D");
-        registerSortableVariable<Mat3d>("ShearStrainRate3D");
-        registerSortableVariable<Mat3d>("StrainRate3D");
-        registerSortableVariable<Mat3d>("StrainTensor3D");
-        registerSortableVariable<int>("PlasticIndicator");
-    }
-
 } // namespace SPH

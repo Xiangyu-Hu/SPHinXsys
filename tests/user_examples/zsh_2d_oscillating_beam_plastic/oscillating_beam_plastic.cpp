@@ -122,12 +122,11 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     RealBody beam_body(system, makeShared<Beam>("BeamBody"));
     //beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
-    beam_body.defineParticlesAndMaterial<J2PlasticicityParticles, J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
+    beam_body.defineParticlesAndMaterial<ContinuumParticles, J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     beam_body.generateParticles<ParticleGeneratorLattice>();
-    beam_body.addBodyStateForRecording<Real>("VonMisesStress");
+    //beam_body.addBodyStateForRecording<Real>("VonMisesStress");
     beam_body.addBodyStateForRecording<Real>("Pressure");
     beam_body.addBodyStateForRecording<Real>("Density");
-    beam_body.addBodyStateForRecording<int>("PlasticIndicator");
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
@@ -198,7 +197,6 @@ int main(int ac, char* av[])
                 constraint_beam_base.exec();
                 beam_shear_stress_relaxation.exec(dt);
                 beam_density_relaxation.exec(dt);
-                
 
                 ite++;
 
