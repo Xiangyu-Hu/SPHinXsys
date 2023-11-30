@@ -109,7 +109,7 @@ Mat3d J2Plasticity::ConstitutiveRelationShearStress(const Mat3d &velocity_gradie
         lambda_dot_ = deviatoric_stress_times_strain_rate / sqrt(2.0 * stress_tensor_J2);
         g = lambda_dot_ * (sqrt(2.0) * G_ * deviatoric_stress_tensor / (sqrt(stress_tensor_J2)));
     }
-    return shear_stress_rate_elastic - g;
+    return shear_stress_rate_elastic;//    -g;
 }
 //=================================================================================================//
 Mat3d J2Plasticity::ConstitutiveRelationShearStress(Mat3d &velocity_gradient, Mat3d &shear_stress, Real hardening_parameter)

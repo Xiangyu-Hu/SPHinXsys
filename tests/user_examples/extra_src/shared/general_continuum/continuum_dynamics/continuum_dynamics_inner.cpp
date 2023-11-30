@@ -540,11 +540,14 @@ void ShearStressRelaxationHourglassControlJ2Plasticity::interaction(size_t index
     Mat3d shear_stress_try = shear_stress_old + shear_stress_rate_3D_[index_i] * dt;
     // For perfect plasticity
     plastic_indicator_[index_i] = J2_plasticity_.PlasticIndicator(shear_stress_try);
-    shear_stress_3D_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_try);
+    shear_stress_3D_[index_i] = shear_stress_try;// J2_plasticity_.ReturnMappingShearStress(shear_stress_try);
     // von Mises stress
     Mat3d stress_tensor_i = shear_stress_3D_[index_i] - p_[index_i] * Mat3d::Identity();
     von_mises_stress_[index_i] = getVonMisesStressFromMatrix(reduceTensor(stress_tensor_i));
-    scale_coef_[index_i] = reduceTensor(shear_stress_3D_[index_i]) * (velocity_gradient_[index_i] + Eps * Matd::Identity()).inverse();
+    Mat3d strain_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
+    Real isotropic_strain_rate = strain_rate.trace() / Real(Dimensions);
+    scale_coef_[index_i] = reduceTensor(shear_stress_3D_[index_i]) * 
+        (strain_rate + (Eps - isotropic_strain_rate) * Matd::Identity()).inverse();
 }
 void ShearStressRelaxationHourglassControlJ2Plasticity::update(size_t index_i, Real dt)
 {
