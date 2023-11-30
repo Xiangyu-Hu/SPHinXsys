@@ -1,8 +1,3 @@
-/**
- * @file 	2d_turbulent_flow_around_cylinder.h
- * @brief 	Numerical parameters and body definition for 2d_turbulent_flow_around_cylinder.
- * @author 	Xiangyu Hu
- */
 #include "sphinxsys.h" // SPHinXsys Library.
 #include "k-epsilon_turbulent_model_complex.h"
 #include "k-epsilon_turbulent_model_complex.hpp"
@@ -11,7 +6,7 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Global parameters on the turbulent properties
 //----------------------------------------------------------------------
-Real resolution_ref = 0.1;		       	                  /**< Initial reference particle spacing. */
+Real resolution_ref = 0.4e-3;		       	                  /**< Initial reference particle spacing. */
 //Real y_p_theo = 0.05;                                   /**< Turbulent: Theoretical distance from the first particle P to wall  */
 Real y_p_theo = 0.0;                                      /**< Turbulent: Theoretical distance from the first particle P to wall  */
 //Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref; /**< Turbulent: offset distance for keeping y+ unchanged */
@@ -20,13 +15,13 @@ Real offset_dist_ref = 0.0;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 30.0;						    		          /**< Reference length. */
-Real DH = 16.0 - 2.0 * offset_dist_ref;                   /**< Reference and the height of main channel. */
+Real DL = 0.150;						    		          /**< Reference length. */
+Real DH = 0.100 - 2.0 * offset_dist_ref;                   /**< Reference and the height of main channel. */
+Real Gutter_b = 0.022; /**< Expanding size, regard it as characteristic length. */
 Real BW = resolution_ref * 4;		                      /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;                     /**< Reference size of the emitter buffer to impose inflow condition. */
-Vec2d insert_circle_center(10.0, 0.5 * DH);   /**< Location of the cylinder center. */
-Real insert_circle_radius = 1.0;              /**< Radius of the cylinder. */
-Real characteristic_length = insert_circle_radius * 2.0; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
+
+Real characteristic_length =  0.0; /**<£¿£¿£¿It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
 StdVec<int> id_exclude;
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
@@ -47,26 +42,28 @@ int num_observer_points_x = 1;
 Real observe_x_ratio = 1.1;
 Real observe_x_spacing = resolution_ref * observe_x_ratio;
 Real x_start_f = 0.0;
-Real x_start_b = insert_circle_center[0] + insert_circle_radius;
-int num_observer_points_f = std::round((insert_circle_center[0]- insert_circle_radius) / observe_x_spacing);//** Build observers in front of the cylinder *
-int num_observer_points_b = std::round((DL- insert_circle_center[0]- insert_circle_radius) / observe_x_spacing);//** Build observers behind the cylinder *
+Real x_start_b = DL/2.0;
+int num_observer_points_f = std::round((DL / 2.0) / observe_x_spacing);//** Build observers in front of the cylinder *
+int num_observer_points_b = std::round((DL / 2.0) / observe_x_spacing);//** Build observers behind the cylinder *
 int num_observer_points = num_observer_points_f + num_observer_points_b;
 Real height_cell = resolution_ref * 1.5;
-StdVec<Real> monitor_bound_y = { DH/2.0-height_cell /2.0 ,DH / 2.0 + height_cell / 2.0 };
+StdVec<Real> monitor_bound_y = { DH / 2.0 - height_cell / 2.0 ,DH / 2.0 + height_cell / 2.0 };
 /**Input mannually*/
 StdVec<Real> monitor_bound_x_f, monitor_bound_x_b;
-
 Real observe_spacing = DH / num_observer_points;
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
+//** Dimentionless scale: meter, kg, second *
 Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f;
-Real Re = 30000.0;					/**< Reynolds number. */
+//Real Re = 30000.0;					/**< Reynolds number. */
 //Real Re = 100.0;
-Real mu_f = rho0_f * U_f * (2.0 * (insert_circle_radius + 2.0 * offset_dist_ref)) / Re; /**< Dynamics viscosity. */
+//Real mu_f = rho0_f * U_f * Gutter_b / Re; /**< Dynamics viscosity. */
+Real mu_f = 1.8333e-5; //** In this case the viscosity is given according to ANSYS HELP VMFL031 *
+
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
@@ -77,6 +74,8 @@ Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+
+
 /** the water block . */
 std::vector<Vecd> water_block_shape
 {
@@ -86,6 +85,24 @@ std::vector<Vecd> water_block_shape
 	Vecd(DL, 0.0),
 	Vecd(-DL_sponge, 0.0),
 };
+/** the v gutter . */
+std::vector<Vecd> v_gutter_shape_up
+{
+	Vecd(0.050, 0.0524782),
+	Vecd(0.0741421, 0.0624782),
+	Vecd(0.0747544, 0.061),
+	Vecd(0.0506123, 0.051),
+	Vecd(0.050, 0.0524782),
+};
+std::vector<Vecd> v_gutter_shape_down
+{
+	Vecd(0.0506123, 0.049),
+	Vecd(0.0747544, 0.039),
+	Vecd(0.0741421, 0.0375218),
+	Vecd(0.0500, 0.0475218),
+	Vecd(0.0506123, 0.049),
+};
+
 //----------------------------------------------------------------------
 //	Define case dependent body shapes.
 //----------------------------------------------------------------------
@@ -95,15 +112,17 @@ public:
 	explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(v_gutter_shape_up, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(v_gutter_shape_down, ShapeBooleanOps::sub);
 	}
 };
-class Cylinder : public MultiPolygonShape
+class V_Gutter : public MultiPolygonShape
 {
 public:
-	explicit Cylinder(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit V_Gutter(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
-		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(v_gutter_shape_up, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(v_gutter_shape_down, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------

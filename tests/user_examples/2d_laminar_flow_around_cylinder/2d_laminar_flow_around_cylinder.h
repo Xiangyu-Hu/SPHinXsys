@@ -1,8 +1,3 @@
-/**
- * @file 	2d_turbulent_flow_around_cylinder.h
- * @brief 	Numerical parameters and body definition for 2d_turbulent_flow_around_cylinder.
- * @author 	Xiangyu Hu
- */
 #include "sphinxsys.h" // SPHinXsys Library.
 #include "k-epsilon_turbulent_model_complex.h"
 #include "k-epsilon_turbulent_model_complex.hpp"
@@ -51,8 +46,7 @@ Real x_start_b = insert_circle_center[0] + insert_circle_radius;
 int num_observer_points_f = std::round((insert_circle_center[0]- insert_circle_radius) / observe_x_spacing);//** Build observers in front of the cylinder *
 int num_observer_points_b = std::round((DL- insert_circle_center[0]- insert_circle_radius) / observe_x_spacing);//** Build observers behind the cylinder *
 int num_observer_points = num_observer_points_f + num_observer_points_b;
-Real height_cell = resolution_ref * 1.5;
-StdVec<Real> monitor_bound_y = { DH/2.0-height_cell /2.0 ,DH / 2.0 + height_cell / 2.0 };
+StdVec<Real> monitor_bound_y = { 7.85 ,8.15 };
 /**Input mannually*/
 StdVec<Real> monitor_bound_x_f, monitor_bound_x_b;
 
@@ -64,8 +58,8 @@ Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f;
-Real Re = 30000.0;					/**< Reynolds number. */
-//Real Re = 100.0;
+//Real Re = 30000.0;					/**< Reynolds number. */
+Real Re = 100.0;
 Real mu_f = rho0_f * U_f * (2.0 * (insert_circle_radius + 2.0 * offset_dist_ref)) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies

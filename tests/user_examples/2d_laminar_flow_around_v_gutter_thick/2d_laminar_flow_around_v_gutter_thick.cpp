@@ -1,10 +1,5 @@
-/**
- * @file 	2d_turbulent_flow_around_cylinder.cpp
- * @brief 	2d_turbulent_flow_around_cylinder flow with K-Epsilon two equations RANS model.
- * @details This is the one of the basic test cases.
- * @author 	Xiangyu Hu
- */
-#include "2d_turbulent_flow_around_cylinder.h"
+
+#include "2d_laminar_flow_around_v_gutter_thick.h"
 
 using namespace SPH;
 
@@ -30,13 +25,13 @@ int main(int ac, char* av[])
 	water_block.generateParticles<ParticleGeneratorLattice>();
 	//water_block.defineAdaptationRatios(1.4);
 
-	SolidBody cylinder(system, makeShared<Cylinder>("Cylinder"));
-	cylinder.defineAdaptationRatios(1.15, 2.0);
-	cylinder.defineBodyLevelSetShape();
-	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
+	SolidBody v_gutter(system, makeShared<V_Gutter>("V_Gutter"));
+	//v_gutter.defineAdaptationRatios(1.15, 2.0);
+	v_gutter.defineBodyLevelSetShape();
+	v_gutter.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!system.RunParticleRelaxation() && system.ReloadParticles())
-		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
-		: cylinder.generateParticles<ParticleGeneratorLattice>();
+		? v_gutter.generateParticles<ParticleGeneratorReload>(io_environment, v_gutter.getName())
+		: v_gutter.generateParticles<ParticleGeneratorLattice>();
 
 
 	ObserverBody fluid_observer(system, "FluidObserver");
@@ -50,8 +45,8 @@ int main(int ac, char* av[])
 	//  inner and contact relations.
 	//----------------------------------------------------------------------
 	InnerRelation water_block_inner(water_block);
-	ContactRelation water_block_contact(water_block, { &cylinder });
-	ContactRelation cylinder_contact(cylinder, { &water_block });
+	ContactRelation water_block_contact(water_block, { &v_gutter });
+	ContactRelation v_gutter_contact(v_gutter, { &water_block });
 	ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
 	//----------------------------------------------------------------------
 	// Combined relations built from basic relations
@@ -64,18 +59,18 @@ int main(int ac, char* av[])
 	if (system.RunParticleRelaxation())
 	{
 		/** body topology only for particle relaxation */
-		InnerRelation cylinder_inner(cylinder);
+		InnerRelation v_gutter_inner(v_gutter);
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
-		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
+		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(v_gutter);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &cylinder });
+		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &v_gutter });
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(io_environment, { &cylinder });
+		ReloadParticleIO write_particle_reload_files(io_environment, { &v_gutter });
 		/** A  Physics relaxation step. */
-		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
+		relax_dynamics::RelaxationStepInner relaxation_step_inner(v_gutter_inner);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -147,57 +142,58 @@ int main(int ac, char* av[])
 
 
 	/** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
-	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
+	//InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
+	//InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
+	//InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+	//InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
 	
 	/** Turbulent advection time step. */
-	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
-	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+	//ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 
 
 
 	
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	NearShapeSurface near_surface(water_block, makeShared<Cylinder>("Cylinder"));
+	NearShapeSurface near_surface(water_block, makeShared<V_Gutter>("V_Gutter"));
 	near_surface.level_set_shape_.writeLevelSet(io_environment);
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
+	
+	//InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
 
-	//** Build observers in front of the cylinder, 30 cells, 31 bounds *
+	//** Build observers at centerline, 30 cells, 31 bounds *
 	for (int i = 0; i < num_observer_points_f + 1; i++)
 	{
 		monitor_bound_x_f.push_back(x_start_f + i * observe_x_spacing);
 	}
-	Real monitor_offset = monitor_bound_x_f[num_observer_points_f] - (insert_circle_center[0] - insert_circle_radius);
+	Real monitor_offset =0.0;
 	for (int i = 0; i < num_observer_points_f + 1; i++)
 	{
 		monitor_bound_x_f[i]= monitor_bound_x_f[i]- monitor_offset;
 	}
-	//** Build observers behind the cylinder *
+	//** Build observers behind the v_gutter *
 	for (int i = 0; i < num_observer_points_b + 1; i++)
 	{
 		monitor_bound_x_b.push_back(x_start_b + i * observe_x_spacing);
 	}
 
-	SimpleDynamics<fluid_dynamics::GetTimeAverageCenterLineData,SequencedPolicy> get_time_average_center_line_data(water_block_inner,num_observer_points, observe_x_ratio, monitor_bound_y, monitor_bound_x_f, monitor_bound_x_b);
+	//SimpleDynamics<fluid_dynamics::GetTimeAverageCenterLineData,SequencedPolicy> get_time_average_center_line_data(water_block_inner,num_observer_points, observe_x_ratio, monitor_bound_y, monitor_bound_x_f, monitor_bound_x_b);
 
-	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_inner, water_block_contact);
-	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	//InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_inner, water_block_contact);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
 
 	/** Turbulent eddy viscosity calculation needs values of Wall Y start. */
-	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
+	//SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer, characteristic_length,0.5);
+	//SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer, characteristic_length,0.5);
 
 //----------------------------------------------------------------------
 //	Algorithms of FSI.
 //----------------------------------------------------------------------
-	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+	SimpleDynamics<NormalDirectionFromBodyShape> v_gutter_normal_direction(v_gutter);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_inserted_body(cylinder_contact);
-	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
+	InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_inserted_body(v_gutter_contact);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(v_gutter_contact);
 	//----------------------------------------------------------------------
 
 	//----------------------------------------------------------------------
@@ -217,14 +213,14 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	cylinder_normal_direction.exec();
-	cylinder.addBodyStateForRecording<Vecd>("NormalDirection");
+	v_gutter_normal_direction.exec();
+	v_gutter.addBodyStateForRecording<Vecd>("NormalDirection");
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	Real end_time = 200;
+	Real end_time = 10.0;
 	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
@@ -236,7 +232,7 @@ int main(int ac, char* av[])
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
 	write_body_states.writeToFile();
-	get_time_average_center_line_data.output_monitor_x_coordinate();
+	//get_time_average_center_line_data.output_monitor_x_coordinate();
 	//----------------------------------------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------------------------------------
@@ -248,14 +244,14 @@ int main(int ac, char* av[])
 		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.exec();
-			Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
-			//Real Dt = get_fluid_advection_time_step_size.exec();
+			//Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
 			free_stream_surface_indicator.exec();
 			update_fluid_density.exec();
 			
-			update_eddy_viscosity.exec();
-			//viscous_acceleration.exec();
-			turbulent_viscous_acceleration.exec();
+			//update_eddy_viscosity.exec();
+			viscous_acceleration.exec();
+			//turbulent_viscous_acceleration.exec();
 			
 			transport_velocity_correction.exec();
 
@@ -265,20 +261,20 @@ int main(int ac, char* av[])
 			{
 				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 				
-				turbulent_kinetic_energy_acceleration.exec();
+				//turbulent_kinetic_energy_acceleration.exec();
 				
 				pressure_relaxation.exec(dt);
 
 				emitter_buffer_inflow_condition.exec();
 
-				impose_turbulent_inflow_condition.exec();
+				//impose_turbulent_inflow_condition.exec();
 
 				density_relaxation.exec(dt);
 
-				get_velocity_gradient.exec(dt);
-				k_equation_relaxation.exec(dt);
-				epsilon_equation_relaxation.exec(dt);
-				standard_wall_function_correction.exec();
+				//get_velocity_gradient.exec(dt);
+				//k_equation_relaxation.exec(dt);
+				//epsilon_equation_relaxation.exec(dt);
+				//standard_wall_function_correction.exec();
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -301,15 +297,15 @@ int main(int ac, char* av[])
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex.updateConfiguration();
-			cylinder_contact.updateConfiguration();
+			v_gutter_contact.updateConfiguration();
 			
 			//if (GlobalStaticVariables::physical_time_ > 0.8)
 			//{
 				//write_body_states.writeToFile();
 			//}
 				
-			get_time_average_center_line_data.exec();
-			get_time_average_center_line_data.output_time_history_data(end_time * 0.75);
+			//get_time_average_center_line_data.exec();
+			//get_time_average_center_line_data.output_time_history_data(end_time * 0.75);
 
 		}
 
@@ -329,6 +325,7 @@ int main(int ac, char* av[])
 		fluid_observer_contact.updateConfiguration();
 		write_fluid_velocity.writeToFile(number_of_iterations);
 
+
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
@@ -339,11 +336,11 @@ int main(int ac, char* av[])
 	std::cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << std::endl;
 
-	get_time_average_center_line_data.get_time_average_data(end_time * 0.75);
+	//get_time_average_center_line_data.get_time_average_data(end_time * 0.75);
 	//std::cout << "The time-average data is output " << std::endl;
 	if (system.GenerateRegressionData())
 	{
-		// The lift force at the cylinder is very small and not important in this case.
+		// The lift force at the v_gutter is very small and not important in this case.
 		write_total_viscous_force_on_inserted_body.generateDataBase({ 1.0e-2, 1.0e-2 }, { 1.0e-2, 1.0e-2 });
 	}
 	else

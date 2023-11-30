@@ -38,14 +38,14 @@ namespace SPH
     namespace fluid_dynamics
     {
 		/**
-		* @class BaseTurbuClosureCoeff
+		* @class BaseTurbuClosureCoeffInner
 		* @brief  Some turbulent empirical parameters
 		*/
-		class BaseTurbuClosureCoeff
+		class BaseTurbuClosureCoeffInner
 		{
 		public:
-			explicit BaseTurbuClosureCoeff();
-			virtual ~BaseTurbuClosureCoeff() {};
+			explicit BaseTurbuClosureCoeffInner();
+			virtual ~BaseTurbuClosureCoeffInner() {};
 
 		protected:
 			Real Karman;
@@ -64,7 +64,7 @@ namespace SPH
 		 * @class BaseTurtbulentModelInner
 		 * @brief BaseTurtbulentModelInner
 		 */
-		class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbuClosureCoeff
+		class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbuClosureCoeffInner
 		{
 		public:
 			explicit BaseTurtbulentModelInner(BaseInnerRelation& inner_relation);
@@ -148,21 +148,21 @@ namespace SPH
 		 * @class GetVelocityGradientInner
 		 * @brief  GetVelocityGradientInner
 		 */
-		class GetVelocityGradientInner : public LocalDynamics, public FluidDataInner
-		{
-		public:
-			explicit GetVelocityGradientInner(BaseInnerRelation& inner_relation);
-			virtual ~GetVelocityGradientInner() {};
+		//class GetVelocityGradientInner : public LocalDynamics, public FluidDataInner
+		//{
+		//public:
+		//	explicit GetVelocityGradientInner(BaseInnerRelation& inner_relation);
+		//	virtual ~GetVelocityGradientInner() {};
 
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		protected:
-			StdLargeVec<Vecd>& vel_, & pos_;
-			StdLargeVec<Matd>& velocity_gradient_;
-			StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//protected:
+		//	StdLargeVec<Vecd>& vel_, & pos_;
+		//	StdLargeVec<Matd>& velocity_gradient_;
+		//	StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
 
-			//**For test*
-			StdLargeVec<Matd> velocity_gradient_wall;
-		};
+		//	//**For test*
+		//	StdLargeVec<Matd> velocity_gradient_wall;
+		//};
 
 		/**
 		 * @class K_TurtbulentModelInner
@@ -213,47 +213,47 @@ namespace SPH
 		 * @class E_TurtbulentModelInner
 		 * @brief  E_TurtbulentModelInner
 		 */
-		class TKEnergyAccInner : public BaseTurtbulentModelInner
-		{
-		public:
-			explicit TKEnergyAccInner(BaseInnerRelation& inner_relation);
-			virtual ~TKEnergyAccInner() {};
+		//class TKEnergyAccInner : public BaseTurtbulentModelInner
+		//{
+		//public:
+		//	explicit TKEnergyAccInner(BaseInnerRelation& inner_relation);
+		//	virtual ~TKEnergyAccInner() {};
 
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		protected:
-			StdLargeVec<Real>& turbu_k_;
-			StdLargeVec<Vecd>& acc_prior_;
-			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<int>& indicator_;
-			StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
-			StdLargeVec<Vecd> test_k_grad_rslt_;
-		};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//protected:
+		//	StdLargeVec<Real>& turbu_k_;
+		//	StdLargeVec<Vecd>& acc_prior_;
+		//	StdLargeVec<Vecd>& pos_;
+		//	StdLargeVec<int>& indicator_;
+		//	StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
+		//	StdLargeVec<Vecd> test_k_grad_rslt_;
+		//};
 
 		/**
 		 * @class TurbuViscousAccInner
 		 * @brief  the turbulent viscosity force induced acceleration
 		 */
-		class TurbuViscousAccInner : public BaseViscousAccelerationInner, public BaseTurbuClosureCoeff
-		{
-		public:
-			explicit TurbuViscousAccInner(BaseInnerRelation& inner_relation) ;
-			virtual ~TurbuViscousAccInner() {};
+		//class TurbuViscousAccInner : public BaseViscousAccelerationInner, public BaseTurbuClosureCoeffInner
+		//{
+		//public:
+		//	explicit TurbuViscousAccInner(BaseInnerRelation& inner_relation) ;
+		//	virtual ~TurbuViscousAccInner() {};
 
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		protected:
-			StdLargeVec<Real>& turbu_mu_;
-			StdLargeVec<Real>& wall_Y_plus_;
-			StdLargeVec<Vecd>& velo_friction_;
-			StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
-			StdLargeVec<Real>& y_p_;
-		};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//protected:
+		//	StdLargeVec<Real>& turbu_mu_;
+		//	StdLargeVec<Real>& wall_Y_plus_;
+		//	StdLargeVec<Vecd>& velo_friction_;
+		//	StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
+		//	StdLargeVec<Real>& y_p_;
+		//};
 
 		/**
 		 * @class TurbuViscousAccInner
 		 * @brief  the turbulent viscosity force induced acceleration
 		 */
 		class TurbulentEddyViscosity : public LocalDynamics, 
-			public FluidDataSimple, public BaseTurbuClosureCoeff
+			public FluidDataSimple, public BaseTurbuClosureCoeffInner
 		{
 		public:
 			explicit TurbulentEddyViscosity(SPHBody& sph_body);
@@ -295,7 +295,7 @@ namespace SPH
 		 *          TargetVelocity gives the velocity profile along the inflow direction,
 		 *          i.e. x direction in local frame.
 		 */
-		class InflowTurbulentCondition :public BaseFlowBoundaryCondition, public BaseTurbuClosureCoeff
+		class InflowTurbulentCondition :public BaseFlowBoundaryCondition, public BaseTurbuClosureCoeffInner
 		{
 		public:
 			explicit InflowTurbulentCondition(BodyPartByCell& body_part,

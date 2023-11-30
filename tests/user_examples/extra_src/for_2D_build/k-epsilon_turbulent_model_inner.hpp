@@ -35,26 +35,26 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		void GetVelocityGradientInner::interaction(size_t index_i, Real dt)
-		{
-			//** The near wall velo grad is updated in wall function part *
-			if (is_near_wall_P1_[index_i] == 1)
-			{
-				return;
-			}
-			Vecd vel_i = vel_[index_i];
-			velocity_gradient_[index_i] = Matd::Zero();
-			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-				//** Strong form *
-				velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
-				//** Weak form *
-				//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
-			}
-		}
+		//void GetVelocityGradientInner::interaction(size_t index_i, Real dt)
+		//{
+		//	//** The near wall velo grad is updated in wall function part *
+		//	if (is_near_wall_P1_[index_i] == 1)
+		//	{
+		//		return;
+		//	}
+		//	Vecd vel_i = vel_[index_i];
+		//	velocity_gradient_[index_i] = Matd::Zero();
+		//	const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+		//	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		//	{
+		//		size_t index_j = inner_neighborhood.j_[n];
+		//		Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+		//		//** Strong form *
+		//		velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+		//		//** Weak form *
+		//		//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+		//	}
+		//}
 		//=================================================================================================//
 		void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
 		{
@@ -130,55 +130,82 @@ namespace SPH
 			ep_diffusion_[index_i] = epsilon_lap;
 		}
 		//=================================================================================================//
-		void TKEnergyAccInner::interaction(size_t index_i, Real dt)
-		{
-			Real turbu_k_i = turbu_k_[index_i];
-			Vecd acceleration = Vecd::Zero();
-			Vecd k_gradient = Vecd::Zero();
+		//void TKEnergyAccInner::interaction(size_t index_i, Real dt)
+		//{
+		//	Real turbu_k_i = turbu_k_[index_i];
+		//	Vecd acceleration = Vecd::Zero();
+		//	Vecd k_gradient = Vecd::Zero();
 
-			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-				//** strong form * 
-				//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
-				//** weak form * 
-				k_gradient += -1.0 * (- 1.0) * (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
-			}
-			acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
-			acc_prior_[index_i] += acceleration;
-			
-			//for test
-			tke_acc_inner_[index_i] = acceleration;
-			test_k_grad_rslt_[index_i] = k_gradient;
-		}
+		//	const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+		//	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		//	{
+		//		size_t index_j = inner_neighborhood.j_[n];
+		//		Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+		//		//** strong form * 
+		//		//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
+		//		//** weak form * 
+		//		k_gradient += -1.0 * (- 1.0) * (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
+		//	}
+		//	acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
+		//	acc_prior_[index_i] += acceleration;
+		//	
+		//	//for test
+		//	tke_acc_inner_[index_i] = acceleration;
+		//	test_k_grad_rslt_[index_i] = k_gradient;
+		//}
 		//=================================================================================================//
-		void TurbuViscousAccInner::
-			interaction(size_t index_i, Real dt)
-		{
-			Real mu_eff_i = turbu_mu_[index_i] + mu_;
+		//void TKEnergyAccInner<Inner<>>::interaction(size_t index_i, Real dt)
+		//{
+		//	Real turbu_k_i = turbu_k_[index_i];
+		//	Vecd acceleration = Vecd::Zero();
+		//	Vecd k_gradient = Vecd::Zero();
 
-			Vecd acceleration = Vecd::Zero();
-			Vecd vel_derivative = Vecd::Zero();
-			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+		//	const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+		//	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		//	{
+		//		size_t index_j = inner_neighborhood.j_[n];
+		//		Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+		//		//** strong form * 
+		//		//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
+		//		//** weak form * 
+		//		k_gradient += -1.0 * (-1.0) * (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
+		//	}
+		//	acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
+		//	acc_prior_[index_i] += acceleration;
 
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
+		//	//for test
+		//	tke_acc_inner_[index_i] = acceleration;
+		//	test_k_grad_rslt_[index_i] = k_gradient;
+		//}
 
-				Real mu_eff_j = turbu_mu_[index_j] + mu_;
-				Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
-				vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-				
-				Vecd acc_j = 2.0 * mu_harmo * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
-				acceleration += acc_j;
-			}
-			acc_prior_[index_i] += acceleration / rho_[index_i];
-			//for test
-			visc_acc_inner_[index_i] = acceleration / rho_[index_i];
-		}
+
+
+		//=================================================================================================//
+		//void TurbuViscousAccInner::
+		//	interaction(size_t index_i, Real dt)
+		//{
+		//	Real mu_eff_i = turbu_mu_[index_i] + mu_;
+
+		//	Vecd acceleration = Vecd::Zero();
+		//	Vecd vel_derivative = Vecd::Zero();
+		//	const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+
+		//	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		//	{
+		//		size_t index_j = inner_neighborhood.j_[n];
+		//		const Vecd& e_ij = inner_neighborhood.e_ij_[n];
+
+		//		Real mu_eff_j = turbu_mu_[index_j] + mu_;
+		//		Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
+		//		vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+		//		
+		//		Vecd acc_j = 2.0 * mu_harmo * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+		//		acceleration += acc_j;
+		//	}
+		//	acc_prior_[index_i] += acceleration / rho_[index_i];
+		//	//for test
+		//	visc_acc_inner_[index_i] = acceleration / rho_[index_i];
+		//}
 		//=================================================================================================//
 	}
 	//=================================================================================================//

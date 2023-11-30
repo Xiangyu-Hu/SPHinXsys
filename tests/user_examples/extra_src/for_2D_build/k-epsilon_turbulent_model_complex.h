@@ -41,96 +41,98 @@ namespace SPH
 		 * @class GetVelocityGradientComplex
 		 * @brief GetVelocityGradientComplex
 		 */
-		class GetVelocityGradientComplex
-			: public BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
-		{
-		public:
-			template <typename... Args>
-			explicit GetVelocityGradientComplex(Args &&...args)
-				: BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
-				(std::forward<Args>(args)...)
-			{
-				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-				{
-					contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
-				}
-			};
-			virtual ~GetVelocityGradientComplex() {};
+		//class GetVelocityGradientComplex
+		//	: public BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
+		//{
+		//public:
+		//	template <typename... Args>
+		//	explicit GetVelocityGradientComplex(Args &&...args)
+		//		: BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
+		//		(std::forward<Args>(args)...)
+		//	{
+		//		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+		//		{
+		//			contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
+		//		}
+		//	};
+		//	virtual ~GetVelocityGradientComplex() {};
 
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		protected:
-			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
-		};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//protected:
+		//	StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
+		//};
 		/**
 		 * @class K_TurtbulentModelRelaxationWithWall
 		 * @brief K_TurtbulentModelRelaxationWithWall
 		 */
-		class K_TurtbulentModelComplex 
-			: public BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
-		{
-		public:
-			template <typename... Args>
-			explicit K_TurtbulentModelComplex(Args &&...args)
-				: BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
-				(std::forward<Args>(args)...) 
-			{
-				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-				{
-					contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
-				}
-			};
-			virtual ~K_TurtbulentModelComplex() {};
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		protected:
-			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
-		};
+		//class K_TurtbulentModelComplex 
+		//	: public BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
+		//{
+		//public:
+		//	template <typename... Args>
+		//	explicit K_TurtbulentModelComplex(Args &&...args)
+		//		: BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
+		//		(std::forward<Args>(args)...) 
+		//	{
+		//		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+		//		{
+		//			contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
+		//		}
+		//	};
+		//	virtual ~K_TurtbulentModelComplex() {};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//protected:
+		//	StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
+		//};
 
 		/**
 		 * @class E_TurtbulentModelRelaxationWithWall
 		 * @brief E_TurtbulentModelRelaxationWithWall
 		 */
-		class E_TurtbulentModelComplex
-			: public BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>
-		{
-		public:
-			template <typename... Args>
-			explicit E_TurtbulentModelComplex(Args &&...args)
-				: BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>(
-					std::forward<Args>(args)...) {};
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		};
+		//class E_TurtbulentModelComplex
+		//	: public BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>
+		//{
+		//public:
+		//	template <typename... Args>
+		//	explicit E_TurtbulentModelComplex(Args &&...args)
+		//		: BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>(
+		//			std::forward<Args>(args)...) {};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//};
+
 
 		/**
 		 * @class TKEnergyAccComplex
 		 * @brief TKEnergyAccComplex
 		 */
-		class TKEnergyAccComplex
-			: public BaseInteractionComplex<TKEnergyAccInner, FluidContactData>
-		{
-		public:
-			template <typename... Args>
-			explicit TKEnergyAccComplex(Args &&...args)
-				: BaseInteractionComplex<TKEnergyAccInner, FluidContactData>(
-					std::forward<Args>(args)...) {};
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		};
+		//class TKEnergyAccComplex
+		//	: public BaseInteractionComplex<TKEnergyAccInner, FluidContactData>
+		//{
+		//public:
+		//	template <typename... Args>
+		//	explicit TKEnergyAccComplex(Args &&...args)
+		//		: BaseInteractionComplex<TKEnergyAccInner, FluidContactData>(
+		//			std::forward<Args>(args)...) {};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//};
+
 
 		/**
 		 * @class BaseTurbuViscousAccWithWall
 		 * @brief BaseTurbuViscousAccWithWall
 		 */
-		template <class TurbuViscousAccInnerType>
-		class BaseTurbuViscousAccWithWall : public InteractionWithWall<TurbuViscousAccInnerType>
-		{
-		public:
-			template <typename... Args>
-			BaseTurbuViscousAccWithWall(Args &&...args)
-				: InteractionWithWall<TurbuViscousAccInnerType>(std::forward<Args>(args)...){};
-			virtual ~BaseTurbuViscousAccWithWall() {};
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		};
+		//template <class TurbuViscousAccInnerType>
+		//class BaseTurbuViscousAccWithWall : public InteractionWithWall<TurbuViscousAccInnerType>
+		//{
+		//public:
+		//	template <typename... Args>
+		//	BaseTurbuViscousAccWithWall(Args &&...args)
+		//		: InteractionWithWall<TurbuViscousAccInnerType>(std::forward<Args>(args)...){};
+		//	virtual ~BaseTurbuViscousAccWithWall() {};
+		//	inline void interaction(size_t index_i, Real dt = 0.0);
+		//};
 
-		using TurbulentViscousAccelerationWithWall = BaseTurbuViscousAccWithWall<TurbuViscousAccInner>;
+		//using TurbulentViscousAccelerationWithWall = BaseTurbuViscousAccWithWall<TurbuViscousAccInner>;
 
 		/**
 		* @class StandardWallFunctionCorrection
@@ -138,12 +140,11 @@ namespace SPH
 		* @brief implicitly modify the values of k and epslion near wall
 		*/
 		class StandardWallFunctionCorrection : public LocalDynamics, public FSIContactData,
-			public BaseTurbuClosureCoeff
+			public BaseTurbuClosureCoeffInner
 		{
 		public:
 			StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
 				BaseContactRelation& contact_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface);
-			explicit StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface);
 			virtual ~StandardWallFunctionCorrection() {};
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:

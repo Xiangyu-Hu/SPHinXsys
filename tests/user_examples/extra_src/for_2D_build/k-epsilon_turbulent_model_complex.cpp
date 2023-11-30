@@ -7,11 +7,11 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-//=================================================================================================//
-		StandardWallFunctionCorrection::
-			StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface)
-			: StandardWallFunctionCorrection(complex_relation.getInnerRelation(),
-				complex_relation.getContactRelation(), offset_dist, id_exclude, near_surface) {}
+////=================================================================================================//
+//		StandardWallFunctionCorrection::
+//			StandardWallFunctionCorrection(ComplexRelation& complex_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface)
+//			: StandardWallFunctionCorrection(complex_relation.,
+//				complex_relation.getContactRelation(), offset_dist, id_exclude, near_surface) {}
 		//=================================================================================================//
 		StandardWallFunctionCorrection::
 			StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,

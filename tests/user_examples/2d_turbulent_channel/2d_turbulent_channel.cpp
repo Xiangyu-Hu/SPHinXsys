@@ -25,7 +25,7 @@ int main(int ac, char* av[])
 	//water_block.defineAdaptationRatios(1.4);
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-	wall_boundary.defineAdaptationRatios(1.15, 4.0);
+	//wall_boundary.defineAdaptationRatios(1.15, 4.0);
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
@@ -36,41 +36,49 @@ int main(int ac, char* av[])
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
+	//  Generally, we first define all the inner relations, then the contact relations.
+	//  At last, we define the complex relaxations by combining previous defined
+	//  inner and contact relations.
 	//----------------------------------------------------------------------
 	InnerRelation water_block_inner(water_block);
-	ComplexRelation water_block_complex_relation(water_block_inner, { &wall_boundary });
+	ContactRelation water_block_contact(water_block, { &wall_boundary });
 	ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
+	//----------------------------------------------------------------------
+	// Combined relations built from basic relations
+	// which are only use for now for updating configurations.
+	//----------------------------------------------------------------------
+	ComplexRelation water_block_complex(water_block_inner, water_block_contact);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	
-	//Attention! the original one does not use Riemann solver for pressure
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex_relation);
-	//Attention! the original one does use Riemann solver for density
-	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
+	//**Attention! the original one does not use Riemann solver for pressure
+	Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+	//**Attention! the original one does use Riemann solver for density
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
 	
 	/** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
 	InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	
 	/** Turbulent standard wall function needs normal vectors of wall. */
 	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
 	near_surface.level_set_shape_.writeLevelSet(io_environment);
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation, offset_dist_ref, id_exclude, near_surface);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
 
 	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points, monitoring_bound);
 
-	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
-	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_inner, water_block_contact);
+	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
 
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex> inlet_outlet_surface_particle_indicator(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+	InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_block_contact);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_block_contact);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
 	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
@@ -149,13 +157,16 @@ int main(int ac, char* av[])
 		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.exec();
+
 			Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
-			//Real Dt = get_fluid_advection_time_step_size.exec();
+			//Real Dt = get_fluid_advection_time_step_size.exec();   //** 
+
 			inlet_outlet_surface_particle_indicator.exec();
 			update_density_by_summation.exec();
 			
 			update_eddy_viscosity.exec();
-			//viscous_acceleration.exec();
+
+			//viscous_acceleration.exec();  //**
 			turbulent_viscous_acceleration.exec();
 			
 			transport_velocity_correction.exec();
@@ -185,7 +196,7 @@ int main(int ac, char* av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
-				//write_body_states.writeToFile();
+				write_body_states.writeToFile();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -201,7 +212,7 @@ int main(int ac, char* av[])
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedListWithParticleSort(100);
-			water_block_complex_relation.updateConfiguration();
+			water_block_complex.updateConfiguration();
 			
 			get_time_average_cross_section_data.exec();
 			get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
