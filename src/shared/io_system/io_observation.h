@@ -101,26 +101,25 @@ class ObservedQuantityRecording : public BodyStatesRecording,
  * @class ReducedQuantityRecording
  * @brief write reduced quantity of a body
  */
-template <class ReduceMethodType>
-class ReducedQuantityRecording
+template <class LocalReduceMethodType>
+class ReducedQuantityRecording : public BaseIO
 {
   protected:
-    IOEnvironment &io_environment_;
     PltEngine plt_engine_;
-    ReduceMethodType reduce_method_;
+    ReduceDynamics<LocalReduceMethodType> reduce_method_;
     std::string dynamics_identifier_name_;
     const std::string quantity_name_;
     std::string filefullpath_output_;
 
   public:
     /*< deduce variable type from reduce method. */
-    using VariableType = typename ReduceMethodType::ReduceReturnType;
+    using VariableType = typename LocalReduceMethodType::ReduceReturnType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    template <typename... ConstructorArgs>
-    ReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
-        : io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    ReducedQuantityRecording(IOEnvironment &io_environment, Args &&...args)
+        : BaseIO(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {
@@ -135,7 +134,7 @@ class ReducedQuantityRecording
     };
     virtual ~ReducedQuantityRecording(){};
 
-    virtual void writeToFile(size_t iteration_step = 0)
+    virtual void writeToFile(size_t iteration_step = 0) override
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << GlobalStaticVariables::physical_time_ << "   ";

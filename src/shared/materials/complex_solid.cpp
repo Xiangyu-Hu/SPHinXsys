@@ -5,8 +5,6 @@
  */
 
 #include "complex_solid.h"
-
-#include "base_local_dynamics.h"
 #include "base_particles.hpp"
 
 namespace SPH
@@ -28,7 +26,7 @@ Matd CompositeSolid::StressPK1(Matd &deformation, size_t index_i)
     return composite_materials_[material_id_[index_i]]->StressPK1(deformation, index_i);
 }
 //=================================================================================================//
-Matd CompositeSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i)
+Matd CompositeSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
 {
     return Matd::Identity();
 }

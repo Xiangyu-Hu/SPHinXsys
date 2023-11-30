@@ -136,11 +136,11 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
     /** stress relaxation. */
     Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfDissipativeRiemann> plate_density_relaxation(plate_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
     InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
         plate_shear_acceleration_angular_conservative(plate_body_inner);
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(plate_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
     // 	write_plate_displacement("Position", io_environment, plate_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_plate_displacement("Position", io_environment, plate_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_kinetic_energy(io_environment, plate_body);
 
     /** Apply initial condition. */
@@ -247,7 +247,6 @@ int main(int ac, char *av[])
     {
         write_kinetic_energy.testResult();
     }
-
 
     return 0;
 }

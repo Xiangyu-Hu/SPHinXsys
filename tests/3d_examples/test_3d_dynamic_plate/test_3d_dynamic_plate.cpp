@@ -124,7 +124,7 @@ class TimeDependentExternalForce : public Gravity
   public:
     explicit TimeDependentExternalForce(Vecd external_force)
         : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(Vecd &position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real current_time = GlobalStaticVariables::physical_time_;
         return current_time < time_to_full_external_force
@@ -250,7 +250,6 @@ int main(int ac, char *av[])
     {
         write_plate_max_displacement.testResult();
     }
-
 
     return 0;
 }

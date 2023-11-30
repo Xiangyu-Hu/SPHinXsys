@@ -42,10 +42,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation flap_inner(flap);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &flap});
+    ContactRelation water_block_contact(water_block, {&wall_boundary, &flap});
     ContactRelation flap_contact(flap, {&water_block});
     ContactRelation observer_contact_with_water(observer, {&water_block});
     ContactRelation observer_contact_with_flap(observer, {&flap});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
@@ -54,20 +59,20 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
     /** time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** pressure relaxation using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Inflow boundary condition. */
     BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
@@ -162,22 +167,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<
-        ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+        ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalForceOnSolid");
     WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
 
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_4(io_environment, wave_probe_buffer_no_4);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_probe_4(io_environment, wave_probe_buffer_no_4, "FreeSurfaceHeight");
 
     BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_5(io_environment, wave_probe_buffer_no_5);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_probe_5(io_environment, wave_probe_buffer_no_5, "FreeSurfaceHeight");
 
     BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_12(io_environment, wave_probe_buffer_no_12);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_probe_12(io_environment, wave_probe_buffer_no_12, "FreeSurfaceHeight");
 
     /** Pressure probe. */
     ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
@@ -308,7 +313,6 @@ int main(int ac, char *av[])
     {
         write_total_force_on_flap.testResult();
     }
-
 
     return 0;
 }

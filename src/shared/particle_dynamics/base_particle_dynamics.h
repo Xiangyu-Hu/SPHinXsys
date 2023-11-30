@@ -127,11 +127,15 @@ template <class ParticlesType = BaseParticles,
           class BaseDataDelegateType = DataDelegateSimple<ParticlesType>>
 class DataDelegateInner : public BaseDataDelegateType
 {
+    BaseInnerRelation &inner_relation_;
+
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
         : BaseDataDelegateType(inner_relation.getSPHBody()),
+          inner_relation_(inner_relation),
           inner_configuration_(inner_relation.inner_configuration_){};
     virtual ~DataDelegateInner(){};
+    BaseInnerRelation &getBodyRelation() { return inner_relation_; };
 
   protected:
     /** inner configuration of the designated body */
@@ -147,60 +151,19 @@ template <class ParticlesType = BaseParticles,
           class BaseDataDelegateType = DataDelegateSimple<ParticlesType>>
 class DataDelegateContact : public BaseDataDelegateType
 {
+    BaseContactRelation &contact_relation_;
+
   public:
-    explicit DataDelegateContact(BaseContactRelation &body_contact_relation);
+    explicit DataDelegateContact(BaseContactRelation &contact_relation);
     virtual ~DataDelegateContact(){};
     void addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation);
+    BaseContactRelation &getBodyRelation() { return contact_relation_; };
 
   protected:
     SPHBodyVector contact_bodies_;
     StdVec<ContactParticlesType *> contact_particles_;
     /** Configurations for particle interaction between bodies. */
     StdVec<ParticleConfiguration *> contact_configuration_;
-};
-
-/**
- * @class DataDelegateComplex
- * @brief prepare data for complex particle dynamics
- */
-template <class ParticlesType = BaseParticles,
-          class ContactParticlesType = BaseParticles>
-class DataDelegateComplex : public DataDelegateInner<ParticlesType>,
-                            public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
-{
-  public:
-    explicit DataDelegateComplex(ComplexRelation &complex_relation)
-        : DataDelegateInner<ParticlesType>(complex_relation.getInnerRelation()),
-          DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation()){};
-    virtual ~DataDelegateComplex(){};
-};
-
-/**
- * @class BaseInteractionComplex
- * @brief Abstract base class for general complex interaction dynamics
- */
-template <class InteractionInnerType, class ContactDataType>
-class BaseInteractionComplex : public InteractionInnerType, public ContactDataType
-{
-  public:
-    // template for different combination of constructing body relations
-    template <typename... Args>
-    BaseInteractionComplex(BaseContactRelation &contact_relation,
-                           BaseInnerRelation &inner_relation, Args &&...args)
-        : InteractionInnerType(inner_relation, std::forward<Args>(args)...),
-          ContactDataType(contact_relation){};
-    template <typename... Args>
-    BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
-        : BaseInteractionComplex(complex_relation.getContactRelation(),
-                                 complex_relation.getInnerRelation(), std::forward<Args>(args)...){};
-    template <typename... Args>
-    BaseInteractionComplex(BaseContactRelation &extra_contact_relation,
-                           ComplexRelation &complex_relation, Args &&...args)
-        : BaseInteractionComplex(complex_relation, std::forward<Args>(args)...)
-    {
-        this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
-    };
-    virtual ~BaseInteractionComplex(){};
 };
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

@@ -51,7 +51,7 @@ void VonMisesStress::update(size_t index_i, Real dt)
         sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy + 3.0 * sigmaxy * sigmaxy);
 }
 //=============================================================================================//
-void MidSurfaceVonMisesStressofShells::update(size_t index_i, Real dt)
+void MidSurfaceVonMisesStress::update(size_t index_i, Real dt)
 {
     Matd sigma = mid_surface_cauchy_stress_[index_i];
 

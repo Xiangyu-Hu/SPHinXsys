@@ -30,7 +30,7 @@
 #define COMPLEX_SOLID_H
 
 #include "elastic_solid.h"
-#include <general_dynamics.h>
+#include "base_general_dynamics.h"
 
 namespace SPH
 {
@@ -45,8 +45,8 @@ class ActiveMuscle : public MuscleType
     StdLargeVec<Real> active_contraction_stress_; /**<  active contraction stress */
 
   public:
-    template <typename... ConstructorArgs>
-    explicit ActiveMuscle(ConstructorArgs &&...args);
+    template <typename... Args>
+    explicit ActiveMuscle(Args &&...args);
     virtual ~ActiveMuscle(){};
 
     /** initialize the local properties, fiber and sheet direction. */
@@ -74,7 +74,7 @@ class CompositeSolid : public ElasticSolid
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
     virtual Matd StressPK1(Matd &deformation, size_t index_i) override;
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t index_i) override;
     virtual Real VolumetricKirchhoff(Real J) override { return 0.0; };
     virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
 

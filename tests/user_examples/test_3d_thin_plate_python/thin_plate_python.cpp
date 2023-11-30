@@ -6,6 +6,7 @@
  * @ref 	doi.org/10.1016/j.ijnonlinmec.2014.04.009, doi.org/10.1201/9780849384165
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 #include <pybind11/pybind11.h>
 #include <string>
 namespace py = pybind11;
@@ -108,7 +109,7 @@ class TimeDependentExternalForce : public Gravity, public Parameter
 public:
 	explicit TimeDependentExternalForce(Vecd external_force)
 		: Gravity(external_force) {}
-	virtual Vecd InducedAcceleration(Vecd &position) override
+	virtual Vecd InducedAcceleration(const Vecd &position) override
 	{
 		Real current_time = GlobalStaticVariables::physical_time_;
 		return current_time < time_to_full_external_force
@@ -153,6 +154,15 @@ public:
 		plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	}
 };
+Real observed_quantity_0 = 0.0;
+Real observed_quantity_n = 0.0;
+Real displ_max_reference = 1.8687;
+TEST(Plate, MaxDisplacement)
+{
+    Real displ_max = observed_quantity_n - observed_quantity_0;
+    EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
+    std::cout << "displ_max: " << displ_max << std::endl;
+}
 //----------------------------------------------------------------------
 //  Define environment.
 //----------------------------------------------------------------------
@@ -225,7 +235,8 @@ public:
 		write_states(io_environment, system.real_bodies_),
 		write_plate_max_displacement("Position", io_environment, plate_observer_contact)
 	{	
-		std::cout<<"Running simulation for loading factor = " << loading_factor <<"\n";
+		if (loading_factor == 200.0) displ_max_reference = 2.5681;
+		std::cout<<"Running simulation for loading factor = " << loading_factor << " and displ_max_reference = " << displ_max_reference << "\n";
 		/** Apply initial condition. */
 		system.initializeSystemCellLinkedLists();
 		system.initializeSystemConfigurations();
@@ -243,11 +254,11 @@ public:
 	{
 		return 1;
 	}
-
+	
 	/**
 	 *  The main program
 	 */
-	void runCase()
+	int runCase()
 	{
 
 		/** Set the starting time.
@@ -302,6 +313,11 @@ public:
 		TimeInterval tt;
 		tt = t4 - t1 - interval;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+		observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
+
+
+    	testing::InitGoogleTest();
+    	return RUN_ALL_TESTS();
 	}
 };
 

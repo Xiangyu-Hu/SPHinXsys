@@ -40,6 +40,7 @@
 #include "external_force.h"
 #include "particle_dynamics_dissipation.h"
 #include "particle_dynamics_dissipation.hpp"
-#include "relax_dynamics.h"
+#include "all_relax_dynamics.h"
+#include "diffusion_optimization.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_H

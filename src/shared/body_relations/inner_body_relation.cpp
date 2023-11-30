@@ -3,6 +3,7 @@
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
 
+#include "tree_body.h"
 namespace SPH
 {
 //=================================================================================================//
@@ -70,6 +71,10 @@ void SelfSurfaceContactRelation::updateConfiguration()
         body_surface_layer_, inner_configuration_,
         get_single_search_depth_, get_self_contact_neighbor_);
 }
+//=================================================================================================//
+TreeInnerRelation::TreeInnerRelation(RealBody &real_body)
+    : InnerRelation(real_body),
+      generative_tree_(DynamicCast<TreeBody>(this, real_body)) {}
 //=================================================================================================//
 void TreeInnerRelation::updateConfiguration()
 {

@@ -46,9 +46,9 @@ class TransformShape : public BaseShapeType
 
   public:
     /** template constructor for general shapes. */
-    template <typename... ConstructorArgs>
-    explicit TransformShape(const Transform &transform, ConstructorArgs &&...args)
-        : BaseShapeType(std::forward<ConstructorArgs>(args)...), transform_(transform){};
+    template <typename... Args>
+    explicit TransformShape(const Transform &transform, Args &&...args)
+        : BaseShapeType(std::forward<Args>(args)...), transform_(transform){};
 
     virtual ~TransformShape(){};
 

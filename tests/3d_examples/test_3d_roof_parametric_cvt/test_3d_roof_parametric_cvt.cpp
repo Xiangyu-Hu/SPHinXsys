@@ -14,19 +14,19 @@ using namespace SPH;
 
 Real to_rad(Real angle) { return angle * Pi / 180; }
 
-void relax_shell(RealBody &plate_body, Real thickness, Real level_set_refinement_ratio)
+void relax_shell(RealBody &plate_body, Real thickness)
 {
     // BUG: apparently only works if dp > thickness, otherwise ShellNormalDirectionPrediction::correctNormalDirection() throws error
 
     InnerRelation imported_model_inner(plate_body);
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(plate_body);
-    relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
+    relax_dynamics::ShellRelaxationStep relaxation_step_inner(imported_model_inner);
     relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_imported_model_particles.exec(0.25);
-    relaxation_step_inner.mid_surface_bounding_.exec();
+    relaxation_step_inner.MidSurfaceBounding().exec();
     plate_body.updateCellLinkedList();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.

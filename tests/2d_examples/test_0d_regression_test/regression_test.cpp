@@ -1,15 +1,14 @@
 /**
- * @file 	regression_test.cpp
- * @brief 	This is a test case based on diffusion, which can be used to
-                        validate the generation of the converged database in a regression test.
-                        It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
+ * @file egression_test.cpp
+ * @brief This is a test case based on diffusion, which can be used to
+ * validate the generation of the converged database in a regression test.
+ * It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
  * @author 	Bo Zhang and Xiangyu Hu
  */
-
 #include "sphinxsys.h" //SPHinXsys Library
 using namespace SPH;   // namespace cite here
 //----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
+//	Basic geometry parameters and simulation setup.
 //----------------------------------------------------------------------
 Real L = 0.2;
 Real H = 0.2;
@@ -155,7 +154,7 @@ class DiffusionInitialCondition
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
     : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<DiffusionParticles, CorrectedKernelGradientInner>>
+          DiffusionRelaxation<Inner<DiffusionParticles, CorrectedKernelGradientInner>>>
 {
   public:
     explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
@@ -210,8 +209,6 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner_relation(diffusion_body);
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
@@ -221,7 +218,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(diffusion_body_inner_relation);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
     SimpleDynamics<ConstantTemperatureConstraint> left_boundary_condition(left_boundary, "Phi", high_temperature);
@@ -235,8 +232,7 @@ int main(int ac, char *av[])
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", io_environment, temperature_observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
-        ReduceAverage<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<Average<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
         write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -248,9 +244,6 @@ int main(int ac, char *av[])
     setup_diffusion_initial_condition.exec();
     left_boundary_condition.exec();
     other_boundary_condition.exec();
-    /** Output global basic parameters. */
-    write_states.writeToFile(0);
-    write_solid_temperature.writeToFile(0);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -265,6 +258,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_states.writeToFile(0);
+    write_solid_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -311,7 +309,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     //----------------------------------------------------------------------
     //	@ensemble_average_method.
-    //	The first argument is the threshold of meanvalue convergence.
+    //	The first argument is the threshold of mean value convergence.
     //	The second argument is the threshold of variance convergence.
     //----------------------------------------------------------------------
     write_solid_temperature.generateDataBase(0.001, 0.001);

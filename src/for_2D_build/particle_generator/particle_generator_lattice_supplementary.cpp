@@ -54,6 +54,11 @@ void ThickSurfaceParticleGeneratorLattice::initializeGeometricVariables()
     Real interval = (Real)planned_number_of_particles_ / (Real)all_cells_;
     if (interval <= 0)
         interval = 1; // It has to be lager than 0.
+
+    // initialize a uniform distribution between 0 (inclusive) and 1 (exclusive)
+    std::mt19937_64 rng;
+    std::uniform_real_distribution<Real> unif(0, 1);
+
     // Add a particle in each interval, randomly. We will skip the last intervals if we already reach the number of particles
     for (int i = 0; i < number_of_lattices[0]; ++i)
         for (int j = 0; j < number_of_lattices[1]; ++j)
@@ -63,7 +68,7 @@ void ThickSurfaceParticleGeneratorLattice::initializeGeometricVariables()
             {
                 if (body_shape_.checkContain(particle_position))
                 {
-                    Real random_real = (Real)rand() / (RAND_MAX);
+                    Real random_real = unif(rng);
                     // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles
                     if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
                     {

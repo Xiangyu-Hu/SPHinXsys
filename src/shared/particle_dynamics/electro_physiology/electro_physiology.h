@@ -182,7 +182,8 @@ class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<Electro
     virtual ~GetElectroPhysiologyTimeStepSize(){};
 };
 
-using ElectroPhysiologyDiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>;
+using ElectroPhysiologyDiffusionRelaxationInner =
+    DiffusionRelaxation<Inner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
@@ -196,20 +197,14 @@ class ElectroPhysiologyDiffusionInnerRK2
     virtual ~ElectroPhysiologyDiffusionInnerRK2(){};
 };
 
-using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
-/**
- * @class ElectroPhysiologyDiffusionRelaxationComplex
- * @brief Compute the diffusion relaxation process
- */
-class ElectroPhysiologyDiffusionRelaxationComplex
-    : public DiffusionRelaxationRK2<
-          ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
-{
-  public:
-    explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : DiffusionRelaxationRK2<ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, contact_relation){};
-    virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
-};
+using DiffusionRelaxationWithDirichletContact =
+    DiffusionRelaxation<Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>;
+
+template <template <typename...> typename... ContactInteractionTypes>
+using ElectroPhysiologyDiffusionRelaxationComplex =
+    DiffusionBodyRelaxationComplex<ElectroPhysiologyParticles, ElectroPhysiologyParticles,
+                                   KernelGradientInner, KernelGradientContact,
+                                   ContactInteractionTypes...>;
 
 /** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 using ElectroPhysiologyReactionRelaxationForward =

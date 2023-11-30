@@ -91,10 +91,17 @@ bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)
     return body_part_shape_.checkNotFar(cell_position, threshold);
 }
 //=================================================================================================//
-NearShapeSurface::
-    NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr)
+NearShapeSurface::NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr)
     : BodyPartByCell(real_body, shape_ptr->getName()),
       level_set_shape_(level_set_shape_keeper_.createRef<LevelSetShape>(real_body, *shape_ptr.get(), true))
+{
+    TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
+    tagCells(tagging_cell_method);
+}
+//=================================================================================================//
+NearShapeSurface::NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape)
+    : BodyPartByCell(real_body, level_set_shape.getName()),
+      level_set_shape_(level_set_shape)
 {
     TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
     tagCells(tagging_cell_method);

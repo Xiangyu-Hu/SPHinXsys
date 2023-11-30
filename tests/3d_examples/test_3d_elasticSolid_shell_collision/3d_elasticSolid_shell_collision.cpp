@@ -1,8 +1,8 @@
 /**
- * @file 	3d_elasticSolid_shell_collision.cpp
- * @brief 	This is a benchmark test of the 3D elastic solid->shell contact/impact formulations.
- * @details  We consider the collision of an elastic ball bouncing in a spherical shell box.
- * @author 	Massoud Rezavand, Virtonomy GmbH
+ * @file 3d_elasticSolid_shell_collision.cpp
+ * @brief This is a benchmark test of the 3D elastic solid->shell contact/impact formulations.
+ * @details We consider the collision of an elastic ball bouncing in a rigid cylindrical shell structure.
+ * @author Massoud Rezavand and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
@@ -14,13 +14,10 @@ Real thickness = resolution_ref * 1.;               /**< shell thickness. */
 Real radius = 2.0;                                  /**< cylinder radius. */
 Real half_height = 1.0;                             /** Height of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
-Vec3d ball_center(radius / 2.0, 0.0, 0.0);
 int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / resolution_ref);
 int particle_number_height = 2 * int(half_height / resolution_ref);
 int BWD = 1; /** Width of the boundary layer measured by number of particles. */
-BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
-                                 Vec3d(radius + thickness, half_height + thickness, radius + thickness));
-StdVec<Vecd> ball_observation_location = {ball_center};
+Vec3d ball_center(radius / 2.0, 0.0, 0.0);
 Real ball_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
@@ -61,8 +58,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
+    BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
+                                     Vec3d(radius + thickness, half_height + thickness, radius + thickness));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    // sph_system.GenerateRegressionData() = true;
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
@@ -72,7 +70,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    /** create a shell body. */
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     shell.generateParticles<CylinderParticleGenerator>();
@@ -90,7 +87,7 @@ int main(int ac, char *av[])
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<ObserverParticleGenerator>(ball_observation_location);
+    ball_observer.generateParticles<ObserverParticleGenerator>(StdVec<Vec3d>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -137,7 +134,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
-    //	Basically the range of bodies to build neighbor particle lists.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation ball_inner(ball);
     SurfaceContactRelation ball_contact(ball, {&shell});
@@ -147,7 +145,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec3d(0.0, 0.0, -gravity_g)));
-    InteractionWithUpdate<CorrectedConfigurationInner> ball_corrected_configuration(ball_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
@@ -171,9 +169,9 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     ball_corrected_configuration.exec();
-    /** Initial states output. */
-    body_states_recording.writeToFile(0);
-    /** Main loop. */
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     int ite = 0;
     Real T0 = 10.0;
     Real end_time = T0;
@@ -185,6 +183,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -240,7 +242,6 @@ int main(int ac, char *av[])
     {
         write_ball_center_displacement.testResult();
     }
-
 
     return 0;
 }

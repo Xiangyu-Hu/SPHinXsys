@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -138,8 +138,7 @@ int main(int ac, char *av[])
         //	Define the methods for particle relaxation for wall boundary.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
-        relax_dynamics::ShellRelaxationStepInner
-            relaxation_step_shell_inner(shell_inner, thickness, level_set_refinement_ratio);
+        relax_dynamics::ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
         relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
         shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
@@ -153,7 +152,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         shell_random_particles.exec(0.25);
 
-        relaxation_step_shell_inner.mid_surface_bounding_.exec();
+        relaxation_step_shell_inner.MidSurfaceBounding().exec();
         write_relaxed_particles.writeToFile(0);
         shell.updateCellLinkedList();
         write_mesh_cell_linked_list.writeToFile(0);
@@ -185,7 +184,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Define external force.*/
     SimpleDynamics<TimeStepInitialization> beam_initialize_timestep(beam);
-    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
     /** stress relaxation for the walls. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> beam_stress_relaxation_first_half(beam_inner);

@@ -73,13 +73,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
+    relax_dynamics::ShellRelaxationStep relaxation_step_inner(imported_model_inner);
     relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_imported_model_particles.exec(0.25);
-    relaxation_step_inner.mid_surface_bounding_.exec();
+    relaxation_step_inner.MidSurfaceBounding().exec();
     write_imported_model_to_vtp.writeToFile(0.0);
     imported_model.updateCellLinkedList();
     write_mesh_cell_linked_list.writeToFile(0.0);
@@ -100,7 +100,6 @@ int main(int ac, char *av[])
     shell_normal_prediction.exec();
     write_imported_model_to_vtp.writeToFile(ite_p);
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-
 
     return 0;
 }

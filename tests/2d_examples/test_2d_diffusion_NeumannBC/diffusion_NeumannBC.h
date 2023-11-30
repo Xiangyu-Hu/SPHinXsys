@@ -175,24 +175,11 @@ class NeumannWallBoundaryInitialCondition
         }
     }
 };
-
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
-using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
-using SolidDiffusionNeumann = DiffusionRelaxationNeumann<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(InnerRelation &inner_relation,
-                                     ContactRelation &body_contact_relation_Dirichlet,
-                                     ContactRelation &body_contact_relation_Neumann)
-        : DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>(
-              inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
+    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------

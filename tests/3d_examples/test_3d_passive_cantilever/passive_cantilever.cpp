@@ -90,7 +90,7 @@ int main(int ac, char *av[])
      */
     SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner>
+    InteractionWithUpdate<KernelCorrectionMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>

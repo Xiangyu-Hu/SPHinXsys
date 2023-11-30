@@ -126,8 +126,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> free_ball_random_particles(free_ball);
         SimpleDynamics<RandomizeParticlePosition> damping_ball_random_particles(damping_ball);
-        relax_dynamics::RelaxationStepInner free_ball_relaxation_step_inner(free_ball_inner);
-        relax_dynamics::RelaxationStepInner damping_ball_relaxation_step_inner(damping_ball_inner);
+        relax_dynamics::RelaxationStepInner free_ball_relaxation_step(free_ball_inner);
+        relax_dynamics::RelaxationStepInner damping_ball_relaxation_step(damping_ball_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -146,8 +146,8 @@ int main(int ac, char *av[])
         int relax_step = 1000;
         while (ite < relax_step)
         {
-            free_ball_relaxation_step_inner.exec();
-            damping_ball_relaxation_step_inner.exec();
+            free_ball_relaxation_step.exec();
+            damping_ball_relaxation_step.exec();
             ite += 1;
             if (ite % 100 == 0)
             {
@@ -180,8 +180,8 @@ int main(int ac, char *av[])
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> free_ball_initialize_timestep(free_ball, gravity_ptr);
     SimpleDynamics<TimeStepInitialization> damping_ball_initialize_timestep(damping_ball, gravity_ptr);
-    InteractionWithUpdate<CorrectedConfigurationInner> free_ball_corrected_configuration(free_ball_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> damping_ball_corrected_configuration(damping_ball_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     /** stress relaxation for the balls. */
@@ -216,7 +216,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Initial states output.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(0);
+    body_states_recording.writeToFile();
     free_ball_displacement_recording.writeToFile(0);
     damping_ball_displacement_recording.writeToFile(0);
     //----------------------------------------------------------------------

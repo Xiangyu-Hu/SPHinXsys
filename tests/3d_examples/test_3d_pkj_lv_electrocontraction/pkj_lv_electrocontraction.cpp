@@ -64,7 +64,7 @@ int main(int ac, char *av[])
         /** Time step for diffusion. */
         GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
         /** Diffusion process for diffusion body. */
-        DiffusionRelaxation diffusion_relaxation(herat_model_inner);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
         /** Compute the fiber and sheet after diffusion. */
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
         /** Write the body state to Vtp file. */
@@ -170,11 +170,11 @@ int main(int ac, char *av[])
     TreeInnerRelation pkj_inner(pkj_body);
 
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     /** Time step size calculation. */
     electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
     /** Diffusion process for diffusion body. */
-    electro_physiology::ElectroPhysiologyDiffusionRelaxationComplex myocardium_diffusion_relaxation(physiology_heart_inner, physiology_heart_contact_with_pkj_leaves);
+    electro_physiology::ElectroPhysiologyDiffusionRelaxationComplex<Dirichlet> myocardium_diffusion_relaxation(physiology_heart_inner, physiology_heart_contact_with_pkj_leaves);
     /** Solvers for ODE system */
     electro_physiology::ElectroPhysiologyReactionRelaxationForward myocardium_reaction_relaxation_forward(physiology_heart);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward myocardium_reaction_relaxation_backward(physiology_heart);
@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
     /** Active mechanics. */
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_contraction(mechanics_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_heart_inner);
     /** Observer Dynamics */
     InteractionDynamics<CorrectInterpolationKernelWeights>
         correct_kernel_weights_for_interpolation(mechanics_heart_contact);

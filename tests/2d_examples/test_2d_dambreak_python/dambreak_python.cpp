@@ -102,15 +102,17 @@ class Environment : public PreSettingCase
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
+    InnerRelation water_block_inner;
+    ContactRelation water_wall_contact;
     ComplexRelation water_block_complex;
     ContactRelation fluid_observer_contact;
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation;
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation;
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation;
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation;
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation;
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation;
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
     SharedPtr<Gravity> gravity_ptr;
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization;
@@ -122,7 +124,7 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording;
     RestartIO restart_io;
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy;
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure;
@@ -144,21 +146,24 @@ class Environment : public PreSettingCase
     TickCount time_instance;
 
   public:
-    explicit Environment(int set_restart_step) : PreSettingCase(),
-                                                 water_block_complex(water_block, {&wall_boundary}),
-                                                 fluid_observer_contact(fluid_observer, {&water_block}),
-                                                 fluid_pressure_relaxation(water_block_complex),
-                                                 fluid_density_relaxation(water_block_complex),
-                                                 fluid_density_by_summation(water_block_complex),
-                                                 wall_boundary_normal_direction(wall_boundary),
-                                                 gravity_ptr(makeShared<Gravity>(Vecd(0.0, -gravity_g))),
-                                                 fluid_step_initialization(water_block, gravity_ptr),
-                                                 fluid_advection_time_step(water_block, U_ref),
-                                                 fluid_acoustic_time_step(water_block),
-                                                 body_states_recording(io_environment, sph_system.real_bodies_),
-                                                 restart_io(io_environment, sph_system.real_bodies_),
-                                                 write_water_mechanical_energy(io_environment, water_block, gravity_ptr),
-                                                 write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact)
+    explicit Environment(int set_restart_step)
+        : PreSettingCase(),
+          water_block_inner(water_block),
+          water_wall_contact(water_block, {&wall_boundary}),
+          water_block_complex(water_block_inner, water_wall_contact),
+          fluid_observer_contact(fluid_observer, {&water_block}),
+          fluid_pressure_relaxation(water_block_inner, water_wall_contact),
+          fluid_density_relaxation(water_block_inner, water_wall_contact),
+          fluid_density_by_summation(water_block_inner, water_wall_contact),
+          wall_boundary_normal_direction(wall_boundary),
+          gravity_ptr(makeShared<Gravity>(Vecd(0.0, -gravity_g))),
+          fluid_step_initialization(water_block, gravity_ptr),
+          fluid_advection_time_step(water_block, U_ref),
+          fluid_acoustic_time_step(water_block),
+          body_states_recording(io_environment, sph_system.real_bodies_),
+          restart_io(io_environment, sph_system.real_bodies_),
+          write_water_mechanical_energy(io_environment, water_block, gravity_ptr),
+          write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact)
     {
         //----------------------------------------------------------------------
         //	Prepare the simulation with cell linked list, configuration

@@ -11,6 +11,17 @@ ShellDynamicsInitialCondition::ShellDynamicsInitialCondition(SPHBody &sph_body)
       n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
       pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
+UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
+    : LocalDynamics(sph_body), ShellDataSimple(sph_body),
+      n_(particles_->n_), F_(particles_->F_),
+      transformation_matrix_(particles_->transformation_matrix_) {}
+//=========================================================================================//
+void UpdateShellNormalDirection::update(size_t index_i, Real dt)
+{
+    /** Calculate the current normal direction of mid-surface. */
+    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
+}
+//=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
       ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
@@ -32,8 +43,8 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
     Real time_setp_1 = SMIN((Real)sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
                             Real(1.0) / (angular_vel_[index_i].norm() + TinyReal));
     Real time_setp_2 = smoothing_length_ * (Real)sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
-                                                (2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
-                                                           (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
+                                                      (2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
+                                                                 (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
     return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 }
 //=================================================================================================//
@@ -75,7 +86,6 @@ ShellStressRelaxationFirstHalf::
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       numerical_damping_scaling_(particles_->numerical_damping_scaling_),
       global_shear_stress_(particles_->global_shear_stress_),
-      n_(particles_->n_),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
@@ -121,8 +131,6 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     rho_[index_i] = rho0_ / J;
 
-    /** Calculate the current normal direction of mid-surface. */
-    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
     /** Get transformation matrix from global coordinates to current local coordinates. */
     Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i]);
 
@@ -143,8 +151,8 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
 
         /** correct out-plane numerical damping. */
-        Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
-                                                                                                                        elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+        Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+                                                                                                      elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;

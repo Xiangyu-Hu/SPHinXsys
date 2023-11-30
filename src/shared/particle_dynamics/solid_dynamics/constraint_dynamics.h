@@ -32,12 +32,12 @@
 
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
+#include "all_simbody.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "general_dynamics.h"
+#include "general_reduce.h"
 #include "solid_body.h"
 #include "solid_particles.h"
-#include "all_simbody.h"
 
 namespace SPH
 {
@@ -181,12 +181,11 @@ class PositionTranslate : public BaseMotionConstraint<DynamicsIdentifier>
   protected:
     Real start_time_, end_time_;
     Vecd translation_;
+
     Vecd getDisplacement(size_t index_i, Real dt)
     {
-        Vecd displacement = Vecd::Zero();
-        displacement = (this->pos0_[index_i] + translation_ - this->pos_[index_i]) * dt /
-                       (end_time_ - GlobalStaticVariables::physical_time_);
-        return displacement;
+        return (this->pos0_[index_i] + translation_ - this->pos_[index_i]) * dt /
+               (end_time_ - GlobalStaticVariables::physical_time_);
     };
 };
 using TranslateSolidBody = PositionTranslate<SPHBody>;
@@ -199,7 +198,7 @@ using TranslateSolidBodyPart = PositionTranslate<BodyPartByParticle>;
 class FixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle>
 {
   public:
-    FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero());
+    explicit FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero());
     virtual ~FixedInAxisDirection(){};
     void update(size_t index_i, Real dt = 0.0);
 
@@ -268,11 +267,11 @@ class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
          * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
          * base_particle_data_i.pos_ = (p_GB + r);
          */
-        degradeToVecd(SimTKToEigen(pos), this->pos_[index_i]);
-        degradeToVecd(SimTKToEigen(vel), this->vel_[index_i]);
+        this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
+        this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
 
         SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(this->n0_[index_i])));
-        degradeToVecd(SimTKToEigen(n), this->n_[index_i]);
+        this->n_[index_i] = degradeToVecd(SimTKToEigen(n));
     };
 
   protected:
@@ -301,7 +300,6 @@ class TotalForceForSimBody
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
-    const SimTK::State *simbody_state_;
     SimTKVec3 current_mobod_origin_location_;
 
   public:
@@ -323,9 +321,9 @@ class TotalForceForSimBody
 
     virtual void setupDynamics(Real dt = 0.0) override
     {
-        simbody_state_ = &integ_.getState();
-        MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
-        current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
+        const SimTK::State *simbody_state = &integ_.getState();
+        MBsystem_.realize(*simbody_state, SimTK::Stage::Acceleration);
+        current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state);
     };
 
     SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
