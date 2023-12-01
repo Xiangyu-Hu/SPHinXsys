@@ -416,7 +416,7 @@ class ShearStressRelaxationHourglassControlJ2Plasticity : public BaseRelaxationJ
     StdLargeVec<Matd> &B_;
     StdLargeVec<Mat3d> &strain_tensor_3D_, &strain_rate_3D_;
     int hourglass_control_;
-    Real E_, nu_;
+    Real G_;
     StdLargeVec<Matd> scale_coef_;
     StdLargeVec<Vecd> acc_hourglass_;
     StdLargeVec<Mat3d> plastic_strain_tensor_3D_;

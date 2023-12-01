@@ -484,7 +484,8 @@ ShearStressRelaxationHourglassControlJ2Plasticity ::
       von_mises_stress_(particles_->von_mises_stress_),
       B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")),
       strain_tensor_3D_(particles_->strain_tensor_3D_), strain_rate_3D_(particles_->strain_rate_3D_),
-      hourglass_control_(hourglass_control), E_(J2_plasticity_.getYoungsModulus()), nu_(J2_plasticity_.getPoissonRatio())
+      hourglass_control_(hourglass_control),
+      G_(J2_plasticity_.getShearModulus(J2_plasticity_.getYoungsModulus(), J2_plasticity_.getPoissonRatio()))
 {
     particles_->registerVariable(acc_hourglass_, "AccelerationHourglass");
     particles_->registerSortableVariable<Vecd>("AccelerationHourglass");
@@ -540,14 +541,19 @@ void ShearStressRelaxationHourglassControlJ2Plasticity::interaction(size_t index
     Mat3d shear_stress_try = shear_stress_old + shear_stress_rate_3D_[index_i] * dt;
     // For perfect plasticity
     plastic_indicator_[index_i] = J2_plasticity_.PlasticIndicator(shear_stress_try);
-    shear_stress_3D_[index_i] = shear_stress_try;// J2_plasticity_.ReturnMappingShearStress(shear_stress_try);
+    shear_stress_3D_[index_i] = shear_stress_try; // J2_plasticity_.ReturnMappingShearStress(shear_stress_try);
     // von Mises stress
     Mat3d stress_tensor_i = shear_stress_3D_[index_i] - p_[index_i] * Mat3d::Identity();
     von_mises_stress_[index_i] = getVonMisesStressFromMatrix(reduceTensor(stress_tensor_i));
-    Mat3d strain_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
+    Matd strain_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
     Real isotropic_strain_rate = strain_rate.trace() / Real(Dimensions);
-    scale_coef_[index_i] = reduceTensor(shear_stress_3D_[index_i]) * 
-        (strain_rate + (Eps - isotropic_strain_rate) * Matd::Identity()).inverse();
+    Matd spin_rate = 0.5 * (velocity_gradient_[index_i] - velocity_gradient_[index_i].transpose());
+    Matd shear_rate = strain_rate - isotropic_strain_rate * Matd::Identity() +
+                      shear_strain_[index_i] * spin_rate.transpose() + spin_rate * shear_strain_[index_i];
+    shear_strain_[index_i] += shear_rate * dt;
+    Real regularization_ceof = 1.0e-2;
+    scale_coef_[index_i] = reduceTensor(shear_stress_3D_[index_i] - shear_stress_old) *
+                           shear_rate * (shear_rate * shear_rate.transpose() + regularization_ceof * Matd::Identity()).inverse();
 }
 void ShearStressRelaxationHourglassControlJ2Plasticity::update(size_t index_i, Real dt)
 {
@@ -572,7 +578,7 @@ void ShearStressRelaxationHourglassControlJ2Plasticity::update(size_t index_i, R
         Real r_ij = inner_neighborhood.r_ij_[n];
         Vecd v_ij_correction = v_ij - 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_j]) * r_ij * e_ij;
         Real coef = 0.1;
-        acceleration_hourglass += coef * (scale_coef_[index_i] + scale_coef_[index_j]) * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
+        acceleration_hourglass += coef * (scale_coef_[index_i] + scale_coef_[index_j]) * v_ij_correction * dW_ijV_j / (rho_i * r_ij);
     }
     acc_hourglass_[index_i] += acceleration_hourglass;
     acc_shear_[index_i] = acceleration + acc_hourglass_[index_i];
