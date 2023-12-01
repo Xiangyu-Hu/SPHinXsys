@@ -111,5 +111,22 @@ class TreeInnerRelation : public InnerRelation
 
     virtual void updateConfiguration() override;
 };
+
+/**
+ * @class ShellSelfContactRelation
+ * @brief The relation for self contact of a shell
+ */
+class ShellSelfContactRelation : public BaseInnerRelation
+{
+  public:
+    explicit ShellSelfContactRelation(RealBody &real_body);
+    virtual ~ShellSelfContactRelation(){};
+    void updateConfiguration() override;
+
+  protected:
+    SearchDepthSingleResolution get_single_search_depth_;
+    NeighborBuilderShellSelfContact get_shell_self_contact_neighbor_;
+    CellLinkedList &cell_linked_list_;
+};
 } // namespace SPH
 #endif // INNER_BODY_RELATION_H

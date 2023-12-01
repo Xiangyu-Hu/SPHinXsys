@@ -197,18 +197,16 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
 };
 
 /**
- * @class NeighborBuilderContactShell
- * @brief A contact neighbor builder functor for contact relation between fluid and shell.
+ * @class BaseNeighborBuilderShell
+ * @brief A base neighbor builder functor for contact relation to shell.
  */
-class NeighborBuilderContactShell : public NeighborBuilderContact
+class BaseNeighborBuilderContactShell : public NeighborBuilder
 {
   public:
-    NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContactShell(){};
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
+    explicit BaseNeighborBuilderContactShell(SPHBody &shell_body);
+    virtual ~BaseNeighborBuilderContactShell(){};
 
-  private:
+  protected:
     StdLargeVec<Vecd> &n_;   // normal direction of contact body
     StdLargeVec<Real> &H_;   // summation of mean curvature of contact body
     Real particle_distance_; // reference spacing of contact body
@@ -219,6 +217,38 @@ class NeighborBuilderContactShell : public NeighborBuilderContact
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
                             size_t index_j, const Real &W_ij,
                             const Real &dW_ijV_j, const Vecd &e_ij);
+};
+/**
+ * @class NeighborBuilderContactShell
+ * @brief A contact neighbor builder functor for contact relation between fluid and shell.
+ */
+class NeighborBuilderContactShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body);
+    virtual ~NeighborBuilderContactShell(){};
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+};
+
+/**
+ * @class NeighborBuilderShellSelfContact
+ * @brief A self-contact neighbor builder functor of shell.
+ */
+class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
+{
+  public:
+    explicit NeighborBuilderShellSelfContact(SPHBody &body);
+    virtual ~NeighborBuilderShellSelfContact(){};
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+  private:
+    StdLargeVec<Vecd> &pos0_;
+    UniquePtrKeeper<Kernel> kernel_keeper_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
