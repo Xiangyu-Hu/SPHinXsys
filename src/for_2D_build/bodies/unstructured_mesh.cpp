@@ -752,10 +752,13 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
     }
 }
 //=================================================================================================//
-BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                                                         vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
-    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(particles_->vel_), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
+BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, 
+    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(particles_->vel_), pos_(particles_->pos_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+      total_ghost_particles_(particles_->total_ghost_particles_),
       real_particles_bound_(particles_->real_particles_bound_),
       each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
       each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),

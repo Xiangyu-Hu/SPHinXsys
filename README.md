@@ -14,14 +14,14 @@
 
 ## Description
 
-SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle Hydrodynamics for industrial compleX systems.
-It provides C++ APIs for physical accurate simulation and aims to model coupled industrial dynamic systems including fluid, solid, multi-body dynamics
-and beyond with SPH (smoothed particle hydrodynamics), a meshless computational method using particle discretization.
-For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
-
-SPHinXsys is a multi-physics, multi-resolution SPH library based on a unified computational framework in which strong couplings are achieved for all involved physics.
-Although it is not a standalone application itself,
+SPHinXsys (pronunciation: s'finksis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
+The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underlying numerical method
+for both particle-based and mesh-based discretization.
+Due to the unified computational framework, SPHinXsys is able to carry out simulation and optimization at the same time.
+Although SPHinXsys is not a standalone application itself,
 many examples designated for the specific type of applications are provided.
+
+For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
 
 ## Examples at a glance
 
@@ -52,6 +52,21 @@ The following gives an example of the flow around cylinder problem solved by FVM
 
 Note that the code for FVM algorithm is exact the same one for particle interaction in SPHinXsys.
 The only difference is that SPHinXsys reads a predefined mesh, other than generate particles, before the computation.
+
+### Target-driven optimization
+
+The unique target-driven optimization is able to achieve the optimization target and physical solution all-in-once, 
+which is able to accelerate optimization process greatly.
+The following gives an example of optimizing the conductivity distribution 
+for a thermal domain problem targeting minimum average temperature.
+
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/optimization/test_2d_VP_heat_flux_optimization/VP_heat_flux_optimization.cpp">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/optimization.gif" height="192px"></a>
+
+Note that the physical solution of the thermal domain (right) and the optimal distribution of conductivity (left)
+are obtained at the same time when optimization is finished. 
+Also note that the entire optimization process is very fast and 
+only several times slower than that for a single physical solution with given conductivity distribution.  
 
 ## Publications
 
@@ -122,8 +137,8 @@ Volume 236, (2021) 109540
 14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, 490, 112303, 2023.  
 [![Free Stream](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2023.112303-d45815.svg)](https://doi.org/10.1016/j.jcp.2023.112303)
 
-15. Yaru Ren, Pengzhi Lin, Chi Zhang, Xiangyu Hu, "An efficient weighted correction method in Riemann SPH for the simulation of general free surface flows", Computer Methods in Applied Mechanics and Engineering, in press. 2023.  
-[![Correction Method](https://img.shields.io/badge/doi-10.1016%2FarXiv.2304.14865-d45815.svg)](https://doi.org/10.48550/arXiv.2304.14865)
+15. Yaru Ren, Pengzhi Lin, Chi Zhang, Xiangyu Hu, "An efficient weighted correction method in Riemann SPH for the simulation of general free surface flows", Computer Methods in Applied Mechanics and Engineering, 417, 116460, 2023.  
+[![Correction Method](https://img.shields.io/badge/doi-10.1016%2Fj.cma.2023.116460-d45815.svg)](https://doi.org/10.1016/j.cma.2023.116460)
 
 ## Software Architecture
 

@@ -88,8 +88,8 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 {
   protected:
     Real CFL_;
-    StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_, &acc_prior_;
-    StdLargeVec<Real> &thickness_;
+    StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
+    StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
 
@@ -182,8 +182,8 @@ class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
     virtual ~BaseShellRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &thickness_, &mass_;
+    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
@@ -209,7 +209,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
         const Matd &global_stress_i = global_stress_[index_i];
         const Matd &global_moment_i = global_moment_[index_i];
 
-        Vecd acceleration = Vecd::Zero();
+        Vecd force = Vecd::Zero();
         Vecd pseudo_normal_acceleration = global_shear_stress_i;
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -226,7 +226,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                                       pos_[index_j],
                                                       transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
                 Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
-                acceleration += hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
+                force += mass_[index_i] * hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
                                 inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
 
                 Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
@@ -240,11 +240,11 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                               inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 2) * limiter_pseudo_n;
             }
 
-            acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
             pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         }
 
-        acc_[index_i] = acceleration * inv_rho0_ / thickness_[index_i];
+        force_[index_i] = force * inv_rho0_ / thickness_[index_i];
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 3);
 
         /** the relation between pseudo-normal and rotations */
@@ -342,8 +342,9 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
   protected:
     const int axis_; /**< the axis direction for bounding*/
     StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &vel_, &acc_;
+    StdLargeVec<Vecd> &vel_, &force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
+    StdLargeVec<Real> &mass_;
 };
 
 /**
@@ -356,7 +357,7 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
     std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
     Real time_to_full_external_force_;
     Real particle_spacing_ref_, h_spacing_ratio_;
-    StdLargeVec<Vecd> &pos0_, &acc_prior_;
+    StdLargeVec<Vecd> &pos0_, &force_prior_;
     StdLargeVec<Real> &thickness_;
     std::vector<StdLargeVec<Real>> weight_;
     std::vector<Real> sum_of_weight_;

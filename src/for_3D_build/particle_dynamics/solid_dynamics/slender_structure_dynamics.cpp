@@ -15,10 +15,10 @@ BarDynamicsInitialCondition::BarDynamicsInitialCondition(SPHBody &sph_body)
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
       BarDataSimple(sph_body), CFL_(CFL),
-      vel_(particles_->vel_), acc_(particles_->acc_),
+      vel_(particles_->vel_), force_(particles_->force_),
       angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
-      acc_prior_(particles_->acc_prior_),
-      thickness_(particles_->thickness_),
+      force_prior_(particles_->force_prior_),
+      thickness_(particles_->thickness_), mass_(particles_->mass_),
       rho0_(particles_->elastic_solid_.ReferenceDensity()),
       E0_(particles_->elastic_solid_.YoungsModulus()),
       nu_(particles_->elastic_solid_.PoissonRatio()),
@@ -31,7 +31,7 @@ Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // Since the particle does not change its configuration in pressure relaxation step,
     // I chose a time-step size according to Eulerian method.
-    Real time_setp_0 = SMIN((Real)sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
+    Real time_setp_0 = SMIN((Real)sqrt(smoothing_length_ / (((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm() + TinyReal)),
                             smoothing_length_ / (c0_ + vel_[index_i].norm()));
     Real time_setp_1 = SMIN((Real)sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
                             Real(1.0) / (angular_vel_[index_i].norm() + TinyReal));
@@ -59,10 +59,10 @@ BarDeformationGradientTensor::
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       rho_(particles_->rho_),
-      thickness_(particles_->thickness_),
+      thickness_(particles_->thickness_), mass_(particles_->mass_),
       pos_(particles_->pos_), vel_(particles_->vel_),
-      acc_(particles_->acc_),
-      acc_prior_(particles_->acc_prior_),
+      force_(particles_->force_),
+      force_prior_(particles_->force_prior_),
       n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -230,7 +230,7 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 //=================================================================================================//
 void BarStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
-    vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
+    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
     angular_vel_[index_i] += (dangular_vel_dt_[index_i]) * dt;
     angular_b_vel_[index_i] += (dangular_b_vel_dt_[index_i]) * dt;
 }
@@ -283,7 +283,7 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
       axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_), vel_(particles_->vel_),
-      acc_(particles_->acc_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
+      force_(particles_->force_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_), rotation_b_(particles_->rotation_b_),
       angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_) {}
 //=================================================================================================//
@@ -300,7 +300,7 @@ DistributingPointForcesToBar::
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-      pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
+      pos0_(particles_->pos0_), force_prior_(particles_->force_prior_),
       thickness_(particles_->thickness_)
 {
     for (size_t i = 0; i < point_forces_.size(); i++)
@@ -350,11 +350,11 @@ void DistributingPointForcesToBar::setupDynamics(Real dt)
 //=================================================================================================//
 void DistributingPointForcesToBar::update(size_t index_i, Real dt)
 {
-    acc_prior_[index_i] = Vecd::Zero();
+    force_prior_[index_i] = Vecd::Zero();
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
         Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
-        acc_prior_[index_i] += force / particles_->ParticleMass(index_i);
+        force_prior_[index_i] += force;
     }
 }
 //=================================================================================================//

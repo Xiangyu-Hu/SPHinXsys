@@ -13,7 +13,9 @@ template <class BaseRelationType>
 EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &base_relation)
     : BaseIntegration<DataDelegationType>(base_relation),
       mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
-      dmom_dt_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")) {}
+      dmom_dt_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
+      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")), 
+      Vol_(this->particles_->Vol_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::
@@ -37,7 +39,7 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t 
         FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
         Matd convect_flux = rho_star * interface_state.vel_ * interface_state.vel_.transpose();
-        momentum_change_rate -= 2.0 * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        momentum_change_rate -= 2.0 * Vol_[index_i] * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
     dmom_dt_[index_i] = momentum_change_rate;
 }
@@ -45,8 +47,8 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t 
 template <class RiemannSolverType>
 void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    mom_[index_i] += (dmom_dt_[index_i] + rho_[index_i] * acc_prior_[index_i]) * dt;
-    vel_[index_i] = mom_[index_i] / rho_[index_i];
+    mom_[index_i] += (dmom_dt_[index_i] + force_prior_[index_i]) * dt;
+    vel_[index_i] = mom_[index_i] / mass_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -77,7 +79,7 @@ void EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>::interaction(s
             FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
             Real rho_star = fluid_.DensityFromPressure(interface_state.p_);
             Matd convect_flux = rho_star * interface_state.vel_ * interface_state.vel_.transpose();
-            momentum_change_rate -= 2.0 * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+            momentum_change_rate -= 2.0 * Vol_[index_i] * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
         }
     }
     dmom_dt_[index_i] += momentum_change_rate;
@@ -93,7 +95,7 @@ template <class RiemannSolverType>
 void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
-    Real density_change_rate = 0.0;
+    Real mass_change_rate = 0.0;
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -105,15 +107,16 @@ void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t 
         FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-        density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
+        mass_change_rate -= 2.0 * Vol_[index_i] * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
     }
-    drho_dt_[index_i] = density_change_rate;
+    dmass_dt_[index_i] = mass_change_rate;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    rho_[index_i] += drho_dt_[index_i] * dt;
+    mass_[index_i] += dmass_dt_[index_i] * dt;
+    rho_[index_i] = mass_[index_i] / Vol_[index_i];
     p_[index_i] = fluid_.getPressure(rho_[index_i]);
 }
 //=================================================================================================//
@@ -127,7 +130,7 @@ template <class RiemannSolverType>
 void EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
-    Real density_change_rate = 0.0;
+    Real mass_change_rate = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
@@ -146,10 +149,10 @@ void EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::interaction(s
             FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
             Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
-            density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
+            mass_change_rate -= 2.0 * this->Vol_[index_i] * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
         }
     }
-    this->drho_dt_[index_i] += density_change_rate;
+    this->dmass_dt_[index_i] += mass_change_rate;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

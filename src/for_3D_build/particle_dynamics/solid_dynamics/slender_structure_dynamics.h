@@ -72,8 +72,8 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 {
   protected:
     Real CFL_;
-    StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_, &acc_prior_;
-    StdLargeVec<Real> &thickness_;
+    StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
+    StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
 
@@ -178,8 +178,8 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
     virtual ~BaseBarRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &thickness_, &mass_;
+    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
@@ -212,7 +212,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
         const Matd &global_b_moment_i = global_b_moment_[index_i];
         const Vecd &global_b_shear_stress_i = global_b_shear_stress_[index_i];
 
-        Vecd acceleration = Vecd::Zero();
+        Vecd force = Vecd::Zero();
         Vecd pseudo_normal_acceleration = global_shear_stress_i;
         Vecd pseudo_b_normal_acceleration = global_b_shear_stress_i;
 
@@ -221,7 +221,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
         {
             size_t index_j = inner_neighborhood.j_[n];
 
-            acceleration += (global_stress_i + global_stress_[index_j]) *
+            force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) *
                             inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
             pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) *
                                           inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
@@ -229,7 +229,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
                                             inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         }
 
-        acc_[index_i] = acceleration * inv_rho0_ / (thickness_[index_i] * width_[index_i]);
+        force_[index_i] = force * inv_rho0_ / (thickness_[index_i] * width_[index_i]);
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
         dpseudo_b_n_d2t_[index_i] = -pseudo_b_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
 
@@ -352,7 +352,7 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
   protected:
     const int axis_; /**< the axis direction for bounding*/
     StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &vel_, &acc_;
+    StdLargeVec<Vecd> &vel_, &force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;
 };
@@ -367,7 +367,7 @@ class DistributingPointForcesToBar : public LocalDynamics, public BarDataSimple
     std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
     Real time_to_full_external_force_;
     Real particle_spacing_ref_, h_spacing_ratio_;
-    StdLargeVec<Vecd> &pos0_, &acc_prior_;
+    StdLargeVec<Vecd> &pos0_, &force_prior_;
     StdLargeVec<Real> &thickness_;
     std::vector<StdLargeVec<Real>> weight_;
     std::vector<Real> sum_of_weight_;

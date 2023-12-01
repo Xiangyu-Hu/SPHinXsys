@@ -11,7 +11,7 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
       rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      Vol_(particles_->Vol_), vel_(particles_->vel_),
+      Vol_(particles_->Vol_), mass_(particles_->mass_), vel_(particles_->vel_),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
@@ -125,7 +125,8 @@ void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
             {
                 vel_[index_i] = vel_farfield_;
                 rho_[index_i] = rho_farfield_;
-                mom_[index_i] = rho_[index_i] * vel_[index_i];
+                mass_[index_i] = rho_[index_i] * Vol_[index_i];
+                mom_[index_i] = mass_[index_i] * vel_[index_i];
             }
             // subsonic inflow condition
             if (fabs(velocity_boundary_normal) < sound_speed_)
@@ -134,7 +135,8 @@ void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
                 p_[index_i] = fluid_.getPressure(rho_[index_i]);
                 Real vel_normal = vel_normal_average_[index_i] * inner_weight_summation_[index_i] + velocity_farfield_normal * (1.0 - inner_weight_summation_[index_i]);
                 vel_[index_i] = vel_normal * n_[index_i] + (vel_farfield_ - velocity_farfield_normal * n_[index_i]);
-                mom_[index_i] = rho_[index_i] * vel_[index_i];
+                mass_[index_i] = rho_[index_i] * Vol_[index_i];
+                mom_[index_i] = mass_[index_i] * vel_[index_i];
             }
         }
         // judge it is the outflow condition
@@ -145,7 +147,8 @@ void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
             {
                 rho_[index_i] = rho_average_[index_i] + TinyReal;
                 vel_[index_i] = vel_average_[index_i];
-                mom_[index_i] = rho_[index_i] * vel_[index_i];
+                mass_[index_i] = rho_[index_i] * Vol_[index_i];
+                mom_[index_i] = mass_[index_i] * vel_[index_i];
             }
 
             // subsonic outflow condition
@@ -155,7 +158,8 @@ void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
                 p_[index_i] = fluid_.getPressure(rho_[index_i]);
                 Real vel_normal = vel_normal_average_[index_i] * inner_weight_summation_[index_i] + velocity_farfield_normal * (1.0 - inner_weight_summation_[index_i]);
                 vel_[index_i] = vel_normal * n_[index_i] + vel_tangential_average_[index_i];
-                mom_[index_i] = rho_[index_i] * vel_[index_i];
+                mass_[index_i] = rho_[index_i] * Vol_[index_i];
+                mom_[index_i] = mass_[index_i] * vel_[index_i];
             }
         }
     }

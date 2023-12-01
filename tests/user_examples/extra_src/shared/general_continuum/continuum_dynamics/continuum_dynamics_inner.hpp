@@ -22,7 +22,7 @@ namespace SPH
         template <class FluidDynamicsType>
         void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
         {
-            this->vel_[index_i] += (this->acc_prior_[index_i] + this->acc_[index_i] + this->acc_shear_[index_i]) * dt;
+            this->vel_[index_i] += ((this->force_prior_[index_i] + this->force_[index_i]) / this->mass_[index_i] + this->acc_shear_[index_i]) * dt;
         }
 
 		//=================================================================================================//
@@ -47,13 +47,13 @@ namespace SPH
 		template <class RiemannSolverType>
 		void BaseStressRelaxation1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 		{
-			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
+			vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		Vecd BaseStressRelaxation1stHalf<RiemannSolverType>::computeNonConservativeAcceleration(size_t index_i)
+		Vecd BaseStressRelaxation1stHalf<RiemannSolverType>::computeNonConservativeForce(size_t index_i)
 		{
-			Vecd acceleration = acc_prior_[index_i] * rho_[index_i];
+			Vecd force = force_prior_[index_i] * rho_[index_i];
 			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -61,15 +61,15 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-				acceleration += (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
+				force += mass_[index_i] * (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
 			}
-			return acceleration / rho_[index_i];
+			return force / rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseStressRelaxation1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration = Vecd::Zero();
+			Vecd force = Vecd::Zero();
 			Real rho_dissipation(0);
 			Real rho_i = rho_[index_i];
 			Matd stress_tensor_i = reduceTensor(stress_tensor_3D_[index_i]);
@@ -81,10 +81,10 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 				Matd stress_tensor_j = reduceTensor(stress_tensor_3D_[index_j]);
-				acceleration += rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
+				force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
 				rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
 			}
-			acc_[index_i] += acceleration;
+			force_[index_i] += force;
 			drho_dt_[index_i] = rho_dissipation * rho_[index_i];
 		}
 		//=================================================================================================//
@@ -115,12 +115,12 @@ namespace SPH
 
 				Vecd u_jump = vel_[index_i] - vel_[index_j];
 				density_change_rate += u_jump.dot(e_ij) * dW_ijV_j;
-				p_dissipation += riemann_solver_.DissipativePJumpExtra(u_jump, e_ij) * dW_ijV_j;
+				p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJumpExtra(u_jump, e_ij) * dW_ijV_j;
 				Matd velocity_gradient_ij = -(vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
 				velocity_gradient += velocity_gradient_ij;
 			}
 			drho_dt_[index_i] += density_change_rate * rho_[index_i];
-			acc_[index_i] = p_dissipation / rho_[index_i];
+			force_[index_i] = p_dissipation / rho_[index_i];
 			velocity_gradient_[index_i] = velocity_gradient;
 		}
 		//=================================================================================================//
