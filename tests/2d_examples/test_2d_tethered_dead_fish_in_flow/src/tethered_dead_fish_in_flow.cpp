@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    system.setReloadParticles(true);
+    system.setReloadParticles(false);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 
@@ -381,12 +381,12 @@ int main(int ac, char *av[])
     fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
     tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
     /** Visualizer from simbody. */
-    //SimTK::Visualizer viz(MBsystem);
-    //SimTK::Visualizer::Reporter visualizer_reporter(viz, 0.01);
-    //MBsystem.addEventReporter(&visualizer_reporter);
+    SimTK::Visualizer viz(MBsystem);
+    SimTK::Visualizer::Reporter visualizer_reporter(viz, 0.01);
+    MBsystem.addEventReporter(&visualizer_reporter);
     /** Initialize the system and state. */
     SimTK::State state = MBsystem.realizeTopology();
-    //viz.report(state);
+    viz.report(state);
     std::cout << "Hit ENTER to run a short simulation ...";
     getchar();
     /** Time stepping method for multibody system.*/
@@ -502,7 +502,7 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             // visualize the motion of rigid body
-            //viz.report(integ.getState());
+            viz.report(integ.getState());
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
             water_block.updateCellLinkedListWithParticleSort(100);
