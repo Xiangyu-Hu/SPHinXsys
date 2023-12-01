@@ -64,7 +64,38 @@ public:
     DecomposedPlasticIntegration1stHalf(BaseInnerRelation& inner_relation);
     virtual ~DecomposedPlasticIntegration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        // including gravity and force from fluid
+        Vecd force = Vecd::Zero();
+        const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Real r_ij = inner_neighborhood.r_ij_[n];
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            Vecd pair_distance = pos_[index_i] - pos_[index_j];
+            Matd pair_scaling = scaling_matrix_[index_i] + scaling_matrix_[index_j];
+            Matd pair_inverse_F = 0.5 * (inverse_F_[index_i] + inverse_F_[index_j]);
+            Vecd e_ij_difference = pair_inverse_F * pair_distance / r_ij - e_ij;
+            Real e_ij_difference_norm = e_ij_difference.norm();
+
+            Real limiter = 0.0;
+            if (e_ij_difference_norm > 0.05)
+            {
+                limiter = SMIN(e_ij_difference_norm - 0.05, 1.0);
+            }
+
+            Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
+            Vecd shear_force_ij = plastic_solid_.ShearModulus() * pair_scaling *
+                (e_ij + 8.0 * limiter * weight * Dimensions * e_ij_difference);
+            force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * e_ij + shear_force_ij) *
+                inner_neighborhood.dW_ijV_j_[n] * inv_rho0_;
+        }
+
+        force_[index_i] = force;
+    };
 
 protected:
     PlasticSolid& plastic_solid_;
