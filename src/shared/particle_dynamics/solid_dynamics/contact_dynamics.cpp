@@ -11,7 +11,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 SelfContactDensitySummation::
-    SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
+    SelfContactDensitySummation(BaseInnerRelation &self_contact_relation)
     : ContactDensityAccessor(self_contact_relation.base_particles_, "SelfContactDensity"),
       LocalDynamics(self_contact_relation.getSPHBody()),
       SolidDataInner(self_contact_relation),
@@ -77,7 +77,7 @@ ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_cont
 }
 //=================================================================================================//
 SelfContactForce::
-    SelfContactForce(SelfSurfaceContactRelation &self_contact_relation)
+    SelfContactForce(BaseInnerRelation &self_contact_relation)
     : LocalDynamics(self_contact_relation.getSPHBody()),
       SolidDataInner(self_contact_relation),
       solid_(particles_->solid_), mass_(particles_->mass_),

@@ -55,7 +55,7 @@ class ContactDensityAccessor
 class SelfContactDensitySummation : public ContactDensityAccessor, public LocalDynamics, public SolidDataInner
 {
   public:
-    explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
+    explicit SelfContactDensitySummation(BaseInnerRelation &self_contact_relation);
     virtual ~SelfContactDensitySummation(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -166,7 +166,7 @@ class ShellContactDensity : public ContactDensityAccessor, public LocalDynamics,
 class SelfContactForce : public LocalDynamics, public SolidDataInner
 {
   public:
-    explicit SelfContactForce(SelfSurfaceContactRelation &self_contact_relation);
+    explicit SelfContactForce(BaseInnerRelation &self_contact_relation);
     virtual ~SelfContactForce(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
