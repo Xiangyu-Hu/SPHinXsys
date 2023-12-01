@@ -62,13 +62,13 @@ namespace SPH
 			//divide an extral rho ??
 			acc_prior_[index_i] = acceleration;
 			/*for debuging*/
-			Vecd force = Vecd::Zero();
-			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;
+			/*Vecd force = Vecd::Zero();
+			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;*/
 
-			/*std::string output_folder = "./output";
+			std::string output_folder = "./output";
 			std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
 			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-			out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;*/
+			out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;
 
 			/*std::string output_folder = "./output";
 			std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";

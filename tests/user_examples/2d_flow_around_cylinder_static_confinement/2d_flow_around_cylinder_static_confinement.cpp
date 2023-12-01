@@ -74,7 +74,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
     /** Computing viscous acceleration with wall. */
     //InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_complex.getInnerRelation());
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner, SequencedPolicy> viscous_acceleration(water_block_inner);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
     /** Impose transport velocity. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
     /** Computing vorticity in the flow. */
@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     update_density_by_summation.post_processes_.push_back(&confinement_condition.density_summation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition.pressure_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition.density_relaxation_);
-    density_relaxation.post_processes_.push_back(&confinement_condition.surface_bounding_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition.surface_bounding_);
     transport_velocity_correction.post_processes_.push_back(&confinement_condition.transport_velocity_);
     viscous_acceleration.post_processes_.push_back(&confinement_condition.viscous_acceleration_);
     

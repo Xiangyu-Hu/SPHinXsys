@@ -206,7 +206,7 @@ void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
     Vecd vel_derivative = Vecd::Zero();
     /*for debugging*/
     //Vecd force = Vecd::Zero();
-    //Real kernel_gradient_divide_Rij (0.0);
+    Real kernel_gradient_divide_Rij (0.0);
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
@@ -219,14 +219,14 @@ void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
             vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
             acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
             /*for debuging*/
-            //kernel_gradient_divide_Rij += contact_neighborhood.dW_ijV_j_[n] /(r_ij + 0.01 * this->smoothing_length_);
+            kernel_gradient_divide_Rij += contact_neighborhood.dW_ijV_j_[n] /(r_ij + 0.01 * this->smoothing_length_);
             //force += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
         }
     }
-    /*std::string output_folder = "./output";
+    std::string output_folder = "./output";
 	std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_" + std::to_string(dt) + ".dat";
 	std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-	out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<< kernel_gradient_divide_Rij<< std::endl;*/
+	out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<< kernel_gradient_divide_Rij<< std::endl;
 	
     /*std::string output_folder = "./output";
 	std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_" + std::to_string(dt) + ".dat";

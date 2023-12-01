@@ -109,8 +109,8 @@ namespace SPH
 			    /*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
 			    vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
 			    Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
-			    //force_from_fluid_[index_i]= -2.0 * mu_ * Vol_[index_i] * kernel_gradient_divide_Rij * vel_derivative ;
-                force_from_fluid_[index_i]= -2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative ;
+			    force_from_fluid_[index_i]= -2.0 * mu_ * Vol_[index_i] * kernel_gradient_divide_Rij * vel_derivative ;
+                //force_from_fluid_[index_i]= -2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative ;
             }
         protected:
             StdLargeVec<Vecd>& pos_;
@@ -224,7 +224,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
             InteractionDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            SimpleDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
+            SimpleDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
             SimpleDynamics<StaticConfinementExtendIntegration1stHalf> extend_intergration_1st_half_;
             SimpleDynamics<StaticConfinementIntegration1stHalfPenaltyVelocity> extend_intergration_1st_half_Velocity;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;

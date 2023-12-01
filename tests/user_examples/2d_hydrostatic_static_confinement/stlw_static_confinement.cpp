@@ -5,7 +5,8 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
-#include "stlw.h" //header for this case
+#include "stlw_static_confinement.h" //header for this case
+#include "level_set_confinement.h"
 
 int main(int ac, char *av[])
 {
@@ -24,33 +25,44 @@ int main(int ac, char *av[])
     water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+   /* SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<ParticleGeneratorLattice>();*/
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary});
+    //ComplexRelation water_block_complex(water_block_inner, {&wall_boundary});
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    //SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
     /** time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** pressure relaxation using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    /** Define the confinement condition for wall. */
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
+    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinementGeneral confinement_condition_wall(near_surface_wall);
+    /** Push back the static confinement conditiont to corresponding dynamics. */
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
+    viscous_acceleration.post_processes_.push_back(&confinement_condition_wall.viscous_acceleration_);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -64,7 +76,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
-    wall_boundary_normal_direction.exec();
+    //wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -96,7 +108,7 @@ int main(int ac, char *av[])
 
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            //viscous_acceleration.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -122,8 +134,8 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
             water_block.updateCellLinkedListWithParticleSort(100);
-            wall_boundary.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
+            //wall_boundary.updateCellLinkedList();
+            water_block_inner.updateConfiguration();
 
             if (total_time >= relax_time)
             {

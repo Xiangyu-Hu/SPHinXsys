@@ -168,6 +168,7 @@ int main()
     IOEnvironment io_environment(system);
     /** Output the body states. */
     BodyStatesRecordingToPlt body_states_recording(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording_vtp(io_environment, system.real_bodies_);
 
     NearShapeSurface near_surface_up(water_block, makeShared<InverseShape<WallUp>>("WallUp"));
     near_surface_up.level_set_shape_.writeLevelSet(io_environment);
@@ -198,7 +199,8 @@ int main()
     system.initializeSystemConfigurations();
     //wall_boundary_normal_direction.exec();
     /** Output the start states of bodies. */
-    body_states_recording.writeToFile(0);
+    //body_states_recording.writeToFile(0);
+    body_states_recording_vtp.writeToFile(0);
     
     /**
      * @brief 	Basic parameters.
@@ -263,7 +265,8 @@ int main()
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         TickCount t2 = TickCount::now();
-        body_states_recording.writeToFile();
+        //body_states_recording.writeToFile();
+        body_states_recording_vtp.writeToFile();
 
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

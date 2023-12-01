@@ -3,18 +3,18 @@
  * @brief	2D dambreak example.
  * @details	This is the one of the basic test cases, also the first case for
  * 			understanding SPH method for fluid simulation.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @author	Yongchuan Yu and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.0;                    /**< Water tank length. */
-Real DH = 2.0;                    /**< Water tank height. */
+Real DL = 5.366;                    /**< Water tank length. */
+Real DH = 5.366;                    /**< Water tank height. */
 Real LL = 2.0;                      /**< Water column length. */
 Real LH = 1.0;                      /**< Water column height. */
-Real particle_spacing_ref = 0.025;  /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.015;  /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -41,8 +41,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        //add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
+        add<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -65,12 +65,6 @@ int main(int ac, char *av[])
                         Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
-    SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(water_block);
-
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -80,22 +74,29 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    InnerRelation water_block_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> fluid_pressure_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_block_inner);
+    
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    //SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
+    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
+    /** Define the confinement condition for wall. */
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
+    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
+    /** Push back the static confinement conditiont to corresponding dynamics. */
+    fluid_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
+    fluid_pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
+    fluid_density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
+    fluid_density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -110,10 +111,8 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    random_airfoil_particles.exec(0.25);
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -121,7 +120,7 @@ int main(int ac, char *av[])
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
+        water_block_inner.updateConfiguration();
         fluid_observer_contact.updateConfiguration();
     }
     //----------------------------------------------------------------------
@@ -131,7 +130,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 10.0;
+    Real end_time = 20.0;
     Real output_interval = 0.1;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -163,8 +162,7 @@ int main(int ac, char *av[])
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
-            
-            transport_velocity_correction.exec();
+
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
@@ -200,7 +198,7 @@ int main(int ac, char *av[])
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
-            water_block_complex.updateConfiguration();
+            water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
