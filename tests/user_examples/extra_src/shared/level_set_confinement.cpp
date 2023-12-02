@@ -60,7 +60,7 @@ namespace SPH
 			Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
 			acceleration = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
 			//divide an extral rho ??
-			acc_prior_[index_i] = acceleration;
+			acc_prior_[index_i] += acceleration;
 			/*for debuging*/
 			/*Vecd force = Vecd::Zero();
 			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;*/

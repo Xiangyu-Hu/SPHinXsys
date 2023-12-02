@@ -167,7 +167,7 @@ int main()
      */
     IOEnvironment io_environment(system);
     /** Output the body states. */
-    BodyStatesRecordingToPlt body_states_recording(io_environment, system.real_bodies_);
+    //BodyStatesRecordingToPlt body_states_recording(io_environment, system.real_bodies_);
     BodyStatesRecordingToVtp body_states_recording_vtp(io_environment, system.real_bodies_);
 
     NearShapeSurface near_surface_up(water_block, makeShared<InverseShape<WallUp>>("WallUp"));
