@@ -37,7 +37,9 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
       phi_gradient_(*registerMeshVariable<Vecd>("LevelsetGradient")),
       kernel_weight_(*registerMeshVariable<Real>("KernelWeight")),
       kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
-      kernel_(*sph_adaptation.getKernel())
+      kernel_(*sph_adaptation.getKernel()),
+      kernel_gradient_multiply_Rij_(*registerMeshVariable<Real>("KernelGradientMultiplyRij")),
+      kernel_gradient_divide_Rij_(*registerMeshVariable<Real>("KernelGradientDivideRij"))
 {
     Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
     initializeASingularDataPackage(
@@ -70,6 +72,13 @@ void LevelSet::updateKernelIntegrals()
                              data_pkg->assignByPosition(
                                  kernel_gradient_, [&](const Vecd &position) -> Vecd
                                  { return computeKernelGradientIntegral(position); });
+                             /*below for viscous force and location divergence*/
+                             data_pkg->assignByPosition(
+                                 kernel_gradient_multiply_Rij_, [&](const Vecd &position) -> Real
+                                 { return computeKernelGradientMultiplyRijIntegral(position); });
+                             data_pkg->assignByPosition(
+                                 kernel_gradient_divide_Rij_, [&](const Vecd &position) -> Real
+                                 { return computeKernelGradientDivideRijIntegral(position); });
                          });
 }
 //=================================================================================================//
@@ -335,6 +344,40 @@ bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
         };
     }
     return is_bounded;
+}
+//=================================================================================================//
+/*below for viscous force and location divergence*/
+//=================================================================================================//
+Real LevelSet::probeKernelGradientMultiplyRijIntegral(const Vecd &position, Real h_ratio)
+{
+    return probeMesh(kernel_gradient_multiply_Rij_, position);
+}
+//=================================================================================================//
+Real LevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)
+{
+    return probeMesh(kernel_gradient_divide_Rij_, position);
+}
+//=================================================================================================//
+Real MultilevelLevelSet::probeKernelGradientMultiplyRijIntegral(const Vecd &position, Real h_ratio)
+{
+    size_t coarse_level = getCoarseLevel(h_ratio);
+    Real alpha = (mesh_levels_[coarse_level + 1]->global_h_ratio_ - h_ratio) /
+                 (mesh_levels_[coarse_level + 1]->global_h_ratio_ - mesh_levels_[coarse_level]->global_h_ratio_);
+    Real coarse_level_value = mesh_levels_[coarse_level]->probeKernelGradientMultiplyRijIntegral(position);
+    Real fine_level_value = mesh_levels_[coarse_level + 1]->probeKernelGradientMultiplyRijIntegral(position);
+
+    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+}
+//=================================================================================================//
+Real MultilevelLevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)
+{
+    size_t coarse_level = getCoarseLevel(h_ratio);
+    Real alpha = (mesh_levels_[coarse_level + 1]->global_h_ratio_ - h_ratio) /
+                 (mesh_levels_[coarse_level + 1]->global_h_ratio_ - mesh_levels_[coarse_level]->global_h_ratio_);
+    Real coarse_level_value = mesh_levels_[coarse_level]->probeKernelGradientDivideRijIntegral(position);
+    Real fine_level_value = mesh_levels_[coarse_level + 1]->probeKernelGradientDivideRijIntegral(position);
+
+    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=============================================================================================//
 } // namespace SPH
