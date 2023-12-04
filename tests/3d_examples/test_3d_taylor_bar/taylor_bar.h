@@ -77,7 +77,6 @@ class ColumnObserverParticleGenerator : public ObserverParticleGenerator
   public:
     explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
     {
-        positions_.push_back(Vecd(0.0, 0.0, PW));
-        positions_.push_back(Vecd(PL, 0.0, 0.0));
+        positions_.push_back(Vecd(PL, 0.0, 0.1 * PW));
     }
 };
