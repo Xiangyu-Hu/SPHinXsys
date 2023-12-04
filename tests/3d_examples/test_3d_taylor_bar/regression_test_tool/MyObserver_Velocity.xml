@@ -2,14 +2,14 @@
 <Velocity>
     <Snapshot_0 Velocity_0="~[0,0,-227]" Velocity_1="~[0,0,0]" />
     <Snapshot_200 Velocity_0="~[0,0,-227]" Velocity_1="~[0,0,0]" />
-    <Snapshot_400 Velocity_0="~[5.54407e-06,-2.95243e-07,-226.996]" Velocity_1="~[0,0,0]" />
-    <Snapshot_600 Velocity_0="~[-0.00829015,-0.0136207,-205.603]" Velocity_1="~[0,0,0]" />
-    <Snapshot_800 Velocity_0="~[-0.338868,0.100492,-191.978]" Velocity_1="~[0,0,0]" />
-    <Snapshot_1000 Velocity_0="~[0.0139169,-0.266064,-173.901]" Velocity_1="~[0,0,0]" />
-    <Snapshot_1200 Velocity_0="~[0.0602974,0.311689,-151.559]" Velocity_1="~[0,0,0]" />
-    <Snapshot_1400 Velocity_0="~[-0.16179,-0.125337,-125.468]" Velocity_1="~[0,0,0]" />
-    <Snapshot_1600 Velocity_0="~[-0.146066,-0.0999969,-95.1357]" Velocity_1="~[0,0,0]" />
-    <Snapshot_1800 Velocity_0="~[0.13989,0.0306153,-60.6559]" Velocity_1="~[0,0,0]" />
-    <Snapshot_2000 Velocity_0="~[-0.164147,-0.192535,-21.9386]" Velocity_1="~[0,0,0]" />
-    <Snapshot_2200 Velocity_0="~[0.284233,-0.432971,14.4425]" Velocity_1="~[0,0,0]" />
+    <Snapshot_400 Velocity_0="~[5.62371e-06,1.28679e-06,-226.996]" Velocity_1="~[0,0,0]" />
+    <Snapshot_600 Velocity_0="~[0.000368257,-0.0206011,-205.58]" Velocity_1="~[0,0,0]" />
+    <Snapshot_800 Velocity_0="~[0.163929,0.0692769,-191.63]" Velocity_1="~[0,0,0]" />
+    <Snapshot_1000 Velocity_0="~[-0.182199,-0.238024,-173.8]" Velocity_1="~[0,0,0]" />
+    <Snapshot_1200 Velocity_0="~[-0.154297,-0.136476,-151.53]" Velocity_1="~[0,0,0]" />
+    <Snapshot_1400 Velocity_0="~[-0.0374587,-0.124508,-125.39]" Velocity_1="~[0,0,0]" />
+    <Snapshot_1600 Velocity_0="~[0.000262415,-0.0561064,-94.9338]" Velocity_1="~[0,0,0]" />
+    <Snapshot_1800 Velocity_0="~[-0.0103612,-0.139732,-60.2716]" Velocity_1="~[0,0,0]" />
+    <Snapshot_2000 Velocity_0="~[-0.163517,-0.137649,-20.8944]" Velocity_1="~[0,0,0]" />
+    <Snapshot_2200 Velocity_0="~[0.0778394,-0.326389,15.0082]" Velocity_1="~[0,0,0]" />
 </Velocity>

@@ -176,8 +176,8 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_displacement.generateDataBase(1.0e-2);
-        write_velocity.generateDataBase(1.0e-2);
+        write_displacement.generateDataBase(0.05);
+        write_velocity.generateDataBase(0.05);
     }
     else
     {

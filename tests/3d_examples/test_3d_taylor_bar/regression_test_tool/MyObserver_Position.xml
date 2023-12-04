@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Position>
-    <Snapshot_0 Position_0="~[2.78742e-06,-3.6157e-07,0.032397]" Position_1="~[0,0,0]" />
-    <Snapshot_200 Position_0="~[2.78742e-06,-3.6157e-07,0.0305375]" Position_1="~[0,0,0]" />
-    <Snapshot_400 Position_0="~[2.78742e-06,-3.6157e-07,0.028686]" Position_1="~[0,0,0]" />
-    <Snapshot_600 Position_0="~[2.78333e-06,-3.78583e-07,0.026906]" Position_1="~[0,0,0]" />
-    <Snapshot_800 Position_0="~[2.64406e-06,-5.44486e-07,0.025239]" Position_1="~[0,0,0]" />
-    <Snapshot_1000 Position_0="~[2.2931e-06,-5.4524e-07,0.0237283]" Position_1="~[0,0,0]" />
-    <Snapshot_1200 Position_0="~[2.14977e-06,-7.32699e-07,0.0223774]" Position_1="~[0,0,0]" />
-    <Snapshot_1400 Position_0="~[1.80047e-06,-9.83099e-07,0.0212168]" Position_1="~[0,0,0]" />
-    <Snapshot_1600 Position_0="~[1.48356e-06,-1.49937e-06,0.0202819]" Position_1="~[0,0,0]" />
-    <Snapshot_1800 Position_0="~[1.34436e-06,-2.20162e-06,0.019614]" Position_1="~[0,0,0]" />
-    <Snapshot_2000 Position_0="~[8.26439e-07,-2.82559e-06,0.0192574]" Position_1="~[0,0,0]" />
-    <Snapshot_2200 Position_0="~[7.54368e-07,-4.15624e-06,0.0192413]" Position_1="~[0,0,0]" />
+    <Snapshot_0 Position_0="~[1.03553e-06,-4.75021e-07,0.0323974]" Position_1="~[0,0,0]" />
+    <Snapshot_200 Position_0="~[1.03553e-06,-4.75021e-07,0.030538]" Position_1="~[0,0,0]" />
+    <Snapshot_400 Position_0="~[1.03554e-06,-4.75021e-07,0.0286867]" Position_1="~[0,0,0]" />
+    <Snapshot_600 Position_0="~[1.02071e-06,-5.1227e-07,0.0269065]" Position_1="~[0,0,0]" />
+    <Snapshot_800 Position_0="~[9.46741e-07,-5.88047e-07,0.0252396]" Position_1="~[0,0,0]" />
+    <Snapshot_1000 Position_0="~[1.09977e-06,-6.96403e-07,0.023729]" Position_1="~[0,0,0]" />
+    <Snapshot_1200 Position_0="~[8.35315e-07,-1.18286e-06,0.0223783]" Position_1="~[0,0,0]" />
+    <Snapshot_1400 Position_0="~[6.35663e-07,-1.75647e-06,0.0212181]" Position_1="~[0,0,0]" />
+    <Snapshot_1600 Position_0="~[3.88562e-07,-2.44373e-06,0.0202838]" Position_1="~[0,0,0]" />
+    <Snapshot_1800 Position_0="~[-1.09426e-07,-3.55453e-06,0.0196178]" Position_1="~[0,0,0]" />
+    <Snapshot_2000 Position_0="~[-1.77389e-07,-5.10694e-06,0.0192656]" Position_1="~[0,0,0]" />
+    <Snapshot_2200 Position_0="~[-8.18119e-07,-6.70355e-06,0.0192592]" Position_1="~[0,0,0]" />
 </Position>
