@@ -49,76 +49,9 @@ class BaseRelaxation : public LocalDynamics, public ContinuumDataInner
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
 };
-
-/**
- * @class BaseArtificialStressRelaxation
- */
-class BaseArtificialStressRelaxation : public BaseRelaxation
-{
-  public:
-    explicit BaseArtificialStressRelaxation(BaseInnerRelation &inner_relation, Real epsilon = 0.3);
-    virtual ~BaseArtificialStressRelaxation(){};
-    Matd repulsiveForce(Matd stress_tensor_i, Real rho_i);
-
-  protected:
-    Real smoothing_length_, reference_spacing_, epsilon_;
-};
-
-/**
- * @class ArtificialNormalStressRelaxation
- */
-class ArtificialNormalShearStressRelaxation : public BaseArtificialStressRelaxation
-{
-  public:
-    explicit ArtificialNormalShearStressRelaxation(BaseInnerRelation &inner_relation, Real exponent = 4);
-    virtual ~ArtificialNormalShearStressRelaxation(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &shear_stress_;
-    StdLargeVec<Vecd> &acc_shear_;
-    Real exponent_;
-};
-
-/**
- * @class ShearStressRelaxation1stHalf
- */
-class ShearStressRelaxation1stHalf : public BaseRelaxation
-{
-  public:
-    explicit ShearStressRelaxation1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressRelaxation1stHalf(){};
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_;
-    StdLargeVec<Vecd> &acc_shear_;
-};
-/**
- * @class ShearStressRelaxation2ndHalf
- */
-class ShearStressRelaxation2ndHalf : public BaseRelaxation
-{
-  public:
-    explicit ShearStressRelaxation2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressRelaxation2ndHalf(){};
-    // void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
-    StdLargeVec<Real> &von_mises_stress_;
-};
-
-//=================================================================================================//
-//===================================Non-hourglass formulation=====================================//
-//=================================================================================================//
 /**
  * @class Integration1stHalf
  * @brief Pressure relaxation scheme with the mostly used Riemann solver.
@@ -129,8 +62,6 @@ class BaseIntegration1stHalf : public FluidDynamicsType
   public:
     explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
     virtual ~BaseIntegration1stHalf(){};
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -260,10 +191,6 @@ class ConstrainSolidBodyMassCenter : public LocalDynamics, public ContinuumDataS
     void update(size_t index_i, Real dt = 0.0);
 };
 
-//=================================================================================================//
-//================================================Plastic==========================================//
-//=================================================================================================//
-
 class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataInner
 {
   public:
@@ -274,67 +201,66 @@ class BaseRelaxationPlastic : public LocalDynamics, public PlasticContinuumDataI
 
   protected:
     PlasticContinuum &plastic_continuum_;
-    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Real> &rho_, &p_, &drho_dt_, & mass_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Mat3d> &stress_tensor_3D_, &strain_tensor_3D_, &stress_rate_3D_, &strain_rate_3D_;
     StdLargeVec<Mat3d> &elastic_strain_tensor_3D_, &elastic_strain_rate_3D_;
 };
 
-//=================================================================================================//
-//===============================BaseStressRelaxation1stHalf======================================//
-//=================================================================================================//
-/**
- * @class BaseIntegration1stHalf
- * @brief Template class for pressure relaxation scheme with the Riemann solver
- * as template variable
- */
 template <class RiemannSolverType>
 class BaseStressRelaxation1stHalf : public BaseRelaxationPlastic
 {
-  public:
-    explicit BaseStressRelaxation1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseStressRelaxation1stHalf(){};
-    RiemannSolverType riemann_solver_;
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    virtual Vecd computeNonConservativeForce(size_t index_i);
-
-    StdLargeVec<Matd> &velocity_gradient_;
+    public:
+        explicit BaseStressRelaxation1stHalf(BaseInnerRelation& inner_relation);
+        virtual ~BaseStressRelaxation1stHalf() {};
+        RiemannSolverType riemann_solver_;
+        void initialization(size_t index_i, Real dt = 0.0);
+        void interaction(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
+    protected:
+        StdLargeVec<Matd>& velocity_gradient_;
+        StdLargeVec<Real>& acc_deviatoric_plastic_strain_, & vertical_stress_;
+        Real E_, nu_;
 };
 using StressRelaxation1stHalf = BaseStressRelaxation1stHalf<NoRiemannSolver>;
-using StressRelaxation1stHalfRiemann = BaseStressRelaxation1stHalf<AcousticRiemannSolverExtra>;
-using StressRelaxation1stHalfDissipativeRiemann = BaseStressRelaxation1stHalf<DissipativeRiemannSolverExtra>;
 
-//=================================================================================================//
-//===============================BaseStressRelaxation2ndHalf======================================//
-//=================================================================================================//
-/**
- * @class BaseIntegration2ndHalf
- * @brief  Template density relaxation scheme with different Riemann solver
- */
 template <class RiemannSolverType>
 class BaseStressRelaxation2ndHalf : public BaseRelaxationPlastic
 {
-  public:
-    explicit BaseStressRelaxation2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseStressRelaxation2ndHalf(){};
-    RiemannSolverType riemann_solver_;
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
+    public:
+        explicit BaseStressRelaxation2ndHalf(BaseInnerRelation& inner_relation);
+        virtual ~BaseStressRelaxation2ndHalf() {};
+        RiemannSolverType riemann_solver_;
+        void interaction(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
 
-  protected:
-    StdLargeVec<Matd> &velocity_gradient_;
-    StdLargeVec<Real> &Vol_, &mass_, &von_mises_stress_;
-    StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
-    Real E_, nu_;
+    protected:
+        virtual Vecd computeNonConservativeForce(size_t index_i);
+
+        StdLargeVec<Matd>& velocity_gradient_;
 };
+
 using StressRelaxation2ndHalf = BaseStressRelaxation2ndHalf<NoRiemannSolver>;
 using StressRelaxation2ndHalfRiemann = BaseStressRelaxation2ndHalf<AcousticRiemannSolverExtra>;
-using StressRelaxation2ndHalfDissipativeRiemann = BaseStressRelaxation2ndHalf<DissipativeRiemannSolverExtra>;
+
+template <class RiemannSolverType>
+class BaseStressRelaxation3rdHalf : public BaseRelaxationPlastic
+{
+    public:
+        explicit BaseStressRelaxation3rdHalf(BaseInnerRelation& inner_relation);
+        virtual ~BaseStressRelaxation3rdHalf() {};
+        RiemannSolverType riemann_solver_;
+        void initialization(size_t index_i, Real dt = 0.0);
+        void interaction(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
+
+    protected:
+        StdLargeVec<Matd>& velocity_gradient_;
+        StdLargeVec<Real>& Vol_, & mass_;
+        Real E_, nu_;
+};
+using StressRelaxation3rdHalf = BaseStressRelaxation3rdHalf<NoRiemannSolver>;
+using StressRelaxation3rdHalfRiemann = BaseStressRelaxation3rdHalf<AcousticRiemannSolverExtra>;
 /**
  * @class StressDiffusion
  */

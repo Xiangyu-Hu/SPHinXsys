@@ -11,8 +11,6 @@ namespace SPH
         BaseParticles::initializeOtherVariables();
 
         registerVariable(acc_shear_, "AccelerationByShear");
-        registerVariable(stress_tensor_, "StressTensor");
-        registerVariable(stress_tensor_rate_, "StressTensorRate");
         registerVariable(shear_stress_, "ShearStress");
         registerVariable(shear_stress_rate_, "ShearStressRate");
         registerVariable(von_mises_stress_, "VonMisesStress");
@@ -24,8 +22,6 @@ namespace SPH
         //		register sortable particle data
         //----------------------------------------------------------------------
         registerSortableVariable<Vecd>("AccelerationByShear");
-        registerSortableVariable<Matd>("StressTensor");
-        registerSortableVariable<Matd>("StressTensorRate");
         registerSortableVariable<Matd>("ShearStress");
         registerSortableVariable<Matd>("ShearStressRate");
         registerSortableVariable<Real>("VonMisesStress");

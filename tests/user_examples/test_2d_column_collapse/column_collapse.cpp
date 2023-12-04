@@ -24,15 +24,12 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-/*
- * Dilatancy angle is always zero for non-associate flow rule
- */
-Real rho0_s = 2650;           /**< Reference density of soil. */
-Real gravity_g = 9.8;         /**< Gravity force of soil. */
-Real Youngs_modulus = 0.84e6; // reference Youngs modulus
-Real poisson = 0.3;           // Poisson ratio
+Real rho0_s = 2040;						 /**< Reference density of soil. */
+Real gravity_g = 9.8;					 /**< Gravity force of soil. */
+Real Youngs_modulus = 5.84e6; //reference Youngs modulus
+Real poisson = 0.3;		 //Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
-Real friction_angle = 19.8 * Pi / 180;
+Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -114,12 +111,13 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.2);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
     // stress relaxation with Riemann solver
-    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
-    Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
+    InteractionWithUpdate<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::StressRelaxation3rdHalfRiemannWithWall> granular_stress_relaxation_3rd(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -182,9 +180,10 @@ int main(int ac, char *av[])
             {
                 Real dt = soil_acoustic_time_step.exec();
 
-                granular_stress_relaxation_1st.exec(dt);
                 stress_diffusion.exec();
+                granular_stress_relaxation_1st.exec(dt);
                 granular_stress_relaxation_2nd.exec(dt);
+                granular_stress_relaxation_3rd.exec(dt);
 
                 relaxation_time += dt;
                 integration_time += dt;
@@ -233,7 +232,6 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    // sph_system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_mechanical_energy.generateDataBase(1.0e-3);

@@ -13,9 +13,6 @@ namespace SPH
         StdLargeVec<Matd> strain_tensor_rate_;
         StdLargeVec<Vecd> acc_shear_;
 
-        StdLargeVec<Matd> stress_tensor_;
-        StdLargeVec<Matd> stress_tensor_rate_;
-
         StdLargeVec<Matd> shear_stress_;
         StdLargeVec<Matd> shear_stress_rate_;
         StdLargeVec<Matd> velocity_gradient_;

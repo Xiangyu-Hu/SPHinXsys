@@ -157,11 +157,12 @@ int main(int ac, char *av[])
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.1);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
-    Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
+    InteractionWithUpdate<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::StressRelaxation3rdHalfRiemannWithWall> granular_stress_relaxation_3rd(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -232,9 +233,10 @@ int main(int ac, char *av[])
             {
                 Real dt = soil_acoustic_time_step.exec();
 
-                granular_stress_relaxation_1st.exec(dt);
                 stress_diffusion.exec();
+                granular_stress_relaxation_1st.exec(dt);
                 granular_stress_relaxation_2nd.exec(dt);
+                granular_stress_relaxation_3rd.exec(dt);
 
                 relaxation_time += dt;
                 integration_time += dt;
@@ -283,7 +285,6 @@ int main(int ac, char *av[])
               << interval_updating_configuration.seconds() << "\n";
     std::cout << "total time steps = " << number_of_iterations << "\n";
 
-    // sph_system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_soil_mechanical_energy.generateDataBase(1.0e-3);
