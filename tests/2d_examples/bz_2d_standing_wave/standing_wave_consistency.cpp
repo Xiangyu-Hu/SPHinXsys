@@ -13,7 +13,7 @@ Real DL = 2.0;                        /**< Tank length. */
 Real DH = 2.0;                        /**< Tank height. */
 Real LL = 2.0;                        /**< Liquid column length. */
 Real LH = 1.0;                        /**< Liquid column height. */
-Real particle_spacing_ref = 0.0025;   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.005;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -76,8 +76,8 @@ class WaterBlock : public ComplexShape
 public:
     explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        MultiPolygon outer_boundary(createWaterBlockShape());
-        add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
+        MultiPolygon water_block(createWaterBlockShape());
+        add<MultiPolygonShape>(water_block);
     }
 };
 //----------------------------------------------------------------------
@@ -110,15 +110,14 @@ int main(int ac, char* av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
-    water_block.defineComponentLevelSetShape("OuterBoundary");
+    water_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -131,9 +130,7 @@ int main(int ac, char* av[])
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
-        : wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<ParticleGeneratorLattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -145,11 +142,11 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ComplexRelation water_block_complex(water_block, { &wall_boundary });
+    ComplexRelation wall_boundary_complex(wall_boundary, { &water_block });
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
     if (sph_system.RunParticleRelaxation())
     {
-        InnerRelation wall_inner(wall_boundary); // extra body topology only for particle relaxation
         /**
          * @brief 	Methods used for particle relaxation.
          */
@@ -162,15 +159,12 @@ int main(int ac, char* av[])
         ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
 
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_inner, true);
-        relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+        relax_dynamics::RelaxationStepInner relaxation_step_inner(water_block_inner, true);
         /**
          * @brief 	Particle relaxation starts here.
          */
-        random_wall_body_particles.exec(0.25);
         random_water_body_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        relaxation_step_complex.SurfaceBounding().exec();
         write_real_body_states.writeToFile(0);
 
         /** relax particles of the insert body. */
@@ -178,7 +172,6 @@ int main(int ac, char* av[])
         while (ite_p < 1000)
         {
             relaxation_step_inner.exec();
-            relaxation_step_complex.exec();
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
@@ -196,18 +189,18 @@ int main(int ac, char* av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-     /** time-space method to detect surface particles. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation_consistency(water_block_complex);
+    /** time-space method to detect surface particles. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.1);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.5);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_wall(wall_boundary_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
+    water_block.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -226,6 +219,7 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
+    corrected_configuration_wall.exec();
     wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
@@ -280,19 +274,15 @@ int main(int ac, char* av[])
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
-            while (relaxation_time < advection_dt)
-            {
-                /** inner loop for dual-time criteria time-stepping.  */
-                acoustic_dt = fluid_acoustic_time_step.exec();
 
-                //fluid_pressure_relaxation.exec(acoustic_dt);
-                //fluid_pressure_relaxation_correct.exec(acoustic_dt);
-                fluid_pressure_relaxation_consistency.exec(acoustic_dt);
-                fluid_density_relaxation.exec(acoustic_dt);
-                relaxation_time += acoustic_dt;
-                integration_time += acoustic_dt;
-                GlobalStaticVariables::physical_time_ += acoustic_dt;
-            }
+            /** inner loop for dual-time criteria time-stepping.  */
+            acoustic_dt = fluid_acoustic_time_step.exec();
+            fluid_pressure_relaxation.exec(acoustic_dt);
+            fluid_density_relaxation.exec(acoustic_dt);
+            relaxation_time += acoustic_dt;
+            integration_time += acoustic_dt;
+            GlobalStaticVariables::physical_time_ += acoustic_dt;
+
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
             /** screen output, write body reduced values and restart files  */

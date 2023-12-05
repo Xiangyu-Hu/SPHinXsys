@@ -13,7 +13,7 @@ using namespace SPH;   //	Namespace cite here.
 int main(int ac, char *av[])
 {
 	//read data from ANASYS mesh.file
-	readMeshFile read_mesh_data(lid_driven_16432_mesh_file_fullpath);
+	readMeshFile read_mesh_data(lid_driven_1094_mesh_file_fullpath);
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
@@ -30,7 +30,6 @@ int main(int ac, char *av[])
     water_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
     water_block.addBodyStateForRecording<Real>("Density");
     /** Initial condition */
-    SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     GhostCreationFromMesh ghost_creation(water_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -50,8 +49,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
-	InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 0.0);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> density_relaxation(water_block_inner, 0.0);
+	InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemann> density_relaxation(water_block_inner);
 	//InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::VorticityInner> vorticity_inner(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
@@ -65,7 +64,6 @@ int main(int ac, char *av[])
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	initial_condition.exec();
 	boundary_condition_setup.resetBoundaryConditions();
 	body_states_recording.writeToFile();
 	//----------------------------------------------------------------------

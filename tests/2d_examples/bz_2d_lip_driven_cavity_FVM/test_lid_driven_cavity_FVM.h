@@ -29,7 +29,7 @@ Real c_f = 10.0 * U_f;				/**< Reference sound speed. */
 Real Re = 400.0;						/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 
-std::string lid_driven_1094_y_v_mesh_file_fullpath = "./input/lid_driven_cavity_1094.msh";
+std::string lid_driven_1094_mesh_file_fullpath = "./input/fluent.msh";
 std::string lid_driven_4282_mesh_file_fullpath = "./input/lid_driven_cavity_4282.msh";
 std::string lid_driven_16432_mesh_file_fullpath = "./input/lid_driven_cavity_16432.msh";
 //----------------------------------------------------------------------
@@ -76,28 +76,6 @@ public:
 		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-
-//----------------------------------------------------------------------
-//	Case-dependent initial condition.
-//----------------------------------------------------------------------
-class WeaklyCompressibleFluidInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
-{
-  public:
-    explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-    };
-    void update(size_t index_i, Real dt){};
-
-  protected:
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-    StdLargeVec<Real> &rho_, &p_;
-};
-
 //----------------------------------------------------------------------
 //	DMFBoundaryConditionSetup
 //----------------------------------------------------------------------

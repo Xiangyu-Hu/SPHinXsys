@@ -4,7 +4,7 @@
  * @details 2D eulerian_Lid_driven_cavity example.
  * @author 	Zhentong Wang
  */
-#include "eulerian_fluid_dynamics.hpp" // eulerian classes for fluid.
+#include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for fluid.
 #include "sphinxsys.h" //	SPHinXsys Library.
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 1.0;					  /**< box length. */
 Real DH = 1.0;					  /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
 Real BW = resolution_ref * 4;	 /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -108,9 +108,9 @@ public:
 	explicit VelocityXObserverParticleGenerator(SPHBody& sph_body)
 		: ObserverParticleGenerator(sph_body)
 	{
-		size_t number_of_observation_point = DL / resolution_ref;
-		Real range_of_measure = DL - resolution_ref;
-		Real start_of_measure = 0.5 * resolution_ref;
+		size_t number_of_observation_point = 51;
+		Real range_of_measure = DL;
+		Real start_of_measure = 0;
 
 		for (size_t i = 0; i < number_of_observation_point; ++i)
 		{
@@ -125,9 +125,9 @@ public:
 	explicit VelocityYObserverParticleGenerator(SPHBody& sph_body)
 		: ObserverParticleGenerator(sph_body)
 	{
-		size_t number_of_observation_point = DL / resolution_ref;
-		Real range_of_measure = DL - resolution_ref;
-		Real start_of_measure = 0.5 * resolution_ref;
+		size_t number_of_observation_point = 51;
+		Real range_of_measure = DL;
+		Real start_of_measure = 0;
 
 		for (size_t i = 0; i < number_of_observation_point; ++i)
 		{
@@ -158,6 +158,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_body.defineComponentLevelSetShape("InnerWaterBlock")->writeLevelSet(io_environment);
+	water_body.defineAdaptationRatios(1.15, 1.0);
 	water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_body.generateParticles<ParticleGeneratorReload>(io_environment, water_body.getName())
@@ -168,6 +169,7 @@ int main(int ac, char *av[])
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+	water_body.defineAdaptationRatios(1.15, 1.0);
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
@@ -206,8 +208,6 @@ int main(int ac, char *av[])
 
 		/* Relaxation method: including based on the 0th and 1st order consistency. */
 		InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_complex(water_block_complex);
-
-		//relax_dynamics::RelaxationStepComplexImplicit relaxation_step_complex(water_block_complex, "InnerWaterBlock");
 		relax_dynamics::RelaxationStepComplexImplicit<CorrectionMatrixRelaxation> relaxation_step_complex(water_block_complex, "InnerWaterBlock");
 		SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_body_inner);
 		ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_body, "ParticleKineticEnergy");
@@ -216,7 +216,7 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.exec(0.25);
+		random_inserted_body_particles.exec(0.15);
 		sph_system.initializeSystemCellLinkedLists();
 		sph_system.initializeSystemConfigurations();
 		relaxation_step_complex.SurfaceBounding().exec();
@@ -229,7 +229,7 @@ int main(int ac, char *av[])
 		TickCount t1 = TickCount::now();
 		int ite = 0; //iteration step for the total relaxation step.
 		GlobalStaticVariables::physical_time_ = ite;
-		while (ite < 200)
+		while (water_block_average_kinetic_energy > 0.001)
 		{
 			kernel_correction_complex.exec();
 			relaxation_step_complex.exec();
@@ -280,8 +280,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_corrected);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
-	InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex_corrected);
-	InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> density_and_energy_relaxation(water_block_complex_corrected);
+	InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemannWithWall> pressure_relaxation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfHLLERiemannWithWall> density_and_energy_relaxation(water_block_complex);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

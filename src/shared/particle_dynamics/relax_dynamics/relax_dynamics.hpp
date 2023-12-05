@@ -197,10 +197,10 @@ computeErrorAndParameters(size_t index_i, Real dt)
 
     error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
                                    this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                                   this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+                                   this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
     error_and_parameters.a_ -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
                                this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
-                               this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+                               this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
 
     return error_and_parameters;
 }
@@ -216,10 +216,11 @@ RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation, bool level_set_co
 template <class RelaxationType>
 void RelaxationStepInnerImplicit<RelaxationType>::exec(Real dt)
 {
+    //real_body_->updateCellLinkedList();
+    //inner_relation_.updateConfiguration();
     time_step_size_ = sqrt(get_time_step_.exec());
-    relaxation_evolution_inner_.exec(time_step_size_);
-    real_body_->updateCellLinkedList();
-    inner_relation_.updateConfiguration();
+    relaxation_evolution_inner_.exec(0.005);
+    //surface_bounding_.exec();
 }
 //=================================================================================================//
 template <class RelaxationType>

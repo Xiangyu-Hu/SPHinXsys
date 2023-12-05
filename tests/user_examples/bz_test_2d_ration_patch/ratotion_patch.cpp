@@ -12,7 +12,7 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real LL = 1.0;                        /**< Liquid column length. */
 Real LH = 1.0;                        /**< Liquid column height. */
-Real particle_spacing_ref = LL / 100; /**< Initial reference particle spacing. */
+Real particle_spacing_ref = LL / 200; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
@@ -144,11 +144,11 @@ int main(int ac, char *av[])
     /** time-space method to detect surface particles. */
     InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationInner>
         free_surface_indicator(water_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistency> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
     /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyInner<BulkParticles>> transport_velocity_correction(water_body_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<BulkParticles>> transport_velocity_correction(water_body_inner);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
@@ -217,6 +217,7 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
+            Real advection_dt = 0.3 * fluid_advection_time_step.exec();
             free_surface_indicator.exec();
             corrected_configuration_fluid.exec();
             transport_velocity_correction.exec();

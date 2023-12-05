@@ -54,7 +54,6 @@ public:
 MultiPolygon averageDomain()
 {
     MultiPolygon multi_polygon;
-    //multi_polygon.addAPolygon(createAverageDomain(), ShapeBooleanOps::add);
     multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
     return multi_polygon;
 }

@@ -144,7 +144,7 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
         /* A scaling is adopted to handle the particle overlap. */
         this->acc_[index_i] -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) * 
                          level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                         sph_adaptation_->SmoothingLengthRatio(index_i)) * (1);
+                         sph_adaptation_->SmoothingLengthRatio(index_i));
     };
 
   protected:
@@ -307,7 +307,7 @@ class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAcc
 
         this->acc_[index_i] -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
                                level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                               sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+                               sph_adaptation_->SmoothingLengthRatio(index_i));
     };
 
   protected:
@@ -413,7 +413,7 @@ protected:
     BaseInnerRelation& inner_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationInnerWithLevelSetCorrectionImplicit<RelaxationType>> relaxation_evolution_inner_;
+    InteractionSplit<RelaxationInnerImplicit<RelaxationType>> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
@@ -598,6 +598,8 @@ protected:
     StdLargeVec<Vecd> ASterm_;
     StdLargeVec<Real> Cterm_norm_;
     StdLargeVec<Vecd> Cterm_;
+    StdLargeVec<Real> NKGC_norm_;
+    StdLargeVec<Vecd> NKGC_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };

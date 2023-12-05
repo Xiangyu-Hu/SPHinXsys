@@ -8,21 +8,21 @@
   */
 #include "sphinxsys.h"
 #include "energy.h"
- /**
- * @brief Namespace cite here.
- */
+  /**
+  * @brief Namespace cite here.
+  */
 using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real particle_spacing_ref = 1.0/50; 		/**< Initial reference particle spacing.*/
+Real particle_spacing_ref = 1.0 / 100; 		/**< Initial reference particle spacing.*/
 Real BW = particle_spacing_ref * 4; 	/**< Extending width for BCs. */
 /**
  * @brief Material properties of the fluid.
  */
 Real rho0_f = 1000.0;						/**< Reference density of fluid.*/
 Real U_f = 1.0;		                       /**< Characteristic velocity.*/    //2.0*sqrt(gravity_g*LH)
-Real c_f = 20.0*U_f;					  /**< Reference sound speed.*/ //5.0*U_f
+Real c_f = 20.0 * U_f;					  /**< Reference sound speed.*/ //5.0*U_f
 
 //for the circle parameter
 Vec2d Circle_center(0, 0);    //circle center
@@ -35,7 +35,7 @@ Real DH = 4 * Circle_radius;
 class WaterBlock : public MultiPolygonShape
 {
 public:
-	explicit WaterBlock(const std::string &shape_name): MultiPolygonShape(shape_name)
+	explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addACircle(Circle_center, Circle_radius, 100, ShapeBooleanOps::add);
 	}
@@ -47,7 +47,7 @@ class InitialVelocity
 	: public fluid_dynamics::FluidInitialCondition
 {
 public:
-	InitialVelocity(SPHBody &sph_body)
+	InitialVelocity(SPHBody& sph_body)
 		: fluid_dynamics::FluidInitialCondition(sph_body) {};
 
 	void update(size_t index_particle_i, Real dt)
@@ -66,9 +66,9 @@ class ExternalField
 	: public fluid_dynamics::FluidInitialCondition
 {
 public:
-	ExternalField(SPHBody &sph_body)
+	ExternalField(SPHBody& sph_body)
 		: fluid_dynamics::FluidInitialCondition(sph_body),
-		 acc_prior_(particles_->acc_prior_) {};
+		acc_prior_(particles_->acc_prior_) {};
 protected:
 	void update(size_t index_particle_i, Real dt)
 	{
@@ -85,12 +85,12 @@ protected:
 /**
  * @brief 	Main program starts here.
  */
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	BoundingBox system_domain_bounds(Vec2d(-DL-BW, -DH-BW), Vec2d(DL + BW, DH + BW));
+	BoundingBox system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	sph_system.handleCommandlineOptions(ac, av);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
-	StdVec<Vecd> observation_location = { Vecd(0.0, 0.0)};
+	StdVec<Vecd> observation_location = { Vecd(0.0, 0.0) };
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	//----------------------------------------------------------------------
@@ -137,7 +137,6 @@ int main(int ac, char *av[])
 		ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
 
 		/** A  Physics relaxation step. */
-		InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_matrix(water_block_inner);
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(water_block_inner, true);
 		/**
 		 * @brief 	Particle relaxation starts here.
@@ -150,7 +149,6 @@ int main(int ac, char *av[])
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			kernel_correction_matrix.exec();
 			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
@@ -179,7 +177,7 @@ int main(int ac, char *av[])
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, 0.0));
 	SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_f);
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);	
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
 	/** We can output a method-specific particle data for debug */
 	water_block.addBodyStateForRecording<Real>("Pressure");
 	water_block.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
@@ -187,7 +185,7 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
-	
+
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<KineticEnergy>>>
@@ -196,10 +194,11 @@ int main(int ac, char *av[])
 		write_water_potential_energy(io_environment, water_block);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+
 	//----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
-    //----------------------------------------------------------------------
+	//	Prepare the simulation with cell linked list, configuration
+	//	and case specified initial condition if necessary.
+	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	drop_initial_velocity.exec();
@@ -249,8 +248,8 @@ int main(int ac, char *av[])
 			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			Real acoustic_dt = 0.0;
-			while (relaxation_time < advection_dt)
-			{
+			//while (relaxation_time < advection_dt)
+			//{
 				/** inner loop for dual-time criteria time-stepping.  */
 				acoustic_dt = fluid_acoustic_time_step.exec();
 				drop_external_field.exec();
@@ -259,7 +258,7 @@ int main(int ac, char *av[])
 				relaxation_time += acoustic_dt;
 				integration_time += acoustic_dt;
 				GlobalStaticVariables::physical_time_ += acoustic_dt;
-			}
+			//}
 			interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
 			if (number_of_iterations % screen_output_interval == 0)
