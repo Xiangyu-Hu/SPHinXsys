@@ -51,8 +51,6 @@ class PlasticSolid : public NeoHookeanSolid
     virtual ~PlasticSolid(){};
 
     Real YieldStress() { return yield_stress_; };
-    /** compute the stress through deformation, and plastic relaxation. */
-    virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) = 0;
 
@@ -82,8 +80,6 @@ class HardeningPlasticSolid : public PlasticSolid
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     Real HardeningModulus() { return hardening_modulus_; };
-    /** compute the stress through deformation, and plastic relaxation. */
-    virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
 
@@ -121,12 +117,8 @@ public:
 		return  (hardening_modulus_ + saturation_exponent_ * (saturation_flow_stress_ - yield_stress_)
 			* exp(-saturation_exponent_ * hardening_parameter_pre));
 	};
-
-	/** compute the stress through deformation, and plastic relaxation. */
-	virtual Matd PlasticConstitutiveRelation(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
 	/** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
 	virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
-
 
 	virtual NonLinearHardeningPlasticSolid* ThisObjectPtr() override { return this; };
 };
@@ -154,8 +146,6 @@ public:
 
 	virtual void initializeLocalParameters(BaseParticles* base_particles) override;
 	Real ViscousModulus() { return viscous_modulus_; };
-	/** compute the stress through deformation, and plastic relaxation. */
-	virtual Matd PlasticConstitutiveRelation(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
 	/** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
 	virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
 

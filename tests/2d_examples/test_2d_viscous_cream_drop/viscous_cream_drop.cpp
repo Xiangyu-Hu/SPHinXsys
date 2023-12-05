@@ -1,5 +1,5 @@
 /**
- * @file 	Viscous Cream Drop.cpp
+ * @file 	viscous_cream_drop.cpp
  * @brief   Viscous cream adhering to the platform falls due to gravity.
  * @author 	Liezhao Wu, Xiaojing Tang and Xiangyu Hu
  */

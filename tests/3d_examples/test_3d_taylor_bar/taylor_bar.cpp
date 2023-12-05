@@ -1,7 +1,7 @@
 /**
  * @file taylor_bar.cpp
  * @brief This is the case setup for plastic taylor bar.
- * @author Chi Zhang  and Xiangyu Hu
+ * @author Xiaojing Tang, Dong Wu and Xiangyu Hu
  * @ref 	doi.org/10.1007/s40571-019-00277-6
  */
 #include "sphinxsys.h"

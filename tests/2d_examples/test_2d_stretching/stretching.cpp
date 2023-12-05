@@ -1,11 +1,9 @@
-/* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-one body version           *
- * ----------------------------------------------------------------------------*
- * This is the one of the basic test cases, also the first case for            *
- * understanding SPH method for solid simulation.                              *
- * In this case, the constraint of the beam is implemented with                *
- * internal constrained subregion.                                             *
- * ----------------------------------------------------------------------------*/
+/**
+ * @file 	stretching.cpp
+ * @brief   Plane strain necking of a bar.
+ * @author 	Xiaojing Tang, Dong Wu and Xiangyu Hu
+ * @ref 	doi.org/10.1016/j.cma.2013.09.024
+ */
 #include "sphinxsys.h"
 
 using namespace SPH;

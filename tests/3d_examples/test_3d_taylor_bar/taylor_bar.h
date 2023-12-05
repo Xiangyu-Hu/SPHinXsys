@@ -1,7 +1,7 @@
 /**
  * @file 	taylor_bar.h
  * @brief 	This is the case setup for plastic taylor bar.
- * @author 	xiaojing tang Chi Zhang and Xiangyu Hu
+ * @author 	Xiaojing Tang, Dong Wu and Xiangyu Hu
  */
 #pragma once
 
