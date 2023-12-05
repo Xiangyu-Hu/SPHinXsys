@@ -160,9 +160,8 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
-    InteractionWithUpdate<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
-    Dynamics1Level<continuum_dynamics::StressRelaxation3rdHalfRiemannWithWall> granular_stress_relaxation_3rd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -236,7 +235,6 @@ int main(int ac, char *av[])
                 stress_diffusion.exec();
                 granular_stress_relaxation_1st.exec(dt);
                 granular_stress_relaxation_2nd.exec(dt);
-                granular_stress_relaxation_3rd.exec(dt);
 
                 relaxation_time += dt;
                 integration_time += dt;

@@ -79,9 +79,9 @@ namespace SPH
     //=================================================================================================//
     Real  PlasticContinuumParticles::getDeviatoricPlasticStrain(Mat3d& strain_tensor)
     {
-        Mat3d deviatoric_strain_tensor = strain_tensor - (1 / (Real)Dimensions) * strain_tensor.trace() * Mat3d::Identity();
+        Mat3d deviatoric_strain_tensor = strain_tensor - (1.0 / (Real)Dimensions) * strain_tensor.trace() * Mat3d::Identity();
         Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
-        return sqrt(sum * 2 / 3);
+        return sqrt(sum * 2.0 / 3.0);
     }
 
 } // namespace SPH

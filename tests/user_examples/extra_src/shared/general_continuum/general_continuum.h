@@ -13,7 +13,6 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real K_;  /*< bulk modules  */
     Real nu_; /*< Poisson ratio  */
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
-
   public:
     explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
         : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0), contact_stiffness_(c0* c0)
@@ -50,6 +49,7 @@ protected:
     Real psi_;  /*< dilatancy angle  */
     Real alpha_phi_;  /*< Drucker¨CPrager¡¯s constants  */
     Real k_c_;  /*< Drucker¨CPrager¡¯s constants */
+    const Real stress_dimension_ = 3.0; // plain strain condition
 public:
     explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real friction_angle, Real cohesion=0, Real dilatancy=0)
         : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
