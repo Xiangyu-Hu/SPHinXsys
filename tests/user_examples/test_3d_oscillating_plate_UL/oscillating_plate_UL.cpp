@@ -1,10 +1,10 @@
-/**
- * @file 	oscillating_plate_UL.cpp
- * @brief 	This is the test case for the hourglass manuscript.
- * @details  We consider vibration deformation of a square plate under initial vertical velocity field.
- * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
- * @version  0.1
- */
+/* ---------------------------------------------------------------------------*
+*            SPHinXsys: 3D oscillation beam example-update Lagrange           *
+* ----------------------------------------------------------------------------*
+* This is the one of the basic test cases for understanding SPH method for    *
+* solid simulation based on update Lagrange method.                           *
+* @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
+* ----------------------------------------------------------------------------*/
 #include "all_continuum.h"
 #include "sphinxsys.h"
 using namespace SPH;
@@ -25,15 +25,14 @@ BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -PT / 2), Vec3d(PL + BW, PH + B
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.5 * PH, 0.0), Vecd(-BW, -BW, 0.0)};
 /** For material properties of the solid. */
-Real rho0_s = 1000.0;          /** Normalized density. */
-Real Youngs_modulus = 100.0e6; /** Normalized Youngs Modulus. */
-Real poisson = 0.3;            /** Poisson ratio. */
+Real rho0_s = 1000.0;          // reference density
+Real Youngs_modulus = 100.0e6; // reference Youngs modulus
+Real poisson = 0.3;            // Poisson ratio
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
 Real gravity_g = 0.0;
-
 Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
-Real U_ref = 1.0; // Maximum velocity
+Real U_ref = 1.0; // anticipated maximum velocity
 /** Define application dependent particle generator for thin structure. */
 class PlateParticleGenerator : public ParticleGenerator
 {
@@ -57,7 +56,6 @@ class PlateParticleGenerator : public ParticleGenerator
         }
     }
 };
-
 /** Define the boundary geometry. */
 class BoundaryGeometry : public BodyPartByParticle
 {
@@ -81,7 +79,6 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
-
 /** Define the initial condition. */
 class BeamInitialCondition
     : public fluid_dynamics::FluidInitialCondition
@@ -96,7 +93,6 @@ class BeamInitialCondition
         vel_[index_i][2] = sin(governing_vibration_integer_x * Pi * pos_[index_i][0] / PL) * sin(governing_vibration_integer_y * Pi * pos_[index_i][1] / PH);
     };
 };
-
 /**
  *  The main program
  */
@@ -105,22 +101,18 @@ int main(int ac, char *av[])
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
-
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
-    // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
     plate_body.addBodyStateForRecording<Real>("Pressure");
     plate_body.addBodyStateForRecording<Real>("Density");
-
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
     plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
-
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
      *  basically the the range of bodies to build neighbor particle lists
@@ -137,7 +129,7 @@ int main(int ac, char *av[])
     /** stress relaxation. */
     Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
-    InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation>
         plate_shear_acceleration_angular_conservative(plate_body_inner);
     /** Corrected configuration. */
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(plate_body_inner);
@@ -151,20 +143,16 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
-    // ObservedQuantityRecording<Vecd>
-    // 	write_plate_displacement("Position", io_environment, plate_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_plate_displacement("Position", io_environment, plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_kinetic_energy(io_environment, plate_body);
-
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     initial_velocity.exec();
     constrain_holder.exec();
     corrected_configuration.exec();
-
     /**
      * @brief The time stepping starts here.
      */
@@ -177,8 +165,6 @@ int main(int ac, char *av[])
     write_states.writeToFile(0);
     write_plate_displacement.writeToFile(0);
     write_kinetic_energy.writeToFile(0);
-    // write_elastic_strain_energy.writeToFile(0);
-
     /** Setup physical parameters. */
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 500;
@@ -198,7 +184,6 @@ int main(int ac, char *av[])
         {
             Real relaxation_time = 0.0;
             Real advection_dt = fluid_advection_time_step.exec();
-
             while (relaxation_time < advection_dt)
             {
                 Real acoustic_dt = fluid_acoustic_time_step.exec();
@@ -233,12 +218,10 @@ int main(int ac, char *av[])
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
-
     TickCount t4 = TickCount::now();
     TickCount::interval_t tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
     if (sph_system.GenerateRegressionData())
     {
         write_kinetic_energy.generateDataBase(1.0e-3);
@@ -247,6 +230,5 @@ int main(int ac, char *av[])
     {
         write_kinetic_energy.testResult();
     }
-
     return 0;
 }

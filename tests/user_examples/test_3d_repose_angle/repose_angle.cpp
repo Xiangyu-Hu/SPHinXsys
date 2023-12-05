@@ -1,3 +1,10 @@
+/**
+ * @file 	column_collapse.cpp
+ * @brief 	3D repose angle example.
+ * @details This is the one of the basic test cases, also the first case for understanding
+ * 			SPH method for modelling granular materials such as soils and sands.
+ * @author Shuaihao Zhang and Xiangyu Hu
+ */
 #include "all_continuum.h"
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
@@ -10,8 +17,8 @@ Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
 // for material properties
-Real rho0_s = 2600;           /**< Reference density of soil. */
-Real gravity_g = 9.8;         /**< Gravity force of soil. */
+Real rho0_s = 2600;           // reference density of soil
+Real gravity_g = 9.8;         // gravity force of soil
 Real Youngs_modulus = 5.98e6; // reference Youngs modulus
 Real poisson = 0.3;           // Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));

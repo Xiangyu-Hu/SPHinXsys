@@ -8,19 +8,6 @@ namespace SPH
             : LocalDynamics(sph_body), PlasticContinuumDataSimple(sph_body),
               pos_(particles_->pos_), vel_(particles_->vel_), stress_tensor_3D_(particles_->stress_tensor_3D_) {}
         //=================================================================================================//
-        ContinuumAcousticTimeStepSize::ContinuumAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
-            : fluid_dynamics::AcousticTimeStepSize(sph_body, acousticCFL) {}
-        //=================================================================================================//
-        Real ContinuumAcousticTimeStepSize::reduce(size_t index_i, Real dt)
-        {
-            return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
-        }
-        //=================================================================================================//
-        Real ContinuumAcousticTimeStepSize::outputResult(Real reduced_value)
-        {
-            return acousticCFL_ * smoothing_length_min_ / (fluid_.ReferenceSoundSpeed() + TinyReal);
-        }
-        //=================================================================================================//
         BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
             : LocalDynamics(inner_relation.getSPHBody()), ContinuumDataInner(inner_relation),
               continuum_(particles_->continuum_), rho_(particles_->rho_),
@@ -32,26 +19,8 @@ namespace SPH
             : BaseRelaxation(inner_relation),
             G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
             smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()), shear_stress_(particles_->shear_stress_),
-            B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity())), acc_shear_(particles_->acc_shear_) {}
+            acc_shear_(particles_->acc_shear_) {}
         void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
-        {
-            Real rho_i = rho_[index_i];
-            Vecd acceleration = Vecd::Zero();
-            Vecd vel_i = vel_[index_i];
-            Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = inner_neighborhood.j_[n];
-                Real r_ij = inner_neighborhood.r_ij_[n];
-                Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-                Vecd v_ij = (vel_i - vel_[index_j]);
-                acceleration += 2 * v_ij * dW_ijV_j / (r_ij + 0.01 * smoothing_length_);
-            }
-            acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
-        }
-        //=================================================================================================//
-        void AngularConservativeShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
         {
             Real rho_i = rho_[index_i];
             Vecd acceleration = Vecd::Zero();
@@ -62,7 +31,7 @@ namespace SPH
                 Real r_ij = inner_neighborhood.r_ij_[n];
                 Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
                 Vecd& e_ij = inner_neighborhood.e_ij_[n];
-                Real eta_ij = 2 * (0.7*(Real)Dimensions+2.1) * (vel_[index_i] - vel_[index_j]).dot(e_ij) / (r_ij + TinyReal);
+                Real eta_ij = 2 * (0.7 * (Real)Dimensions + 2.1) * (vel_[index_i] - vel_[index_j]).dot(e_ij) / (r_ij + TinyReal);
                 acceleration += eta_ij * dW_ijV_j * e_ij;
             }
             acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
@@ -90,11 +59,8 @@ namespace SPH
                 size_t index_j = inner_neighborhood.j_[n];
                 Real dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
                 Vecd& e_ij = inner_neighborhood.e_ij_[n];
-
-                //Matd velocity_gradient_ij = - (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
                 Vecd v_ij = vel_[index_i] - vel_[index_j];
-                Matd velocity_gradient_ij = -v_ij * (B_[index_i] * e_ij * dW_ijV_j_).transpose();
-                velocity_gradient += velocity_gradient_ij;
+                velocity_gradient -= v_ij * (B_[index_i] * e_ij * dW_ijV_j_).transpose();
             }
             velocity_gradient_[index_i] = velocity_gradient;
             //calculate strain

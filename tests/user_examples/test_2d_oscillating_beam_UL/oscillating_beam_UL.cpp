@@ -5,6 +5,7 @@
  * solid simulation based on update Lagrange method                            *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
+ * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
 #include "all_continuum.h"
 #include "sphinxsys.h"
@@ -26,7 +27,6 @@ BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
 Real rho0_s = 1.0e3;         // reference density
 Real Youngs_modulus = 2.0e6; // reference Youngs modulus
 Real poisson = 0.3975;       // Poisson ratio
-// Real poisson = 0.4;		 //Poisson ratio
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
 Real gravity_g = 0.0;
 //----------------------------------------------------------------------
@@ -38,16 +38,13 @@ Real N = cos(kl) + cosh(kl);
 Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
 Real vf = 0.05;
 Real R = PL / (0.5 * Pi);
-// for dual time-step
 Real U_ref = vf * c0 * (M * (cos(kl) - cosh(kl)) - N * (sin(kl) - sinh(kl))) / Q;
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
-// a beam base shape
 std::vector<Vecd> beam_base_shape{
     Vecd(-SL - BW, -PH / 2 - BW), Vecd(-SL - BW, PH / 2 + BW), Vecd(0.0, PH / 2 + BW),
     Vecd(0.0, -PH / 2 - BW), Vecd(-SL - BW, -PH / 2 - BW)};
-// a beam shape
 std::vector<Vecd> beam_shape{
     Vecd(-SL, -PH / 2), Vecd(-SL, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(-SL, -PH / 2)};
 // Beam observer location
@@ -73,7 +70,6 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(RealBody &beam_column)
         : fluid_dynamics::FluidInitialCondition(beam_column){};
-
   protected:
     void update(size_t index_i, Real dt)
     {
@@ -124,7 +120,6 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
-
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -138,17 +133,15 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
-
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
-    InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation>
         beam_shear_acceleration_angular_conservative(beam_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
-    // for dual time step
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
@@ -193,7 +186,6 @@ int main(int ac, char *av[])
         {
             Real relaxation_time = 0.0;
             Real advection_dt = fluid_advection_time_step.exec();
-
             while (relaxation_time < advection_dt)
             {
                 Real acoustic_dt = fluid_acoustic_time_step.exec();
@@ -230,8 +222,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
@@ -240,6 +230,5 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
     return 0;
 }

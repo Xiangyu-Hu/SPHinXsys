@@ -8,6 +8,7 @@ namespace SPH
         BaseIntegration1stHalf<FluidDynamicsType>::BaseIntegration1stHalf(BaseInnerRelation& inner_relation)
             : FluidDynamicsType(inner_relation), 
             acc_shear_(*this->particles_->template getVariableByName<Vecd>("AccelerationByShear")) {}
+		//=================================================================================================//
         template <class FluidDynamicsType>
         void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
         {

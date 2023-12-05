@@ -28,15 +28,6 @@ class ContinuumInitialCondition : public LocalDynamics, public PlasticContinuumD
     StdLargeVec<Mat3d> &stress_tensor_3D_;
 };
 
-class ContinuumAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
-{
-  public:
-    explicit ContinuumAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.5);
-    virtual ~ContinuumAcousticTimeStepSize(){};
-    Real reduce(size_t index_i, Real dt = 0.0);
-    virtual Real outputResult(Real reduced_value) override;
-};
-
 /**
  * @class BaseIntegration
  * @brief Pure abstract base class for all fluid relaxation schemes
@@ -82,23 +73,9 @@ class ShearAccelerationRelaxation : public BaseRelaxation
 
   protected:
     Real G_, smoothing_length_;
-    StdLargeVec<Matd> &shear_stress_, &B_;
+    StdLargeVec<Matd> &shear_stress_;
     StdLargeVec<Vecd> &acc_shear_;
 };
-
-/**
- * @class AngularConservativeShearAccelerationRelaxation
- */
-class AngularConservativeShearAccelerationRelaxation : public ShearAccelerationRelaxation
-{
-  public:
-    explicit AngularConservativeShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
-        : ShearAccelerationRelaxation(inner_relation){};
-    virtual ~AngularConservativeShearAccelerationRelaxation(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
 /**
  * @class ShearStressRelaxation
  */

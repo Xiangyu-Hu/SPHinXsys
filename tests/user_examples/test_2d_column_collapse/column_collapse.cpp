@@ -1,8 +1,9 @@
 /**
  * @file 	column_collapse.cpp
- * @brief 	2D dambreak example.
- * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for soil simulation.
+ * @brief 	2D column collapse.
+ * @details This is the one of the basic test cases, also the first case for understanding
+ * 			SPH method for modelling granular materials such as soils and sands.
+ * @author Shuaihao Zhang and Xiangyu Hu  
  */
 #include "all_continuum.h"
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -10,12 +11,10 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-// unit system - 1
 Real DL = 0.5;  /**< Tank length. */
 Real DH = 0.15; /**< Tank height. */
 Real LL = 0.2;  /**< Liquid column length. */
 Real LH = 0.1;  /**< Liquid column height. */
-
 Real particle_spacing_ref = LH / 50; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -24,11 +23,11 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-Real rho0_s = 2040;						 /**< Reference density of soil. */
-Real gravity_g = 9.8;					 /**< Gravity force of soil. */
-Real Youngs_modulus = 5.84e6; //reference Youngs modulus
-Real poisson = 0.3;		 //Poisson ratio
-Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
+Real rho0_s = 2040;				// reference density of soil
+Real gravity_g = 9.8;			// gravity force of soil
+Real Youngs_modulus = 5.84e6;   // reference Youngs modulus
+Real poisson = 0.3;		        // Poisson ratio
+Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson))); //sound speed
 Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
