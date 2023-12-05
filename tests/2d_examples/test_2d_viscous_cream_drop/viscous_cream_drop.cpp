@@ -4,8 +4,7 @@
  * @author 	Liezhao Wu, Xiaojing Tang and Xiangyu Hu
  */
 
-#include "sphinxsys.h"   
-#include "viscous_inelastic_solid.h"        
+#include "sphinxsys.h"     
 using namespace SPH;           
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

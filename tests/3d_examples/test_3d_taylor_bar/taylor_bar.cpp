@@ -172,7 +172,7 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_displacement.generateDataBase(0.08);
+        write_displacement.generateDataBase(0.1);
     }
     else
     {
