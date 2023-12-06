@@ -27,12 +27,15 @@
  * @author	Yongchuan Yu and Xiangyu Hu
  */
 
-#ifndef FLUID_BOUNDARY_STATIC_COFINEMENT_H
-#define FLUID_BOUNDARY_STATIC_COFINEMENT_H
+#ifndef LEVEL_SET_COFINEMENT_H
+#define LEVEL_SET_COFINEMENT_H
 
-#include "fluid_dynamics_inner.h"
-#include "fluid_boundary.h"
-#include "fluid_surface_inner.h"
+
+#include "shape_confinement.h"
+#include "body_part_by_cell_tracing.h"
+#include "base_fluid_dynamics.h"
+#include "general_constraint.h"
+#include "riemann_solver.h"
 #include <mutex>
 
 namespace SPH
@@ -49,7 +52,7 @@ namespace SPH
         public:
             StaticConfinementTransportVelocity(NearShapeSurface& near_surface, Real coefficient = 0.2);
             virtual ~StaticConfinementTransportVelocity() {};
-            void interaction(size_t index_i, Real dt = 0.0);
+            void update(size_t index_i, Real dt = 0.0);
 
         protected:
             StdLargeVec<Vecd>& pos_;
@@ -69,16 +72,91 @@ namespace SPH
             StaticConfinementViscousAcceleration(NearShapeSurface& near_surface);
             virtual ~StaticConfinementViscousAcceleration() {};
             void interaction(size_t index_i, Real dt = 0.0);
-
+            StdLargeVec<Vecd> &getForceFromFluid() { return force_prior_; };
         protected:
             StdLargeVec<Vecd>& pos_;
-            StdLargeVec<Real>& rho_;
-            StdLargeVec<Vecd>& vel_, &acc_prior_;
+            StdLargeVec<Real>& rho_, &mass_;
+            StdLargeVec<Vecd>& vel_, &force_prior_;
             Real mu_;
             LevelSetShape* level_set_shape_;
+ 
+        };
+
+        /**
+         * @class StaticConfinementViscousAcceleration
+         * @brief static confinement condition for viscous acceleration
+         */
+        class StaticConfinementViscousAccelerationForce : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public:
+            StaticConfinementViscousAccelerationForce(NearShapeSurface& near_surface)
+                : BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
+			pos_(particles_->pos_), mass_(particles_->mass_), force_prior_(particles_->force_prior_), rho_(particles_->rho_),
+			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
+			level_set_shape_(&near_surface.level_set_shape_)
+		{}
+            virtual ~StaticConfinementViscousAccelerationForce() {};
+            void interaction(size_t index_i, Real dt = 0.0)
+            {
+                Vecd force = Vecd::Zero();
+			    Vecd vel_derivative = Vecd::Zero();
+			    Vecd vel_level_set_cell_j = Vecd::Zero();
+			    Real rho_i = rho_[index_i];
+			    /*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
+			    Real phi_r_ij = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+			    vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
+			    Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
+			    force = 2.0 * mu_ * mass_[index_i] * kernel_gradient_divide_Rij * vel_derivative /rho_i;
+			    force_from_fluid_[index_i] += force;
+            }
+            StdLargeVec<Vecd> &getForceFromFluid() { return force_prior_; };
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            StdLargeVec<Real>& rho_, &mass_;
+            StdLargeVec<Vecd>& vel_, &force_prior_;
+            Real mu_;
+            LevelSetShape* level_set_shape_;
+            StdLargeVec<Vecd> force_from_fluid_;
+ 
         };
 
 
+        class BaseForceFromFluidStaticConfinement : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public: 
+            explicit BaseForceFromFluidStaticConfinement(NearShapeSurface& near_surface);
+            virtual ~BaseForceFromFluidStaticConfinement() {};
+            StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
+
+        protected:
+            StdLargeVec<Vecd> force_from_fluid_;
+            LevelSetShape* level_set_shape_;
+            //StdLargeVec<Real> &Vol_;
+        };
+
+        class ViscousForceFromFluidStaticConfinement : public BaseForceFromFluidStaticConfinement
+        {
+        public:
+            explicit ViscousForceFromFluidStaticConfinement(NearShapeSurface& near_surface);
+            virtual ~ViscousForceFromFluidStaticConfinement() {};
+            inline void interaction(size_t index_i, Real dt = 0.0)
+            {
+			    Vecd acceleration = Vecd::Zero();
+			    Vecd vel_derivative = Vecd::Zero();
+			    Vecd vel_level_set_cell_j = Vecd::Zero();
+			    Real rho_i = rho_[index_i];
+			    /*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
+			    vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
+			    Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
+			    force_from_fluid_[index_i]= -2.0 * mu_ * mass_[index_i] * kernel_gradient_divide_Rij * vel_derivative /rho_i;
+                //force_from_fluid_[index_i]= -2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative ;
+            }
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            StdLargeVec<Real>& rho_, &mass_;
+            StdLargeVec<Vecd>& vel_;
+            Real mu_;
+        };
         /**
         * @class StaticConfinementIntegration1stHalf
         * @brief static confinement condition for pressure relaxation
@@ -93,8 +171,8 @@ namespace SPH
         protected:
             Real penalty_strength_;
             Fluid& fluid_;
-            StdLargeVec<Real>& rho_, & p_;
-            StdLargeVec<Vecd>& pos_, & vel_, & acc_;
+            StdLargeVec<Real>&rho_, &p_, &mass_;
+            StdLargeVec<Vecd>&pos_, &vel_, &force_;
             LevelSetShape* level_set_shape_;
             AcousticRiemannSolver riemann_solver_;
         };
@@ -113,8 +191,8 @@ namespace SPH
         protected:
             Real penalty_strength_, c_0_;
             Fluid& fluid_;
-            StdLargeVec<Real>& rho_, & p_;
-            StdLargeVec<Vecd>& pos_, & vel_, & acc_;
+            StdLargeVec<Real>& rho_, & p_, &mass_;
+            StdLargeVec<Vecd>& pos_, & vel_, &force_;
             LevelSetShape* level_set_shape_;
             AcousticRiemannSolver riemann_solver_;
         };
@@ -184,8 +262,8 @@ namespace SPH
             SimpleDynamics<StaticConfinementDensity> density_summation_;
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-            InteractionDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            InteractionDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
+            SimpleDynamics<StaticConfinementTransportVelocity> transport_velocity_;
+            InteractionDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
             SimpleDynamics<StaticConfinementExtendIntegration1stHalf> extend_intergration_1st_half_;
             SimpleDynamics<StaticConfinementIntegration1stHalfPenaltyVelocity> extend_intergration_1st_half_Velocity;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
@@ -200,14 +278,15 @@ namespace SPH
             SimpleDynamics<StaticConfinementDensity> density_summation_;
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-            InteractionDynamics<StaticConfinementTransportVelocity, SequencedPolicy> transport_velocity_;
-            InteractionDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
+            SimpleDynamics<StaticConfinementTransportVelocity> transport_velocity_;
+            InteractionDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
             InteractionDynamics<StaticConfinementFreeSurfaceIndication> free_surface_indication_;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
 
             StaticConfinementGeneral(NearShapeSurface &near_surface);
             virtual ~StaticConfinementGeneral(){};
         };
+
     }
 }
-#endif  FLUID_BOUNDARY_STATIC_COFINEMENT_H
+#endif  LEVEL_SET_COFINEMENT_H
