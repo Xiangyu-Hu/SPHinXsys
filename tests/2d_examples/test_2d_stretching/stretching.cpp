@@ -1,12 +1,9 @@
-/* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-one body version           *
- * ----------------------------------------------------------------------------*
- * This is the one of the basic test cases, also the first case for            *
- * understanding SPH method for solid simulation.                              *
- * In this case, the constraint of the beam is implemented with                *
- * internal constrained subregion.                                             *
- * ----------------------------------------------------------------------------*/
-#include "inelastic_solid_hardening.h"
+/**
+ * @file 	stretching.cpp
+ * @brief   Plane strain necking of a bar.
+ * @author 	Xiaojing Tang, Dong Wu and Xiangyu Hu
+ * @ref 	doi.org/10.1016/j.cma.2013.09.024
+ */
 #include "sphinxsys.h"
 
 using namespace SPH;
@@ -177,7 +174,8 @@ int main(int ac, char *av[])
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    system.setReloadParticles(false);
+    system.setReloadParticles(true);
+    system.setGenerateRegressionData(false);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 
@@ -256,7 +254,7 @@ int main(int ac, char *av[])
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
-    Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
+    Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
 
@@ -278,6 +276,8 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
     ReducedQuantityRecording<TotalMechanicalEnergy>
         write_total_mechanical_energy(io_environment, beam_body);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+        write_displacement("Position", io_environment, beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -295,6 +295,7 @@ int main(int ac, char *av[])
     Real D_Time = End_Time / 100.0; // time step size for output file
     Real Dt = End_Time / 10000.0;   /**< Time period for stretching */
     Real dt = 0.0;                  // default acoustic time step sizes
+    int observation_sample_interval = 1000.0;
 
     // statistics for computing time
     TickCount t1 = TickCount::now();
@@ -304,6 +305,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
     write_total_mechanical_energy.writeToFile(0);
+    write_displacement.writeToFile(0);
 
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < End_Time)
@@ -343,6 +345,12 @@ int main(int ac, char *av[])
                                   << "	Dt: " << Dt << "	dt: " << dt
                                   << "	Dt:dt = " << Dt / dt << "\n";
                     }
+
+                    if (ite != 0 && ite % observation_sample_interval == 0)
+                    {
+                        write_total_mechanical_energy.writeToFile(ite);
+                        write_displacement.writeToFile(ite);
+                    }
                 }
                 relaxation_time += dt;
                 integration_time += dt;
@@ -366,5 +374,15 @@ int main(int ac, char *av[])
               << "  Iterations:  " << ite << std::endl;
     std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
               << std::endl;
+
+    if (system.GenerateRegressionData())
+    {
+        write_displacement.generateDataBase(0.05);
+    }
+    else
+    {
+        write_displacement.testResult();
+    }
+
     return 0;
 }
