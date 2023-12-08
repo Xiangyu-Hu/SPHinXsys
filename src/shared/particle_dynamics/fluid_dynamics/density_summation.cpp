@@ -15,13 +15,13 @@ void DensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
     rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 }
 //=================================================================================================//
-DensitySummation<InnerAdaptive>::DensitySummation(BaseInnerRelation &inner_relation)
-    : DensitySummation<BaseInner>(inner_relation),
+DensitySummation<Inner<Adaptive>>::DensitySummation(BaseInnerRelation &inner_relation)
+    : DensitySummation<Inner<Base>>(inner_relation),
       sph_adaptation_(*sph_body_.sph_adaptation_),
       kernel_(*sph_adaptation_.getKernel()),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
-void DensitySummation<InnerAdaptive>::interaction(size_t index_i, Real dt)
+void DensitySummation<Inner<Adaptive>>::interaction(size_t index_i, Real dt)
 {
     Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], ZeroVecd);
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -32,7 +32,7 @@ void DensitySummation<InnerAdaptive>::interaction(size_t index_i, Real dt)
                         sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 }
 //=================================================================================================//
-DensitySummation<BaseContact>::DensitySummation(BaseContactRelation &contact_relation)
+DensitySummation<Contact<Base>>::DensitySummation(BaseContactRelation &contact_relation)
     : DensitySummation<Base, FluidContactData>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -43,7 +43,7 @@ DensitySummation<BaseContact>::DensitySummation(BaseContactRelation &contact_rel
     }
 }
 //=================================================================================================//
-Real DensitySummation<BaseContact>::ContactSummation(size_t index_i)
+Real DensitySummation<Contact<Base>>::ContactSummation(size_t index_i)
 {
     Real sigma(0.0);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -61,19 +61,19 @@ Real DensitySummation<BaseContact>::ContactSummation(size_t index_i)
 //=================================================================================================//
 void DensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 {
-    Real sigma = DensitySummation<BaseContact>::ContactSummation(index_i);
+    Real sigma = DensitySummation<Contact<Base>>::ContactSummation(index_i);
     rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];
 }
 //=================================================================================================//
-DensitySummation<ContactAdaptive>::
+DensitySummation<Contact<Adaptive>>::
     DensitySummation(BaseContactRelation &contact_relation)
-    : DensitySummation<BaseContact>(contact_relation),
+    : DensitySummation<Contact<Base>>(contact_relation),
       sph_adaptation_(*sph_body_.sph_adaptation_),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
-void DensitySummation<ContactAdaptive>::interaction(size_t index_i, Real dt)
+void DensitySummation<Contact<Adaptive>>::interaction(size_t index_i, Real dt)
 {
-    Real sigma = DensitySummation<BaseContact>::ContactSummation(index_i);
+    Real sigma = DensitySummation<Contact<Base>>::ContactSummation(index_i);
     rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i] /
                          sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 }

@@ -147,7 +147,7 @@ class CorrectedKernelGradientContact
 };
 
 template <class ParticlesType, class ContactParticlesType, class ContactKernelGradientType>
-class DiffusionRelaxation<BaseContact, ParticlesType, ContactParticlesType, ContactKernelGradientType>
+class DiffusionRelaxation<Contact<Base>, ParticlesType, ContactParticlesType, ContactKernelGradientType>
     : public DiffusionRelaxation<Base, DiffusionReactionContactData<ParticlesType, ContactParticlesType>>
 {
   protected:
@@ -166,7 +166,7 @@ class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
 
 template <typename... ContactParameters>
 class DiffusionRelaxation<Dirichlet<ContactParameters...>>
-    : public DiffusionRelaxation<BaseContact, ContactParameters...>
+    : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
 {
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
@@ -185,7 +185,7 @@ class Neumann; /**< Contact interaction with Neumann boundary condition */
 
 template <typename... ContactParameters>
 class DiffusionRelaxation<Neumann<ContactParameters...>>
-    : public DiffusionRelaxation<BaseContact, ContactParameters...>
+    : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_heat_flux_;
@@ -206,7 +206,7 @@ class Robin; /**< Contact interaction with Robin boundary condition */
 
 template <typename... ContactParameters>
 class DiffusionRelaxation<Robin<ContactParameters...>>
-    : public DiffusionRelaxation<BaseContact, ContactParameters...>
+    : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_convection_;

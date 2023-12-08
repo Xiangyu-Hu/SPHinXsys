@@ -52,13 +52,13 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>::
+EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
     : BaseEulerianIntegrationWithWall(wall_contact_relation),
       riemann_solver_(fluid_, fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Vecd momentum_change_rate = Vecd::Zero();
@@ -121,13 +121,13 @@ void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::
+EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
     : BaseEulerianIntegrationWithWall(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter){};
 //=================================================================================================//
 template <class RiemannSolverType>
-void EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
     Real mass_change_rate = 0.0;

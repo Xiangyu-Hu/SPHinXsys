@@ -60,10 +60,10 @@ class Oldroyd_BIntegration1stHalf<Inner<>>
 };
 
 using Integration1stHalfContactWallDissipative =
-    Integration1stHalf<ContactWall<>, DissipativeRiemannSolver, NoKernelCorrection>;
+    Integration1stHalf<Contact<Wall>, DissipativeRiemannSolver, NoKernelCorrection>;
 
 template <>
-class Oldroyd_BIntegration1stHalf<ContactWall<>>
+class Oldroyd_BIntegration1stHalf<Contact<Wall>>
     : public Integration1stHalfContactWallDissipative
 {
   public:
@@ -97,9 +97,9 @@ class Oldroyd_BIntegration2ndHalf<Inner<>>
 };
 
 using Integration2ndHalfWithWallDissipative =
-    Integration2ndHalf<ContactWall<>, DissipativeRiemannSolver>;
+    Integration2ndHalf<Contact<Wall>, DissipativeRiemannSolver>;
 template <>
-class Oldroyd_BIntegration2ndHalf<ContactWall<>>
+class Oldroyd_BIntegration2ndHalf<Contact<Wall>>
     : public Integration2ndHalfWithWallDissipative
 {
   public:
@@ -113,8 +113,8 @@ class Oldroyd_BIntegration2ndHalf<ContactWall<>>
     Real mu_p_, lambda_;
 };
 
-using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, ContactWall<>>>;
-using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, ContactWall<>>>;
+using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
+using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // NON_NEWTONIAN_DYNAMICS_H

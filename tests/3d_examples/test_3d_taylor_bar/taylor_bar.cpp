@@ -33,7 +33,7 @@ int main(int ac, char *av[])
         : column.generateParticles<ParticleGeneratorLattice>();
     column.addBodyStateForRecording<Vecd>("NormalDirection");
 
-    SolidBody wall(sph_system, makeShared<Wall>("Wall"));
+    SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall.generateParticles<ParticleGeneratorLattice>();
 

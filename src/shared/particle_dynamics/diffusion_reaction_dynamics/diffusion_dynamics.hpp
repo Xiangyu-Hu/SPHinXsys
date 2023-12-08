@@ -99,7 +99,7 @@ void DiffusionRelaxation<Inner<ParticlesType, KernelGradientType>>::
 }
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class ContactKernelGradientType>
-DiffusionRelaxation<BaseContact, ParticlesType, ContactParticlesType, ContactKernelGradientType>::
+DiffusionRelaxation<Contact<Base>, ParticlesType, ContactParticlesType, ContactKernelGradientType>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
     : DiffusionRelaxation<Base, DiffusionReactionContactData<ParticlesType, ContactParticlesType>>(contact_relation)
 {
@@ -136,7 +136,7 @@ DiffusionRelaxation<BaseContact, ParticlesType, ContactParticlesType, ContactKer
 template <typename... CommonControlTypes>
 DiffusionRelaxation<Dirichlet<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
-    : DiffusionRelaxation<BaseContact, CommonControlTypes...>(contact_relation)
+    : DiffusionRelaxation<Contact<Base>, CommonControlTypes...>(contact_relation)
 {
     contact_gradient_species_.resize(this->contact_particles_.size());
 
@@ -193,7 +193,7 @@ void DiffusionRelaxation<Dirichlet<CommonControlTypes...>>::
 template <typename... CommonControlTypes>
 DiffusionRelaxation<Neumann<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
-    : DiffusionRelaxation<BaseContact, CommonControlTypes...>(contact_relation),
+    : DiffusionRelaxation<Contact<Base>, CommonControlTypes...>(contact_relation),
       n_(this->particles_->n_)
 {
     contact_heat_flux_.resize(this->contact_particles_.size());
@@ -245,7 +245,7 @@ void DiffusionRelaxation<Neumann<CommonControlTypes...>>::
 template <typename... CommonControlTypes>
 DiffusionRelaxation<Robin<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
-    : DiffusionRelaxation<BaseContact, CommonControlTypes...>(contact_relation),
+    : DiffusionRelaxation<Contact<Base>, CommonControlTypes...>(contact_relation),
       n_(this->particles_->n_)
 {
     contact_convection_.resize(this->contact_particles_.size());

@@ -79,7 +79,7 @@ class ViscousAcceleration<AngularConservative<Inner<>>>
 
 using BaseViscousAccelerationWithWall = InteractionWithWall<ViscousAcceleration>;
 template <>
-class ViscousAcceleration<ContactWall<>> : public BaseViscousAccelerationWithWall
+class ViscousAcceleration<Contact<Wall>> : public BaseViscousAccelerationWithWall
 {
   public:
     explicit ViscousAcceleration(BaseContactRelation &wall_contact_relation)
@@ -101,7 +101,7 @@ class ViscousAcceleration<Contact<>> : public ViscousAcceleration<FluidContactDa
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
-using ViscousAccelerationWithWall = ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>;
+using ViscousAccelerationWithWall = ComplexInteraction<ViscousAcceleration<Inner<>, Contact<Wall>>>;
 
 /**
  * @class VorticityInner
