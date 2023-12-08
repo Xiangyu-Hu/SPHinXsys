@@ -83,7 +83,7 @@ using TransportVelocityCorrectionInner =
     TransportVelocityCorrection<Inner<SingleResolution>, NoKernelCorrection, ParticleScope>;
 
 template <typename... CommonControlTypes>
-class TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>
+class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
     : public TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>
 {
   public:
@@ -107,7 +107,7 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 
 template <class ResolutionType, typename... CommonControlTypes>
 using BaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType>, ContactBoundary<>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
@@ -119,7 +119,7 @@ using TransportVelocityCorrectionComplexAdaptive =
 
 template <class ResolutionType, typename... CommonControlTypes>
 using BaseMultiPhaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType>, Contact<>, ContactBoundary<>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType>, Contact<>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using MultiPhaseTransportVelocityCorrectionComplex =
