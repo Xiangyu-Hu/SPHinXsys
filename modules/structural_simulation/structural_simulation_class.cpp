@@ -216,12 +216,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       translation_solid_body_part_tuple_(input.translation_solid_body_part_tuple_),
 
       // iterators
-      iteration_(0),
-
-      // data storage
-      von_mises_stress_max_({}),
-      von_mises_stress_particles_({})
-
+      iteration_(0)
 {
     // scaling of translation and resolution
     scaleTranslationAndResolution();
@@ -910,12 +905,7 @@ void StructuralSimulation::runSimulation(Real end_time)
             runSimulationStep(dt, integration_time);
         }
         TickCount t2 = TickCount::now();
-        // record data for test
-        von_mises_stress_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressMax());
-        von_mises_stress_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressVector());
 
-        von_mises_strain_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainMax());
-        von_mises_strain_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainVector());
         // write data to file
         write_states.writeToFile();
         TickCount t3 = TickCount::now();

@@ -84,7 +84,7 @@ class ElasticSolidParticles : public SolidParticles
     //----------------------------------------------------------------------
     //		for fluid-structure interaction (FSI)
     //----------------------------------------------------------------------
-    StdLargeVec<Vecd> vel_ave_; /**<  fluid time-step averaged particle velocity */
+    StdLargeVec<Vecd> vel_ave_;   /**<  fluid time-step averaged particle velocity */
     StdLargeVec<Vecd> force_ave_; /**<  fluid time-step averaged particle force */
 
     /** Return the Lagrange strain. */
@@ -196,7 +196,5 @@ class ShellParticles : public ElasticSolidParticles
     virtual ShellParticles *ThisObjectPtr() override { return this; };
 };
 
-
-
-}
+} // namespace SPH
 #endif // SOLID_PARTICLES_H
