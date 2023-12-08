@@ -39,9 +39,7 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction types specifically for fluid dynamics
 //----------------------------------------------------------------------
-template <typename InteractionType>
 class FreeSurface; /**< A interaction considering the effect of free surface */
-template <typename InteractionType>
 class FreeStream; /**< A interaction considering the effect of free stream */
 template <typename InteractionType>
 class AngularConservative; /**< A interaction considering the conservation of angular momentum */

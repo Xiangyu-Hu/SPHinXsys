@@ -44,14 +44,8 @@ class Base; /**< Indicating base class for a method */
 template <typename... InnerParameters>
 class Inner; /**< Inner interaction: interaction within a body*/
 
-class InnerAdaptive; /**< Inner interaction with adaptive resolution */
-class BaseInner;     /**< Base inner interaction */
-
 template <typename... ContactParameters>
 class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
-
-class ContactAdaptive; /**< Contact interaction with adaptive resolution */
-class BaseContact;     /**< Base contact interaction*/
 
 template <typename... ContactBoundaryParameters>
 class ContactBoundary; /**< Contact interaction with boundary */
@@ -59,6 +53,7 @@ class ContactBoundary; /**< Contact interaction with boundary */
 template <typename... ContactWallParameters>
 class ContactWall; /**< Contact interaction with wall boundary */
 
+class Adaptive; /**< Interaction with adaptive resolution */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
 //----------------------------------------------------------------------
