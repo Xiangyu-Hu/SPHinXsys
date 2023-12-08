@@ -31,10 +31,10 @@ Real Youngs_modulus = 1.17e11;
 Real yield_stress = 0.4e9;
 Real hardening_modulus = 0.1e9;
 
-class Wall : public ComplexShape
+class WallShape : public ComplexShape
 {
   public:
-    explicit Wall(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit WallShape(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
         Vecd translation_holder(0.0, 0.0, -0.5 * SL);
