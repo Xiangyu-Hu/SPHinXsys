@@ -71,7 +71,7 @@ using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<
 
 using BaseEulerianIntegrationWithWall = InteractionWithWall<EulerianIntegration>;
 template <class RiemannSolverType>
-class EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>
+class EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>
     : public BaseEulerianIntegrationWithWall
 {
   public:
@@ -86,7 +86,7 @@ class EulerianIntegration1stHalf<ContactWall<>, RiemannSolverType>
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, ContactWall<>>, EulerianAcousticRiemannSolver>;
+    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, Contact<Wall>>, EulerianAcousticRiemannSolver>;
 
 template <typename... InteractionTypes>
 class EulerianIntegration2ndHalf;
@@ -114,7 +114,7 @@ using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<
  * @brief template density relaxation scheme with using  Riemann solver.
  */
 template <class RiemannSolverType>
-class EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>
+class EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
     : public BaseEulerianIntegrationWithWall
 {
   public:
@@ -129,7 +129,7 @@ class EulerianIntegration2ndHalf<ContactWall<>, RiemannSolverType>
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfWithWallRiemann =
-    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, ContactWall<>>, EulerianAcousticRiemannSolver>;
+    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, Contact<Wall>>, EulerianAcousticRiemannSolver>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_FLUID_INTEGRATION_H

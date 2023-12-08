@@ -42,7 +42,7 @@ void ViscousAcceleration<AngularConservative<Inner<>>>::interaction(size_t index
     force_prior_[index_i] += force / rho_[index_i];
 }
 //=================================================================================================//
-void ViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
+void ViscousAcceleration<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
     Real rho_i = this->rho_[index_i];
     const Vecd &vel_i = this->vel_[index_i];
