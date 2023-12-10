@@ -53,6 +53,22 @@ class Adaptive;        /**< Interaction with adaptive resolution */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
 //----------------------------------------------------------------------
+// Particle-wise functors
+//----------------------------------------------------------------------
+template <typename DataType>
+class ParticleValue
+{
+    StdLargeVec<DataType> &variable_;
+
+  public:
+    explicit ParticleValue(BaseParticles *base_particles, const std::string &input_name)
+        : variable_(*base_particles->getVariableByName<DataType>(input_name)){};
+    DataType operator()(size_t index_i)
+    {
+        return variable_[index_i];
+    };
+};
+//----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
 class AllParticles

@@ -36,28 +36,29 @@ namespace SPH
 {
 /**
  * @class MaximumNorm
- * @brief  obtained the maximum norm of a variable
+ * @brief  obtained the maximum norm of a input
  */
-template <typename DataType>
+template <typename InputFunction>
 class MaximumNorm : public LocalDynamicsReduce<Real, ReduceMax>,
                     public GeneralDataDelegateSimple
 {
   public:
-    MaximumNorm(SPHBody &sph_body, const std::string &variable_name)
+    template <typename... Args>
+    MaximumNorm(SPHBody &sph_body, Args &&...args)
         : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
           GeneralDataDelegateSimple(sph_body),
-          variable_(*particles_->getVariableByName<DataType>(variable_name)){};
+          input_function_(this->getParticles(), std::forward<Args>(args)...){};
     virtual ~MaximumNorm(){};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
-    Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
+    Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(input_function_(index_i)); };
 
   protected:
-    StdLargeVec<DataType> &variable_;
+    InputFunction input_function_;
 
     template <typename Datatype>
-    Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
+    Real getSquaredNorm(const Datatype &input) { return input.squaredNorm(); };
 
-    Real getSquaredNorm(const Real &variable) { return variable * variable; };
+    Real getSquaredNorm(const Real &input) { return input * input; };
 };
 
 /**
@@ -157,28 +158,28 @@ class PositionUpperBound : public LocalDynamicsReduce<Vecd, ReduceUpperBound>,
 
 /**
  * @class QuantitySummation
- * @brief Compute the summation of  a particle variable in a body
+ * @brief Compute the summation of  a particle input in a body
  */
-template <typename VariableType>
-class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>,
+template <typename inputType>
+class QuantitySummation : public LocalDynamicsReduce<inputType, ReduceSum<inputType>>,
                           public GeneralDataDelegateSimple
 {
   protected:
-    StdLargeVec<VariableType> &variable_;
+    StdLargeVec<inputType> &input_;
 
   public:
-    explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
+    explicit QuantitySummation(SPHBody &sph_body, const std::string &input_name)
+        : LocalDynamicsReduce<inputType, ReduceSum<inputType>>(sph_body, ZeroData<inputType>::value),
           GeneralDataDelegateSimple(sph_body),
-          variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+          input_(*this->particles_->template getinputByName<inputType>(input_name))
     {
-        this->quantity_name_ = variable_name + "Summation";
+        this->quantity_name_ = input_name + "Summation";
     };
     virtual ~QuantitySummation(){};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    inputType reduce(size_t index_i, Real dt = 0.0)
     {
-        return variable_[index_i];
+        return input_[index_i];
     };
 };
 
@@ -186,24 +187,24 @@ class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<Var
  * @class QuantityMoment
  * @brief Compute the moment of a body
  */
-template <typename VariableType>
-class QuantityMoment : public QuantitySummation<VariableType>
+template <typename inputType>
+class QuantityMoment : public QuantitySummation<inputType>
 {
   protected:
     StdLargeVec<Real> &mass_;
 
   public:
-    explicit QuantityMoment(SPHBody &sph_body, const std::string &variable_name)
-        : QuantitySummation<VariableType>(sph_body, variable_name),
+    explicit QuantityMoment(SPHBody &sph_body, const std::string &input_name)
+        : QuantitySummation<inputType>(sph_body, input_name),
           mass_(this->particles_->mass_)
     {
-        this->quantity_name_ = variable_name + "Moment";
+        this->quantity_name_ = input_name + "Moment";
     };
     virtual ~QuantityMoment(){};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    inputType reduce(size_t index_i, Real dt = 0.0)
     {
-        return mass_[index_i] * this->variable_[index_i];
+        return mass_[index_i] * this->input_[index_i];
     };
 };
 
