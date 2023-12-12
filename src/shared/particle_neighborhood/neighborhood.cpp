@@ -258,15 +258,15 @@ void BaseNeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborh
     neighborhood.e_ij_[current_size] = e_ij;
 }
 //=================================================================================================//
-NeighborBuilderContactShell::NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body)
+NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body)
     : BaseNeighborBuilderContactShell(contact_body)
 {
     // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
     kernel_ = body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
-void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
-                                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
+                                               const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 {
     size_t index_j = std::get<0>(list_data_j);
 
@@ -276,14 +276,11 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
 
     const Real Vol_j = std::get<2>(list_data_j);
 
-    // correct normal direction, make sure it points from fluid to shell
-    const Vecd n_j = n_[index_j]; // normal direction of shell particle in cell linked list with index j
-    // H is the total mean curvature
-    // for 2D, curvature=H
-    // for 3D, mean curvature=H/2
-    const Real H_j = H_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
+    // normal direction should point from shell to fluid
+    // correct normal direction pointing from fluid to shell
+    const Vecd n_j = -n_[index_j]; // normal direction of shell particle in cell linked list with index j
 
-    if (distance < kernel_->CutOffRadius())
+    if (displacement.dot(n_j) <= cos(Pi / 6.0) && distance < kernel_->CutOffRadius())
     {
         Real W_ijV_j_ttl = kernel_->W(distance, displacement) * Vol_j;
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
@@ -293,25 +290,28 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
         Vecd displacement_dummy = pos_i - pos_j_dummy;
         Real distance_dummy = displacement_dummy.norm();
 
-        // Ghost particle is only needed when normal points from fluid to shell
-        if (displacement.dot(n_j) <= 0)
-        {
-            int counter = 0;
-            while (distance_dummy < kernel_->CutOffRadius())
-            {
-                counter++;
-                const Real Vol_j_dummy = Vol_j * std::pow(1 + counter * H_j * particle_distance_, Dimensions - 1);
-                Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
-                Vecd e_ij = displacement_dummy / distance_dummy;
-                W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
-                dW_ijV_j_ttl += dW_ijV_j;
-                dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
+        // H is the total mean curvature
+        // for 2D, curvature=H
+        // for 3D, mean curvature=H/2
+        const Real H_j = -H_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
 
-                // calculate the position and volume of the next dummy particle
-                pos_j_dummy += n_j * particle_distance_;
-                displacement_dummy = pos_i - pos_j_dummy;
-                distance_dummy = displacement_dummy.norm();
-            }
+        int counter = 0;
+        while (distance_dummy < kernel_->CutOffRadius())
+        {
+            counter++;
+            const Real Vol_j_dummy = Vol_j * std::pow(1 + counter * H_j * particle_distance_, Dimensions - 1);
+            if (Vol_j_dummy <= 0)
+                break;
+            Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
+            Vecd e_ij = displacement_dummy / distance_dummy;
+            W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
+            dW_ijV_j_ttl += dW_ijV_j;
+            dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
+
+            // calculate the position and volume of the next dummy particle
+            pos_j_dummy += n_j * particle_distance_;
+            displacement_dummy = pos_i - pos_j_dummy;
+            distance_dummy = displacement_dummy.norm();
         }
 
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
@@ -322,6 +322,62 @@ void NeighborBuilderContactShell::operator()(Neighborhood &neighborhood,
         neighborhood.current_size_ >= neighborhood.allocated_size_
             ? createNeighbor(neighborhood, distance, index_j, W_ij_corrected, dW_ijV_j_corrected, e_ij_corrected)
             : initializeNeighbor(neighborhood, distance, index_j, W_ij_corrected, dW_ijV_j_corrected, e_ij_corrected);
+        neighborhood.current_size_++;
+    }
+};
+//=================================================================================================//
+NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body)
+    : BaseNeighborBuilderContactShell(body)
+{
+    // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
+    kernel_ = contact_body.sph_adaptation_->getKernel();
+}
+//=================================================================================================//
+void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
+                                                 const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = std::get<0>(list_data_j);
+
+    const Vecd pos_j = std::get<1>(list_data_j);
+    const Vecd displacement = pos_i - pos_j;
+    const Real distance = displacement.norm();
+
+    const Real Vol_j = std::get<2>(list_data_j);
+
+    const Real W_ij = kernel_->W(distance, displacement) * Vol_j;
+
+    // correct normal direction, pointing from fluid to shell
+    const Vecd n_i = -n_[index_i];
+
+    if (distance < kernel_->CutOffRadius())
+    {
+        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
+        Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
+
+        Vecd pos_i_dummy = pos_i + n_i * particle_distance_;
+        Vecd displacement_dummy = pos_i_dummy - pos_j;
+        Real distance_dummy = displacement_dummy.norm();
+
+        while (distance_dummy < kernel_->CutOffRadius())
+        {
+            Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j;
+            Vecd e_ij = displacement_dummy / distance_dummy;
+            dW_ijV_j_ttl += dW_ijV_j;
+            dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
+
+            // calculate the position and volume of the next dummy particle
+            pos_i_dummy += n_i * particle_distance_;
+            displacement_dummy = pos_i_dummy - pos_j;
+            distance_dummy = displacement_dummy.norm();
+        }
+
+        Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_; // from surface area to volume
+
+        // create new neighborhood
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, distance, index_j, W_ij, dW_ijV_j_corrected, e_ij_corrected)
+            : initializeNeighbor(neighborhood, distance, index_j, W_ij, dW_ijV_j_corrected, e_ij_corrected);
         neighborhood.current_size_++;
     }
 };

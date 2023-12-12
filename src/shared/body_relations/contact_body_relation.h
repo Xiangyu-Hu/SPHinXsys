@@ -160,7 +160,7 @@ class AdaptiveContactRelation : public BaseContactRelation
 class ContactRelationToShell : public ContactRelationCrossResolution
 {
   protected:
-    UniquePtrsKeeper<NeighborBuilderContactShell> neighbor_builder_contact_shell_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
 
   public:
     ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies);
@@ -168,7 +168,25 @@ class ContactRelationToShell : public ContactRelationCrossResolution
     virtual void updateConfiguration() override;
 
   protected:
-    StdVec<NeighborBuilderContactShell *> get_shell_contact_neighbors_;
+    StdVec<NeighborBuilderContactToShell *> get_shell_contact_neighbors_;
+};
+
+/**
+ * @class ContactRelationFromShell
+ * @brief The relation between a shell body and its contact contact bodies
+ */
+class ContactRelationFromShell : public ContactRelationCrossResolution
+{
+  protected:
+    UniquePtrsKeeper<NeighborBuilderContactFromShell> neighbor_builder_contact_from_shell_ptrs_keeper_;
+
+  public:
+    ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies);
+    virtual ~ContactRelationFromShell(){};
+    virtual void updateConfiguration() override;
+
+  protected:
+    StdVec<NeighborBuilderContactFromShell *> get_contact_neighbors_;
 };
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H

@@ -218,20 +218,31 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
                             size_t index_j, const Real &W_ij,
                             const Real &dW_ijV_j, const Vecd &e_ij);
 };
+
 /**
- * @class NeighborBuilderContactShell
- * @brief A contact neighbor builder functor for contact relation between fluid and shell.
+ * @class NeighborBuilderContactToShell
+ * @brief A contact neighbor builder functor for contact relation from fluid to shell.
  */
-class NeighborBuilderContactShell : public BaseNeighborBuilderContactShell
+class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
 {
   public:
-    NeighborBuilderContactShell(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContactShell(){};
+    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body);
+    virtual ~NeighborBuilderContactToShell(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+};
 
-  private:
-    UniquePtrKeeper<Kernel> kernel_keeper_;
+/**
+ * @class NeighborBuilderContactFromShell
+ * @brief A contact neighbor builder functor for contact relation from shell and fluid.
+ */
+class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body);
+    virtual ~NeighborBuilderContactFromShell(){};
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 };
 
 /**
