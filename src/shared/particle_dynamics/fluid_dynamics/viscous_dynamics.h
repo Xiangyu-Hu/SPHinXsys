@@ -49,8 +49,8 @@ class ViscousAcceleration<DataDelegationType>
     virtual ~ViscousAcceleration(){};
 
   protected:
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Vecd> &vel_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &vel_, &force_prior_;
     Real mu_;
     Real smoothing_length_;
 };
@@ -79,7 +79,7 @@ class ViscousAcceleration<AngularConservative<Inner<>>>
 
 using BaseViscousAccelerationWithWall = InteractionWithWall<ViscousAcceleration>;
 template <>
-class ViscousAcceleration<ContactWall<>> : public BaseViscousAccelerationWithWall
+class ViscousAcceleration<Contact<Wall>> : public BaseViscousAccelerationWithWall
 {
   public:
     explicit ViscousAcceleration(BaseContactRelation &wall_contact_relation)
@@ -101,7 +101,7 @@ class ViscousAcceleration<Contact<>> : public ViscousAcceleration<FluidContactDa
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
-using ViscousAccelerationWithWall = ComplexInteraction<ViscousAcceleration<Inner<>, ContactWall<>>>;
+using ViscousAccelerationWithWall = ComplexInteraction<ViscousAcceleration<Inner<>, Contact<Wall>>>;
 
 /**
  * @class VorticityInner

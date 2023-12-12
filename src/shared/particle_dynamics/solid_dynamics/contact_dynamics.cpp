@@ -82,7 +82,7 @@ SelfContactForce::
       SolidDataInner(self_contact_relation),
       solid_(particles_->solid_), mass_(particles_->mass_),
       self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")),
-      Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_),
+      Vol_(particles_->Vol_), force_prior_(particles_->force_prior_),
       vel_(particles_->vel_),
       contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())) {}
 //=================================================================================================//
@@ -92,7 +92,7 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
       solid_(particles_->solid_),
       contact_density_(*particles_->getVariableByName<Real>("ContactDensity")),
       Vol_(particles_->Vol_), mass_(particles_->mass_),
-      acc_prior_(particles_->acc_prior_)
+      force_prior_(particles_->force_prior_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -106,13 +106,13 @@ ContactForceFromWall::ContactForceFromWall(SurfaceContactRelation &solid_body_co
       ContactWithWallData(solid_body_contact_relation), solid_(particles_->solid_),
       contact_density_(*particles_->getVariableByName<Real>("ContactDensity")),
       Vol_(particles_->Vol_), mass_(particles_->mass_),
-      acc_prior_(particles_->acc_prior_) {}
+      force_prior_(particles_->force_prior_) {}
 //=================================================================================================//
 ContactForceToWall::ContactForceToWall(SurfaceContactRelation &solid_body_contact_relation)
     : LocalDynamics(solid_body_contact_relation.getSPHBody()),
       ContactDynamicsData(solid_body_contact_relation),
       Vol_(particles_->Vol_), mass_(particles_->mass_),
-      acc_prior_(particles_->acc_prior_)
+      force_prior_(particles_->force_prior_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -140,7 +140,7 @@ DynamicContactForceWithWall::
       ContactDynamicsData(solid_body_contact_relation),
       solid_(particles_->solid_),
       Vol_(particles_->Vol_), mass_(particles_->mass_),
-      vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
+      vel_(particles_->vel_), force_prior_(particles_->force_prior_),
       penalty_strength_(penalty_strength)
 {
     impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());

@@ -1,11 +1,10 @@
 /**
- * @file 	Viscous Cream Drop.cpp
+ * @file 	viscous_cream_drop.cpp
  * @brief   Viscous cream adhering to the platform falls due to gravity.
  * @author 	Liezhao Wu, Xiaojing Tang and Xiangyu Hu
  */
 
-#include "sphinxsys.h"   
-#include "viscous_inelastic_solid.h"        
+#include "sphinxsys.h"     
 using namespace SPH;           
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -87,6 +86,7 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(true);
+    sph_system.setGenerateRegressionData(false);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -161,7 +161,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<KernelCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
     /** stress relaxation for the balls. */
-    Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
+    Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> cream_stress_relaxation_second_half(cream_inner);
     /** constraint for the cream. */
     BodyRegionByParticle platform(cream, makeShared<MultiPolygonShape>(createPlatformConstraint()));
@@ -188,10 +188,11 @@ int main(int ac, char *av[])
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     int ite = 0;
-    Real T0 = 0.8;
+    Real T0 = 0.75;
     Real end_time = T0;
+    int screen_output_interval = 100;
+    int observation_sample_interval = screen_output_interval * 2;
     Real output_interval = 0.01 * T0;
-    Real Dt = 0.1 * output_interval;
     Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -206,32 +207,30 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            Real relaxation_time = 0.0;
-            while (relaxation_time < Dt)
+            cream_initialize_timestep.exec();
+
+            if (ite % screen_output_interval == 0)
             {
-                cream_initialize_timestep.exec();
-                if (ite % 1000 == 0)
+                std::cout << "N=" << ite << " Time: "
+                    << GlobalStaticVariables::physical_time_ << "	dt: "
+                    << dt << "\n";
+
+                if (ite != 0 && ite % observation_sample_interval == 0)
                 {
-                    std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                    cream_displacement_recording.writeToFile(ite);
                 }
-                cream_stress_relaxation_first_half.exec(dt);
-                platform_constraint.exec(dt);
-                cream_stress_relaxation_second_half.exec(dt);
-
-                cream.updateCellLinkedList();
-
-                ite++;
-                dt = cream_get_time_step_size.exec();
-                relaxation_time += dt;
-                integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
-
-                 cream_displacement_recording.writeToFile(ite);
             }
+            cream_stress_relaxation_first_half.exec(dt);
+            platform_constraint.exec(dt);
+            cream_stress_relaxation_second_half.exec(dt);
+
+            ite++;
+            dt = cream_get_time_step_size.exec();
+            integration_time += dt;
+            GlobalStaticVariables::physical_time_ += dt;
         }
         TickCount t2 = TickCount::now();
-        body_states_recording.writeToFile(ite);
+        body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -243,8 +242,7 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        // The lift force at the cylinder is very small and not important in this case.
-        cream_displacement_recording.generateDataBase(1.0e-2);
+        cream_displacement_recording.generateDataBase(0.05);
     }
     else
     {

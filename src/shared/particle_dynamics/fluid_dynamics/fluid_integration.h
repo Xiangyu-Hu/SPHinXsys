@@ -61,8 +61,8 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
 };
 
 template <typename... InteractionTypes>
@@ -92,7 +92,7 @@ using Integration1stHalfCorrectionInnerRiemann = Integration1stHalf<Inner<>, Aco
 using BaseIntegrationWithWall = InteractionWithWall<BaseIntegration>;
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
+class Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
     : public BaseIntegrationWithWall
 {
   public:
@@ -106,8 +106,8 @@ class Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<ContactWall<Extended>, RiemannSolverType, KernelCorrectionType>
-    : public Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
+class Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrectionType>
+    : public Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
 {
   public:
     explicit Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
@@ -138,16 +138,16 @@ class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-using Integration1stHalfWithWall = ComplexInteraction<Integration1stHalf<Inner<>, ContactWall<>>, RiemannSolverType, KernelCorrectionType>;
+using Integration1stHalfWithWall = ComplexInteraction<Integration1stHalf<Inner<>, Contact<Wall>>, RiemannSolverType, KernelCorrectionType>;
 
 using Integration1stHalfWithWallNoRiemann = Integration1stHalfWithWall<NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, KernelCorrection>;
 
 using MultiPhaseIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, ContactWall<>>, AcousticRiemannSolver, NoKernelCorrection>;
+    ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>;
 using ExtendedMultiPhaseIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, ContactWall<Extended>>, AcousticRiemannSolver, NoKernelCorrection>;
+    ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall, Extended>>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <typename... InteractionTypes>
 class Integration2ndHalf;
@@ -172,7 +172,7 @@ using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSo
 using Integration2ndHalfInnerDissipativeRiemann = Integration2ndHalf<Inner<>, DissipativeRiemannSolver>;
 
 template <class RiemannSolverType>
-class Integration2ndHalf<ContactWall<>, RiemannSolverType>
+class Integration2ndHalf<Contact<Wall>, RiemannSolverType>
     : public BaseIntegrationWithWall
 {
   public:
@@ -200,13 +200,13 @@ class Integration2ndHalf<Contact<>, RiemannSolverType>
 };
 
 template <class RiemannSolverType>
-using Integration2ndHalfWithWall = ComplexInteraction<Integration2ndHalf<Inner<>, ContactWall<>>, RiemannSolverType>;
+using Integration2ndHalfWithWall = ComplexInteraction<Integration2ndHalf<Inner<>, Contact<Wall>>, RiemannSolverType>;
 
 using Integration2ndHalfWithWallNoRiemann = Integration2ndHalfWithWall<NoRiemannSolver>;
 using Integration2ndHalfWithWallRiemann = Integration2ndHalfWithWall<AcousticRiemannSolver>;
 
 using MultiPhaseIntegration2ndHalfWithWallRiemann =
-    ComplexInteraction<Integration2ndHalf<Inner<>, Contact<>, ContactWall<>>, AcousticRiemannSolver>;
+    ComplexInteraction<Integration2ndHalf<Inner<>, Contact<>, Contact<Wall>>, AcousticRiemannSolver>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_INTEGRATION_H

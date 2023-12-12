@@ -29,7 +29,7 @@ InteractionWithWall<BaseIntegrationType>::
         wall_inv_rho0_.push_back(1.0 / rho0_k);
         wall_mass_.push_back(&(FSIContactData::contact_particles_[k]->mass_));
         wall_vel_ave_.push_back(FSIContactData::contact_particles_[k]->AverageVelocity());
-        wall_acc_ave_.push_back(FSIContactData::contact_particles_[k]->AverageAcceleration());
+        wall_force_ave_.push_back(FSIContactData::contact_particles_[k]->AverageForce());
         wall_n_.push_back(&(FSIContactData::contact_particles_[k]->n_));
     }
 }
@@ -98,9 +98,9 @@ void BaseShearStressRelaxation2ndHalfWithWall<BaseShearStressRelaxation2ndHalfTy
 }
 
 template <class BaseStressRelaxation1stHalfType>
-Vecd BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::computeNonConservativeAcceleration(size_t index_i)
+Vecd BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::computeNonConservativeForce(size_t index_i)
 {
-    return this->acc_prior_[index_i];
+    return this->force_prior_[index_i];
 }
 
 template <class BaseStressRelaxation1stHalfType>
@@ -108,15 +108,16 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
 {
     BaseStressRelaxation1stHalfType::interaction(index_i, dt);
 
-    Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
-    Vecd acceleration = acc_prior_i;
+    Vecd force_prior_i = computeNonConservativeForce(index_i);
+    Vecd force = force_prior_i;
     Real rho_dissipation(0);
 
     Matd stress_tensor_i = this->reduceTensor(this->stress_tensor_3D_[index_i]);
 
     for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
+        StdLargeVec<Vecd> &force_ave_k = *(this->wall_force_ave_[k]);
+        StdLargeVec<Real> &wall_mass_k = *(this->wall_mass_[k]);
         Neighborhood &wall_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -125,13 +126,13 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
-            Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
+            Real face_wall_external_acceleration = (force_prior_i / this->mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
             Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration += 2 * stress_tensor_i * wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
+            force += 2 * this->mass_[index_i] * stress_tensor_i * wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
             rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
-    this->acc_[index_i] += acceleration / this->rho_[index_i];
+    this->force_[index_i] += force / this->rho_[index_i];
     this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 }
 //=================================================================================================//
@@ -164,12 +165,12 @@ void BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::inter
 
             density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
             Vecd u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]);
-            p_dissipation += this->riemann_solver_.DissipativePJumpExtra(u_jump, n_k[index_j]) * dW_ijV_j;
+            p_dissipation += this->mass_[index_i] * this->riemann_solver_.DissipativePJumpExtra(u_jump, n_k[index_j]) * dW_ijV_j;
         }
     }
     this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
     this->velocity_gradient_[index_i] += velocity_gradient;
-    this->acc_[index_i] += p_dissipation / this->rho_[index_i];
+    this->force_[index_i] += p_dissipation / this->rho_[index_i];
 }
 
 template <class BaseStressDiffusionType>

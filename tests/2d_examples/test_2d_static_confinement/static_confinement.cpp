@@ -76,10 +76,10 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Shape for the wall.
 //----------------------------------------------------------------------
-class Wall : public MultiPolygonShape
+class WallShape : public MultiPolygonShape
 {
   public:
-    explicit Wall(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WallShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
     }
@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     /** Define the confinement condition for wall. */
-    NearShapeSurface near_surface_wall(water_block, makeShared<Wall>("Wall"));
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallShape>("Wall"));
     near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */

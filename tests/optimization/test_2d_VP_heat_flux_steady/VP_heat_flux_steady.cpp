@@ -1,5 +1,5 @@
 /**
- * @file 	VP_problem4_non_optimized.cpp
+ * @file 	VP_heat_flux_steady.cpp
  * @brief 	This is the steady test for the heat flux problem.
  * @author 	Bo Zhang and Xiangyu Hu
  */
@@ -152,7 +152,6 @@ class WallBoundaryInitialCondition
         }
     };
 };
-
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
@@ -168,14 +167,11 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 
         for (size_t i = 0; i < number_of_observation_points; ++i)
         {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
-                                                    Real(number_of_observation_points - 1) +
-                                                start_of_measure);
+            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
             positions_.push_back(point_coordinate);
         }
     }
 };
-
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -314,7 +310,7 @@ TEST(test_optimization, test_problem4_non_optimization)
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 
-    EXPECT_NEAR(451.814, calculate_averaged_temperature.exec(), 0.01);
+    EXPECT_NEAR(442.74, calculate_averaged_temperature.exec(), 0.01);
 }
 
 int main(int argc, char *argv[])

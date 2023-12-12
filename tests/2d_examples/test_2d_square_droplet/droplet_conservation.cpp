@@ -154,9 +154,9 @@ int main()
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     /** Viscous acceleration. */
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, ContactWall<>>>>
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
         water_viscous_acceleration(water_inner, water_air_contact, water_wall_contact);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, ContactWall<>>>>
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
         air_viscous_acceleration(air_inner, air_water_contact, air_wall_contact);
     /** Surface tension. */
     InteractionDynamics<fluid_dynamics::SurfaceTensionStress> water_surface_tension_stress(water_air_contact, StdVec<Real>{Real(1.0)});
@@ -164,7 +164,7 @@ int main()
     InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
     InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
-    air_block.addBodyStateForRecording<Vecd>("PriorAcceleration");
+    air_block.addBodyStateForRecording<Vecd>("PriorForce");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

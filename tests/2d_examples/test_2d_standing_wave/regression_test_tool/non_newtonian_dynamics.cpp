@@ -26,7 +26,7 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Integration1stHalfInnerDissipative::interaction(index_i, dt);
 
-    Vecd acceleration = Vecd::Zero();
+    Vecd force = Vecd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -34,18 +34,18 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
         // elastic force
-        acceleration += (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
+        force += mass_[index_i] * (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
     }
 
-    acc_[index_i] += acceleration / rho_[index_i];
+    force_[index_i] += force / rho_[index_i];
 }
 //=================================================================================================//
-Oldroyd_BIntegration1stHalf<ContactWall<>>::
+Oldroyd_BIntegration1stHalf<Contact<Wall>>::
     Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation)
     : Integration1stHalfContactWallDissipative(wall_contact_relation),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")){};
 //=================================================================================================//
-void Oldroyd_BIntegration1stHalf<ContactWall<>>::interaction(size_t index_i, Real dt)
+void Oldroyd_BIntegration1stHalf<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
     Integration1stHalfContactWallDissipative::interaction(index_i, dt);
 
@@ -105,7 +105,7 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::interaction(size_t index_i, Real dt)
     dtau_dt_[index_i] = stress_rate;
 }
 //=================================================================================================//
-Oldroyd_BIntegration2ndHalf<ContactWall<>>::
+Oldroyd_BIntegration2ndHalf<Contact<Wall>>::
     Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
     : Integration2ndHalfWithWallDissipative(wall_contact_relation),
       oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
@@ -116,7 +116,7 @@ Oldroyd_BIntegration2ndHalf<ContactWall<>>::
     lambda_ = oldroyd_b_fluid_.getReferenceRelaxationTime();
 }
 //=================================================================================================//
-void Oldroyd_BIntegration2ndHalf<ContactWall<>>::interaction(size_t index_i, Real dt)
+void Oldroyd_BIntegration2ndHalf<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
     Integration2ndHalfWithWallDissipative::interaction(index_i, dt);
 

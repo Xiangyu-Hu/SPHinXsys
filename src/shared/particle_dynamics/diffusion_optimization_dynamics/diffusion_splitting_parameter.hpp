@@ -167,7 +167,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
             if (species_k[this->phi_][index_j] > 0.0)
             {
                 VariableType variable_derivative = variable_i;
-                Real phi_ij = this->species_modified_[index_i] - species_k[this->phi_][index_j];
+                Real phi_ij = 2 * (this->species_modified_[index_i] - species_k[this->phi_][index_j]);
                 Real parameter_b = 2.0 * phi_ij * contact_neighborhood.dW_ijV_j_[n] * dt / contact_neighborhood.r_ij_[n];
 
                 error_and_parameters.error_ -= variable_derivative * parameter_b;
