@@ -136,12 +136,12 @@ class WallBoundaryParticleGenerator : public SurfaceParticleGenerator
             // upper wall
             Real y1 = DH + 0.5 * wall_thickness;
             initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref);
-            Vec2d normal_direction_1 = Vec2d(0, 1.0);
+            Vec2d normal_direction_1 = Vec2d(0, -1.0);
             initializeSurfaceProperties(normal_direction_1, wall_thickness);
             // lower wall
             Real y2 = -0.5 * wall_thickness; // lower wall
             initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref);
-            Vec2d normal_direction_2 = Vec2d(0, -1.0);
+            Vec2d normal_direction_2 = Vec2d(0, 1.0);
             initializeSurfaceProperties(normal_direction_2, wall_thickness);
         }
     }

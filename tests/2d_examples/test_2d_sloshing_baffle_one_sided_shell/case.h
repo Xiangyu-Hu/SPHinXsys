@@ -179,7 +179,7 @@ class ShellBaffleParticleGenerator : public SurfaceParticleGenerator
             Real x = Gate_x_middle; // 0.5, 0.75, 1.5
             Real y = -BW + Real(i) * particle_spacing_gate;
             initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
-            Vec2d normal_direction = Vec2d(1.0, 0);
+            Vec2d normal_direction = Vec2d(-1.0, 0);
             initializeSurfaceProperties(normal_direction, Gate_width);
         }
     }

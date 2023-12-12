@@ -31,6 +31,7 @@ int main(int ac, char *av[])
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     /** The baffle, body and particles container. */
     SolidBody shell_baffle(sph_system, makeShared<DefaultShape>("ShellBaffle"));
+    shell_baffle.defineAdaptation<SPH::SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     shell_baffle.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
     shell_baffle.generateParticles<ShellBaffleParticleGenerator>();
     shell_baffle.addBodyStateForRecording<Vecd>("PseudoNormal");
@@ -192,6 +193,7 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
+            shell_update_normal.exec();
             shell_curvature.exec(); // update curvature before water shell contact update
 
             /** Update cell linked list and configuration. */

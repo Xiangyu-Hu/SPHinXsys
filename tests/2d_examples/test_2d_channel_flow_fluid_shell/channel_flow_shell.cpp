@@ -36,7 +36,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(wall_boundary);
-    /** Must construct ShellContactRelation first! Otherwise ComplexRelation creates ContactRelation*/
     ContactRelationToShell water_block_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
