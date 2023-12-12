@@ -30,22 +30,22 @@ Real rho0_s = 1.0;                 /** Normalized density. */
 Real Youngs_modulus = 1.3024653e6; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;                /** Poisson ratio. */
 
-StdVec<int> rondom_index;
+StdVec<int> random_index;
 StdLargeVec<Vecd> pseudo_normal;
 StdLargeVec<Vecd> normal;
 StdVec<Real> von_mises_strain;
 TEST(Plate, RigidRotationTest)
 {
-    for (size_t i = 0; i < rondom_index.size(); i++)
+    for (size_t i = 0; i < random_index.size(); i++)
     {
-        EXPECT_NEAR(pseudo_normal[rondom_index[i]][0], normal[rondom_index[i]][0], 1.0e-3);
-        EXPECT_NEAR(pseudo_normal[rondom_index[i]][1], normal[rondom_index[i]][1], 1.0e-3);
-        EXPECT_NEAR(pseudo_normal[rondom_index[i]][2], normal[rondom_index[i]][2], 1.0e-3);
+        EXPECT_NEAR(pseudo_normal[random_index[i]][0], normal[random_index[i]][0], 1.0e-3);
+        EXPECT_NEAR(pseudo_normal[random_index[i]][1], normal[random_index[i]][1], 1.0e-3);
+        EXPECT_NEAR(pseudo_normal[random_index[i]][2], normal[random_index[i]][2], 1.0e-3);
         EXPECT_NEAR(von_mises_strain[i], 0.0, 1.0e-3);
 
-        std::cout << "pseudo_normal[" << rondom_index[i] << "]: " << pseudo_normal[rondom_index[i]] << std::endl;
-        std::cout << "normal[" << rondom_index[i] << "]: " << normal[rondom_index[i]] << std::endl;
-        std::cout << "von_mises_strain[" << rondom_index[i] << "]: " << von_mises_strain[i] << std::endl;
+        std::cout << "pseudo_normal[" << random_index[i] << "]: " << pseudo_normal[random_index[i]] << std::endl;
+        std::cout << "normal[" << random_index[i] << "]: " << normal[random_index[i]] << std::endl;
+        std::cout << "von_mises_strain[" << random_index[i] << "]: " << von_mises_strain[i] << std::endl;
     }
 }
 
@@ -69,17 +69,17 @@ class PlateParticleGenerator : public SurfaceParticleGenerator
         }
     }
 };
-/** Define the controled geometry. */
-class ControledGeometry : public BodyPartByParticle
+/** Define the controlled geometry. */
+class ControlledGeometry : public BodyPartByParticle
 {
   public:
-    ControledGeometry(SPHBody &body, const std::string &body_part_name)
+    ControlledGeometry(SPHBody &body, const std::string &body_part_name)
         : BodyPartByParticle(body, body_part_name)
     {
-        TaggingParticleMethod tagging_particle_method = std::bind(&ControledGeometry::tagManually, this, _1);
+        TaggingParticleMethod tagging_particle_method = std::bind(&ControlledGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~ControledGeometry(){};
+    virtual ~ControlledGeometry(){};
 
   private:
     void tagManually(size_t index_i)
@@ -87,30 +87,30 @@ class ControledGeometry : public BodyPartByParticle
         body_part_particles_.push_back(index_i);
     };
 };
-/** Define the controled rotation. */
-class ControledRotation : public thin_structure_dynamics::ConstrainShellBodyRegion
+/** Define the controlled rotation. */
+class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyRegion
 {
   public:
-    ControledRotation(BodyPartByParticle &body_part)
+    ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
           vel_(particles_->vel_), angular_vel_(particles_->angular_vel_), pos_(particles_->pos_){};
-    virtual ~ControledRotation(){};
+    virtual ~ControlledRotation(){};
 
   protected:
     StdLargeVec<Vecd> &vel_, &angular_vel_, &pos_;
-    Real ratation_v = Pi;
+    Real rotation_v = Pi;
     void update(size_t index_i, Real dt = 0.0)
     {
         Real current_time = GlobalStaticVariables::physical_time_;
         if (current_time <= 0.5)
         {
-            vel_[index_i] = Vecd(0.0, -ratation_v * pos_[index_i][2], ratation_v * pos_[index_i][1]);
-            angular_vel_[index_i] = Vecd(ratation_v, 0.0, 0.0);
+            vel_[index_i] = Vecd(0.0, -rotation_v * pos_[index_i][2], rotation_v * pos_[index_i][1]);
+            angular_vel_[index_i] = Vecd(rotation_v, 0.0, 0.0);
         }
         else
         {
-            vel_[index_i] = Vecd(-ratation_v * pos_[index_i][1], ratation_v * pos_[index_i][0], 0.0);
-            angular_vel_[index_i] = Vecd(0.0, ratation_v, 0.0);
+            vel_[index_i] = Vecd(-rotation_v * pos_[index_i][1], rotation_v * pos_[index_i][0], 0.0);
+            angular_vel_[index_i] = Vecd(0.0, rotation_v, 0.0);
         }
     };
 };
@@ -150,8 +150,8 @@ int main(int ac, char *av[])
         stress_relaxation_second_half(plate_body_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** Constrain the Boundary. */
-    ControledGeometry controled_geometry(plate_body, "ControledGeometry");
-    SimpleDynamics<ControledRotation> controled_rotaton(controled_geometry);
+    ControlledGeometry controlled_geometry(plate_body, "ControlledGeometry");
+    SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
     /** Output */
     IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
-    controled_rotaton.exec();
+    controlled_rotation.exec();
 
     /**
      * From here the time stepping begins.
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
             stress_relaxation_first_half.exec(dt);
             if (GlobalStaticVariables::physical_time_ > 0.5 && GlobalStaticVariables::physical_time_ < 0.51)
             {
-                controled_rotaton.exec();
+                controlled_rotation.exec();
             }
             stress_relaxation_second_half.exec(dt);
 
@@ -216,8 +216,8 @@ int main(int ac, char *av[])
 
     for (int i = 0; i < 10; i++)
     {
-        rondom_index.push_back((double)rand() / (RAND_MAX)*shell_particles->total_real_particles_);
-        von_mises_strain.push_back(shell_particles->getVonMisesStrain(rondom_index[i]));
+        random_index.push_back((double)rand() / (RAND_MAX)*shell_particles->total_real_particles_);
+        von_mises_strain.push_back(shell_particles->getVonMisesStrain(random_index[i]));
     }
 
     update_normal.exec();
