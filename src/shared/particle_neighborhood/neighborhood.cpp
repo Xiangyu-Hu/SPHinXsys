@@ -5,9 +5,9 @@
 
 #include "neighborhood.h"
 
+#include "all_complex_bodies.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
-#include "complex_body.h"
 
 namespace SPH
 {

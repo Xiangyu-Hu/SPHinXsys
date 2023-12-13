@@ -80,8 +80,9 @@ class RegressionTestBase : public ObserveMethodType
     int number_of_snapshot_old_; /*< the snapshot size of last trimmed result. */
 
   public:
-    template <typename... ConstructorArgs>
-    explicit RegressionTestBase(ConstructorArgs &&...args) : ObserveMethodType(std::forward<ConstructorArgs>(args)...), xmlmemory_io_(),
+    template <typename... Args>
+    explicit RegressionTestBase(Args &&...args) 
+    : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
                                                              observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
                                                              result_xml_engine_in_("result_xml_engine_in", "result"),
                                                              result_xml_engine_out_("result_xml_engine_out", "result")

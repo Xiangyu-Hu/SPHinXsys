@@ -1,19 +1,17 @@
 /**
- * @file 	shock_tube.cpp
- * @brief 	This is a test to show the standard Sod shock tube case.
+ * @file shock_tube.cpp
+ * @brief This is a test to show the standard Sod shock tube case.
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
- * @author 	Zhentong Wang and Xiangyu Hu
+ * @author Zhentong Wang and Xiangyu Hu
  */
-#include "common_compressible_eulerian_classes.hpp" // eulerian classes for compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
+//	Basic geometry parameters and simulation setup.
 //----------------------------------------------------------------------
 Real DL = 5.0;                           /**< Tube length. */
 Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
 Real DH = particle_spacing_ref * 4;      /**< Tube height. */
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;              /**< initial density of left state. */
 Real rho0_r = 0.125;            /**< initial density of right state. */
@@ -49,7 +47,8 @@ class ShockTubeInitialCondition
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
+          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
+          p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");
         particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
@@ -65,27 +64,29 @@ class ShockTubeInitialCondition
         {
             // initial left state pressure,momentum and energy profile
             rho_[index_i] = rho0_l;
+            mass_[index_i] = rho_[index_i] * Vol_[index_i];
             p_[index_i] = p_l;
             Real rho_e = p_[index_i] / (gamma_ - 1.0);
             vel_[index_i] = velocity_l;
-            mom_[index_i] = rho0_l * velocity_l;
-            E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
+            mom_[index_i] = mass_[index_i] * vel_[index_i];
+            E_[index_i] = rho_e * Vol_[index_i] + 0.5 * mass_[index_i] * vel_[index_i].squaredNorm();
         }
         if (pos_[index_i][0] > DL / 10.0)
         {
             // initial right state pressure,momentum and energy profile
             rho_[index_i] = rho0_r;
+            mass_[index_i] = rho_[index_i] * Vol_[index_i];
             p_[index_i] = p_r;
             Real rho_e = p_[index_i] / (gamma_ - 1.0);
             vel_[index_i] = velocity_r;
-            mom_[index_i] = rho0_r * velocity_r;
-            E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
+            mom_[index_i] = mass_[index_i] * vel_[index_i];
+            E_[index_i] = rho_e * Vol_[index_i] + 0.5 * mass_[index_i] * vel_[index_i].squaredNorm();
         }
     }
 
   protected:
     StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
     StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
     StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
     Real gamma_;
@@ -120,13 +121,13 @@ int main(int ac, char *av[])
     SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
     wave_body.addBodyStateForRecording<Real>("TotalEnergy");
     wave_body.addBodyStateForRecording<Real>("Density");
-    SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
+    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
-    ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
-    InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
-    InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
+    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
-    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix);
+    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(wave_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.

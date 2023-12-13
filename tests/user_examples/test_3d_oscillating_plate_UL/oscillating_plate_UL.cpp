@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
     /** stress relaxation. */
     Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfDissipativeRiemann> plate_density_relaxation(plate_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
     InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
         plate_shear_acceleration_angular_conservative(plate_body_inner);
     /** Corrected configuration. */
@@ -247,7 +247,6 @@ int main(int ac, char *av[])
     {
         write_kinetic_energy.testResult();
     }
-
 
     return 0;
 }

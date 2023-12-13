@@ -94,7 +94,7 @@ class TimeStepPartInitialization1 : public TimeStepInitialization
         if (solid_particles->pos0_[index_i][0] > 0.0 && solid_particles->pos0_[index_i][1] > 0.0 &&
             solid_particles->pos0_[index_i][0] < PL && solid_particles->pos0_[index_i][1] < PH)
         {
-            acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
+            force_prior_[index_i] = mass_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
         }
     }
 };
@@ -112,7 +112,7 @@ class TimeStepPartInitialization2 : public TimeStepInitialization
         if (solid_particles->pos0_[index_i][0] < 0.0 || solid_particles->pos0_[index_i][1] < 0.0 ||
             solid_particles->pos0_[index_i][0] > PL || solid_particles->pos0_[index_i][1] > PH)
         {
-            acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
+            force_prior_[index_i] = mass_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
         }
     }
 };
@@ -124,7 +124,7 @@ class TimeDependentExternalForce : public Gravity
   public:
     explicit TimeDependentExternalForce(Vecd external_force)
         : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(Vecd &position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real current_time = GlobalStaticVariables::physical_time_;
         return current_time < time_to_full_external_force
@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
-    plate_body.addBodyStateForRecording<Vec3d>("PriorAcceleration");
+    plate_body.addBodyStateForRecording<Vec3d>("PriorForce");
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
@@ -250,7 +250,6 @@ int main(int ac, char *av[])
     {
         write_plate_max_displacement.testResult();
     }
-
 
     return 0;
 }

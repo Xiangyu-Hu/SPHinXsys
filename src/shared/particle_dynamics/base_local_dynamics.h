@@ -37,12 +37,28 @@
 namespace SPH
 {
 //----------------------------------------------------------------------
+// Interaction type identifies
+//----------------------------------------------------------------------
+class Base; /**< Indicating base class for a method */
+
+template <typename... InnerParameters>
+class Inner; /**< Inner interaction: interaction within a body*/
+
+template <typename... ContactParameters>
+class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
+
+class Boundary;        /**< Interaction with boundary */
+class Wall;            /**< Interaction with wall boundary */
+class Adaptive;        /**< Interaction with adaptive resolution */
+class Extended;        /**< An extened method of an interaction type */
+class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
+//----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
 class AllParticles
 {
   public:
-    AllParticles(BaseParticles *base_particles){};
+    explicit AllParticles(BaseParticles *base_particles){};
     bool operator()(size_t index_i)
     {
         return true;
@@ -55,7 +71,7 @@ class IndicatedParticles
     StdLargeVec<int> &indicator_;
 
   public:
-    IndicatedParticles(BaseParticles *base_particles)
+    explicit IndicatedParticles(BaseParticles *base_particles)
         : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
@@ -71,7 +87,7 @@ class NotIndicatedParticles
     StdLargeVec<int> &indicator_;
 
   public:
-    NotIndicatedParticles(BaseParticles *base_particles)
+    explicit NotIndicatedParticles(BaseParticles *base_particles)
         : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
@@ -80,12 +96,12 @@ class NotIndicatedParticles
 };
 
 template <typename DataType>
-class ParticlesPairAverageInner
+class PairAverageInner
 {
     StdLargeVec<DataType> &variable_;
 
   public:
-    ParticlesPairAverageInner(StdLargeVec<DataType> &variable)
+    explicit PairAverageInner(StdLargeVec<DataType> &variable)
         : variable_(variable){};
     DataType operator()(size_t index_i, size_t index_j)
     {
@@ -94,14 +110,14 @@ class ParticlesPairAverageInner
 };
 
 template <typename DataType>
-class ParticlesPairAverageContact
+class PairAverageContact
 {
     StdLargeVec<DataType> &inner_variable_;
     StdLargeVec<DataType> &contact_variable_;
 
   public:
-    ParticlesPairAverageContact(StdLargeVec<DataType> &inner_variable,
-                                StdLargeVec<DataType> &contact_variable)
+    PairAverageContact(StdLargeVec<DataType> &inner_variable,
+                       StdLargeVec<DataType> &contact_variable)
         : inner_variable_(inner_variable), contact_variable_(contact_variable){};
     DataType operator()(size_t index_i, size_t index_j)
     {
@@ -109,6 +125,55 @@ class ParticlesPairAverageContact
     };
 };
 
+class NoKernelCorrection
+{
+  public:
+    NoKernelCorrection(BaseParticles *particles){};
+    Real operator()(size_t index_i)
+    {
+        return 1.0;
+    };
+};
+
+class KernelCorrection
+{
+  public:
+    KernelCorrection(BaseParticles *particles)
+        : B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+
+    Matd operator()(size_t index_i)
+    {
+        return B_[index_i];
+    };
+
+  protected:
+    StdLargeVec<Matd> &B_;
+};
+
+class SingleResolution
+{
+  public:
+    SingleResolution(BaseParticles *particles){};
+    Real operator()(size_t index_i)
+    {
+        return 1.0;
+    };
+};
+
+class AdaptiveResolution
+{
+  public:
+    AdaptiveResolution(BaseParticles *particles)
+        : h_ratio_(*particles->getVariableByName<Real>("SmoothingLengthRatio")){};
+
+    Real operator()(size_t index_i)
+    {
+        return h_ratio_[index_i];
+    };
+
+  protected:
+    StdLargeVec<Real> &h_ratio_;
+};
 //----------------------------------------------------------------------
 // Particle reduce functors
 //----------------------------------------------------------------------
@@ -228,29 +293,31 @@ class Average : public ReduceSumType
 };
 
 /**
- * @class LocalDynamicsParameters
- * @brief Class template argument deduction (CTAD) for constructor parameters.
+ * @class ConstructorArgs
+ * @brief Class template argument deduction (CTAD) for constructor arguments.
  */
 template <typename BodyRelationType, typename... OtherArgs>
-struct LocalDynamicsParameters
+struct ConstructorArgs
 {
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
-    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs &&...other_args)
-        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
+    SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
+        : body_relation_(body_relation),
+          others_(other_args...){};
 };
 
 /**
  * @class ComplexInteraction
  * @brief A class that integrates multiple local dynamics.
  * Typically, it includes an inner interaction and one or
- * several contact interaction ad boundary conditions.
+ * several contact interaction and boundary conditions.
  */
-template <typename... InteractionType>
+template <typename... T>
 class ComplexInteraction;
 
-template <>
-class ComplexInteraction<>
+template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName>
+class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
 {
   public:
     ComplexInteraction(){};
@@ -258,21 +325,24 @@ class ComplexInteraction<>
     void interaction(size_t index_i, Real dt = 0.0){};
 };
 
-template <class FirstInteraction, class... OtherInteractions>
-class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
+template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,
+          class FirstInteraction, class... OtherInteractions>
+class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>, CommonParameters...>
+    : public LocalDynamicsName<FirstInteraction, CommonParameters...>
 {
   protected:
-    ComplexInteraction<OtherInteractions...> other_interactions_;
+    ComplexInteraction<LocalDynamicsName<OtherInteractions...>, CommonParameters...> other_interactions_;
 
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit ComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-        : FirstInteraction(first_parameter_set),
+    explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
+                                OtherParameterSets &&...other_parameter_sets)
+        : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
-        FirstInteraction::interaction(index_i, dt);
+        LocalDynamicsName<FirstInteraction, CommonParameters...>::interaction(index_i, dt);
         other_interactions_.interaction(index_i, dt);
     };
 };

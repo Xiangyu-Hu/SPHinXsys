@@ -61,7 +61,7 @@ class SolidParticles : public BaseParticles
     /** Get wall average velocity when interacting with fluid. */
     virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
     /** Get wall average acceleration when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_; };
+    virtual StdLargeVec<Vecd> *AverageForce() { return &force_; };
     /** Initialized variables for solid particles. */
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */
@@ -85,7 +85,7 @@ class ElasticSolidParticles : public SolidParticles
     //		for fluid-structure interaction (FSI)
     //----------------------------------------------------------------------
     StdLargeVec<Vecd> vel_ave_; /**<  fluid time-step averaged particle velocity */
-    StdLargeVec<Vecd> acc_ave_; /**<  fluid time-step averaged particle acceleration */
+    StdLargeVec<Vecd> force_ave_; /**<  fluid time-step averaged particle force */
 
     /** Return the Lagrange strain. */
     Matd getGreenLagrangeStrain(size_t particle_i);
@@ -133,7 +133,7 @@ class ElasticSolidParticles : public SolidParticles
     /** Get wall average velocity when interacting with fluid. */
     virtual StdLargeVec<Vecd> *AverageVelocity() override { return &vel_ave_; };
     /** Get wall average acceleration when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageAcceleration() override { return &acc_ave_; };
+    virtual StdLargeVec<Vecd> *AverageForce() override { return &force_ave_; };
 
     /** Initialize the variables for elastic particle. */
     virtual void initializeOtherVariables() override;

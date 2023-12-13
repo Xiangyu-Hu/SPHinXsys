@@ -23,4 +23,4 @@ add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_S
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, Eulerian")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-target_link_libraries(${PROJECT_NAME} extra_sources_2d)
+target_link_libraries(${PROJECT_NAME} sphinxsys_2d)

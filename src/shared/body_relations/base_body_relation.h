@@ -29,10 +29,11 @@
 #ifndef BASE_BODY_RELATION_H
 #define BASE_BODY_RELATION_H
 
+#include "base_body.h"
+#include "base_body_part.h"
 #include "base_geometry.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "complex_body.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -132,7 +133,7 @@ class BaseInnerRelation : public SPHRelation
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
     explicit BaseInnerRelation(RealBody &real_body);
     virtual ~BaseInnerRelation(){};
-
+    BaseInnerRelation &getRelation() { return *this; };
     virtual void resizeConfiguration() override;
 };
 
@@ -153,6 +154,7 @@ class BaseContactRelation : public SPHRelation
     BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
         : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
     virtual ~BaseContactRelation(){};
+    BaseContactRelation &getRelation() { return *this; };
 
     virtual void resizeConfiguration() override;
 };

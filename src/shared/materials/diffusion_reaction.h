@@ -330,9 +330,9 @@ class DiffusionReaction : public BaseMaterialType
     };
 
     /** Initialize a diffusion material. */
-    template <class DiffusionType, typename... ConstructorArgs>
+    template <class DiffusionType, typename... Args>
     void initializeAnDiffusion(const std::string &diffusion_species_name,
-                               const std::string &gradient_species_name, ConstructorArgs &&...args)
+                               const std::string &gradient_species_name, Args &&...args)
     {
         size_t diffusion_species_index = all_species_indexes_map_[diffusion_species_name];
         size_t gradient_species_index = all_species_indexes_map_[gradient_species_name];
@@ -341,7 +341,7 @@ class DiffusionReaction : public BaseMaterialType
 
         all_diffusions_.push_back(
             diffusion_ptr_keeper_.createPtr<DiffusionType>(
-                diffusion_species_index, gradient_species_index, std::forward<ConstructorArgs>(args)...));
+                diffusion_species_index, gradient_species_index, std::forward<Args>(args)...));
     };
 
     virtual DiffusionReaction<BaseMaterialType, NUM_REACTIVE_SPECIES> *ThisObjectPtr() override { return this; };

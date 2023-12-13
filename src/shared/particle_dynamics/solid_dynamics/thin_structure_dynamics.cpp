@@ -11,12 +11,23 @@ ShellDynamicsInitialCondition::ShellDynamicsInitialCondition(SPHBody &sph_body)
       n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
       pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
+UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
+    : LocalDynamics(sph_body), ShellDataSimple(sph_body),
+      n_(particles_->n_), F_(particles_->F_),
+      transformation_matrix_(particles_->transformation_matrix_) {}
+//=========================================================================================//
+void UpdateShellNormalDirection::update(size_t index_i, Real dt)
+{
+    /** Calculate the current normal direction of mid-surface. */
+    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
+}
+//=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
-      ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
+      ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), force_(particles_->force_),
       angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
-      acc_prior_(particles_->acc_prior_),
-      thickness_(particles_->thickness_),
+      force_prior_(particles_->force_prior_),
+      thickness_(particles_->thickness_), mass_(particles_->mass_),
       rho0_(particles_->elastic_solid_.ReferenceDensity()),
       E0_(particles_->elastic_solid_.YoungsModulus()),
       nu_(particles_->elastic_solid_.PoissonRatio()),
@@ -27,7 +38,7 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // Since the particle does not change its configuration in pressure relaxation step,
     // I chose a time-step size according to Eulerian method.
-    Real time_setp_0 = SMIN((Real)sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
+    Real time_setp_0 = SMIN((Real)sqrt(smoothing_length_ / ((force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i] + TinyReal)),
                             smoothing_length_ / (c0_ + vel_[index_i].norm()));
     Real time_setp_1 = SMIN((Real)sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
                             Real(1.0) / (angular_vel_[index_i].norm() + TinyReal));
@@ -53,10 +64,10 @@ ShellDeformationGradientTensor::
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       rho_(particles_->rho_),
-      thickness_(particles_->thickness_),
+      thickness_(particles_->thickness_), mass_(particles_->mass_),
       pos_(particles_->pos_), vel_(particles_->vel_),
-      acc_(particles_->acc_),
-      acc_prior_(particles_->acc_prior_),
+      force_(particles_->force_),
+      force_prior_(particles_->force_prior_),
       n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -75,7 +86,6 @@ ShellStressRelaxationFirstHalf::
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       numerical_damping_scaling_(particles_->numerical_damping_scaling_),
       global_shear_stress_(particles_->global_shear_stress_),
-      n_(particles_->n_),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
@@ -121,8 +131,6 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     rho_[index_i] = rho0_ / J;
 
-    /** Calculate the current normal direction of mid-surface. */
-    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
     /** Get transformation matrix from global coordinates to current local coordinates. */
     Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i]);
 
@@ -144,7 +152,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
         /** correct out-plane numerical damping. */
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
-                                                                                                                        elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+                                                                                                      elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -176,7 +184,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 //=================================================================================================//
 void ShellStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
-    vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
+    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
     angular_vel_[index_i] += dangular_vel_dt_[index_i] * dt;
 }
 //=================================================================================================//
@@ -209,15 +217,15 @@ void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
       axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_), vel_(particles_->vel_),
-      acc_(particles_->acc_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
-      dangular_vel_dt_(particles_->dangular_vel_dt_) {}
+      force_(particles_->force_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
+      dangular_vel_dt_(particles_->dangular_vel_dt_), mass_(particles_->mass_) {}
 //=================================================================================================//
 void ConstrainShellBodyRegionAlongAxis::update(size_t index_i, Real dt)
 {
     vel_[index_i][axis_] = 0.0;
     vel_[index_i][2] = 0.0;
-    acc_[index_i][axis_] = 0.0;
-    acc_[index_i][2] = 0.0;
+    force_[index_i][axis_] = 0.0;
+    force_[index_i][2] = 0.0;
 
     angular_vel_[index_i][1 - axis_] = 0.0;
     dangular_vel_dt_[index_i][1 - axis_] = 0.0;
@@ -231,7 +239,7 @@ DistributingPointForcesToShell::
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-      pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
+      pos0_(particles_->pos0_), force_prior_(particles_->force_prior_),
       thickness_(particles_->thickness_)
 {
     for (size_t i = 0; i < point_forces_.size(); i++)
@@ -281,11 +289,11 @@ void DistributingPointForcesToShell::setupDynamics(Real dt)
 //=================================================================================================//
 void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 {
-    acc_prior_[index_i] = Vecd::Zero();
+    force_prior_[index_i] = Vecd::Zero();
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
         Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
-        acc_prior_[index_i] += force / particles_->ParticleMass(index_i);
+        force_prior_[index_i] += force;
     }
 }
 //=================================================================================================//

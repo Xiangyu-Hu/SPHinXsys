@@ -49,7 +49,7 @@ int main(int ac, char *av[])
         /** Time step for diffusion. */
         GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
         /** Diffusion process for diffusion body. */
-        DiffusionRelaxation diffusion_relaxation(herat_model_inner);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
         /** Compute the fiber and sheet after diffusion. */
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
         /** Write the body state to Vtp file. */

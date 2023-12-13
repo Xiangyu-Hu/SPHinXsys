@@ -1,28 +1,29 @@
 /**
- * @file 	fsi2.cpp
- * @brief 	This is the benchmark test of fluid-structure interaction.
+ * @file fsi2.cpp
+ * @brief This is the benchmark test of fluid-structure interaction.
  * @details We consider a flow-induced vibration of an elastic beam behind a cylinder in 2D.
- *			The case can be found in Chi Zhang, Massoud Rezavand, Xiangyu Hu,
- *			Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
- *			Journal of Computation Physics 404 (2020) 109135.
- * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
+ * The case can be found in Chi Zhang, Massoud Rezavand, Xiangyu Hu,
+ * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
+ * Journal of Computation Physics 404 (2020) 109135.
+ * @author Chi Zhang and Xiangyu Hu
  */
+#include "fsi2.h" // case file to setup the test case
 #include "sphinxsys.h"
-
-#include "fsi2.h" //	case file to setup the test case
 using namespace SPH;
-
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
-    //	Build up the environment of a SPHSystem with global controls.
+    //	Build up SPHSystem and IO environment.
     //----------------------------------------------------------------------
+    BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
-#ifdef BOOST_AVAILABLE
+    sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(false);        // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-#endif
+
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -44,6 +45,7 @@ int main(int ac, char *av[])
         : insert_body.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
+    StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
     beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<FluidObserverParticleGenerator>();
@@ -59,14 +61,10 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
-        /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
-        /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, {&insert_body});
-        /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, {&insert_body});
-        /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(insert_body_inner);
+        BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, {&insert_body});
+        ReloadParticleIO write_particle_reload_files(io_environment, {&insert_body});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -97,14 +95,18 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
+    InnerRelation water_block_inner(water_block);
     InnerRelation insert_body_inner(insert_body);
-    ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
+    ContactRelation water_block_contact(water_block, RealBodyVector{&wall_boundary, &insert_body});
     ContactRelation insert_body_contact(insert_body, {&water_block});
     ContactRelation beam_observer_contact(beam_observer, {&insert_body});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // and only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -112,20 +114,20 @@ int main(int ac, char *av[])
     /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_complex);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-    /** Computing vorticity in the flow. */
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    /** Computing vorticity in the flow for visualization. */
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
@@ -156,7 +158,7 @@ int main(int ac, char *av[])
     /** Constrain region of the inserted body. */
     BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
-    /** Update norm .*/
+    /** Update surface norm direction.*/
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
@@ -166,8 +168,7 @@ int main(int ac, char *av[])
         write_total_viscous_force_on_insert_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
-    ObservedQuantityRecording<Vecd>
-        write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
+    ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -186,7 +187,7 @@ int main(int ac, char *av[])
     /** computing linear reproducing configuration for the insert body. */
     insert_body_corrected_configuration.exec();
     //----------------------------------------------------------------------
-    //	Setup computing and initial conditions.
+    //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;

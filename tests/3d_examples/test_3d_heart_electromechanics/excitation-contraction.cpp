@@ -77,15 +77,8 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
 };
 using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation method. */
-class DiffusionRelaxation
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<FiberDirectionDiffusionParticles>>
-{
-  public:
-    explicit DiffusionRelaxation(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~DiffusionRelaxation(){};
-};
+using FiberDirectionDiffusionRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<FiberDirectionDiffusionParticles, CorrectedKernelGradientInner>>>;
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
     : public DiffusionReactionSpeciesConstraint<BodyPartByParticle, FiberDirectionDiffusionParticles>
@@ -298,7 +291,7 @@ int main(int ac, char *av[])
         /** Time step for diffusion. */
         GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
         /** Diffusion process for diffusion body. */
-        DiffusionRelaxation diffusion_relaxation(herat_model_inner);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
         /** Compute the fiber and sheet after diffusion. */
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
         /** Write the body state to Vtp file. */

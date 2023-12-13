@@ -1,7 +1,7 @@
 /**
  * @file 	taylor_bar.h
  * @brief 	This is the case setup for plastic taylor bar.
- * @author 	xiaojing tang Chi Zhang and Xiangyu Hu
+ * @author 	Xiaojing Tang, Dong Wu and Xiangyu Hu
  */
 #pragma once
 
@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real PL = 0.0032; /**< X-direction domain. */
 Real PW = 0.0324; /**< Z-direction domain. */
-Real particle_spacing_ref = PL / 10.0;
+Real particle_spacing_ref = PL / 5.0;
 /** YOU can try PW = 0.2 and particle_spacing_ref = PH / 10.0 to see an interesting test. */
 Real SL = particle_spacing_ref * 4.0; /**< Length of the holder is one layer particle. */
 Real inner_circle_radius = PL;
@@ -31,10 +31,10 @@ Real Youngs_modulus = 1.17e11;
 Real yield_stress = 0.4e9;
 Real hardening_modulus = 0.1e9;
 
-class Wall : public ComplexShape
+class WallShape : public ComplexShape
 {
   public:
-    explicit Wall(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit WallShape(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
         Vecd translation_holder(0.0, 0.0, -0.5 * SL);
@@ -78,6 +78,5 @@ class ColumnObserverParticleGenerator : public ObserverParticleGenerator
     explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
     {
         positions_.push_back(Vecd(0.0, 0.0, PW));
-        positions_.push_back(Vecd(PL, 0.0, 0.0));
     }
 };

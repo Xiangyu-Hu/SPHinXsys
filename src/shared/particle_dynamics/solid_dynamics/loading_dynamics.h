@@ -34,7 +34,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 
@@ -77,7 +77,8 @@ class ImposeExternalForce : public LocalDynamics, public SolidDataSimple
 class SpringDamperConstraintParticleWise : public LocalDynamics, public SolidDataSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
+    StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &force_prior_;
+    StdLargeVec<Real> &mass_;
     Vecd stiffness_;
     Vecd damping_coeff_; // damping component parallel to the spring force component
 
@@ -110,7 +111,7 @@ class SpringNormalOnSurfaceParticles : public LocalDynamics, public SolidDataSim
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_, &pos0_, &n_, &n0_, &vel_, &acc_prior_;
+    StdLargeVec<Vecd> &pos_, &pos0_, &n_, &n0_, &vel_, &force_prior_;
     StdLargeVec<Real> &mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
@@ -132,7 +133,7 @@ class SpringNormalOnSurfaceParticles : public LocalDynamics, public SolidDataSim
 class SpringOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
+    StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &force_prior_;
     StdLargeVec<Real> &mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
@@ -151,7 +152,8 @@ class SpringOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
 class AccelerationForBodyPartInBoundingBox : public LocalDynamics, public SolidDataSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &acc_prior_;
+    StdLargeVec<Vecd> &pos_, &force_prior_;
+    StdLargeVec<Real> &mass_;
     BoundingBox bounding_box_;
     Vecd acceleration_;
 
@@ -174,8 +176,8 @@ class ForceInBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public S
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos0_, &acc_prior_;
-    Vecd acceleration_;
+    StdLargeVec<Vecd> &pos0_, &force_prior_;
+    Vecd force_vector_;
     Real end_time_;
 };
 
@@ -193,7 +195,7 @@ class SurfacePressureFromSource : public BaseLocalDynamics<BodyPartByParticle>, 
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos0_, &n_, &acc_prior_;
+    StdLargeVec<Vecd> &pos0_, &n_, &force_prior_;
     StdLargeVec<Real> &mass_;
     StdVec<std::array<Real, 2>> pressure_over_time_;
     StdLargeVec<bool> apply_pressure_to_particle_;

@@ -545,7 +545,7 @@ public:
 		Real time = GlobalStaticVariables::physical_time_;
 		pos_[index_i] = pos0_[index_i] + getDisplacement(time);
 		vel_[index_i] = getVelocity(time);
-		acc_[index_i] = getAcceleration(time);
+		force_[index_i] = mass_[index_i] * getAcceleration(time);
 	};
 };
 

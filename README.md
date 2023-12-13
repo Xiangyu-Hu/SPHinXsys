@@ -14,14 +14,14 @@
 
 ## Description
 
-SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle Hydrodynamics for industrial compleX systems.
-It provides C++ APIs for physical accurate simulation and aims to model coupled industrial dynamic systems including fluid, solid, multi-body dynamics
-and beyond with SPH (smoothed particle hydrodynamics), a meshless computational method using particle discretization.
-For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
-
-SPHinXsys is a multi-physics, multi-resolution SPH library based on a unified computational framework in which strong couplings are achieved for all involved physics.
-Although it is not a standalone application itself,
+SPHinXsys (pronunciation: s'finksis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
+The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underlying numerical method
+for both particle-based and mesh-based discretization.
+Due to the unified computational framework, SPHinXsys is able to carry out simulation and optimization at the same time.
+Although SPHinXsys is not a standalone application itself,
 many examples designated for the specific type of applications are provided.
+
+For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
 
 ## Examples at a glance
 
@@ -38,7 +38,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/half-sphere.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_twisting_column/twisting_column.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
 
 ### Fully compatible to classical FVM method
@@ -47,15 +47,47 @@ Through the unified computational framework in SPHinXsys,
 the algorithms for particle methods are full compatible to those in the classical finite volume method (FVM).
 The following gives an example of the flow around cylinder problem solved by FVM in SPHinXsys.
 
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fvm-sphinxsys-flow-around-cylinder.gif" height="168px"></a>
 
 Note that the code for FVM algorithm is exact the same one for particle interaction in SPHinXsys.
 The only difference is that SPHinXsys reads a predefined mesh, other than generate particles, before the computation.
 
-## Journal publications
+### Target-driven optimization
 
-Main Reference:
+The unique target-driven optimization is able to achieve the optimization target and physical solution all-in-once, 
+which is able to accelerate optimization process greatly.
+The following gives an example of optimizing the conductivity distribution 
+for a thermal domain problem targeting minimum average temperature.
+
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/optimization/test_2d_VP_heat_flux_optimization/VP_heat_flux_optimization.cpp">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/optimization.gif" height="192px"></a>
+
+Note that the physical solution of the thermal domain (right) and the optimal distribution of conductivity (left)
+are obtained at the same time when optimization is finished. 
+Also note that the entire optimization process is very fast and 
+only several times slower than that for a single physical solution with given conductivity distribution.  
+
+### Python interface
+
+While SPHinXsys is written in C++, it provides a python interface for users to write python scripts to control the simulation, 
+including carry out regression tests for continuous integration (CI) and other tasks.
+One example is given below for the dambreak case.
+Please check the source code of 
+[2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python) 
+for the usage.
+
+### Heterogenous computing
+
+Recently, we have a preview release for the heterogeneous computing version of SPHinXsys. 
+By using SYCL, a royalty-free open standard developed by the Khronos Group that allows developers
+to program heterogeneous architectures in standard C++, SPHinXsys is able to utilize the power of GPU.
+Please check the [Preview Release](https://github.com/Xiangyu-Hu/SPHinXsys/releases/tag/v1.0-beta.08-sycl)
+and the [SYCL branch](https://github.com/Xiangyu-Hu/SPHinXsys/tree/sycl) for details.
+
+## Publications
+
+Main publication on the library:
 
 1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu,
 "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
@@ -64,7 +96,7 @@ Computer Physics Communications, 267, 108066, 2021.
 
 The algorithms in SPHinXsys are based on the following publications:
 
-1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiagnyu Hu,
+1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiangyu Hu,
 "Smoothed particle hydrodynamics: Methodology development and recent achievement",
 Journal of Hydrodynamics 34(5), 767--805, 2022  
 [![Review Publication](https://img.shields.io/badge/doi-10.1007%2Fs42241.022.0052.1-d45815.svg)](https://doi.org/10.1007/s42241-022-0052-1)
@@ -121,6 +153,9 @@ Volume 236, (2021) 109540
 
 14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, 490, 112303, 2023.  
 [![Free Stream](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2023.112303-d45815.svg)](https://doi.org/10.1016/j.jcp.2023.112303)
+
+15. Yaru Ren, Pengzhi Lin, Chi Zhang, Xiangyu Hu, "An efficient weighted correction method in Riemann SPH for the simulation of general free surface flows", Computer Methods in Applied Mechanics and Engineering, 417, 116460, 2023.  
+[![Correction Method](https://img.shields.io/badge/doi-10.1016%2Fj.cma.2023.116460-d45815.svg)](https://doi.org/10.1016/j.cma.2023.116460)
 
 ## Software Architecture
 

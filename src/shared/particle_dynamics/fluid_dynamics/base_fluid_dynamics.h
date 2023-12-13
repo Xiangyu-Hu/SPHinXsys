@@ -32,16 +32,52 @@
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
 #include "base_particles.hpp"
-#include "fluid_body.h"
+#include "solid_particles.h"
 
 namespace SPH
 {
+//----------------------------------------------------------------------
+// Interaction types specifically for fluid dynamics
+//----------------------------------------------------------------------
+class FreeSurface; /**< A interaction considering the effect of free surface */
+class FreeStream; /**< A interaction considering the effect of free stream */
+template <typename InteractionType>
+class AngularConservative; /**< A interaction considering the conservation of angular momentum */
+
 namespace fluid_dynamics
 {
 typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
 typedef DataDelegateInner<BaseParticles> FluidDataInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> FluidContactOnly;
+typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
+typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
+/**
+ * @class InteractionWithWall
+ * @brief Base class adding interaction with wall to general relaxation process
+ */
+
+template <template <typename...> class BaseInteractionType>
+class InteractionWithWall : public BaseInteractionType<FSIContactData>
+{
+  public:
+    explicit InteractionWithWall(BaseContactRelation &wall_contact_relation)
+        : BaseInteractionType<FSIContactData>(wall_contact_relation)
+    {
+        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+        {
+            wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
+            wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
+            wall_n_.push_back(&(this->contact_particles_[k]->n_));
+            wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
+        }
+    };
+    virtual ~InteractionWithWall(){};
+
+  protected:
+    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
+    StdVec<StdLargeVec<Real> *> wall_mass_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BASE_FLUID_DYNAMICS_H
