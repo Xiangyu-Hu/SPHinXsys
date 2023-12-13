@@ -13,8 +13,8 @@ SPHinXsys depends on the following:
 * CMake 3.16 or later
 * C++17 compliant compiler
 
-  * Visual Studio 2017 15.7 or later (Windows)
-  * GCC 8 or later (Linux)
+* Visual Studio 2017 15.7 or later (Windows)
+* GCC 8 or later (Linux)
 * Boost libraries
 * Intel Thread Building Blocks
 * Simbody 3.6.0 or later
@@ -134,6 +134,123 @@ For running a specific case, for example, the **2d_dambreak**:
     make -j 7 # Where 7 is the number of parallel compilation processes, adapt according to your CPU  
     cd bin
     ./test_2d_dambreak
+
+Installing SYCL version on Ubuntu
+---------------------------------------
+
+Note that since the current Windows Subsystem for Linux (WSL1 or WSL2) does not support Unified Shared Memory (USM), 
+the current SYCL version only runs on full Linux.
+
+First Step: Install Intel oneAPI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Go to "https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html" 
+and choose the appropriate system and method to install Intel oneAPI.
+For instance, we choose Linux(For now, only full Linux can run SPHinXsys SYCL version) and offline installer, 
+then we get following instructions:
+
+..  code-block:: pwsh
+
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/20f4e6a1-6b0b-4752-b8c1-e5eacba10e01/l_BaseKit_p_2024.0.0.49564_offline.sh
+    sudo sh ./l_BaseKit_p_2024.0.0.49564_offline.sh
+
+Run these two commands in sequence, and then the GUI interface of the installer will open. 
+Just use the default settings (the warning of the Prerequistes Check can be ignored).
+
+The sign of successful installation is to open the terminal and enter:
+
+..  code-block:: pwsh
+    
+    source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+ 
+If it shows that "oneAPI environment initialized", the installation is successful.
+Note that you need to activate the oneAPI environment every time you open a new terminal.
+Or you can add the above command to the "~/.bashrc" file, 
+so that the oneAPI environment can be automatically activated when the terminal is opened.
+
+Second Step: Install the GPU driver and CUDA (for the NVIDIA GPU)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are so many tutorials and ways to install NVIDIA driver and CUDA on the Internet, 
+such as official documents "https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-overview". 
+
+Here we list only one of them:
+
+Driver: Open the "Software & Updates" that comes with Ubuntu, then select "Additional Drivers", and finally select the appropriate driver. 
+Click "Apply Changes", and the system will restart and automatically complete the driver update for you.
+(Note that this is valid on Ubuntu 22.04.3LTS. If something unexpected happens, you can try other methods to install the NVIDIA driver.)
+The sign of successful installation is to open the terminal and enter "nvidia-smi". 
+If the graphics card information can be printed correctly, the installation is successful.
+
+CUDA: Go to "https://developer.nvidia.com/cuda-downloads" and choose the appropriate system and method to install CUDA.
+For instance, we choose Ubuntu and runfile (local) installer, 
+then we get following instructions:
+
+..  code-block:: pwsh
+
+    wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run
+    sudo sh cuda_12.3.1_545.23.08_linux.run
+
+Run these two commands in sequence. 
+Please note that there will be a few seconds of waiting after you execute this command, this is normal. 
+These system will first ask to choose "abort" or "continue" the installation,
+as it detected that the driver has been installed before. 
+You should choose to "continue" and cancel out the installing driver later.
+After you see options such as "accept", "decline", etc., you can enter "accept" to continue.
+Another interface will open. 
+You can cancel out the installation of the driver that comes with CUDA 
+because we have already installed it before.
+
+After CUDA is installed, go to the "~/.bashrc" file, add the following instructions at the end of the file:
+
+..  code-block:: pwsh
+
+    export CUDA_HOME=/usr/local/cuda
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CUDA_HOME}/lib64
+    export PATH=${CUDA_HOME}/bin:${PATH}
+
+Then, open the terminal and enter "source ~/.bashrc" to make the changes take effect.
+The sign of successful installation is to open the terminal and enter "nvcc -V". 
+If the CUDA information can be printed correctly, the installation is successful.
+
+Third Step: Install the oneAPI Plugin for NVIDIA GPU 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since oneAPI officially does not currently support graphics cards from other manufacturers, 
+we need to install the corresponding plug-ins so that NVIDIA or AMD graphics cards can be detected by SYCL. 
+There is a detailed official document explaining how to install this plugin:
+"https://developer.codeplay.com/products/oneapi/nvidia/2024.0.0/guides/get-started-guide-nvidia"
+
+The sign of successful installation is to open the terminal and enter "sycl-ls". 
+If it can detect your graphics card information, the installation is successful.
+(You need to activate the oneAPI environment first.)
+
+Final Step: Building SPHinXsys-SYCL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Clone the sycl branch of SPHinXsys:
+
+..  code-block:: pwsh
+
+    git clone -b sycl https://github.com/Xiangyu-Hu/SPHinXsys.git SPHinXsysSYCL
+    cd SPHinXsysSYCL
+    cmake   -G "Unix Makefiles"                                                     \
+        -D CMAKE_BUILD_TYPE=Release                                                 \
+        -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx                          \
+        -D CMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake"      \
+        -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache   \
+        -D SPHINXSYS_USE_SYCL=ON                                                    \
+        -D SPHINXSYS_SYCL_TARGETS=nvptx64-nvidia-cuda                               \
+        -S .                                                                        \
+        -B ./build
+    cmake --build build/ --target test_2d_dambreak_sycl
+
+Then, you can run it:
+
+..  code-block:: pwsh
+
+    cd build/tests/2d_examples/test_2d_dambreak_sycl/bin/
+    ./test_2d_dambreak_sycl
 
 
 
