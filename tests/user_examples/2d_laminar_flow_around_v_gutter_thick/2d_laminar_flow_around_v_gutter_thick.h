@@ -15,7 +15,7 @@ Real offset_dist_ref = 0.0;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.150;						    		          /**< Reference length. */
+Real DL = 0.300;						    		          /**< Reference length. */
 Real DH = 0.100 - 2.0 * offset_dist_ref;                   /**< Reference and the height of main channel. */
 Real Gutter_b = 0.022; /**< Expanding size, regard it as characteristic length. */
 Real BW = resolution_ref * 4;		                      /**< Reference size of the emitter. */
@@ -30,7 +30,7 @@ Vec2d point_coordinate_3(5.0, 5.0);
 StdVec<Vecd> observation_locations = { point_coordinate_1, point_coordinate_2, point_coordinate_3 };
 //-------------------------------------------------------
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge- 4.0 * BW , -0.25 * DH), Vec2d(DL + 4.0 * BW, 1.25 * DH));
 /** Observation locations, but for channel flow, the cell-based monitoring approach is used, parameters are defined in corresponding .cpp file*/
 Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
@@ -102,6 +102,24 @@ std::vector<Vecd> v_gutter_shape_down
 	Vecd(0.0500, 0.0475218),
 	Vecd(0.0506123, 0.049),
 };
+/** the side wall . */
+Real extend_value = 4.0 * BW;
+std::vector<Vecd> wall_side_up
+{
+	Vecd(-DL_sponge - extend_value, DH + resolution_ref/2.0),
+	Vecd(-DL_sponge - extend_value, DH + BW + resolution_ref / 2.0),
+	Vecd(DL + extend_value, DH + BW + resolution_ref / 2.0),
+	Vecd(DL + extend_value, DH + resolution_ref / 2.0),
+	Vecd(-DL_sponge - extend_value, DH + resolution_ref / 2.0),
+};
+std::vector<Vecd> wall_side_down
+{
+	Vecd(-DL_sponge - extend_value, -BW - resolution_ref / 2.0),
+	Vecd(-DL_sponge - extend_value, 0.0 - resolution_ref / 2.0),
+	Vecd(DL + extend_value, 0.0 - resolution_ref / 2.0),
+	Vecd(DL + extend_value, -BW - resolution_ref / 2.0),
+	Vecd(-DL_sponge - extend_value, -BW - resolution_ref / 2.0),
+};
 
 //----------------------------------------------------------------------
 //	Define case dependent body shapes.
@@ -123,6 +141,8 @@ public:
 	{
 		multi_polygon_.addAPolygon(v_gutter_shape_up, ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(v_gutter_shape_down, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(wall_side_up, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(wall_side_down, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
