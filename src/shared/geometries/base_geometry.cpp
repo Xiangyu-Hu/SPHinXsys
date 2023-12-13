@@ -38,7 +38,7 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
     {
         Vecd jittered = probe_point;
         for (int l = 0; l != probe_point.size(); ++l)
-            jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
+            jittered[l] = probe_point[l] + (Real(rand() / RAND_MAX) - 0.5) * 100.0 * Eps;
         if (checkContain(jittered) == is_contain)
             displacement_to_surface = findClosestPoint(jittered) - jittered;
     }

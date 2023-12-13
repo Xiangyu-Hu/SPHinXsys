@@ -36,7 +36,7 @@ bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INC
     {
         Vec3d jittered = probe_point; // jittering
         for (int l = 0; l != probe_point.size(); ++l)
-            jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * (SqrtEps + distance_to_pnt * 0.1);
+            jittered[l] = probe_point[l] + (Real(rand() / RAND_MAX) - 0.5) * (SqrtEps + distance_to_pnt * 0.1);
         Vec3d from_face_to_jittered = jittered - SimTKToEigen(closest_pnt);
         Vec3d direction_to_jittered = from_face_to_jittered / (from_face_to_jittered.norm() + TinyReal);
         cosine_angle = face_normal.dot(direction_to_jittered);
