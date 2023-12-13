@@ -48,6 +48,7 @@ void ViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
     const Vecd &vel_i = this->vel_[index_i];
 
     Vecd force = Vecd::Zero();
+    Real kernel_devide_rij(0.0);
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
@@ -59,10 +60,16 @@ void ViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
 
             Vecd vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
             force += 2.0 * this->mu_ * this->mass_[index_i] * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+            /*below for debuging*/
+            kernel_devide_rij += contact_neighborhood.dW_ijV_j_[n] / (r_ij + 0.01 * this->smoothing_length_);
         }
     }
-
+    
     this->force_prior_[index_i] += force;
+    /*below for debuging*/
+    viscous_force_on_wall_[index_i] = force;
+    kernel_gradient_divide_Rij_[index_i]=kernel_devide_rij;
+
 }
 //=================================================================================================//
 ViscousAcceleration<Contact<>>::ViscousAcceleration(BaseContactRelation &contact_relation)

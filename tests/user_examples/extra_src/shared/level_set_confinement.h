@@ -60,6 +60,7 @@ namespace SPH
             const Real coefficient_;
             Real smoothing_length_sqr_;
             LevelSetShape* level_set_shape_;
+            StdLargeVec<Vecd> &transport_acc_;
         };
 
         /**
@@ -72,13 +73,16 @@ namespace SPH
             StaticConfinementViscousAcceleration(NearShapeSurface& near_surface);
             virtual ~StaticConfinementViscousAcceleration() {};
             void interaction(size_t index_i, Real dt = 0.0);
-            StdLargeVec<Vecd> &getForceFromFluid() { return force_prior_; };
+            //StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
         protected:
             StdLargeVec<Vecd>& pos_;
             StdLargeVec<Real>& rho_, &mass_;
             StdLargeVec<Vecd>& vel_, &force_prior_;
             Real mu_;
             LevelSetShape* level_set_shape_;
+            StdLargeVec<Vecd> force_from_fluid_;
+            StdLargeVec<Real> kernel_value_;
+
  
         };
 
@@ -279,7 +283,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
             SimpleDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            InteractionDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
+            InteractionDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
             InteractionDynamics<StaticConfinementFreeSurfaceIndication> free_surface_indication_;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
 

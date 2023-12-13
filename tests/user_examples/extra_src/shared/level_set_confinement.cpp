@@ -10,23 +10,24 @@ namespace SPH
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			pos_(particles_->pos_), surface_indicator_(particles_->indicator_),
 			coefficient_(coefficient), smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-			level_set_shape_(&near_surface.level_set_shape_) {}
+			level_set_shape_(&near_surface.level_set_shape_), transport_acc_(*particles_->getVariableByName<Vecd>("TransportAcceleration"))
+		{}
 		//=================================================================================================//
         void StaticConfinementTransportVelocity::update(size_t index_i, Real dt)
 		{
-			Vecd acceleration_trans = Vecd::Zero();
+			//Vecd acceleration_trans = Vecd::Zero();
             /*below for debuging*/
             //Vecd pos_tem = pos_[index_i];
 			Real inv_h_ratio = 1.0;
 			// acceleration for transport velocity
-			acceleration_trans -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
+			transport_acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			/** correcting particle position */
             //if (surface_indicator_[index_i] == 1 || surface_indicator_[index_i]==0)
             
-            if (surface_indicator_[index_i] == 0)
+           /* if (surface_indicator_[index_i] == 0)
             {
                 pos_[index_i] += coefficient_ *  smoothing_length_sqr_ * acceleration_trans;
-            }
+            }*/
             
 			 //std::string output_folder = "./output";
 				//std::string filefullpath = output_folder + "/" + "transportVelocity_wall_levelset_" + std::to_string(dt) + ".dat";
@@ -45,8 +46,11 @@ namespace SPH
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			pos_(particles_->pos_), mass_(particles_->mass_), force_prior_(particles_->force_prior_), rho_(particles_->rho_),
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
-			level_set_shape_(&near_surface.level_set_shape_)
-		{}
+            level_set_shape_(&near_surface.level_set_shape_)
+		{
+            particles_->registerVariable(force_from_fluid_, "ViscousForceFromWall"); 
+			particles_->registerVariable(kernel_value_, "KernelValue");
+		}
 		//=================================================================================================//
         void StaticConfinementViscousAcceleration::interaction(size_t index_i, Real dt)
 		{
@@ -60,7 +64,9 @@ namespace SPH
 			Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
 			force = 2.0 * mu_ * mass_[index_i] * kernel_gradient_divide_Rij * vel_derivative /rho_i;
 			force_prior_[index_i] += force;
-			
+                        /*below for debuging*/
+            force_from_fluid_[index_i] = force;
+            kernel_value_[index_i] = kernel_gradient_divide_Rij;
 			/*for debuging*/
 			/*Vecd force = Vecd::Zero();
 			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;*/

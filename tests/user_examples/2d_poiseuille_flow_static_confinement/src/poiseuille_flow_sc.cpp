@@ -148,7 +148,7 @@ int main()
     /** Pressure relaxation algorithm without Riemann solver for viscous flows. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     /** Pressure relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerNoRiemann> density_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
     /** Impose transport velocity. */
@@ -222,7 +222,7 @@ int main()
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec(GlobalStaticVariables::physical_time_);
+            viscous_acceleration.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
             /** Dynamics including pressure relaxation. */

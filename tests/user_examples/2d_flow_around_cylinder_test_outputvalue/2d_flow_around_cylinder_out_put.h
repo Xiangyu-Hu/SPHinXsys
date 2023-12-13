@@ -12,12 +12,11 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 15.0;                         /**< Channel length. */
 Real DH = 10.0;                         /**< Channel height. */
-Real resolution_ref = 0.2;              /**< Initial reference particle spacing. */
+Real resolution_ref = 0.1;              /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 10.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0;  /**< Sponge region to impose freestream condition. */
 Vec2d insert_circle_center(4.0, 5.0);   /**< Location of the cylinder center. */
 Real insert_circle_radius = 0.75;       /**< Radius of the cylinder. */
-Vec2d insert_circle_center_1(6.0, 5.0);  
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 // Observation locations
@@ -77,7 +76,6 @@ class WaterBlock : public ComplexShape
         MultiPolygon multi_polygon;
         multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
         multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        //multi_polygon.addACircle(insert_circle_center_1, insert_circle_radius, 100, ShapeBooleanOps::sub);
         add<MultiPolygonShape>(multi_polygon);
     }
 };
@@ -104,7 +102,6 @@ class Cylinder : public MultiPolygonShape
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
     }
 };
-
 //----------------------------------------------------------------------
 //	Case dependent flow boundary condition.
 //----------------------------------------------------------------------

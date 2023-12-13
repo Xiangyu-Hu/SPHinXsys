@@ -83,9 +83,18 @@ class ViscousAcceleration<ContactWall<>> : public BaseViscousAccelerationWithWal
 {
   public:
     explicit ViscousAcceleration(BaseContactRelation &wall_contact_relation)
-        : BaseViscousAccelerationWithWall(wall_contact_relation){};
+        : BaseViscousAccelerationWithWall(wall_contact_relation)  
+    {
+       /*below for debuging*/
+       this->particles_->registerVariable(viscous_force_on_wall_, "ViscousForceFromWall");
+       this->particles_->registerVariable(kernel_gradient_divide_Rij_, "KernelGradientDivideRij");
+    };
     virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+    /*below for debuging*/
+    StdLargeVec<Vecd> viscous_force_on_wall_;
+    StdLargeVec<Real> kernel_gradient_divide_Rij_;
 };
 
 template <>
