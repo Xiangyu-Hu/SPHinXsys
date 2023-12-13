@@ -68,6 +68,23 @@ are obtained at the same time when optimization is finished.
 Also note that the entire optimization process is very fast and 
 only several times slower than that for a single physical solution with given conductivity distribution.  
 
+### Python interface
+
+While SPHinXsys is written in C++, it provides a python interface for users to write python scripts to control the simulation, 
+including carry out regression tests for continuous integration (CI) and other tasks.
+One example is given below for the dambreak case.
+Please check the source code of 
+[2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python) 
+for the usage.
+
+### Heterogenous computing
+
+Recently, we have a preview release for the heterogeneous computing version of SPHinXsys. 
+By using SYCL, a royalty-free open standard developed by the Khronos Group that allows developers
+to program heterogeneous architectures in standard C++, SPHinXsys is able to utilize the power of GPU.
+Please check the [Preview Release](https://github.com/Xiangyu-Hu/SPHinXsys/releases/tag/v1.0-beta.08-sycl)
+and the [SYCL branch](https://github.com/Xiangyu-Hu/SPHinXsys/tree/sycl) for details.
+
 ## Publications
 
 Main publication on the library:
@@ -79,7 +96,7 @@ Computer Physics Communications, 267, 108066, 2021.
 
 The algorithms in SPHinXsys are based on the following publications:
 
-1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiagnyu Hu,
+1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiangyu Hu,
 "Smoothed particle hydrodynamics: Methodology development and recent achievement",
 Journal of Hydrodynamics 34(5), 767--805, 2022  
 [![Review Publication](https://img.shields.io/badge/doi-10.1007%2Fs42241.022.0052.1-d45815.svg)](https://doi.org/10.1007/s42241-022-0052-1)
