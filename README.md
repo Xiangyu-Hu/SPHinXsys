@@ -14,7 +14,7 @@
 
 ## Description
 
-SPHinXsys (pronunciation: s'finksis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
+SPHinXsys (pronunciation: s'fink-sis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
 The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underlying numerical method
 for both particle-based and mesh-based discretization.
 Due to the unified computational framework, SPHinXsys is able to carry out simulation and optimization at the same time.
@@ -173,6 +173,8 @@ You are welcomed to use and get involved in SPHinXsys.
 As the code is on git-hub, you can register an account there (if you do not have a github account yet)
 and fork out the SPHinXsys repository.
 You can work on the forked repository and add new features, and then commit them.
+You can also initiate a pull request to the main repository,
+so that your new features can be merged into it.
 
 Besides forking the repository and begin to develop by your own,
 there are many other ways to make SPHinXsys better for every one.
