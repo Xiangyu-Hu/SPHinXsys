@@ -77,7 +77,7 @@ RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)
 {
     std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
                    [&](SPHBody *body) -> std::string
-                   { return io_environment.restart_folder_ + "/SPHBody_" + body->getName() + "_rst_"; });
+                   { return io_environment.restart_folder_ + "/" + body->getName() + "_rst_"; });
 }
 //=============================================================================================//
 void RestartIO::writeToFile(size_t iteration_step)
