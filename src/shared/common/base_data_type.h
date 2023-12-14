@@ -38,6 +38,12 @@
 #include <map>
 #include <vector>
 
+// Avoid automatic memory allocations
+#define EIGEN_RUNTIME_NO_MALLOC
+#define EIGEN_NO_MALLOC
+// Disable sse2/etc vectorization SIMDs for SPIR-V target
+#define EIGEN_DONT_VECTORIZE
+
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
 #include <Eigen/Dense>

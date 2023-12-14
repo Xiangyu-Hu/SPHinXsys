@@ -98,6 +98,14 @@ if(TARGET Boost::program_options)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
+if(NOT SPHINXSYS_SYCL_TARGETS)
+    set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
+endif()
+
+message("-- SPHinXsys use SYCL with targets ${SPHINXSYS_SYCL_TARGETS}")
+target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS})
+target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS})
+
 # ------ Setup the concrete libraries
 add_subdirectory(src)
 add_subdirectory(modules)
