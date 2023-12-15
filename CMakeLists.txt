@@ -12,6 +12,7 @@ option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 option(TEST_STATE_RECORDING "State recording when run Ctest" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
+option(SPHINXSYS_DEVICE_USE_FLOAT "Build using float (single-precision floating-point format) as primary type for device" ON)
 option(SPHINXSYS_USE_SIMD "Build using SIMD instructions" OFF)
 option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
 
@@ -100,6 +101,7 @@ endif()
 
 if(NOT SPHINXSYS_SYCL_TARGETS)
     set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
+    set(SPHINXSYS_DEVICE_USE_FLOAT SPHINXSYS_USE_FLOAT)
 endif()
 
 message("-- SPHinXsys use SYCL with targets ${SPHINXSYS_SYCL_TARGETS}")
