@@ -54,8 +54,8 @@ bool BinaryShapes::isValid()
 BoundingBox BinaryShapes::findBounds()
 {
     // initial reference values
-    Vecd lower_bound = Infinity * Vecd::Ones();
-    Vecd upper_bound = -Infinity * Vecd::Ones();
+    Vecd lower_bound = MaxReal * Vecd::Ones();
+    Vecd upper_bound = -MaxReal * Vecd::Ones();
 
     for (auto &shape_and_op : shapes_and_ops_)
     {
@@ -106,7 +106,7 @@ bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
 Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
 {
     // a big positive number
-    Real large_number(Infinity);
+    Real large_number(MaxReal);
     Real dist_min = large_number;
     Vecd pnt_closest = Vecd::Zero();
     Vecd pnt_found = Vecd::Zero();

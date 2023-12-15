@@ -262,7 +262,7 @@ TEST(test_optimization, test_problem4_optimized)
     Real averaged_variation_current_global(0.0);
     Real maximum_variation_current_global(10.0);
     Real opt_averaged_temperature = 0.0;
-    Real nonopt_averaged_temperature = Infinity;
+    Real nonopt_averaged_temperature = MaxReal;
     Real boundary_averaged_temperature = 0.0;
     Real averaged_k_parameter = 0.0;
     Real initial_eta_regularization = 0.5;

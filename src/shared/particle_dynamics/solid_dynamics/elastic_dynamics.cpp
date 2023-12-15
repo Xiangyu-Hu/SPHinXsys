@@ -10,7 +10,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
+    : LocalDynamicsReduce<Real, ReduceMin>(sph_body, MaxReal),
       ElasticSolidDataSimple(sph_body), CFL_(CFL),
       vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
       mass_(particles_->mass_), smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),

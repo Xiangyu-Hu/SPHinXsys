@@ -189,7 +189,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     {     // tests on initialization
         { // checking particle distances - avoid bugs of reading file
-            Real min_rij = Infinity;
+            Real min_rij = MaxReal;
             Real max_rij = 0;
             for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
             {

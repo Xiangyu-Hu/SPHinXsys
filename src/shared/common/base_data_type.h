@@ -102,9 +102,14 @@ struct ZeroData
     static inline DataType value = DataType::Zero();
 };
 template <>
-struct ZeroData<Real>
+struct ZeroData<float>
 {
-    static inline Real value = 0.0;
+    static inline float value = 0.0;
+};
+template <>
+struct ZeroData<double>
+{
+    static inline double value = 0.0;
 };
 template <>
 struct ZeroData<int>
@@ -147,10 +152,6 @@ struct DataTypeIndex<int>
 {
     static constexpr int value = 5;
 };
-/** Useful float point constants. */
-constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
-constexpr Real MinRealNumber = std::numeric_limits<Real>::min();
-constexpr Real MaxRealNumber = std::numeric_limits<Real>::max();
 /** Verbal boolean for positive and negative axis directions. */
 const int xAxis = 0;
 const int yAxis = 1;
@@ -160,10 +161,11 @@ const bool negativeDirection = false;
 /** Constant parameters. */
 constexpr Real Pi = Real(M_PI);
 constexpr Real Eps = std::numeric_limits<Real>::epsilon();
-constexpr Real TinyReal = Real(2.71051e-20);
-constexpr Real Infinity = std::numeric_limits<Real>::max();
 constexpr Real SqrtEps = Real(1.0e-8);
-
+constexpr Real TinyReal = Real(2.71051e-20);
+constexpr Real MinReal = std::numeric_limits<Real>::min();
+constexpr Real MaxReal = std::numeric_limits<Real>::max();
+constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 /** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
 template <typename VecType>
 class BaseBoundingBox
