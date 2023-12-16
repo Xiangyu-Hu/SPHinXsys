@@ -116,7 +116,7 @@ class DiffusionBodyInitialCondition
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = 550 + 50 * (double)rand() / RAND_MAX;
+        all_species_[phi_][index_i] = 550.0 + 50.0 * rand_uniform(0.0, 1.0);
     };
 };
 
