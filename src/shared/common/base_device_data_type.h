@@ -29,11 +29,11 @@
 #ifndef BASE_DEVICE_DATA_TYPE_H
 #define BASE_DEVICE_DATA_TYPE_H
 
-// Avoid automatic memory allocations
+// Specialize Eigen for device
 #define EIGEN_RUNTIME_NO_MALLOC
 #define EIGEN_NO_MALLOC
-// Disable sse2/etc vectorization SIMDs for SPIR-V target
 #define EIGEN_DONT_VECTORIZE
+#define EIGEN_NO_DEBUG
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
