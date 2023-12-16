@@ -125,7 +125,7 @@ class ThermalConductivityRandomInitialization
           thermal_conductivity(*(particles_->getVariableByName<Real>("ThermalConductivity"))){};
     void update(size_t index_i, Real dt)
     {
-        thermal_conductivity[index_i] = 0.5 + (double)rand() / RAND_MAX;
+        thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
     }
 };
 

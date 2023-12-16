@@ -82,7 +82,7 @@ Vecd LevelSet::probeNormalDirection(const Vecd &position)
     {
         Vecd jittered = position; // jittering
         for (int l = 0; l != position.size(); ++l)
-            jittered[l] += (Real(rand() / RAND_MAX) - 0.5) * 0.5 * data_spacing_;
+            jittered[l] += rand_uniform(-0.5, 0.5) * 0.5 * data_spacing_;
         probed_value = probeLevelSetGradient(jittered);
     }
     return probed_value.normalized();
