@@ -73,7 +73,7 @@ BoundingBox TriangleMeshShape::findBounds()
     int number_of_vertices = triangle_mesh_->getNumVertices();
     // initial reference values
     Vec3d lower_bound = SimTKToEigen(SimTKVec3(MaxReal));
-    Vec3d upper_bound = SimTKToEigen(SimTKVec3(-MaxReal));
+    Vec3d upper_bound = SimTKToEigen(SimTKVec3(MinReal));
     for (int i = 0; i != number_of_vertices; ++i)
     {
         Vec3d vertex_position = SimTKToEigen(triangle_mesh_->getVertexPosition(i));

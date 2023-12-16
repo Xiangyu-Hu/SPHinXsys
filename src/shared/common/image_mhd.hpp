@@ -34,7 +34,7 @@ ImageMHD<T, nDims>::ImageMHD(std::string full_path_to_file) : objectType_("Image
                                                               elementType_(MET_FLOAT),
                                                               elementDataFile_(""),
                                                               min_value_(MaxReal),
-                                                              max_value_(-MaxReal),
+                                                              max_value_(MinReal),
                                                               data_(nullptr)
 {
     //- read mhd file
@@ -153,7 +153,7 @@ ImageMHD<T, nDims>::ImageMHD(Real radius, Array3i NxNyNz, Vec3d spacings) : obje
                                                                             elementType_(MET_FLOAT),
                                                                             elementDataFile_(""),
                                                                             min_value_(MaxReal),
-                                                                            max_value_(-MaxReal),
+                                                                            max_value_(MinReal),
                                                                             data_(nullptr)
 {
     if (data_ == nullptr)
@@ -373,7 +373,7 @@ BoundingBox ImageMHD<T, nDims>::findBounds()
 {
     // initial reference values
     Vec3d lower_bound = MaxReal * Vec3d::Ones();
-    Vec3d upper_bound = -MaxReal * Vec3d::Ones();
+    Vec3d upper_bound = MinReal * Vec3d::Ones();
 
     for (int z = 0; z < depth_ + 1; z++)
     {

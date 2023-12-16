@@ -55,7 +55,7 @@ BoundingBox BinaryShapes::findBounds()
 {
     // initial reference values
     Vecd lower_bound = MaxReal * Vecd::Ones();
-    Vecd upper_bound = -MaxReal * Vecd::Ones();
+    Vecd upper_bound = MinReal * Vecd::Ones();
 
     for (auto &shape_and_op : shapes_and_ops_)
     {
