@@ -38,7 +38,7 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
     {
         Vecd jittered = probe_point;
         for (int l = 0; l != probe_point.size(); ++l)
-            jittered[l] = probe_point[l] + (Real(rand() / RAND_MAX) - 0.5) * 100.0 * Eps;
+            jittered[l] = probe_point[l] + rand_uniform(-0.5, 0.5) * 100.0 * Eps;
         if (checkContain(jittered) == is_contain)
             displacement_to_surface = findClosestPoint(jittered) - jittered;
     }
@@ -54,8 +54,8 @@ bool BinaryShapes::isValid()
 BoundingBox BinaryShapes::findBounds()
 {
     // initial reference values
-    Vecd lower_bound = Infinity * Vecd::Ones();
-    Vecd upper_bound = -Infinity * Vecd::Ones();
+    Vecd lower_bound = MaxReal * Vecd::Ones();
+    Vecd upper_bound = -MaxReal * Vecd::Ones();
 
     for (auto &shape_and_op : shapes_and_ops_)
     {
@@ -106,7 +106,7 @@ bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
 Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
 {
     // a big positive number
-    Real large_number(Infinity);
+    Real large_number(MaxReal);
     Real dist_min = large_number;
     Vecd pnt_closest = Vecd::Zero();
     Vecd pnt_found = Vecd::Zero();

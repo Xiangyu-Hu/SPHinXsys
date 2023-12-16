@@ -385,7 +385,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // TESTS on initialization
     // checking particle distances - avoid bugs of reading file
-    Real min_rij = Infinity;
+    Real min_rij = MaxReal;
     for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
     {
         Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];

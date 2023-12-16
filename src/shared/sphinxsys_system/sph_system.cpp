@@ -35,7 +35,7 @@ void SPHSystem::initializeSystemConfigurations()
 //=================================================================================================//
 Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 {
-    Real dt = Infinity;
+    Real dt = MaxReal;
     for (size_t i = 0; i < solid_bodies_.size(); i++)
     {
         ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(*solid_bodies_[i], CFL);

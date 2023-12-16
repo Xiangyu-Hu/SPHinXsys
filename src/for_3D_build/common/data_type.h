@@ -41,6 +41,7 @@ using AlignedBox = AlignedBox3d;
 using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
 using BoundingBox = BaseBoundingBox<Vec3d>;
+using Transform = BaseTransform<Rotation3d, Vec3d>;
 
 template <class DataType, int array_size>
 using PackageDataMatrix = std::array<std::array<std::array<DataType, array_size>, array_size>, array_size>;

@@ -33,8 +33,8 @@ ImageMHD<T, nDims>::ImageMHD(std::string full_path_to_file) : objectType_("Image
                                                               anatomicalOrientation_("???"),
                                                               elementType_(MET_FLOAT),
                                                               elementDataFile_(""),
-                                                              min_value_(Infinity),
-                                                              max_value_(-Infinity),
+                                                              min_value_(MaxReal),
+                                                              max_value_(-MaxReal),
                                                               data_(nullptr)
 {
     //- read mhd file
@@ -152,8 +152,8 @@ ImageMHD<T, nDims>::ImageMHD(Real radius, Array3i NxNyNz, Vec3d spacings) : obje
                                                                             anatomicalOrientation_("???"),
                                                                             elementType_(MET_FLOAT),
                                                                             elementDataFile_(""),
-                                                                            min_value_(Infinity),
-                                                                            max_value_(-Infinity),
+                                                                            min_value_(MaxReal),
+                                                                            max_value_(-MaxReal),
                                                                             data_(nullptr)
 {
     if (data_ == nullptr)
@@ -372,8 +372,8 @@ template <typename T, int nDims>
 BoundingBox ImageMHD<T, nDims>::findBounds()
 {
     // initial reference values
-    Vec3d lower_bound = Infinity * Vec3d::Ones();
-    Vec3d upper_bound = -Infinity * Vec3d::Ones();
+    Vec3d lower_bound = MaxReal * Vec3d::Ones();
+    Vec3d upper_bound = -MaxReal * Vec3d::Ones();
 
     for (int z = 0; z < depth_ + 1; z++)
     {
