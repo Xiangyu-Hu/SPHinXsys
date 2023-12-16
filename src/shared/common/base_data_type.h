@@ -166,6 +166,7 @@ constexpr Real TinyReal = Real(2.71051e-20);
 constexpr Real MinReal = std::numeric_limits<Real>::min();
 constexpr Real MaxReal = std::numeric_limits<Real>::max();
 constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
+
 /** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
 template <typename VecType>
 class BaseBoundingBox
@@ -225,9 +226,49 @@ BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const
 
 /** obtain minimum dimension of a bounding box */
 template <class BoundingBoxType>
-Real MinimumDimension(const BoundingBoxType &bbox)
+auto MinimumDimension(const BoundingBoxType &bbox)
 {
     return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
+};
+
+template <typename RotationType, typename VecType>
+class BaseTransform
+{
+  private:
+    using MatType = decltype(RotationType().toRotationMatrix());
+    MatType rotation_, inv_rotation_;
+    VecType translation_;
+
+  public:
+    explicit BaseTransform(const RotationType &rotation, const VecType &translation = VecType::Zero())
+        : rotation_(rotation.toRotationMatrix()), inv_rotation_(rotation_.transpose()), translation_(translation){};
+    explicit BaseTransform(const VecType &translation)
+        : rotation_(MatType::Identity()), inv_rotation_(rotation_.transpose()), translation_(translation){};
+    BaseTransform() : BaseTransform(VecType::Zero()){};
+
+    /** Forward rotation. */
+    VecType xformFrameVecToBase(const VecType &origin)
+    {
+        return rotation_ * origin;
+    };
+
+    /** Forward transformation. Note that the rotation operation is carried out first. */
+    VecType shiftFrameStationToBase(const VecType &origin)
+    {
+        return translation_ + xformFrameVecToBase(origin);
+    };
+
+    /** Inverse rotation. */
+    VecType xformBaseVecToFrame(const VecType &target)
+    {
+        return inv_rotation_ * target;
+    };
+
+    /** Inverse transformation. Note that the inverse translation operation is carried out first. */
+    VecType shiftBaseStationToFrame(const VecType &target)
+    {
+        return xformBaseVecToFrame(target - translation_);
+    };
 };
 } // namespace SPH
 
