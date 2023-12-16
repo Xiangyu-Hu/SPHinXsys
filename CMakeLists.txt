@@ -51,6 +51,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_DEVICE_USE_FLOAT=$<BOOL:${SPHINXSYS_DEVICE_USE_FLOAT}>)
 
 # ------ Dependencies
 # ## SIMD flags

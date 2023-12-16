@@ -30,6 +30,7 @@
 #define DATA_TYPE_2D_H
 
 #include "base_data_type.h"
+#include "base_device_data_type.h"
 #include "scalar_functions.h"
 
 namespace SPH
