@@ -99,8 +99,8 @@ if(SPHINXSYS_USE_SYCL)
         set(SPHINXSYS_SYCL_TARGETS nvptx64-nvidia-cuda)
     endif()
     message("-- SPHinXsys use SYCL with targets ${SPHINXSYS_SYCL_TARGETS}")
-    target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS})
-    target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS})
+    target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS}  -Wno-unknown-cuda-version)
+    target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS}  -Wno-unknown-cuda-version)
 endif()
 
 # ------ Setup the concrete libraries
