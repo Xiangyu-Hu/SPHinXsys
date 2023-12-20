@@ -39,8 +39,6 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction type identifies
 //----------------------------------------------------------------------
-class Base; /**< Indicating base class for a method */
-
 template <typename... InnerParameters>
 class Inner; /**< Inner interaction: interaction within a body*/
 

@@ -7,19 +7,20 @@
 namespace SPH
 {
 //=================================================================================================//
-BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
+ParticleGenerator<Base>::ParticleGenerator(SPHBody &sph_body)
     : base_particles_(sph_body.getBaseParticles()),
       base_material_(base_particles_.getBaseMaterial()),
-      pos_(base_particles_.pos_), unsorted_id_(base_particles_.unsorted_id_) {}
+      pos_(base_particles_.pos_), Vol_(base_particles_.Vol_),
+      unsorted_id_(base_particles_.unsorted_id_) {}
 //=================================================================================================//
-void BaseParticleGenerator::initializePosition(const Vecd &position)
+void ParticleGenerator<Base>::initializePosition(const Vecd &position)
 {
     pos_.push_back(position);
     unsorted_id_.push_back(base_particles_.total_real_particles_);
     base_particles_.total_real_particles_++;
 }
 //=================================================================================================//
-void BaseParticleGenerator::generateParticlesWithBasicVariables()
+void ParticleGenerator<Base>::generateParticlesWithBasicVariables()
 {
     initializeGeometricVariables();
     // should be determined first before register other variables
@@ -27,33 +28,29 @@ void BaseParticleGenerator::generateParticlesWithBasicVariables()
     base_material_.registerReloadLocalParameters(&base_particles_);
 }
 //=================================================================================================//
-ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
-    : BaseParticleGenerator(sph_body), Vol_(base_particles_.Vol_) {}
-//=================================================================================================//
-void ParticleGenerator::initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
+void ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
+    const Vecd &position, Real volumetric_measure)
 {
     initializePosition(position);
     Vol_.push_back(volumetric_measure);
 }
 //=================================================================================================//
-SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator(sph_body),
+ParticleGenerator<Surface>::ParticleGenerator(SPHBody &sph_body)
+    : ParticleGenerator<Base>(sph_body),
       n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
       thickness_(*base_particles_.getVariableByName<Real>("Thickness")) {}
 //=================================================================================================//
-void SurfaceParticleGenerator::initializeSurfaceProperties(const Vecd &surface_normal, Real thickness)
+void ParticleGenerator<Surface>::initializeSurfaceProperties(const Vecd &surface_normal, Real thickness)
 {
     n_.push_back(surface_normal);
     thickness_.push_back(thickness);
 }
 //=================================================================================================//
-
-
-void ObserverParticleGenerator::initializeGeometricVariables()
+void ParticleGenerator<Observer>::initializeGeometricVariables()
 {
     for (size_t i = 0; i < positions_.size(); ++i)
     {
-        initializePositionAndVolumetricMeasure(positions_[i], 0.0); 
+        initializePositionAndVolumetricMeasure(positions_[i], 0.0);
     }
 }
 //=================================================================================================//

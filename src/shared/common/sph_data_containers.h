@@ -35,9 +35,7 @@
 
 namespace SPH
 {
-/**
- * @brief Pre-claimed classes.
- */
+class Base;
 class BaseMaterial;
 class SPHBody;
 class RealBody;
