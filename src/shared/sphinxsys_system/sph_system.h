@@ -96,7 +96,7 @@ class SPHSystem
 #ifdef BOOST_AVAILABLE
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
-    SPHSystem *setIOEnvironment();
+    SPHSystem *setIOEnvironment(bool delete_output = true);
 
   protected:
     bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */

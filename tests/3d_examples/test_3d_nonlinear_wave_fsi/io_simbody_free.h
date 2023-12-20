@@ -20,15 +20,15 @@ class WriteSimBodyFreeRotationMatrix : public WriteSimBodyStates<SimTK::Mobilize
     std::string filefullpath_;
 
   public:
-    WriteSimBodyFreeRotationMatrix(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body);
+    WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body);
     virtual ~WriteSimBodyFreeRotationMatrix(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 //=============================================================================================//
 WriteSimBodyFreeRotationMatrix::
-    WriteSimBodyFreeRotationMatrix(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body)
-    : WriteSimBodyStates<SimTK::MobilizedBody::Free>(integ, free_body),
-      filefullpath_(io_environment_.output_folder_ + "/RotationMatrix.dat")
+    WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body)
+    : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
+      filefullpath_(sph_system.io_environment_->output_folder_ + "/RotationMatrix.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -96,15 +96,15 @@ class WriteSimBodyVelocity : public WriteSimBodyStates<SimTK::MobilizedBody::Fre
     std::string filefullpath_;
 
   public:
-    WriteSimBodyVelocity(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body);
+    WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body);
     virtual ~WriteSimBodyVelocity(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 //=============================================================================================//
 WriteSimBodyVelocity::
-    WriteSimBodyVelocity(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body)
-    : WriteSimBodyStates<SimTK::MobilizedBody::Free>(integ, free_body),
-      filefullpath_(io_environment_.output_folder_ + "/BodyVelocity.dat")
+    WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Free &free_body)
+    : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
+      filefullpath_(sph_system.io_environment_->output_folder_ + "/BodyVelocity.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 

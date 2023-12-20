@@ -180,7 +180,8 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -270,9 +271,11 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    std::string filefullpath_nonopt_temperature = io_environment.output_folder_ + "/" + "nonopt_temperature.dat";
+    std::string filefullpath_nonopt_temperature =
+        sph_system.io_environment_->output_folder_ + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
-    std::string filefullpath_nonopt_boundary_temperature = io_environment.output_folder_ + "/" + "nonopt_boundary_temperature.dat";
+    std::string filefullpath_nonopt_boundary_temperature =
+        sph_system.io_environment_->output_folder_ + "/" + "nonopt_boundary_temperature.dat";
     std::ofstream out_file_nonopt_boundary_temperature(filefullpath_nonopt_boundary_temperature.c_str(), std::ios::app);
 
     while (GlobalStaticVariables::physical_time_ < End_Time)

@@ -17,11 +17,10 @@ int main(int ac, char *av[])
     //	Build up the Structure Relax SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
-    system_fit.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment_fit(system_fit);
+    system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment_fit);
+    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
     structure_fit.generateParticles<ParticleGeneratorMultiResolution>();
     structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
@@ -39,7 +38,7 @@ int main(int ac, char *av[])
     relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
     SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
     /** Write the particle reload files. */
-    ReloadParticleIO write_particle_reload_files(io_environment_fit, structure_fit);
+    ReloadParticleIO write_particle_reload_files(structure_fit);
 
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
@@ -257,12 +256,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Cable SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_AR(integ, tethering_springAR, "AR");
-    WriteSimBodyCableData write_cable_AL(integ, tethering_springAL, "AL");
-    WriteSimBodyCableData write_cable_BR(integ, tethering_springBR, "BR");
-    WriteSimBodyCableData write_cable_BL(integ, tethering_springBL, "BL");
-    WriteSimBodyFreeRotationMatrix write_free_body_rotation(integ, tethered_struct);
-    WriteSimBodyVelocity write_free_body_velocity(integ, tethered_struct);
+    WriteSimBodyCableData write_cable_AR(sph_system, integ, tethering_springAR, "AR");
+    WriteSimBodyCableData write_cable_AL(sph_system, integ, tethering_springAL, "AL");
+    WriteSimBodyCableData write_cable_BR(sph_system, integ, tethering_springBR, "BR");
+    WriteSimBodyCableData write_cable_BL(sph_system, integ, tethering_springBL, "BL");
+    WriteSimBodyFreeRotationMatrix write_free_body_rotation(sph_system, integ, tethered_struct);
+    WriteSimBodyVelocity write_free_body_velocity(sph_system, integ, tethered_struct);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.

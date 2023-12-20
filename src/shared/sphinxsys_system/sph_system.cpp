@@ -144,9 +144,9 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 }
 #endif
 //=================================================================================================//
-SPHSystem *SPHSystem::setIOEnvironment()
+SPHSystem *SPHSystem::setIOEnvironment(bool delete_output)
 {
-    io_environment_ = io_ptr_keeper_.createPtr<IOEnvironment>(*this);
+    io_environment_ = io_ptr_keeper_.createPtr<IOEnvironment>(*this, delete_output);
     return this;
 }
 //=================================================================================================//

@@ -203,7 +203,8 @@ TEST(test_optimization, test_problem4_optimized)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -340,10 +341,12 @@ TEST(test_optimization, test_problem4_optimized)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    std::string filefullpath_opt_temperature = io_environment.output_folder_ + "/" + "opt_temperature.dat";
+    std::string filefullpath_opt_temperature =
+        sph_system.io_environment_->output_folder_ + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app); // record the temperature with modifing parameter.
 
-    std::string filefullpath_nonopt_temperature = io_environment.output_folder_ + "/" + "nonopt_temperature.dat";
+    std::string filefullpath_nonopt_temperature =
+        sph_system.io_environment_->output_folder_ + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app); // record the temperature without modifing parameter.
     //----------------------------------------------------------------------
     //	Initial States update.
