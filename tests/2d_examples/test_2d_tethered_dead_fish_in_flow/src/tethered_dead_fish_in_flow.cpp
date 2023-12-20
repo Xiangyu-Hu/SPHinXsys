@@ -405,7 +405,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(system.real_bodies_);
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
         write_total_force_on_fish(fluid_force_on_fish_body, "TotalPressureForceOnSolid");
-    ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
+    ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
     /**
      * Time steeping starts here.
      */

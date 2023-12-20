@@ -25,7 +25,7 @@ int main(int ac, char *av[])
     /** create a body with corresponding material, particles and reaction model. */
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
-    column.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     //	Output
     //----------------------------------------------------------------------
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, my_observer_contact);
+        write_displacement("Position", my_observer_contact);
 
     //----------------------------------------------------------------------
     // From here the time stepping begins.

@@ -167,8 +167,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -211,7 +210,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
-    ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+    ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

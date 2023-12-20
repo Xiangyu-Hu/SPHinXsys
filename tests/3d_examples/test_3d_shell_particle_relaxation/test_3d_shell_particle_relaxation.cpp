@@ -43,13 +43,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem sph_system(system_domain_bounds, dp_0)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
-    imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(io_environment);
+    imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(sph_system);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     imported_model.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     imported_model.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
@@ -58,7 +57,7 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
-    MeshRecordingToPlt write_mesh_cell_linked_list(imported_model.getCellLinkedList());
+    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

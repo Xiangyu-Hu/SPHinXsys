@@ -45,7 +45,7 @@ int main(int ac, char *av[])
     Heart triangle_mesh_heart_model("HeartModel");
     SharedPtr<LevelSetShape> level_set_heart_model =
         makeShared<LevelSetShape>(triangle_mesh_heart_model, makeShared<SPHAdaptation>(dp_0));
-    level_set_heart_model->correctLevelSetSign()->writeLevelSet(io_environment);
+    level_set_heart_model->correctLevelSetSign()->writeLevelSet(sph_system);
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
@@ -187,8 +187,8 @@ int main(int ac, char *av[])
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);
     /**IO for observer.*/
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    ObservedQuantityRecording<Real> write_voltage("Voltage", io_environment, voltage_observer_contact);
-    ObservedQuantityRecording<Vecd> write_displacement("Position", io_environment, myocardium_observer_contact);
+    ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
+    ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
     /**Apply the Iron stimulus.*/
     SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);

@@ -87,8 +87,7 @@ int main(int ac, char *av[])
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(true);
     sph_system.setGenerateRegressionData(false);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -171,7 +170,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        cream_displacement_recording("Position", io_environment, cream_observer_contact);
+        cream_displacement_recording("Position", cream_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

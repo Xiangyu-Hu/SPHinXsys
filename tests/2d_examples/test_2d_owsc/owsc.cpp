@@ -13,8 +13,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -169,7 +168,7 @@ int main(int ac, char *av[])
     RegressionTestDynamicTimeWarping<
         ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_force_on_flap(fluid_force_on_flap, "TotalForceOnSolid");
-    WriteSimBodyPinData write_flap_pin_data(integ, pin_spot);
+    WriteSimBodyPinData write_flap_pin_data(sph_system, integ, pin_spot);
 
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
@@ -185,7 +184,7 @@ int main(int ac, char *av[])
         wave_probe_12(wave_probe_buffer_no_12, "FreeSurfaceHeight");
 
     /** Pressure probe. */
-    ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
+    ObservedQuantityRecording<Real> pressure_probe("Pressure", observer_contact_with_water);
     // Interpolate the particle position in flap to move the observer accordingly.
     // Seems not used? TODO: observe displacement more accurate.
     InteractionDynamics<InterpolatingAQuantity<Vecd>>

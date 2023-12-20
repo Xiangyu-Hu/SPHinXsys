@@ -63,7 +63,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
         ball.generateParticles<ParticleGeneratorLattice>();
     }
 
@@ -82,7 +82,7 @@ int main(int ac, char *av[])
     else
     {
         Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
-        rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
+        rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
         rigid_shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
     }
 
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
-        MeshRecordingToPlt write_mesh_cell_linked_list(rigid_shell.getCellLinkedList());
+        MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, rigid_shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload({&ball, &rigid_shell});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -173,7 +173,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_ball_center_displacement("Position", io_environment, ball_observer_contact);
+        write_ball_center_displacement("Position", ball_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

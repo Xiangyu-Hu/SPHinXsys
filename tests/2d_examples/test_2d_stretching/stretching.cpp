@@ -277,7 +277,7 @@ int main(int ac, char *av[])
     ReducedQuantityRecording<TotalMechanicalEnergy>
         write_total_mechanical_energy(beam_body);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, beam_observer_contact);
+        write_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------

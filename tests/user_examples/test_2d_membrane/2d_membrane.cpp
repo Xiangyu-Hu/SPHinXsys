@@ -190,7 +190,7 @@ int main(int ac, char *av[])
     // note there is a line observation
 
     ObservedQuantityRecording<Vecd>
-        write_beam_tip_position("Position", io_environment, beam_observer_contact);
+        write_beam_tip_position("Position", beam_observer_contact);
 
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.

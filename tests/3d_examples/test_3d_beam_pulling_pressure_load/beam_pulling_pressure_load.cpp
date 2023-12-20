@@ -171,7 +171,7 @@ int main(int ac, char *av[])
     /** Output */
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
-        write_beam_stress("VonMisesStress", io_environment, beam_observer_contact);
+        write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */
     GlobalStaticVariables::physical_time_ = 0.0;
     sph_system.initializeSystemCellLinkedLists();

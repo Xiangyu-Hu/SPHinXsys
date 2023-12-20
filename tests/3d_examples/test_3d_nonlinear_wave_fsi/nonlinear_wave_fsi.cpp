@@ -71,8 +71,7 @@ int main(int ac, char *av[])
     //	Build up the Main environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -278,12 +277,12 @@ int main(int ac, char *av[])
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_str_displacement("Position", io_environment, observer_contact_with_structure);
+        write_str_displacement("Position", observer_contact_with_structure);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_WMobserver_position(WMobserver_contact_with_wall, "Position", "Position");
     ObservedQuantityRecording<Vecd>
-        write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
+        write_WM_displacement("Position", WMobserver_contact_with_wall);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp1_position(fp1_contact_s, "Position", "Position");
@@ -291,9 +290,9 @@ int main(int ac, char *av[])
         interpolation_bp1_position(bp1_contact_s, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
+        write_recorded_pressure_fp1("Pressure", fp1_contact_w);
     ObservedQuantityRecording<Real>
-        write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
+        write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
     RestartIO restart_io(sph_system.real_bodies_);
 

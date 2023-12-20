@@ -70,7 +70,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody coil(sph_system, makeShared<Coil>("Coil"));
-    coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? coil.generateParticles<ParticleGeneratorReload>(coil.getName())

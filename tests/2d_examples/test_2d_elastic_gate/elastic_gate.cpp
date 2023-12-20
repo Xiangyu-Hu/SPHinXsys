@@ -141,8 +141,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -218,7 +217,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system.real_bodies_);
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, gate_observer_contact);
+        write_beam_tip_displacement("Position", gate_observer_contact);
     // TODO: observing position is not as good observing displacement.
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

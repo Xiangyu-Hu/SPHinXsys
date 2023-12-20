@@ -185,7 +185,7 @@ int main(int ac, char *av[])
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    ObservedQuantityRecording<Vecd> write_beam_max_displacement("Position", io_environment, bar_observer_contact);
+    ObservedQuantityRecording<Vecd> write_beam_max_displacement("Position", bar_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();

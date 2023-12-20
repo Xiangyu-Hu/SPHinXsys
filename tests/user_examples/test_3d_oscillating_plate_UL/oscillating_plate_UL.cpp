@@ -152,9 +152,9 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     // ObservedQuantityRecording<Vecd>
-    // 	write_plate_displacement("Position", io_environment, plate_observer_contact);
+    // 	write_plate_displacement("Position", plate_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_plate_displacement("Position", io_environment, plate_observer_contact);
+        write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_kinetic_energy(plate_body);
 

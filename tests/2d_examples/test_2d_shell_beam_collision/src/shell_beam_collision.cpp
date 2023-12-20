@@ -86,8 +86,7 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(true);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -101,7 +100,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
+        shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
         shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
     }
 
@@ -145,7 +144,7 @@ int main(int ac, char *av[])
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
-        MeshRecordingToPlt write_mesh_cell_linked_list(shell.getCellLinkedList());
+        MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload_files({&shell});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.

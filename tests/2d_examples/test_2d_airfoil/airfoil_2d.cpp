@@ -1,6 +1,6 @@
 /**
  * @file 	airfoil_2d.cpp
- * @brief 	This is the test of using levelset to generate body fitted SPH particles.
+ * @brief 	This is the test of using level set to generate body fitted SPH particles.
  * @details	We use this case to test the particle generation and relaxation with a complex geometry (2D).
  *			Before the particles are generated, we clean the sharp corners and other unresolvable surfaces.
  * @author 	Yongchuan Yu and Xiangyu Hu
@@ -44,16 +44,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(true); // tag to run particle relaxation when no commandline option
-#ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av);
-#endif
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(io_environment);
+    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
     airfoil.defineParticlesAndMaterial();
     airfoil.generateParticles<ParticleGeneratorMultiResolution>();
     airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
@@ -61,7 +58,7 @@ int main(int ac, char *av[])
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp({&airfoil});
-    MeshRecordingToPlt cell_linked_list_recording(airfoil.getCellLinkedList());
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies,

@@ -133,7 +133,7 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
-    MeshRecordingToPlt write_mesh_cell_linked_list(leaflet.getCellLinkedList());
+    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
