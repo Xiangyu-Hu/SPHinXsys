@@ -141,8 +141,8 @@ const VtuStringData &BodyStatesRecordingToVtpString::GetVtuData() const
 }
 //=============================================================================================//
 WriteToVtpIfVelocityOutOfBound::
-    WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment, SPHBodyVector bodies, Real velocity_bound)
-    : BodyStatesRecordingToVtp(io_environment, bodies), out_of_bound_(false)
+    WriteToVtpIfVelocityOutOfBound(SPHBodyVector bodies, Real velocity_bound)
+    : BodyStatesRecordingToVtp(bodies), out_of_bound_(false)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {

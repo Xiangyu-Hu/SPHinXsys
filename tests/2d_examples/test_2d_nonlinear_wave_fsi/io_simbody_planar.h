@@ -27,7 +27,7 @@ namespace SPH
 	//=============================================================================================//
 	WriteSimBodyPlanarData::
 		WriteSimBodyPlanarData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Planar &planarbody)
-		: WriteSimBodyStates<SimTK::MobilizedBody::Planar>(io_environment, integ, planarbody),
+		: WriteSimBodyStates<SimTK::MobilizedBody::Planar>(integ, planarbody),
 		  filefullpath_(io_environment_.output_folder_ + "/mb_planar_data.dat")
 	{
 		std::ofstream out_file(filefullpath_.c_str(), std::ios::app);

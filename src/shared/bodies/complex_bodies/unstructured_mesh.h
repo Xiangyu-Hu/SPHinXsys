@@ -197,7 +197,7 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
 class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, ANSYSMesh &ansys_mesh);
+    BodyStatesRecordingInMeshToVtp(SPHBody &body, ANSYSMesh &ansys_mesh);
     virtual ~BodyStatesRecordingInMeshToVtp(){};
 
   protected:

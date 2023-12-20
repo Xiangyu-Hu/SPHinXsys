@@ -68,9 +68,9 @@ int main(int ac, char *av[])
         /** Compute the fiber and sheet after diffusion. */
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
+        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, herat_model);
+        ReloadParticleIO write_particle_reload_files(herat_model);
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -131,7 +131,7 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
+        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
         : physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
     /** create a SPH body, material and particles */
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
+        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
         : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);
     /**IO for observer.*/
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Real> write_voltage("Voltage", io_environment, voltage_observer_contact);
     ObservedQuantityRecording<Vecd> write_displacement("Position", io_environment, myocardium_observer_contact);
     /**Apply the Iron stimulus.*/

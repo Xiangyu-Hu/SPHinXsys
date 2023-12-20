@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     tree_on_sphere.defineParticlesAndMaterial();
     tree_on_sphere.generateParticles<ParticleGeneratorNetwork>(starting_point, second_point, iteration_levels, grad_factor);
     /** Write particle data. */
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     write_states.writeToFile(0);
 
 

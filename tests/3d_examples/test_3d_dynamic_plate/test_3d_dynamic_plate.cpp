@@ -180,7 +180,7 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 

@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     cream.defineParticlesAndMaterial<ElasticSolidParticles, ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
                                                                                  yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cream.generateParticles<ParticleGeneratorReload>(io_environment, cream.getName())
+        ? cream.generateParticles<ParticleGeneratorReload>(cream.getName())
         : cream.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
@@ -119,8 +119,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_cream_state(io_environment, sph_system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files(io_environment, cream);
+        BodyStatesRecordingToVtp write_cream_state(sph_system.real_bodies_);
+        ReloadParticleIO write_particle_reload_files(cream);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         cream_displacement_recording("Position", io_environment, cream_observer_contact);
     //----------------------------------------------------------------------

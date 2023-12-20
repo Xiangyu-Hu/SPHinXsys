@@ -172,18 +172,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_A(io_environment, integ, tethering_springA, "A");
-    WriteSimBodyCableData write_cable_B(io_environment, integ, tethering_springB, "B");
-    WriteSimBodyPlanarData write_planar(io_environment, integ, tethered_spot);
+    WriteSimBodyCableData write_cable_A(integ, tethering_springA, "A");
+    WriteSimBodyCableData write_cable_B(integ, tethering_springB, "B");
+    WriteSimBodyPlanarData write_planar(integ, tethered_spot);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     /** WaveProbe. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createWaveGauge(), "WaveGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
-        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     /** StructureMovement. */
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
@@ -198,7 +198,7 @@ int main(int ac, char *av[])
         write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

@@ -89,7 +89,7 @@ int main(int ac, char *av[])
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
+    structure.generateParticles<ParticleGeneratorReload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
@@ -258,21 +258,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Cable SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_AR(io_environment, integ, tethering_springAR, "AR");
-    WriteSimBodyCableData write_cable_AL(io_environment, integ, tethering_springAL, "AL");
-    WriteSimBodyCableData write_cable_BR(io_environment, integ, tethering_springBR, "BR");
-    WriteSimBodyCableData write_cable_BL(io_environment, integ, tethering_springBL, "BL");
-    WriteSimBodyFreeRotationMatrix write_free_body_rotation(io_environment, integ, tethered_struct);
-    WriteSimBodyVelocity write_free_body_velocity(io_environment, integ, tethered_struct);
+    WriteSimBodyCableData write_cable_AR(integ, tethering_springAR, "AR");
+    WriteSimBodyCableData write_cable_AL(integ, tethering_springAL, "AL");
+    WriteSimBodyCableData write_cable_BR(integ, tethering_springBR, "BR");
+    WriteSimBodyCableData write_cable_BL(integ, tethering_springBL, "BL");
+    WriteSimBodyFreeRotationMatrix write_free_body_rotation(integ, tethered_struct);
+    WriteSimBodyVelocity write_free_body_velocity(integ, tethered_struct);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
-        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
@@ -295,7 +295,7 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real>
         write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
 
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
 
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.

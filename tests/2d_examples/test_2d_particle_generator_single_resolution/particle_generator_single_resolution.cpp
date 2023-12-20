@@ -72,8 +72,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp input_body_recording_to_vtp(io_environment, input_body);
-    MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body.getCellLinkedList());
+    BodyStatesRecordingToVtp input_body_recording_to_vtp(input_body);
+    MeshRecordingToPlt cell_linked_list_recording(input_body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

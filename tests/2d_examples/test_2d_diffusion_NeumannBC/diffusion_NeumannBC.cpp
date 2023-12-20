@@ -60,7 +60,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     // ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", io_environment, temperature_observer_contact);

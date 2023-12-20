@@ -130,12 +130,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, water_block, ansys_mesh);
+    BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, ansys_mesh);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
+        write_total_viscous_force_on_inserted_body(viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
-    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
+        write_total_force_on_inserted_body(fluid_force_on_solid_update, "TotalPressureForceOnSolid");
+    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

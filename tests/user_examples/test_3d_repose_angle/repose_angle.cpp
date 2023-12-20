@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     soil_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? soil_block.generateParticles<ParticleGeneratorReload>(io_environment, soil_block.getName())
+        ? soil_block.generateParticles<ParticleGeneratorReload>(soil_block.getName())
         : soil_block.generateParticles<ParticleGeneratorLattice>();
     soil_block.addBodyStateForRecording<Real>("Pressure");
     soil_block.addBodyStateForRecording<Real>("Density");
@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     // run particle relaxation
     if (sph_system.RunParticleRelaxation())
     {
@@ -119,10 +119,10 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(soil_block);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_column_to_vtp(io_environment, soil_block);
+        BodyStatesRecordingToVtp write_column_to_vtp(soil_block);
         /** Write the particle reload files. */
 
-        ReloadParticleIO write_particle_reload_files(io_environment, soil_block);
+        ReloadParticleIO write_particle_reload_files(soil_block);
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(soil_block_inner);
         /**
@@ -166,9 +166,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_soil_mechanical_energy(io_environment, soil_block, gravity_ptr);
+        write_soil_mechanical_energy(soil_block, gravity_ptr);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

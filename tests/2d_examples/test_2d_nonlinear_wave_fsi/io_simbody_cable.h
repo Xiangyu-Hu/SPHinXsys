@@ -37,7 +37,7 @@ namespace SPH
 	{
 	public:
 		WriteSimBodyCableStates(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, CableSpring &cable1)
-			: SimBodyCableStatesIO<CableSpring>(io_environment, integ, cable1){};
+			: SimBodyCableStatesIO<CableSpring>(integ, cable1){};
 		virtual ~WriteSimBodyCableStates(){};
 
 		virtual void writeToFile(size_t iteration_step) = 0;
@@ -52,9 +52,9 @@ namespace SPH
 	{
 	public:
 		ReadSimBodyCableStates(IOEnvironment &io_environment, CableSpring *cable1)
-			: SimBodyCableStatesIO<CableSpring>(io_environment, cable1){};
+			: SimBodyCableStatesIO<CableSpring>(cable1){};
 		ReadSimBodyCableStates(IOEnvironment &io_environment, StdVec<CableSpring *> cables)
-			: SimBodyCableStatesIO<CableSpring>(io_environment, cables){};
+			: SimBodyCableStatesIO<CableSpring>(cables){};
 		virtual ~ReadSimBodyCableStates(){};
 
 		virtual void readFromFile(size_t iteration_step) = 0;
@@ -77,7 +77,7 @@ namespace SPH
 	//=============================================================================================//
 	WriteSimBodyCableData::
 		WriteSimBodyCableData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::CableSpring &cable1, std::string cableinf)
-		: WriteSimBodyCableStates<SimTK::CableSpring>(io_environment, integ, cable1),
+		: WriteSimBodyCableStates<SimTK::CableSpring>(integ, cable1),
 		  filefullpath_(io_environment_.output_folder_ + "/cable" + cableinf + ".dat")
 	{
 		std::ofstream out_file(filefullpath_.c_str(), std::ios::app);

@@ -60,8 +60,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp airfoil_recording_to_vtp(io_environment, {&airfoil});
-    MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil.getCellLinkedList());
+    BodyStatesRecordingToVtp airfoil_recording_to_vtp({&airfoil});
+    MeshRecordingToPlt cell_linked_list_recording(airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies,

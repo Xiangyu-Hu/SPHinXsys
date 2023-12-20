@@ -116,8 +116,7 @@ class SolidBodyForSimulation
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
-void relaxParticlesSingleResolution(IOEnvironment &io_environment,
-                                    bool write_particles_to_file,
+void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,
                                     ElasticSolidParticles &solid_body_from_mesh_particles,
                                     InnerRelation &solid_body_from_mesh_inner);
@@ -200,7 +199,6 @@ class StructuralSimulation
     Real system_resolution_;
     SPHSystem system_;
     Real scale_system_boundaries_;
-    IOEnvironment io_environment_;
 
     StdVec<SharedPtr<SolidBodyForSimulation>> solid_body_list_;
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;

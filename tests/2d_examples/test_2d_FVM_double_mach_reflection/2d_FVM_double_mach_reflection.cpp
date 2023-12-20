@@ -52,9 +52,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
     // Visualization in FVM with date in cell.
-    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, wave_block, ansys_mesh);
+    BodyStatesRecordingInMeshToVtp write_real_body_states(wave_block, ansys_mesh);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(io_environment, wave_block);
+        write_maximum_speed(wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.
     //----------------------------------------------------------------------

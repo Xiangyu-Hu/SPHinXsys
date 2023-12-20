@@ -138,7 +138,7 @@ int main(int ac, char *av[])
      */
     IOEnvironment io_environment(sph_system);
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /**
      * @brief Setup geometry and initial conditions.
      */

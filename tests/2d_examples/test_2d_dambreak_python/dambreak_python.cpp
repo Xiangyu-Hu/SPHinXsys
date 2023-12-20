@@ -160,9 +160,9 @@ class Environment : public PreSettingCase
           fluid_step_initialization(water_block, gravity_ptr),
           fluid_advection_time_step(water_block, U_ref),
           fluid_acoustic_time_step(water_block),
-          body_states_recording(io_environment, sph_system.real_bodies_),
-          restart_io(io_environment, sph_system.real_bodies_),
-          write_water_mechanical_energy(io_environment, water_block, gravity_ptr),
+          body_states_recording(sph_system.real_bodies_),
+          restart_io(sph_system.real_bodies_),
+          write_water_mechanical_energy(water_block, gravity_ptr),
           write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact)
     {
         //----------------------------------------------------------------------

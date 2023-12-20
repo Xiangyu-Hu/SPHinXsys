@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
+        shell.generateParticles<ParticleGeneratorReload>(shell.getName());
     }
     else
     {
@@ -144,9 +144,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-        MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, shell.getCellLinkedList());
-        ReloadParticleIO write_particle_reload_files(io_environment, {&shell});
+        BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+        MeshRecordingToPlt write_mesh_cell_linked_list(shell.getCellLinkedList());
+        ReloadParticleIO write_particle_reload_files({&shell});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -201,7 +201,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     /**
      * The multi body system from simbody.

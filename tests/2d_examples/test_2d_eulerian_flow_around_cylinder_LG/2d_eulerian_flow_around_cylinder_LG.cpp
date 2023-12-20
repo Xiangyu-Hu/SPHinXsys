@@ -96,7 +96,7 @@ int main(int ac, char *av[])
     water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
+        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<int>("Indicator");
 
@@ -106,7 +106,7 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
+        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -134,8 +134,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-        ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+        ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
         relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
             ConstructorArgs(water_block_inner, "OuterBoundary"), water_block_contact);
@@ -190,12 +190,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
+        write_total_viscous_force_on_inserted_body(viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
-    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
+        write_total_force_on_inserted_body(fluid_force_on_solid_update, "TotalPressureForceOnSolid");
+    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
