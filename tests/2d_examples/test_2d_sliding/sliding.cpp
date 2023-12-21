@@ -120,10 +120,10 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /** Observer and output. */
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_free_cube_displacement("Position", io_environment, cube_observer_contact);
+        write_free_cube_displacement("Position", cube_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

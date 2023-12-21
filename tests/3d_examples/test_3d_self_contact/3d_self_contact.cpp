@@ -70,10 +70,10 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody coil(sph_system, makeShared<Coil>("Coil"));
-    coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
+        ? coil.generateParticles<ParticleGeneratorReload>(coil.getName())
         : coil.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
@@ -82,7 +82,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -105,7 +105,7 @@ int main(int ac, char *av[])
         // Random reset the insert body particle position.
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(coil);
         // Write the particle reload files.
-        ReloadParticleIO write_particle_reload_files(io_environment, coil);
+        ReloadParticleIO write_particle_reload_files(coil);
         // A  Physics relaxation step.
         relax_dynamics::RelaxationStepInner relaxation_step_inner(coil_inner);
         //----------------------------------------------------------------------

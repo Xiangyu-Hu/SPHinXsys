@@ -186,11 +186,11 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     // note there is a line observation
 
     ObservedQuantityRecording<Vecd>
-        write_beam_tip_position("Position", io_environment, beam_observer_contact);
+        write_beam_tip_position("Position", beam_observer_contact);
 
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.

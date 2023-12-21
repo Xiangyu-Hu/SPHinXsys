@@ -47,7 +47,7 @@ Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 }
 //=================================================================================================//
 #ifdef BOOST_AVAILABLE
-void SPHSystem::handleCommandlineOptions(int ac, char *av[])
+SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 {
     try
     {
@@ -139,7 +139,15 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
     {
         std::cerr << "Exception of unknown type!\n";
     }
+
+    return this;
 }
 #endif
+//=================================================================================================//
+SPHSystem *SPHSystem::setIOEnvironment(bool delete_output)
+{
+    io_environment_ = io_ptr_keeper_.createPtr<IOEnvironment>(*this, delete_output);
+    return this;
+}
 //=================================================================================================//
 } // namespace SPH

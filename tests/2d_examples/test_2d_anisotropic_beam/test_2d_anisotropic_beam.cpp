@@ -222,9 +222,9 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
+        write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------

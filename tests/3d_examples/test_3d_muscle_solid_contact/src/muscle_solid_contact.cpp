@@ -97,7 +97,7 @@ int main(int ac, char *av[])
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     /** Simbody interface. */
     /**
      * The multi body system from simbody.

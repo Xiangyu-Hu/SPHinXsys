@@ -5,8 +5,6 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
-#include "io_simbody_cable.h"   //output for cable data
-#include "io_simbody_planar.h"  //output for planar structure
 #include "nonlinear_wave_fsi.h" //header for this case
 
 int main(int ac, char *av[])
@@ -15,8 +13,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -172,33 +169,33 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_A(io_environment, integ, tethering_springA, "A");
-    WriteSimBodyCableData write_cable_B(io_environment, integ, tethering_springB, "B");
-    WriteSimBodyPlanarData write_planar(io_environment, integ, tethered_spot);
+    WriteSimBodyCableData write_cable_A(sph_system, integ, tethering_springA, "A");
+    WriteSimBodyCableData write_cable_B(sph_system, integ, tethering_springB, "B");
+    WriteSimBodyPlanarData write_planar(sph_system, integ, tethered_spot);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     /** WaveProbe. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createWaveGauge(), "WaveGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
-        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     /** StructureMovement. */
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_str_displacement("Position", io_environment, observer_contact_with_structure);
+        write_str_displacement("Position", observer_contact_with_structure);
     /** StructurePressureProbes. Position is updated with structure movement. */
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp2_position(fp2_contact_s, "Position", "Position");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp3_position(fp3_contact_s, "Position", "Position");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
+        write_recorded_pressure_fp2("Pressure", fp2_contact_w);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+        write_recorded_pressure_fp3("Pressure", fp3_contact_w);
+    RestartIO restart_io(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

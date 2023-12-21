@@ -100,8 +100,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
@@ -132,9 +131,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt body_states_recording(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(io_environment, wave_body);
+        write_maximum_speed(wave_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

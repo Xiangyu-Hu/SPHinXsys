@@ -25,9 +25,9 @@ LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ra
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-void LevelSetShape::writeLevelSet(IOEnvironment &io_environment)
+void LevelSetShape::writeLevelSet(SPHSystem &sph_system)
 {
-    MeshRecordingToPlt write_level_set_to_plt(io_environment, level_set_);
+    MeshRecordingToPlt write_level_set_to_plt(sph_system, level_set_);
     write_level_set_to_plt.writeToFile(0);
 }
 //=================================================================================================//

@@ -158,11 +158,11 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
+        write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, beam_body, gravity_ptr);
+        write_water_mechanical_energy(beam_body, gravity_ptr);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------

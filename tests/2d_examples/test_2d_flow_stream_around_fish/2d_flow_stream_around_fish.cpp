@@ -19,8 +19,7 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -30,11 +29,11 @@ int main(int ac, char *av[])
 
     SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
-    fish_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    fish_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, FishBodyComposite>();
     //  Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
+        ? fish_body.generateParticles<ParticleGeneratorReload>(fish_body.getName())
         : fish_body.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -60,8 +59,8 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
-        BodyStatesRecordingToVtp write_fish_body(io_environment, fish_body);
-        ReloadParticleIO write_particle_reload_files(io_environment, {&fish_body});
+        BodyStatesRecordingToVtp write_fish_body(fish_body);
+        ReloadParticleIO write_particle_reload_files({&fish_body});
         relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -150,12 +149,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_insert_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
+        write_total_viscous_force_on_insert_body(viscous_force_on_solid, "TotalViscousForceOnSolid");
     RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_force_on_insert_body(io_environment, fluid_force_on_fish_update, "TotalForceOnSolid");
+        write_total_force_on_insert_body(fluid_force_on_fish_update, "TotalForceOnSolid");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

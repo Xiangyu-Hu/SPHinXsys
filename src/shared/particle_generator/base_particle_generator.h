@@ -101,7 +101,7 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
     std::string file_path_;
 
   public:
-    ParticleGenerator(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name);
+    ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name);
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
     virtual void generateParticlesWithBasicVariables() override;

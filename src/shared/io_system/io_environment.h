@@ -21,62 +21,47 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	io_plt.h
- * @brief 	Classes for save data in Tecplot file format.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	io_environment.h
+ * @brief 	environment for IO.
+ * @author	Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_ENVIRONMENT_H
+#define IO_ENVIRONMENT_H
 
-#include "io_base.h"
+#include "ownership.h"
+#include "parameterization.h"
+
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+namespace fs = std::filesystem;
 
 namespace SPH
 {
-/**
- * @class PltEngine
- * @brief The base class which defines Tecplot file related operation.
- */
-class PltEngine
-{
-  public:
-    PltEngine(){};
-    virtual ~PltEngine(){};
-
-    void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
-    void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
-    void writeAQuantity(std::ofstream &out_file, const Real &quantity);
-    void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
-};
+class SPHSystem;
 
 /**
- * @class BodyStatesRecordingToPlt
- * @brief  Write files for bodies
- * the output file is dat format can visualized by TecPlot
+ * @class IOEnvironment
+ * @brief The base class which defines folders for output,
+ * restart and particle reload folders.
  */
-class BodyStatesRecordingToPlt : public BodyStatesRecording
+class IOEnvironment
 {
-  public:
-    BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToPlt(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
-    virtual ~BodyStatesRecordingToPlt(){};
-
-  protected:
-    virtual void writeWithFileName(const std::string &sequence) override;
-};
-
-/**
- * @class MeshRecordingToPlt
- * @brief  write the mesh data in Tecplot format
- */
-class MeshRecordingToPlt : public BaseIO
-{
-  protected:
-    BaseMeshField &mesh_field_;
-    std::string filefullpath_;
+  private:
+    UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
 
   public:
-    MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field);
-    virtual ~MeshRecordingToPlt(){};
-    virtual void writeToFile(size_t iteration_step = 0) override;
+    SPHSystem &sph_system_;
+    std::string input_folder_;
+    std::string output_folder_;
+    std::string restart_folder_;
+    std::string reload_folder_;
+
+    explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
+    virtual ~IOEnvironment(){};
+    ParameterizationIO &defineParameterizationIO();
 };
 } // namespace SPH
+#endif // IO_ENVIRONMENT_H
