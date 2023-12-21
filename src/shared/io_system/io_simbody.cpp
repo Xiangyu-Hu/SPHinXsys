@@ -1,17 +1,11 @@
-
-/**
- * @file 	io_simbody.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "io_simbody.h"
 
 namespace SPH
 {
 //=============================================================================================//
 WriteSimBodyPinData::
-    WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
-    : WriteSimBodyStates<SimTK::MobilizedBody::Pin>(sph_system, integ, pinbody),
+    WriteSimBodyPinData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
+    : WriteSimBodyStates<SimTK::MobilizedBody::Pin>(io_environment, integ, pinbody),
       filefullpath_(io_environment_.output_folder_ + "/mb_pinbody_data.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
