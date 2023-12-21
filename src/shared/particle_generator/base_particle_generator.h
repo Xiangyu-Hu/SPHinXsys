@@ -40,13 +40,16 @@ namespace SPH
 
 class SPHBody;
 class BaseParticles;
-class IOEnvironment;
 class Surface;
+class ThickSurface;
 class Observer;
 class Reload;
 
 template <typename... Parameters>
 class ParticleGenerator;
+
+template <typename... Parameters>
+class GeneratingMethod;
 
 template <> // default volume metric particle generator
 class ParticleGenerator<Base>

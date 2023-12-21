@@ -41,16 +41,14 @@ class Shape;
 class ParticleRefinementByShape;
 class ShellParticles;
 class ParticleSplitAndMerge;
+class Lattice;
 
-/**
- * @class BaseParticleGeneratorLattice
- * @brief Base class for generating particles from lattice positions for a body.
- */
-class BaseParticleGeneratorLattice
+template <> // Base class for generating particles from lattice positions
+class GeneratingMethod<Lattice>
 {
   public:
-    explicit BaseParticleGeneratorLattice(SPHBody &sph_body);
-    virtual ~BaseParticleGeneratorLattice(){};
+    explicit GeneratingMethod(SPHBody &sph_body);
+    virtual ~GeneratingMethod(){};
 
   protected:
     Real lattice_spacing_;      /**< Initial particle spacing. */
@@ -58,54 +56,30 @@ class BaseParticleGeneratorLattice
     Shape &body_shape_;         /**< Geometry shape for body. */
 };
 
-/**
- * @class ParticleGeneratorLattice
- * @brief generate particles from lattice positions for a body.
- */
-class ParticleGeneratorLattice : public BaseParticleGeneratorLattice, public ParticleGenerator
+template <>
+class ParticleGenerator<Lattice>
+    : public ParticleGenerator<Base>, public GeneratingMethod<Lattice>
 {
   public:
-    explicit ParticleGeneratorLattice(SPHBody &sph_body);
-    virtual ~ParticleGeneratorLattice(){};
+    explicit ParticleGenerator(SPHBody &sph_body);
+    virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 };
 
-/**
- * @class ParticleGeneratorMultiResolution
- * @brief generate multi-resolution particles from lattice positions for a body.
- */
-class ParticleGeneratorMultiResolution : public ParticleGeneratorLattice
+template <> // For generating particles with adaptive resolution from lattice positions
+class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
 {
   public:
-    ParticleGeneratorMultiResolution(SPHBody &sph_body, Shape &target_shape);
-    explicit ParticleGeneratorMultiResolution(SPHBody &sph_body);
-    virtual ~ParticleGeneratorMultiResolution(){};
+    ParticleGenerator(SPHBody &sph_body, Shape &target_shape);
+    explicit ParticleGenerator(SPHBody &sph_body);
+    virtual ~ParticleGenerator(){};
 
   protected:
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;
     StdLargeVec<Real> &h_ratio_;
-    /** Initialize particle position and measured volume. */
     virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
-    /** Initialize smoothing length ratio. */
     virtual void initializeSmoothingLengthRatio(Real local_spacing);
-};
-
-/**
- * @class ParticleGeneratorSplitAndMerge
- * @brief generate particles from lattice positions for a body.
- */
-class ParticleGeneratorSplitAndMerge : public ParticleGeneratorLattice
-{
-  public:
-    explicit ParticleGeneratorSplitAndMerge(SPHBody &sph_body);
-    virtual ~ParticleGeneratorSplitAndMerge(){};
-
-  protected:
-    ParticleSplitAndMerge *particle_adaptation_;
-    StdLargeVec<Real> &h_ratio_;
-
-    virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
 
 /**
@@ -115,17 +89,18 @@ class ParticleGeneratorSplitAndMerge : public ParticleGeneratorLattice
  * Note that, this class should not be used for generating the thin surface particles,
  * which may be better generated from a geometric surface directly.
  */
-class ThickSurfaceParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
+template <>
+class ParticleGenerator<ThickSurface, Lattice>
+    : public ParticleGenerator<Surface>, public GeneratingMethod<Lattice>
 {
   public:
-    ThickSurfaceParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness);
-    virtual ~ThickSurfaceParticleGeneratorLattice(){};
-    /** Initialize geometric variables. */
+    ParticleGenerator(SPHBody &sph_body, Real thickness);
+    virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 
   protected:
     Real total_volume_;                  /**< Total volume of body calculated from level set. */
-    Real global_avg_thickness_;          /**< Global average thickness. */
+    Real thickness_;                     /**< Global average thickness. */
     Real particle_spacing_;              /**< Particle spacing. */
     Real avg_particle_volume_;           /**< Average particle volume. */
     size_t all_cells_;                   /**< Number of cells enclosed by the volume. */

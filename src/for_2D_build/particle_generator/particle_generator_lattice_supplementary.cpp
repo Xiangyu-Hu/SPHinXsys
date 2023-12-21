@@ -9,7 +9,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void ParticleGeneratorLattice::initializeGeometricVariables()
+void ParticleGenerator<Lattice>::initializeGeometricVariables()
 {
     BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
     Real particle_volume = lattice_spacing_ * lattice_spacing_;
@@ -28,7 +28,7 @@ void ParticleGeneratorLattice::initializeGeometricVariables()
         }
 }
 //=================================================================================================//
-void ThickSurfaceParticleGeneratorLattice::initializeGeometricVariables()
+void ParticleGenerator<ThickSurface, Lattice>::initializeGeometricVariables()
 {
     // Calculate the total volume and
     // count the number of cells inside the body volume, where we might put particles.
@@ -72,8 +72,8 @@ void ThickSurfaceParticleGeneratorLattice::initializeGeometricVariables()
                     // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles
                     if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
                     {
-                        initializePositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / global_avg_thickness_);
-                        initializeSurfaceProperties(body_shape_.findNormalDirection(particle_position), global_avg_thickness_);
+                        initializePositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / thickness_);
+                        initializeSurfaceProperties(body_shape_.findNormalDirection(particle_position), thickness_);
                     }
                 }
             }

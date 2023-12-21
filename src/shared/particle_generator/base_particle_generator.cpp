@@ -55,8 +55,8 @@ void ParticleGenerator<Observer>::initializeGeometricVariables()
     }
 }
 //=================================================================================================//
-ParticleGeneratorReload::ParticleGeneratorReload(SPHBody &sph_body, const std::string &reload_body_name)
-    : ParticleGenerator(sph_body)
+ParticleGenerator<Reload>::ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name)
+    : ParticleGenerator<Base>(sph_body)
 {
     std::string reload_folder = sph_body.getSPHSystem().io_environment_->reload_folder_;
     if (!fs::exists(reload_folder))
@@ -69,12 +69,12 @@ ParticleGeneratorReload::ParticleGeneratorReload(SPHBody &sph_body, const std::s
     file_path_ = reload_folder + "/" + reload_body_name + "_rld.xml";
 }
 //=================================================================================================//
-void ParticleGeneratorReload::initializeGeometricVariables()
+void ParticleGenerator<Reload>::initializeGeometricVariables()
 {
     base_particles_.readFromXmlForReloadParticle(file_path_);
 }
 //=================================================================================================//
-void ParticleGeneratorReload::generateParticlesWithBasicVariables()
+void ParticleGenerator<Reload>::generateParticlesWithBasicVariables()
 {
     base_material_.registerReloadLocalParameters(&base_particles_);
     initializeGeometricVariables();

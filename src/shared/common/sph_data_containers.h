@@ -35,7 +35,8 @@
 
 namespace SPH
 {
-class Base;
+class Base;     // Indicating base class
+class Adaptive; // Indicating with adaptive resolution
 class BaseMaterial;
 class SPHBody;
 class RealBody;
