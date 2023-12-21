@@ -45,8 +45,8 @@ class SimBodyStatesIO
     MobilizedBodyType &mobody_;
 
   public:
-    SimBodyStatesIO(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
-        : io_environment_(io_environment), integ_(integ), mobody_(mobody){};
+    SimBodyStatesIO(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
+        : io_environment_(*sph_system.io_environment_), integ_(integ), mobody_(mobody){};
     virtual ~SimBodyStatesIO(){};
 };
 
@@ -58,28 +58,11 @@ template <class MobilizedBodyType>
 class WriteSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
 {
   public:
-    WriteSimBodyStates(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
-        : SimBodyStatesIO<MobilizedBodyType>(io_environment, integ, mobody){};
+    WriteSimBodyStates(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
+        : SimBodyStatesIO<MobilizedBodyType>(sph_system, integ, mobody){};
     virtual ~WriteSimBodyStates(){};
 
     virtual void writeToFile(size_t iteration_step) = 0;
-};
-
-/**
- * @class ReadSimBodyStates
- * @brief base class for read SimBody states.
- */
-template <class MobilizedBodyType>
-class ReadSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
-{
-  public:
-    ReadSimBodyStates(IOEnvironment &io_environment, MobilizedBodyType *mobody)
-        : SimBodyStatesIO<MobilizedBodyType>(io_environment, mobody){};
-    ReadSimBodyStates(IOEnvironment &io_environment, StdVec<MobilizedBodyType *> mobodies)
-        : SimBodyStatesIO<MobilizedBodyType>(io_environment, mobodies){};
-    virtual ~ReadSimBodyStates(){};
-
-    virtual void readFromFile(size_t iteration_step) = 0;
 };
 
 /**
@@ -92,7 +75,7 @@ class WriteSimBodyPinData : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
     std::string filefullpath_;
 
   public:
-    WriteSimBodyPinData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody);
+    WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody);
     virtual ~WriteSimBodyPinData(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
