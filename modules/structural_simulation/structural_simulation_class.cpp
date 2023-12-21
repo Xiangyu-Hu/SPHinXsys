@@ -198,6 +198,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       system_resolution_(0.0),
       system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
+      io_environment_(system_),
 
       // optional: boundary conditions
       non_zero_gravity_(input.non_zero_gravity_),
