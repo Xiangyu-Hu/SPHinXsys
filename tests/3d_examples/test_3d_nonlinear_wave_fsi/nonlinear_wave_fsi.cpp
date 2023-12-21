@@ -3,11 +3,9 @@
  * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
-#include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;
-#include "io_simbody_cable.h"   //output for cable data
-#include "io_simbody_free.h"    //output for free body data
 #include "nonlinear_wave_fsi.h" //header for this case
+#include "sphinxsys.h"          //SPHinXsys Library.
+using namespace SPH;
 
 int main(int ac, char *av[])
 {

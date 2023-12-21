@@ -4,8 +4,8 @@ namespace SPH
 {
 //=============================================================================================//
 WriteSimBodyPinData::
-    WriteSimBodyPinData(SPHSystem &sph_system,
-                        SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
+    WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                        SimTK::MobilizedBody::Pin &pinbody)
     : WriteSimBodyStates<SimTK::MobilizedBody::Pin>(sph_system, integ, pinbody),
       filefullpath_(io_environment_.output_folder_ + "/mb_pinbody_data.dat")
 {
@@ -22,7 +22,7 @@ WriteSimBodyPinData::
     out_file << "\n";
 
     out_file.close();
-};
+}
 //=============================================================================================//
 void WriteSimBodyPinData::writeToFile(size_t iteration_step)
 {
@@ -34,7 +34,7 @@ void WriteSimBodyPinData::writeToFile(size_t iteration_step)
 
     out_file << "\n";
     out_file.close();
-};
+}
 //=============================================================================================//
 WriteSimBodyCableData::
     WriteSimBodyCableData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
@@ -67,7 +67,7 @@ WriteSimBodyCableData::
     out_file << "\n";
 
     out_file.close();
-};
+}
 //=============================================================================================//
 void WriteSimBodyCableData::writeToFile(size_t iteration_step)
 {
@@ -85,7 +85,7 @@ void WriteSimBodyCableData::writeToFile(size_t iteration_step)
     out_file << "  " << mobody_.getDissipatedEnergy(state) << "  ";
     out_file << "\n";
     out_file.close();
-};
+}
 //=============================================================================================//
 WriteSimBodyPlanarData::
     WriteSimBodyPlanarData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
@@ -109,7 +109,7 @@ WriteSimBodyPlanarData::
     out_file << "\n";
 
     out_file.close();
-};
+}
 //=============================================================================================//
 void WriteSimBodyPlanarData::writeToFile(size_t iteration_step)
 {
@@ -122,6 +122,107 @@ void WriteSimBodyPlanarData::writeToFile(size_t iteration_step)
     out_file << "  " << mobody_.getAngle(state) << "  ";
     out_file << "\n";
     out_file.close();
+}
+//=============================================================================================//
+WriteSimBodyFreeRotationMatrix::
+    WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                                   SimTK::MobilizedBody::Free &free_body)
+    : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
+      filefullpath_(sph_system.io_environment_->output_folder_ + "/RotationMatrix.dat")
+{
+    std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+
+    out_file << "\"time\""
+             << "   ";
+    out_file << "  "
+             << "rotation [1,1]"
+             << " ";
+    out_file << "  "
+             << "rotation [1,2]"
+             << " ";
+    out_file << "  "
+             << "rotation [1,3]"
+             << " ";
+    out_file << "  "
+             << "rotation [2,1]"
+             << " ";
+    out_file << "  "
+             << "rotation [2,2]"
+             << " ";
+    out_file << "  "
+             << "rotation [2,3]"
+             << " ";
+    out_file << "  "
+             << "rotation [3,1]"
+             << " ";
+    out_file << "  "
+             << "rotation [3,2]"
+             << " ";
+    out_file << "  "
+             << "rotation [3,3]"
+             << " ";
+    out_file << "\n";
+
+    out_file.close();
+}
+//=============================================================================================//
+void WriteSimBodyFreeRotationMatrix::writeToFile(size_t iteration_step)
+{
+    std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+    out_file << GlobalStaticVariables::physical_time_ << "   ";
+    const SimTK::State &state = integ_.getState();
+
+    out_file << "  " << mobody_.getBodyRotation(state)[0][0] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[0][1] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[0][2] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[1][0] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[1][1] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[1][2] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[2][0] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[2][1] << "  ";
+    out_file << "  " << mobody_.getBodyRotation(state)[2][2] << "  ";
+
+    out_file << "\n";
+    out_file.close();
+}
+//=============================================================================================//
+WriteSimBodyVelocity::
+    WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                         SimTK::MobilizedBody::Free &free_body)
+    : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
+      filefullpath_(sph_system.io_environment_->output_folder_ + "/BodyVelocity.dat")
+{
+    std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+
+    out_file << "\"time\""
+             << "   ";
+    out_file << "  "
+             << "velocity [0]"
+             << " ";
+    out_file << "  "
+             << "velocity [1]"
+             << " ";
+    out_file << "  "
+             << "velocity [2]"
+             << " ";
+    out_file << "  ";
+    out_file << "\n";
+
+    out_file.close();
 };
+//=============================================================================================//
+void WriteSimBodyVelocity::writeToFile(size_t iteration_step)
+{
+    std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+    out_file << GlobalStaticVariables::physical_time_ << "   ";
+    const SimTK::State &state = integ_.getState();
+
+    out_file << "  " << mobody_.getBodyOriginVelocity(state)[0] << "  ";
+    out_file << "  " << mobody_.getBodyOriginVelocity(state)[1] << "  ";
+    out_file << "  " << mobody_.getBodyOriginVelocity(state)[2] << "  ";
+
+    out_file << "\n";
+    out_file.close();
+}
 //=================================================================================================//
 } // namespace SPH

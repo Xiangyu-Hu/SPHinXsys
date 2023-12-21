@@ -45,7 +45,8 @@ class SimBodyStatesIO
     MobilizedBodyType &mobody_;
 
   public:
-    SimBodyStatesIO(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
+    SimBodyStatesIO(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                    MobilizedBodyType &mobody)
         : io_environment_(*sph_system.io_environment_), integ_(integ), mobody_(mobody){};
     virtual ~SimBodyStatesIO(){};
 };
@@ -58,7 +59,8 @@ template <class MobilizedBodyType>
 class WriteSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
 {
   public:
-    WriteSimBodyStates(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
+    WriteSimBodyStates(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                       MobilizedBodyType &mobody)
         : SimBodyStatesIO<MobilizedBodyType>(sph_system, integ, mobody){};
     virtual ~WriteSimBodyStates(){};
 
@@ -75,7 +77,8 @@ class WriteSimBodyPinData : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
     std::string filefullpath_;
 
   public:
-    WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody);
+    WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                        SimTK::MobilizedBody::Pin &pinbody);
     virtual ~WriteSimBodyPinData(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
@@ -109,6 +112,38 @@ class WriteSimBodyPlanarData : public WriteSimBodyStates<SimTK::MobilizedBody::P
     WriteSimBodyPlanarData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                            SimTK::MobilizedBody::Planar &planar_body);
     virtual ~WriteSimBodyPlanarData(){};
+    virtual void writeToFile(size_t iteration_step = 0) override;
+};
+
+/**
+ * @class WriteSimBodyFreeRotationMatrix
+ * @brief Write displacement and rotation of planar solid body.
+ */
+class WriteSimBodyFreeRotationMatrix : public WriteSimBodyStates<SimTK::MobilizedBody::Free>
+{
+  protected:
+    std::string filefullpath_;
+
+  public:
+    WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                                   SimTK::MobilizedBody::Free &free_body);
+    virtual ~WriteSimBodyFreeRotationMatrix(){};
+    virtual void writeToFile(size_t iteration_step = 0) override;
+};
+
+/**
+ * @class WriteSimBodyVelocity
+ * @brief Write displacement and rotation of planar solid body.
+ */
+class WriteSimBodyVelocity : public WriteSimBodyStates<SimTK::MobilizedBody::Free>
+{
+  protected:
+    std::string filefullpath_;
+
+  public:
+    WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                         SimTK::MobilizedBody::Free &free_body);
+    virtual ~WriteSimBodyVelocity(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 } // namespace SPH
