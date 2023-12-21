@@ -23,7 +23,7 @@
 /**
  * @file 	io_simbody.h
  * @brief 	Classes for simbody relevant files.
- * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ * @author	Chi Zhang, Shuoguo Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -77,6 +77,38 @@ class WriteSimBodyPinData : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
   public:
     WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody);
     virtual ~WriteSimBodyPinData(){};
+    virtual void writeToFile(size_t iteration_step = 0) override;
+};
+
+/**
+ * @class WriteSimBodyCableData
+ * @brief Write total force acting a single cable element.
+ */
+class WriteSimBodyCableData : public WriteSimBodyStates<SimTK::CableSpring>
+{
+  protected:
+    std::string filefullpath_;
+
+  public:
+    WriteSimBodyCableData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                          SimTK::CableSpring &cable1, std::string cable_inf);
+    virtual ~WriteSimBodyCableData(){};
+    virtual void writeToFile(size_t iteration_step = 0) override;
+};
+
+/**
+ * @class WriteSimBodyPlanarData
+ * @brief Write displacement and rotation of planar solid body.
+ */
+class WriteSimBodyPlanarData : public WriteSimBodyStates<SimTK::MobilizedBody::Planar>
+{
+  protected:
+    std::string filefullpath_;
+
+  public:
+    WriteSimBodyPlanarData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
+                           SimTK::MobilizedBody::Planar &planar_body);
+    virtual ~WriteSimBodyPlanarData(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 } // namespace SPH

@@ -5,8 +5,6 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
-#include "io_simbody_cable.h"   //output for cable data
-#include "io_simbody_planar.h"  //output for planar structure
 #include "nonlinear_wave_fsi.h" //header for this case
 
 int main(int ac, char *av[])
