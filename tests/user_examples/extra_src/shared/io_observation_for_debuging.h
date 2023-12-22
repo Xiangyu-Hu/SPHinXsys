@@ -38,6 +38,7 @@ namespace SPH
     //class FluidDataSimple;
 
      typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
+     
      template <class ReturnType, class OperationType>
      class ReducedQuantityRecordingForDebuging : public BaseIO, public FluidDataSimple
     {
@@ -87,5 +88,67 @@ namespace SPH
              }
              return temp;
          }
+     };
+
+      template <class ReturnType>
+     class QuantityRecordingForDebuging : public BaseIO, public FluidDataSimple
+    {
+       protected:
+         std::string sph_body_name_;
+         const std::string quantity_name_;
+         StdLargeVec<ReturnType> &varriable_for_output_;
+         ReturnType reference_;
+         StdLargeVec<Vecd>& varriable_position_;
+
+       public:
+         QuantityRecordingForDebuging(IOEnvironment &io_environment, SPHBody &sph_body, ReturnType reference, std::string quantity_name)
+             : BaseIO(io_environment), FluidDataSimple(sph_body),
+               sph_body_name_(sph_body.getName()), varriable_for_output_(*particles_->getVariableByName<ReturnType>(quantity_name)),
+               quantity_name_(quantity_name), reference_(reference), varriable_position_(*particles_->getVariableByName<Vecd>("Position"))
+         {
+            
+         };
+         virtual ~QuantityRecordingForDebuging(){};
+
+         void writeToFile( size_t iteration_step = static_cast<size_t>(GlobalStaticVariables::physical_time_ * 100000) ) override
+         {
+              /** output for .dat file. */
+             std::string filefullpath_output = io_environment_.output_folder_ + "/" + sph_body_name_ + "_" + quantity_name_ + "_"+ std::to_string(iteration_step) + ".dat";
+             std::ofstream out_file(filefullpath_output.c_str(), std::ios::app);
+             this->writeAQuantityWithPosition(out_file, reference_);
+             out_file << "\n";
+             out_file.close();
+         };
+
+        void writeAQuantityWithPosition(std::ofstream &out_file, Real reference)
+        {
+            for (size_t n = 0; n != varriable_position_.size(); ++n)
+            {
+                for (int i = 0; i < Dimensions; ++i)
+                {
+                    out_file << std::fixed << std::setprecision(9) << varriable_position_[n][i] << "   ";
+                }
+                out_file << n << "   ";
+                out_file << std::fixed << std::setprecision(9) << varriable_for_output_[n]<< "   ";  
+                out_file << "\n";
+            } 
+        }
+
+        void writeAQuantityWithPosition(std::ofstream &out_file, Vecd reference)
+        {
+            for (size_t n = 0; n != varriable_position_.size(); ++n)
+            {
+                for (int i = 0; i < Dimensions; ++i)
+                {
+                    out_file << std::fixed << std::setprecision(9) << varriable_position_[n][i] << "   ";
+                }
+                out_file << n << "   ";
+                for (int j = 0; j < Dimensions; ++j)
+                {
+                    out_file << std::fixed << std::setprecision(9) << varriable_for_output_[n][j] << "   ";
+                }
+                out_file << "\n";
+            } 
+        }
      };
 } // namespace SPH

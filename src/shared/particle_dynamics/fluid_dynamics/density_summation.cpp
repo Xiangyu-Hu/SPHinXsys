@@ -41,11 +41,15 @@ DensitySummation<BaseContact>::DensitySummation(BaseContactRelation &contact_rel
         contact_inv_rho0_.push_back(1.0 / rho0_k);
         contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
     }
+     /*for debuging*/
+    particles_->registerVariable(kernel_value_, "KernelValueParticle");
 }
 //=================================================================================================//
 Real DensitySummation<BaseContact>::ContactSummation(size_t index_i)
 {
     Real sigma(0.0);
+    /*for debuging*/
+    Real kernel_value = 0.0;
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
@@ -54,9 +58,13 @@ Real DensitySummation<BaseContact>::ContactSummation(size_t index_i)
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+            /*for debuging*/
+            kernel_value += contact_neighborhood.W_ij_[n];
         }
     }
     return sigma;
+    /*for debuging*/
+    kernel_value_[index_i] = kernel_value;
 };
 //=================================================================================================//
 void DensitySummation<Contact<>>::interaction(size_t index_i, Real dt)

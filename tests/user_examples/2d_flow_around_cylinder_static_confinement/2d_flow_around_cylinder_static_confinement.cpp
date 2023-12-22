@@ -103,8 +103,10 @@ int main(int ac, char *av[])
         write_total_force_on_inserted_body(io_environment, pressure_force_on_cylinder, "TotalPressureForceOnSolid");*/
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "ViscousForceFromWall");
-     ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValue");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "Force");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValue");
+    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real(io_environment, water_block, 0.0, "KernelValue");
+    QuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "Force");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -148,7 +150,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            //viscous_acceleration.exec();
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */
@@ -196,6 +198,8 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile();
         write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
         //write_total_force_on_inserted_body.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_real.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_vecd.writeToFile(number_of_iterations);
         write_single_variable_vector.writeToFile(number_of_iterations);
         write_single_variable_real.writeToFile(number_of_iterations);
         fluid_observer_contact.updateConfiguration();

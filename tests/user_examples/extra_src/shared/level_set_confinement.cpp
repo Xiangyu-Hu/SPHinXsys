@@ -49,7 +49,7 @@ namespace SPH
             level_set_shape_(&near_surface.level_set_shape_)
 		{
             particles_->registerVariable(force_from_fluid_, "ViscousForceFromWall"); 
-			particles_->registerVariable(kernel_value_, "KernelValue");
+			particles_->registerVariable(kernel_gradient_rij_, "KernelGradientRij");
 		}
 		//=================================================================================================//
         void StaticConfinementViscousAcceleration::interaction(size_t index_i, Real dt)
@@ -66,7 +66,7 @@ namespace SPH
 			force_prior_[index_i] += force;
                         /*below for debuging*/
             force_from_fluid_[index_i] = force;
-            kernel_value_[index_i] = kernel_gradient_divide_Rij;
+            kernel_gradient_rij_[index_i] = kernel_gradient_divide_Rij;
 			/*for debuging*/
 			/*Vecd force = Vecd::Zero();
 			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;*/

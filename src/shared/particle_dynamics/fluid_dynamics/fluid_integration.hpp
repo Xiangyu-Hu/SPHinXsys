@@ -76,7 +76,7 @@ template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
-      correction_(particles_), riemann_solver_(fluid_, fluid_) {}
+      correction_(particles_), riemann_solver_(fluid_, fluid_){}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
 void Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)

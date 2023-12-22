@@ -81,7 +81,7 @@ namespace SPH
             Real mu_;
             LevelSetShape* level_set_shape_;
             StdLargeVec<Vecd> force_from_fluid_;
-            StdLargeVec<Real> kernel_value_;
+            StdLargeVec<Real> kernel_gradient_rij_;
 
  
         };

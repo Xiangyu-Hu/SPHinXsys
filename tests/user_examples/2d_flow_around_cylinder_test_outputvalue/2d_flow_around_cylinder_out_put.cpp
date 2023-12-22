@@ -137,9 +137,15 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
     //fluid_dynamics::ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable(io_environment, water_block, Vecd::Zero(), "ViscousForceOnWall");
-    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "ViscousForceFromWall");
-    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector_1(io_environment, water_block, Vecd::Zero(), "PriorForce");
-    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelGradientDivideRij");
+    //ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradient");
+    //ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector_1(io_environment, water_block, Vecd::Zero(), "PriorForce");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_density(io_environment, water_block, 0.0, "Density");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_volume(io_environment, water_block, 0.0, "VolumetricMeasure");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_mass(io_environment, water_block, 0.0, "MassiveMeasure");
+    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_density(io_environment, water_block, 0.0, "Density");
+    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_mass(io_environment, water_block, 0.0, "MassiveMeasure");
+    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_volume(io_environment, water_block, 0.0, "VolumetricMeasure");
+    QuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "Force");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -159,7 +165,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 200.0;
+    Real end_time = 100.0;
     Real output_interval = end_time / 200.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -232,9 +238,14 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile();
         write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
         write_total_force_on_inserted_body.writeToFile(number_of_iterations);
-        write_single_variable_vector.writeToFile(number_of_iterations);
-        write_single_variable_vector_1.writeToFile(number_of_iterations);
-        write_single_variable_real.writeToFile(number_of_iterations);
+        //write_single_variable_vector.writeToFile(number_of_iterations);
+        //write_single_variable_vector_1.writeToFile(number_of_iterations);
+        write_single_variable_real_density.writeToFile(number_of_iterations);
+        write_single_variable_real_volume.writeToFile(number_of_iterations);
+        write_single_variable_real_mass.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_real_mass.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_real_density.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_real_volume.writeToFile(number_of_iterations);
         fluid_observer_contact.updateConfiguration();
         write_fluid_velocity.writeToFile(number_of_iterations);
 
@@ -247,7 +258,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_total_viscous_force_on_inserted_body.testResult();
+    //write_total_viscous_force_on_inserted_body.testResult();
 
     return 0;
 }
