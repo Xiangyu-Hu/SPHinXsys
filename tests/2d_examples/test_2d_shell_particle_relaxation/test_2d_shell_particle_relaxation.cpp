@@ -37,13 +37,12 @@ int main(int ac, char *av[])
 {
     /** Build up a SPHSystem. */
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     /** Creating body, materials and particles. */
     SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
+    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     pipe_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     pipe_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
@@ -51,8 +50,8 @@ int main(int ac, char *av[])
     /**
      * @brief define simple data file input and outputs functions.
      */
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, {pipe_body});
-    MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body.getCellLinkedList());
+    BodyStatesRecordingToVtp write_real_body_states({pipe_body});
+    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, pipe_body.getCellLinkedList());
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

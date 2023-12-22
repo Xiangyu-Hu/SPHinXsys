@@ -72,8 +72,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -121,11 +120,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_water_block_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
+        write_water_mechanical_energy(water_block, gravity_ptr);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

@@ -215,9 +215,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
-    sph_system.handleCommandlineOptions(ac, av);
-    GlobalStaticVariables::physical_time_ = 0.0;
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -235,7 +233,7 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<DiffusionCylinderParticles, WettingCylinderBodyMaterial>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
+        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
@@ -275,9 +273,9 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp({&cylinder});
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
+        ReloadParticleIO write_particle_reload_files({&cylinder});
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
@@ -385,12 +383,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_cylinder_wetting("Phi", io_environment, wetting_observer_contact);
+        write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

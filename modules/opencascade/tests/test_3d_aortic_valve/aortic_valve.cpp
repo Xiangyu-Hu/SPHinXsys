@@ -121,8 +121,7 @@ int main(int ac, char *av[])
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -133,8 +132,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-    MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, leaflet.getCellLinkedList());
+    BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

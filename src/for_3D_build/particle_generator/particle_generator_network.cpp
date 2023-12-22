@@ -160,8 +160,7 @@ bool ParticleGeneratorNetwork::
 //=================================================================================================//
 void ParticleGeneratorNetwork::initializeGeometricVariables()
 {
-    IOEnvironment *io_environment = sph_body_.getSPHSystem().io_environment_;
-    BodyStatesRecordingToVtp write_states(*io_environment, {sph_body_});
+    BodyStatesRecordingToVtp write_states({sph_body_});
 
     std::cout << "Now creating Particles on network... " << std::endl;
 

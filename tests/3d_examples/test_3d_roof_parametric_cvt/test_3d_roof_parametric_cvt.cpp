@@ -305,6 +305,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
+    system.setIOEnvironment(false);  
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     if (cvt)
@@ -321,9 +322,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
       // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
     // output
-    IOEnvironment io_env(system, false);
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
+    BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges

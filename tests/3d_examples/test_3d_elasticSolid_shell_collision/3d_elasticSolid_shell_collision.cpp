@@ -65,8 +65,7 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(false);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -78,11 +77,11 @@ int main(int ac, char *av[])
     ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getName());
+        ball.generateParticles<ParticleGeneratorReload>(ball.getName());
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
         ball.generateParticles<ParticleGeneratorLattice>();
     }
 
@@ -105,8 +104,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files(io_environment, ball);
+        BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+        ReloadParticleIO write_particle_reload_files(ball);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -158,10 +157,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    BodyStatesRecordingToVtp write_ball_state(io_environment, {&ball});
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_ball_state({&ball});
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_ball_center_displacement("Position", io_environment, ball_observer_contact);
+        write_ball_center_displacement("Position", ball_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

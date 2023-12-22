@@ -46,15 +46,14 @@ int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     /** Creat a body, corresponding material and particles. */
     TreeBody tree_on_sphere(sph_system, makeShared<GeometricShapeBall>(Vec3d::Zero(), 1.0, "Sphere"));
-    tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     tree_on_sphere.defineParticlesAndMaterial();
     tree_on_sphere.generateParticles<ParticleGeneratorNetwork>(starting_point, second_point, iteration_levels, grad_factor);
     /** Write particle data. */
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     write_states.writeToFile(0);
 
 

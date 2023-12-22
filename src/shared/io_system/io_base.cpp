@@ -11,55 +11,21 @@
 namespace SPH
 {
 //=============================================================================================//
-IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
-    : sph_system_(sph_system),
-      input_folder_("./input"), output_folder_("./output"),
-      restart_folder_("./restart"), reload_folder_("./reload")
-{
-    if (!fs::exists(input_folder_))
-    {
-        fs::create_directory(input_folder_);
-    }
-
-    if (!fs::exists(output_folder_))
-    {
-        fs::create_directory(output_folder_);
-    }
-
-    if (!fs::exists(restart_folder_))
-    {
-        fs::create_directory(restart_folder_);
-    }
-
-    if (!fs::exists(reload_folder_))
-    {
-        fs::create_directory(reload_folder_);
-    }
-
-    if (sph_system.RestartStep() == 0)
-    {
-        fs::remove_all(restart_folder_);
-        fs::create_directory(restart_folder_);
-        if (delete_output == true)
-        {
-            fs::remove_all(output_folder_);
-            fs::create_directory(output_folder_);
-        }
-    }
-
-    sph_system.io_environment_ = this;
-}
-//=============================================================================================//
-ParameterizationIO &IOEnvironment::defineParameterizationIO()
-{
-    return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
-}
+BaseIO::BaseIO(SPHSystem &sph_system)
+    : sph_system_(sph_system), io_environment_(*sph_system.io_environment_) {}
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
     int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);
     return padValueWithZeros(i_time);
 }
+//=============================================================================================//
+BodyStatesRecording::BodyStatesRecording(SPHBodyVector bodies)
+    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
+      state_recording_(sph_system_.StateRecording()) {}
+//=============================================================================================//
+BodyStatesRecording::BodyStatesRecording(SPHBody &body)
+    : BodyStatesRecording({&body}) {}
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
@@ -71,13 +37,13 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     writeWithFileName(padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
-RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)
-    : BaseIO(io_environment), bodies_(bodies),
-      overall_file_path_(io_environment.restart_folder_ + "/Restart_time_")
+RestartIO::RestartIO(SPHBodyVector bodies)
+    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
+      overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
 {
     std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
                    [&](SPHBody *body) -> std::string
-                   { return io_environment.restart_folder_ + "/" + body->getName() + "_rst_"; });
+                   { return io_environment_.restart_folder_ + "/" + body->getName() + "_rst_"; });
 }
 //=============================================================================================//
 void RestartIO::writeToFile(size_t iteration_step)
@@ -138,23 +104,22 @@ void RestartIO::readFromFile(size_t restart_step)
     }
 }
 //=============================================================================================//
-ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies)
-    : BaseIO(io_environment), bodies_(bodies)
+ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
+    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies)
 {
     std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
                    [&](SPHBody *body) -> std::string
-                   { return io_environment.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
+                   { return io_environment_.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
 }
 //=============================================================================================//
-ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body,
-                                   const std::string &given_body_name)
-    : BaseIO(io_environment), bodies_({&sph_body})
+ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name)
+    : BaseIO(sph_body.getSPHSystem()), bodies_({&sph_body})
 {
-    file_names_.push_back(io_environment.reload_folder_ + "/" + given_body_name + "_rld.xml");
+    file_names_.push_back(io_environment_.reload_folder_ + "/" + given_body_name + "_rld.xml");
 }
 //=============================================================================================//
-ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body)
-    : ReloadParticleIO(io_environment, sph_body, sph_body.getName()) {}
+ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body)
+    : ReloadParticleIO(sph_body, sph_body.getName()) {}
 //=============================================================================================//
 void ReloadParticleIO::writeToFile(size_t iteration_step)
 {

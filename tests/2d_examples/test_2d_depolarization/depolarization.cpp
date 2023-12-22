@@ -76,8 +76,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -114,9 +113,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_recorded_voltage("Voltage", io_environment, voltage_observer_contact_relation);
+        write_recorded_voltage("Voltage", voltage_observer_contact_relation);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

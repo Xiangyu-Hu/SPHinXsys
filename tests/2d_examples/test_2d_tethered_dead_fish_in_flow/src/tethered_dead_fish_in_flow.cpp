@@ -228,7 +228,7 @@ int main(int ac, char *av[])
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
+        ? fish_body.generateParticles<ParticleGeneratorReload>(fish_body.getName())
         : fish_body.generateParticles<ParticleGeneratorLattice>();
     /**
      * @brief   Particle and body creation of fish observer.
@@ -255,9 +255,9 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_fish_body(io_environment, fish_body);
+        BodyStatesRecordingToVtp write_fish_body(fish_body);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, {&fish_body});
+        ReloadParticleIO write_particle_reload_files({&fish_body});
 
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_body_inner);
@@ -402,10 +402,10 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
         constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(system.real_bodies_);
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_fish(io_environment, fluid_force_on_fish_body, "TotalPressureForceOnSolid");
-    ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
+        write_total_force_on_fish(fluid_force_on_fish_body, "TotalPressureForceOnSolid");
+    ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
     /**
      * Time steeping starts here.
      */

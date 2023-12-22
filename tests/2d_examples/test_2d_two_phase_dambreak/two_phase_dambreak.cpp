@@ -15,8 +15,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -92,13 +91,13 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /** Output the mechanical energy of fluid body. */
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
+        write_water_mechanical_energy(water_block, gravity_ptr);
     /** output the observed data from fluid body. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

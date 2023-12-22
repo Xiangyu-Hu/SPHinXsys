@@ -188,7 +188,7 @@ int main(int ac, char *av[])
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? beam_body.generateParticles<ParticleGeneratorReload>(io_environment, beam_body.getName())
+        ? beam_body.generateParticles<ParticleGeneratorReload>(beam_body.getName())
         : beam_body.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
@@ -215,8 +215,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_ball_state(io_environment, system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files(io_environment, {&beam_body});
+        BodyStatesRecordingToVtp write_ball_state(system.real_bodies_);
+        ReloadParticleIO write_particle_reload_files({&beam_body});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -273,11 +273,11 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
 
-    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
     ReducedQuantityRecording<TotalMechanicalEnergy>
-        write_total_mechanical_energy(io_environment, beam_body);
+        write_total_mechanical_energy(beam_body);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, beam_observer_contact);
+        write_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------

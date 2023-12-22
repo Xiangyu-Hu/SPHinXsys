@@ -42,10 +42,8 @@ namespace SPH
 class BodyStatesRecordingToVtp : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBody &body)
-        : BodyStatesRecording(io_environment, body){};
-    BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BodyStatesRecording(io_environment, bodies){};
+    BodyStatesRecordingToVtp(SPHBody &body) : BodyStatesRecording(body){};
+    BodyStatesRecordingToVtp(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
     virtual ~BodyStatesRecordingToVtp(){};
 
   protected:
@@ -61,8 +59,8 @@ class BodyStatesRecordingToVtp : public BodyStatesRecording
 class BodyStatesRecordingToVtpString : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToVtpString(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BodyStatesRecording(io_environment, bodies){};
+    BodyStatesRecordingToVtpString(SPHBodyVector bodies)
+        : BodyStatesRecording(bodies){};
     virtual ~BodyStatesRecordingToVtpString() = default;
 
     const VtuStringData &GetVtuData() const;
@@ -96,8 +94,7 @@ class WriteToVtpIfVelocityOutOfBound
     virtual void writeWithFileName(const std::string &sequence) override;
 
   public:
-    WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment,
-                                   SPHBodyVector bodies, Real velocity_bound);
+    WriteToVtpIfVelocityOutOfBound(SPHBodyVector bodies, Real velocity_bound);
     virtual ~WriteToVtpIfVelocityOutOfBound(){};
 };
 } // namespace SPH

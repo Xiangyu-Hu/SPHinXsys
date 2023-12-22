@@ -38,6 +38,7 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
+#include "io_environment.h"
 #include "sph_data_containers.h"
 
 #include <filesystem>
@@ -51,7 +52,6 @@ namespace SPH
  * Pre-claimed classes.
  */
 class SPHBody;
-class IOEnvironment;
 class ComplexShape;
 
 /**
@@ -60,6 +60,8 @@ class ComplexShape;
  */
 class SPHSystem
 {
+    UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
+
   public:
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
               size_t number_of_threads = std::thread::hardware_concurrency());
@@ -79,7 +81,7 @@ class SPHSystem
     Real resolution_ref_;                    /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
 
-    IOEnvironment *io_environment_;    /**< io_environment setup */
+    IOEnvironment *io_environment_;    /**< io environment */
     SPHBodyVector sph_bodies_;         /**< All sph bodies. */
     SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
     SPHBodyVector real_bodies_;        /**< The bodies with inner particle configuration. */
@@ -92,8 +94,10 @@ class SPHSystem
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     /** Command line handle for Ctest. */
 #ifdef BOOST_AVAILABLE
-    void handleCommandlineOptions(int ac, char *av[]);
+    SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
+    SPHSystem *setIOEnvironment(bool delete_output = true);
+
   protected:
     bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;         /**< start the simulation with relaxed particles. */

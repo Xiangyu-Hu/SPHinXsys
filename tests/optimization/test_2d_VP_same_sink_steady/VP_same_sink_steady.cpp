@@ -153,8 +153,9 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 
         for (size_t i = 0; i < number_of_observation_points; ++i)
         {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * (Real)i / 
-                (Real)(number_of_observation_points - 1) + start_of_measure);
+            Vec2d point_coordinate(0.5 * L, range_of_measure * (Real)i /
+                                                    (Real)(number_of_observation_points - 1) +
+                                                start_of_measure);
             positions_.push_back(point_coordinate);
         }
     }
@@ -168,7 +169,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
+    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -209,9 +210,9 @@ TEST(test_optimization, test_problem1_non_optimized)
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
-    ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
+    ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -246,7 +247,8 @@ TEST(test_optimization, test_problem1_non_optimized)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    std::string filefullpath_nonopt_temperature = io_environment.output_folder_ + "/" + "nonopt_temperature.dat";
+    std::string filefullpath_nonopt_temperature =
+        sph_system.io_environment_->output_folder_ + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
 
     while (GlobalStaticVariables::physical_time_ < End_Time)
