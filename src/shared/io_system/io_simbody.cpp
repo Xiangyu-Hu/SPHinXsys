@@ -128,7 +128,7 @@ WriteSimBodyFreeRotationMatrix::
     WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                                    SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(sph_system.io_environment_->output_folder_ + "/RotationMatrix.dat")
+      filefullpath_(sph_system.getIOEnvironment().output_folder_ + "/RotationMatrix.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -190,7 +190,7 @@ WriteSimBodyVelocity::
     WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                          SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(sph_system.io_environment_->output_folder_ + "/BodyVelocity.dat")
+      filefullpath_(sph_system.getIOEnvironment().output_folder_ + "/BodyVelocity.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 

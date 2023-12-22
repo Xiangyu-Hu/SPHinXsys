@@ -47,7 +47,7 @@ class SimBodyStatesIO
   public:
     SimBodyStatesIO(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                     MobilizedBodyType &mobody)
-        : io_environment_(*sph_system.io_environment_), integ_(integ), mobody_(mobody){};
+        : io_environment_(sph_system.getIOEnvironment()), integ_(integ), mobody_(mobody){};
     virtual ~SimBodyStatesIO(){};
 };
 

@@ -131,7 +131,7 @@ class ImageMHD
 
   private:
     std::string objectType_;
-    int ndims_;
+    int nDims_;
     bool binaryData_;
     bool binaryDataByteOrderMSB_;
     bool compressedData_;
