@@ -18,6 +18,17 @@ SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::generateTriangleMesh(co
     return triangle_mesh;
 }
 //=================================================================================================//
+SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::getTriangleMesh()
+{
+    if (triangle_mesh_ == nullptr)
+    {
+        std::cout << "\n Error: TriangleMesh not setup yet! \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    return triangle_mesh_;
+}
+//=================================================================================================//
 bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 {
     SimTKVec2 uv_coordinate;
