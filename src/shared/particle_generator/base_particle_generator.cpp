@@ -59,7 +59,7 @@ void ObserverParticleGenerator::initializeGeometricVariables()
 ParticleGeneratorReload::ParticleGeneratorReload(SPHBody &sph_body, const std::string &reload_body_name)
     : ParticleGenerator(sph_body)
 {
-    std::string reload_folder = sph_body.getSPHSystem().io_environment_->reload_folder_;
+    std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().reload_folder_;
     if (!fs::exists(reload_folder))
     {
         std::cout << "\n Error: the particle reload folder:" << reload_folder << " is not exists" << std::endl;

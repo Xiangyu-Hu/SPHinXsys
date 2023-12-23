@@ -63,10 +63,23 @@ class SPHSystem
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
 
   public:
+    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
+    Real resolution_ref_;                    /**< reference resolution of the SPH system */
+    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
+    SPHBodyVector sph_bodies_;               /**< All sph bodies. */
+    SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
+    SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
+    SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
+
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
               size_t number_of_threads = std::thread::hardware_concurrency());
     virtual ~SPHSystem(){};
 
+#ifdef BOOST_AVAILABLE
+    SPHSystem *handleCommandlineOptions(int ac, char *av[]);
+#endif
+    SPHSystem *setIOEnvironment(bool delete_output = true);
+    IOEnvironment &getIOEnvironment();
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
@@ -77,28 +90,16 @@ class SPHSystem
     void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     size_t RestartStep() { return restart_step_; };
-    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
-    Real resolution_ref_;                    /**< reference resolution of the SPH system */
-    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
-
-    IOEnvironment *io_environment_;    /**< io environment */
-    SPHBodyVector sph_bodies_;         /**< All sph bodies. */
-    SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
-    SPHBodyVector real_bodies_;        /**< The bodies with inner particle configuration. */
-    SolidBodyVector solid_bodies_;     /**< The bodies with inner particle configuration and acoustic time steps . */
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
     /** Initialize particle configuration for the SPH system. */
     void initializeSystemConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
-    /** Command line handle for Ctest. */
-#ifdef BOOST_AVAILABLE
-    SPHSystem *handleCommandlineOptions(int ac, char *av[]);
-#endif
-    SPHSystem *setIOEnvironment(bool delete_output = true);
 
   protected:
+    friend class IOEnvironment;
+    IOEnvironment *io_environment_; /**< io environment */
     bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;         /**< start the simulation with relaxed particles. */
     size_t restart_step_;           /**< restart step */

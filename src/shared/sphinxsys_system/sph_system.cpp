@@ -14,6 +14,18 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
       io_environment_(nullptr), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true) {}
 //=================================================================================================//
+IOEnvironment &SPHSystem::getIOEnvironment()
+{
+    if (io_environment_ == nullptr)
+    {
+        std::cout << "\n Error: IO Environment not setup yet! \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    return *io_environment_;
+}
+//=================================================================================================//
+
 void SPHSystem::initializeSystemCellLinkedLists()
 {
     for (auto &body : real_bodies_)

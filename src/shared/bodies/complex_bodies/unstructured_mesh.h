@@ -106,7 +106,6 @@ class ParticleGeneratorInFVM : public ParticleGenerator
 class NeighborBuilderInFVM
 {
   protected:
-    Kernel *kernel_;
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
@@ -115,7 +114,7 @@ class NeighborBuilderInFVM
                             Vecd &interface_normal_direction, size_t j_index) const;
 
   public:
-    NeighborBuilderInFVM() : kernel_(nullptr){};
+    NeighborBuilderInFVM(){};
     virtual ~NeighborBuilderInFVM(){};
 };
 
