@@ -319,6 +319,30 @@ class QuantityMaximum : public LocalDynamicsReduce<VariableType, ReduceMax>,
     }
 };
 
+template <typename VariableType, class DynamicsIdentifier>
+class QuantityMaximumPartly
+    : public BaseLocalDynamicsReduce<VariableType, ReduceMax, DynamicsIdentifier>,
+      public GeneralDataDelegateSimple
+{
+protected:
+    StdLargeVec<VariableType>& variable_;
+
+public:
+    QuantityMaximumPartly(DynamicsIdentifier& identifier, const std::string& variable_name)
+        : BaseLocalDynamicsReduce<VariableType, ReduceMax, DynamicsIdentifier>(identifier, ZeroData<VariableType>::value),
+        GeneralDataDelegateSimple(identifier.getSPHBody()),
+        variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+    {
+        this->quantity_name_ = variable_name + "Maximum";
+    };
+    virtual ~QuantityMaximumPartly() {};
+
+    Real reduce(size_t index_i, Real dt = 0.0)
+    {
+        return variable_[index_i];
+    };
+};
+
 /**
  * @class QuantityMoment
  * @brief Compute the moment of a body

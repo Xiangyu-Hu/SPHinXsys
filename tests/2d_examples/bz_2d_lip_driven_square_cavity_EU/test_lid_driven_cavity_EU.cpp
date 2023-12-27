@@ -12,8 +12,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 1.0;					  /**< box length. */
 Real DH = 1.0;					  /**< box height. */
-Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
-Real BW = resolution_ref * 4;	 /**< Extending width for BCs. */
+Real resolution_ref = 1.0 / 200.0; /**< Global reference resolution. */
+Real BW = resolution_ref * 6;	 /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -158,18 +158,17 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_body.defineComponentLevelSetShape("InnerWaterBlock")->writeLevelSet(io_environment);
-	water_body.defineAdaptationRatios(1.15, 1.0);
+	water_body.defineAdaptationRatios(0.8, 1.0);
 	water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_body.generateParticles<ParticleGeneratorReload>(io_environment, water_body.getName())
 		: water_body.generateParticles<ParticleGeneratorLattice>();
 	water_body.addBodyStateForRecording<Real>("Density");
-
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-	water_body.defineAdaptationRatios(1.15, 1.0);
+	water_body.defineAdaptationRatios(0.8, 1.0);
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
@@ -208,6 +207,7 @@ int main(int ac, char *av[])
 
 		/* Relaxation method: including based on the 0th and 1st order consistency. */
 		InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_complex(water_block_complex);
+		//relax_dynamics::RelaxationStepComplexImplicit relaxation_step_complex(water_block_complex, "InnerWaterBlock");
 		relax_dynamics::RelaxationStepComplexImplicit<CorrectionMatrixRelaxation> relaxation_step_complex(water_block_complex, "InnerWaterBlock");
 		SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_body_inner);
 		ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_body, "ParticleKineticEnergy");
@@ -216,34 +216,47 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.exec(0.15);
+		random_inserted_body_particles.exec(0.25);
 		sph_system.initializeSystemCellLinkedLists();
 		sph_system.initializeSystemConfigurations();
 		relaxation_step_complex.SurfaceBounding().exec();
 		write_water_body_to_vtp.writeToFile(0);
-		Real water_block_average_kinetic_energy = 100.0;
-		Real water_block_maximum_kinetic_energy = 100.0;
+		Real water_block_average_energy = 100.0;
+		Real water_block_maximum_energy = 100.0;
+		Real last_water_block_maximum_energy = 100.0;
+		Real dt = 1;
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
 		//----------------------------------------------------------------------
 		TickCount t1 = TickCount::now();
 		int ite = 0; //iteration step for the total relaxation step.
 		GlobalStaticVariables::physical_time_ = ite;
-		while (water_block_average_kinetic_energy > 0.001)
+		while (water_block_maximum_energy > 1e-2)
 		{
 			kernel_correction_complex.exec();
-			relaxation_step_complex.exec();
+			relaxation_step_complex.exec(dt);
 
 			ite += 1;
-			if (ite % 200 == 0)
+			if (ite % 500 == 0)
 			{
 				update_water_block_kinetic_energy.exec();
-				water_block_average_kinetic_energy = calculate_water_block_average_kinetic_energy.exec();
-				water_block_maximum_kinetic_energy = calculate_water_block_maximum_kinetic_energy.exec();
+				water_block_average_energy = calculate_water_block_average_kinetic_energy.exec();
+				water_block_maximum_energy = calculate_water_block_maximum_kinetic_energy.exec();
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
 				std::cout << "Body: "
-					      << " Average: " << water_block_average_kinetic_energy
-					      << " Maximum: " << water_block_maximum_kinetic_energy << std::endl;
+					      << " Maximum: " << water_block_maximum_energy
+					      << " Average: " << water_block_average_energy << std::endl;
+
+				if (water_block_maximum_energy > last_water_block_maximum_energy)
+				{
+					dt = 0.99 * dt;
+				}
+				else if (water_block_maximum_energy < last_water_block_maximum_energy)
+				{
+					dt = 1.01 * dt;
+				}
+				last_water_block_maximum_energy = water_block_maximum_energy;
+				std::cout << "dt ratio is " << dt << std::endl;
 				write_water_body_to_vtp.writeToFile(ite);
 			}
 		}
@@ -286,7 +299,7 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+	BodyStatesRecordingToPlt body_states_recording(io_environment, sph_system.real_bodies_);
 	ObservedQuantityRecording<Vecd> write_horizontal_velocity("Velocity", io_environment, horizontal_observer_contact);
 	ObservedQuantityRecording<Vecd> write_vertical_velocity("Velocity", io_environment, vertical_observer_contact);
 	/** Output the body states for restart simulation. */
@@ -309,7 +322,7 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 50.0; /**< End time. */
+	Real End_Time = 30.0; /**< End time. */
 	Real D_Time = 1.0;	 /**< Time stamps for output of body states. */
 	/** statistics for computing CPU time. */
 	TickCount t1 = TickCount::now();

@@ -47,15 +47,29 @@ DissipationState HLLERiemannSolver::getDissipationState(const FluidState &state_
     Real state_ld = state_i.rho_;
     Real state_rd = state_j.rho_;
 
-    Matd momentum_dissipation = SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) *
+    Matd momentum_dissipation = SMIN<Real>(3.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) *
         (0.5 * (s_r + s_l) / (s_r - s_l) * (flux_lm - flux_rm) + s_r * s_l * (state_rm - state_lm) * (-e_ij).transpose() / (s_r - s_l));
-    Vecd density_dissipation = SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) *
+    Vecd density_dissipation = SMIN<Real>(3.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) *
         ((0.5 * (s_r + s_l) / (s_r - s_l) * (flux_ld - flux_rd)) + s_r * s_l * (state_rd - state_ld) / (s_r - s_l) * (-e_ij));
 
     //Matd momentum_dissipation = SMIN<Real>(15 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ * state_j.vel_ - state_i.rho_ * state_i.vel_) * (-e_ij).transpose();
     //Vecd density_dissipation = SMIN<Real>(15 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)) * (state_j.rho_ - state_i.rho_) * (-e_ij);
     return DissipationState(momentum_dissipation, density_dissipation);
 };
+//=================================================================================================//
+CheckTaylorGreenVortexFlow::CheckTaylorGreenVortexFlow(BaseInnerRelation& inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+    pos_(particles_->pos_), vel_(particles_->vel_)
+{
+    particles_->registerVariable(velocity_error_norm_, "VELOCITYERRORNORM");
+    particles_->addVariableToWrite<Real>("VELOCITYERRORNORM");
+}
+//=================================================================================================//
+void CheckTaylorGreenVortexFlow::update(size_t index_i, Real dt)
+{
+    velocity_error_norm_[index_i] = (Vec2d((-exp(-8 * Pi * Pi * dt / 100) * cos(2 * Pi * pos_[index_i][0]) * sin(2 * Pi * pos_[index_i][1])),
+        (exp(-8 * Pi * Pi * dt / 100) * sin(2 * Pi * pos_[index_i][0]) * cos(2 * Pi * pos_[index_i][1]))) - vel_[index_i]).norm();
+}
 //=================================================================================================//
 SmearedSurfaceIndication::SmearedSurfaceIndication(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),

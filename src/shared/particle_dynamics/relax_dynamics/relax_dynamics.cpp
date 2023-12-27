@@ -219,11 +219,11 @@ void CheckL2NormError::interaction(size_t index_i, Real dt)
         CKGC_error_ += (scalar_[index_i] * B_[index_j] + scalar_[index_j] * B_[index_i]) * e_ij * dW_ijV_j;
     }
 
-    analytical_[index_i] = 2 * Pi * cos(2 * Pi * pos_[index_i][0]);
+    analytical_[index_i] = -20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1);
  
-    L2_NKGC_[index_i] = (NKGC_error_ - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
-    L2_SKGC_[index_i] = (SKGC_error_ - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
-    L2_CKGC_[index_i] = (CKGC_error_ - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+    L2_NKGC_[index_i] = (NKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    L2_SKGC_[index_i] = (SKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    L2_CKGC_[index_i] = (CKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
 };
 //=================================================================================================//
 CheckConsistencyRealization::
@@ -259,6 +259,8 @@ CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_co
     particles_->addVariableToWrite<Real>("NKGCNORM");
     particles_->registerVariable(NKGC_, "NKGC");
     particles_->addVariableToWrite<Vecd>("NKGC");
+    particles_->registerVariable(PR_ERROR_, "PRERROR");
+    particles_->addVariableToWrite<Real>("PRERROR");
 
     particles_->addVariableToWrite<Real>("Scalar");
     particles_->addVariableToWrite<Vecd>("Vector");
@@ -273,6 +275,7 @@ void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
     Vecd C = Vecd::Zero();
     Vecd AS = Vecd::Zero();
     Vecd NKGC = Vecd::Zero();
+    Vecd PRERROR = Vecd::Zero();
     
     Neighborhood& inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -285,16 +288,18 @@ void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
         AS += scalar_[index_i] * (B_[index_i] + B_[index_j]) * e_ij * dW_ijV_j;
         C -= (scalar_[index_i] - scalar_[index_j]) * B_[index_j] * e_ij * dW_ijV_j;
         NKGC += (scalar_[index_i] + scalar_[index_j]) * e_ij * dW_ijV_j;
+        PRERROR += scalar_[index_i] * e_ij * dW_ijV_j;
     }
     
     ACterm_[index_i] = AC;
-    ACterm_norm_[index_i] = (AC - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+    ACterm_norm_[index_i] = (AC - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
     ASterm_[index_i] = AS;
     ASterm_norm_[index_i] = AS.norm();
     Cterm_[index_i] = C;
-    Cterm_norm_[index_i] = (C - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+    Cterm_norm_[index_i] = (C - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
     NKGC_[index_i] = NKGC;
     NKGC_norm_[index_i] = NKGC.norm();
+    PR_ERROR_[index_i] = PRERROR.norm();
 }
 //=================================================================================================//
 CheckReverseConsistencyRealization::
@@ -338,11 +343,11 @@ void CheckReverseConsistencyRealization::interaction(size_t index_i, Real dt)
     }
 
     ABterm_[index_i] = AB;
-    ABterm_norm_[index_i] = (AB - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+    ABterm_norm_[index_i] = (AB - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
     ARterm_[index_i] = AR;
     ARterm_norm_[index_i] = AR.norm();
     Bterm_[index_i] = B;
-    Bterm_norm_[index_i] = (B - Vec2d(2 * Pi * cos(2 * Pi * pos_[index_i][0]), 0)).norm();
+    Bterm_norm_[index_i] = (B - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
 }
 //=================================================================================================//
 ShellMidSurfaceBounding::

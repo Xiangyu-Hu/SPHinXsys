@@ -600,6 +600,7 @@ protected:
     StdLargeVec<Vecd> Cterm_;
     StdLargeVec<Real> NKGC_norm_;
     StdLargeVec<Vecd> NKGC_;
+    StdLargeVec<Real> PR_ERROR_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };

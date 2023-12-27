@@ -197,10 +197,10 @@ computeErrorAndParameters(size_t index_i, Real dt)
 
     error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
                                    this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                                   this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
+                                   this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
     error_and_parameters.a_ -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
                                this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
-                               this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
+                               this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
 
     return error_and_parameters;
 }
@@ -218,9 +218,8 @@ void RelaxationStepInnerImplicit<RelaxationType>::exec(Real dt)
 {
     //real_body_->updateCellLinkedList();
     //inner_relation_.updateConfiguration();
-    time_step_size_ = sqrt(get_time_step_.exec());
-    relaxation_evolution_inner_.exec(0.005);
-    //surface_bounding_.exec();
+    time_step_size_ =  sqrt(get_time_step_.exec());
+    relaxation_evolution_inner_.exec(dt * time_step_size_);
 }
 //=================================================================================================//
 template <class RelaxationType>
@@ -284,15 +283,15 @@ computeErrorAndParameters(size_t index_i, Real dt)
             error_and_parameters.a_ -= parameter_b;
 
             /* With the wall*/
-            //size_t index_j = contact_neighborhood.j_[n];
-            //Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_i]) *
-            //    contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
-            //    kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) *
-            //    Vol_k[index_j] * dt * dt;
+           /* size_t index_j = contact_neighborhood.j_[n];
+            Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_i]) *
+                contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
+                kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) *
+                Vol_k[index_j] * dt * dt;
 
-            //error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_[index_i]) *
-            //    contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
-            //error_and_parameters.a_ -= parameter_b;
+            error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_[index_i]) *
+                contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
+            error_and_parameters.a_ -= parameter_b;*/
         }
     }
 
@@ -368,7 +367,7 @@ template <class RelaxationType>
 void RelaxationStepComplexImplicit<RelaxationType>::exec(Real dt)
 {
     time_step_size_ = sqrt(get_time_step_.exec());
-    relaxation_evolution_complex_.exec(time_step_size_);
+    relaxation_evolution_complex_.exec(dt * time_step_size_);
     real_body_->updateCellLinkedList();
     complex_relation_.updateConfiguration();
 }

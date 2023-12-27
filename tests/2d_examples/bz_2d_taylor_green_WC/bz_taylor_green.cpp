@@ -68,7 +68,7 @@ int main(int ac, char* av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -117,14 +117,14 @@ int main(int ac, char* av[])
         int ite_p = 0;
         while (ite_p < 20000)
         {
+            kernel_correction_matrix.exec();
+            relaxation_step_inner.exec();
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
             water_block.updateCellLinkedList();
             periodic_condition_x.update_cell_linked_list_.exec();
             periodic_condition_y.update_cell_linked_list_.exec();
             water_block_inner.updateConfiguration();
-            kernel_correction_matrix.exec();
-            relaxation_step_inner.exec();
 
             ite_p += 1;
             if (ite_p % 200 == 0)
@@ -166,7 +166,7 @@ int main(int ac, char* av[])
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner, 0.2);
-    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyInner<AllParticles>> transport_velocity_consistency(water_block_inner, 0.0125);
+    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyInner<AllParticles>> transport_velocity_consistency(water_block_inner, 0.1);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
@@ -222,7 +222,7 @@ int main(int ac, char* av[])
 
             kernel_correction_inner.exec();
             //transport_velocity_correction.exec();
-            //transport_velocity_consistency.exec();
+            transport_velocity_consistency.exec();
             
 
             Real relaxation_time = 0.0;

@@ -34,12 +34,12 @@ void ICEIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real 
         Real s_r = wave_speeds[1];
 
         /*SKGC*/
-        Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity()) * B_[index_i];
-        Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity()) * B_[index_j];
+        //Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity()) * B_[index_i];
+        //Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity()) * B_[index_j];
 
         /*RKGC*/
-        //Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity()) * B_[index_j];
-        //Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity()) * B_[index_i];
+        Matd flux_l = (rho_[index_i] * vel_[index_i] * vel_[index_i].transpose() + p_[index_i] * Matd::Identity()) * B_[index_j];
+        Matd flux_r = (rho_[index_j] * vel_[index_j] * vel_[index_j].transpose() + p_[index_j] * Matd::Identity()) * B_[index_i];
 
         if (s_l < 0 && s_r > 0)
         {
@@ -97,8 +97,12 @@ void ICEIntegration1stHalfWithWall<ICEIntegration1stHalfType>::interaction(size_
             Real s_r = wave_speeds[1];
 
             /* SKGC */
+            //Matd flux_l = (this->p_[index_i] * Matd::Identity()) * Matd::Identity();
+            //Matd flux_r = (p_in_wall * Matd::Identity()) * this->B_[index_i];
+
+            /* RKGC */
             Matd flux_l = (this->p_[index_i] * Matd::Identity()) * this->B_[index_i];
-            Matd flux_r = (p_in_wall * Matd::Identity()) * this->B_[index_i];
+            Matd flux_r = (p_in_wall * Matd::Identity()) * Matd::Identity();
             
             if (s_l < 0 && s_r > 0)
             {
@@ -143,12 +147,12 @@ void ICEIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real 
         Real s_r = wave_speeds[1];
 
         /* SKGC */
-        Vecd flux_l = rho_[index_i] * vel_[index_i] * e_ij.transpose() * B_[index_i] * e_ij;
-        Vecd flux_r = rho_[index_j] * vel_[index_j] * e_ij.transpose() * B_[index_j] * e_ij;
+        //Vecd flux_l = rho_[index_i] * vel_[index_i] * e_ij.transpose() * B_[index_i] * e_ij;
+        //Vecd flux_r = rho_[index_j] * vel_[index_j] * e_ij.transpose() * B_[index_j] * e_ij;
 
         /* RKGC */
-        //Vecd flux_l = rho_[index_i] * vel_[index_i] * e_ij.transpose() * B_[index_j] * e_ij;
-        //Vecd flux_r = rho_[index_j] * vel_[index_j] * e_ij.transpose() * B_[index_i] * e_ij;
+        Vecd flux_l = rho_[index_i] * vel_[index_i] * e_ij.transpose() * B_[index_j] * e_ij;
+        Vecd flux_r = rho_[index_j] * vel_[index_j] * e_ij.transpose() * B_[index_i] * e_ij;
 
         if (s_l < 0 && s_r > 0)
         {
@@ -204,9 +208,13 @@ void ICEIntegration2ndHalfWithWall<ICEIntegration2ndHalfType>::interaction(size_
             Real s_l = wave_speeds[0];
             Real s_r = wave_speeds[1];
 
-            /* SKGC and RKGC */
-            Vecd flux_l = this->rho_[index_i] * this->vel_[index_i] * e_ij.transpose() *this->B_[index_i] * e_ij;
-            Vecd flux_r = rho_in_wall * vel_in_wall * e_ij.transpose() * this->B_[index_i] * e_ij;
+            /* SKGC */
+            //Vecd flux_l = this->rho_[index_i] * this->vel_[index_i] * e_ij.transpose() * Matd::Identity() * e_ij;
+            //Vecd flux_r = rho_in_wall * vel_in_wall * e_ij.transpose() * this->B_[index_i] * e_ij;
+            
+            /* RKGC */
+            Vecd flux_l = this->rho_[index_i] * this->vel_[index_i] * e_ij.transpose() * this->B_[index_i] * e_ij;
+            Vecd flux_r = rho_in_wall * vel_in_wall * e_ij.transpose() * Matd::Identity() * e_ij;
 
             if (s_l < 0 && s_r > 0)
             {
