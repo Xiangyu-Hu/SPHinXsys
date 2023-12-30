@@ -44,10 +44,10 @@ Real poisson = 0.3;              /** Poisson ratio. */
 Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
 
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary

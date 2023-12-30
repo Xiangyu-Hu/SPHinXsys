@@ -26,7 +26,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
-    wave_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
+    wave_block.generateParticles<ParticleGeneratorUnstructuredMesh>(ansys_mesh);
     wave_block.addBodyStateForRecording<Real>("Density");
     wave_block.addBodyStateForRecording<Real>("Pressure");
     /** Initial condition and register variables*/

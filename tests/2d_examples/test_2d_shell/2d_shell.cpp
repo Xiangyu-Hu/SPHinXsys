@@ -34,10 +34,10 @@ Real physical_viscosity = 2000.0; /** physical damping, here we choose the same 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10000.0;
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary

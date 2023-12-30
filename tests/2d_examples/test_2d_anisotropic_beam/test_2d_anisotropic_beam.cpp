@@ -24,10 +24,10 @@ Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate 
 //----------------------------------------------------------------------
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
-class AnisotropicParticleGenerator : public ParticleGenerator
+class AnisotropicParticleGenerator : public ParticleGenerator<Base>
 {
   public:
-    AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator(sph_body){};
+    AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
 
     virtual void initializeGeometricVariables() override
     {

@@ -38,10 +38,10 @@ Real time_to_full_external_force = 0.0;
 Real gravitational_acceleration = 0.0;
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary

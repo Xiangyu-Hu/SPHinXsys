@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     {
         Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
         rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        rigid_shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
+        rigid_shell.generateParticles<ParticleGeneratorThickSurface>(thickness);
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");

@@ -84,16 +84,9 @@ class Fluid : public BaseMaterial
     Real mu_; /**< reference viscosity. */
 
   public:
-    StdLargeVec<Real> p_; /**< pressure */
-
-    explicit Fluid(Real rho0, Real c0, Real mu)
-        : BaseMaterial(rho0), c0_(c0), mu_(mu)
-    {
-        material_type_name_ = "Fluid";
-    };
+    explicit Fluid(Real rho0, Real c0, Real mu);
     Fluid(Real rho0, Real mu) : Fluid(rho0, 1.0, mu) {}
     virtual ~Fluid(){};
-
     Real ReferenceViscosity() { return mu_; };
     Real ReferenceSoundSpeed() { return c0_; };
     virtual Real getPressure(Real rho) = 0;
@@ -101,7 +94,6 @@ class Fluid : public BaseMaterial
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
     virtual Fluid *ThisObjectPtr() override { return this; };
-
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 };
 

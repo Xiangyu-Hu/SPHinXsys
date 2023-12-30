@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
+        shell.generateParticles<ParticleGeneratorThickSurface>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())

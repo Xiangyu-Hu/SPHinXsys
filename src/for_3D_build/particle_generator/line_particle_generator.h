@@ -52,5 +52,6 @@ class ParticleGenerator<Line> : public ParticleGenerator<Base>
     virtual void initializeLineProperties(
         const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
 };
+
 } // namespace SPH
 #endif // LINE_PARTICLE_GENERATOR_H

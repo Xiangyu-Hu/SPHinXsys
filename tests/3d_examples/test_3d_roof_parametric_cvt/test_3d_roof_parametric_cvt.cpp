@@ -45,7 +45,7 @@ void relax_shell(RealBody &plate_body, Real thickness)
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 }
 
-class ShellRoofParticleGenerator : public SurfaceParticleGenerator
+class ShellRoofParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -54,7 +54,7 @@ class ShellRoofParticleGenerator : public SurfaceParticleGenerator
 
   public:
     explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -198,12 +198,12 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
     Real particle_number_;
 
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : SurfaceParticleGenerator(sph_body),
+    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : ParticleGeneratorSurface(sph_body),
                                                                                        particle_number_(particle_number){};
     virtual void initializeGeometricVariables() override
     {

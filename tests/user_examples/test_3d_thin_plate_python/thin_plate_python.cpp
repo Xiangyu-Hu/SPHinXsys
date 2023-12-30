@@ -41,10 +41,10 @@ protected:
 };
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator, public Parameter
+class PlateParticleGenerator : public ParticleGeneratorSurface, public Parameter
 {
 public:
-	explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+	explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
 	virtual void initializeGeometricVariables() override
 	{
 		// the plate and boundary

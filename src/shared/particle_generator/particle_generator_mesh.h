@@ -56,5 +56,6 @@ class ParticleGenerator<UnstructuredMesh>
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 };
+using ParticleGeneratorUnstructuredMesh = ParticleGenerator<UnstructuredMesh>;
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_MESH_H

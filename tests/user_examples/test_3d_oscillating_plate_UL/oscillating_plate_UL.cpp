@@ -35,10 +35,11 @@ Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
 Real U_ref = 1.0; // Maximum velocity
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator
+class PlateParticleGenerator : public ParticleGenerator<Base>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body)
+        : ParticleGenerator<Base>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         for (int k = 0; k < particle_number; k++)
@@ -50,8 +51,8 @@ class PlateParticleGenerator : public ParticleGenerator
                     Real x = particle_spacing_ref * i - BW + particle_spacing_ref * 0.5;
                     Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                     Real z = particle_spacing_ref * (k - ((particle_number - 1.0) / 2.0));
-                    initializePositionAndVolumetricMeasure(Vecd(x, y, z),
-                                                           particle_spacing_ref * particle_spacing_ref * particle_spacing_ref);
+                    initializePositionAndVolumetricMeasure(
+                        Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * particle_spacing_ref);
                 }
             }
         }

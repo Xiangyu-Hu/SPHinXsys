@@ -84,6 +84,7 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
     StdLargeVec<Real> &thickness_; /**< surface thickness */
     virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
 };
+using ParticleGeneratorSurface = ParticleGenerator<Surface>;
 
 template <> // generate observer particles
 class ParticleGenerator<Observer> : public ParticleGenerator<Base>

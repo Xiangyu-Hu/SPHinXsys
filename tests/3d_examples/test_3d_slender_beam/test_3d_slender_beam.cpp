@@ -49,10 +49,10 @@ TEST(Beam, MaxDisplacement)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class BarParticleGenerator : public LineParticleGenerator
+class BarParticleGenerator : public ParticleGenerator<Line>
 {
   public:
-    explicit BarParticleGenerator(SPHBody &sph_body) : LineParticleGenerator(sph_body)
+    explicit BarParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };

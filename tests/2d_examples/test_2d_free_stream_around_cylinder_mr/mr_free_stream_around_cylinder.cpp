@@ -31,7 +31,7 @@ int main(int ac, char *av[])
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorMultiResolution>(refinement_region);
+        : water_block.generateParticles<ParticleGeneratorAdaptive>(refinement_region);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));

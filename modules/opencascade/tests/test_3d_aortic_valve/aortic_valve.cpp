@@ -51,10 +51,10 @@ class BoundaryGeometry : public BodyPartByParticle
     };
 };
 
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body), sph_body_(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body), sph_body_(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.body_shape_);
