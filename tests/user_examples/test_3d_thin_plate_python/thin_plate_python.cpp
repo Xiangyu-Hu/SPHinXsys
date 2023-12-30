@@ -151,7 +151,7 @@ public:
 		plate_body.generateParticles<PlateParticleGenerator>();
 
 		plate_observer.defineParticlesAndMaterial();
-		plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+		plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 	}
 };
 Real observed_quantity_0 = 0.0;

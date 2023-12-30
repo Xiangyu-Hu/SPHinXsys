@@ -83,23 +83,6 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 };
 
 /**
- * @class ParticleGeneratorInFVM
- * @brief Generate particle directly from position-and-volume data.
- */
-class ParticleGeneratorInFVM : public ParticleGenerator
-{
-  public:
-    ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
-    virtual ~ParticleGeneratorInFVM(){};
-    /** Initialize geometrical variable for observe particles. */
-    virtual void initializeGeometricVariables() override;
-
-  protected:
-    StdLargeVec<Vecd> &elements_centroids_;
-    StdLargeVec<Real> &elements_volumes_;
-};
-
-/**
  * @class NeighborBuilderInFVM
  * @brief Base neighbor relation between particles i and j.
  */

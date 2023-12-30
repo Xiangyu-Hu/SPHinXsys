@@ -125,7 +125,7 @@ int main(int ac, char *av[])
 
     // Define Observer
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});

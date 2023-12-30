@@ -92,11 +92,11 @@ class DiffusionBodyRelaxation
 //----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
+class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
     explicit TemperatureObserverParticleGenerator(SPHBody &sph_body)
-        : ObserverParticleGenerator(sph_body)
+        : ParticleGeneratorObserver(sph_body)
     {
         size_t number_of_observation_points = 11;
         Real range_of_measure = 0.9 * L;

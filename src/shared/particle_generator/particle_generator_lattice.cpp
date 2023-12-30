@@ -53,7 +53,7 @@ void ParticleGenerator<Lattice, Adaptive>::initializeSmoothingLengthRatio(Real l
     h_ratio_.push_back(particle_adaptation_->ReferenceSpacing() / local_spacing);
 }
 //=================================================================================================//
-ParticleGenerator<ThickSurface, Lattice>::ParticleGenerator(SPHBody &sph_body, Real thickness)
+ParticleGenerator<Surface, Lattice, ReducedOrder>::ParticleGenerator(SPHBody &sph_body, Real thickness)
     : ParticleGenerator<Surface>(sph_body), GeneratingMethod<Lattice>(sph_body),
       total_volume_(0), thickness_(thickness),
       particle_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),

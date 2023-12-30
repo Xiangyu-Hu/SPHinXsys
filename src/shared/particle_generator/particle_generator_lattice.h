@@ -21,12 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	particle_generator_lattice.h
- * @brief 	This is the base class of particle generator, which generates particles
- * 			with given positions and volumes. The direct generator simply generate
- * 			particle with given position and volume. The lattice generator generate
- * 			at lattice position by check whether the position is contained by a SPH body.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file particle_generator_lattice.h
+ * @brief The lattice generator generates particles
+ * at lattice position by check whether the position is contained by a SPH body.
+ * @author Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_GENERATOR_LATTICE_H
@@ -40,8 +38,6 @@ namespace SPH
 class Shape;
 class ParticleRefinementByShape;
 class ShellParticles;
-class ParticleSplitAndMerge;
-class Lattice;
 
 template <> // Base class for generating particles from lattice positions
 class GeneratingMethod<Lattice>
@@ -65,6 +61,7 @@ class ParticleGenerator<Lattice>
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 };
+using ParticleGeneratorLattice = ParticleGenerator<Lattice>;
 
 template <> // For generating particles with adaptive resolution from lattice positions
 class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
@@ -82,15 +79,8 @@ class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
     virtual void initializeSmoothingLengthRatio(Real local_spacing);
 };
 
-/**
- * @class ThickSurfaceParticleGeneratorLattice
- * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.
- * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing.
- * Note that, this class should not be used for generating the thin surface particles,
- * which may be better generated from a geometric surface directly.
- */
-template <>
-class ParticleGenerator<ThickSurface, Lattice>
+template <> // For generating surface particles from lattice positions using reduced order approach
+class ParticleGenerator<Surface, Lattice, ReducedOrder>
     : public ParticleGenerator<Surface>, public GeneratingMethod<Lattice>
 {
   public:

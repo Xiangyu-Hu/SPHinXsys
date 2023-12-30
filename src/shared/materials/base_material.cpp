@@ -4,9 +4,10 @@
 namespace SPH
 {
 //=================================================================================================//
-void Fluid::registerReloadLocalParameters(BaseParticles *base_particles)
+void Fluid::initializeLocalParameters(BaseParticles *base_particles)
 {
-    base_particles->registerVariable(p_, "Pressure");
+    BaseMaterial::initializeLocalParameters(base_particles);
+    base_particles->registerVariable(p_, "Pressure", getPressure(rho0_));
 }
 //=================================================================================================//
 } // namespace SPH

@@ -102,7 +102,7 @@ class Fluid : public BaseMaterial
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
     virtual Fluid *ThisObjectPtr() override { return this; };
 
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 };
 
 /** @class  Solid

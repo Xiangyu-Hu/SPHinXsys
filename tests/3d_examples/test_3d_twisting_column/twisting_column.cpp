@@ -89,7 +89,7 @@ int main(int ac, char *av[])
 
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
-    my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    my_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

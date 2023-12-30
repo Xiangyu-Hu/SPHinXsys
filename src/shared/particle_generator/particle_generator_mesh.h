@@ -21,15 +21,40 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_particle_generator.h
- * @brief 	Head file for all particle generator.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file particle_generator_mesh.h
+ * @brief The mesh particle generator generates particles at the centroids
+ * of mesh elements.
+ * @author Zhentong Wang and Xiangyu Hu
  */
 
-#ifndef ALL_PARTICLE_GENERATORS_2D_H
-#define ALL_PARTICLE_GENERATORS_2D_H
+#ifndef PARTICLE_GENERATOR_MESH_H
+#define PARTICLE_GENERATOR_MESH_H
 
-#include "particle_generator_lattice.h"
-#include "particle_generator_mesh.h"
+#include "base_particle_generator.h"
+#include "unstructured_mesh.h"
 
-#endif // ALL_PARTICLE_GENERATORS_2D_H
+namespace SPH
+{
+template <> // Base class for generating particles from mesh centroids
+class GeneratingMethod<UnstructuredMesh>
+{
+  public:
+    explicit GeneratingMethod(ANSYSMesh &ansys_mesh);
+    virtual ~GeneratingMethod(){};
+
+  protected:
+    StdLargeVec<Vecd> &elements_centroids_;
+    StdLargeVec<Real> &elements_volumes_;
+};
+
+template <>
+class ParticleGenerator<UnstructuredMesh>
+    : public ParticleGenerator<Base>, public GeneratingMethod<UnstructuredMesh>
+{
+  public:
+    explicit ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
+    virtual ~ParticleGenerator(){};
+    virtual void initializeGeometricVariables() override;
+};
+} // namespace SPH
+#endif // PARTICLE_GENERATOR_MESH_H

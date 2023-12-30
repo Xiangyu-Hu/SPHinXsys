@@ -120,11 +120,11 @@ class SPHBody
     template <typename... Args>
     LevelSetShape *defineBodyLevelSetShape(Args &&...args)
     {
-        LevelSetShape *levelset_shape =
+        LevelSetShape *level_set_shape =
             shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *body_shape_, std::forward<Args>(args)...);
 
-        body_shape_ = levelset_shape;
-        return levelset_shape;
+        body_shape_ = level_set_shape;
+        return level_set_shape;
     };
 
     /** partial construct particles with an already constructed material */

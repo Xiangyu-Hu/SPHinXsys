@@ -123,7 +123,7 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
-    beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(beam_observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

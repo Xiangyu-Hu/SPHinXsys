@@ -40,8 +40,11 @@ namespace SPH
 
 class SPHBody;
 class BaseParticles;
+//---------------------------------------------------------------------------
+// Geometric types of particles. The default type is volume metric particles.
+//---------------------------------------------------------------------------
 class Surface;
-class ThickSurface;
+class ThickSurface; // Surface thickness equal or larger than the particle spacing
 class Observer;
 class Reload;
 
@@ -62,7 +65,6 @@ class ParticleGenerator<Base>
 
   protected:
     BaseParticles &base_particles_;
-    BaseMaterial &base_material_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<size_t> &unsorted_id_;
@@ -97,10 +99,12 @@ class ParticleGenerator<Observer> : public ParticleGenerator<Base>
   protected:
     StdVec<Vecd> positions_;
 };
+using ParticleGeneratorObserver = ParticleGenerator<Observer>;
 
 template <> // generate particles by reloading dynamically relaxed particles
 class ParticleGenerator<Reload> : public ParticleGenerator<Base>
 {
+    BaseMaterial &base_material_;
     std::string file_path_;
 
   public:
@@ -109,5 +113,7 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
     virtual void initializeGeometricVariables() override;
     virtual void generateParticlesWithBasicVariables() override;
 };
+using ParticleGeneratorReload = ParticleGenerator<Reload>;
+
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H

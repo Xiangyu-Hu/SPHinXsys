@@ -123,7 +123,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     //----------------------------------------------------------------------
     //	Define body relation map.

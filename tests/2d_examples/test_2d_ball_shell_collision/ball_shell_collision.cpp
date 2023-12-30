@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<ObserverParticleGenerator>(StdVec<Vecd>{ball_center});
+    ball_observer.generateParticles<ParticleGeneratorObserver>(StdVec<Vecd>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

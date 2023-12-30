@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     cantilever_body.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");
-    cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    cantilever_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** topology */
     InnerRelation cantilever_body_inner(cantilever_body);

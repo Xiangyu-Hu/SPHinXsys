@@ -223,7 +223,7 @@ int main(int ac, char *av[])
     thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
-    temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    temperature_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

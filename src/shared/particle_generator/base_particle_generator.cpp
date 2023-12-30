@@ -9,9 +9,10 @@ namespace SPH
 //=================================================================================================//
 ParticleGenerator<Base>::ParticleGenerator(SPHBody &sph_body)
     : base_particles_(sph_body.getBaseParticles()),
-      base_material_(base_particles_.getBaseMaterial()),
       pos_(base_particles_.pos_), Vol_(base_particles_.Vol_),
-      unsorted_id_(base_particles_.unsorted_id_) {}
+      unsorted_id_(base_particles_.unsorted_id_)
+{
+}
 //=================================================================================================//
 void ParticleGenerator<Base>::initializePosition(const Vecd &position)
 {
@@ -25,7 +26,6 @@ void ParticleGenerator<Base>::generateParticlesWithBasicVariables()
     initializeGeometricVariables();
     // should be determined first before register other variables
     base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
-    base_material_.registerReloadLocalParameters(&base_particles_);
 }
 //=================================================================================================//
 void ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
@@ -51,12 +51,11 @@ void ParticleGenerator<Observer>::initializeGeometricVariables()
     for (size_t i = 0; i < positions_.size(); ++i)
     {
         initializePositionAndVolumetricMeasure(positions_[i], 0.0);
-        initializePositionAndVolumetricMeasure(positions_[i], 0.0);
     }
 }
 //=================================================================================================//
 ParticleGenerator<Reload>::ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name)
-    : ParticleGenerator<Base>(sph_body)
+    : ParticleGenerator<Base>(sph_body), base_material_(sph_body.getBaseMaterial())
 {
     std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().reload_folder_;
     if (!fs::exists(reload_folder))
