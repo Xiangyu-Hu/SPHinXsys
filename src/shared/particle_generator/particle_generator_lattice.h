@@ -74,9 +74,7 @@ class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
   protected:
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;
-    StdLargeVec<Real> &h_ratio_;
     virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
-    virtual void initializeSmoothingLengthRatio(Real local_spacing);
 };
 using ParticleGeneratorAdaptive = ParticleGenerator<Lattice, Adaptive>;
 

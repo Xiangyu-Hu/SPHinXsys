@@ -26,8 +26,7 @@ ParticleGenerator<Lattice>::ParticleGenerator(SPHBody &sph_body)
 //=================================================================================================//
 ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body, Shape &target_shape)
     : ParticleGenerator<Lattice>(sph_body), target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
-      h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio"))
+      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_))
 {
     lattice_spacing_ = particle_adaptation_->MinimumSpacing();
 }
@@ -44,13 +43,7 @@ void ParticleGenerator<Lattice, Adaptive>::
     {
         ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
             position, volume / local_particle_volume_ratio);
-        initializeSmoothingLengthRatio(local_particle_spacing);
     }
-}
-//=================================================================================================//
-void ParticleGenerator<Lattice, Adaptive>::initializeSmoothingLengthRatio(Real local_spacing)
-{
-    h_ratio_.push_back(particle_adaptation_->ReferenceSpacing() / local_spacing);
 }
 //=================================================================================================//
 ParticleGenerator<Surface, Lattice, ReducedOrder>::ParticleGenerator(SPHBody &sph_body, Real thickness)

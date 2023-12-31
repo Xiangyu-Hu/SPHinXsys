@@ -81,7 +81,7 @@ class SPHAdaptation
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
-    virtual void registerAdaptationVariables(BaseParticles &base_particles){};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles){};
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
@@ -117,12 +117,12 @@ class ParticleWithLocalRefinement : public SPHAdaptation
 
     virtual size_t getCellLinkedListTotalLevel();
     size_t getLevelSetTotalLevel();
-    virtual void registerAdaptationVariables(BaseParticles &base_particles) override;
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
         return h_ratio_[particle_index_i];
     };
 
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
@@ -143,7 +143,6 @@ class ParticleRefinementByShape : public ParticleWithLocalRefinement
         : ParticleWithLocalRefinement(std::forward<Args>(args)...){};
 
     virtual ~ParticleRefinementByShape(){};
-
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
 
   protected:

@@ -148,10 +148,10 @@ class SPHBody
     template <class ParticleGeneratorType, typename... Args>
     void generateParticles(Args &&...args)
     {
-        sph_adaptation_->registerAdaptationVariables(*base_particles_);
         ParticleGeneratorType particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
+        sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->initializeLocalParameters(base_particles_);
     };
 
