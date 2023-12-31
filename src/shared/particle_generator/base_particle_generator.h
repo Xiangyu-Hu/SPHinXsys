@@ -21,10 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_particle_generator.h
- * @brief 	This is the base class of particle generator, which generates particles
- * 			with given positions and volumes. The direct generator simply generate
- * 			particle with given position and volume.
+ * @file base_particle_generator.h
+ * @brief This is the base class of particle generator, which generates particles
+ * with given positions and volumes. The direct generator simply generate
+ * particle with given position and volume.
+ * The particle generators naming are using template partial specialization,
+ * with three keywords. The first indicates volume (default), surface and line particles,
+ * the second generating methods, and the third the control parameters,
+ * such as adaptive for adaptive resolution.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
