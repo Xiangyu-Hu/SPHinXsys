@@ -152,7 +152,7 @@ class SPHBody
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
-        base_material_->initializeLocalParameters(base_particles_);
+        base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
     };
 
     template <typename DataType>

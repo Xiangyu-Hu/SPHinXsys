@@ -58,7 +58,6 @@ class BaseMaterial
     virtual ~BaseMaterial(){};
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
-    /**interface called in base particles constructor */
     virtual void registerReloadLocalParameters(BaseParticles *base_particles){};
     /**
      * This will be called after particles generation
@@ -67,6 +66,7 @@ class BaseMaterial
      * one need assign the base particle to that material too.
      */
     virtual void initializeLocalParameters(BaseParticles *base_particles){};
+    void setLocalParameters(bool is_reload, BaseParticles *base_particles);
     virtual BaseMaterial *ThisObjectPtr() { return this; };
 
   protected:
