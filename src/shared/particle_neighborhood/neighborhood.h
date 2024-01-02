@@ -204,7 +204,6 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 {
   public:
     explicit BaseNeighborBuilderContactShell(SPHBody &shell_body);
-    virtual ~BaseNeighborBuilderContactShell(){};
 
   protected:
     StdLargeVec<Vecd> &n_;   // normal direction of contact body
@@ -227,7 +226,6 @@ class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
 {
   public:
     NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContactToShell(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 };
@@ -240,9 +238,11 @@ class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
 {
   public:
     NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContactFromShell(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+  private:
+    StdLargeVec<Real> &thickness_;
 };
 
 /**
@@ -253,12 +253,26 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
 {
   public:
     explicit NeighborBuilderShellSelfContact(SPHBody &body);
-    virtual ~NeighborBuilderShellSelfContact(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
     StdLargeVec<Vecd> &pos0_;
+    StdLargeVec<Real> &thickness_;
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+};
+
+/**
+ * @class ShellNeighborBuilderInnerWithContactKernel
+ * @brief A inner neighbor builder functor with reduced kernel.
+ * The smoothing length is equal to that of the contact body
+ */
+class ShellNeighborBuilderInnerWithContactKernel : public NeighborBuilderInner
+{
+  public:
+    explicit ShellNeighborBuilderInnerWithContactKernel(SPHBody &body, SPHBody &contact_body);
+
+  private:
     UniquePtrKeeper<Kernel> kernel_keeper_;
 };
 } // namespace SPH
