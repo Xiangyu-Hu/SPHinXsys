@@ -1,9 +1,7 @@
 /**
  * @file 	poiseuille_flow.cpp
  * @brief 	3D poiseuille flow example
- * @details This is the one of the basic test cases for validating viscous flow,
- with using emitter as inlet and disposer as outlet.
-                        // TODO: include shell in next patch.
+ * @details This is the one of the basic test cases for validating fluid-rigid shell interaction
  * @author
  */
 /**
