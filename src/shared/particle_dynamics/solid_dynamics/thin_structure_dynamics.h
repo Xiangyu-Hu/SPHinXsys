@@ -227,7 +227,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                                       transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
                 Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
                 force += mass_[index_i] * hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
-                                inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
+                         inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
 
                 Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
                 Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
@@ -375,31 +375,20 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
 };
 
 /**
- * @class ShellCurvature
- * @brief  Update shell curvature during deformation
+ * @class AverageShellCurvature
+ * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
  */
-class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
+class AverageShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
 {
   public:
-    explicit ShellCurvature(BaseInnerRelation &inner_relation);
-    virtual ~ShellCurvature(){};
-
+    explicit AverageShellCurvature(BaseInnerRelation &inner_relation);
     void update(size_t index_i, Real dt);
-    void compute_initial_curvature();
 
-  protected:
-    StdLargeVec<Vecd> &n0_;
-    StdLargeVec<Matd> &B_;
-    StdLargeVec<Matd> &transformation_matrix_;
+  private:
     StdLargeVec<Vecd> &n_;
-    StdLargeVec<Matd> &F_;
-    StdLargeVec<Matd> &F_bending_;
 
     StdLargeVec<Real> &H_;
     StdLargeVec<Real> &K_;
-
-    StdLargeVec<Matd> dn_0_;
-    StdLargeVec<Matd> dn_;
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH
