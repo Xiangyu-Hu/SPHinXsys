@@ -96,4 +96,18 @@ void ShellSelfContactRelation::updateConfiguration()
         get_single_search_depth_, get_shell_self_contact_neighbor_);
 }
 //=================================================================================================//
+ShellInnerRelationWithContactKernel::ShellInnerRelationWithContactKernel(RealBody &real_body, RealBody &contact_body)
+    : BaseInnerRelation(real_body),
+      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
+      get_contact_search_depth_(contact_body, &cell_linked_list_),
+      get_inner_neighbor_with_contact_kernel_(real_body, contact_body) {}
+//=================================================================================================//
+void ShellInnerRelationWithContactKernel::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    cell_linked_list_.searchNeighborsByParticles(
+        sph_body_, inner_configuration_,
+        get_contact_search_depth_, get_inner_neighbor_with_contact_kernel_);
+}
+//=================================================================================================//
 } // namespace SPH
