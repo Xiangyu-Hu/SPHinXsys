@@ -49,7 +49,8 @@ int main(int ac, char *av[])
     InnerRelation baffle_inner(shell_baffle);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelationToShell water_baffle_contact(water_block, {&shell_baffle});
-    ContactRelation baffle_water_contact(shell_baffle, {&water_block});
+    ContactRelationFromShell baffle_water_contact(shell_baffle, {&water_block});
+    ShellInnerRelationWithContactKernel shell_curvature_inner(shell_baffle, water_block);
     ContactRelation observer_contact_with_water(fluid_observer, {&water_block});
     ContactRelation observer_contact_with_baffle(baffle_disp_observer, {&shell_baffle});
     //----------------------------------------------------------------------
@@ -64,19 +65,19 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_wall_contact, water_baffle_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, ContactWall<>, ContactWall<>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_wall_contact, water_baffle_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, ContactWall<>, ContactWall<>>, NoRiemannSolver>> fluid_density_relaxation(water_inner, water_wall_contact, water_baffle_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_wall_contact, water_baffle_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_wall_contact, water_baffle_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, NoRiemannSolver>> fluid_density_relaxation(water_inner, water_wall_contact, water_baffle_contact);
     /** Algorithms for solid. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_time_step_size(shell_baffle);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(baffle_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(baffle_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(baffle_inner);
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(baffle_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> shell_update_normal(shell_baffle);
     /** FSI */
-    InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_shell(baffle_water_contact);
-    InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
+    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_shell(baffle_water_contact);
+    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell_baffle);
     /** constraint and damping */
     BoundaryGeometry shell_boundary_geometry(shell_baffle, "BoundaryGeometry");
@@ -106,7 +107,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     shell_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
+    shell_curvature.exec();
     water_block_complex.updateConfiguration();
 
     // Check dWijVjeij
@@ -194,11 +195,13 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             shell_update_normal.exec();
-            shell_curvature.exec(); // update curvature before water shell contact update
 
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedList();
             shell_baffle.updateCellLinkedList();
+
+            shell_curvature_inner.updateConfiguration();
+            shell_curvature.exec();
 
             water_block_complex.updateConfiguration();
 

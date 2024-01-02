@@ -263,6 +263,8 @@ int main(int ac, char *av[])
     ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate});
     ContactRelationFromShell gate_contact(gate, {&water_block});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
+    // inner relation to compute curvature
+    ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_block);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -300,7 +302,7 @@ int main(int ac, char *av[])
     /** Update the norm of elastic gate. */
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> gate_update_normal(gate);
     /** Curvature calculation for elastic gate. */
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> gate_curvature(gate_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> gate_curvature(shell_curvature_inner);
     /**Damping.  */
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
@@ -319,7 +321,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Real>("Pressure");
     gate.addBodyStateForRecording<Real>("TotalMeanCurvature");
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
-    gate.addBodyStateForRecording<Vecd>("PriorAcceleration");
+    gate.addBodyStateForRecording<Vecd>("PriorForce");
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
     /** Output the observed displacement of gate center. */
@@ -336,7 +338,7 @@ int main(int ac, char *av[])
     /** computing linear reproducing configuration for the insert body. */
     gate_corrected_configuration.exec();
     /** calculate initial curvature after corrected configuration*/
-    gate_curvature.compute_initial_curvature();
+    gate_curvature.exec();
     /** update fluid-shell contact*/
     water_block_contact.updateConfiguration();
 

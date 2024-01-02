@@ -36,6 +36,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(wall_boundary);
+    ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, water_block);
     ContactRelationToShell water_block_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
@@ -73,7 +74,7 @@ int main(int ac, char *av[])
     /** Wall boundary configuration correction*/
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     // Curvature calculation
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_boundary_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -95,7 +96,7 @@ int main(int ac, char *av[])
 
     /** initial curvature*/
     wall_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
+    shell_curvature.exec();
     water_block_complex.updateConfiguration();
 
     // Check dWijVjeij

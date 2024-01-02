@@ -12,6 +12,7 @@ class CheckKernelCompleteness
 {
   private:
     BaseParticles *particles_;
+    Kernel *kernel_;
     std::vector<SPH::BaseParticles *> contact_particles_;
     ParticleConfiguration *inner_configuration_;
     std::vector<ParticleConfiguration *> contact_configuration_;
@@ -23,7 +24,9 @@ class CheckKernelCompleteness
 
   public:
     CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
+        : particles_(&inner_relation.base_particles_),
+          kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
+          inner_configuration_(&inner_relation.inner_configuration_)
     {
         for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
         {
@@ -45,7 +48,7 @@ class CheckKernelCompleteness
             {
                 int N_inner_number = 0;
                 int N_contact_number = 0;
-                Real W_ijV_j_ttl_i = 0;
+                Real W_ijV_j_ttl_i = particles_->Vol_[index_i] * kernel_->W(0, ZeroVecd);
                 Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
                 const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -96,14 +99,20 @@ class SmoothingNormal : public ParticleSmoothing<Vecd>
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.0;                               /**< Reference length. */
-Real DH = 3.0;                               /**< Reference and the height of main channel. */
-Real DL1 = 0.7 * DL;                         /**< The length of the main channel. */
+Real DL = 5.0;                 /**< Reference length. */
+Real DH = 3.0;                 /**< Reference and the height of main channel. */
+Real DL1 = 0.7 * DL;           /**< The length of the main channel. */
+Real DH2 = DL - DL1;           /**< Height of side channel. */
+Real DL2 = 1.0 * DH;           /**< Length of side channel. */
+Real angle = 7.5 / 180.0 * Pi; /**< Angle between side channel and horizontal line. */
+Real cos_a = cos(angle);
+Real sin_a = sin(angle);
+Real DL3 = 0.5 * DH / sin_a + DL2 - DH2 * cos_a / sin_a; /**< Length of side channel on the other side. */
+
 Real resolution_ref = 0.15;                  /**< Initial reference particle spacing. */
-Real resolution_wall = resolution_ref / 2.0; /**< Initial reference particle spacing of wall. */
+Real resolution_wall = resolution_ref * 0.5; /**< Initial reference particle spacing of wall. */
 Real BW = resolution_ref * 4;                /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;        /**< Reference size of the emitter buffer to impose inflow condition. */
-Real level_set_refinement_ratio = resolution_wall / (0.1 * resolution_wall);
 //-------------------------------------------------------
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
@@ -111,24 +120,26 @@ Real level_set_refinement_ratio = resolution_wall / (0.1 * resolution_wall);
 Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;    /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
-Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1)));
+Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * DH2));
 Real Re = 100.0;                    /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
 /** the water block in T shape polygon. */
+Vec2d point_water_1(-DL_sponge, -0.5 * DH);
+Vec2d point_water_2(-DL_sponge, 0.5 * DH);
+Vec2d point_water_3(DL1, 0.5 * DH);
+Vec2d point_water_4 = point_water_3 + Vec2d(DL2 * cos_a, DL2 *sin_a);
+Vec2d point_water_5 = point_water_4 + Vec2d(DH2 * sin_a, -DH2 *cos_a);
+Vec2d point_water_6(point_water_5.x() - (0.5 * DH / sin_a + DL2 - DH2 * 1 / tan(angle)) * cos_a, 0);
+Vec2d point_water_7(point_water_5.x(), -point_water_5.y());
+Vec2d point_water_8(point_water_4.x(), -point_water_4.y());
+Vec2d point_water_9(point_water_3.x(), -point_water_3.y());
 std::vector<Vecd> water_block_shape{
-    Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH),
-    Vecd(DL, 2.0 * DH), Vecd(DL, -DH), Vecd(DL1, -DH), Vecd(DL1, 0.0), Vecd(-DL_sponge, 0.0)};
-/** the outer wall polygon. */
-std::vector<Vecd> outer_wall_shape{
-    Vecd(-DL_sponge - BW, -resolution_wall), Vecd(-DL_sponge - BW, DH + resolution_wall), Vecd(DL1 - resolution_wall, DH + resolution_wall), Vecd(DL1 - resolution_wall, 2.0 * DH + BW),
-    Vecd(DL + resolution_wall, 2.0 * DH + BW), Vecd(DL + resolution_wall, -DH - BW), Vecd(DL1 - resolution_wall, -DH - BW), Vecd(DL1 - resolution_wall, -resolution_wall), Vecd(-DL_sponge - BW, -resolution_wall)};
-/** the inner wall polygon. */
-std::vector<Vecd> inner_wall_shape{
-    Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
-    Vecd(DL, 2.0 * DH + BW), Vecd(DL, -DH - BW), Vecd(DL1, -DH - BW), Vecd(DL1, 0.0), Vecd(-DL_sponge - BW, 0.0)};
+    point_water_1, point_water_2, point_water_3, point_water_4,
+    point_water_5, point_water_6, point_water_7, point_water_8,
+    point_water_9, point_water_1};
 //----------------------------------------------------------------------
 //	Define case dependent body shapes.
 //----------------------------------------------------------------------
@@ -140,73 +151,81 @@ class WaterBlock : public MultiPolygonShape
         multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
     }
 };
-
-class WallBoundary : public MultiPolygonShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-    }
-};
-
-/** Particle generator and constraint boundary for shell baffle. */
+/** Particle generator for the wall boundary. */
 class WallBoundaryParticleGenerator : public SurfaceParticleGenerator
 {
   public:
     explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
     virtual void initializeGeometricVariables() override
     {
-        Real x = DL1 - 0.75 * resolution_wall;
-        Real y1 = DH + 0.5 * resolution_wall; // higher wall
-        Real y2 = -0.5 * resolution_wall;     // lower wall
+        const Vec2d n_main_channel_1(0, -1); // normal of main channel
+        const Vec2d n_main_channel_2 = -n_main_channel_1;
+        const Vec2d n_side_channel_1(sin_a, -cos_a); // normal of side channel
+        const Vec2d n_side_channel_2(sin_a, cos_a);
+        const Vec2d n_main_corner_1 = (n_main_channel_1 + n_side_channel_1).normalized(); //  normal of corner between main and side channel
+        const Vec2d n_main_corner_2 = (n_main_channel_2 + n_side_channel_2).normalized();
+        const Vec2d n_side_corner(-1, 0); // normal of corner between two side channels
 
-        initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_wall);
-        Vec2d normal_direction_1 = -Vec2d(-1.0, 1.0).normalized();
-        initializeSurfaceProperties(normal_direction_1, resolution_wall);
+        // main channel corner
+        const Real x_main_corner = (point_water_3 + 0.5 * Vec2d(-resolution_wall * tan(0.5 * angle), resolution_wall)).x();
+        const Real y_main_corner = 0.5 * DH + 0.5 * resolution_wall;
 
-        initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_wall);
-        Vec2d normal_direction_2 = -Vec2d(-1.0, -1.0).normalized();
-        initializeSurfaceProperties(normal_direction_2, resolution_wall);
+        initializePositionAndVolumetricMeasure(Vecd(x_main_corner, y_main_corner), resolution_wall);
+        initializeSurfaceProperties(n_main_corner_1, resolution_wall);
 
-        int particle_number_mid_surface = int((DL1 + DL_sponge + BW) / resolution_wall);
-        for (int i = 1; i < particle_number_mid_surface; i++)
+        initializePositionAndVolumetricMeasure(Vecd(x_main_corner, -y_main_corner), resolution_wall);
+        initializeSurfaceProperties(n_main_corner_2, resolution_wall);
+
+        // main channel
         {
-            x -= resolution_wall;
-            initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_wall);
-            normal_direction_1 = -Vec2d(0, 1.0);
-            initializeSurfaceProperties(normal_direction_1, resolution_wall);
+            int particle_number_mid_surface = int((DL1 + DL_sponge + BW) / resolution_wall);
+            for (int i = 1; i < particle_number_mid_surface; i++)
+            {
+                Real x = x_main_corner - double(i) * resolution_wall;
+                Real y = y_main_corner;
+                initializePositionAndVolumetricMeasure(Vecd(x, y), resolution_wall);
+                initializeSurfaceProperties(n_main_channel_1, resolution_wall);
 
-            initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_wall);
-            normal_direction_2 = -Vec2d(0, -1.0);
-            initializeSurfaceProperties(normal_direction_2, resolution_wall);
+                initializePositionAndVolumetricMeasure(Vecd(x, -y), resolution_wall);
+                initializeSurfaceProperties(n_main_channel_2, resolution_wall);
+            }
         }
 
-        x = DL1 - 0.75 * resolution_wall;
-        y1 = DH + 0.5 * resolution_wall;
-        y2 = -0.5 * resolution_wall;
-        Vec2d normal_direction(1.0, 0.0);
-        particle_number_mid_surface = int((DH + BW) / resolution_wall);
-        for (int i = 1; i < particle_number_mid_surface; i++)
+        // left side channel
         {
-            y1 += resolution_wall;
-            initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_wall);
-            initializeSurfaceProperties(normal_direction, resolution_wall);
+            int particle_number_mid_surface = int((DL2 + BW) / resolution_wall);
+            for (int i = 1; i < particle_number_mid_surface; i++)
+            {
+                Real x = x_main_corner + double(i) * resolution_wall * cos_a;
+                Real y = y_main_corner + double(i) * resolution_wall * sin_a;
+                initializePositionAndVolumetricMeasure(Vecd(x, y), resolution_wall);
+                initializeSurfaceProperties(n_side_channel_1, resolution_wall);
 
-            y2 -= resolution_wall;
-            initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_wall);
-            initializeSurfaceProperties(normal_direction, resolution_wall);
+                initializePositionAndVolumetricMeasure(Vecd(x, -y), resolution_wall);
+                initializeSurfaceProperties(n_side_channel_2, resolution_wall);
+            }
         }
 
-        x = DL;
-        particle_number_mid_surface = int((3 * DH + 2 * BW) / resolution_wall);
-        normal_direction = -Vec2d(1.0, 0.0);
-        for (int i = 0; i < particle_number_mid_surface; i++)
+        // side channel corner
+        const Real x_side_corner = point_water_6.x() + 0.5 * resolution_wall / sin_a;
+        const Real y_side_corner = 0.0;
+
+        initializePositionAndVolumetricMeasure(Vecd(x_side_corner, y_side_corner), resolution_wall);
+        initializeSurfaceProperties(n_side_corner, resolution_wall);
+
+        // right side channel
         {
-            Real y = -DH - BW + (Real(i) + 0.5) * resolution_wall;
-            initializePositionAndVolumetricMeasure(Vecd(x, y), resolution_wall);
-            initializeSurfaceProperties(normal_direction, resolution_wall);
+            int particle_number_mid_surface = int((DL3 + BW) / resolution_wall);
+            for (int i = 1; i < particle_number_mid_surface; i++)
+            {
+                Real x = x_side_corner + double(i) * resolution_wall * cos_a;
+                Real y = y_side_corner + double(i) * resolution_wall * sin_a;
+                initializePositionAndVolumetricMeasure(Vecd(x, y), resolution_wall);
+                initializeSurfaceProperties(-n_side_channel_1, resolution_wall);
+
+                initializePositionAndVolumetricMeasure(Vecd(x, -y), resolution_wall);
+                initializeSurfaceProperties(-n_side_channel_2, resolution_wall);
+            }
         }
     }
 };
@@ -242,7 +261,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
+    BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -0.5 * DH - DL2),
+                                     Vec2d(DL1 + DL3, 0.5 * DH + DL2));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -257,36 +277,6 @@ int main(int ac, char *av[])
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_wall);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     wall_boundary.generateParticles<WallBoundaryParticleGenerator>();
-
-    // auto predict_normal_direction = [&]()
-    // {
-    //     auto &n = *wall_boundary.getBaseParticles().getVariableByName<Vecd>("NormalDirection");
-    //     auto &n0 = *wall_boundary.getBaseParticles().getVariableByName<Vecd>("InitialNormalDirection");
-    //     particle_for(
-    //         par,
-    //         wall_boundary.getBaseParticles().total_real_particles_,
-    //         [&](size_t index_i)
-    //         {
-    //             const auto &pos = wall_boundary.getBaseParticles().pos_[index_i];
-    //             if (pos[0] <= DL1 - 0.75 * resolution_wall && pos[1] > DH)
-    //                 n[index_i] = Vecd(0, 1);
-    //             if (pos[0] <= DL1 - 0.75 * resolution_wall && pos[1] < 0)
-    //                 n[index_i] = Vecd(0, -1);
-    //             if (pos[0] > DL1 - 0.75 * resolution_wall && pos[0] < DL)
-    //                 n[index_i] = Vecd(-1, 0);
-    //             if (pos[0] > DL)
-    //                 n[index_i] = Vecd(1, 0);
-    //             if (pos[0] < DL1 - 0.25 * resolution_ref && pos[0] > DL1 - 0.75 * resolution_ref)
-    //             {
-    //                 if (pos[1] < DH + 0.75 * resolution_ref && pos[1] > DH)
-    //                     n[index_i] = Vecd(-1, 1).normalized();
-    //                 if (pos[1] > -0.75 * resolution_ref && pos[1] < 0)
-    //                     n[index_i] = Vecd(-1, -1).normalized();
-    //             }
-    //             n0[index_i] = n[index_i];
-    //         });
-    // };
-    // predict_normal_direction();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -297,6 +287,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(wall_boundary);
+    ShellInnerRelationWithContactKernel wall_curvature_inner(wall_boundary, water_block);
     ContactRelationToShell water_wall_contact(water_block, {&wall_boundary});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
@@ -319,33 +310,33 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_boundary_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(wall_curvature_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(wall_curvature_inner);
     InteractionWithUpdate<SmoothingNormal> smoothing_normal(shell_boundary_inner);
 
     Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
-    Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
+    Vec2d emitter_translation = Vec2d(-DL_sponge + 0.5 * BW, 0.0);
     BodyAlignedBoxByParticle emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
 
     Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-    Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
+    Vec2d inlet_buffer_translation = Vec2d(-0.5 * DL_sponge, 0.0);
     BodyAlignedBoxByCell emitter_buffer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 
-    Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
-    Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
+    Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.3 * DH2);
+    Vec2d disposer_up_translation = 0.5 * (point_water_4 + point_water_5);
     BodyAlignedBoxByCell disposer_up(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, yAxis);
+        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(angle), Vec2d(disposer_up_translation)), disposer_up_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
 
     Vec2d disposer_down_halfsize = disposer_up_halfsize;
-    Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, -DH) + disposer_down_halfsize;
+    Vec2d disposer_down_translation = 0.5 * (point_water_7 + point_water_8);
     BodyAlignedBoxByCell disposer_down(
-        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down, yAxis);
+        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(-angle), Vec2d(disposer_down_translation)), disposer_down_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down, xAxis);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -359,7 +350,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     // for (int i = 0; i < 2; i++)
     //     smoothing_normal.exec();
-    wall_corrected_configuration.exec();
+    // wall_corrected_configuration.exec();
     shell_curvature.compute_initial_curvature();
     water_block_complex.updateConfiguration();
 
