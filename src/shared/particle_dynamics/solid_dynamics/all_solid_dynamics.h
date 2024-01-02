@@ -36,6 +36,5 @@
 #include "general_solid_dynamics.h"
 #include "inelastic_dynamics.h"
 #include "loading_dynamics.h"
-#include "shell_fluid_interaction.h"
 #include "thin_structure_dynamics.h"
 #include "thin_structure_math.h"
