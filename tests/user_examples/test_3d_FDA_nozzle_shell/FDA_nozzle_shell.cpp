@@ -236,7 +236,7 @@ int main(int ac, char *av[])
     fluid_block.addBodyStateForRecording<Real>("Density");
     fluid_block.addBodyStateForRecording<Real>("VolumetricMeasure");
     fluid_block.addBodyStateForRecording<Real>("MassiveMeasure");
-    wall_boundary.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    wall_boundary.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     wall_boundary.addBodyStateForRecording<Real>("Thickness");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     /**

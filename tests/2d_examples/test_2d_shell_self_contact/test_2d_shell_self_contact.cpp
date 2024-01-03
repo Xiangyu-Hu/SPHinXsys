@@ -124,26 +124,26 @@ class UpperDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegi
 {
   public:
     explicit UpperDisplacement(BodyPartByParticle &body_part)
-        : ConstrainShellBodyRegion(body_part), acc_prior_(particles_->acc_prior_){};
+        : ConstrainShellBodyRegion(body_part), force_prior_(particles_->force_prior_){};
 
   protected:
-    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Vecd> &force_prior_;
     void update(size_t index_i, Real dt = 0.0)
     {
-        acc_prior_[index_i] = Vec2d(0, -30);
+        force_prior_[index_i] = Vec2d(0, -30) * particles_->mass_[index_i];
     };
 };
 class LowerDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
 {
   public:
     explicit LowerDisplacement(BodyPartByParticle &body_part)
-        : ConstrainShellBodyRegion(body_part), acc_prior_(particles_->acc_prior_){};
+        : ConstrainShellBodyRegion(body_part), force_prior_(particles_->force_prior_){};
 
   protected:
-    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Vecd> &force_prior_;
     void update(size_t index_i, Real dt = 0.0)
     {
-        acc_prior_[index_i] = Vec2d(0, 30);
+        force_prior_[index_i] = Vec2d(0, 30) * particles_->mass_[index_i];
     };
 };
 class ConstrainAlongYAxis : public LocalDynamics, public thin_structure_dynamics::ShellDataSimple
@@ -291,7 +291,7 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first_half(shell_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second_half(shell_inner);
     /** Algorithms for shell self contact. */
-    InteractionDynamics<solid_dynamics::SelfContactDensitySummation> shell_self_contact_density(shell_self_contact);
+    InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> shell_self_contact_density(shell_self_contact);
     InteractionDynamics<solid_dynamics::SelfContactForce> shell_self_contact_forces(shell_self_contact);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
@@ -315,7 +315,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     shell_corrected_configuration.exec();
-    shell_curvature.exec();
+    shell_curvature.compute_initial_curvature();
     /** Initial states output. */
     shell.addBodyStateForRecording<Real>("TotalMeanCurvature");
     body_states_recording.writeToFile(0);

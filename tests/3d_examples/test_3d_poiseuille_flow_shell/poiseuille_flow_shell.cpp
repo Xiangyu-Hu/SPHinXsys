@@ -269,6 +269,7 @@ int main()
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(shell_boundary);
+    ShellInnerRelationWithContactKernel wall_curvature_inner(shell_boundary, water_block);
     // contact
     ContactRelationToShell water_block_contact(water_block, {&shell_boundary});
     //----------------------------------------------------------------------
@@ -336,7 +337,7 @@ int main()
     /** Wall boundary configuration correction*/
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     // Curvature calculation
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_boundary_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(wall_curvature_inner);
     /**
      * @brief Output.
      */
@@ -346,7 +347,7 @@ int main()
     shell_boundary.addBodyStateForRecording<double>("Density");
     shell_boundary.addBodyStateForRecording<double>("VolumetricMeasure");
     shell_boundary.addBodyStateForRecording<double>("Thickness");
-    shell_boundary.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    shell_boundary.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment,
                                                    system.real_bodies_);
@@ -372,7 +373,7 @@ int main()
 
     /** initial curvature*/
     wall_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
+    shell_curvature.exec();
     water_block_complex.updateConfiguration();
 
     // Check dWijVjeij

@@ -89,7 +89,7 @@ int main(int ac, char *av[])
     /**
      * @brief Output.
      */
-    shell_baffle.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    shell_baffle.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     shell_baffle.addBodyStateForRecording<Real>("GaussianCurvature");
     BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, sph_system.real_bodies_);
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);

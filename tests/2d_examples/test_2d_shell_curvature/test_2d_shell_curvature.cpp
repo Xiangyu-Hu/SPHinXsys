@@ -74,10 +74,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    shell.addBodyStateForRecording<Real>("TotalMeanCurvature");
-    shell.addBodyStateForRecording<Real>("GaussianCurvature");
+    shell.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    ObservingAQuantity<Real> observe_curvature(observer_contact, "TotalMeanCurvature");
+    ObservingAQuantity<Real> observe_curvature(observer_contact, "AverageTotalMeanCurvature");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

@@ -108,7 +108,7 @@ class UpperDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegi
   protected:
     void update(size_t index_i, Real dt = 0.0)
     {
-        vel_[index_i] = Vec3d(0, -0.05, 0);
+        vel_[index_i] = Vec3d(0, -0.06, 0);
     };
 };
 // class LowerDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
@@ -197,7 +197,7 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first_half(shell_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second_half(shell_inner);
     /** Algorithms for shell self contact. */
-    InteractionDynamics<solid_dynamics::SelfContactDensitySummation> shell_self_contact_density(shell_self_contact);
+    InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> shell_self_contact_density(shell_self_contact);
     InteractionDynamics<solid_dynamics::SelfContactForce> shell_self_contact_forces(shell_self_contact);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
@@ -221,7 +221,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     shell_corrected_configuration.exec();
-    shell_curvature.exec();
+    shell_curvature.compute_initial_curvature();
     /** Initial states output. */
     shell.addBodyStateForRecording<Real>("TotalMeanCurvature");
     body_states_recording.writeToFile(0);

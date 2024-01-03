@@ -319,7 +319,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<Real>("Pressure");
-    gate.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    gate.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     gate.addBodyStateForRecording<Vecd>("PriorForce");
     /** Output body states for visualization. */

@@ -340,7 +340,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    wall_boundary.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    wall_boundary.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     BodyStatesRecordingToVtp write_body_states(io_environment, sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -351,7 +351,7 @@ int main(int ac, char *av[])
     // for (int i = 0; i < 2; i++)
     //     smoothing_normal.exec();
     // wall_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
+    shell_curvature.exec();
     water_block_complex.updateConfiguration();
 
     // Check dWijVjeij

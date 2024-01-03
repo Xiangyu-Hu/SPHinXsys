@@ -70,9 +70,9 @@ const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
-const Real rho0_s = 10.0;    /**< Reference density.*/
-const Real poisson = 0.4;    /**< Poisson ratio.*/
-const Real Ae = 3.5 * 1.4e5; /**< Normalized Youngs Modulus. */
+const Real rho0_s = 10.0; /**< Reference density.*/
+const Real poisson = 0.4; /**< Poisson ratio.*/
+const Real Ae = 1.4e4;    /**< Normalized Youngs Modulus. */
 const Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * thickness_balloon;
 //----------------------------------------------------------------------
@@ -196,7 +196,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (std::abs(base_particles_.pos_[index_i][1]) < 2 * resolution_shell)
+        if (std::abs(base_particles_.pos_[index_i][1]) < resolution_shell)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -262,6 +262,8 @@ int main(int ac, char *av[])
     ComplexRelation water_block_complex(water_inner, {&water_wall_contact, &water_shell_contact});
     // inner relation to compute curvature
     ShellInnerRelationWithContactKernel shell_curvature_inner(shell, water_block);
+    // shell self contact
+    ShellSelfContactRelation shell_self_contact(shell);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -357,8 +359,23 @@ int main(int ac, char *av[])
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(shell_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(shell_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(shell_inner);
-    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_average_curvature(shell_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> shell_update_normal(shell);
+    /** Algorithms for shell self contact. */
+    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_inner);
+    InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> shell_self_contact_density(shell_self_contact);
+    InteractionDynamics<solid_dynamics::SelfContactForce> shell_self_contact_forces(shell_self_contact);
+    auto reset_force_prior = [&]()
+    {
+        const auto &force_from_fluid = *shell.getBaseParticles().getVariableByName<Vec2d>("AllForceFromFluid");
+        particle_for(
+            par,
+            shell.getBaseParticles().total_real_particles_,
+            [&](size_t index_i)
+            {
+                shell.getBaseParticles().force_prior_[index_i] = force_from_fluid[index_i];
+            });
+    };
     /** FSI */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_shell(shell_water_contact);
     InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_shell_update(shell_water_contact, viscous_force_on_shell);
@@ -373,7 +390,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    shell.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
     shell.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    shell.addBodyStateForRecording<Real>("SelfContactDensity");
     BodyStatesRecordingToVtp write_body_states(io_environment, sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -383,7 +402,8 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     shell_corrected_configuration.exec();
-    shell_curvature.exec();
+    shell_curvature.compute_initial_curvature();
+    shell_average_curvature.exec();
     water_block_complex.updateConfiguration();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
@@ -391,7 +411,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 10;
     Real end_time = 5.0;
-    Real output_interval = end_time / 100.0; /**< Time stamps for output of body states. */
+    Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;                           /**< Default acoustic time step sizes. */
     Real dt_s = 0.0;                         /**< Default acoustic time step sizes for solid. */
     //----------------------------------------------------------------------
@@ -440,13 +460,25 @@ int main(int ac, char *av[])
                     average_velocity_and_acceleration.initialize_displacement_.exec();
                     while (dt_s_sum < dt)
                     {
+                        reset_force_prior();
+
+                        shell_self_contact_density.exec();
+                        shell_self_contact_forces.exec();
+
                         dt_s = std::min(shell_time_step_size.exec(), dt - dt_s_sum);
+
                         shell_stress_relaxation_first.exec(dt_s);
                         shell_constrain.exec();
                         shell_position_damping.exec(dt_s);
                         shell_rotation_damping.exec(dt_s);
                         shell_constrain.exec();
                         shell_stress_relaxation_second.exec(dt_s);
+
+                        shell_update_normal.exec();
+                        shell_curvature.exec();
+                        shell.updateCellLinkedList();
+                        shell_self_contact.updateConfiguration();
+
                         dt_s_sum += dt_s;
                     }
                     average_velocity_and_acceleration.update_averages_.exec(dt);
@@ -468,9 +500,6 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            if (if_fsi)
-                shell_update_normal.exec();
-
             /** inflow injection*/
             emitter_inflow_injection.exec();
             disposer_outflow_deletion.exec();
@@ -479,10 +508,11 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             if (if_fsi)
             {
+                shell_update_normal.exec();
                 shell.updateCellLinkedList();
                 shell_water_contact.updateConfiguration();
                 shell_curvature_inner.updateConfiguration();
-                shell_curvature.exec();
+                shell_average_curvature.exec();
             }
             water_block_complex.updateConfiguration();
         }
