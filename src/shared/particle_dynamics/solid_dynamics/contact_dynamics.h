@@ -76,6 +76,23 @@ class SelfContactDensitySummation : public ContactDensityAccessor, public LocalD
 };
 
 /**
+ * @class ShellSelfContactDensitySummation
+ * @brief Computing the summation density due to shell self-contact model.
+ */
+class ShellSelfContactDensitySummation : public SelfContactDensitySummation
+{
+  public:
+    explicit ShellSelfContactDensitySummation(BaseInnerRelation &self_contact_relation)
+        : SelfContactDensitySummation(self_contact_relation)
+    {
+        Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
+        Real smoothing_length_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        KernelWendlandC2 kernel(smoothing_length_1);
+        offset_W_ij_ = kernel.W(dp_1, ZeroVecd);
+    }
+};
+
+/**
  * @class ContactDensitySummation
  * @brief Computing the summation density due to solid-solid contact model.
  */
