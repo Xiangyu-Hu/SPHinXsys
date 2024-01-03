@@ -297,11 +297,51 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
+ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
+      n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
+      n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
+      H_(*particles_->registerSharedVariable<Real>("TotalMeanCurvature"))
+{
+    particles_->registerVariable(dn_0_, "InitialNormalGradient");
+    particles_->registerVariable(dn_, "NormalGradient");
+};
+//=================================================================================================//
+void ShellCurvature::compute_initial_curvature()
+{
+    particle_for(
+        par,
+        particles_->total_real_particles_,
+        [this](size_t index_i)
+        {
+            Matd dn_0_i = Matd::Zero();
+            // transform initial local B_ to global B_
+            const Matd B_global_i = transformation_matrix_[index_i].transpose() * B_[index_i] * transformation_matrix_[index_i];
+            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                const size_t index_j = inner_neighborhood.j_[n];
+                const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                dn_0_i -= (n0_[index_i] - n0_[index_j]) * gradW_ijV_j.transpose();
+            }
+            dn_0_[index_i] = dn_0_i * B_global_i;
+            H_[index_i] = get_mean_curvature(dn_0_[index_i]);
+        });
+}
+//=================================================================================================//
+void ShellCurvature::update(size_t index_i, Real dt)
+{
+    Matd dn_0_i = dn_0_[index_i] + transformation_matrix_[index_i].transpose() *
+                                       F_bending_[index_i] * transformation_matrix_[index_i];
+    Matd inverse_F = F_[index_i].inverse();
+    dn_[index_i] = dn_0_i * transformation_matrix_[index_i].transpose() * inverse_F * transformation_matrix_[index_i];
+    H_[index_i] = get_mean_curvature(dn_[index_i]);
+}
+//=================================================================================================//
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
       n_(particles_->n_),
-      H_(*particles_->registerSharedVariable<Real>("TotalMeanCurvature")),
-      K_(*particles_->registerSharedVariable<Real>("GaussianCurvature")){};
+      H_avg_(*particles_->registerSharedVariable<Real>("AverageTotalMeanCurvature")){};
 //=================================================================================================//
 void AverageShellCurvature::update(size_t index_i, Real dt)
 {
@@ -313,8 +353,7 @@ void AverageShellCurvature::update(size_t index_i, Real dt)
         const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         dn_i -= (n_[index_i] - n_[index_j]) * gradW_ijV_j.transpose();
     }
-    H_[index_i] = get_mean_curvature(dn_i);
-    K_[index_i] = get_Gaussian_curvature(H_[index_i], dn_i);
+    H_avg_[index_i] = get_mean_curvature(dn_i);
 }
 //=================================================================================================//
 } // namespace thin_structure_dynamics

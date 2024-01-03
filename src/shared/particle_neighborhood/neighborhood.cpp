@@ -233,7 +233,6 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 //=================================================================================================//
 BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_body)
     : NeighborBuilder(), n_(*shell_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
-      H_(*shell_body.getBaseParticles().registerSharedVariable<Real>("TotalMeanCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -259,7 +258,8 @@ void BaseNeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborh
 }
 //=================================================================================================//
 NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body)
-    : BaseNeighborBuilderContactShell(contact_body)
+    : BaseNeighborBuilderContactShell(contact_body),
+      H_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("AverageTotalMeanCurvature"))
 {
     // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
     kernel_ = body.sph_adaptation_->getKernel();
@@ -293,7 +293,7 @@ void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
         // H is the total mean curvature
         // for 2D, curvature=H
         // for 3D, mean curvature=H/2
-        const Real H_j = -H_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
+        const Real H_j = -H_avg_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
 
         int counter = 0;
         while (distance_dummy < kernel_->CutOffRadius())
@@ -328,6 +328,7 @@ void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
 //=================================================================================================//
 NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body)
     : BaseNeighborBuilderContactShell(body),
+      H_avg_(*body.getBaseParticles().registerSharedVariable<Real>("AverageTotalMeanCurvature")),
       thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness"))
 {
     // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
@@ -362,7 +363,7 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
         // H is the total mean curvature
         // for 2D, curvature=H
         // for 3D, mean curvature=H/2
-        const Real H_i = -H_[index_i] / (Dimensions - 1); // mean curvature with corrected sign
+        const Real H_i = -H_avg_[index_i] / (Dimensions - 1); // mean curvature with corrected sign
 
         int counter = 0;
         while (distance_dummy < kernel_->CutOffRadius())
@@ -396,6 +397,7 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
 NeighborBuilderShellSelfContact::
     NeighborBuilderShellSelfContact(SPHBody &body)
     : BaseNeighborBuilderContactShell(body),
+      H_(*body.getBaseParticles().registerSharedVariable<Real>("TotalMeanCurvature")),
       pos0_(*body.getBaseParticles().getVariableByName<Vecd>("InitialPosition")),
       thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness"))
 {
@@ -457,7 +459,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
         Real W_ij_corrected = W_ijV_j_ttl / Vol_j;
         // change surface mass and area to volumetric mass and volume
-        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_ * particle_distance_ / thickness_[index_i];
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_ * particle_distance_;
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_

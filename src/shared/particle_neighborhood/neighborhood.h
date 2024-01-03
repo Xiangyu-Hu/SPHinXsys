@@ -207,7 +207,6 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 
   protected:
     StdLargeVec<Vecd> &n_;   // normal direction of contact body
-    StdLargeVec<Real> &H_;   // summation of mean curvature of contact body
     Real particle_distance_; // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -228,6 +227,9 @@ class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
     NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body);
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+  private:
+    StdLargeVec<Real> &H_avg_; // summation of average mean curvature of contact body
 };
 
 /**
@@ -242,6 +244,7 @@ class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
+    StdLargeVec<Real> &H_avg_; // summation of average mean curvature of contact body
     StdLargeVec<Real> &thickness_;
 };
 
@@ -257,6 +260,7 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
+    StdLargeVec<Real> &H_; // summation of mean curvature of contact body
     StdLargeVec<Vecd> &pos0_;
     StdLargeVec<Real> &thickness_;
     UniquePtrKeeper<Kernel> kernel_keeper_;

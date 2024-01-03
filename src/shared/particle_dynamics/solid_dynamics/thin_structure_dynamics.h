@@ -375,6 +375,32 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
 };
 
 /**
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
+ */
+class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
+{
+  public:
+    explicit ShellCurvature(BaseInnerRelation &inner_relation);
+
+    void update(size_t index_i, Real dt);
+    void compute_initial_curvature();
+
+  private:
+    StdLargeVec<Vecd> &n0_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Matd> &F_;
+    StdLargeVec<Matd> &F_bending_;
+
+    StdLargeVec<Real> &H_;
+
+    StdLargeVec<Matd> dn_0_;
+    StdLargeVec<Matd> dn_;
+};
+
+/**
  * @class AverageShellCurvature
  * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
  */
@@ -386,9 +412,7 @@ class AverageShellCurvature : public LocalDynamics, public thin_structure_dynami
 
   private:
     StdLargeVec<Vecd> &n_;
-
-    StdLargeVec<Real> &H_;
-    StdLargeVec<Real> &K_;
+    StdLargeVec<Real> &H_avg_;
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH
