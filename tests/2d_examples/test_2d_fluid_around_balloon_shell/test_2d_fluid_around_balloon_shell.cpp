@@ -7,6 +7,7 @@
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 
+// Make sure the initial normal direction points from shell to fluid
 class CorrectNormalDirection
 {
   private:
@@ -36,10 +37,12 @@ class CorrectNormalDirection
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
+const bool if_fsi = true;
 const Real scale = 1.0;
-const Real DL = 5.2 * scale; /**< Reference length. */
+const Real DL = 7.5 * scale; /**< Reference length. */
 const Real DH = 3.0 * scale; /**< Reference and the height of main channel. */
 const Real DL_balloon = 4.0 * scale;
+const Real radius_balloon = 0.5 * scale; // radius of the mid surface
 
 const Real resolution_ref = 0.15 * scale;
 const Real resolution_shell = resolution_ref * 0.5; // outer surface radius
@@ -47,7 +50,6 @@ const Real resolution_shell = resolution_ref * 0.5; // outer surface radius
 const Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 const Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 
-const Real radius_balloon = 0.51 * resolution_shell;                        // radius of the mid surface
 const Real thickness_balloon = resolution_shell;                            // thickness of the balloon
 const Real radius_balloon_outer = radius_balloon + 0.5 * thickness_balloon; // radius of the outer surface
 const Real radius_balloon_inner = radius_balloon - 0.5 * thickness_balloon; // radius of the outer surface
@@ -60,10 +62,19 @@ const Vec2d balloon_center(0.5 * DL, 0);
 //----------------------------------------------------------------------
 const Real rho0_f = 1.0; /**< Reference density of fluid. */
 const Real U_f = 1.0;    /**< Characteristic velocity. */
+const Real U_max = 1.5 * U_f * DH / (DH - 2 * radius_balloon_outer);
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
-const Real c_f = 10.0 * U_f * DH / (DH - 2 * radius_balloon);
+const Real c_f = 10.0 * U_max;
 const Real Re = 100.0;                    /**< Reynolds number. */
 const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
+//----------------------------------------------------------------------
+//	Global parameters on the solid properties
+//----------------------------------------------------------------------
+const Real rho0_s = 10.0;    /**< Reference density.*/
+const Real poisson = 0.4;    /**< Poisson ratio.*/
+const Real Ae = 3.5 * 1.4e5; /**< Normalized Youngs Modulus. */
+const Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
+const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * thickness_balloon;
 //----------------------------------------------------------------------
 //	Define case dependent geometries
 //----------------------------------------------------------------------
@@ -155,7 +166,7 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(U_f), t_ref_(2.0),
+        : u_ref_(U_f), t_ref_(1.0),
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
@@ -167,6 +178,29 @@ struct InflowVelocity
         target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         return target_velocity;
     }
+};
+//----------------------------------------------------------------------
+//	Define the boundary geometry
+//----------------------------------------------------------------------
+class BoundaryGeometry : public BodyPartByParticle
+{
+  public:
+    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
+        : BodyPartByParticle(body, body_part_name)
+    {
+        TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
+        tagParticles(tagging_particle_method);
+    };
+    virtual ~BoundaryGeometry(){};
+
+  private:
+    void tagManually(size_t index_i)
+    {
+        if (std::abs(base_particles_.pos_[index_i][1]) < 2 * resolution_shell)
+        {
+            body_part_particles_.push_back(index_i);
+        }
+    };
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -196,8 +230,7 @@ int main(int ac, char *av[])
 
     SolidBody shell(sph_system, makeShared<Shell>("Shell"));
     shell.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
+    shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
         shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
@@ -225,6 +258,7 @@ int main(int ac, char *av[])
     InnerRelation shell_inner(shell);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelationToShell water_shell_contact(water_block, {&shell});
+    ContactRelationFromShell shell_water_contact(shell, {&water_block});
     ComplexRelation water_block_complex(water_inner, {&water_wall_contact, &water_shell_contact});
     // inner relation to compute curvature
     ShellInnerRelationWithContactKernel shell_curvature_inner(shell, water_block);
@@ -291,7 +325,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Algorithm for fluid dynamics. */
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeStream>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_wall_contact, water_shell_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_wall_contact, water_shell_contact);
@@ -319,9 +353,23 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, xAxis);
     /** Algorithm for solid dynamics. */
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    /** Algorithm for shell dynamics. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(shell_curvature_inner);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_time_step_size(shell);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(shell_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(shell_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(shell_inner);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> shell_update_normal(shell);
+    /** FSI */
+    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_shell(shell_water_contact);
+    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_shell_update(shell_water_contact, viscous_force_on_shell);
+    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell);
+    /** constraint and damping */
+    BoundaryGeometry shell_boundary_geometry(shell, "BoundaryGeometry");
+    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> shell_constrain(shell_boundary_geometry);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+        shell_position_damping(0.2, shell_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+        shell_rotation_damping(0.2, shell_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -334,17 +382,18 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    // shell_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
+    shell_corrected_configuration.exec();
+    shell_curvature.exec();
     water_block_complex.updateConfiguration();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
-    int screen_output_interval = 100;
-    Real end_time = 100.0;
-    Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
+    int screen_output_interval = 10;
+    Real end_time = 5.0;
+    Real output_interval = end_time / 100.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;                           /**< Default acoustic time step sizes. */
+    Real dt_s = 0.0;                         /**< Default acoustic time step sizes for solid. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -370,6 +419,9 @@ int main(int ac, char *av[])
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
 
+            if (if_fsi)
+                viscous_force_on_shell.exec();
+
             /** Dynamics including pressure relaxation. */
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -377,7 +429,28 @@ int main(int ac, char *av[])
                 dt = SMIN(fluid_acoustic_time_step.exec(), Dt - relaxation_time);
                 fluid_pressure_relaxation.exec(dt);
                 emitter_buffer_inflow_condition.exec();
+                if (if_fsi)
+                    fluid_force_on_shell_update.exec();
                 fluid_density_relaxation.exec(dt);
+
+                /** Solid dynamics time stepping. */
+                if (if_fsi)
+                {
+                    Real dt_s_sum = 0.0;
+                    average_velocity_and_acceleration.initialize_displacement_.exec();
+                    while (dt_s_sum < dt)
+                    {
+                        dt_s = std::min(shell_time_step_size.exec(), dt - dt_s_sum);
+                        shell_stress_relaxation_first.exec(dt_s);
+                        shell_constrain.exec();
+                        shell_position_damping.exec(dt_s);
+                        shell_rotation_damping.exec(dt_s);
+                        shell_constrain.exec();
+                        shell_stress_relaxation_second.exec(dt_s);
+                        dt_s_sum += dt_s;
+                    }
+                    average_velocity_and_acceleration.update_averages_.exec(dt);
+                }
 
                 relaxation_time += dt;
                 integration_time += dt;
@@ -388,9 +461,15 @@ int main(int ac, char *av[])
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
-                          << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                          << "	Dt = " << Dt << "	dt = " << dt;
+                if (if_fsi)
+                    std::cout << "  dt_s = " << dt_s;
+                std::cout << "\n";
             }
             number_of_iterations++;
+
+            if (if_fsi)
+                shell_update_normal.exec();
 
             /** inflow injection*/
             emitter_inflow_injection.exec();
@@ -398,6 +477,13 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedListWithParticleSort(100);
+            if (if_fsi)
+            {
+                shell.updateCellLinkedList();
+                shell_water_contact.updateConfiguration();
+                shell_curvature_inner.updateConfiguration();
+                shell_curvature.exec();
+            }
             water_block_complex.updateConfiguration();
         }
 
