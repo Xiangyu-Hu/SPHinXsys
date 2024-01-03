@@ -176,6 +176,19 @@ int main(int ac, char *av[])
     wall_boundary.defineAdaptationRatios(1.15, resolution_fluid / resolution_shell);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0); // dummy material parameters
     wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
+    // make sure normal points from shell to fluid
+    auto correct_normal_direction = [&]()
+    {
+        auto &n = *wall_boundary.getBaseParticles().getVariableByName<Vecd>("NormalDirection");
+        particle_for(
+            par,
+            wall_boundary.getBaseParticles().total_real_particles_,
+            [&](size_t index_i)
+            {
+                n[index_i] *= -1;
+            });
+    };
+    correct_normal_direction();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -186,6 +199,7 @@ int main(int ac, char *av[])
     InnerRelation wall_boundary_inner(wall_boundary);
     ContactRelationToShell fluid_wall_contact(fluid_block, {&wall_boundary});
     ComplexRelation fluid_block_complex(fluid_block_inner, fluid_wall_contact);
+    ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, fluid_block);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -213,10 +227,8 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
-    /** Wall boundary configuration correction*/
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(wall_boundary_inner);
     // wall curvature
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(wall_boundary_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -246,8 +258,7 @@ int main(int ac, char *av[])
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
     /** initial curvature*/
-    wall_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
+    shell_curvature.exec();
     fluid_block_complex.updateConfiguration();
     //   Check dWijVjeij
     CheckKernelCompleteness check_kernel_completeness(fluid_block_inner, fluid_wall_contact);
