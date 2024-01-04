@@ -280,7 +280,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Real E = 4.32e8;
     Real mu = 0.3;
     auto material = makeShared<LinearElasticSolid>(rho, E, mu);
-    Real physical_viscosity = 7e3;
+    Real physical_viscosity = 7e3 * thickness;
     std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
     // physical_viscosity = 2*get_physical_viscosity_general(rho, E, thickness);
     // std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
@@ -305,7 +305,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);  
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     if (cvt)
@@ -400,7 +400,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
     std::cout << "total_mass: " << total_mass << std::endl;
     EXPECT_FLOAT_EQ(total_volume, total_area);
-    EXPECT_FLOAT_EQ(total_mass, total_area * rho);
+    EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
 
     /**
      * From here the time stepping begins.

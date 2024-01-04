@@ -191,7 +191,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real E = 3e7 * psi_to_pa;
     Real mu = 0.3;
     auto material = makeShared<LinearElasticSolid>(rho, E, mu);
-    Real physical_viscosity = 7e3; // where is this value coming from?
+    Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
     Vec3d gravity = -pressure / (thickness * rho) * sym_vec; // force/mass simplified by area
@@ -229,7 +229,7 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);  
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     shell_body.generateParticles<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
@@ -299,7 +299,7 @@ return_data bending_circular_plate(Real dp_ratio)
         Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
-        EXPECT_FLOAT_EQ(total_mass, total_area * rho);
+        EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
     }
 
     /**

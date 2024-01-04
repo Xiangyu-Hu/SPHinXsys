@@ -30,10 +30,10 @@ StdVec<Vecd> observation_location = {Vecd(radius_mid_surface * cos((50.0 - 2.0 *
                                           0.5 * height,
                                           radius_mid_surface *sin((50.0 - 2.0 * 80.0 / particle_number) / 180.0 * Pi))};
 /** For material properties of the solid. */
-Real rho0_s = 36.0;              /** Normalized density. */
-Real Youngs_modulus = 4.32e8;    /** Normalized Youngs Modulus. */
-Real poisson = 0.0;              /** Poisson ratio. */
-Real physical_viscosity = 7.0e3; /** physical damping, here we choose the same value as numerical viscosity. */
+Real rho0_s = 36.0;                          /** Normalized density. */
+Real Youngs_modulus = 4.32e8;                /** Normalized Youngs Modulus. */
+Real poisson = 0.0;                          /** Poisson ratio. */
+Real physical_viscosity = 7.0e3 * thickness; /** physical damping, here we choose the same value as numerical viscosity. */
 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10.0;
