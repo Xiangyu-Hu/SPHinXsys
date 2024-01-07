@@ -136,6 +136,8 @@ namespace fluid_dynamics
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
+		this->particles_->registerVariable(visc_direction_matrix_, "ViscDirectionMatrix");
+		this->particles_->addVariableToWrite<Vecd>("ViscDirectionMatrix");
 	}
 //=================================================================================================//
 
@@ -156,6 +158,7 @@ namespace fluid_dynamics
 
 		Vecd acceleration = Vecd::Zero();
 		Vecd vel_derivative = Vecd::Zero();
+
 		for (size_t k = 0; k < contact_configuration_.size(); ++k)
 		{
 			StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
@@ -179,6 +182,7 @@ namespace fluid_dynamics
 		this->acc_prior_[index_i] += acceleration;
 		//** For test *
 		this->visc_acc_wall_[index_i] = acceleration;
+		this->visc_direction_matrix_[index_i] = e_tau * e_n.transpose() + (e_tau * e_n.transpose()).transpose();
 	}
 
 

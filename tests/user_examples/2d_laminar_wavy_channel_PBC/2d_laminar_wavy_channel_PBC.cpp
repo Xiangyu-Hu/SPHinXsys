@@ -17,35 +17,27 @@ using namespace SPH;
 /**
  * @ parameters for validation with [1997 Joseph JCP].
  */
- //Real DH = 1.0e-3;                
- //Real DL = 4.0 * DH;          
- //Real rho0_f = 1000.0;                 
- //Real gravity_g = 1.0e-4;
- //Real nu_f = 1.0e-6;
- //Real mu_f = nu_f * rho0_f;  
- // 
-//----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
-//----------------------------------------------------------------------
-Real DL = 6.0;                         /**< Channel length. */
-Real DH = 1.0;                         /**< Channel height. */
-Real resolution_ref = 0.05;              /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
-Real amplitude = 0.1;
-Real wave_length = 1;
+Real DH = 1.0e-3;                
+Real DL = 4.0 * DH;          
+Real rho0_f = 1000.0;                 
+Real gravity_g = 1.0e-4;
+Real nu_f = 1.0e-6;
+Real mu_f = nu_f * rho0_f;              
+
+Real resolution_ref = DH / 50.0; /**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-//----------------------------------------------------------------------
-//	Material properties of the fluid.
-//----------------------------------------------------------------------
-Real gravity_g = 1.0e-4;
-Real U_f = 1.0;
-Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
+/**
+ * @brief Material properties of the fluid.
+ */
+//Real u_max = 1.5; /**< Characteristic velocity. */
+//Real rho0_f = 1.0;                                   
 
-Real rho0_f = 1.0;                                            /**< Density. */
+Real U_f = 1.0e-5; /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;
 
-Real mu_f = 0.01; /**< Dynamics viscosity. */
-Real Re = 100.0;                                              /**< Reynolds number. */
+Real Re = rho0_f * U_f * DH / mu_f;
 
 
 /**

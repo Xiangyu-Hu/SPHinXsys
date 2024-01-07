@@ -15,6 +15,8 @@ Real y_p_theo = 0.05;                 /**< Theoretical distance from the first p
 Real resolution_ref = 0.082609;			  /**< Initial reference particle spacing. */
 Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref;
 //Real offset_dist_ref = 0.0;
+//** Intial values for K, Epsilon and Mu_t *
+StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

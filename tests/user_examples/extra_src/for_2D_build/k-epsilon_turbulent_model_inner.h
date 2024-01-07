@@ -117,14 +117,14 @@ namespace SPH
 		class GetTimeAverageCrossSectionData : public BaseGetTimeAverageData
 		{
 		public:
-			explicit GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points, const StdVec<Real>& bound_x);
+			explicit GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points, const StdVec<Real>& bound_x, Real offset_dist_y = 0.0);
 			virtual ~GetTimeAverageCrossSectionData() {};
 
 			void update(size_t index_i, Real dt = 0.0);
 		protected:
-			Real x_min ;
-			Real x_max ;
-
+			Real x_min_, x_max_;
+			Real offset_dist_y_;
+			StdVec<Real> monitor_cellcenter_y;
 		};
 		/** Note this is a temporary treatment *
 		* @class GetTimeAverageCenterLineData
@@ -171,7 +171,7 @@ namespace SPH
 		class K_TurtbulentModelInner : public BaseTurtbulentModelInner
 		{
 		public:
-			explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation);
+			explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values);
 			virtual ~K_TurtbulentModelInner() {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
@@ -183,10 +183,12 @@ namespace SPH
 			StdLargeVec<Real> k_production_;
 
 			StdLargeVec<int> is_near_wall_P1_; //** This is used to specially treat near wall region  *
+			Real turbu_k_initial_, turbu_ep_initial_, turbu_mu_initial_;
 
 			//** for test */
 			StdLargeVec<Real>  k_diffusion_, vel_x_;
 			//StdLargeVec<Matd> velocity_gradient_wall;
+
 		};
 
 		/**

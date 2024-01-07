@@ -10,9 +10,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 8.0;                         /**< Channel length. */
+Real DL = 32.0;                         /**< Channel length. */
 Real DH = 1.0;                         /**< Channel height. */
-Real resolution_ref = 0.01;              /**< Initial reference particle spacing. */
+Real resolution_ref = 0.05;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 10.0; /**< Sponge region to impose inflow condition. */
 Real amplitude = 0.1;
@@ -138,5 +138,23 @@ class FreeStreamCondition : public fluid_dynamics::FlowVelocityBuffer
     {
         Real run_time = GlobalStaticVariables::physical_time_;
         u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
+    }
+};
+//----------------------------------------------------------------------
+//	Define time dependent acceleration in x-direction
+//----------------------------------------------------------------------
+class TimeDependentAcceleration : public Gravity
+{
+    Real du_ave_dt_, u_ref_, t_ref_;
+
+public:
+    explicit TimeDependentAcceleration(Vecd gravity_vector)
+        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(U_f), du_ave_dt_(0) {}
+
+    virtual Vecd InducedAcceleration(const Vecd& position) override
+    {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
+        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
     }
 };

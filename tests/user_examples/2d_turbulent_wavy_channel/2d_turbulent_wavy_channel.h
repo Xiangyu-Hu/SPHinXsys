@@ -6,11 +6,14 @@
  */
 
 #include "sphinxsys.h"
+#include "k-epsilon_turbulent_model_complex.h"
+#include "k-epsilon_turbulent_model_complex.hpp"
+#include "k-epsilon_turbulent_model.cpp"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 6.0;                         /**< Channel length. */
+Real DL = 8.0;                         /**< Channel length. */
 Real DH = 1.0;                         /**< Channel height. */
 Real resolution_ref = 0.05;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
@@ -25,13 +28,25 @@ Vec2d point_coordinate_2(4.0, 5.0);
 Vec2d point_coordinate_3(5.0, 5.0);
 StdVec<Vec2d> observation_locations = {point_coordinate_1, point_coordinate_2, point_coordinate_3};
 //----------------------------------------------------------------------
+//	Global parameters on the turbulent properties
+//----------------------------------------------------------------------
+//Real y_p_theo = 0.05;                 /**< Theoretical distance from the first particle P to wall  */
+Real y_p_theo = 0.0;
+//Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref;
+Real offset_dist_ref = 0.0;
+StdVec<int> id_exclude;
+//----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;                                            /**< Density. */
-Real U_f = 1.0;                                               /**< freestream velocity. */
+Real U_f = 0.816;                                               /**< freestream velocity. */
+//Real U_f = 1.0;
 Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
-Real Re = 100.0;                                              /**< Reynolds number. */
-Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
+//Real Re = 100.0;                                              /**< Reynolds number. */
+//Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
+//Real mu_f = 0.0001; /**< Dynamics viscosity. */
+Real mu_f = 0.01; /**< Dynamics viscosity. */
+
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
 //----------------------------------------------------------------------
@@ -105,6 +120,18 @@ public:
         bottom_wall_shape.push_back(Vecd(-DL_sponge - BW, 0.0));
     }
 };
+class ChannelShape
+{
+public:
+    explicit ChannelShape()
+    {
+        bottom_wall_shape.push_back(Vecd(-DL_sponge - BW, -BW));
+        bottom_wall_shape.push_back(Vecd(-DL_sponge - BW, 0.0));
+        bottom_wall_shape.push_back(Vecd(DL + BW, 0.0));
+        bottom_wall_shape.push_back(Vecd(DL + BW, -BW));
+        bottom_wall_shape.push_back(Vecd(-DL_sponge - BW, -BW));
+    }
+};
 /** Water block shape definition */
 class WaterBlock : public ComplexShape
 {
@@ -147,7 +174,7 @@ class FreeStreamCondition : public fluid_dynamics::FlowVelocityBuffer
     Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
     {
         /* Fully-developed velocity inlet */
-        //Real radius;
+        //Real radius = 0.0;
         //if (position[1]>= DH/2.0 )
         //{
         //    radius = position[1] - DH / 2.0;
@@ -165,3 +192,32 @@ class FreeStreamCondition : public fluid_dynamics::FlowVelocityBuffer
         u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
     }
 };
+class CorrectBufferVelocity : public fluid_dynamics::BaseFlowBoundaryCondition
+{
+public:
+    CorrectBufferVelocity(BodyPartByCell& body_part) : BaseFlowBoundaryCondition(body_part) {}
+    virtual ~CorrectBufferVelocity() {};
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        vel_[index_i][1] = 0.0;
+    }
+};
+//----------------------------------------------------------------------
+//	Define time dependent acceleration in x-direction
+//----------------------------------------------------------------------
+class TimeDependentAcceleration : public Gravity
+{
+    Real du_ave_dt_, u_ref_, t_ref_;
+
+public:
+    explicit TimeDependentAcceleration(Vecd gravity_vector)
+        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(2.0*U_f), du_ave_dt_(0) {}
+
+    virtual Vecd InducedAcceleration(const Vecd& position) override
+    {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
+        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
+    }
+};
+

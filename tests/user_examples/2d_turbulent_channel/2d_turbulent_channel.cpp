@@ -59,7 +59,7 @@ int main(int ac, char* av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
 	
 	/** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
 	InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
 	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
@@ -81,9 +81,11 @@ int main(int ac, char* av[])
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_block_contact);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
 	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
+	water_block.addBodyStateForRecording<Real>("Density");		   // output for debug
 
 	/** Define the external force for turbulent startup to reduce instability at start-up stage, 1e-4 is from poisulle case */
-	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
+	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
+	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	
 	/** Turbulent advection time step. */
@@ -134,7 +136,7 @@ int main(int ac, char* av[])
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 200.0;
-	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
+	Real output_interval = end_time / 20.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -196,7 +198,7 @@ int main(int ac, char* av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
-				write_body_states.writeToFile();
+				//write_body_states.writeToFile();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -228,7 +230,7 @@ int main(int ac, char* av[])
 		//}
 
 		TickCount t2 = TickCount::now();
-		//write_body_states.writeToFile();
+		write_body_states.writeToFile();
 		
 		//write_fluid_x_velocity.writeToFile(); //For test turbulent model
 		//write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model

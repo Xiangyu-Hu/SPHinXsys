@@ -32,7 +32,7 @@ int main(int ac, char *av[])
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineAdaptationRatios(1.15, 2.0);
+    //wall_boundary.defineAdaptationRatios(1.15, 2.0);
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -105,25 +105,24 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+    
+    SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
+    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
+    //SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
+
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
     SimpleDynamics<FreeStreamCondition> freestream_condition(free_stream_buffer);
-    //----------------------------------------------------------------------
-    //	Algorithms of FSI.
-    //----------------------------------------------------------------------
-    /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_wall_boundary(wall_boundary_contact);
-    InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> pressure_force_on_wall_boundary(wall_boundary_contact);
+
     /** Computing viscous force acting on wall with wall model. */
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
@@ -132,16 +131,18 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
     water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
+    water_block.addBodyStateForRecording<Real>("Density");		   // output for debug
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     /** initialize cell linked lists for all bodies. */
     sph_system.initializeSystemCellLinkedLists();
+
     /** periodic condition applied after the mesh cell linked list build up
      * but before the configuration build up. */
     periodic_condition_x.update_cell_linked_list_.exec();
-    periodic_condition_y.update_cell_linked_list_.exec();
+
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
     /** initialize surface normal direction for the insert body. */
@@ -179,8 +180,6 @@ int main(int ac, char *av[])
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
 
-            /** FSI for viscous force. */
-            viscous_force_on_wall_boundary.exec();
             size_t inner_ite_dt = 0;
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -188,8 +187,7 @@ int main(int ac, char *av[])
                 Real dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 /** Fluid pressure relaxation, first half. */
                 pressure_relaxation.exec(dt);
-                /** FSI for pressure force. */
-                pressure_force_on_wall_boundary.exec();
+
                 /** Fluid pressure relaxation, second half. */
                 density_relaxation.exec(dt);
 
@@ -198,6 +196,8 @@ int main(int ac, char *av[])
                 GlobalStaticVariables::physical_time_ += dt;
                 freestream_condition.exec();
                 inner_ite_dt++;
+
+                //write_real_body_states.writeToFile();
             }
 
             if (number_of_iterations % screen_output_interval == 0)
@@ -210,18 +210,17 @@ int main(int ac, char *av[])
 
             /** Water block configuration and periodic condition. */
             periodic_condition_x.bounding_.exec();
-            periodic_condition_y.bounding_.exec();
+
             water_block.updateCellLinkedListWithParticleSort(100);
+
             periodic_condition_x.update_cell_linked_list_.exec();
-            periodic_condition_y.update_cell_linked_list_.exec();
+
             /** one need update configuration after periodic condition. */
             water_block_complex.updateConfiguration();
-            wall_boundary_contact.updateConfiguration();
         }
 
         TickCount t2 = TickCount::now();
         /** write run-time observation into file */
-        compute_vorticity.exec();
         write_real_body_states.writeToFile();
         fluid_observer_contact.updateConfiguration();
         write_fluid_velocity.writeToFile(number_of_iterations);

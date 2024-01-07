@@ -10,11 +10,11 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120;						  /**< Reference length. */
-Real DH = 2;						  /**< Reference and the height of main channel. */
-Real resolution_ref = 0.1;			  /**< Initial reference particle spacing. */
+Real DL = 4.0;						  /**< Reference length. */
+Real DH = 1.0;						  /**< Reference and the height of main channel. */
+Real resolution_ref = 0.05;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
-Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
+Real DL_sponge = resolution_ref * 0; /**< Reference size of the emitter buffer to impose inflow condition. */
 //-------------------------------------------------------
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + BW));

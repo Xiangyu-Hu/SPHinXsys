@@ -42,19 +42,27 @@ int main(int ac, char* av[])
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
+	//  Generally, we first define all the inner relations, then the contact relations.
+	//  At last, we define the complex relaxations by combining previous defined
+	//  inner and contact relations.
 	//----------------------------------------------------------------------
 	InnerRelation water_block_inner(water_block);
-	ComplexRelation water_block_complex_relation(water_block_inner, { &wall_boundary });
+	ContactRelation water_block_contact(water_block, { &wall_boundary });
 	ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
+	//----------------------------------------------------------------------
+	// Combined relations built from basic relations
+	// which are only use for now for updating configurations.
+	//----------------------------------------------------------------------
+	ComplexRelation water_block_complex(water_block_inner, water_block_contact);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	
-	//Attention! the original one does not use Riemann solver for pressure
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex_relation);
-	//Attention! the original one does use Riemann solver for density
-	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
+	//**Attention! the original one does not use Riemann solver for pressure
+	Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+	//**Attention! the original one does use Riemann solver for density
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
 	
 	/** Turbulent.Note: When use wall function, K Epsilon and TKE gradient calculation only consider inner */
 	//InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
@@ -67,17 +75,17 @@ int main(int ac, char* av[])
 
 	/** TurbulentViscous cal. includes the molecular one and the eddy viscosity one */
 	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
 	//InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_complex_relation);
 
 
 		
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
 	
 	//InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 	//	inlet_outlet_surface_particle_indicator(water_block_complex_relation);
 	
-	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
 	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
@@ -212,7 +220,7 @@ int main(int ac, char* av[])
 			/** Periodic condition. */
 			periodic_condition.update_cell_linked_list_.exec();
 
-			water_block_complex_relation.updateConfiguration();
+			water_block_complex.updateConfiguration();
 		}
 
 

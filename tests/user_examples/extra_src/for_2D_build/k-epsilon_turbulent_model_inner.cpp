@@ -17,49 +17,61 @@ namespace SPH
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), dimension_(Vecd(0).size()),
 			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation)
+		K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
 			: BaseTurtbulentModelInner(inner_relation)
 		{
-				particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
-				particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
+			//** Obtain Initial values for transport equations *
+			turbu_k_initial_ = initial_values[0];
+			turbu_ep_initial_ = initial_values[1];
+			turbu_mu_initial_ = initial_values[2];
 
-				particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", 0.000180001);
-				particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
-				particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
+			particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
+			particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
 
-				particles_->registerVariable(turbu_mu_, "TurbulentViscosity", 1.0e-9);
-				particles_->registerSortableVariable<Real>("TurbulentViscosity");
-				particles_->addVariableToWrite<Real>("TurbulentViscosity");
+			//particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", 0.000180001);
+			particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", turbu_k_initial_);
 
-				particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", 3.326679e-5);
-				particles_->registerSortableVariable<Real>("TurbulentDissipation");
-				particles_->addVariableToWrite<Real>("TurbulentDissipation");
+			particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
+			particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
 
-				particles_->registerVariable(k_production_, "K_Production");
-				particles_->registerSortableVariable<Real>("K_Production");
-				particles_->addVariableToWrite<Real>("K_Production");
-				
-				//particles_->registerVariable(B_, "CorrectionMatrix");
-				//particles_->registerSortableVariable<Matd>("CorrectionMatrix");
-				//particles_->addVariableToWrite<Matd>("CorrectionMatrix");
+			//particles_->registerVariable(turbu_mu_, "TurbulentViscosity", 1.0e-9);
+			particles_->registerVariable(turbu_mu_, "TurbulentViscosity", turbu_mu_initial_);
+			particles_->registerSortableVariable<Real>("TurbulentViscosity");
+			particles_->addVariableToWrite<Real>("TurbulentViscosity");
 
-				particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
-				particles_->registerSortableVariable<int>("IsNearWallP1");
-				particles_->addVariableToWrite<int>("IsNearWallP1");
+			//particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", 3.326679e-5);
+			particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", turbu_ep_initial_);
 
-				//** for test */
-				particles_->registerVariable(k_diffusion_, "K_Diffusion");
-				particles_->registerSortableVariable<Real>("K_Diffusion");
-				particles_->addVariableToWrite<Real>("K_Diffusion");
+			particles_->registerSortableVariable<Real>("TurbulentDissipation");
+			particles_->addVariableToWrite<Real>("TurbulentDissipation");
 
-				particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
+			particles_->registerVariable(k_production_, "K_Production");
+			particles_->registerSortableVariable<Real>("K_Production");
+			particles_->addVariableToWrite<Real>("K_Production");
 
-				particles_->registerVariable(velocity_gradient_, "VelocityGradient");
-				particles_->registerSortableVariable<Matd>("VelocityGradient");
-				particles_->addVariableToWrite<Matd>("VelocityGradient");
+			//particles_->registerVariable(B_, "CorrectionMatrix");
+			//particles_->registerSortableVariable<Matd>("CorrectionMatrix");
+			//particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 
-				particles_->registerVariable(vel_x_, "Velocity_X");
-				particles_->registerSortableVariable<Real>("Velocity_X");
+			particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
+			particles_->registerSortableVariable<int>("IsNearWallP1");
+			particles_->addVariableToWrite<int>("IsNearWallP1");
+
+			//** for test */
+			particles_->registerVariable(k_diffusion_, "K_Diffusion");
+			particles_->registerSortableVariable<Real>("K_Diffusion");
+			particles_->addVariableToWrite<Real>("K_Diffusion");
+
+			particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
+
+			particles_->registerVariable(velocity_gradient_, "VelocityGradient");
+			particles_->registerSortableVariable<Matd>("VelocityGradient");
+			particles_->addVariableToWrite<Matd>("VelocityGradient");
+
+			particles_->registerVariable(vel_x_, "Velocity_X");
+			particles_->registerSortableVariable<Real>("Velocity_X");
+
+
 		}
 		//=================================================================================================//
 		BaseGetTimeAverageData::BaseGetTimeAverageData(BaseInnerRelation& inner_relation,int num_observer_points)
@@ -193,22 +205,39 @@ namespace SPH
 			std::cout << "The cutoff_time is " << cutoff_time << std::endl;
 		}
 		//=================================================================================================//
-		GetTimeAverageCrossSectionData::GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation, int num_observer_points, const StdVec<Real>& bound_x)
+		GetTimeAverageCrossSectionData::GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation, int num_observer_points, const StdVec<Real>& bound_x, Real offset_dist_y)
 			: BaseGetTimeAverageData(inner_relation, num_observer_points)
 		{
-			x_min = bound_x[0];
-			x_max = bound_x[1];
+			x_min_ = bound_x[0];
+			x_max_ = bound_x[1];
+			offset_dist_y_ = offset_dist_y;
+			//** Get the center coordinate of the monitoring cell *
+			for (int i = 0; i < num_cell; i++)
+			{
+				Real upper_bound = ((i + 1) * particle_spacing_min_ + offset_dist_y_);
+				Real lower_bound = (i * particle_spacing_min_ + offset_dist_y_);
+				monitor_cellcenter_y.push_back((lower_bound + upper_bound) / 2.0);
+			}
+			file_path_output_ = "../bin/output/monitor_cell_center_y.dat";
+			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+			for (size_t i = 0; i != num_cell; ++i)
+			{
+				plt_engine_.writeAQuantity(out_file, monitor_cellcenter_y[i]);
+				out_file << "\n";
+			}
+			out_file << "\n";
+			out_file.close();
 		}
 		//=================================================================================================//
 		void GetTimeAverageCrossSectionData::update(size_t index_i, Real dt)
 		{
 			//** Get data *
-			if (pos_[index_i][0] > x_min && pos_[index_i][0] <= x_max)
+			if (pos_[index_i][0] > x_min_ && pos_[index_i][0] <= x_max_)
 			{
 				for (int i = 0; i < num_cell; i++)
 				{
-					if (pos_[index_i][1] > i* particle_spacing_min_ && 
-						pos_[index_i][1] <= (i+1)* particle_spacing_min_)
+					if (pos_[index_i][1] > (i* particle_spacing_min_+ offset_dist_y_) &&
+						pos_[index_i][1] <= ((i+1)* particle_spacing_min_+ offset_dist_y_))
 					{
 						num_in_cell_[i] += 1;
 						data_sto_[i][0] += vel_[index_i][0];
