@@ -58,7 +58,6 @@ class BaseMaterial
     virtual ~BaseMaterial(){};
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
-    /**interface called in base particles constructor */
     virtual void registerReloadLocalParameters(BaseParticles *base_particles){};
     /**
      * This will be called after particles generation
@@ -67,6 +66,7 @@ class BaseMaterial
      * one need assign the base particle to that material too.
      */
     virtual void initializeLocalParameters(BaseParticles *base_particles){};
+    void setLocalParameters(bool is_reload, BaseParticles *base_particles);
     virtual BaseMaterial *ThisObjectPtr() { return this; };
 
   protected:
@@ -84,16 +84,9 @@ class Fluid : public BaseMaterial
     Real mu_; /**< reference viscosity. */
 
   public:
-    StdLargeVec<Real> p_; /**< pressure */
-
-    explicit Fluid(Real rho0, Real c0, Real mu)
-        : BaseMaterial(rho0), c0_(c0), mu_(mu)
-    {
-        material_type_name_ = "Fluid";
-    };
+    explicit Fluid(Real rho0, Real c0, Real mu);
     Fluid(Real rho0, Real mu) : Fluid(rho0, 1.0, mu) {}
     virtual ~Fluid(){};
-
     Real ReferenceViscosity() { return mu_; };
     Real ReferenceSoundSpeed() { return c0_; };
     virtual Real getPressure(Real rho) = 0;
@@ -101,8 +94,7 @@ class Fluid : public BaseMaterial
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
     virtual Fluid *ThisObjectPtr() override { return this; };
-
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 };
 
 /** @class  Solid

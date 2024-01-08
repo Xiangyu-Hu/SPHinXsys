@@ -385,10 +385,10 @@ MultiPolygon createWaveProbeShape12()
 //------------------------------------------------------------------------------
 // Case-dependent observer particle generator
 //------------------------------------------------------------------------------
-class FlapObserverParticleGenerator : public ObserverParticleGenerator
+class FlapObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** the measuring particle with zero volume */
         positions_.push_back(Vecd(7.862, 0.645));

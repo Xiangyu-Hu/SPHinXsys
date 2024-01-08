@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     ANSYSMesh ansys_mesh(ansys_mesh_file_path);
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
+    water_block.generateParticles<ParticleGeneratorUnstructuredMesh>(ansys_mesh);
     water_block.addBodyStateForRecording<Real>("Density");
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh);
     //----------------------------------------------------------------------

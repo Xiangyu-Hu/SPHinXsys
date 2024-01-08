@@ -45,7 +45,6 @@ namespace SPH
 
 class SPHBody;
 class BaseMaterial;
-class ParticleGenerator;
 class BodySurface;
 template <class ReturnType>
 class BaseDynamics;
@@ -92,8 +91,8 @@ class BaseParticles
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~BaseParticles(){};
 
-    StdLargeVec<Vecd> pos_;       /**< Position */
-    StdLargeVec<Vecd> vel_;       /**< Velocity */
+    StdLargeVec<Vecd> pos_;         /**< Position */
+    StdLargeVec<Vecd> vel_;         /**< Velocity */
     StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
     StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
 
@@ -192,6 +191,7 @@ class BaseParticles
     //----------------------------------------------------------------------
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleMass(size_t index) { return mass_[index]; }
+    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
     SPHBody &sph_body_;

@@ -21,34 +21,26 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	beam_particle_generator.h
+ * @file 	line_particle_generator.h
  * @brief generate particle for linear structures.
- * @author	Xipeng Lyu
+ * @author	Xipeng Lyu and Xiangyu Hu
  */
 
-#ifndef BEAM_PARTICLE_GENERATOR_H
-#define BEAM_PARTICLE_GENERATOR_H
+#ifndef LINE_PARTICLE_GENERATOR_H
+#define LINE_PARTICLE_GENERATOR_H
 
-#include "base_data_package.h"
 #include "base_particle_generator.h"
-#include "large_data_containers.h"
-#include "sph_data_containers.h"
 
 namespace SPH
 {
+class Line;
 
-class SPHBody;
-class BaseParticles;
-
-/**
- * @class LineParticleGenerator
- * @brief Generate volumetric particles by initialize extra Line variables.
- */
-class LineParticleGenerator : public ParticleGenerator
+template <> // Generate a smooth line-shape using particles
+class ParticleGenerator<Line> : public ParticleGenerator<Base>
 {
   public:
-    explicit LineParticleGenerator(SPHBody &sph_body);
-    virtual ~LineParticleGenerator(){};
+    explicit ParticleGenerator(SPHBody &sph_body);
+    virtual ~ParticleGenerator(){};
 
   protected:
     StdLargeVec<Vecd> &n_;         /**< line normal */
@@ -57,8 +49,9 @@ class LineParticleGenerator : public ParticleGenerator
     StdLargeVec<Real> &width_;     /**< line width */
 
     /** Initialize line particle. */
-    virtual void initializeLineProperties(const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
+    virtual void initializeLineProperties(
+        const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
 };
 
 } // namespace SPH
-#endif // BEAM_PARTICLE_GENERATOR_H
+#endif // LINE_PARTICLE_GENERATOR_H

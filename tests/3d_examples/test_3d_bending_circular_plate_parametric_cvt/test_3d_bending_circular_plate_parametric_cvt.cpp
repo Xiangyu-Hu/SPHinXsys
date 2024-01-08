@@ -16,7 +16,7 @@ using namespace SPH;
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 
-class ShellCircleParticleGenerator : public SurfaceParticleGenerator
+class ShellCircleParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -25,7 +25,7 @@ class ShellCircleParticleGenerator : public SurfaceParticleGenerator
 
   public:
     explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),

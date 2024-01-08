@@ -486,18 +486,6 @@ void BaseInnerRelationInFVM::resizeConfiguration()
     inner_configuration_.resize(updated_size, Neighborhood());
 }
 //=================================================================================================//
-ParticleGeneratorInFVM::ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh)
-    : ParticleGenerator(sph_body), elements_centroids_(ansys_mesh.elements_centroids_),
-      elements_volumes_(ansys_mesh.elements_volumes_) {}
-//=================================================================================================//
-void ParticleGeneratorInFVM::initializeGeometricVariables()
-{
-    for (size_t particle_index = 0; particle_index != elements_centroids_.size(); ++particle_index)
-    {
-        initializePositionAndVolumetricMeasure(elements_centroids_[particle_index], elements_volumes_[particle_index]);
-    }
-}
-//=================================================================================================//
 void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance,
                                           Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
 {

@@ -72,10 +72,10 @@ class InitialCondition
 };
 
 // define an observer body
-class ColumnObserverParticleGenerator : public ObserverParticleGenerator
+class ColumnObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         positions_.push_back(Vecd(0.0, 0.0, PW));
     }

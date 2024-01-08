@@ -49,10 +49,10 @@ class WallBoundary : public ComplexShape
 };
 
 //	define an observer particle generator
-class WaterObserverParticleGenerator : public ObserverParticleGenerator
+class WaterObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit WaterObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit WaterObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         // add observation points
         positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));

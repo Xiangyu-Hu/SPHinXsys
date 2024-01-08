@@ -41,10 +41,10 @@ protected:
 };
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator, public Parameter
+class PlateParticleGenerator : public ParticleGeneratorSurface, public Parameter
 {
 public:
-	explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+	explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
 	virtual void initializeGeometricVariables() override
 	{
 		// the plate and boundary
@@ -151,7 +151,7 @@ public:
 		plate_body.generateParticles<PlateParticleGenerator>();
 
 		plate_observer.defineParticlesAndMaterial();
-		plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+		plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 	}
 };
 Real observed_quantity_0 = 0.0;

@@ -49,10 +49,10 @@ TEST(Beam, MaxDisplacement)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class BarParticleGenerator : public LineParticleGenerator
+class BarParticleGenerator : public ParticleGenerator<Line>
 {
   public:
-    explicit BarParticleGenerator(SPHBody &sph_body) : LineParticleGenerator(sph_body)
+    explicit BarParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
     bar_observer.defineParticlesAndMaterial();
-    bar_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    bar_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

@@ -237,10 +237,10 @@ int main(int ac, char *av[])
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observer_location);
 
     ObserverBody wetting_observer(sph_system, "WettingObserver");
-    wetting_observer.generateParticles<ObserverParticleGenerator>(wetting_observer_location);
+    wetting_observer.generateParticles<ParticleGeneratorObserver>(wetting_observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

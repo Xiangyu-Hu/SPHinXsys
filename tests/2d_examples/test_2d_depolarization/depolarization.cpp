@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     muscle_body.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    voltage_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

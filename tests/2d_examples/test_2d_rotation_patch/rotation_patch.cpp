@@ -131,7 +131,7 @@ int main(int ac, char *av[])
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //-------------------------------------------------------------------------------------------------------------------------------------------
     InnerRelation water_body_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
