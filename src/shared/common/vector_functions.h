@@ -96,9 +96,15 @@ inline Vec2d deviceToHostVecd(const DeviceVec2d& device) { return {device[0], de
 inline Vec3d deviceToHostVecd(const DeviceVec3d& device) { return {device[0], device[1], device[2]}; }
 
 /** Initialize Vecd of zeros for host or device */
-template<class V> inline V VecdZero();
-template<> inline DeviceVec2d VecdZero() { return DeviceVec2d{0}; }
-template<> inline DeviceVec3d VecdZero() { return DeviceVec3d{0}; }
+template<class V, class Enable = std::true_type> inline V VecdZero();
+template<> inline DeviceVec2d VecdZero<DeviceVec2d, is_device_type_different_from_host<DeviceVec2d>>()
+{
+    return DeviceVec2d{0};
+}
+template<> inline DeviceVec3d VecdZero<DeviceVec3d, is_device_type_different_from_host<DeviceVec3d>>()
+{
+    return DeviceVec3d{0};
+}
 template<> inline Vec2d VecdZero() { return Vec2d::Zero(); }
 template<> inline Vec3d VecdZero() { return Vec3d::Zero(); }
 
@@ -127,13 +133,80 @@ template<class RealType, int Dimension>
 inline RealType VecdSquareNorm(const Eigen::Matrix<RealType,Dimension,1>& vec) {
     return vec.squaredNorm();
 }
-
+template<class RealType, int Dimension>
+inline sycl::vec<RealType,Dimension> VecdMax(const sycl::vec<RealType,Dimension>& v1, const sycl::vec<RealType,Dimension>& v2) {
+    return sycl::max(v1, v2);
+}
+inline Vec2d VecdMax(const Vec2d& v1, const Vec2d& v2) {
+    return {
+        v1[0] < v2[0] ? v2[0] : v1[0],
+        v1[1] < v2[1] ? v2[1] : v1[1]
+    };
+}
+inline Vec3d VecdMax(const Vec3d& v1, const Vec3d& v2) {
+    return {
+        v1[0] < v2[0] ? v2[0] : v1[0],
+        v1[1] < v2[1] ? v2[1] : v1[1],
+        v1[2] < v2[2] ? v2[2] : v1[2]
+    };
+}
+inline Array2i VecdMax(const Array2i& v1, const Array2i& v2) {
+    return {
+        v1[0] < v2[0] ? v2[0] : v1[0],
+        v1[1] < v2[1] ? v2[1] : v1[1]
+    };
+}
+inline Array3i VecdMax(const Array3i& v1, const Array3i& v2) {
+    return {
+        v1[0] < v2[0] ? v2[0] : v1[0],
+        v1[1] < v2[1] ? v2[1] : v1[1],
+        v1[2] < v2[2] ? v2[2] : v1[2]
+    };
+}
+template<class RealType, int Dimension>
+inline sycl::vec<RealType,Dimension> VecdMin(const sycl::vec<RealType,Dimension>& v1, const sycl::vec<RealType,Dimension>& v2) {
+    return sycl::min(v1, v2);
+}
+inline Vec2d VecdMin(const Vec2d& v1, const Vec2d& v2) {
+    return {
+        v1[0] > v2[0] ? v2[0] : v1[0],
+        v1[1] > v2[1] ? v2[1] : v1[1]
+    };
+}
+inline Vec3d VecdMin(const Vec3d& v1, const Vec3d& v2) {
+    return {
+        v1[0] > v2[0] ? v2[0] : v1[0],
+        v1[1] > v2[1] ? v2[1] : v1[1],
+        v1[2] > v2[2] ? v2[2] : v1[2]
+    };
+}
+inline Array2i VecdMin(const Array2i& v1, const Array2i& v2) {
+    return {
+        v1[0] > v2[0] ? v2[0] : v1[0],
+        v1[1] > v2[1] ? v2[1] : v1[1]
+    };
+}
+inline Array3i VecdMin(const Array3i& v1, const Array3i& v2) {
+    return {
+        v1[0] > v2[0] ? v2[0] : v1[0],
+        v1[1] > v2[1] ? v2[1] : v1[1],
+        v1[2] > v2[2] ? v2[2] : v1[2]
+    };
+}
 template<class VecType, std::size_t ...Index>
 inline auto VecdFoldingProd_impl(const VecType& vec, std::index_sequence<Index...>) {
     return ( vec[Index] * ... );
 }
 template<class Type, int Dimension>
 inline Type VecdFoldProduct(const sycl::vec<Type,Dimension>& vec) {
+    return VecdFoldingProd_impl(vec, std::make_index_sequence<Dimension>());
+}
+template<class Type, int Dimension>
+inline Type VecdFoldProduct(const Eigen::Matrix<Type,Dimension,1>& vec) {
+    return VecdFoldingProd_impl(vec, std::make_index_sequence<Dimension>());
+}
+template<class Type, int Dimension>
+inline Type VecdFoldProduct(const Eigen::Array<Type,Dimension,1>& vec) {
     return VecdFoldingProd_impl(vec, std::make_index_sequence<Dimension>());
 }
 

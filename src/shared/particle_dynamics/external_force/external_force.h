@@ -51,7 +51,7 @@ class ExternalForce
  * @class Gravity
  * @brief The gravity force, derived class of External force.
  */
-class Gravity : public ExternalForce
+class Gravity
 {
   protected:
     Vecd global_acceleration_;
@@ -61,16 +61,27 @@ class Gravity : public ExternalForce
 
   public:
     Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
-    virtual ~Gravity(){};
 
     /** This function can be used for runtime control of external force. */
-    virtual Vecd InducedAcceleration(Vecd &position) override;
-    Real getPotential(Vecd &position);
+    Vecd InducedAcceleration(Vecd &position) const
+    {
+        return global_acceleration_;
+    }
+    Real getPotential(Vecd &position) const
+    {
+        return InducedAcceleration(position).dot(zero_potential_reference_ - position);
+    }
 
-    DeviceVecd InducedAcceleration(const DeviceVecd& position) const {
+    template<class Vec,
+              typename = std::enable_if_t<std::conjunction_v<std::is_same<Vec, DeviceVecd>>,
+                                          std::is_same<is_device_type_different_from_host<DeviceVecd>, std::true_type>>>
+    DeviceVecd InducedAcceleration(const Vec& position) const {
         return global_acceleration_device_;
     }
-    DeviceReal getPotential(const DeviceVecd &position) const {
+    template<class Vec,
+              typename = std::enable_if_t<std::conjunction_v<std::is_same<Vec, DeviceVecd>>,
+                                          std::is_same<is_device_type_different_from_host<DeviceVecd>, std::true_type>>>
+    DeviceReal getPotential(const Vec &position) const {
         return VecdDot(InducedAcceleration(position), DeviceVecd(zero_potential_reference_device_ - position));
     }
 };

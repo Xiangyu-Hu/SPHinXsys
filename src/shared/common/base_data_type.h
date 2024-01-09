@@ -39,6 +39,12 @@
 #include <map>
 #include <vector>
 
+// Avoid automatic memory allocations
+#define EIGEN_RUNTIME_NO_MALLOC
+#define EIGEN_NO_MALLOC
+// Disable sse2/etc vectorization SIMDs for spirv gen
+#define EIGEN_DONT_VECTORIZE
+
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -93,10 +99,10 @@ using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 /** Device data types. */
 using DeviceReal = Real;
-using DeviceVec2d = sycl::vec<DeviceReal, 2>;
-using DeviceVec3d = sycl::vec<DeviceReal, 3>;
-using DeviceArray2i = sycl::int2;
-using DeviceArray3i = sycl::int3;
+using DeviceVec2d = Vec2d;
+using DeviceVec3d = Vec3d;
+using DeviceArray2i = Array2i;
+using DeviceArray3i = Array3i;
 
 template<typename Type, class Enable = void>
 struct DataTypeEquivalence {

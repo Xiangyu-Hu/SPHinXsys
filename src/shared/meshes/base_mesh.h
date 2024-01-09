@@ -95,10 +95,15 @@ class BaseMesh
      */
     SYCL_EXTERNAL static size_t MortonCode(const size_t &i);
     /** Converts mesh index into a Morton order. */
-    template<class Array>
+    template<class Array, typename = enable_both_host_device_t<Array, Array2i>>
     static size_t transferMeshIndexToMortonOrder(const Array &mesh_index)
     {
         return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1);
+    }
+    template<class Array, typename = enable_both_host_device_t<Array, Array3i>, typename = void>
+    static size_t transferMeshIndexToMortonOrder(const Array &mesh_index)
+    {
+        return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
     }
 };
 

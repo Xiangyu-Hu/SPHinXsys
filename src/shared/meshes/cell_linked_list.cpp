@@ -23,14 +23,29 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 CellLinkedListKernel::CellLinkedListKernel(BaseParticles &particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                                            const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells)
     : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
-      list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), mesh_lower_bound_(meshLowerBound), grid_spacing_(gridSpacing),
-      all_grid_points_(allGridPoints), all_cells_(allCells), index_list_(allocateDeviceData<size_t>(total_real_particles_)),
-      index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(all_cells_))) {}
+      list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), mesh_lower_bound_(allocateDeviceData<DeviceVecd>(1)),
+      grid_spacing_(allocateDeviceData<DeviceReal>(1)), all_grid_points_(allocateDeviceData<DeviceArrayi>(1)),
+      all_cells_(allocateDeviceData<DeviceArrayi>(1)), index_list_(allocateDeviceData<size_t>(total_real_particles_)),
+      index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(allCells))), index_head_list_size_(VecdFoldProduct(allCells))
+{
+    copyDataToDevice(&meshLowerBound, mesh_lower_bound_, 1)
+        .add(copyDataToDevice(&gridSpacing, grid_spacing_, 1))
+        .add(copyDataToDevice(&allGridPoints, all_grid_points_, 1))
+        .add(copyDataToDevice(&allCells, all_cells_, 1)).wait();
+}
+
+CellLinkedListKernel::~CellLinkedListKernel()
+{
+    freeDeviceData(mesh_lower_bound_);
+    freeDeviceData(grid_spacing_);
+    freeDeviceData(all_grid_points_);
+    freeDeviceData(all_cells_);
+}
 
 execution::ExecutionEvent CellLinkedListKernel::clearCellLists()
 {
     // Only clear head list, since index list does not depend on its previous values
-    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, VecdFoldProduct(all_cells_)));
+    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, index_head_list_size_));
 }
 
 execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
@@ -48,9 +63,9 @@ execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(SPH::BaseParticl
                                  const size_t index_i = item.get_global_id();
                                  if(index_i < total_real_particles)
                                  {
-                                     const auto cell_index = CellIndexFromPosition(pos_n[index_i], mesh_lower_bound,
-                                                                                   grid_spacing, all_grid_points);
-                                     const auto linear_cell_index = transferCellIndexTo1D(cell_index, all_cells);
+                                     const auto cell_index = CellIndexFromPosition(pos_n[index_i], *mesh_lower_bound,
+                                                                                   *grid_spacing, *all_grid_points);
+                                     const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells);
                                      sycl::atomic_ref<size_t, sycl::memory_order_relaxed, sycl::memory_scope_device,
                                                       sycl::access::address_space::global_space>
                                          atomic_head_list(index_head_list[linear_cell_index]);
@@ -83,8 +98,8 @@ size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
                                                           size_t i = item.get_global_id();
                                                           if(i < total_real_particles)
                                                               sequence[i] = BaseMesh::transferMeshIndexToMortonOrder(
-                                                                  CellIndexFromPosition(pos[i], mesh_lower_bound,
-                                                                                        grid_spacing, all_grid_points)); });
+                                                                  CellIndexFromPosition(pos[i], *mesh_lower_bound,
+                                                                                        *grid_spacing, *all_grid_points)); });
                                  })
         .wait_and_throw();
     return sequence;
