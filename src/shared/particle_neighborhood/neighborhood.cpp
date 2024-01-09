@@ -34,7 +34,7 @@ Neighborhood& Neighborhood::operator=(const NeighborhoodDevice &device) {
 }
 
 NeighborhoodDevice::NeighborhoodDevice() : current_size_(allocateDeviceData<size_t>(1)),
-                                           allocated_size_(28),
+                                           allocated_size_(Dimensions == 2 ? 28 : 82),
                                            j_(allocateDeviceData<size_t>(allocated_size_)),
                                            W_ij_(allocateDeviceData<DeviceReal>(allocated_size_)),
                                            dW_ijV_j_(allocateDeviceData<DeviceReal>(allocated_size_)),
@@ -114,12 +114,8 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 }
 //=================================================================================================//
-NeighborBuilderInner::NeighborBuilderInner(SPHBody &body) : NeighborBuilder(),
-                                                            execution::DeviceExecutable<NeighborBuilderInner,
-                                                                                        NeighborBuilderInnerKernel>(this, *body.sph_adaptation_->getKernel())
-{
-    kernel_ = body.sph_adaptation_->getKernel();
-}
+NeighborBuilderInner::NeighborBuilderInner(SPHBody &body) : NeighborBuilder(body.sph_adaptation_->getKernel()),
+                                                            device_kernel(*kernel_) {}
 //=================================================================================================//
 void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
                                       const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -187,15 +183,12 @@ void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
 };
 //=================================================================================================//
 NeighborBuilderContact::
-    NeighborBuilderContact(SPHBody &body, SPHBody &contact_body) : NeighborBuilder(),
-                                                                   execution::DeviceExecutable<NeighborBuilderContact,
-                                                                                               NeighborBuilderContactKernel>(this, body.sph_adaptation_->getKernel()->SmoothingLength()
-                                                                                                                                           > contact_body.sph_adaptation_->getKernel()->SmoothingLength() ?
-                                                                                                                                       *body.sph_adaptation_->getKernel() : *contact_body.sph_adaptation_->getKernel())
+    NeighborBuilderContact(SPHBody &body, SPHBody &contact_body) : NeighborBuilder()
 {
     Kernel *source_kernel = body.sph_adaptation_->getKernel();
     Kernel *target_kernel = contact_body.sph_adaptation_->getKernel();
     kernel_ = source_kernel->SmoothingLength() > target_kernel->SmoothingLength() ? source_kernel : target_kernel;
+    device_kernel = decltype(device_kernel)(*kernel_);
 }
 //=================================================================================================//
 void NeighborBuilderContact::operator()(Neighborhood &neighborhood,

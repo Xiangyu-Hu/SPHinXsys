@@ -199,170 +199,39 @@ struct QuickSortParticleBody
 namespace SPH
 {
 
-/** Get the number of bits corresponding to the d-th digit of key,
- * with each digit composed of a number of bits equal to radix_bits */
-inline size_t get_digit(size_t key, size_t d, size_t radix_bits);
-
-/** Get the b-th bit of key */
-inline size_t get_bit(size_t key, size_t b);
-
-/** Group operation to compute rank, i.e. sorted position, of each work-item based on one bit.
- * All work-items with bit = 0 will be on the first half of the ranking, while work-items with
- * bit = 1 will be placed on the second half. */
-SYCL_EXTERNAL size_t split_count(bool bit, sycl::nd_item<1> &item);
-
-template <class T>
-T find_max_element(const T *data, size_t size, T identity)
+template<class ValueType>
+class DeviceRadixSort
 {
-    T result = identity;
-    auto &sycl_queue = execution::executionQueue.getQueue();
-    {
-        sycl::buffer<T> buffer_result(&result, 1);
-        sycl_queue.submit([&](sycl::handler &cgh)
-                          {
-                              auto reduction_operator = sycl::reduction(buffer_result, cgh, sycl::maximum<>());
-                              cgh.parallel_for(execution::executionQueue.getUniformNdRange(size), reduction_operator,
-                                               [=](sycl::nd_item<1> item, auto& reduction) {
-                                                   if(item.get_global_id() < size)
-                                                       reduction.combine(data[item.get_global_linear_id()]);
-                                               }); })
-            .wait_and_throw();
-    }
-    return result;
-}
+    using SortablePair = std::pair<size_t, ValueType>;
+  public:
+    /** Get the number of bits corresponding to the d-th digit of key,
+     *  with each digit composed of a number of bits equal to radix_bits */
+    static inline size_t get_digit(size_t key, size_t d, size_t radix_bits);
 
-template <class T, class DataInitializer>
-sycl::event sort_by_key(
-    size_t *keys, T *data, size_t data_size, sycl::queue &queue,
-    size_t workgroup_size = 256, size_t radix_bits = 4,
-    DataInitializer init_data = [](const T *data, size_t idx) -> T
-    { return data[idx]; })
-{
-    const bool uniform_case_masking = data_size % workgroup_size; // Workload needs to be homogenized
-    size_t uniform_global_size = uniform_case_masking ? (data_size / workgroup_size + 1) * workgroup_size : data_size;
-    const sycl::nd_range<1> kernel_range{uniform_global_size, workgroup_size};
-    const size_t workgroups = kernel_range.get_group_range().size();
+    /** Get the b-th bit of key */
+    static inline size_t get_bit(size_t key, size_t b);
 
-    const size_t radix = 1ul << radix_bits; // radix = 2^b
-    // Largest key, increased by 1 if the workgroup is not homogeneous with the data vector,
-    // the new maximum will be used for those work-items out of data range, that will then be excluded once sorted
-    const size_t max_key = find_max_element(keys, data_size, 0ul) + (uniform_case_masking ? 1 : 0);
-    const size_t bits_max_key = std::floor(std::log2(max_key)) + 1.0;                                    // bits needed to represent max_key
-    const size_t length = max_key ? bits_max_key / radix_bits + (bits_max_key % radix_bits ? 1 : 0) : 1; // max number of radix digits
+    /** Group operation to compute rank, i.e. sorted position, of each work-item based on one bit.
+     *  All work-items with bit = 0 will be on the first half of the ranking, while work-items with
+     *  bit = 1 will be placed on the second half. */
+    static SYCL_EXTERNAL size_t split_count(bool bit, sycl::nd_item<1> &item);
 
-    // Each entry contains global number of digits with the same value
-    // Column-major, so buckets offsets can be computed by just applying a scan over it
-    auto global_buckets = sycl::buffer<size_t, 2>({radix, workgroups});
-    // Each entry contains global number of digits with the same and lower values
-    auto global_buckets_offsets = sycl::buffer<size_t, 2>({radix, workgroups});
-    auto local_buckets_offsets_buffer = sycl::buffer<size_t, 2>({workgroups, radix}); // save state of local accessor
+    size_t find_max_element(const size_t *data, size_t size, size_t identity);
 
-    using SortablePair = std::pair<size_t, T>;
-    auto data_swap_buffer = sycl::buffer<SortablePair>(data_size); // temporary memory for swapping
+    void resize(size_t data_size, size_t radix_bits, size_t workgroup_size);
 
-    sycl::event sort_event{};
-    for (int digit = 0; digit < length; ++digit)
-    {
+    sycl::event sort_by_key(
+        size_t *keys, ValueType *data, size_t data_size, sycl::queue &queue,
+        size_t workgroup_size = 256, size_t radix_bits = 4);
 
-        auto buckets_event = queue.submit([&](sycl::handler &cgh)
-                                          {
-                        cgh.depends_on(sort_event);
-                         auto data_swap_acc = data_swap_buffer.get_access(cgh, sycl::write_only, sycl::no_init);
-                         auto local_buckets = sycl::local_accessor<size_t>(radix, cgh);
-                         auto local_output = sycl::local_accessor<SortablePair>(kernel_range.get_local_range(), cgh);
-                         auto global_buckets_accessor = global_buckets.get_access(cgh, sycl::read_write, sycl::no_init);
-                         auto local_buckets_offsets_accessor = local_buckets_offsets_buffer.get_access(cgh, sycl::write_only,
-                                                                                                       sycl::no_init);
-
-                         cgh.parallel_for(kernel_range, [=](sycl::nd_item<1> item) {
-                                              const size_t workgroup = item.get_group_linear_id(),
-                                                           global_id = item.get_global_id();
-
-                                              SortablePair number;
-                                              // Initialize key-data pair, with masking in case of non-homogeneous data_size/workgroup_size
-                                              if(global_id < data_size)
-                                                  number = {keys[global_id],
-                                                            // Give possibility to initialize data here to avoid calling
-                                                            // another kernel before sort_by_key in order to initialize it
-                                                            digit ? data[global_id] : init_data(data, global_id)};
-                                              else  // masking extra indexes
-                                                  // Initialize exceeding values to the largest key considered
-                                                  number.first = (1 << bits_max_key) - 1;  // max key for given number of bits
-
-
-                                              // Locally sort digit with split primitive
-                                              auto radix_digit = get_digit(number.first, digit, radix_bits);
-                                              auto rank = split_count(get_bit(radix_digit, 0), item);  // sorting first bit
-                                              local_output[rank] = number;
-                                              for (size_t b = 1; b < radix_bits; ++b) {  // sorting remaining bits
-                                                  item.barrier(sycl::access::fence_space::local_space);
-                                                  number = local_output[item.get_local_id()];
-                                                  radix_digit = get_digit(number.first, digit, radix_bits);
-
-                                                  rank = split_count(get_bit(radix_digit, b), item);
-                                                  local_output[rank] = number;
-                                              }
-
-                                              // Initialize local buckets to zero, since they are uninitialized by default
-                                              for (int r = 0; r < radix; ++r)
-                                                  local_buckets[r] = 0;
-
-                                              item.barrier(sycl::access::fence_space::local_space);
-                                              {
-                                                  sycl::atomic_ref<size_t, sycl::memory_order_relaxed, sycl::memory_scope_work_group,
-                                                                   sycl::access::address_space::local_space> bucket_r{local_buckets[radix_digit]};
-                                                  ++bucket_r;
-                                                  item.barrier(sycl::access::fence_space::local_space);
-                                              }
-
-                                              // Save local buckets to global memory, with one row per work-group (in column-major order)
-                                              for (int r = 0; r < radix; ++r)
-                                                  global_buckets_accessor[r][workgroup] = local_buckets[r];
-
-                                              if(global_id < data_size)
-                                                  data_swap_acc[workgroup_size * workgroup + rank] = number;  // save local sorting back to data
-
-                                              // Compute local buckets offsets
-                                              size_t *begin = local_buckets.get_pointer(), *end = begin + radix,
-                                                     *outBegin = local_buckets_offsets_accessor.get_pointer().get() + workgroup * radix;
-                                              sycl::joint_exclusive_scan(item.get_group(), begin, end, outBegin, sycl::plus<size_t>{});
-                                          }); });
-
-        // Global synchronization to make sure that all locally computed buckets have been copied to global memory
-
-        sort_event = queue.submit([&](sycl::handler &cgh)
-                                  {
-                        cgh.depends_on(buckets_event);
-                         auto data_swap_acc = data_swap_buffer.get_access(cgh, sycl::read_only);
-                         auto global_buckets_accessor = global_buckets.get_access(cgh, sycl::read_only);
-                         auto global_buckets_offsets_accessor = global_buckets_offsets.get_access(cgh, sycl::read_write);
-                         auto local_buckets_offsets_accessor = local_buckets_offsets_buffer.get_access(cgh, sycl::read_only);
-                         cgh.parallel_for(kernel_range, [=](sycl::nd_item<1> item) {
-                                              // Compute global buckets offsets
-                                              size_t *begin = global_buckets_accessor.get_pointer(), *end = begin + global_buckets_accessor.size();
-                                              sycl::joint_exclusive_scan(item.get_group(), begin, end,
-                                                                         global_buckets_offsets_accessor.get_pointer(), sycl::plus<size_t>{});
-
-                                              // Mask only relevant indexes. All max_keys added to homogenize the computations
-                                              // should be owned by work-items with global_id >= data_size
-                                              if(item.get_global_id() < data_size) {
-                                                  // Retrieve position and sorted data from swap memory
-                                                  const size_t rank = item.get_local_id(), workgroup = item.get_group_linear_id();
-                                                  const SortablePair number = data_swap_acc[workgroup_size * workgroup + rank];
-                                                  const size_t radix_digit = get_digit(number.first, digit, radix_bits);
-
-                                                  // Compute sorted position based on global and local buckets
-                                                  const size_t data_offset = global_buckets_offsets_accessor[radix_digit][workgroup] + rank -
-                                                                             local_buckets_offsets_accessor[workgroup][radix_digit];
-
-                                                  // Copy to original data pointers
-                                                  keys[data_offset] = number.first;
-                                                  data[data_offset] = number.second;
-                                              }
-                                          }); });
-    }
-    return sort_event;
-}
+  private:
+    bool uniform_case_masking_;
+    size_t data_size_ = 0, radix_bits_, workgroup_size_,
+           uniform_global_size_, workgroups_, radix_;
+    sycl::nd_range<1> kernel_range_{0,0};
+    std::unique_ptr<sycl::buffer<size_t, 2>> global_buckets_, global_buckets_offsets_, local_buckets_offsets_buffer_;
+    std::unique_ptr<sycl::buffer<SortablePair>> data_swap_buffer_, uniform_extra_swap_buffer_;
+};
 
 class BaseParticles;
 
@@ -502,6 +371,7 @@ class ParticleSorting
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;
     MoveSortableParticleDeviceData move_sortable_particle_device_data_;
+    DeviceRadixSort<size_t> device_radix_sorting;
     CompareParticleSequence compare_;
     tbb::interface9::QuickSortParticleRange<
         size_t *, CompareParticleSequence, SwapSortableParticleData>

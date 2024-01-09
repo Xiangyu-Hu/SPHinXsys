@@ -187,14 +187,14 @@ BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelat
 template <class RiemannSolverType>
 void BaseIntegration1stHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
 {
-    DeviceKernel::initialization(index_i, dt, rho_.data(), drho_dt_.data(), p_.data(), pos_.data(), vel_.data(),
-                                 fluid_, [](auto &fluid, Real rho) { return fluid.getPressure(rho); });
+    decltype(device_kernel)::KernelType::initialization(index_i, dt, rho_.data(), drho_dt_.data(),
+                                                        p_.data(), pos_.data(), vel_.data(), fluid_);
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    DeviceKernel::update(index_i, dt, vel_.data(), acc_prior_.data(), acc_.data());
+    decltype(device_kernel)::KernelType::update(index_i, dt, vel_.data(), acc_prior_.data(), acc_.data());
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -217,7 +217,7 @@ template <class RiemannSolverType>
 void BaseIntegration1stHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
-    DeviceKernel::interaction(index_i, dt, p_.data(), rho_.data(), drho_dt_.data(), acc_.data(),
+    decltype(device_kernel)::KernelType::interaction(index_i, dt, p_.data(), rho_.data(), drho_dt_.data(), acc_.data(),
                               inner_configuration_.data(), riemann_solver_);
 }
 //=================================================================================================//
@@ -229,20 +229,20 @@ BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelat
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
 {
-    DeviceKernel::initialization(index_i, dt, pos_.data(), vel_.data());
+    decltype(device_kernel)::KernelType::initialization(index_i, dt, pos_.data(), vel_.data());
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    DeviceKernel::update(index_i, dt, rho_.data(), drho_dt_.data(), Vol_.data(), mass_.data());
+    decltype(device_kernel)::KernelType::update(index_i, dt, rho_.data(), drho_dt_.data(), Vol_.data(), mass_.data());
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
-    DeviceKernel::interaction(index_i, dt, rho_.data(), drho_dt_.data(), vel_.data(),
+    decltype(device_kernel)::KernelType::interaction(index_i, dt, rho_.data(), drho_dt_.data(), vel_.data(),
                               acc_.data(), inner_configuration_.data(), riemann_solver_);
 };
 //=================================================================================================//

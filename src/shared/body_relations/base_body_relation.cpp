@@ -62,7 +62,7 @@ namespace SPH
         }
 
     void BaseInnerRelation::allocateInnerConfigurationDevice() {
-        inner_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice>>(inner_configuration_.size(),
+        inner_configuration_device_ = makeShared<StdSharedVec<NeighborhoodDevice>>(inner_configuration_.size(),
                 execution::executionQueue.getQueue());
     }
 

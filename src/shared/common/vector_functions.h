@@ -96,18 +96,9 @@ inline Vec2d deviceToHostVecd(const DeviceVec2d& device) { return {device[0], de
 inline Vec3d deviceToHostVecd(const DeviceVec3d& device) { return {device[0], device[1], device[2]}; }
 
 /** Initialize Vecd of zeros for host or device */
-template<class V, class Enable = std::true_type> inline V VecdZero();
-template<> inline DeviceVec2d VecdZero<DeviceVec2d, is_device_type_different_from_host<DeviceVec2d>>()
-{
-    return { static_cast<DeviceReal>(0.0),
-             static_cast<DeviceReal>(0.0) };
-}
-template<> inline DeviceVec3d VecdZero<DeviceVec3d, is_device_type_different_from_host<DeviceVec3d>>()
-{
-    return { static_cast<DeviceReal>(0.0),
-             static_cast<DeviceReal>(0.0),
-             static_cast<DeviceReal>(0.0) };
-}
+template<class V> inline V VecdZero();
+template<> inline DeviceVec2d VecdZero() { return DeviceVec2d{0}; }
+template<> inline DeviceVec3d VecdZero() { return DeviceVec3d{0}; }
 template<> inline Vec2d VecdZero() { return Vec2d::Zero(); }
 template<> inline Vec3d VecdZero() { return Vec3d::Zero(); }
 
@@ -136,21 +127,14 @@ template<class RealType, int Dimension>
 inline RealType VecdSquareNorm(const Eigen::Matrix<RealType,Dimension,1>& vec) {
     return vec.squaredNorm();
 }
-template<class RealType, int Dimension>
-inline sycl::vec<RealType,Dimension> VecdMax(const sycl::vec<RealType,Dimension>& v1, const sycl::vec<RealType,Dimension>& v2) {
-    return sycl::max(v1, v1);
+
+template<class VecType, std::size_t ...Index>
+inline auto VecdFoldingProd_impl(const VecType& vec, std::index_sequence<Index...>) {
+    return ( vec[Index] * ... );
 }
-template<class Vec>
-inline Vec VecdMax(const Vec& v1, const Vec& v2) {
-    return v1.max(v2);
-}
-template<class RealType, int Dimension>
-inline sycl::vec<RealType,Dimension> VecdMin(const sycl::vec<RealType,Dimension>& v1, const sycl::vec<RealType,Dimension>& v2) {
-    return sycl::min(v1, v1);
-}
-template<class Vec>
-inline Vec VecdMin(const Vec& v1, const Vec& v2) {
-    return v1.min(v2);
+template<class Type, int Dimension>
+inline Type VecdFoldProduct(const sycl::vec<Type,Dimension>& vec) {
+    return VecdFoldingProd_impl(vec, std::make_index_sequence<Dimension>());
 }
 
 /* SYCL memory transfer utilities */

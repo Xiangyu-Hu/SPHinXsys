@@ -214,7 +214,7 @@ class RealBody : public SPHBody
     }
     template<>
     inline auto *getCellLinkedListPtr(execution::ParallelSYCLDevicePolicy execution_policy) const {
-        return DynamicCast<CellLinkedList>(this, cell_linked_list_ptr_.get())->getDeviceProxy().get(execution_policy);
+        return DynamicCast<CellLinkedList>(this, cell_linked_list_ptr_.get())->device_kernel.get_ptr();
     }
 
   public:

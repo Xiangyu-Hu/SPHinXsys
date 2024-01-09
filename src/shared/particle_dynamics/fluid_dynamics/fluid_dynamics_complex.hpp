@@ -178,7 +178,7 @@ BaseDensitySummationComplex<DensitySummationInnerType>::
       contact_inv_rho0_device_(this->contact_particles_.size(), executionQueue.getQueue()),
       contact_mass_(this->contact_particles_.size()),
       contact_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
-      device_proxy(this, contact_inv_rho0_device_.data(), contact_mass_device_.data(),
+      device_kernel(contact_inv_rho0_device_.data(), contact_mass_device_.data(),
                    this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
                    this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0)
 {
@@ -236,7 +236,8 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
 {
     BaseIntegration1stHalfType::interaction(index_i, dt);
 
-    BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>::interaction(
+    using BaseIntegration1stHalfTypeKernel = typename decltype(BaseIntegration1stHalfType::device_kernel)::KernelType;
+    BaseIntegration1stHalfWithWallKernel<BaseIntegration1stHalfTypeKernel>::interaction(
             index_i, dt, this->p_.data(), this->rho_.data(), this->drho_dt_.data(), this->acc_.data(),
             this->riemann_solver_, FluidWallData::contact_configuration_.size(),
             [&](auto index_i){ return computeNonConservativeAcceleration(index_i); },
@@ -312,7 +313,8 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
 {
     BaseIntegration2ndHalfType::interaction(index_i, dt);
 
-    BaseIntegration2ndHalfWithWallKernel<typename BaseIntegration2ndHalfType::DeviceKernel>::interaction(
+    using BaseIntegration2ndHalfTypeKernel = typename decltype(BaseIntegration2ndHalfType::device_kernel)::KernelType;
+    BaseIntegration2ndHalfWithWallKernel<BaseIntegration2ndHalfTypeKernel>::interaction(
             index_i, dt, this->rho_.data(), this->drho_dt_.data(), this->vel_.data(), this->acc_.data(),
             this->riemann_solver_, FluidWallData::contact_configuration_.size(),
             [&](auto k){ return this->wall_vel_ave_[k]->data(); },

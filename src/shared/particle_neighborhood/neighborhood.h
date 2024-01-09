@@ -34,8 +34,7 @@
 #include "all_kernels.h"
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "execution_selector.hpp"
-#include "device_executable.hpp"
+#include "device_implementation.hpp"
 
 namespace SPH
 {
@@ -135,6 +134,7 @@ class NeighborBuilder
 
   public:
     NeighborBuilder() : kernel_(nullptr){};
+    explicit NeighborBuilder(Kernel* kernel) : kernel_(kernel) {};
     virtual ~NeighborBuilder(){};
 };
 
@@ -151,13 +151,14 @@ class NeighborBuilderInnerKernel : public NeighborBuilderKernel {
  * @class NeighborBuilderInner
  * @brief A inner neighbor builder functor.
  */
-class NeighborBuilderInner : public NeighborBuilder,
-                             public execution::DeviceExecutable<NeighborBuilderInner, NeighborBuilderInnerKernel>
+class NeighborBuilderInner : public NeighborBuilder
 {
   public:
     explicit NeighborBuilderInner(SPHBody &body);
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+    execution::DeviceImplementation<NeighborBuilderInnerKernel> device_kernel;
 };
 
 /**
@@ -215,14 +216,15 @@ class NeighborBuilderContactKernel : public NeighborBuilderKernel {
  * @class NeighborBuilderContact
  * @brief A contact neighbor builder functor for contact relation.
  */
-class NeighborBuilderContact : public NeighborBuilder,
-                               public execution::DeviceExecutable<NeighborBuilderContact, NeighborBuilderContactKernel>
+class NeighborBuilderContact : public NeighborBuilder
 {
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContact(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+    execution::DeviceImplementation<NeighborBuilderContactKernel> device_kernel;
 };
 
 /**

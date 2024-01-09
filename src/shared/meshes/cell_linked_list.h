@@ -98,31 +98,26 @@ class CellLinkedListKernel {
 
     size_t* computingSequence(BaseParticles &baseParticles);
 
-    template<class Type, int Dim>
-    static inline DeviceArrayi CellIndexFromPosition(const sycl::vec<Type,Dim> &position, const sycl::vec<Type,Dim>& mesh_lower_bound,
-                                                     const Type &grid_spacing, const sycl::vec<int,Dim> &all_grid_points)
+    static inline DeviceArrayi CellIndexFromPosition(const DeviceVecd &position, const DeviceVecd& mesh_lower_bound,
+                                                     const DeviceReal &grid_spacing, const DeviceArrayi &all_grid_points)
     {
         return sycl::min(
             sycl::max(
                 sycl::floor((position - mesh_lower_bound) / grid_spacing)
-                    .template convert<int, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
+                    .convert<int, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
             all_grid_points - DeviceArrayi{2});
     }
 
-    template<class Type, int Dim>
-    static inline DeviceArrayi CellIndexFromPosition(const Eigen::Matrix<Type,Dim,1> &position,
-                                                     const Eigen::Matrix<Type,Dim,1>& mesh_lower_bound,
-                                                     const Type &grid_spacing, const Eigen::Array<int,Dim,1> &all_grid_points)
-    {
-        return floor((position - mesh_lower_bound).array() / grid_spacing)
-                .template cast<int>()
-                .max(Arrayi::Zero())
-                .min(all_grid_points - 2 * Arrayi::Ones());
-    }
-
-    static inline size_t transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArrayi &all_cells)
+    static inline size_t transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArray2i &all_cells)
     {
         return cell_index[0] * all_cells[1] + cell_index[1];
+    }
+
+    static inline size_t transferCellIndexTo1D(const DeviceArray3i &cell_index, const DeviceArray3i &all_cells)
+    {
+        return cell_index[0] * all_cells[1] * all_cells[2] +
+               cell_index[1] * all_cells[2] +
+               cell_index[2];
     }
 
   private:
@@ -144,8 +139,7 @@ class CellLinkedListKernel {
  * @brief Defining a mesh cell linked list for a body.
  * 		  The meshes for all bodies share the same global coordinates.
  */
-class CellLinkedList : public BaseCellLinkedList, public Mesh,
-                       public execution::DeviceExecutable<CellLinkedList, CellLinkedListKernel>
+class CellLinkedList : public BaseCellLinkedList, public Mesh
 {
     StdVec<CellLinkedList *> single_cell_linked_list_level_;
 
@@ -179,6 +173,8 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh,
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
+
+    execution::DeviceImplementation<CellLinkedListKernel> device_kernel;
 };
 
 /**
