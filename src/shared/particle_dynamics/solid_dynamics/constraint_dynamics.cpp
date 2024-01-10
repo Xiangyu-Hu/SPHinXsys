@@ -101,7 +101,7 @@ ConstrainSolidBodyMassCenter::
 {
     for (int i = 0; i != Dimensions; ++i)
         correction_matrix_(i, i) = constrain_direction[i];
-    ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "MassiveMeasure");
+    ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "Mass");
     total_mass_ = compute_total_mass_.exec();
 }
 //=================================================================================================//

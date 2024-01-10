@@ -98,7 +98,7 @@ class BaseParticles
 
     StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
     StdLargeVec<Real> rho_;      /**< Density */
-    StdLargeVec<Real> mass_;     /**< Massive measure, also mass per-unit thickness and per-unit cross-section of surface and linear particle */
+    StdLargeVec<Real> mass_;     /**< Mass*/
     StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
