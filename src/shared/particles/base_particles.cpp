@@ -28,6 +28,11 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     //----------------------------------------------------------------------
     addVariableToList<Vecd>(variables_to_reload_, "Position");
     addVariableToList<Real>(variables_to_reload_, "VolumetricMeasure");
+    //----------------------------------------------------------------------
+    //		add particle data for restart
+    //----------------------------------------------------------------------
+    addVariableToList<Vecd>(variables_to_restart_, "Position");
+    addVariableToList<Real>(variables_to_restart_, "VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeOtherVariables()
@@ -50,10 +55,8 @@ void BaseParticles::initializeOtherVariables()
     /**
      *	add restart output particle data
      */
-    addVariableToList<Vecd>(variables_to_restart_, "Position");
     addVariableToList<Vecd>(variables_to_restart_, "Velocity");
     addVariableToList<Vecd>(variables_to_restart_, "Force");
-    addVariableToList<Real>(variables_to_restart_, "VolumetricMeasure");
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
@@ -319,11 +322,11 @@ void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream &output_file, Bo
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
-    size_t total_elements = xml_parser.Size( xml_parser.first_element_);
+    size_t total_elements = xml_parser.Size(xml_parser.first_element_);
 
     if (total_elements <= total_real_particles_)
     {
-        xml_parser.resize( xml_parser.first_element_, total_real_particles_, "particle" );
+        xml_parser.resize(xml_parser.first_element_, total_real_particles_, "particle");
     }
 }
 //=================================================================================================//
@@ -356,7 +359,7 @@ void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
-    total_real_particles_ = reload_xml_parser_.Size( reload_xml_parser_.first_element_ );
+    total_real_particles_ = reload_xml_parser_.Size(reload_xml_parser_.first_element_);
     for (size_t i = 0; i != total_real_particles_; ++i)
     {
         unsorted_id_.push_back(i);

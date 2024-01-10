@@ -65,7 +65,7 @@ class BaseMaterial
      * For a composite material, i.e. there is a material pointer with another material,
      * one need assign the base particle to that material too.
      */
-    virtual void initializeLocalParameters(BaseParticles *base_particles){};
+    virtual void initializeLocalParameters(BaseParticles *base_particles);
     void setLocalParameters(bool is_reload, BaseParticles *base_particles);
     virtual BaseMaterial *ThisObjectPtr() { return this; };
 
@@ -77,7 +77,7 @@ class BaseMaterial
 /** @class  Fluid
  *  @brief  Base class of all fluids
  */
-class Fluid : public BaseMaterial
+class Fluid : virtual public BaseMaterial
 {
   protected:
     Real c0_; /**< reference sound speed and pressure */
@@ -100,7 +100,7 @@ class Fluid : public BaseMaterial
 /** @class  Solid
  *  @brief Base class of all solid materials
  */
-class Solid : public BaseMaterial
+class Solid : virtual public BaseMaterial
 {
   public:
     Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0)

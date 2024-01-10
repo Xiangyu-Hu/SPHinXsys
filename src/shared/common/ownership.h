@@ -96,7 +96,8 @@ class UniquePtrKeeper
     DerivedType *createPtr(Args &&...args)
     {
         ptr_member_.reset(new DerivedType(std::forward<Args>(args)...));
-        return static_cast<DerivedType *>(ptr_member_.get());
+        // using dynamic cast so that it also works for virtual base class
+        return DynamicCast<DerivedType>(this, ptr_member_.get());
     };
 
     /** output the observer as derived reference */
@@ -104,7 +105,8 @@ class UniquePtrKeeper
     DerivedType &createRef(Args &&...args)
     {
         ptr_member_.reset(new DerivedType(std::forward<Args>(args)...));
-        return *static_cast<DerivedType *>(ptr_member_.get());
+        // using dynamic cast so that it also works for virtual base class
+        return *DynamicCast<DerivedType>(this, ptr_member_.get());
     };
 
     /** output the observer as pointer */

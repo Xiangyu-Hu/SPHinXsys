@@ -80,8 +80,8 @@ DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_nam
 }
 //=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::
-    registerSharedVariable(const std::string &variable_name, const DataType &default_value)
+StdLargeVec<DataType> *BaseParticles::registerSharedVariable(
+    const std::string &variable_name, DataType default_value)
 {
 
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
@@ -98,6 +98,18 @@ StdLargeVec<DataType> *BaseParticles::
     {
         return std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
     }
+}
+//=================================================================================================//
+template <typename DataType, class InitializationFunction>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariable(
+    const std::string &variable_name, const InitializationFunction &initialization)
+{
+    StdLargeVec<DataType> *variable = registerSharedVariable<DataType>(variable_name);
+    for (size_t i = 0; i != real_particles_bound_; ++i)
+    {
+        (*variable)[i] = initialization(i); // Here, lambda function is applied for initialization.
+    }
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -329,12 +341,12 @@ void WriteAParticleVariableToXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
     size_t index = 0;
-    for( auto child = xml_parser_.first_element_->FirstChildElement();
-        child;
-        child = child->NextSiblingElement()  )
+    for (auto child = xml_parser_.first_element_->FirstChildElement();
+         child;
+         child = child->NextSiblingElement())
     {
-        xml_parser_.setAttributeToElement( child, variable_name, variable[index] );
-        index ++; 
+        xml_parser_.setAttributeToElement(child, variable_name, variable[index]);
+        index++;
     }
 }
 //=================================================================================================//
@@ -343,12 +355,12 @@ void ReadAParticleVariableFromXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
     size_t index = 0;
-    for( auto child = xml_parser_.first_element_->FirstChildElement();
-        child;
-        child = child->NextSiblingElement()  )
+    for (auto child = xml_parser_.first_element_->FirstChildElement();
+         child;
+         child = child->NextSiblingElement())
     {
-        xml_parser_.queryAttributeValue( child, variable_name, variable[index] );
-        index ++; 
+        xml_parser_.queryAttributeValue(child, variable_name, variable[index]);
+        index++;
     }
 }
 //=================================================================================================//
