@@ -29,7 +29,7 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
      */
     particles_->registerSortableVariable<Vecd>("Position");
     particles_->registerSortableVariable<Vecd>("Velocity");
-    particles_->registerSortableVariable<Real>("MassiveMeasure");
+    particles_->registerSortableVariable<Real>("Mass");
     particles_->registerSortableVariable<Real>("Density");
     particles_->registerSortableVariable<Real>("Pressure");
     particles_->registerSortableVariable<Real>("VolumetricMeasure");
@@ -183,7 +183,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
             Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
             force -= this->mass_[index_i] * riemann_solver_k.AverageP(this->p_[index_i] * correction_k(index_i), p_k[index_j] * correction_(index_j)) *
-                            2.0 * e_ij * dW_ijV_j;
+                     2.0 * e_ij * dW_ijV_j;
             rho_dissipation += riemann_solver_k.DissipativeUJump(this->p_[index_i] - p_k[index_j]) * dW_ijV_j;
         }
     }

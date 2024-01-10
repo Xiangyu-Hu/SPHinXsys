@@ -44,9 +44,9 @@ void BaseParticles::initializeOtherVariables()
     registerVariable(force_, "Force");
     registerVariable(force_prior_, "PriorForce");
     registerVariable(rho_, "Density", base_material_.ReferenceDensity());
-    registerVariable(mass_, "MassiveMeasure",
+    registerVariable(mass_, "Mass",
                      [&](size_t i) -> Real
-                     { return rho_[i] * Vol_[i]; });
+                     { return rho_[i] * ParticleVolume(i); });
     registerVariable(indicator_, "Indicator");
     /**
      *	add basic output particle data
