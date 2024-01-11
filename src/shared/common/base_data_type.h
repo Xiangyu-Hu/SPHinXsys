@@ -29,7 +29,6 @@
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
-#include <math.h>
 #include <algorithm>
 #include <cassert>
 #include <climits>
@@ -39,19 +38,14 @@
 #include <map>
 #include <vector>
 
-// Avoid automatic memory allocations
-#define EIGEN_RUNTIME_NO_MALLOC
-#define EIGEN_NO_MALLOC
-// Disable sse2/etc vectorization SIMDs for spirv gen
-#define EIGEN_DONT_VECTORIZE
+#include <CL/sycl.hpp>
+#define SYCL_DEVICE_ONLY
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
-
-#include <sycl/sycl.hpp>
 
 namespace SPH
 {
