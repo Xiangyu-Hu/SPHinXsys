@@ -135,7 +135,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);  
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     shell_body.generateParticles<ShellSphereParticleGenerator>(obj_vertices, center, particle_area, thickness);
@@ -161,7 +161,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         for (size_t i = 0; i < shell_particles->force_prior_.size(); ++i)
         {
             // opposite to normals
-            shell_particles->force_prior_[i] -= shell_particles->mass_[i] * pressure_MPa * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
+            shell_particles->force_prior_[i] -= pressure_MPa * shell_particles->Vol_[i] * shell_particles->n_[i];
         }
     };
 
