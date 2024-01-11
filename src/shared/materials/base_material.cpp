@@ -23,7 +23,6 @@ void BaseMaterial::initializeLocalParameters(BaseParticles *base_particles)
     base_particles->registerSharedVariable<Real>("Mass",
                                                  [&](size_t i) -> Real
                                                  { return rho0_ * base_particles->ParticleVolume(i); });
-    base_particles->registerSharedVariable<int>("Indicator");
     //----------------------------------------------------------------------
     //		add particle data for output
     //----------------------------------------------------------------------

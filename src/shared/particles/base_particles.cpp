@@ -23,6 +23,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     //----------------------------------------------------------------------
     registerVariable(pos_, "Position");
     registerVariable(Vol_, "VolumetricMeasure");
+    registerVariable(indicator_, "Indicator");
     //----------------------------------------------------------------------
     //		add particle reload data on geometries
     //----------------------------------------------------------------------
@@ -37,26 +38,6 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 //=================================================================================================//
 void BaseParticles::initializeOtherVariables()
 {
-    //----------------------------------------------------------------------
-    //		register non-geometric data
-    //----------------------------------------------------------------------
-    registerVariable(vel_, "Velocity");
-    registerVariable(force_, "Force");
-    registerVariable(force_prior_, "PriorForce");
-    registerVariable(rho_, "Density", base_material_.ReferenceDensity());
-    registerVariable(mass_, "Mass",
-                     [&](size_t i) -> Real
-                     { return rho_[i] * ParticleVolume(i); });
-    registerVariable(indicator_, "Indicator");
-    /**
-     *	add basic output particle data
-     */
-    addVariableToWrite<Vecd>("Velocity");
-    /**
-     *	add restart output particle data
-     */
-    addVariableToList<Vecd>(variables_to_restart_, "Velocity");
-    addVariableToList<Vecd>(variables_to_restart_, "Force");
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
