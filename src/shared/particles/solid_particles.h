@@ -188,9 +188,6 @@ class ShellParticles : public ElasticSolidParticles
 
     /** get particle volume. */
     virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
-    /** get particle mass. */
-    virtual Real ParticleMass(size_t index_i) override { return mass_[index_i]; }
-    /** Initialize variable for shell particles. */
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */
     virtual ShellParticles *ThisObjectPtr() override { return this; };
