@@ -10,6 +10,7 @@
  */
 #include "sphinxsys.h"
 #include "level_set_confinement.h"
+#include "io_observation_for_debuging.h"
 /**
  * @brief Namespace cite here.
  */
@@ -193,6 +194,10 @@ int main()
     //body_states_recording.writeToFile(0);
     body_states_recording_vtp.writeToFile(0);
     
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValueLevelSet");
+    GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_real(io_environment, water_block, 0.0, "KernelValueLevelSet");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradientLevelSet");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "KernelGradientLevelSet");
     /**
      * @brief 	Basic parameters.
      */
@@ -258,7 +263,10 @@ int main()
         TickCount t2 = TickCount::now();
         //body_states_recording.writeToFile();
         body_states_recording_vtp.writeToFile();
-
+        write_single_variable_real.writeToFile();
+        wrtie_variable_by_position_real.writeToFile();
+        write_single_variable_vector.writeToFile();
+        wrtie_variable_by_position_vecd.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

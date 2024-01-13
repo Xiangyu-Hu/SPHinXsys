@@ -11,8 +11,10 @@ StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surfac
       inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
       mass_(particles_->mass_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")),
       pos_(particles_->pos_), level_set_shape_(&near_surface.level_set_shape_)
+    , kernel_value_(*this->particles_->template registerSharedVariable<Real>("KernelValueLevelSet"))
 {
-    particles_->registerVariable(kernel_value_, "KernelValue");
+    //particles_->registerSortableVariable<Real>("KernelValueLevelSet");
+    //particles_->registerVariable(kernel_value_, "KernelValueLevelSet");
 }
 //=================================================================================================//
 void StaticConfinementDensity::update(size_t index_i, Real dt)
@@ -22,6 +24,13 @@ void StaticConfinementDensity::update(size_t index_i, Real dt)
         level_set_shape_->computeKernelIntegral(pos_[index_i]) * inv_Vol_0_i * rho0_ * inv_sigma0_;
     /*for debuging*/
     kernel_value_[index_i] =  level_set_shape_->computeKernelIntegral(pos_[index_i]);
+
+    /*for debuging*/
+    /*std::string output_folder = "./output";
+	std::string filefullpath = output_folder + "/" + "kernel_value_levelset_" + std::to_string(dt) + ".dat";
+	std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+	out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << kernel_value_[index_i]<< " " << std::endl; */
+				
 }
 //=================================================================================================//
 StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
@@ -30,16 +39,18 @@ StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearSha
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       mass_(particles_->mass_), pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
-      level_set_shape_(&near_surface.level_set_shape_),
+      level_set_shape_(&near_surface.level_set_shape_), kernel_gradient_(*this->particles_->template registerSharedVariable<Vecd>("KernelGradientLevelSet")),
       riemann_solver_(fluid_, fluid_) 
 {
-    particles_->registerVariable(kernel_gradient_, "KernelGradient");
+    //particles_->registerVariable(kernel_gradient_, "KernelGradientLevelSet");
+    particles_->registerSortableVariable<Vecd>("KernelGradientLevelSet");
 }
 //=================================================================================================//
 void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 {
     Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
     force_[index_i] -= 2.0 * mass_[index_i] * p_[index_i] * kernel_gradient / rho_[index_i];
+    /*for debuging*/
     kernel_gradient_[index_i] = kernel_gradient;
 }
 //=================================================================================================//

@@ -107,7 +107,7 @@ class DensitySummation<BaseContact> : public DensitySummation<Base, FluidContact
     StdVec<StdLargeVec<Real> *> contact_mass_;
     Real ContactSummation(size_t index_i);
         /*below for debuging*/
-    StdLargeVec<Real> kernel_value_;
+    StdLargeVec<Real> &kernel_value_contact_;
 };
 
 template <>
@@ -118,7 +118,6 @@ class DensitySummation<Contact<>> : public DensitySummation<BaseContact>
         : DensitySummation<BaseContact>(contact_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
 };
 
 template <>

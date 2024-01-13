@@ -39,6 +39,7 @@
 
 namespace SPH
 {
+
 namespace fluid_dynamics
 {
 class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
@@ -103,6 +104,9 @@ class Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>
   protected:
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
+
+        /*below for debuging*/
+    StdLargeVec<Vecd> &kernel_gradient_value_wall_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>

@@ -72,7 +72,7 @@ namespace SPH
         public:
             StaticConfinementViscousAcceleration(NearShapeSurface& near_surface);
             virtual ~StaticConfinementViscousAcceleration() {};
-            void interaction(size_t index_i, Real dt = 0.0);
+            void update(size_t index_i, Real dt = 0.0);
             //StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
         protected:
             StdLargeVec<Vecd>& pos_;
@@ -267,7 +267,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
             SimpleDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            InteractionDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
+            SimpleDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
             SimpleDynamics<StaticConfinementExtendIntegration1stHalf> extend_intergration_1st_half_;
             SimpleDynamics<StaticConfinementIntegration1stHalfPenaltyVelocity> extend_intergration_1st_half_Velocity;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
@@ -279,11 +279,11 @@ namespace SPH
         class StaticConfinementGeneral
         {
         public:
-            SimpleDynamics<StaticConfinementDensity> density_summation_;
+            SimpleDynamics<StaticConfinementDensity, SequencedPolicy> density_summation_;
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-            SimpleDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            InteractionDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
+            SimpleDynamics<StaticConfinementTransportVelocity, SequencedPolicy> transport_velocity_;
+            SimpleDynamics<StaticConfinementViscousAcceleration, SequencedPolicy> viscous_acceleration_;
             InteractionDynamics<StaticConfinementFreeSurfaceIndication> free_surface_indication_;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
 

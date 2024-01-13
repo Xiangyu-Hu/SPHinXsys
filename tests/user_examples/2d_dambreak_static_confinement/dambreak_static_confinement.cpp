@@ -15,7 +15,7 @@ Real DL = 5.366;                    /**< Water tank length. */
 Real DH = 5.366;                    /**< Water tank height. */
 Real LL = 2.0;                      /**< Water column length. */
 Real LH = 1.0;                      /**< Water column height. */
-Real particle_spacing_ref = 0.015;  /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.025;  /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> fluid_pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> fluid_density_relaxation(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner, SequencedPolicy> fluid_density_by_summation(water_block_inner);
     
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
@@ -110,8 +110,11 @@ int main(int ac, char *av[])
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
-    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradient");
-    // ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValue");
+  
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValueLevelSet");
+    GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_real(io_environment, water_block, 0.0, "KernelValueLevelSet");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vecd(io_environment, water_block, Vecd::Zero(), "KernelGradientLevelSet");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "KernelGradientLevelSet");
 
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -166,7 +169,7 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
-            fluid_density_by_summation.exec();
+            fluid_density_by_summation.exec(number_of_iterations);
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -210,7 +213,10 @@ int main(int ac, char *av[])
         }
 
         body_states_recording.writeToFile();
-        write_single_variable_vector.writeToFile();
+        wrtie_variable_by_position_real.writeToFile(number_of_iterations);
+        write_single_variable_real.writeToFile(number_of_iterations);
+        write_single_variable_vecd.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_vecd.writeToFile(number_of_iterations);
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

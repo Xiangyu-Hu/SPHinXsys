@@ -34,13 +34,12 @@
 
 namespace SPH
 {
-
     //class FluidDataSimple;
 
-     typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
+     typedef DataDelegateSimple<BaseParticles> BaseDataSimple;
      
      template <class ReturnType, class OperationType>
-     class ReducedQuantityRecordingForDebuging : public BaseIO, public FluidDataSimple
+     class ReducedQuantityRecordingForDebuging : public BaseIO, public BaseDataSimple
     {
        protected:
          PltEngine plt_engine_;
@@ -54,7 +53,7 @@ namespace SPH
 
        public:
          ReducedQuantityRecordingForDebuging(IOEnvironment &io_environment, SPHBody &sph_body, ReturnType reference, std::string quantity_name)
-             : BaseIO(io_environment), FluidDataSimple(sph_body), plt_engine_(),
+             : BaseIO(io_environment), BaseDataSimple(sph_body), plt_engine_(),
                sph_body_name_(sph_body.getName()), varriable_for_output_(*particles_->getVariableByName<ReturnType>(quantity_name)),
                quantity_name_(quantity_name), reference_(reference)
          {
@@ -91,7 +90,7 @@ namespace SPH
      };
 
       template <class ReturnType>
-     class QuantityRecordingForDebuging : public BaseIO, public FluidDataSimple
+     class GlobalQuantityRecordingForDebuging : public BaseIO, public BaseDataSimple
     {
        protected:
          std::string sph_body_name_;
@@ -101,14 +100,14 @@ namespace SPH
          StdLargeVec<Vecd>& varriable_position_;
 
        public:
-         QuantityRecordingForDebuging(IOEnvironment &io_environment, SPHBody &sph_body, ReturnType reference, std::string quantity_name)
-             : BaseIO(io_environment), FluidDataSimple(sph_body),
+         GlobalQuantityRecordingForDebuging(IOEnvironment &io_environment, SPHBody &sph_body, ReturnType reference, std::string quantity_name)
+             : BaseIO(io_environment), BaseDataSimple(sph_body),
                sph_body_name_(sph_body.getName()), varriable_for_output_(*particles_->getVariableByName<ReturnType>(quantity_name)),
                quantity_name_(quantity_name), reference_(reference), varriable_position_(*particles_->getVariableByName<Vecd>("Position"))
          {
             
          };
-         virtual ~QuantityRecordingForDebuging(){};
+         virtual ~GlobalQuantityRecordingForDebuging(){};
 
          void writeToFile( size_t iteration_step = static_cast<size_t>(GlobalStaticVariables::physical_time_ * 100000) ) override
          {
@@ -120,9 +119,10 @@ namespace SPH
              out_file.close();
          };
 
+       protected:    
         void writeAQuantityWithPosition(std::ofstream &out_file, Real reference)
         {
-            for (size_t n = 0; n != varriable_position_.size(); ++n)
+            for (size_t n = 0; n != varriable_for_output_.size(); ++n)
             {
                 for (int i = 0; i < Dimensions; ++i)
                 {
@@ -136,7 +136,7 @@ namespace SPH
 
         void writeAQuantityWithPosition(std::ofstream &out_file, Vecd reference)
         {
-            for (size_t n = 0; n != varriable_position_.size(); ++n)
+            for (size_t n = 0; n != varriable_for_output_.size(); ++n)
             {
                 for (int i = 0; i < Dimensions; ++i)
                 {
@@ -151,4 +151,6 @@ namespace SPH
             } 
         }
      };
+
+    
 } // namespace SPH

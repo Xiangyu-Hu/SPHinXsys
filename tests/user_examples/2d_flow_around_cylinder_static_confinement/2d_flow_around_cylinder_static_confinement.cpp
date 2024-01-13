@@ -53,7 +53,7 @@ int main(int ac, char *av[])
     /** Periodic BCs in y direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationInner, SequencedPolicy> update_density_by_summation(water_block_inner);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
@@ -63,9 +63,9 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerNoRiemann> density_relaxation(water_block_inner);
     /** Computing viscous acceleration with wall. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner, SequencedPolicy> viscous_acceleration(water_block_inner);
     /** Impose transport velocity. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>, SequencedPolicy> transport_velocity_correction(water_block_inner);
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** free stream boundary condition. */
@@ -90,6 +90,9 @@ int main(int ac, char *av[])
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<fluid_dynamics::ViscousForceFromFluidStaticConfinement> viscous_force_on_cylinder(near_surface);
     //InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> pressure_force_on_cylinder(cylinder_contact);
+    
+    water_block.getBaseParticles().registerSortableVariable<Vecd>("ViscousForceFromWall");
+    //water_block.getBaseParticles().registerSortableVariable<Vecd>("KernelGradientRij");
 
     /** Computing viscous force acting on wall with wall model. */
     //----------------------------------------------------------------------
@@ -103,10 +106,18 @@ int main(int ac, char *av[])
         write_total_force_on_inserted_body(io_environment, pressure_force_on_cylinder, "TotalPressureForceOnSolid");*/
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "Force");
-    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValue");
-    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real(io_environment, water_block, 0.0, "KernelValue");
-    QuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "Force");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_viscous_wall(io_environment, water_block, Vecd::Zero(), "ViscousForceFromWall");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_viscous_wall(io_environment, water_block, Vecd::Zero(), "ViscousForceFromWall");
+
+    //ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_Gradient_Rij(io_environment, water_block, 0.0, "KernelGradientRij");
+    //GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_Gradient_Rij(io_environment, water_block, 0.0, "KernelGradientRij");
+    //QuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "Force");
+
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_kernel_value(io_environment, water_block, 0.0, "KernelValueLevelSet");
+    GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_kernel_value(io_environment, water_block, 0.0, "KernelValueLevelSet");
+
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradientLevelSet");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "KernelGradientLevelSet");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -126,7 +137,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 200.0;
+    Real end_time = 100.0;
     Real output_interval = end_time / 200.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -149,8 +160,8 @@ int main(int ac, char *av[])
         {
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
-            update_density_by_summation.exec();
-            //viscous_acceleration.exec();
+            update_density_by_summation.exec(number_of_iterations);
+            viscous_acceleration.exec(number_of_iterations);
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */
@@ -198,10 +209,17 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile();
         write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
         //write_total_force_on_inserted_body.writeToFile(number_of_iterations);
-        wrtie_variable_by_position_real.writeToFile(number_of_iterations);
+        //wrtie_variable_by_position_real.writeToFile(number_of_iterations);
         wrtie_variable_by_position_vecd.writeToFile(number_of_iterations);
         write_single_variable_vector.writeToFile(number_of_iterations);
-        write_single_variable_real.writeToFile(number_of_iterations);
+
+        write_single_variable_kernel_value.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_kernel_value.writeToFile(number_of_iterations);
+
+        write_single_variable_viscous_wall.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_viscous_wall.writeToFile(number_of_iterations);
+        //write_single_variable_Gradient_Rij.writeToFile(number_of_iterations);
+        //wrtie_variable_by_position_Gradient_Rij.writeToFile(number_of_iterations);
         fluid_observer_contact.updateConfiguration();
         write_fluid_velocity.writeToFile(number_of_iterations);
 

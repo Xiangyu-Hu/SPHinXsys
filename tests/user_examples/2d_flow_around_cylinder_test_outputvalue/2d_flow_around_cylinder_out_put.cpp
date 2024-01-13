@@ -129,6 +129,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    water_block.getBaseParticles().registerSortableVariable<Vecd>("KernelGradientParticle");
+    //cylinder.getBaseParticles().registerSortableVariable<Vecd>("ViscousForceFromFluid");
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_cylinder, "TotalViscousForceOnSolid");
@@ -139,13 +141,21 @@ int main(int ac, char *av[])
     //fluid_dynamics::ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable(io_environment, water_block, Vecd::Zero(), "ViscousForceOnWall");
     //ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradient");
     //ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector_1(io_environment, water_block, Vecd::Zero(), "PriorForce");
-    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_density(io_environment, water_block, 0.0, "Density");
-    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_volume(io_environment, water_block, 0.0, "VolumetricMeasure");
-    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_mass(io_environment, water_block, 0.0, "MassiveMeasure");
-    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_density(io_environment, water_block, 0.0, "Density");
-    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_mass(io_environment, water_block, 0.0, "MassiveMeasure");
-    QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_volume(io_environment, water_block, 0.0, "VolumetricMeasure");
-    QuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "Force");
+    //ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_density(io_environment, water_block, 0.0, "Density");
+    //ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_volume(io_environment, water_block, 0.0, "VolumetricMeasure");
+    //ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_mass(io_environment, water_block, 0.0, "MassiveMeasure");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradientParticle");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValueParticle");
+    //QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_density(io_environment, water_block, 0.0, "Density");
+    //QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_mass(io_environment, water_block, 0.0, "MassiveMeasure");
+    //QuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_volume(io_environment, water_block, 0.0, "VolumetricMeasure");
+    GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_kernel_value(io_environment, water_block, 0.0, "KernelValueParticle");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "KernelGradientParticle");
+
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector_viscous_force(io_environment, cylinder, Vecd::Zero(), "ViscousForceFromFluid");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector_viscous_force_wall(io_environment, water_block, Vecd::Zero(), "ViscousForceFromWall");
+
+    //LocalQuantityRecordingForDebuging<LocalRealVariable> wrtie_local_variable_by_position_real(io_environment, water_block, std::make_pair(0.0, Vecd::Zero()), "KernelGradientParticle");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -238,14 +248,18 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile();
         write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
         write_total_force_on_inserted_body.writeToFile(number_of_iterations);
-        //write_single_variable_vector.writeToFile(number_of_iterations);
-        //write_single_variable_vector_1.writeToFile(number_of_iterations);
-        write_single_variable_real_density.writeToFile(number_of_iterations);
-        write_single_variable_real_volume.writeToFile(number_of_iterations);
-        write_single_variable_real_mass.writeToFile(number_of_iterations);
-        wrtie_variable_by_position_real_mass.writeToFile(number_of_iterations);
-        wrtie_variable_by_position_real_density.writeToFile(number_of_iterations);
-        wrtie_variable_by_position_real_volume.writeToFile(number_of_iterations);
+        write_single_variable_vector.writeToFile(number_of_iterations);
+        write_single_variable_real.writeToFile(number_of_iterations);
+        //write_single_variable_real_density.writeToFile(number_of_iterations);
+        //write_single_variable_real_volume.writeToFile(number_of_iterations);
+        //write_single_variable_real_mass.writeToFile(number_of_iterations);
+        //wrtie_variable_by_position_real_mass.writeToFile(number_of_iterations);
+        //wrtie_variable_by_position_real_density.writeToFile(number_of_iterations);
+        //wrtie_variable_by_position_real_volume.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_real_kernel_value.writeToFile(number_of_iterations);
+        wrtie_variable_by_position_vecd.writeToFile(number_of_iterations);
+        write_single_variable_vector_viscous_force.writeToFile(number_of_iterations);
+        write_single_variable_vector_viscous_force_wall.writeToFile(number_of_iterations);
         fluid_observer_contact.updateConfiguration();
         write_fluid_velocity.writeToFile(number_of_iterations);
 

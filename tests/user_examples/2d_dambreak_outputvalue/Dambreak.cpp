@@ -106,13 +106,19 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
+    water_block.getBaseParticles().registerSortableVariable<Vecd>("KernelGradientParticle");
+
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
-    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGridentParticle");
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector_kernel_grident(io_environment, water_block, Vecd::Zero(), "KernelGradientParticle");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real_kernel_vaule(io_environment, water_block, 0.0, "KernelValueParticle");
+    //GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_density(io_environment, water_block, 0.0, "Density");
+    GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_kernel_vaule(io_environment, water_block, 0.0, "KernelValueParticle");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd_kernel_vaule(io_environment, water_block, Vecd::Zero(), "KernelGradientParticle");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -211,7 +217,10 @@ int main(int ac, char *av[])
         }
 
         body_states_recording.writeToFile();
-        write_single_variable_vector.writeToFile();
+        write_single_variable_vector_kernel_grident.writeToFile();
+        write_single_variable_real_kernel_vaule.writeToFile();
+        wrtie_variable_by_position_real_kernel_vaule.writeToFile();
+        wrtie_variable_by_position_vecd_kernel_vaule.writeToFile();
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

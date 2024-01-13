@@ -9,6 +9,7 @@
  * @brief 	SPHinXsys Library.
  */
 #include "sphinxsys.h"
+#include "io_observation_for_debuging.h"
 /**
  * @brief Namespace cite here.
  */
@@ -148,6 +149,10 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
+    ReducedQuantityRecordingForDebuging<Vecd, ReduceSum<Vecd>> write_single_variable_vector(io_environment, water_block, Vecd::Zero(), "KernelGradientParticle");
+    ReducedQuantityRecordingForDebuging<Real, ReduceSum<Real>> write_single_variable_real(io_environment, water_block, 0.0, "KernelValueParticle");
+    GlobalQuantityRecordingForDebuging<Real>wrtie_variable_by_position_real_kernel_value(io_environment, water_block, 0.0, "KernelValueParticle");
+    GlobalQuantityRecordingForDebuging<Vecd>wrtie_variable_by_position_vecd(io_environment, water_block, Vecd::Zero(), "KernelGradientParticle");
     /**
      * @brief 	Basic parameters.
      */
@@ -212,6 +217,10 @@ int main(int ac, char *av[])
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
+        write_single_variable_real.writeToFile();
+        write_single_variable_vector.writeToFile();
+        wrtie_variable_by_position_real_kernel_value.writeToFile();
+        wrtie_variable_by_position_vecd.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

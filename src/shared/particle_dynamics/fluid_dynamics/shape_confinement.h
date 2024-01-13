@@ -55,7 +55,7 @@ class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, publi
     StdLargeVec<Vecd> &pos_;
     LevelSetShape *level_set_shape_;
     /*for debuging*/
-    StdLargeVec<Real> kernel_value_;
+    StdLargeVec<Real>& kernel_value_;
 };
 
 /**
@@ -77,7 +77,7 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
     AcousticRiemannSolver riemann_solver_;
 
     /*for debuging*/
-    StdLargeVec<Vecd> kernel_gradient_;
+    StdLargeVec<Vecd>& kernel_gradient_;
 };
 
 /**
@@ -106,7 +106,7 @@ class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByC
 class StaticConfinement
 {
   public:
-    SimpleDynamics<StaticConfinementDensity> density_summation_;
+    SimpleDynamics<StaticConfinementDensity, SequencedPolicy> density_summation_;
     SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
     SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;

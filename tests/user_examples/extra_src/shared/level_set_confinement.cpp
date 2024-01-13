@@ -32,7 +32,7 @@ namespace SPH
 			 //std::string output_folder = "./output";
 				//std::string filefullpath = output_folder + "/" + "transportVelocity_wall_levelset_" + std::to_string(dt) + ".dat";
 				//std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-				//out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << acceleration_trans[0] << " " << acceleration_trans[1]<<" "  << acceleration_trans.norm() << std::endl;
+				//out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << transport_acc_[index_i][0] << " " << transport_acc_[index_i][1]<<" "  << transport_acc_[index_i].norm() << std::endl;
 				///** correcting particle position */
 
 			/*std::string output_folder = "./output";
@@ -47,12 +47,14 @@ namespace SPH
 			pos_(particles_->pos_), mass_(particles_->mass_), force_prior_(particles_->force_prior_), rho_(particles_->rho_),
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
             level_set_shape_(&near_surface.level_set_shape_)
+			//, force_from_fluid_(*this->particles_->template registerSharedVariable<Vecd>("ViscousForceFromWall")),
+			//kernel_gradient_rij_(*this->particles_->template registerSharedVariable<Real>("KernelGradientRij"))
 		{
             particles_->registerVariable(force_from_fluid_, "ViscousForceFromWall"); 
 			particles_->registerVariable(kernel_gradient_rij_, "KernelGradientRij");
 		}
 		//=================================================================================================//
-        void StaticConfinementViscousAcceleration::interaction(size_t index_i, Real dt)
+        void StaticConfinementViscousAcceleration::update(size_t index_i, Real dt)
 		{
 			Vecd force = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
@@ -71,17 +73,17 @@ namespace SPH
 			/*Vecd force = Vecd::Zero();
 			force = 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative;*/
 
-			/*std::string output_folder = "./output";
+			std::string output_folder = "./output";
 			std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
 			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
 			out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << force[0] << " " << force[1]<<" "  << force.norm() << " "
-			<<kernel_gradient_divide_Rij<< std::endl;*/
+			<<kernel_gradient_divide_Rij<< std::endl;
 
 		}
 		//=================================================================================================//
 		BaseForceFromFluidStaticConfinement::BaseForceFromFluidStaticConfinement(NearShapeSurface& near_surface)
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_), 
-			level_set_shape_(&near_surface.level_set_shape_)
+			level_set_shape_(&near_surface.level_set_shape_), force_from_fluid_(*this->particles_->template registerSharedVariable<Vecd>("ViscousForceFromFluid"))
 		{
 		}
 		//=================================================================================================//
@@ -89,7 +91,7 @@ namespace SPH
 			:BaseForceFromFluidStaticConfinement(near_surface), pos_(particles_->pos_), rho_(particles_->rho_), mass_(particles_->mass_),
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_)
 		{
-			particles_->registerVariable(force_from_fluid_, "ViscousForceFromFluid");
+			//particles_->registerVariable(force_from_fluid_, "ViscousForceFromFluid");
 		}
 		//=================================================================================================//
 		StaticConfinementExtendIntegration1stHalf::

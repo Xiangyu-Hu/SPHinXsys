@@ -75,14 +75,18 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
 template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &wall_contact_relation)
-    : BaseIntegrationWithWall(wall_contact_relation),
-      correction_(particles_), riemann_solver_(fluid_, fluid_){}
+    : BaseIntegrationWithWall(wall_contact_relation), kernel_gradient_value_wall_(*this->particles_->template registerSharedVariable<Vecd>("KernelGradientParticle")),
+      correction_(particles_), riemann_solver_(fluid_, fluid_)
+{
+    
+}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
 void Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
+    Vecd kernel_gradient_contact(Vecd::Zero()) ;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
@@ -99,10 +103,12 @@ void Integration1stHalf<ContactWall<>, RiemannSolverType, KernelCorrectionType>:
             Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             force -= mass_[index_i] * (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
+            kernel_gradient_contact += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
         }
     }
     force_[index_i] += force / rho_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
+    kernel_gradient_value_wall_[index_i] = kernel_gradient_contact;
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
