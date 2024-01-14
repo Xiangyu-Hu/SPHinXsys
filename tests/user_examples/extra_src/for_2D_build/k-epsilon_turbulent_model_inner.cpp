@@ -478,6 +478,16 @@ namespace SPH
 			}
 			return turbu_E_original;
 		}
+		//=================================================================================================//
+		ClearYPositionForTest::
+			ClearYPositionForTest(SPHBody& sph_body)
+			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+			pos_(particles_->pos_), vel_(particles_->vel_) {}
+		//=================================================================================================//
+		void ClearYPositionForTest::update(size_t index_i, Real dt)
+		{
+			vel_[index_i][1] = 0.0;
+		}
 	}
 	//=================================================================================================//
 }

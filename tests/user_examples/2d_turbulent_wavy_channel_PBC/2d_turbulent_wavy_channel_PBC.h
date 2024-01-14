@@ -31,7 +31,7 @@ Real DH = 1.0;                         /**< Channel height. */
 Real DL = 4.0;                         /**< Channel length. */
 Real amplitude = 0.1;
 Real wave_length = 1;
-Real resolution_ref = DH / 40.0;              /**< Initial reference particle spacing. */
+Real resolution_ref = DH / 20.0;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-2.0 * BW, -DH), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
@@ -53,7 +53,7 @@ Real rho0_f = 1.0;                                            /**< Density. */
 
 //Real Re = 40000.0;
 //Real mu_f = rho0_f * U_f * DH  / Re;
-Real mu_f = 0.001;
+Real mu_f = 0.0001;
 Real gravity_g = 0.01874594;
 Real Re = U_f * DH * rho0_f / mu_f;
 //Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */

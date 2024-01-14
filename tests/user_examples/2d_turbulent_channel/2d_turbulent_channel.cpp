@@ -122,6 +122,8 @@ int main(int ac, char* av[])
 	//ObservedQuantityRecording<Real> write_fluid_turbu_kinetic_energy("TurbulenceKineticEnergy", io_environment, fluid_observer_contact); //For test turbulent model
 	//ObservedQuantityRecording<Real> write_fluid_turbu_dissipation_rate("TurbulentDissipation", io_environment, fluid_observer_contact); //For test turbulent model
 	//ObservedQuantityRecording<Real> write_fluid_turbu_viscosity("TurbulentViscosity", io_environment, fluid_observer_contact); //For test turbulent model
+	SimpleDynamics<fluid_dynamics::ClearYPositionForTest> clear_y_displacement(water_block);
+
 
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -136,7 +138,7 @@ int main(int ac, char* av[])
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 200.0;
-	Real output_interval = end_time / 20.0; /**< Time stamps for output of body states. */
+	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -199,6 +201,7 @@ int main(int ac, char* av[])
 				GlobalStaticVariables::physical_time_ += dt;
 
 				//write_body_states.writeToFile();
+				clear_y_displacement.exec();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{

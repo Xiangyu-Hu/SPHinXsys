@@ -182,7 +182,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& y_p_;
 
 		//** For test *
-		StdLargeVec<Matd> visc_direction_matrix_;
+		//StdLargeVec<Matd> visc_direction_matrix_;
 	};
 
 	//** Inner part *

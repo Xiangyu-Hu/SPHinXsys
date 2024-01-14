@@ -92,7 +92,7 @@ int main(int ac, char *av[])
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
 
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
@@ -174,7 +174,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 20.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -204,7 +204,9 @@ int main(int ac, char *av[])
             //viscous_acceleration.exec();
             turbulent_viscous_acceleration.exec();
 
-            transport_velocity_correction.exec();
+            //if (GlobalStaticVariables::physical_time_ < 100.0)
+                transport_velocity_correction.exec();
+            
             /** Dynamics including pressure relaxation. */
             Real relaxation_time = 0.0;
             int inner_itr = 0;

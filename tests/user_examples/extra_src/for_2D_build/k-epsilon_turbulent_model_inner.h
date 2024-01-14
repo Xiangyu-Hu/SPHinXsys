@@ -314,6 +314,23 @@ namespace SPH
 			virtual Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k);
 			virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
 		};
+
+		/**
+		 * @class ClearYPositionForTest
+		 * @brief  Test
+		 */
+		class ClearYPositionForTest : public LocalDynamics,
+			public FluidDataSimple, public BaseTurbuClosureCoeffInner
+		{
+		public:
+			explicit ClearYPositionForTest(SPHBody& sph_body);
+			virtual ~ClearYPositionForTest() {};
+
+			void update(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Vecd>& pos_;
+			StdLargeVec<Vecd>& vel_;
+		};
     }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_INNER_H

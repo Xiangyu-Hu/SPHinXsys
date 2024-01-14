@@ -41,7 +41,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_wall_contact);
+    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex,SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner, water_wall_contact);
 
     /** Define external force. */
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -81,6 +81,8 @@ int main(int ac, char *av[])
     /** Turbulent eddy viscosity calculation needs values of Wall Y start. */
     SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 
+    //SimpleDynamics<fluid_dynamics::ClearYPositionForTest> clear_y_displacement(water_block);
+
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
@@ -98,8 +100,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 600.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real end_time = 100.0;   /**< End time. */
+    Real Output_Time = end_time / 1000.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -109,6 +111,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
+    int num_output_file = 0;
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -153,8 +156,9 @@ int main(int ac, char *av[])
                 inner_itr++;
                 //if (GlobalStaticVariables::physical_time_ >48.0)
                 //{
-                //    body_states_recording.writeToFile();
+                    //body_states_recording.writeToFile();
                 //}
+                //clear_y_displacement.exec();
                 
             }
             if (number_of_iterations % screen_output_interval == 0)
@@ -176,7 +180,12 @@ int main(int ac, char *av[])
 
         }
         TickCount t2 = TickCount::now();
+        
         body_states_recording.writeToFile();
+        num_output_file++;
+        if (num_output_file == 120)
+            system("pause");
+        
         TickCount t3 = TickCount::now();
     }
     TickCount t4 = TickCount::now();
