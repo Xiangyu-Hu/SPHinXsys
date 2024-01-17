@@ -34,7 +34,7 @@ Neighborhood& Neighborhood::operator=(const NeighborhoodDevice &device) {
 }
 
 NeighborhoodDevice::NeighborhoodDevice() : current_size_(allocateDeviceData<size_t>(1)),
-                                           allocated_size_(Dimensions == 2 ? 28 : 82),
+                                           allocated_size_(Dimensions == 2 ? 28 : 86),
                                            j_(allocateDeviceData<size_t>(allocated_size_)),
                                            W_ij_(allocateDeviceData<DeviceReal>(allocated_size_)),
                                            dW_ijV_j_(allocateDeviceData<DeviceReal>(allocated_size_)),
