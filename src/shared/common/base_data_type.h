@@ -29,7 +29,6 @@
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
-#include <math.h>
 #include <algorithm>
 #include <cassert>
 #include <climits>
@@ -39,13 +38,14 @@
 #include <map>
 #include <vector>
 
+#include <CL/sycl.hpp>
+#define SYCL_DEVICE_ONLY
+
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
-
-#include <sycl/sycl.hpp>
 
 namespace SPH
 {
@@ -93,10 +93,10 @@ using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 /** Device data types. */
 using DeviceReal = Real;
-using DeviceVec2d = sycl::vec<DeviceReal, 2>;
-using DeviceVec3d = sycl::vec<DeviceReal, 3>;
-using DeviceArray2i = sycl::int2;
-using DeviceArray3i = sycl::int3;
+using DeviceVec2d = Vec2d;
+using DeviceVec3d = Vec3d;
+using DeviceArray2i = Array2i;
+using DeviceArray3i = Array3i;
 
 template<typename Type, class Enable = void>
 struct DataTypeEquivalence {
