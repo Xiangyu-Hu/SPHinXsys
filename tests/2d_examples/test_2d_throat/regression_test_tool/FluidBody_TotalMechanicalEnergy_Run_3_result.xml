@@ -4,6 +4,6 @@
         <Snapshot number_of_snapshot_for_local_result_="3" />
     </Snapshot_Element>
     <Result_Element>
-        <Particle_0 snapshot_0="-0.045022269283297452" snapshot_1="-0.22363183778528906" snapshot_2="-0.39967005530234595" />
+        <Particle_0 snapshot_0="0.0019394354849214888" snapshot_1="0.0019432632379111708" snapshot_2="0.0019619360486814491" />
     </Result_Element>
 </result>
