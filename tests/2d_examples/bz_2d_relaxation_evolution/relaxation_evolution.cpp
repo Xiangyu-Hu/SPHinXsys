@@ -13,7 +13,7 @@ Real DH = 1.0;
 Real insert_circle_radius = 1;
 Vec2d insert_circle_center(0.0, 0.0);
 Real resolution_ref = 1 / 80.0;
-Real BW = resolution_ref * 4;
+Real BW = resolution_ref * 20;
 BoundingBox system_domain_bounds(Vec2d(-2 * BW - DL, -2 * BW - DH), Vec2d(DL + 2 * BW, DH + 2 * BW));
 //----------------------------------------------------------------------
 //	Define geometries
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody body(sph_system, makeShared<Circle>("Body"));
     body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-    body.defineAdaptationRatios(1.15, 1.0);
+    body.defineAdaptationRatios(0.8, 1.0);
     body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(1, 1, 1);
     body.addBodyStateForRecording<Vecd>("Position");
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -184,6 +184,8 @@ int main(int ac, char *av[])
 
         Real body_average_kinetic_energy = 100.0;
         Real body_maximum_kinetic_energy = 100.0;
+        Real last_body_maximum_kinetic_energy = 100;
+        Real dt = 1.0;
         /*Real ac_term = 0;
         Real as_term = 0;
         Real c_term = 0;
@@ -211,13 +213,13 @@ int main(int ac, char *av[])
             ab_term << " " << ar_term << " " << b_term << "\n";*/
 
         GlobalStaticVariables::physical_time_ = ite;
-        while (body_average_kinetic_energy > 5e-5)
+        while (body_maximum_kinetic_energy > 1e-4)
         {
             correction_matrix.exec();
-            relaxation_inner_implicit.exec();
+            relaxation_inner_implicit.exec(dt);
             ite++;
 
-            if (ite % 500 == 0)
+            if (ite % 2000 == 0)
             {
                 /* testing_initial_condition.exec();
                 correction_matrix.exec();
@@ -250,7 +252,19 @@ int main(int ac, char *av[])
                 std::cout << "Body: "
                     << " Average: " << body_average_kinetic_energy
                     << " Maximum: " << body_maximum_kinetic_energy << std::endl;
-                write_body_to_vtp.writeToFile(ite);
+                
+
+               /* if (body_maximum_kinetic_energy > last_body_maximum_kinetic_energy)
+                {
+                    dt = 0.99 * dt;
+                }
+                else if (body_maximum_kinetic_energy < last_body_maximum_kinetic_energy)
+                {
+                    dt = 1.01 * dt;
+                }
+                last_body_maximum_kinetic_energy = body_maximum_kinetic_energy;*/
+                std::cout << "dt ratio is " << dt << std::endl;
+                //write_body_to_vtp.writeToFile(ite);
             }
         }
         ite++;

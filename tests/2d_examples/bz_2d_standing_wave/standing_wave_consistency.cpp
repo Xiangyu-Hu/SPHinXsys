@@ -13,7 +13,7 @@ Real DL = 2.0;                        /**< Tank length. */
 Real DH = 2.0;                        /**< Tank height. */
 Real LL = 2.0;                        /**< Liquid column length. */
 Real LH = 1.0;                        /**< Liquid column height. */
-Real particle_spacing_ref = 0.005;   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.01;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -110,7 +110,7 @@ int main(int ac, char* av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -190,7 +190,9 @@ int main(int ac, char* av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     /** time-space method to detect surface particles. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation(water_block_complex);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectWithWall> fluid_pressure_relaxation(water_block_complex);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.5);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_wall(wall_boundary_complex);
@@ -235,7 +237,7 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
+    int observation_sample_interval = screen_output_interval * 0.5;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 25.0;
     Real output_interval = 0.05;
@@ -275,13 +277,16 @@ int main(int ac, char* av[])
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
 
-            /** inner loop for dual-time criteria time-stepping.  */
-            acoustic_dt = fluid_acoustic_time_step.exec();
-            fluid_pressure_relaxation.exec(acoustic_dt);
-            fluid_density_relaxation.exec(acoustic_dt);
-            relaxation_time += acoustic_dt;
-            integration_time += acoustic_dt;
-            GlobalStaticVariables::physical_time_ += acoustic_dt;
+            while (relaxation_time < advection_dt)
+            {
+                /** inner loop for dual-time criteria time-stepping.  */
+                acoustic_dt = fluid_acoustic_time_step.exec();
+                fluid_pressure_relaxation.exec(acoustic_dt);
+                fluid_density_relaxation.exec(acoustic_dt);
+                relaxation_time += acoustic_dt;
+                integration_time += acoustic_dt;
+                GlobalStaticVariables::physical_time_ += acoustic_dt;
+            }
 
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 

@@ -196,11 +196,11 @@ computeErrorAndParameters(size_t index_i, Real dt)
                    this->sph_adaptation_->SmoothingLengthRatio(index_i));
 
     error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
-                                   this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
-                                   this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+        this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
+            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
     error_and_parameters.a_ -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
-                               this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
-                               this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+        this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
+            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
 
     return error_and_parameters;
 }
@@ -216,8 +216,8 @@ RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation, bool level_set_co
 template <class RelaxationType>
 void RelaxationStepInnerImplicit<RelaxationType>::exec(Real dt)
 {
-    //real_body_->updateCellLinkedList();
-    //inner_relation_.updateConfiguration();
+    real_body_->updateCellLinkedList();
+    inner_relation_.updateConfiguration();
     time_step_size_ =  sqrt(get_time_step_.exec());
     relaxation_evolution_inner_.exec(dt * time_step_size_);
 }

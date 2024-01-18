@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 1.0;                    /**< box length. */
 Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-    water_body.defineAdaptationRatios(0.8, 1.0);
+    water_body.defineAdaptationRatios(1.3, 1.0);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_body.generateParticles<ParticleGeneratorReload>(io_environment, water_body.getName())
@@ -113,7 +113,7 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_body);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_water_body_to_vtp(io_environment, { &water_body });
+        BodyStatesRecordingToPlt write_water_body_to_vtp(io_environment, { &water_body });
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(io_environment, { &water_body });
 
@@ -159,7 +159,7 @@ int main(int ac, char *av[])
             water_body_inner.updateConfiguration();
             
             ite++;
-            if (ite % 500 == 0)
+            if (ite % 200 == 0)
             {
                 update_water_block_kinetic_energy.exec();
                 water_block_average_energy = calculate_water_block_average_kinetic_energy.exec();
