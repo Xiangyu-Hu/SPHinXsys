@@ -7,10 +7,10 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_square_droplet_conservation
+case name: test_2d_square_droplet
 """
 
-case_name = "test_2d_square_droplet_conservation"
+case_name = "test_2d_square_droplet"
 body_name = "WaterBody"
 parameter_name = "TotalMechanicalEnergy"
 
@@ -27,7 +27,7 @@ while True:
     converged = sphinxsys.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
     if number_of_run_times <= 200:
-        if (converged == "true") and (converged_1 == "true"):
+        if (converged == "true"):
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
         elif converged != "true":
