@@ -159,8 +159,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", beam_observer_contact);
+    ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(beam_body, gravity_ptr);
     //----------------------------------------------------------------------
@@ -234,11 +233,11 @@ int main(int ac, char *av[])
     // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
-        write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
+        write_water_mechanical_energy.generateDataBase(1.0e-3);
     }
     else
     {
-        write_beam_tip_displacement.testResult();
+        write_water_mechanical_energy.testResult();
     }
 
     return 0;

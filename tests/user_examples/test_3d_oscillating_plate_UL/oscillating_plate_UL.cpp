@@ -152,12 +152,8 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
-    // ObservedQuantityRecording<Vecd>
-    // 	write_plate_displacement("Position", plate_observer_contact);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_plate_displacement("Position", plate_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_kinetic_energy(plate_body);
+    ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_kinetic_energy(plate_body);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
