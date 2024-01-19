@@ -336,7 +336,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
+    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluidRiemann>
         fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);
     //----------------------------------------------------------------------
     //	Building Simbody.
