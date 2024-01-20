@@ -7,10 +7,10 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_3d_oscillating_plate
+case name: test_3d_oscillating_plate_UL
 """
 
-case_name = "test_3d_oscillating_plate"
+case_name = "test_3d_oscillating_plate_UL"
 body_name = "PlateBody"
 parameter_name = "TotalMechanicalEnergy"
 
