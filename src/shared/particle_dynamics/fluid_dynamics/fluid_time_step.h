@@ -74,7 +74,8 @@ class AdvectionTimeStepSizeForImplicitViscosity
     virtual Real outputResult(Real reduced_value) override;
 
   protected:
-    StdLargeVec<Vecd> &vel_;
+    StdLargeVec<Real> &mass_;
+    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
     Real smoothing_length_min_;
     Real speed_ref_, advectionCFL_;
 };

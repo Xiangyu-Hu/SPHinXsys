@@ -164,8 +164,8 @@ void BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::inter
             velocity_gradient += velocity_gradient_ij;
 
             density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
-            Vecd u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]);
-            p_dissipation += this->mass_[index_i] * this->riemann_solver_.DissipativePJumpExtra(u_jump, n_k[index_j]) * dW_ijV_j;
+            Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
+            p_dissipation += this->mass_[index_i] * this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }
     }
     this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
