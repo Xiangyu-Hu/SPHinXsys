@@ -136,9 +136,10 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for wall boundary.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
-        relax_dynamics::ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
-        relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
+        ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
+        ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
         shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
         //	Output for particle relaxation.

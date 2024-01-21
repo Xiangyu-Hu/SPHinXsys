@@ -99,8 +99,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for ball.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        relax_dynamics::RelaxationStepInner ball_relaxation_step_inner(ball_inner);
+        RelaxationStepInner ball_relaxation_step_inner(ball_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------

@@ -112,9 +112,7 @@ int main(int ac, char *av[])
     // run particle relaxation
     if (sph_system.RunParticleRelaxation())
     {
-        /**
-         * @brief 	Methods used for particle relaxation.
-         */
+        using namespace relax_dynamics;
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(soil_block);
         /** Write the body state to Vtp file. */
@@ -123,7 +121,7 @@ int main(int ac, char *av[])
 
         ReloadParticleIO write_particle_reload_files(soil_block);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(soil_block_inner);
+        RelaxationStepInner relaxation_step_inner(soil_block_inner);
         /**
          * @brief 	Particle relaxation starts here.
          */

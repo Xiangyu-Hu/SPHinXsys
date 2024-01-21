@@ -101,14 +101,15 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for the ball.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        relax_dynamics::RelaxationStepInner ball_relaxation_step(ball_inner);
+        RelaxationStepInner ball_relaxation_step(ball_inner);
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for the rigid shell.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> rigid_shell_random_particles(rigid_shell);
-        relax_dynamics::ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner);
-        relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, thickness, cos(Pi / 3.75));
+        ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner);
+        ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, thickness, cos(Pi / 3.75));
         rigid_shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
         //	Output for particle relaxation.

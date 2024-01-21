@@ -210,8 +210,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> beam_body_random_particles(beam_body);
-        relax_dynamics::RelaxationStepInner beam_body_relaxation_step_inner(beam_body_inner);
+        RelaxationStepInner beam_body_relaxation_step_inner(beam_body_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------

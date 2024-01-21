@@ -61,8 +61,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(insert_body_inner);
+        RelaxationStepInner relaxation_step_inner(insert_body_inner);
         BodyStatesRecordingToVtp write_insert_body_to_vtp({&insert_body});
         ReloadParticleIO write_particle_reload_files({&insert_body});
         //----------------------------------------------------------------------

@@ -4,8 +4,8 @@
  * @author 	Liezhao Wu, Xiaojing Tang and Xiangyu Hu
  */
 
-#include "sphinxsys.h"     
-using namespace SPH;           
+#include "sphinxsys.h"
+using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -24,11 +24,11 @@ StdVec<Vecd> observation_location = {cream_center};
 //----------------------------------------------------------------------
 Real gravity_g = 9.8;
 // shaving cream material
-Real rho0_s = 77.7;                /*  density  */
-Real Bulk_modulus = 1.09e5;        /*  bulk modulus */
-Real Shear_modulus = 290.0;        /*  shear modulus */
-Real yield_stress = 31.9;          /*  yield stress */
-Real viscosity = 27.2;             /* viscosity  */
+Real rho0_s = 77.7;                                                                                     /*  density  */
+Real Bulk_modulus = 1.09e5;                                                                             /*  bulk modulus */
+Real Shear_modulus = 290.0;                                                                             /*  shear modulus */
+Real yield_stress = 31.9;                                                                               /*  yield stress */
+Real viscosity = 27.2;                                                                                  /* viscosity  */
 Real Herschel_Bulkley_power = 0.22;                                                                     /*   Herschel_Bulkley_power. */
 Real Youngs_modulus = (9.0 * Shear_modulus * Bulk_modulus) / (3.0 * Bulk_modulus + Shear_modulus);      /*   Young's modulus  */
 Real poisson = (3.0 * Bulk_modulus - 2.0 * Shear_modulus) / (6.0 * Bulk_modulus + 2.0 * Shear_modulus); /*  Poisson's ratio */
@@ -113,8 +113,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> cream_random_particles(cream);
-        relax_dynamics::RelaxationStepInner cream_relaxation_step_inner(cream_inner);
+        RelaxationStepInner cream_relaxation_step_inner(cream_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -211,8 +212,8 @@ int main(int ac, char *av[])
             if (ite % screen_output_interval == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                    << GlobalStaticVariables::physical_time_ << "	dt: "
-                    << dt << "\n";
+                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << dt << "\n";
 
                 if (ite != 0 && ite % observation_sample_interval == 0)
                 {
@@ -246,7 +247,7 @@ int main(int ac, char *av[])
     else
     {
         cream_displacement_recording.testResult();
-    } 
+    }
 
     return 0;
 }

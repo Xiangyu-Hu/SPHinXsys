@@ -127,16 +127,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        InnerRelation cylinder_inner(cylinder); // extra body topology only for particle relaxation
+        InnerRelation cylinder_inner(cylinder);
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
         ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
-        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
-        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
             ConstructorArgs(water_block_inner, "OuterBoundary"), water_block_contact);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.

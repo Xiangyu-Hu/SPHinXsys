@@ -58,10 +58,11 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
         BodyStatesRecordingToVtp write_fish_body(fish_body);
         ReloadParticleIO write_particle_reload_files({&fish_body});
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_inner);
+        RelaxationStepInner relaxation_step_inner(fish_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------

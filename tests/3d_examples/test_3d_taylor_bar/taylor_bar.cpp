@@ -50,9 +50,7 @@ int main(int ac, char *av[])
 
     if (sph_system.RunParticleRelaxation())
     {
-        /**
-         * @brief 	Methods used for particle relaxation.
-         */
+        using namespace relax_dynamics;
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(column);
         /** Write the body state to Vtp file. */
@@ -61,7 +59,7 @@ int main(int ac, char *av[])
 
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(column_inner);
+        RelaxationStepInner relaxation_step_inner(column_inner);
         /**
          * @brief 	Particle relaxation starts here.
          */
@@ -168,7 +166,7 @@ int main(int ac, char *av[])
 
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl; 
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     if (sph_system.GenerateRegressionData())
     {
@@ -178,7 +176,6 @@ int main(int ac, char *av[])
     {
         write_displacement.testResult();
     }
-
 
     return 0;
 }

@@ -68,24 +68,5 @@ class TimeStepInitialization
     virtual ~TimeStepInitialization(){};
     void update(size_t index_i, Real dt = 0.0);
 };
-
-/**
- * @class RandomizeParticlePosition
- * @brief Randomize the initial particle position
- */
-class RandomizeParticlePosition
-    : public LocalDynamics,
-      public GeneralDataDelegateSimple
-{
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    Real randomize_scale_;
-
-  public:
-    explicit RandomizeParticlePosition(SPHBody &sph_body);
-    virtual ~RandomizeParticlePosition(){};
-
-    void update(size_t index_i, Real dt = 0.0);
-};
 } // namespace SPH
 #endif // TIME_STEP_INITIALIZATION_H

@@ -71,16 +71,16 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
-        /** Random reset the insert body particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
         ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
-        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
             ConstructorArgs(water_block_inner, "OuterBoundary"), water_contact);
-        SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
+        SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
