@@ -207,27 +207,31 @@ class QuantityMoment : public QuantitySummation<VariableType>
     };
 };
 
-/**
- * @class TotalMechanicalEnergy
- * @brief Compute the total mechanical (kinematic and potential) energy
- */
-class TotalMechanicalEnergy
+class TotalKineticEnergy
     : public LocalDynamicsReduce<Real, ReduceSum<Real>>,
       public GeneralDataDelegateSimple
 {
-  private:
-    SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
-
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &vel_, &pos_;
-    Gravity *gravity_;
+    StdLargeVec<Vecd> &vel_;
 
   public:
-    explicit TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd::Zero()));
-    virtual ~TotalMechanicalEnergy(){};
-
+    explicit TotalKineticEnergy(SPHBody &sph_body);
+    virtual ~TotalKineticEnergy(){};
     Real reduce(size_t index_i, Real dt = 0.0);
 };
+
+class TotalMechanicalEnergy : public TotalKineticEnergy
+{
+  protected:
+    Gravity &gravity_;
+    StdLargeVec<Vecd> &pos_;
+
+  public:
+    explicit TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity);
+    virtual ~TotalMechanicalEnergy(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+};
+
 } // namespace SPH
 #endif // GENERAL_REDUCE_H

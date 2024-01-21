@@ -175,7 +175,8 @@ int main(int ac, char *av[])
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     // define external force
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
     // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
@@ -204,6 +205,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     // prepare quantities will be used once only
     wall_boundary_normal_direction.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -231,7 +233,6 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
 
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             transport_velocity_correction.exec();
