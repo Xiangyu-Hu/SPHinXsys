@@ -21,24 +21,45 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file force_prior.h
+ * @brief Here, we define the base methods for force prior
+ * (all forces on particle except that due to pressure or stress)
+ * used in SPH method.
+ * @author Xiangyu Hu
  */
+#ifndef FORCE_PRIOR_H
+#define FORCE_PRIOR_H
 
-#pragma once
-
-#include "all_surface_indication.h"
 #include "base_general_dynamics.h"
-#include "domain_bounding.h"
-#include "force_prior.h"
-#include "general_constraint.h"
-#include "general_geometric.h"
-#include "general_interpolation.h"
-#include "general_life_time_dynamics.h"
-#include "general_reduce.h"
-#include "general_refinement.h"
-#include "kernel_correction.hpp"
-#include "particle_smoothing.hpp"
-#include "time_step_initialization.h"
+
+namespace SPH
+{
+
+class ForcePrior
+{
+  protected:
+    StdLargeVec<Vecd> &force_prior_, &current_force_, &previous_force_;
+
+  public:
+    ForcePrior(BaseParticles *base_particles, const std::string &force_name);
+    virtual ~ForcePrior(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
+
+class GravityForce : public LocalDynamics,
+                     public ForcePrior,
+                     public GeneralDataDelegateSimple
+{
+  protected:
+    Gravity &gravity_;
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &mass_;
+
+  public:
+    explicit GravityForce(SPHBody &sph_body, Gravity &gravity);
+    virtual ~GravityForce(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
+
+} // namespace SPH
+#endif // FORCE_PRIOR_H
