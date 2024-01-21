@@ -84,14 +84,14 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
 };
 
 /**
- * @class EulerianViscousAccelerationInner
+ * @class EulerianViscousForceInner
  * @brief  the viscosity force induced acceleration in Eulerian method
  */
-class EulerianCompressibleViscousAccelerationInner : public ViscousAccelerationInner
+class EulerianCompressibleViscousForceInner : public ViscousForceInner
 {
   public:
-    explicit EulerianCompressibleViscousAccelerationInner(BaseInnerRelation &inner_relation);
-    virtual ~EulerianCompressibleViscousAccelerationInner(){};
+    explicit EulerianCompressibleViscousForceInner(BaseInnerRelation &inner_relation);
+    virtual ~EulerianCompressibleViscousForceInner(){};
     void interaction(size_t index_i, Real dt = 0.0);
     StdLargeVec<Real> &dE_dt_prior_;
     StdLargeVec<Vecd> &dmom_dt_prior_;

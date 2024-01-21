@@ -36,13 +36,13 @@ Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
     return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
-EulerianCompressibleViscousAccelerationInner::
-    EulerianCompressibleViscousAccelerationInner(BaseInnerRelation &inner_relation)
-    : ViscousAccelerationInner(inner_relation),
+EulerianCompressibleViscousForceInner::
+    EulerianCompressibleViscousForceInner(BaseInnerRelation &inner_relation)
+    : ViscousForceInner(inner_relation),
       dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")),
       dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
 //=================================================================================================//
-void EulerianCompressibleViscousAccelerationInner::interaction(size_t index_i, Real dt)
+void EulerianCompressibleViscousForceInner::interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
     const Vecd &vel_i = vel_[index_i];

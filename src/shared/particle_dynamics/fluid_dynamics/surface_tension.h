@@ -51,14 +51,14 @@ class SurfaceTensionStress : public LocalDynamics, public FluidContactData
 };
 
 template <typename... T>
-class SurfaceStressAcceleration;
+class SurfaceStressForce;
 
 template <>
-class SurfaceStressAcceleration<Inner<>> : public LocalDynamics, public FluidDataInner
+class SurfaceStressForce<Inner<>> : public LocalDynamics, public FluidDataInner
 {
   public:
-    SurfaceStressAcceleration(BaseInnerRelation &inner_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    SurfaceStressForce(BaseInnerRelation &inner_relation);
+    virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -69,11 +69,11 @@ class SurfaceStressAcceleration<Inner<>> : public LocalDynamics, public FluidDat
 };
 
 template <>
-class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidContactData
+class SurfaceStressForce<Contact<>> : public LocalDynamics, public FluidContactData
 {
   public:
-    explicit SurfaceStressAcceleration(BaseContactRelation &contact_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    explicit SurfaceStressForce(BaseContactRelation &contact_relation);
+    virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -86,7 +86,7 @@ class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidC
     StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 
-using SurfaceStressAccelerationComplex = ComplexInteraction<SurfaceStressAcceleration<Inner<>, Contact<>>>;
+using SurfaceStressForceComplex = ComplexInteraction<SurfaceStressForce<Inner<>, Contact<>>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_TENSION_H
