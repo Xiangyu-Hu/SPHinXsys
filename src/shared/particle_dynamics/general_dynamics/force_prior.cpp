@@ -18,8 +18,8 @@ void ForcePrior::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 GravityForce::GravityForce(SPHBody &sph_body, Gravity &gravity)
-    : LocalDynamics(sph_body), ForcePrior(&base_particles_, "GravityForce"),
-      GeneralDataDelegateSimple(sph_body), gravity_(gravity),
+    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+      ForcePrior(&base_particles_, "GravityForce"), gravity_(gravity),
       pos_(base_particles_.pos_), mass_(base_particles_.mass_) {}
 //=================================================================================================//
 void GravityForce::update(size_t index_i, Real dt)

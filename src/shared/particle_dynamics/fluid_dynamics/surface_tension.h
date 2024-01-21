@@ -32,6 +32,7 @@
 #define SURFACE_TENSION_H
 
 #include "base_fluid_dynamics.h"
+#include "force_prior.h"
 
 namespace SPH
 {
@@ -53,23 +54,33 @@ class SurfaceTensionStress : public LocalDynamics, public FluidContactData
 template <typename... T>
 class SurfaceStressAcceleration;
 
+template <class DataDelegationType>
+class SurfaceStressAcceleration<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class BaseRelationType>
+    explicit SurfaceStressAcceleration(BaseRelationType &base_relation);
+    virtual ~SurfaceStressAcceleration(){};
+
+  protected:
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &color_gradient_, &surface_tension_force_;
+    StdLargeVec<Matd> &surface_tension_stress_;
+};
+
 template <>
-class SurfaceStressAcceleration<Inner<>> : public LocalDynamics, public FluidDataInner
+class SurfaceStressAcceleration<Inner<>>
+    : public SurfaceStressAcceleration<FluidDataInner>, public ForcePrior
 {
   public:
     SurfaceStressAcceleration(BaseInnerRelation &inner_relation);
     virtual ~SurfaceStressAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
 };
 
 template <>
-class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidContactData
+class SurfaceStressAcceleration<Contact<>> : public SurfaceStressAcceleration<FluidContactData>
 {
   public:
     explicit SurfaceStressAcceleration(BaseContactRelation &contact_relation);
@@ -77,10 +88,6 @@ class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidC
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
     StdVec<StdLargeVec<Vecd> *> contact_color_gradient_;
     StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;

@@ -127,8 +127,6 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
-    SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
         update_water_density_by_summation(water_inner, water_air_contact, water_wall_contact);
@@ -154,16 +152,16 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     /** Viscous acceleration. */
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
         water_viscous_acceleration(water_inner, water_air_contact, water_wall_contact);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
         air_viscous_acceleration(air_inner, air_water_contact, air_wall_contact);
     /** Surface tension. */
     InteractionDynamics<fluid_dynamics::SurfaceTensionStress> water_surface_tension_stress(water_air_contact, StdVec<Real>{Real(1.0)});
     InteractionDynamics<fluid_dynamics::SurfaceTensionStress> air_surface_tension_stress(air_water_contact, StdVec<Real>{Real(1.0e-3)});
-    InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
+    InteractionWithUpdate<fluid_dynamics::SurfaceStressAccelerationComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
-    InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
+    InteractionWithUpdate<fluid_dynamics::SurfaceStressAccelerationComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
     air_block.addBodyStateForRecording<Vecd>("PriorForce");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -210,8 +208,6 @@ int main(int ac, char *av[])
         {
             /** Acceleration due to viscous force and gravity. */
             time_instance = TickCount::now();
-            initialize_a_water_step.exec();
-            initialize_a_air_step.exec();
 
             Real Dt_f = get_water_advection_time_step_size.exec();
             Real Dt_a = get_air_advection_time_step_size.exec();

@@ -31,6 +31,7 @@
 #define VISCOUS_DYNAMICS_H
 
 #include "base_fluid_dynamics.h"
+#include "force_prior.h"
 
 namespace SPH
 {
@@ -50,17 +51,19 @@ class ViscousAcceleration<DataDelegationType>
 
   protected:
     StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &vel_, &force_prior_;
+    StdLargeVec<Vecd> &vel_, &viscous_force_;
     Real mu_;
     Real smoothing_length_;
 };
 
 template <>
-class ViscousAcceleration<Inner<>> : public ViscousAcceleration<FluidDataInner>
+class ViscousAcceleration<Inner<>>
+    : public ViscousAcceleration<FluidDataInner>, public ForcePrior
 {
   public:
     explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
-        : ViscousAcceleration<FluidDataInner>(inner_relation){};
+        : ViscousAcceleration<FluidDataInner>(inner_relation),
+          ForcePrior(&base_particles_, "ViscousForce"){};
     virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -68,11 +71,12 @@ using ViscousAccelerationInner = ViscousAcceleration<Inner<>>;
 
 template <>
 class ViscousAcceleration<AngularConservative<Inner<>>>
-    : public ViscousAcceleration<FluidDataInner>
+    : public ViscousAcceleration<FluidDataInner>, public ForcePrior
 {
   public:
     explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
-        : ViscousAcceleration<FluidDataInner>(inner_relation){};
+        : ViscousAcceleration<FluidDataInner>(inner_relation),
+          ForcePrior(&base_particles_, "ViscousForce"){};
     virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };

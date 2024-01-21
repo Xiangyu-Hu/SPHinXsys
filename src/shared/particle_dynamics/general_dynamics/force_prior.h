@@ -46,9 +46,10 @@ class ForcePrior
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class GravityForce : public LocalDynamics,
-                     public ForcePrior,
-                     public GeneralDataDelegateSimple
+class GravityForce
+    : public LocalDynamics,
+      public GeneralDataDelegateSimple,
+      public ForcePrior
 {
   protected:
     Gravity &gravity_;
