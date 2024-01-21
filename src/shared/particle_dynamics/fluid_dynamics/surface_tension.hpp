@@ -9,7 +9,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-SurfaceStressAcceleration<DataDelegationType>::SurfaceStressAcceleration(BaseRelationType &base_relation)
+SurfaceStressForce<DataDelegationType>::SurfaceStressForce(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       rho_(this->particles_->rho_), mass_(this->particles_->mass_),
       color_gradient_(*this->particles_->template getVariableByName<Vecd>("ColorGradient")),

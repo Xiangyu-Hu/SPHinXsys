@@ -52,16 +52,16 @@ class SurfaceTensionStress : public LocalDynamics, public FluidContactData
 };
 
 template <typename... T>
-class SurfaceStressAcceleration;
+class SurfaceStressForce;
 
 template <class DataDelegationType>
-class SurfaceStressAcceleration<DataDelegationType>
+class SurfaceStressForce<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit SurfaceStressAcceleration(BaseRelationType &base_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    explicit SurfaceStressForce(BaseRelationType &base_relation);
+    virtual ~SurfaceStressForce(){};
 
   protected:
     StdLargeVec<Real> &rho_, &mass_;
@@ -70,8 +70,8 @@ class SurfaceStressAcceleration<DataDelegationType>
 };
 
 template <>
-class SurfaceStressAcceleration<Inner<>>
-    : public SurfaceStressAcceleration<FluidDataInner>, public ForcePrior
+class SurfaceStressForce<Inner<>>
+    : public SurfaceStressForce<FluidDataInner>, public ForcePrior
 {
   public:
     SurfaceStressForce(BaseInnerRelation &inner_relation);
@@ -80,7 +80,7 @@ class SurfaceStressAcceleration<Inner<>>
 };
 
 template <>
-class SurfaceStressAcceleration<Contact<>> : public SurfaceStressAcceleration<FluidContactData>
+class SurfaceStressForce<Contact<>> : public SurfaceStressForce<FluidContactData>
 {
   public:
     explicit SurfaceStressForce(BaseContactRelation &contact_relation);

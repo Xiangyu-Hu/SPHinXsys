@@ -57,27 +57,27 @@ class ViscousForce<DataDelegationType>
 };
 
 template <>
-class ViscousAcceleration<Inner<>>
-    : public ViscousAcceleration<FluidDataInner>, public ForcePrior
+class ViscousForce<Inner<>>
+    : public ViscousForce<FluidDataInner>, public ForcePrior
 {
   public:
-    explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
-        : ViscousAcceleration<FluidDataInner>(inner_relation),
+    explicit ViscousForce(BaseInnerRelation &inner_relation)
+        : ViscousForce<FluidDataInner>(inner_relation),
           ForcePrior(&base_particles_, "ViscousForce"){};
-    virtual ~ViscousAcceleration(){};
+    virtual ~ViscousForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 using ViscousForceInner = ViscousForce<Inner<>>;
 
 template <>
-class ViscousAcceleration<AngularConservative<Inner<>>>
-    : public ViscousAcceleration<FluidDataInner>, public ForcePrior
+class ViscousForce<AngularConservative<Inner<>>>
+    : public ViscousForce<FluidDataInner>, public ForcePrior
 {
   public:
-    explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
-        : ViscousAcceleration<FluidDataInner>(inner_relation),
+    explicit ViscousForce(BaseInnerRelation &inner_relation)
+        : ViscousForce<FluidDataInner>(inner_relation),
           ForcePrior(&base_particles_, "ViscousForce"){};
-    virtual ~ViscousAcceleration(){};
+    virtual ~ViscousForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 

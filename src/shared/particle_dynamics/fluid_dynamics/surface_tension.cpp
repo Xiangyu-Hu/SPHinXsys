@@ -47,8 +47,8 @@ void SurfaceTensionStress::interaction(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-SurfaceStressAcceleration<Inner<>>::SurfaceStressAcceleration(BaseInnerRelation &inner_relation)
-    : SurfaceStressAcceleration<FluidDataInner>(inner_relation),
+SurfaceStressForce<Inner<>>::SurfaceStressForce(BaseInnerRelation &inner_relation)
+    : SurfaceStressForce<FluidDataInner>(inner_relation),
       ForcePrior(&base_particles_, "SurfaceTensionForce") {}
 //=================================================================================================//
 void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
@@ -65,8 +65,8 @@ void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
     surface_tension_force_[index_i] = summation / rho_[index_i];
 }
 //=================================================================================================//
-SurfaceStressAcceleration<Contact<>>::SurfaceStressAcceleration(BaseContactRelation &contact_relation)
-    : SurfaceStressAcceleration<FluidContactData>(contact_relation)
+SurfaceStressForce<Contact<>>::SurfaceStressForce(BaseContactRelation &contact_relation)
+    : SurfaceStressForce<FluidContactData>(contact_relation)
 {
     Real rho0 = getSPHBody().base_material_->ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)

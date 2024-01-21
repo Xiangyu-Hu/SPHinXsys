@@ -177,8 +177,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     Gravity gravity(Vecd(gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
-    // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
+    // computing viscous effect implicitly and with update velocity directly other than viscous force
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
     // impose transport velocity
@@ -191,8 +190,8 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_fluid_mechanical_energy(fluid_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_fluid_kinetic_energy(fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_fluid_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
@@ -257,7 +256,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_fluid_mechanical_energy.writeToFile(number_of_iterations);
+                    write_fluid_kinetic_energy.writeToFile(number_of_iterations);
                     write_recorded_fluid_pressure.writeToFile(number_of_iterations);
                 }
             }
@@ -284,12 +283,12 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_fluid_mechanical_energy.generateDataBase(1.0e-2);
+        write_fluid_kinetic_energy.generateDataBase(1.0e-2);
         write_recorded_fluid_pressure.generateDataBase(1.0e-2);
     }
     else
     {
-        write_fluid_mechanical_energy.testResult();
+        write_fluid_kinetic_energy.testResult();
         write_recorded_fluid_pressure.testResult();
     }
 
