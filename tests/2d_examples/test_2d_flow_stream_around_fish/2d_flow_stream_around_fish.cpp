@@ -115,7 +115,7 @@ int main(int ac, char *av[])
     pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Impose transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     /** Computing vorticity in the flow. */
@@ -128,7 +128,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<KernelCorrectionMatrixInner> fish_body_corrected_configuration(fish_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(fish_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluidRiemann>
+    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann>
         fluid_force_on_fish_update(fish_contact, viscous_force_on_solid);
     /** Compute the average velocity of the insert body. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(fish_body);
@@ -199,7 +199,7 @@ int main(int ac, char *av[])
             Real Dt = get_fluid_advection_time_step_size.exec();
             free_stream_surface_indicator.exec();
             update_fluid_density.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */

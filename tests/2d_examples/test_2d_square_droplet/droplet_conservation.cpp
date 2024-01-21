@@ -206,7 +206,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
+            /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
 
             Real Dt_f = get_water_advection_time_step_size.exec();
@@ -218,8 +218,8 @@ int main(int ac, char *av[])
             air_transport_correction.exec();
             water_transport_correction.exec();
 
-            air_viscous_acceleration.exec();
-            water_viscous_acceleration.exec();
+            air_viscous_force.exec();
+            water_viscous_force.exec();
 
             water_surface_tension_stress.exec();
             air_surface_tension_stress.exec();

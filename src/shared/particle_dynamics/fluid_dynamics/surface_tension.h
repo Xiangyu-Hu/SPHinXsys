@@ -74,8 +74,8 @@ class SurfaceStressAcceleration<Inner<>>
     : public SurfaceStressAcceleration<FluidDataInner>, public ForcePrior
 {
   public:
-    SurfaceStressAcceleration(BaseInnerRelation &inner_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    SurfaceStressForce(BaseInnerRelation &inner_relation);
+    virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
@@ -83,8 +83,8 @@ template <>
 class SurfaceStressAcceleration<Contact<>> : public SurfaceStressAcceleration<FluidContactData>
 {
   public:
-    explicit SurfaceStressAcceleration(BaseContactRelation &contact_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    explicit SurfaceStressForce(BaseContactRelation &contact_relation);
+    virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -93,7 +93,7 @@ class SurfaceStressAcceleration<Contact<>> : public SurfaceStressAcceleration<Fl
     StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 
-using SurfaceStressAccelerationComplex = ComplexInteraction<SurfaceStressAcceleration<Inner<>, Contact<>>>;
+using SurfaceStressForceComplex = ComplexInteraction<SurfaceStressForce<Inner<>, Contact<>>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_TENSION_H

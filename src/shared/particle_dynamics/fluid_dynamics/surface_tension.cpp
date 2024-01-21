@@ -51,7 +51,7 @@ SurfaceStressAcceleration<Inner<>>::SurfaceStressAcceleration(BaseInnerRelation 
     : SurfaceStressAcceleration<FluidDataInner>(inner_relation),
       ForcePrior(&base_particles_, "SurfaceTensionForce") {}
 //=================================================================================================//
-void SurfaceStressAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
+void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Vecd summation = ZeroData<Vecd>::value;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -80,7 +80,7 @@ SurfaceStressAcceleration<Contact<>>::SurfaceStressAcceleration(BaseContactRelat
     }
 }
 //=================================================================================================//
-void SurfaceStressAcceleration<Contact<>>::interaction(size_t index_i, Real dt)
+void SurfaceStressForce<Contact<>>::interaction(size_t index_i, Real dt)
 {
     Vecd summation = ZeroData<Vecd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)

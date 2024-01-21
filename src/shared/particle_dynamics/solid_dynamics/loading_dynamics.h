@@ -146,10 +146,10 @@ class SpringOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
     void update(size_t index_i, Real dt = 0.0);
 };
 /**
- * @class AccelerationForBodyPartInBoundingBox
+ * @class ExternalForceInBoundingBox
  * @brief Adds acceleration to the part of the body that's inside a bounding box
  */
-class AccelerationForBodyPartInBoundingBox : public LocalDynamics, public SolidDataSimple
+class ExternalForceInBoundingBox : public LocalDynamics, public SolidDataSimple
 {
   protected:
     StdLargeVec<Vecd> &pos_, &force_prior_;
@@ -158,8 +158,8 @@ class AccelerationForBodyPartInBoundingBox : public LocalDynamics, public SolidD
     Vecd acceleration_;
 
   public:
-    AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration);
-    virtual ~AccelerationForBodyPartInBoundingBox(){};
+    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration);
+    virtual ~ExternalForceInBoundingBox(){};
 
     void update(size_t index_i, Real dt = 0.0);
 };

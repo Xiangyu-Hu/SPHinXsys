@@ -5,7 +5,7 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void ViscousAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
+void ViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     Vecd vel_derivative = Vecd::Zero();
@@ -22,7 +22,7 @@ void ViscousAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
     viscous_force_[index_i] = force / rho_[index_i];
 }
 //=================================================================================================//
-void ViscousAcceleration<AngularConservative<Inner<>>>::interaction(size_t index_i, Real dt)
+void ViscousForce<AngularConservative<Inner<>>>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -42,7 +42,7 @@ void ViscousAcceleration<AngularConservative<Inner<>>>::interaction(size_t index
     viscous_force_[index_i] = force / rho_[index_i];
 }
 //=================================================================================================//
-void ViscousAcceleration<Contact<Wall>>::interaction(size_t index_i, Real dt)
+void ViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
     Real rho_i = this->rho_[index_i];
     const Vecd &vel_i = this->vel_[index_i];
@@ -65,8 +65,8 @@ void ViscousAcceleration<Contact<Wall>>::interaction(size_t index_i, Real dt)
     viscous_force_[index_i] += force;
 }
 //=================================================================================================//
-ViscousAcceleration<Contact<>>::ViscousAcceleration(BaseContactRelation &contact_relation)
-    : ViscousAcceleration<FluidContactData>(contact_relation)
+ViscousForce<Contact<>>::ViscousForce(BaseContactRelation &contact_relation)
+    : ViscousForce<FluidContactData>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -76,7 +76,7 @@ ViscousAcceleration<Contact<>>::ViscousAcceleration(BaseContactRelation &contact
     }
 }
 //=================================================================================================//
-void ViscousAcceleration<Contact<>>::interaction(size_t index_i, Real dt)
+void ViscousForce<Contact<>>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)

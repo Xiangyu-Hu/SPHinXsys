@@ -151,11 +151,11 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-AccelerationForBodyPartInBoundingBox::AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
+ExternalForceInBoundingBox::ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
     : LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_),
       force_prior_(particles_->force_prior_), mass_(particles_->mass_), bounding_box_(bounding_box), acceleration_(acceleration) {}
 //=================================================================================================//
-void AccelerationForBodyPartInBoundingBox::update(size_t index_i, Real dt)
+void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
 {
     if (bounding_box_.checkContain(pos_[index_i]))
     {

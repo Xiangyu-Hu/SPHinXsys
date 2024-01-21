@@ -160,12 +160,12 @@ void ShearStressRelaxation2ndHalf::update(size_t index_i, Real dt)
 //=================================================================================================//
 //===================================Non-hourglass formulation=====================================//
 //=================================================================================================//
-ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
+ShearForceRelaxation::ShearForceRelaxation(BaseInnerRelation &inner_relation)
     : BaseRelaxation(inner_relation),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()), shear_stress_(particles_->shear_stress_),
       B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity())), acc_shear_(particles_->acc_shear_) {}
-void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
+void ShearForceRelaxation::interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
     Vecd acceleration = Vecd::Zero();
@@ -183,7 +183,7 @@ void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
     acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
 }
 //=================================================================================================//
-void AngularConservativeShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
+void AngularConservativeShearForceRelaxation::interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
     Vecd acceleration = Vecd::Zero();

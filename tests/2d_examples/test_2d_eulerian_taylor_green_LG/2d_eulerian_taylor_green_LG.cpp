@@ -121,7 +121,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
-    InteractionDynamics<fluid_dynamics::EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
+    InteractionDynamics<fluid_dynamics::EulerianCompressibleViscousForceInner> viscous_force(water_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(water_body_inner);
     //----------------------------------------------------------------------
@@ -169,10 +169,10 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force. */
+            /** Force Prior due to viscous force. */
             time_step_initialization.exec();
             Real dt = get_fluid_time_step_size.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             /** Dynamics including pressure relaxation. */
             integration_time += dt;
             pressure_relaxation.exec(dt);

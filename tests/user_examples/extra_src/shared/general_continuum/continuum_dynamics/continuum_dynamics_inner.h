@@ -139,13 +139,13 @@ using Integration1stHalf = BaseIntegration1stHalf<fluid_dynamics::Integration1st
 using Integration1stHalfRiemann = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerRiemann>;
 
 /**
- * @class ShearAccelerationRelaxation
+ * @class ShearForceRelaxation
  */
-class ShearAccelerationRelaxation : public BaseRelaxation
+class ShearForceRelaxation : public BaseRelaxation
 {
   public:
-    explicit ShearAccelerationRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearAccelerationRelaxation(){};
+    explicit ShearForceRelaxation(BaseInnerRelation &inner_relation);
+    virtual ~ShearForceRelaxation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -155,14 +155,14 @@ class ShearAccelerationRelaxation : public BaseRelaxation
 };
 
 /**
- * @class AngularConservativeShearAccelerationRelaxation
+ * @class AngularConservativeShearForceRelaxation
  */
-class AngularConservativeShearAccelerationRelaxation : public ShearAccelerationRelaxation
+class AngularConservativeShearForceRelaxation : public ShearForceRelaxation
 {
   public:
-    explicit AngularConservativeShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
-        : ShearAccelerationRelaxation(inner_relation){};
-    virtual ~AngularConservativeShearAccelerationRelaxation(){};
+    explicit AngularConservativeShearForceRelaxation(BaseInnerRelation &inner_relation)
+        : ShearForceRelaxation(inner_relation){};
+    virtual ~AngularConservativeShearForceRelaxation(){};
 
     void interaction(size_t index_i, Real dt = 0.0);
 };
