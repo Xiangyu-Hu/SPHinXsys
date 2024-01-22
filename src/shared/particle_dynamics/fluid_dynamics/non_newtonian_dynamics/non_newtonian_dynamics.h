@@ -43,7 +43,7 @@ template <typename... InteractionTypes>
 class Oldroyd_BIntegration1stHalf;
 
 using Integration1stHalfInnerDissipative =
-    Integration1stHalf<Inner<>, DissipativeRiemannSolver, NoKernelCorrection>;
+    Integration1stHalf<Inner<>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <>
 class Oldroyd_BIntegration1stHalf<Inner<>>
@@ -60,7 +60,7 @@ class Oldroyd_BIntegration1stHalf<Inner<>>
 };
 
 using Integration1stHalfContactWallDissipative =
-    Integration1stHalf<Contact<Wall>, DissipativeRiemannSolver, NoKernelCorrection>;
+    Integration1stHalf<Contact<Wall>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <>
 class Oldroyd_BIntegration1stHalf<Contact<Wall>>
@@ -79,7 +79,7 @@ template <typename... InteractionTypes>
 class Oldroyd_BIntegration2ndHalf;
 
 using Integration2ndHalfInnerDissipative =
-    Integration2ndHalf<Inner<>, DissipativeRiemannSolver>;
+    Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
 template <>
 class Oldroyd_BIntegration2ndHalf<Inner<>>
     : public Integration2ndHalfInnerDissipative
@@ -97,7 +97,7 @@ class Oldroyd_BIntegration2ndHalf<Inner<>>
 };
 
 using Integration2ndHalfWithWallDissipative =
-    Integration2ndHalf<Contact<Wall>, DissipativeRiemannSolver>;
+    Integration2ndHalf<Contact<Wall>, AcousticRiemannSolver>;
 template <>
 class Oldroyd_BIntegration2ndHalf<Contact<Wall>>
     : public Integration2ndHalfWithWallDissipative
