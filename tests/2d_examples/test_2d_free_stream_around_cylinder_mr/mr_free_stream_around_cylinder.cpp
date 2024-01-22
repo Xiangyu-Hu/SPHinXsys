@@ -148,7 +148,7 @@ int main(int ac, char *av[])
     /** Density relaxation. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_contact);
     /** Apply transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplexAdaptive<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_contact);
@@ -159,7 +159,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-    InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_inserted_body(cylinder_contact);
+    InteractionDynamics<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_inserted_body(cylinder_contact);
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
@@ -210,7 +210,7 @@ int main(int ac, char *av[])
             Real Dt = get_fluid_advection_time_step_size.exec();
             free_stream_surface_indicator.exec();
             update_fluid_density.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             size_t inner_ite_dt = 0;

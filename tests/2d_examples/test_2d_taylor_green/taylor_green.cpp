@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerNoRiemann> density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    InteractionDynamics<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
@@ -152,7 +152,7 @@ int main(int ac, char *av[])
             time_step_initialization.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             Real relaxation_time = 0.0;

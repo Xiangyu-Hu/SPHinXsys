@@ -247,7 +247,7 @@ int main(int ac, char *av[])
     /** Pressure relaxation using verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
         fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -267,7 +267,7 @@ int main(int ac, char *av[])
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_gate(gate_contact);
+    InteractionDynamics<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -315,7 +315,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
+            /** Force Prior due to viscous force and gravity. */
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();

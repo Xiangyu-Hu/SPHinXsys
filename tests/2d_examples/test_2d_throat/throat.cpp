@@ -176,7 +176,7 @@ int main(int ac, char *av[])
     // define external force
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_block_inner, fluid_block_contact);
     // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);

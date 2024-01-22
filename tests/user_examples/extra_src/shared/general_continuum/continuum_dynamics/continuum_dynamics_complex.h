@@ -53,9 +53,6 @@ class BaseShearStressRelaxation1stHalfWithWall : public InteractionWithWall<Base
         : InteractionWithWall<BaseShearStressRelaxation1stHalfType>(std::forward<Args>(args)...){};
     virtual ~BaseShearStressRelaxation1stHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    // virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 };
 
 using ShearStressRelaxation1stHalfWithWall = BaseShearStressRelaxation1stHalfWithWall<ShearStressRelaxation1stHalf>;

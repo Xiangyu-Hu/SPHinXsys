@@ -47,13 +47,13 @@ void SurfaceTensionStress::interaction(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-SurfaceStressAcceleration<Inner<>>::SurfaceStressAcceleration(BaseInnerRelation &inner_relation)
+SurfaceStressForce<Inner<>>::SurfaceStressForce(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       rho_(particles_->rho_), mass_(particles_->mass_), force_prior_(particles_->force_prior_),
       color_gradient_(*particles_->getVariableByName<Vecd>("ColorGradient")),
       surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress")) {}
 //=================================================================================================//
-void SurfaceStressAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
+void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Vecd summation = ZeroData<Vecd>::value;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -67,7 +67,7 @@ void SurfaceStressAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
     force_prior_[index_i] += summation / rho_[index_i];
 }
 //=================================================================================================//
-SurfaceStressAcceleration<Contact<>>::SurfaceStressAcceleration(BaseContactRelation &contact_relation)
+SurfaceStressForce<Contact<>>::SurfaceStressForce(BaseContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()), FluidContactData(contact_relation),
       rho_(particles_->rho_), mass_(particles_->mass_), force_prior_(particles_->force_prior_),
       color_gradient_(*particles_->getVariableByName<Vecd>("ColorGradient")),
@@ -85,7 +85,7 @@ SurfaceStressAcceleration<Contact<>>::SurfaceStressAcceleration(BaseContactRelat
     }
 }
 //=================================================================================================//
-void SurfaceStressAcceleration<Contact<>>::interaction(size_t index_i, Real dt)
+void SurfaceStressForce<Contact<>>::interaction(size_t index_i, Real dt)
 {
     Vecd summation = ZeroData<Vecd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)

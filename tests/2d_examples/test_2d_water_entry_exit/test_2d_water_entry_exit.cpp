@@ -320,7 +320,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define the wetting diffusion dynamics used in the simulation.
@@ -336,7 +336,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluidRiemann>
+    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann>
         fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);
     //----------------------------------------------------------------------
     //	Building Simbody.
@@ -454,7 +454,7 @@ int main(int ac, char *av[])
             Real Dt = fluid_advection_time_step.exec();
 
             fluid_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
