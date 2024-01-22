@@ -107,7 +107,7 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 Oldroyd_BIntegration2ndHalf<Contact<Wall>>::
     Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
-    : Integration2ndHalfWithWallRiemann(wall_contact_relation),
+    : Integration2ndHalfContactWallRiemann(wall_contact_relation),
       oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")),
       dtau_dt_(*particles_->getVariableByName<Matd>("ElasticStressChangeRate"))
@@ -118,7 +118,7 @@ Oldroyd_BIntegration2ndHalf<Contact<Wall>>::
 //=================================================================================================//
 void Oldroyd_BIntegration2ndHalf<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    Integration2ndHalfWithWallRiemann::interaction(index_i, dt);
+    Integration2ndHalfContactWallRiemann::interaction(index_i, dt);
 
     Vecd vel_i = vel_[index_i];
     Matd tau_i = tau_[index_i];
