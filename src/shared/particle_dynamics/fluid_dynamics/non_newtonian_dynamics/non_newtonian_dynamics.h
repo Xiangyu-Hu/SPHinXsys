@@ -42,12 +42,12 @@ namespace fluid_dynamics
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration1stHalf;
 
-using Integration1stHalfInnerDissipative =
+using Integration1stHalfInnerRiemann =
     Integration1stHalf<Inner<>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <>
 class Oldroyd_BIntegration1stHalf<Inner<>>
-    : public Integration1stHalfInnerDissipative
+    : public Integration1stHalfInnerRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
@@ -59,12 +59,12 @@ class Oldroyd_BIntegration1stHalf<Inner<>>
     StdLargeVec<Matd> tau_, dtau_dt_;
 };
 
-using Integration1stHalfContactWallDissipative =
+using Integration1stHalfContactWallRiemann =
     Integration1stHalf<Contact<Wall>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <>
 class Oldroyd_BIntegration1stHalf<Contact<Wall>>
-    : public Integration1stHalfContactWallDissipative
+    : public Integration1stHalfContactWallRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation);
@@ -78,11 +78,11 @@ class Oldroyd_BIntegration1stHalf<Contact<Wall>>
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration2ndHalf;
 
-using Integration2ndHalfInnerDissipative =
+using Integration2ndHalfInnerRiemann =
     Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
 template <>
 class Oldroyd_BIntegration2ndHalf<Inner<>>
-    : public Integration2ndHalfInnerDissipative
+    : public Integration2ndHalfInnerRiemann
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
@@ -96,11 +96,11 @@ class Oldroyd_BIntegration2ndHalf<Inner<>>
     Real mu_p_, lambda_;
 };
 
-using Integration2ndHalfWithWallDissipative =
+using Integration2ndHalfWithWallRiemann =
     Integration2ndHalf<Contact<Wall>, AcousticRiemannSolver>;
 template <>
 class Oldroyd_BIntegration2ndHalf<Contact<Wall>>
-    : public Integration2ndHalfWithWallDissipative
+    : public Integration2ndHalfWithWallRiemann
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
