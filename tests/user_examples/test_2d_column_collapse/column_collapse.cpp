@@ -1,8 +1,9 @@
 /**
  * @file 	column_collapse.cpp
- * @brief 	2D dambreak example.
- * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for soil simulation.
+ * @brief 	2D column collapse.
+ * @details This is the one of the basic test cases, also the first case for understanding
+ * 			SPH method for modelling granular materials such as soils and sands.
+ * @author Shuaihao Zhang and Xiangyu Hu
  */
 #include "all_continuum.h"
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -10,29 +11,24 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-// unit system - 1
 Real DL = 0.5;  /**< Tank length. */
 Real DH = 0.15; /**< Tank height. */
 Real LL = 0.2;  /**< Liquid column length. */
 Real LH = 0.1;  /**< Liquid column height. */
-
 Real particle_spacing_ref = LH / 50; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 // observer location
-StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
+StdVec<Vecd> observation_location = { Vecd(DL, 0.2) };
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-/*
- * Dilatancy angle is always zero for non-associate flow rule
- */
-Real rho0_s = 2650;           /**< Reference density of soil. */
-Real gravity_g = 9.8;         /**< Gravity force of soil. */
-Real Youngs_modulus = 0.84e6; // reference Youngs modulus
-Real poisson = 0.3;           // Poisson ratio
-Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
-Real friction_angle = 19.8 * Pi / 180;
+Real rho0_s = 2040;				// reference density of soil
+Real gravity_g = 9.8;			// gravity force of soil
+Real Youngs_modulus = 5.84e6;   // reference Youngs modulus
+Real poisson = 0.3;		        // Poisson ratio
+Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson))); //sound speed
+Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -47,20 +43,20 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
 {
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+public:
+    explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 std::vector<Vecd> soil_shape{
-    Vecd(0, 0), Vecd(0, LH), Vecd(LL, LH), Vecd(LL, 0), Vecd(0, 0)};
+    Vecd(0, 0), Vecd(0, LH), Vecd(LL, LH), Vecd(LL, 0), Vecd(0, 0) };
 
 class Soil : public MultiPolygonShape
 {
-  public:
-    explicit Soil(const std::string &shape_name) : MultiPolygonShape(shape_name)
+public:
+    explicit Soil(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(soil_shape, ShapeBooleanOps::add);
     }
@@ -68,19 +64,16 @@ class Soil : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-#ifdef BOOST_AVAILABLE
-    // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-#endif //----------------------------------------------------------------------
-       //----------------------------------------------------------------------
-       //	Creating bodies with corresponding materials and particles.
-       //----------------------------------------------------------------------
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<Soil>("GranularBody"));
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<ParticleGeneratorLattice>();
@@ -100,7 +93,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation soil_block_inner(soil_block);
-    ContactRelation soil_block_contact(soil_block, {&wall_boundary});
+    ContactRelation soil_block_contact(soil_block, { &wall_boundary });
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -114,17 +107,15 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.2);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    // stress relaxation with Riemann solver
     Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
     Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
@@ -181,11 +172,9 @@ int main(int ac, char *av[])
             while (relaxation_time < Dt)
             {
                 Real dt = soil_acoustic_time_step.exec();
-
-                granular_stress_relaxation_1st.exec(dt);
                 stress_diffusion.exec();
+                granular_stress_relaxation_1st.exec(dt);
                 granular_stress_relaxation_2nd.exec(dt);
-
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
@@ -196,8 +185,8 @@ int main(int ac, char *av[])
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
-                              << GlobalStaticVariables::physical_time_
-                              << std::scientific << "	dt = " << dt << "\n";
+                        << GlobalStaticVariables::physical_time_
+                        << std::scientific << "	dt = " << dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                     {
@@ -225,15 +214,14 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << std::fixed << "Total wall time for computation: " << tt.seconds()
-              << " seconds." << std::endl;
+        << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
+        << interval_computing_time_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_soil_stress_relaxation = "
-              << interval_computing_soil_stress_relaxation.seconds() << "\n";
+        << interval_computing_soil_stress_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-              << interval_updating_configuration.seconds() << "\n";
+        << interval_updating_configuration.seconds() << "\n";
 
-    // sph_system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_mechanical_energy.generateDataBase(1.0e-3);

@@ -8,13 +8,10 @@ namespace SPH
 
     class ContinuumParticles : public BaseParticles
     {
-      public:
+    public:
         StdLargeVec<Matd> strain_tensor_;
         StdLargeVec<Matd> strain_tensor_rate_;
         StdLargeVec<Vecd> acc_shear_;
-
-        StdLargeVec<Matd> stress_tensor_;
-        StdLargeVec<Matd> stress_tensor_rate_;
 
         StdLargeVec<Matd> shear_stress_;
         StdLargeVec<Matd> shear_stress_rate_;
@@ -27,13 +24,13 @@ namespace SPH
         StdLargeVec<Vecd> n_;    /**<  current normal direction */
         StdLargeVec<Vecd> n0_;   /**<  initial normal direction */
 
-        GeneralContinuum &continuum_;
+        GeneralContinuum& continuum_;
 
-        ContinuumParticles(SPHBody &sph_body, GeneralContinuum *continuum);
-        virtual ~ContinuumParticles(){};
+        ContinuumParticles(SPHBody& sph_body, GeneralContinuum* continuum);
+        virtual ~ContinuumParticles() {};
 
         virtual void initializeOtherVariables() override;
-        virtual ContinuumParticles *ThisObjectPtr() override { return this; };
+        virtual ContinuumParticles* ThisObjectPtr() override { return this; };
     };
 
     class PlasticContinuumParticles : public ContinuumParticles
