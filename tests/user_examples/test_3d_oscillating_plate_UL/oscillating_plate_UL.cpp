@@ -138,8 +138,7 @@ int main(int ac, char *av[])
     /** stress relaxation. */
     Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
-    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation>
-        plate_shear_acceleration(plate_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> plate_shear_acceleration(plate_body_inner);
     /** Corrected configuration. */
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
@@ -203,7 +202,6 @@ int main(int ac, char *av[])
                 plate_pressure_relaxation.exec(acoustic_dt);
                 constrain_holder.exec(acoustic_dt);
                 plate_density_relaxation.exec(acoustic_dt);
-                // shear acceleration with angular conservative
                 plate_shear_acceleration.exec(acoustic_dt);
                 number_of_iterations++;
                 relaxation_time += acoustic_dt;
