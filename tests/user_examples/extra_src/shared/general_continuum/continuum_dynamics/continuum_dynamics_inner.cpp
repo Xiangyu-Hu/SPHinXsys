@@ -116,8 +116,8 @@ void ConstrainSolidBodyMassCenter::update(size_t index_i, Real dt)
 //=================================================================================================//
 BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), PlasticContinuumDataInner(inner_relation),
-      plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_), mass_(particles_->mass_),
-      p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), pos_(particles_->pos_),
+      plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_), 
+      p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), mass_(particles_->mass_), pos_(particles_->pos_),
       vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
       stress_tensor_3D_(particles_->stress_tensor_3D_), strain_tensor_3D_(particles_->strain_tensor_3D_),
       stress_rate_3D_(particles_->stress_rate_3D_), strain_rate_3D_(particles_->strain_rate_3D_),
