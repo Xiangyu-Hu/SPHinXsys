@@ -69,17 +69,19 @@ class AcousticRiemannSolver : public NoRiemannSolver
 {
   public:
     template <class FluidI, class FluidJ>
-    AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+    AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, const Real limiter_coeff = 3.0)
         : NoRiemannSolver(fluid_i, fluid_j),
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
-          inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
-    Real DissipativePJump(const Real &u_jump, const Real coeff = 3.0);
+          inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_),
+          limiter_coeff_(limiter_coeff){};
+    Real DissipativePJump(const Real &u_jump);
     Real DissipativeUJump(const Real &p_jump);
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;
     Real inv_c_ave_;
+    Real limiter_coeff_;
 };
 
 class DissipativeRiemannSolver : public AcousticRiemannSolver

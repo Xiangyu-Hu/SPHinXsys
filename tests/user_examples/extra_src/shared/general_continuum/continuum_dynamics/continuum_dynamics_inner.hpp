@@ -74,7 +74,7 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseStressRelaxation2ndHalf<RiemannSolverType>::BaseStressRelaxation2ndHalf(BaseInnerRelation& inner_relation)
-			: BaseRelaxationPlastic(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_),
+			: BaseRelaxationPlastic(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
 			velocity_gradient_(particles_->velocity_gradient_), acc_deviatoric_plastic_strain_(particles_->acc_deviatoric_plastic_strain_),
 			vertical_stress_(particles_->vertical_stress_), Vol_(particles_->Vol_), mass_(particles_->mass_),
 			E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
@@ -99,7 +99,7 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
 				density_change_rate += u_jump * dW_ijV_j;
-				p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump, 20*(Real)Dimensions) * dW_ijV_j * e_ij;
+				p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
 				velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * e_ij.transpose();
 			}
 			drho_dt_[index_i] += density_change_rate * rho_[index_i];
