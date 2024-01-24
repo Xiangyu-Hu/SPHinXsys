@@ -99,7 +99,7 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
 				density_change_rate += u_jump * dW_ijV_j;
-				p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+				p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump, 20*(Real)Dimensions) * dW_ijV_j * e_ij;
 				velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * e_ij.transpose();
 			}
 			drho_dt_[index_i] += density_change_rate * rho_[index_i];

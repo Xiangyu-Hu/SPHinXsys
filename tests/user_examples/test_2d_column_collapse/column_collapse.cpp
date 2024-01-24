@@ -13,8 +13,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 0.5;  /**< Tank length. */
 Real DH = 0.15; /**< Tank height. */
-Real LL = 0.2;  /**< Liquid column length. */
-Real LH = 0.1;  /**< Liquid column height. */
+Real LL = 0.2;  /**< Soil column length. */
+Real LH = 0.1;  /**< Soil column height. */
 Real particle_spacing_ref = LH / 50; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));

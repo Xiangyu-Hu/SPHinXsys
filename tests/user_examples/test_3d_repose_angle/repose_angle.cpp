@@ -9,8 +9,8 @@
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
-Real radius = 0.1;                                         // liquid length
-Real height = 0.1;                                         // liquid height
+Real radius = 0.1;                                         // Soil column length
+Real height = 0.1;                                         // Soil column height
 Real resolution_ref = radius / 10;                         // particle spacing
 Real BW = resolution_ref * 4;                              // boundary width
 Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length

@@ -74,7 +74,7 @@ class AcousticRiemannSolver : public NoRiemannSolver
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
           inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
-    Real DissipativePJump(const Real &u_jump);
+    Real DissipativePJump(const Real &u_jump, const Real coeff = 3.0);
     Real DissipativeUJump(const Real &p_jump);
 
   protected:

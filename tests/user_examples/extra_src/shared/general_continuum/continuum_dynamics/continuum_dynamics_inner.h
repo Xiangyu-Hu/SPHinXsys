@@ -5,8 +5,6 @@
 #include "fluid_integration.hpp"
 #include "fluid_time_step.h"
 #include "general_continuum.h"
-#include "riemann_solver_extra.h"
-
 namespace SPH
 {
     namespace continuum_dynamics
@@ -199,9 +197,8 @@ namespace SPH
             virtual Vecd computeNonConservativeForce(size_t index_i);
             StdLargeVec<Matd>& velocity_gradient_;
         };
-
         using StressRelaxation1stHalf = BaseStressRelaxation1stHalf<NoRiemannSolver>;
-        using StressRelaxation1stHalfRiemann = BaseStressRelaxation1stHalf<AcousticRiemannSolverExtra>;
+        using StressRelaxation1stHalfRiemann = BaseStressRelaxation1stHalf<AcousticRiemannSolver>;
 
         template <class RiemannSolverType>
         class BaseStressRelaxation2ndHalf : public BaseRelaxationPlastic
@@ -221,7 +218,7 @@ namespace SPH
             Real E_, nu_;
         };
         using StressRelaxation2ndHalf = BaseStressRelaxation2ndHalf<NoRiemannSolver>;
-        using StressRelaxation2ndHalfRiemann = BaseStressRelaxation2ndHalf<AcousticRiemannSolverExtra>;
+        using StressRelaxation2ndHalfRiemann = BaseStressRelaxation2ndHalf<AcousticRiemannSolver>;
         /**
          * @class StressDiffusion
          */
