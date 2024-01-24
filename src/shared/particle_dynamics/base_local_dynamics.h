@@ -49,6 +49,7 @@ class Boundary;        /**< Interaction with boundary */
 class Wall;            /**< Interaction with wall boundary */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
+class Dynamic;         /**< A dynamic interaction */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
