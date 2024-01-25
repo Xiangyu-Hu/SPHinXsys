@@ -1,5 +1,12 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
+**Notice on repository transfer to SPHinXsys team** 
+
+In order to promoting open-source democratization,
+this repository will be transferred to the SPHinXsys team 
+in the next few weeks.
+After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
+
 **Project Status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
@@ -11,13 +18,6 @@
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/sphinxsys.svg?style=social&label=Follow%20%40sphinxsys)](https://twitter.com/sphinxsys)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
-
-**Notice on repository transfer to SPHinXsys team** 
-
-In order to promoting open-source democratization,
-this repository will be transferred to the SPHinXsys team 
-in the next few weeks.
-After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
 
 ## Description
 
