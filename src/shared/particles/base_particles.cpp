@@ -37,7 +37,7 @@ void BaseParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     registerVariable(vel_, "Velocity");
     registerVariable(force_, "Force");
-    registerVariable(force_prior_, "PriorForce");
+    registerVariable(force_prior_, "ForcePrior");
     registerVariable(rho_, "Density", base_material_.ReferenceDensity());
     registerVariable(mass_, "Mass",
                      [&](size_t i) -> Real

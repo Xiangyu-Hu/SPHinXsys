@@ -162,7 +162,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::SurfaceStressForceComplex> water_surface_tension_force(water_inner, water_air_contact);
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
     InteractionWithUpdate<fluid_dynamics::SurfaceStressForceComplex> air_surface_tension_force(air_inner, air_water_contact);
-    air_block.addBodyStateForRecording<Vecd>("PriorForce");
+    air_block.addBodyStateForRecording<Vecd>("ForcePrior");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

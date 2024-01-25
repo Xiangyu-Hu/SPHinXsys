@@ -41,4 +41,3 @@
 #include "general_refinement.h"
 #include "kernel_correction.hpp"
 #include "particle_smoothing.hpp"
-#include "time_step_initialization.h"
