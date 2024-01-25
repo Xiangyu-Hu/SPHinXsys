@@ -23,7 +23,7 @@ StdVec<Vecd> observation_location = { Vecd(DL, 0.2) };
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-Real rho0_s = 2040;				// reference density of soil
+Real rho0_s = 2040.0;				// reference density of soil
 Real gravity_g = 9.8;			// gravity force of soil
 Real Youngs_modulus = 5.84e6;   // reference Youngs modulus
 Real poisson = 0.3;		        // Poisson ratio
