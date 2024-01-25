@@ -20,15 +20,6 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * --------------------------------------------------------------------------*/
-/**
- * @file all_fluid_dynamics.h
- * @brief This is the header file that user code should include to pick up all
- * fluid dynamics used in SPHinXsys.
- * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
- * then algorithm interacting with wall is defined, further algorithms for multiphase flow interaction
- * built upon these basic algorithms.
- * @author	Chi ZHang and Xiangyu Hu
- */
 #pragma once
 
 #include "all_continuum_dynamics.h"
