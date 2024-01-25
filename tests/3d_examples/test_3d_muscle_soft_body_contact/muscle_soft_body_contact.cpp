@@ -4,10 +4,11 @@
  * Different particle resolutions are used for the two soft bodies that are in contact.
  * @author 	Chi Zhang, Bence Rochlitz and Xiangyu Hu
  */
-#include "sphinxsys.h"
-/** Name space. */
+#include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
-/** Geometry parameters. */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real L = 0.04;
 Real PL = 0.1;
 Real resolution_ref = L / 12.0;
@@ -18,16 +19,18 @@ Vecd halfsize_stationary_plate(0.5 * BW, 0.5 * L + BW, 0.5 * L + BW);
 Vecd translation_stationary_plate(-0.5 * BW, 0.0, 0.0);
 Vecd halfsize_moving_plate(0.5 * BW, 0.5 * PL, 0.5 * PL);
 Vecd translation_moving_plate(L + BW, 0.0, 0.0);
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vecd(-BW, -0.5 * PL, -0.5 * PL),
                                  Vecd(2.0 * L + BW, 0.5 * PL, 0.5 * PL));
-
-/** For material properties of the solid. */
+//----------------------------------------------------------------------
+//	Material parameters.
+//----------------------------------------------------------------------
 Real rho0_s = 1265.0;
 Real poisson = 0.45;
 Real Youngs_modulus = 5e4;
 Real physical_viscosity = 200.0;
-/** Define the myocardium body shape. */
+//----------------------------------------------------------------------
+//	Geometric shapes used in this case.
+//----------------------------------------------------------------------
 class Myocardium : public ComplexShape
 {
   public:
@@ -37,9 +40,7 @@ class Myocardium : public ComplexShape
         add<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate);
     }
 };
-/**
- * @brief define the moving plate shape
- */
+
 class MovingPlate : public ComplexShape
 {
   public:
@@ -48,35 +49,43 @@ class MovingPlate : public ComplexShape
         add<TransformShape<GeometricShapeBox>>(Transform(translation_moving_plate), halfsize_moving_plate);
     }
 };
-/**
- *  The main program
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
+    //----------------------------------------------------------------------
+    //	Build up an SPHSystem and IO environment.
+    //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    /** Creat a Myocardium body, corresponding material, particles and reaction model. */
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<ParticleGeneratorLattice>();
-    /** Plate. */
+
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineAdaptationRatios(1.15, 1.5);
     moving_plate.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<ParticleGeneratorLattice>();
-    /** topology */
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
     InnerRelation myocardium_body_inner(myocardium_body);
     InnerRelation moving_plate_inner(moving_plate);
     SurfaceContactRelation myocardium_plate_contact(myocardium_body, {&moving_plate});
     SurfaceContactRelation plate_myocardium_contact(moving_plate, {&myocardium_body});
-    /**
-     * This section define all numerical methods will be used in this case.
-     */
-    /** initialize a time step */
-    SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
-    SimpleDynamics<TimeStepInitialization> plate_initialize_time_step(moving_plate, makeShared<Gravity>(Vecd(-100.0, 0.0, 0.0)));
-    /** Corrected configuration. */
+    //----------------------------------------------------------------------
+    //	Define the numerical methods used in the simulation.
+    //	Note that there may be data dependence on the sequence of constructions.
+    //----------------------------------------------------------------------
+    Gravity gravity(Vecd(-100.0, 0.0, 0.0));
+    SimpleDynamics<GravityForce> plate_initialize_constant_gravity(moving_plate, gravity);
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
@@ -84,68 +93,68 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half_2(moving_plate_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_2(moving_plate_inner);
-    // stress_relaxation_first_half_2.post_processes_(spring_constraint);
     /** Algorithms for solid-solid contact. */
     InteractionDynamics<solid_dynamics::ContactDensitySummation> myocardium_update_contact_density(myocardium_plate_contact);
     InteractionDynamics<solid_dynamics::ContactDensitySummation> plate_update_contact_density(plate_myocardium_contact);
-    InteractionDynamics<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-    InteractionDynamics<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
-
+    InteractionWithUpdate<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
     /** Constrain the holder. */
     BodyRegionByParticle holder(myocardium_body,
                                 makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Add spring constraint on the plate. */
     SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
-
     /** Damping with the solid body*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
-        muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
-        plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
-    /** Output */
-    IOEnvironment io_environment(sph_system);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-
-    /**
-     * From here the time stepping begins.
-     * Set the starting time.
-     */
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_plate_kinetic_energy(moving_plate);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     GlobalStaticVariables::physical_time_ = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    /** apply initial condition */
     corrected_configuration.exec();
     corrected_configuration_2.exec();
-    write_states.writeToFile(0);
-    /** Setup physical parameters. */
+    plate_initialize_constant_gravity.exec();
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     int ite = 0;
     Real end_time = 0.1;
     Real output_period = end_time / 100.0;
     Real dt = 0.0;
-    /** Statistics for computing time. */
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
-    /**
-     * Main loop
-     */
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_states.writeToFile(0);
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
         {
-            if (ite % 100 == 0)
+            if (ite % 50 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
                           << GlobalStaticVariables::physical_time_ << "	dt: "
                           << dt << "\n";
+                write_plate_kinetic_energy.writeToFile(ite);
             }
-            /** Gravity. */
-            myocardium_initialize_time_step.exec();
-            plate_initialize_time_step.exec();
-
             spring_constraint.exec();
-
             /** Contact model for myocardium. */
             myocardium_update_contact_density.exec();
             myocardium_compute_solid_contact_forces.exec();
@@ -186,6 +195,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+    if (sph_system.GenerateRegressionData())
+    {
+        write_plate_kinetic_energy.generateDataBase(1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_plate_kinetic_energy.testResult();
+    }
 
     return 0;
 }
