@@ -1,5 +1,12 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
+**Notice on repository transfer to SPHinXsys team** 
+
+In order to promoting open-source democratization,
+this repository will be transferred to the SPHinXsys team 
+in the next few weeks.
+After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
+
 **Project Status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
