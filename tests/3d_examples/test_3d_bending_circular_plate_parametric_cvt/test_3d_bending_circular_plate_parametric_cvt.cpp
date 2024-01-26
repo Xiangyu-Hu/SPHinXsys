@@ -254,7 +254,8 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
@@ -280,6 +281,7 @@ return_data bending_circular_plate(Real dp_ratio)
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
+    constant_gravity_force.exec();
 
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file
@@ -330,8 +332,6 @@ return_data bending_circular_plate(Real dp_ratio)
                               << dt << "\n";
                 }
 
-                initialize_external_force.exec(dt);
-
                 dt = std::min(thickness / dp, Real(0.5)) * computing_time_step_size.exec();
                 { // checking for excessive time step reduction
                     if (dt > max_dt)
@@ -359,8 +359,7 @@ return_data bending_circular_plate(Real dp_ratio)
                             throw std::runtime_error("position has become nan");
                 }
             }
-            { // output data
-                // std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+            {
                 vtp_output.writeToFile(ite);
             }
         }
@@ -382,11 +381,9 @@ return_data bending_circular_plate(Real dp_ratio)
         std::cout << "deflection_ref: " << deflection_ref << std::endl;
 
         EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref) * 5e-2); // 5%
-                                                                                                                               // EXPECT_NEAR(point_center.stress_max, stress_max_ref, stress_max_ref*1e-2);
     }
     return_data data;
     data.deflection = point_center.displacement[sym_axis];
-    // data.stress_max = point_center.stress_max;
     return data;
 }
 
