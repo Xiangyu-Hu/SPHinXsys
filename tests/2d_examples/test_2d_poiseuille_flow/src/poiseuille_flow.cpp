@@ -1,8 +1,7 @@
 /**
  * @file 	poiseuille_flow.cpp
  * @brief 	2D poiseuille flow example
- * @details This is the one of the basic test cases for validating viscous flow.
- * 			//TODO: this case is too causal now, it should be revised to validate low-Reynolds number flow (Re = 10?).
+ * @details This is the one of the basic test cases for validating viscous flow with low-Reynolds number flow (Re = 100).
  * @author 	Chi Zhang and Xiangyu Hu
  */
 /**
@@ -16,8 +15,8 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 1.0e-3;                /**< Tank length. */
-Real DH = 1.0e-3;                /**< Tank height. */
+Real DL = 6.0;                   /**< Tank length. */
+Real DH = 1.0;                   /**< Tank height. */
 Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
 /** Domain bounds of the system. */
@@ -25,11 +24,12 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /**
  * @brief Material properties of the fluid.
  */
-Real rho0_f = 1000.0;                  /**< Reference density of fluid. */
-Real gravity_g = 1.0e-4;               /**< Gravity force of fluid. */
-Real mu_f = 1.0e-6;                    /**< Viscosity. */
-Real U_f = gravity_g * DH * DH / mu_f; /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;                 /**< Reference sound speed. */
+Real rho0_f = 1.0;
+Real mu_f = 1.0e-1; /**< Viscosity. */
+Real U_f = 1.0;
+Real gravity_g = 12.0 * mu_f * U_f / rho0_f / DH / DH; /**< Gravity force of fluid. */
+Real U_max = 1.5 * U_f; //make sure the maximum anticipated speed 
+Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 /**
  * @brief 	Fluid body definition.
  */
@@ -90,6 +90,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.addBodyStateForRecording<Real>("Density");
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
@@ -153,9 +154,9 @@ int main(int ac, char *av[])
      */
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 20.0;   /**< End time. */
-    Real Output_Time = 0.1; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real end_time = 100.0;  /**< End time. */
+    Real Output_Time = 1.0; /**< Time stamps for output of body states. */
+    Real dt = 0.0;           /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
@@ -177,7 +178,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            // viscous_force.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
             /** Dynamics including pressure relaxation. */
@@ -187,7 +188,6 @@ int main(int ac, char *av[])
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 pressure_relaxation.exec(dt);
-                viscous_force.exec(dt);
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
