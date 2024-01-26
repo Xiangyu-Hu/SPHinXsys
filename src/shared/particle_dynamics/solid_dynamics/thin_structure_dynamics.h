@@ -383,7 +383,7 @@ class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::She
   public:
     explicit ShellCurvature(BaseInnerRelation &inner_relation);
 
-    void update(size_t index_i, Real dt);
+    void update(size_t index_i, Real);
     void compute_initial_curvature();
 
   private:
@@ -394,10 +394,10 @@ class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::She
     StdLargeVec<Matd> &F_;
     StdLargeVec<Matd> &F_bending_;
 
-    StdLargeVec<Real> &H_;
+    StdLargeVec<Real> &k1_; // first principle curvature
+    StdLargeVec<Real> &k2_; // second principle curvature
 
     StdLargeVec<Matd> dn_0_;
-    StdLargeVec<Matd> dn_;
 };
 
 /**
@@ -408,11 +408,12 @@ class AverageShellCurvature : public LocalDynamics, public thin_structure_dynami
 {
   public:
     explicit AverageShellCurvature(BaseInnerRelation &inner_relation);
-    void update(size_t index_i, Real dt);
+    void update(size_t index_i, Real);
 
   private:
     StdLargeVec<Vecd> &n_;
-    StdLargeVec<Real> &H_avg_;
+    StdLargeVec<Real> &k1_avg_; // first principle curvature
+    StdLargeVec<Real> &k2_avg_; // second principle curvature
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH
