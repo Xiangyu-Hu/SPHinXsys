@@ -136,26 +136,30 @@ int main(int ac, char *av[])
     periodic_condition.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile(0);
-    /**
-     * @brief 	Basic parameters.
-     */
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 100.0;  /**< End time. */
     Real Output_Time = 1.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
-    /** statistics for computing CPU time. */
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;
     TimeInterval interval_computing_pressure_relaxation;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
-    /**
-     * @brief 	Main loop starts here.
-     */
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile(0);
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
