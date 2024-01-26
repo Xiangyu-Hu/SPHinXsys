@@ -128,14 +128,14 @@ void AdaptiveContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies)
+ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_shell_contact_neighbors_.push_back(
             neighbor_builder_contact_to_shell_ptrs_keeper_.createPtr<NeighborBuilderContactToShell>(
-                sph_body_, *contact_bodies_[k]));
+                sph_body_, *contact_bodies_[k], normal_correction));
     }
 }
 //=================================================================================================//
@@ -150,14 +150,14 @@ void ContactRelationToShell::updateConfiguration()
     }
 }
 //=================================================================================================//
-ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies)
+ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_contact_neighbors_.push_back(
             neighbor_builder_contact_from_shell_ptrs_keeper_.createPtr<NeighborBuilderContactFromShell>(
-                sph_body_, *contact_bodies_[k]));
+                sph_body_, *contact_bodies_[k], normal_correction));
     }
 }
 //=================================================================================================//

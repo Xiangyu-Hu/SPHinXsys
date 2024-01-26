@@ -163,7 +163,7 @@ class ContactRelationToShell : public ContactRelationCrossResolution
     UniquePtrsKeeper<NeighborBuilderContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
 
   public:
-    ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies);
+    ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction);
     virtual ~ContactRelationToShell(){};
     virtual void updateConfiguration() override;
 
@@ -181,7 +181,7 @@ class ContactRelationFromShell : public ContactRelationCrossResolution
     UniquePtrsKeeper<NeighborBuilderContactFromShell> neighbor_builder_contact_from_shell_ptrs_keeper_;
 
   public:
-    ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies);
+    ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction);
     virtual ~ContactRelationFromShell(){};
     virtual void updateConfiguration() override;
 

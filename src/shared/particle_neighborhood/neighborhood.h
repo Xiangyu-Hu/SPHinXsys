@@ -224,12 +224,14 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
 {
   public:
-    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body);
+    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
-    StdLargeVec<Real> &H_avg_; // summation of average mean curvature of contact body
+    StdLargeVec<Real> &k1_avg_; // 1st principle curvature of contact body
+    StdLargeVec<Real> &k2_avg_; // 2nd principle curvature of contact body
+    Real direction_correcter_;
 };
 
 /**
@@ -239,13 +241,15 @@ class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
 class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
 {
   public:
-    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body);
+    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
-    StdLargeVec<Real> &H_avg_; // summation of average mean curvature of contact body
+    StdLargeVec<Real> &k1_avg_; // 1st principle curvature of contact body
+    StdLargeVec<Real> &k2_avg_; // 2nd principle curvature of contact body
     StdLargeVec<Real> &thickness_;
+    Real direction_correcter_;
 };
 
 /**
@@ -260,7 +264,8 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
-    StdLargeVec<Real> &H_; // summation of mean curvature of contact body
+    StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
+    StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
     StdLargeVec<Vecd> &pos0_;
     StdLargeVec<Real> &thickness_;
     UniquePtrKeeper<Kernel> kernel_keeper_;

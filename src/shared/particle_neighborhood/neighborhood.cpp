@@ -257,9 +257,11 @@ void BaseNeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborh
     neighborhood.e_ij_[current_size] = e_ij;
 }
 //=================================================================================================//
-NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body)
+NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactShell(contact_body),
-      H_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("AverageTotalMeanCurvature"))
+      k1_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("Average1stPrincipleCurvature")),
+      k2_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("Average2ndPrincipleCurvature")),
+      direction_correcter_(normal_correction ? -1 : 1)
 {
     // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
     kernel_ = body.sph_adaptation_->getKernel();
@@ -276,32 +278,33 @@ void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
 
     const Real Vol_j = std::get<2>(list_data_j);
 
-    // normal direction should point from shell to fluid
-    // correct normal direction pointing from fluid to shell
-    const Vecd n_j = -n_[index_j]; // normal direction of shell particle in cell linked list with index j
-
     if (distance < kernel_->CutOffRadius())
     {
         Real W_ijV_j_ttl = kernel_->W(distance, displacement) * Vol_j;
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
+        // correct normal direction pointing from fluid to shell
+        const Vecd n_j = direction_correcter_ * n_[index_j]; // normal direction of shell particle in cell linked list with index j
+
         Vecd pos_j_dummy = pos_j + n_j * particle_distance_;
         Vecd displacement_dummy = pos_i - pos_j_dummy;
         Real distance_dummy = displacement_dummy.norm();
 
-        // H is the total mean curvature
-        // for 2D, curvature=H
-        // for 3D, mean curvature=H/2
-        const Real H_j = -H_avg_[index_j] / (Dimensions - 1); // mean curvature with corrected sign
+        // k1 and k2 are principle curvatures of the shell
+        // For 2d, k1 is the curvature, k2 = 0
+        const Real k1_j = direction_correcter_ * k1_avg_[index_j];
+        const Real k2_j = direction_correcter_ * k2_avg_[index_j];
 
         int counter = 0;
         while (distance_dummy < kernel_->CutOffRadius())
         {
             counter++;
-            const Real Vol_j_dummy = Vol_j * std::pow(1 + counter * H_j * particle_distance_, Dimensions - 1);
-            if (Vol_j_dummy <= 0)
+            const Real factor_1 = 1 + counter * k1_j * particle_distance_;
+            const Real factor_2 = 1 + counter * k2_j * particle_distance_;
+            if (factor_1 <= 0 || factor_2 <= 0)
                 break;
+            const Real Vol_j_dummy = Vol_j * factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
             W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
@@ -326,10 +329,12 @@ void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
     }
 };
 //=================================================================================================//
-NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body)
+NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactShell(body),
-      H_avg_(*body.getBaseParticles().registerSharedVariable<Real>("AverageTotalMeanCurvature")),
-      thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness"))
+      k1_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("Average1stPrincipleCurvature")),
+      k2_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("Average2ndPrincipleCurvature")),
+      thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness")),
+      direction_correcter_(normal_correction ? -1 : 1)
 {
     // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
     kernel_ = contact_body.sph_adaptation_->getKernel();
@@ -346,32 +351,35 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
 
     const Real Vol_j = std::get<2>(list_data_j);
 
-    const Real W_ij = kernel_->W(distance, displacement) * Vol_j;
-
-    // correct normal direction, pointing from fluid to shell
-    const Vecd n_i = -n_[index_i];
-
     if (distance < kernel_->CutOffRadius())
     {
+        // W_ij is not used in force from fluid classes, no need to modify
+        const Real W_ij = kernel_->W(distance, displacement);
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
+
+        // correct normal direction, pointing from fluid to shell
+        const Vecd n_i = direction_correcter_ * n_[index_i];
 
         Vecd pos_i_dummy = pos_i + n_i * particle_distance_;
         Vecd displacement_dummy = pos_i_dummy - pos_j;
         Real distance_dummy = displacement_dummy.norm();
 
-        // H is the total mean curvature
-        // for 2D, curvature=H
-        // for 3D, mean curvature=H/2
-        const Real H_i = -H_avg_[index_i] / (Dimensions - 1); // mean curvature with corrected sign
+        // k1 and k2 are principle curvatures of the shell
+        // For 2d, k1 is the curvature, k2 = 0
+        const Real k1_i = direction_correcter_ * k1_avg_[index_i];
+        const Real k2_i = direction_correcter_ * k2_avg_[index_i];
 
         int counter = 0;
         while (distance_dummy < kernel_->CutOffRadius())
         {
             counter++;
-            const Real Vol_i_factor = std::pow(1 + counter * H_i * particle_distance_, Dimensions - 1);
-            if (Vol_i_factor <= 0)
+            const Real factor_1 = 1 + counter * k1_i * particle_distance_;
+            const Real factor_2 = 1 + counter * k2_i * particle_distance_;
+            if (factor_1 <= 0 || factor_2 <= 0)
                 break;
+            const Real Vol_i_factor = factor_1 * factor_2;
+
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j * Vol_i_factor;
             Vecd e_ij = displacement_dummy / distance_dummy;
             dW_ijV_j_ttl += dW_ijV_j;
@@ -397,7 +405,8 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
 NeighborBuilderShellSelfContact::
     NeighborBuilderShellSelfContact(SPHBody &body)
     : BaseNeighborBuilderContactShell(body),
-      H_(*body.getBaseParticles().registerSharedVariable<Real>("TotalMeanCurvature")),
+      k1_(*body.getBaseParticles().registerSharedVariable<Real>("1stPrincipleCurvature")),
+      k2_(*body.getBaseParticles().registerSharedVariable<Real>("2ndPrincipleCurvature")),
       pos0_(*body.getBaseParticles().getVariableByName<Vecd>("InitialPosition")),
       thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness"))
 {
@@ -418,15 +427,6 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
 
     const Real Vol_j = std::get<2>(list_data_j);
 
-    // correct normal direction, make sure it points from index i to index j
-    const Real direction_corrector = -SGN(displacement.dot(n_[index_j]));
-    const Vecd n_j = n_[index_j] * direction_corrector; // normal direction of shell particle in cell linked list with index j
-
-    // H is the total mean curvature
-    // for 2D, curvature=H
-    // for 3D, mean curvature=H/2
-    const Real H_j = H_[index_j] / (Dimensions - 1) * direction_corrector; // mean curvature with corrected sign
-
     // only particles within 1*dp distance should have force
     if (distance < particle_distance_ && distance0 > kernel_->CutOffRadius())
     {
@@ -434,16 +434,27 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
+        // correct normal direction, make sure it points from index i to index j
+        const Real direction_corrector = -SGN(displacement.dot(n_[index_j]));
+        const Vecd n_j = n_[index_j] * direction_corrector; // normal direction of shell particle in cell linked list with index j
+
         Vecd pos_j_dummy = pos_j + n_j * particle_distance_;
         Vecd displacement_dummy = pos_i - pos_j_dummy;
         Real distance_dummy = displacement_dummy.norm();
+
+        const Real k1_j = k1_[index_j] * direction_corrector; // mean curvature with corrected sign
+        const Real k2_j = k2_[index_j] * direction_corrector; // mean curvature with corrected sign
 
         int counter = 0;
         // only add particles within 1*dp distance
         while (direction_corrector != 0 && distance_dummy < particle_distance_)
         {
             counter++;
-            const Real Vol_j_dummy = Vol_j * std::pow(1 + counter * H_j * particle_distance_, Dimensions - 1);
+            const Real factor_1 = 1 + counter * k1_j * particle_distance_;
+            const Real factor_2 = 1 + counter * k2_j * particle_distance_;
+            if (factor_1 <= 0 || factor_2 <= 0)
+                break;
+            const Real Vol_j_dummy = Vol_j * factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
             W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
