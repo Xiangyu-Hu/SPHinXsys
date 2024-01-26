@@ -215,9 +215,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
-    sph_system.handleCommandlineOptions(ac, av);
-    GlobalStaticVariables::physical_time_ = 0.0;
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -235,14 +233,14 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<DiffusionCylinderParticles, WettingCylinderBodyMaterial>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
+        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observer_location);
 
     ObserverBody wetting_observer(sph_system, "WettingObserver");
-    wetting_observer.generateParticles<ObserverParticleGenerator>(wetting_observer_location);
+    wetting_observer.generateParticles<ParticleGeneratorObserver>(wetting_observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -275,9 +273,9 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp({&cylinder});
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
+        ReloadParticleIO write_particle_reload_files({&cylinder});
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
@@ -322,7 +320,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define the wetting diffusion dynamics used in the simulation.
@@ -338,7 +336,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
+    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann>
         fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);
     //----------------------------------------------------------------------
     //	Building Simbody.
@@ -385,12 +383,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_cylinder_wetting("Phi", io_environment, wetting_observer_contact);
+        write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -456,7 +454,7 @@ int main(int ac, char *av[])
             Real Dt = fluid_advection_time_step.exec();
 
             fluid_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 

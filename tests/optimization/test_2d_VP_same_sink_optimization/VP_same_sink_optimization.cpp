@@ -125,7 +125,7 @@ class ThermalConductivityRandomInitialization
           thermal_conductivity(*(particles_->getVariableByName<Real>("ThermalConductivity"))){};
     void update(size_t index_i, Real dt)
     {
-        thermal_conductivity[index_i] = 0.5 + (double)rand() / RAND_MAX;
+        thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
     }
 };
 
@@ -192,7 +192,7 @@ TEST(test_optimization, test_problem1_optimized)
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
+    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -209,7 +209,7 @@ TEST(test_optimization, test_problem1_optimized)
     //	Basically the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner(diffusion_body);
-    ContactRelation diffusion_body_contact(diffusion_body, { &wall_boundary });
+    ContactRelation diffusion_body_contact(diffusion_body, {&wall_boundary});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -217,13 +217,13 @@ TEST(test_optimization, test_problem1_optimized)
     ComplexRelation diffusion_body_complex(diffusion_body_inner, diffusion_body_contact);
     //----------------------------------------------------------------------
     // Obtain the time step size.
-    //---------------------------------------------------------------------- 
+    //----------------------------------------------------------------------
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
@@ -247,7 +247,7 @@ TEST(test_optimization, test_problem1_optimized)
     Real averaged_variation_current_global(0.0);
     Real maximum_variation_current_global(10.0);
     Real opt_averaged_temperature = 0.0;
-    Real nonopt_averaged_temperature = Infinity;
+    Real nonopt_averaged_temperature = MaxReal;
     Real averaged_k_parameter = 0.0;
     Real initial_eta_regularization = 0.4;
     Real current_eta_regularization = initial_eta_regularization;
@@ -321,17 +321,19 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    //record the temperature with modified design variable.
-    std::string filefullpath_opt_temperature = io_environment.output_folder_ + "/" + "opt_temperature.dat";
+    // record the temperature with modified design variable.
+    std::string filefullpath_opt_temperature =
+        sph_system.getIOEnvironment().output_folder_ + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app);
 
-    //record the temperature without modified design variable.
-    std::string filefullpath_nonopt_temperature = io_environment.output_folder_ + "/" + "nonopt_temperature.dat";
+    // record the temperature without modified design variable.
+    std::string filefullpath_nonopt_temperature =
+        sph_system.getIOEnvironment().output_folder_ + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
     //----------------------------------------------------------------------
     //	Initial States update.
     //----------------------------------------------------------------------
-    write_states.writeToFile(ite); //output the initial states.
+    write_states.writeToFile(ite); // output the initial states.
 
     update_regularization_global_variation.exec(dt_ratio_rg * dt);
     averaged_variation_current_global = calculate_regularization_global_variation.exec(dt);
@@ -347,7 +349,8 @@ TEST(test_optimization, test_problem1_optimized)
 
     /** the converged criterion contains three parts respect to target function, PDE constrain, and maximum step. */
     while ((relative_temperature_difference > 0.00001 || averaged_residual_T_current_global > 0.000005 ||
-        relative_average_variation_difference > 0.0001) && ite_loop < 10000)
+            relative_average_variation_difference > 0.0001) &&
+           ite_loop < 10000)
     {
         std::cout << "This is the beginning of the " << ite_loop << " iteration loop." << std::endl;
 
@@ -362,8 +365,9 @@ TEST(test_optimization, test_problem1_optimized)
         /* Impose objective function and PDE residual may increase. */
         impose_objective_function.exec(learning_rate_alpha);
 
-        //if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
-        std::cout << "N=" << ite << " and the objective function has been imposed. " << "\n";
+        // if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
+        std::cout << "N=" << ite << " and the objective function has been imposed. "
+                  << "\n";
 
         //----------------------------------------------------------------------
         //	Parameter (design variable) splitting.
@@ -374,7 +378,8 @@ TEST(test_optimization, test_problem1_optimized)
             //----------------------------------------------------------------------
             //	Parameter splitting by PDE.
             //----------------------------------------------------------------------
-            ite++; ite_k++;
+            ite++;
+            ite_k++;
             parameter_splitting_pde_complex.exec(dt_ratio_k * dt);
             //----------------------------------------------------------------------
             //	Constraint of the summation of parameter.
@@ -392,7 +397,8 @@ TEST(test_optimization, test_problem1_optimized)
             //----------------------------------------------------------------------
             if (ite_k % 1 == 0 || ite_k == ite_k_total)
             {
-                ite++; ite_rg++;
+                ite++;
+                ite_rg++;
                 thermal_diffusivity_regularization.UpdateCurrentEta(current_eta_regularization);
                 thermal_diffusivity_regularization.UpdateMaximumVariation(maximum_variation_current_global);
                 thermal_diffusivity_regularization.UpdateAverageVariation(averaged_variation_current_global);
@@ -406,18 +412,26 @@ TEST(test_optimization, test_problem1_optimized)
                 maximum_variation_current_global = calculate_maximum_variation.exec(dt);
             }
         }
-        ite_k = 0; ite_rg = 0;
-        if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
-        std::cout << "N=" << ite << " and the k splitting is finished." << "\n";
+        ite_k = 0;
+        ite_rg = 0;
+        if (ite_loop % ite_output == 0)
+        {
+            write_states.writeToFile(ite);
+        }
+        std::cout << "N=" << ite << " and the k splitting is finished."
+                  << "\n";
 
         //----------------------------------------------------------------------
         //	Temperature splitting.
         //----------------------------------------------------------------------
         std::cout << "averaged_residual_T_last_global is " << averaged_residual_T_last_global << std::endl;
         while (((averaged_residual_T_current_global > 0.9 * averaged_residual_T_last_global) &&
-            averaged_residual_T_current_global > 0.000005) || ite_T < ite_T_total)
+                averaged_residual_T_current_global > 0.000005) ||
+               ite_T < ite_T_total)
         {
-            ite++; ite_T++; ite_T_comparison_opt++;
+            ite++;
+            ite_T++;
+            ite_T_comparison_opt++;
             temperature_splitting_pde_complex.exec(dt);
 
             update_temperature_pde_residual.exec(dt);
@@ -448,7 +462,8 @@ TEST(test_optimization, test_problem1_optimized)
         std::cout << "averaged_residual_T_current_global is " << averaged_residual_T_current_global << std::endl;
         ite_T = 0;
         write_states.writeToFile(ite);
-        std::cout << "N=" << ite << " and the temperature splitting is finished." << "\n";
+        std::cout << "N=" << ite << " and the temperature splitting is finished."
+                  << "\n";
 
         //----------------------------------------------------------------------
         //	Decision Making.
@@ -456,13 +471,17 @@ TEST(test_optimization, test_problem1_optimized)
         last_averaged_temperature = current_averaged_temperature;
         current_averaged_temperature = calculate_averaged_opt_temperature.exec();
 
-        ite_loop++; std::cout << "This is the " << ite_loop << " iteration loop and the averaged temperature is " << opt_averaged_temperature
-            << " and the learning rate is " << learning_rate_alpha
-            << " and the regularization is " << current_eta_regularization << endl;
+        ite_loop++;
+        std::cout << "This is the " << ite_loop << " iteration loop and the averaged temperature is " << opt_averaged_temperature
+                  << " and the learning rate is " << learning_rate_alpha
+                  << " and the regularization is " << current_eta_regularization << endl;
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
-        if (ite_loop % ite_restart == 0) { restart_io.writeToFile(ite_loop); }
+        if (ite_loop % ite_restart == 0)
+        {
+            restart_io.writeToFile(ite_loop);
+        }
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();

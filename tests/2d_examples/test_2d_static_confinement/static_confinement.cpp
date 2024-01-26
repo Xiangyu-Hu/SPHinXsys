@@ -105,8 +105,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -115,7 +114,7 @@ int main(int ac, char *av[])
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -145,11 +144,11 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     /** Define the confinement condition for wall. */
     NearShapeSurface near_surface_wall(water_block, makeShared<WallShape>("Wall"));
-    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    near_surface_wall.level_set_shape_.writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
     NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
-    near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
+    near_surface_triangle.level_set_shape_.writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
     /** Push back the static confinement condition to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
@@ -164,11 +163,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
+        write_water_mechanical_energy(water_block, gravity_ptr);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -206,7 +205,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
+            /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();

@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	io_plt.h
- * @brief 	Classes for save data in tecplot file format.
- * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ * @brief 	Classes for save data in Tecplot file format.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -56,10 +56,8 @@ class PltEngine
 class BodyStatesRecordingToPlt : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBody &body)
-        : BodyStatesRecording(io_environment, body){};
-    BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BodyStatesRecording(io_environment, bodies){};
+    BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body){};
+    BodyStatesRecordingToPlt(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
     virtual ~BodyStatesRecordingToPlt(){};
 
   protected:
@@ -77,7 +75,7 @@ class MeshRecordingToPlt : public BaseIO
     std::string filefullpath_;
 
   public:
-    MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field);
+    MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field);
     virtual ~MeshRecordingToPlt(){};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };

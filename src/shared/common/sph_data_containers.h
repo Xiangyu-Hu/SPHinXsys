@@ -35,9 +35,11 @@
 
 namespace SPH
 {
-/**
- * @brief Pre-claimed classes.
- */
+class Base;             // Indicating base class
+class Adaptive;         // Indicating with adaptive resolution
+class ReducedOrder;     // Indicating with reduced order
+class Lattice;          // Indicating with lattice points
+class UnstructuredMesh; // Indicating with unstructured mesh
 class BaseMaterial;
 class SPHBody;
 class RealBody;

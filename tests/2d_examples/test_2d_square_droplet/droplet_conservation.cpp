@@ -79,14 +79,14 @@ class WallBoundary : public ComplexShape
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -154,24 +154,24 @@ int main()
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     /** Viscous acceleration. */
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
-        water_viscous_acceleration(water_inner, water_air_contact, water_wall_contact);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<>, Contact<Wall>>>>
-        air_viscous_acceleration(air_inner, air_water_contact, air_wall_contact);
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<>, Contact<Wall>>>>
+        water_viscous_force(water_inner, water_air_contact, water_wall_contact);
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<>, Contact<Wall>>>>
+        air_viscous_force(air_inner, air_water_contact, air_wall_contact);
     /** Surface tension. */
     InteractionDynamics<fluid_dynamics::SurfaceTensionStress> water_surface_tension_stress(water_air_contact, StdVec<Real>{Real(1.0)});
     InteractionDynamics<fluid_dynamics::SurfaceTensionStress> air_surface_tension_stress(air_water_contact, StdVec<Real>{Real(1.0e-3)});
-    InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
+    InteractionDynamics<fluid_dynamics::SurfaceStressForceComplex> water_surface_tension_acceleration(water_inner, water_air_contact);
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
-    InteractionDynamics<fluid_dynamics::SurfaceStressAccelerationComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
+    InteractionDynamics<fluid_dynamics::SurfaceStressForceComplex> air_surface_tension_acceleration(air_inner, air_water_contact);
     air_block.addBodyStateForRecording<Vecd>("PriorForce");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, water_block);
+        write_water_mechanical_energy(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -208,7 +208,7 @@ int main()
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
+            /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
             initialize_a_water_step.exec();
             initialize_a_air_step.exec();
@@ -222,8 +222,8 @@ int main()
             air_transport_correction.exec();
             water_transport_correction.exec();
 
-            air_viscous_acceleration.exec();
-            water_viscous_acceleration.exec();
+            air_viscous_force.exec();
+            water_viscous_force.exec();
 
             water_surface_tension_stress.exec();
             air_surface_tension_stress.exec();

@@ -41,10 +41,10 @@ protected:
 };
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator, public Parameter
+class PlateParticleGenerator : public ParticleGeneratorSurface, public Parameter
 {
 public:
-	explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+	explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
 	virtual void initializeGeometricVariables() override
 	{
 		// the plate and boundary
@@ -151,7 +151,7 @@ public:
 		plate_body.generateParticles<PlateParticleGenerator>();
 
 		plate_observer.defineParticlesAndMaterial();
-		plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+		plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 	}
 };
 Real observed_quantity_0 = 0.0;
@@ -232,8 +232,8 @@ public:
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
 		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),
 		io_environment(system),
-		write_states(io_environment, system.real_bodies_),
-		write_plate_max_displacement("Position", io_environment, plate_observer_contact)
+		write_states(system.real_bodies_),
+		write_plate_max_displacement("Position", plate_observer_contact)
 	{	
 		if (loading_factor == 200.0) displ_max_reference = 2.5681;
 		std::cout<<"Running simulation for loading factor = " << loading_factor << " and displ_max_reference = " << displ_max_reference << "\n";

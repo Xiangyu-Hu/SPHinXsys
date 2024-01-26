@@ -103,22 +103,22 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 };
 
 /**
- * @class BasePressureForceAccelerationFromFluid
+ * @class BasePressureForceFromFluid
  * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
  * The pressure force is added on the viscous force of the latter is computed.
  * This class is for FSI applications to achieve smaller solid dynamics
  * time step size compared to the fluid dynamics
  */
 template <class RiemannSolverType>
-class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
+class BasePressureForceFromFluid : public BaseForceFromFluid
 {
   public:
-    explicit BasePressureForceAccelerationFromFluid(BaseContactRelation &contact_relation)
-        : BasePressureForceAccelerationFromFluid(true, contact_relation)
+    explicit BasePressureForceFromFluid(BaseContactRelation &contact_relation)
+        : BasePressureForceFromFluid(true, contact_relation)
     {
         particles_->registerVariable(force_from_fluid_, "PressureForceFromFluid");
     };
-    virtual ~BasePressureForceAccelerationFromFluid(){};
+    virtual ~BasePressureForceFromFluid(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -140,7 +140,7 @@ class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
                 Real face_wall_external_acceleration = (force_prior_k[index_j] / mass_k[index_j] - force_ave_[index_i] / particles_->mass_[index_i]).dot(e_ij);
                 Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
                 Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
-                force += (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] - (p_in_wall + p_k[index_j]) * e_ij) * Vol_[index_i] * contact_neighborhood.dW_ijV_j_[n];
+                force -= (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] + (p_in_wall + p_k[index_j]) * e_ij) * Vol_[index_i] * contact_neighborhood.dW_ijV_j_[n];
             }
         }
         force_from_fluid_[index_i] = force;
@@ -153,7 +153,7 @@ class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
     StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_force_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
 
-    BasePressureForceAccelerationFromFluid(bool mostDerived, BaseContactRelation &contact_relation)
+    BasePressureForceFromFluid(bool mostDerived, BaseContactRelation &contact_relation)
         : BaseForceFromFluid(contact_relation),
           vel_ave_(*particles_->AverageVelocity()),
           force_prior_(particles_->force_prior_),
@@ -170,26 +170,26 @@ class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
         }
     };
 };
-using PressureForceAccelerationFromFluid = BasePressureForceAccelerationFromFluid<NoRiemannSolver>;
-using PressureForceAccelerationFromFluidRiemann = BasePressureForceAccelerationFromFluid<AcousticRiemannSolver>;
+using PressureForceFromFluid = BasePressureForceFromFluid<NoRiemannSolver>;
+using PressureForceFromFluidRiemann = BasePressureForceFromFluid<AcousticRiemannSolver>;
 
 /**
- * @class BaseAllForceAccelerationFromFluid
+ * @class BaseAllForceFromFluid
  * @brief template class for computing force from fluid with updated viscous force
  */
 template <class PressureForceType>
-class BaseAllForceAccelerationFromFluid : public PressureForceType
+class BaseAllForceFromFluid : public PressureForceType
 {
   public:
     template <class ViscousForceFromFluidType>
-    BaseAllForceAccelerationFromFluid(BaseContactRelation &contact_relation,
-                                      ViscousForceFromFluidType &viscous_force_from_fluid)
+    BaseAllForceFromFluid(BaseContactRelation &contact_relation,
+                          ViscousForceFromFluidType &viscous_force_from_fluid)
         : PressureForceType(false, contact_relation),
           viscous_force_from_fluid_(viscous_force_from_fluid.getForceFromFluid())
     {
         this->particles_->registerVariable(this->force_from_fluid_, "AllForceFromFluid");
     };
-    virtual ~BaseAllForceAccelerationFromFluid(){};
+    virtual ~BaseAllForceFromFluid(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -201,10 +201,10 @@ class BaseAllForceAccelerationFromFluid : public PressureForceType
   protected:
     StdLargeVec<Vecd> &viscous_force_from_fluid_;
 };
-using AllForceAccelerationFromFluid =
-    BaseAllForceAccelerationFromFluid<PressureForceAccelerationFromFluid>;
-using AllForceAccelerationFromFluidRiemann =
-    BaseAllForceAccelerationFromFluid<PressureForceAccelerationFromFluidRiemann>;
+using AllForceFromFluid =
+    BaseAllForceFromFluid<PressureForceFromFluid>;
+using AllForceFromFluidRiemann =
+    BaseAllForceFromFluid<PressureForceFromFluidRiemann>;
 
 /**
  * @class TotalForceFromFluid

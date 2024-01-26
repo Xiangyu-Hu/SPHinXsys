@@ -16,7 +16,7 @@ using namespace SPH;
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 
-class ShellCircleParticleGenerator : public SurfaceParticleGenerator
+class ShellCircleParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -25,7 +25,7 @@ class ShellCircleParticleGenerator : public SurfaceParticleGenerator
 
   public:
     explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
@@ -191,7 +191,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real E = 3e7 * psi_to_pa;
     Real mu = 0.3;
     auto material = makeShared<LinearElasticSolid>(rho, E, mu);
-    Real physical_viscosity = 7e3; // where is this value coming from?
+    Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
     Vec3d gravity = -pressure / (thickness * rho) * sym_vec; // force/mass simplified by area
@@ -229,14 +229,14 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     shell_body.generateParticles<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
-    IOEnvironment io_env(system, false);
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
+    BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
@@ -283,7 +283,7 @@ return_data bending_circular_plate(Real dp_ratio)
 
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file
-        Real min_rij = Infinity;
+        Real min_rij = MaxReal;
         for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
         {
             Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
@@ -299,7 +299,7 @@ return_data bending_circular_plate(Real dp_ratio)
         Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
-        EXPECT_FLOAT_EQ(total_mass, total_area * rho);
+        EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
     }
 
     /**

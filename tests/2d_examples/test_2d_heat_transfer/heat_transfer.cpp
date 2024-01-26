@@ -196,7 +196,10 @@ struct InflowVelocity
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
         Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+        if (aligned_box_.checkInBounds(0, position))
+        {
+            target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+        }
         return target_velocity;
     }
 };
@@ -223,7 +226,7 @@ int main(int ac, char *av[])
     thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
-    temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    temperature_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -266,7 +269,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_body_inner, fluid_body_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_body_inner, fluid_body_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_inner, fluid_body_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_body_inner, fluid_body_contact);
     /** Apply transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_body_inner, fluid_body_contact);
     /** Computing vorticity in the flow. */
@@ -278,11 +281,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_fluid_phi("Phi", io_environment, fluid_observer_contact);
+        write_fluid_phi("Phi", fluid_observer_contact);
     ObservedQuantityRecording<Vecd>
-        write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
+        write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -326,7 +329,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             size_t inner_ite_dt = 0;

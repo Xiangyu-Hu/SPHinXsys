@@ -49,10 +49,10 @@ TEST(Beam, MaxDisplacement)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class BarParticleGenerator : public LineParticleGenerator
+class BarParticleGenerator : public ParticleGenerator<Line>
 {
   public:
-    explicit BarParticleGenerator(SPHBody &sph_body) : LineParticleGenerator(sph_body)
+    explicit BarParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
     bar_observer.defineParticlesAndMaterial();
-    bar_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    bar_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -184,8 +184,8 @@ int main(int ac, char *av[])
         bar_rotation_b_damping(0.5, bar_body_inner, "AngularVelocity_b", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    ObservedQuantityRecording<Vecd> write_beam_max_displacement("Position", io_environment, bar_observer_contact);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_beam_max_displacement("Position", bar_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();

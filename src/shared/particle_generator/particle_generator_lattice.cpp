@@ -8,7 +8,7 @@
 namespace SPH
 {
 //=================================================================================================//
-BaseParticleGeneratorLattice::BaseParticleGeneratorLattice(SPHBody &sph_body)
+GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
     : lattice_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),
       domain_bounds_(sph_body.getSPHSystemBounds()),
       body_shape_(*sph_body.body_shape_)
@@ -21,58 +21,41 @@ BaseParticleGeneratorLattice::BaseParticleGeneratorLattice(SPHBody &sph_body)
     }
 }
 //=================================================================================================//
-ParticleGeneratorLattice::ParticleGeneratorLattice(SPHBody &sph_body)
-    : BaseParticleGeneratorLattice(sph_body), ParticleGenerator(sph_body) {}
+ParticleGenerator<Lattice>::ParticleGenerator(SPHBody &sph_body)
+    : ParticleGenerator<Base>(sph_body), GeneratingMethod<Lattice>(sph_body) {}
 //=================================================================================================//
-ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body, Shape &target_shape)
-    : ParticleGeneratorLattice(sph_body), target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
-      h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio"))
+ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body, Shape &target_shape)
+    : ParticleGenerator<Lattice>(sph_body), target_shape_(target_shape),
+      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_))
 {
     lattice_spacing_ = particle_adaptation_->MinimumSpacing();
 }
 //=================================================================================================//
-ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body)
-    : ParticleGeneratorMultiResolution(sph_body, *sph_body.body_shape_) {}
+ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body)
+    : ParticleGenerator<Lattice, Adaptive>(sph_body, *sph_body.body_shape_) {}
 //=================================================================================================//
-void ParticleGeneratorMultiResolution::
+void ParticleGenerator<Lattice, Adaptive>::
     initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 {
     Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);
     Real local_particle_volume_ratio = pow(lattice_spacing_ / local_particle_spacing, Dimensions);
-    if ((Real)rand() / (RAND_MAX) < local_particle_volume_ratio)
+    if (rand_uniform(0.0, 1.0) < local_particle_volume_ratio)
     {
-        ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume / local_particle_volume_ratio);
-        initializeSmoothingLengthRatio(local_particle_spacing);
+        ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
+            position, volume / local_particle_volume_ratio);
     }
 }
 //=================================================================================================//
-void ParticleGeneratorMultiResolution::initializeSmoothingLengthRatio(Real local_spacing)
-{
-    h_ratio_.push_back(particle_adaptation_->ReferenceSpacing() / local_spacing);
-}
-//=================================================================================================//
-ParticleGeneratorSplitAndMerge::ParticleGeneratorSplitAndMerge(SPHBody &sph_body)
-    : ParticleGeneratorLattice(sph_body),
-      particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_)),
-      h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio")) {}
-//=================================================================================================//
-void ParticleGeneratorSplitAndMerge::
-    initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
-{
-    ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume);
-    h_ratio_.push_back(1.0);
-}
-//=================================================================================================//
-ThickSurfaceParticleGeneratorLattice::
-    ThickSurfaceParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness)
-    : BaseParticleGeneratorLattice(sph_body), SurfaceParticleGenerator(sph_body),
-      total_volume_(0), global_avg_thickness_(global_avg_thickness),
+ParticleGenerator<Surface, Lattice, ReducedOrder>::ParticleGenerator(SPHBody &sph_body, Real thickness)
+    : ParticleGenerator<Surface>(sph_body), GeneratingMethod<Lattice>(sph_body),
+      total_volume_(0), thickness_(thickness),
       particle_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      avg_particle_volume_(pow(particle_spacing_, Dimensions - 1) * global_avg_thickness_),
+      avg_particle_volume_(pow(particle_spacing_, Dimensions - 1) * thickness_),
       all_cells_(0), planned_number_of_particles_(0)
 {
-    lattice_spacing_ = global_avg_thickness_ > particle_spacing_ ? 0.5 * particle_spacing_ : 0.5 * global_avg_thickness_;
+    lattice_spacing_ = thickness_ > particle_spacing_
+                           ? 0.5 * particle_spacing_
+                           : 0.5 * thickness_;
 }
 //=================================================================================================//
 } // namespace SPH

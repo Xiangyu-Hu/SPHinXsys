@@ -37,11 +37,11 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
+        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_locations);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -72,9 +72,9 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp({&cylinder});
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, cylinder);
+        ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
@@ -124,18 +124,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_cylinder(cylinder_contact);
-    InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> pressure_force_on_cylinder(cylinder_contact);
+    InteractionDynamics<solid_dynamics::PressureForceFromFluid> pressure_force_on_cylinder(cylinder_contact);
     /** Computing viscous force acting on wall with wall model. */
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_cylinder, "TotalViscousForceOnSolid");
+        write_total_viscous_force_on_inserted_body(viscous_force_on_cylinder, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(io_environment, pressure_force_on_cylinder, "TotalPressureForceOnSolid");
+        write_total_force_on_inserted_body(pressure_force_on_cylinder, "TotalPressureForceOnSolid");
     ObservedQuantityRecording<Vecd>
-        write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
+        write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -179,7 +179,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */

@@ -86,8 +86,7 @@ int main(int ac, char *av[])
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(false);
     // Handle command line arguments and override the tags for particle relaxation and reload.
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -96,7 +95,7 @@ int main(int ac, char *av[])
     water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
+        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<int>("Indicator");
 
@@ -106,7 +105,7 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
+        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -134,8 +133,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-        ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+        ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
         relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
             ConstructorArgs(water_block_inner, "OuterBoundary"), water_block_contact);
@@ -176,7 +175,7 @@ int main(int ac, char *av[])
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
@@ -186,16 +185,16 @@ int main(int ac, char *av[])
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_solid_update(cylinder_contact, viscous_force_on_solid);
+    InteractionDynamics<solid_dynamics::AllForceFromFluid> fluid_force_on_solid_update(cylinder_contact, viscous_force_on_solid);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
+        write_total_viscous_force_on_inserted_body(viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
-    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
+        write_total_force_on_inserted_body(fluid_force_on_solid_update, "TotalPressureForceOnSolid");
+    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -235,7 +234,7 @@ int main(int ac, char *av[])
         {
             initialize_a_fluid_step.exec();
             Real dt = get_fluid_time_step_size.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
 

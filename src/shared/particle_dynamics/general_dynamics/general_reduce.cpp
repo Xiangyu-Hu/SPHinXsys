@@ -29,7 +29,7 @@ Real MaximumSpeed::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PositionLowerBound::PositionLowerBound(SPHBody &sph_body)
-    : LocalDynamicsReduce<Vecd, ReduceLowerBound>(sph_body, MaxRealNumber * Vecd::Ones()),
+    : LocalDynamicsReduce<Vecd, ReduceLowerBound>(sph_body, MaxReal * Vecd::Ones()),
       GeneralDataDelegateSimple(sph_body),
       pos_(particles_->pos_)
 {
@@ -42,7 +42,7 @@ Vecd PositionLowerBound::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PositionUpperBound::PositionUpperBound(SPHBody &sph_body)
-    : LocalDynamicsReduce<Vecd, ReduceUpperBound>(sph_body, MinRealNumber * Vecd::Ones()),
+    : LocalDynamicsReduce<Vecd, ReduceUpperBound>(sph_body, MinReal * Vecd::Ones()),
       GeneralDataDelegateSimple(sph_body),
       pos_(particles_->pos_)
 {

@@ -13,7 +13,7 @@
 
 using namespace SPH;
 
-class ShellSphereParticleGenerator : public SurfaceParticleGenerator
+class ShellSphereParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -23,7 +23,7 @@ class ShellSphereParticleGenerator : public SurfaceParticleGenerator
   public:
     explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
                                           const Vec3d &center, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -135,14 +135,14 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     shell_body.generateParticles<ShellSphereParticleGenerator>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
-    IOEnvironment io_env(system, false);
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
+    BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
 
     // methods
@@ -161,7 +161,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         for (size_t i = 0; i < shell_particles->force_prior_.size(); ++i)
         {
             // opposite to normals
-            shell_particles->force_prior_[i] -= shell_particles->mass_[i] * pressure_MPa * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
+            shell_particles->force_prior_[i] -= pressure_MPa * shell_particles->Vol_[i] * shell_particles->n_[i];
         }
     };
 
@@ -189,7 +189,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     {     // tests on initialization
         { // checking particle distances - avoid bugs of reading file
-            Real min_rij = Infinity;
+            Real min_rij = MaxReal;
             Real max_rij = 0;
             for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
             {

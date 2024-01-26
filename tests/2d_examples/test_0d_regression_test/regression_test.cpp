@@ -164,11 +164,11 @@ class DiffusionBodyRelaxation
 //----------------------------------------------------------------------
 //	an observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
+class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
     explicit TemperatureObserverParticleGenerator(SPHBody &sph_body)
-        : ObserverParticleGenerator(sph_body)
+        : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 11;
@@ -191,8 +191,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
@@ -228,12 +227,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+        write_solid_temperature("Phi", temperature_observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<Average<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
-        write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
+        write_solid_average_temperature_part(inner_domain, "Phi");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

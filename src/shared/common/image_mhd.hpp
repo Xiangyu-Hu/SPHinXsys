@@ -1,7 +1,7 @@
 /**
  * @file 	image_mesh_shape.h
  * @brief 	Image process for geometry representation.
- * @author	Yijin Mao
+ * @author	Yijin Mao and Xiangyu Hu
  */
 
 #ifndef IMAGE_MHD_HPP
@@ -16,26 +16,27 @@ namespace SPH
 {
 
 template <typename T, int nDims>
-ImageMHD<T, nDims>::ImageMHD(std::string full_path_to_file) : objectType_("Image"),
-                                                              ndims_(nDims),
-                                                              binaryData_(true),
-                                                              binaryDataByteOrderMSB_(false),
-                                                              compressedData_(false),
-                                                              transformMatrix_(Matd::Identity()),
-                                                              offset_(Vecd::Zero()),
-                                                              centerOfRotation_(Vecd::Zero()),
-                                                              elementSpacing_(Vecd::Ones()),
-                                                              dimSize_(Arrayi::Ones()),
-                                                              width_(dimSize_[0]),
-                                                              height_(dimSize_[1]),
-                                                              depth_(dimSize_[2]),
-                                                              size_(dimSize_[0] * dimSize_[1] * dimSize_[2]),
-                                                              anatomicalOrientation_("???"),
-                                                              elementType_(MET_FLOAT),
-                                                              elementDataFile_(""),
-                                                              min_value_(Infinity),
-                                                              max_value_(-Infinity),
-                                                              data_(nullptr)
+ImageMHD<T, nDims>::ImageMHD(std::string full_path_to_file)
+    : objectType_("Image"),
+      nDims_(nDims),
+      binaryData_(true),
+      binaryDataByteOrderMSB_(false),
+      compressedData_(false),
+      transformMatrix_(Matd::Identity()),
+      offset_(Vecd::Zero()),
+      centerOfRotation_(Vecd::Zero()),
+      elementSpacing_(Vecd::Ones()),
+      dimSize_(Arrayi::Ones()),
+      width_(dimSize_[0]),
+      height_(dimSize_[1]),
+      depth_(dimSize_[2]),
+      size_(dimSize_[0] * dimSize_[1] * dimSize_[2]),
+      anatomicalOrientation_("???"),
+      elementType_(MET_FLOAT),
+      elementDataFile_(""),
+      min_value_(MaxReal),
+      max_value_(MinReal),
+      data_(nullptr)
 {
     //- read mhd file
     std::ifstream dataFile(full_path_to_file, std::ifstream::in);
@@ -135,26 +136,27 @@ ImageMHD<T, nDims>::ImageMHD(std::string full_path_to_file) : objectType_("Image
     // write(std::string("sphere-binary"),ASCII);
 }
 template <typename T, int nDims>
-ImageMHD<T, nDims>::ImageMHD(Real radius, Array3i NxNyNz, Vec3d spacings) : objectType_("Image"),
-                                                                            ndims_(nDims),
-                                                                            binaryData_(true),
-                                                                            binaryDataByteOrderMSB_(false),
-                                                                            compressedData_(false),
-                                                                            transformMatrix_(Matd::Identity()),
-                                                                            offset_(Vecd(-0.5 * NxNyNz[0] * spacings[0], -0.5 * NxNyNz[1] * spacings[1], -0.5 * NxNyNz[2] * spacings[2])),
-                                                                            centerOfRotation_(Vecd::Zero()),
-                                                                            elementSpacing_(spacings),
-                                                                            dimSize_(NxNyNz),
-                                                                            width_(dimSize_[0]),
-                                                                            height_(dimSize_[1]),
-                                                                            depth_(dimSize_[2]),
-                                                                            size_(width_ * height_ * depth_),
-                                                                            anatomicalOrientation_("???"),
-                                                                            elementType_(MET_FLOAT),
-                                                                            elementDataFile_(""),
-                                                                            min_value_(Infinity),
-                                                                            max_value_(-Infinity),
-                                                                            data_(nullptr)
+ImageMHD<T, nDims>::ImageMHD(Real radius, Array3i NxNyNz, Vec3d spacings)
+    : objectType_("Image"),
+      nDims_(nDims),
+      binaryData_(true),
+      binaryDataByteOrderMSB_(false),
+      compressedData_(false),
+      transformMatrix_(Matd::Identity()),
+      offset_(Vecd(-0.5 * NxNyNz[0] * spacings[0], -0.5 * NxNyNz[1] * spacings[1], -0.5 * NxNyNz[2] * spacings[2])),
+      centerOfRotation_(Vecd::Zero()),
+      elementSpacing_(spacings),
+      dimSize_(NxNyNz),
+      width_(dimSize_[0]),
+      height_(dimSize_[1]),
+      depth_(dimSize_[2]),
+      size_(width_ * height_ * depth_),
+      anatomicalOrientation_("???"),
+      elementType_(MET_FLOAT),
+      elementDataFile_(""),
+      min_value_(MaxReal),
+      max_value_(MinReal),
+      data_(nullptr)
 {
     if (data_ == nullptr)
         data_ = new float[size_];
@@ -236,65 +238,65 @@ Vec3d ImageMHD<T, nDims>::computeGradientAtCell(int i)
     int y = (i % sliceSize) / width;
     int x = (i % sliceSize) % width;
 
-    Real gradx = 0.0;
-    Real grady = 0.0;
-    Real gradz = 0.0;
+    Real grad_x = 0.0;
+    Real grad_y = 0.0;
+    Real grad_z = 0.0;
     //- cds (if inner cell)
     //- otherwise back/forward scheme
     if (x == 0)
     {
         int indexHigh = z * sliceSize + y * width + (x + 1);
-        gradx = (getValueAtCell(indexHigh) - getValueAtCell(i));
+        grad_x = (getValueAtCell(indexHigh) - getValueAtCell(i));
     }
     else if (x == width - 1)
     {
         int indexLow = z * sliceSize + y * width + (x - 1);
-        gradx = -(getValueAtCell(indexLow) - getValueAtCell(i));
+        grad_x = -(getValueAtCell(indexLow) - getValueAtCell(i));
     }
     else if (x > 0 && x < width_ - 1)
     {
         int indexHigh = z * sliceSize + y * width + (x + 1);
         int indexLow = z * sliceSize + y * width + (x - 1);
-        gradx = (getValueAtCell(indexHigh) - getValueAtCell(indexLow)) / 2.0;
+        grad_x = (getValueAtCell(indexHigh) - getValueAtCell(indexLow)) / 2.0;
     }
 
     if (y == 0)
     {
         int indexHigh = z * sliceSize + (y + 1) * width + x;
-        grady = (getValueAtCell(indexHigh) - getValueAtCell(i));
+        grad_y = (getValueAtCell(indexHigh) - getValueAtCell(i));
     }
     else if (y == height - 1)
     {
         int indexLow = z * sliceSize + (y - 1) * width + x;
-        grady = -(getValueAtCell(indexLow) - getValueAtCell(i));
+        grad_y = -(getValueAtCell(indexLow) - getValueAtCell(i));
     }
     else if (y > 0 && y < height_ - 1)
     {
         int indexHigh = z * sliceSize + (y + 1) * width + x;
         int indexLow = z * sliceSize + (y - 1) * width + x;
-        grady = (getValueAtCell(indexHigh) - getValueAtCell(indexLow)) / 2.0;
+        grad_y = (getValueAtCell(indexHigh) - getValueAtCell(indexLow)) / 2.0;
     }
 
     if (z == 0)
     {
         int indexHigh = (z + 1) * sliceSize + y * width + x;
-        gradz = (getValueAtCell(indexHigh) - getValueAtCell(i));
+        grad_z = (getValueAtCell(indexHigh) - getValueAtCell(i));
     }
     else if (z == depth - 1)
     {
         int indexLow = (z - 1) * sliceSize + y * width + x;
-        gradz = -(getValueAtCell(indexLow) - getValueAtCell(i));
+        grad_z = -(getValueAtCell(indexLow) - getValueAtCell(i));
     }
     else if (z > 0 && z < depth_ - 1)
     {
         int indexHigh = (z + 1) * sliceSize + y * width + x;
         int indexLow = (z - 1) * sliceSize + y * width + x;
-        gradz = (getValueAtCell(indexHigh) - getValueAtCell(indexLow)) / 2.0;
+        grad_z = (getValueAtCell(indexHigh) - getValueAtCell(indexLow)) / 2.0;
     }
-    gradx = gradx / elementSpacing_[0];
-    grady = grady / elementSpacing_[1];
-    gradz = gradz / elementSpacing_[2];
-    return Vec3d(gradx, grady, gradz);
+    grad_x = grad_x / elementSpacing_[0];
+    grad_y = grad_y / elementSpacing_[1];
+    grad_z = grad_z / elementSpacing_[2];
+    return Vec3d(grad_x, grad_y, grad_z);
 }
 //=================================================================================================//
 template <typename T, int nDims>
@@ -372,8 +374,8 @@ template <typename T, int nDims>
 BoundingBox ImageMHD<T, nDims>::findBounds()
 {
     // initial reference values
-    Vec3d lower_bound = Infinity * Vec3d::Ones();
-    Vec3d upper_bound = -Infinity * Vec3d::Ones();
+    Vec3d lower_bound = MaxReal * Vec3d::Ones();
+    Vec3d upper_bound = MinReal * Vec3d::Ones();
 
     for (int z = 0; z < depth_ + 1; z++)
     {
@@ -454,7 +456,7 @@ void ImageMHD<T, nDims>::write(std::string filename, Output_Mode mode)
 {
     std::ofstream output_file(filename + ".mhd", std::ofstream::out);
     output_file << "ObjectType = " << objectType_ << "\n";
-    output_file << "NDims = " << ndims_ << "\n";
+    output_file << "NDims = " << nDims_ << "\n";
     if (mode == BINARY)
         output_file << "BinaryData = True"
                     << "\n";
@@ -508,5 +510,4 @@ void ImageMHD<T, nDims>::write(std::string filename, Output_Mode mode)
 }
 } // namespace SPH
 #endif //__EMSCRIPTEN__
-
 #endif // IMAGE_MHD_HPP

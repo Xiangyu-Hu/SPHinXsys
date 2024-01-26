@@ -35,10 +35,11 @@ Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
 Real U_ref = 1.0; // Maximum velocity
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator
+class PlateParticleGenerator : public ParticleGenerator<Base>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body)
+        : ParticleGenerator<Base>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         for (int k = 0; k < particle_number; k++)
@@ -50,8 +51,8 @@ class PlateParticleGenerator : public ParticleGenerator
                     Real x = particle_spacing_ref * i - BW + particle_spacing_ref * 0.5;
                     Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                     Real z = particle_spacing_ref * (k - ((particle_number - 1.0) / 2.0));
-                    initializePositionAndVolumetricMeasure(Vecd(x, y, z),
-                                                           particle_spacing_ref * particle_spacing_ref * particle_spacing_ref);
+                    initializePositionAndVolumetricMeasure(
+                        Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * particle_spacing_ref);
                 }
             }
         }
@@ -119,7 +120,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -137,8 +138,7 @@ int main(int ac, char *av[])
     /** stress relaxation. */
     Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
-    InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
-        plate_shear_acceleration_angular_conservative(plate_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> plate_shear_acceleration(plate_body_inner);
     /** Corrected configuration. */
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
@@ -149,14 +149,10 @@ int main(int ac, char *av[])
         constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
-    // ObservedQuantityRecording<Vecd>
-    // 	write_plate_displacement("Position", io_environment, plate_observer_contact);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_plate_displacement("Position", io_environment, plate_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_kinetic_energy(io_environment, plate_body);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_kinetic_energy(plate_body);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
@@ -206,8 +202,7 @@ int main(int ac, char *av[])
                 plate_pressure_relaxation.exec(acoustic_dt);
                 constrain_holder.exec(acoustic_dt);
                 plate_density_relaxation.exec(acoustic_dt);
-                // shear acceleration with angular conservative
-                plate_shear_acceleration_angular_conservative.exec(acoustic_dt);
+                plate_shear_acceleration.exec(acoustic_dt);
                 number_of_iterations++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;

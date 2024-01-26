@@ -13,8 +13,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -72,13 +71,13 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Inflow boundary condition. */
     BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on flap. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(flap_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
+    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
@@ -165,27 +164,27 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<
         ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalForceOnSolid");
-    WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
+        write_total_force_on_flap(fluid_force_on_flap, "TotalForceOnSolid");
+    WriteSimBodyPinData write_flap_pin_data(sph_system, integ, pin_spot);
 
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
-        wave_probe_4(io_environment, wave_probe_buffer_no_4, "FreeSurfaceHeight");
+        wave_probe_4(wave_probe_buffer_no_4, "FreeSurfaceHeight");
 
     BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
-        wave_probe_5(io_environment, wave_probe_buffer_no_5, "FreeSurfaceHeight");
+        wave_probe_5(wave_probe_buffer_no_5, "FreeSurfaceHeight");
 
     BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
-        wave_probe_12(io_environment, wave_probe_buffer_no_12, "FreeSurfaceHeight");
+        wave_probe_12(wave_probe_buffer_no_12, "FreeSurfaceHeight");
 
     /** Pressure probe. */
-    ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
+    ObservedQuantityRecording<Real> pressure_probe("Pressure", observer_contact_with_water);
     // Interpolate the particle position in flap to move the observer accordingly.
     // Seems not used? TODO: observe displacement more accurate.
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
@@ -236,7 +235,7 @@ int main(int ac, char *av[])
 
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             /** Viscous force exerting on flap. */
             viscous_force_on_solid.exec();
 

@@ -244,10 +244,10 @@ class ApplyStimulusCurrentSII
 /**
  * define observer particle generator.
  */
-class HeartObserverParticleGenerator : public ObserverParticleGenerator
+class HeartObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
@@ -279,7 +279,7 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
-        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
+        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
         herat_model.generateParticles<ParticleGeneratorLattice>();
         /** topology */
@@ -295,9 +295,9 @@ int main(int ac, char *av[])
         /** Compute the fiber and sheet after diffusion. */
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
+        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, herat_model);
+        ReloadParticleIO write_particle_reload_files(herat_model);
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -358,7 +358,7 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
+        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
         : physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
     /** create a SPH body, material and particles */
@@ -366,7 +366,7 @@ int main(int ac, char *av[])
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
+        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
         : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
     //----------------------------------------------------------------------
@@ -422,11 +422,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	SPH Output section
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_voltage("Voltage", io_environment, voltage_observer_contact);
+        write_voltage("Voltage", voltage_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, myocardium_observer_contact);
+        write_displacement("Position", myocardium_observer_contact);
     //----------------------------------------------------------------------
     //	 Pre-simulation.
     //----------------------------------------------------------------------

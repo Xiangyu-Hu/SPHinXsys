@@ -123,7 +123,7 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
-    beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(beam_observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -153,9 +153,9 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
+        write_beam_tip_displacement("Position", beam_observer_contact);
     //-----------------------------------------------------------------------------
     //	Setup particle configuration and initial conditions
     //-----------------------------------------------------------------------------

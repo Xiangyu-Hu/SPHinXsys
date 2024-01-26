@@ -29,6 +29,28 @@ SPHSystem &SPHBody::getSPHSystem()
     return sph_system_;
 }
 //=================================================================================================//
+BaseParticles &SPHBody::getBaseParticles()
+{
+    if (base_particles_ == nullptr)
+    {
+        std::cout << "\n Error: BaseParticle not generated yet! \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    return *base_particles_;
+};
+//=================================================================================================//
+BaseMaterial &SPHBody::getBaseMaterial()
+{
+    if (base_material_ == nullptr)
+    {
+        std::cout << "\n Error: BaseMaterial not generated yet! \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    return *base_material_;
+};
+//=================================================================================================//
 void SPHBody::allocateConfigurationMemoriesForBufferParticles()
 {
     for (size_t i = 0; i < body_relations_.size(); i++)

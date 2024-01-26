@@ -92,7 +92,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<Real, ReduceMax
 
   public:
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, std::string name, int axis = lastAxis)
-        : BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(identifier, Real(MinRealNumber)),
+        : BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(identifier, MinReal),
           GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis), pos_(particles_->pos_)
     {
         this->quantity_name_ = name;

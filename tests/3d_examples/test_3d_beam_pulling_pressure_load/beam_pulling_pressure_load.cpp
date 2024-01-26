@@ -125,7 +125,7 @@ int main(int ac, char *av[])
 
     // Define Observer
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
@@ -169,9 +169,9 @@ int main(int ac, char *av[])
         beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
     /** Output */
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
-        write_beam_stress("VonMisesStress", io_environment, beam_observer_contact);
+        write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */
     GlobalStaticVariables::physical_time_ = 0.0;
     sph_system.initializeSystemCellLinkedLists();

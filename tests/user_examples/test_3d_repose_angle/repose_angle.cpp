@@ -1,17 +1,24 @@
+/**
+ * @file 	column_collapse.cpp
+ * @brief 	3D repose angle example.
+ * @details This is the one of the basic test cases, also the first case for understanding
+ * 			SPH method for modelling granular materials such as soils and sands.
+ * @author Shuaihao Zhang and Xiangyu Hu
+ */
 #include "all_continuum.h"
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
-Real radius = 0.1;                                         // liquid length
-Real height = 0.1;                                         // liquid height
+Real radius = 0.1;                                         // Soil column length
+Real height = 0.1;                                         // Soil column height
 Real resolution_ref = radius / 10;                         // particle spacing
 Real BW = resolution_ref * 4;                              // boundary width
 Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
 // for material properties
-Real rho0_s = 2600;           /**< Reference density of soil. */
-Real gravity_g = 9.8;         /**< Gravity force of soil. */
+Real rho0_s = 2600;           // reference density of soil
+Real gravity_g = 9.8;         // gravity force of soil
 Real Youngs_modulus = 5.98e6; // reference Youngs modulus
 Real poisson = 0.3;           // Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
@@ -21,19 +28,19 @@ Real inner_circle_radius = radius;
 int resolution(20);
 class SoilBlock : public ComplexShape
 {
-  public:
-    explicit SoilBlock(const std::string &shape_name) : ComplexShape(shape_name)
+public:
+    explicit SoilBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
         Vecd translation_column(DL / 2, 0.5 * height, DW / 2);
         add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 1.0, 0), inner_circle_radius,
-                                       0.5 * height, resolution, translation_column);
+            0.5 * height, resolution, translation_column);
     }
 };
 //	define the static solid wall boundary shape
 class WallBoundary : public ComplexShape
 {
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+public:
+    explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
     {
         Vecd outer_wall_halfsize = Vecd(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
         Vecd outer_wall_translation = Vecd(-BW, -BW, -BW) + outer_wall_halfsize;
@@ -48,11 +55,11 @@ class WallBoundary : public ComplexShape
 //----------------------------------------------------------------------
 class SoilInitialCondition : public continuum_dynamics::ContinuumInitialCondition
 {
-  public:
-    explicit SoilInitialCondition(RealBody &granular_column)
-        : continuum_dynamics::ContinuumInitialCondition(granular_column){};
+public:
+    explicit SoilInitialCondition(RealBody& granular_column)
+        : continuum_dynamics::ContinuumInitialCondition(granular_column) {};
 
-  protected:
+protected:
     void update(size_t index_i, Real dt)
     {
         /** initial stress */
@@ -65,25 +72,22 @@ class SoilInitialCondition : public continuum_dynamics::ContinuumInitialConditio
     };
 };
 // the main program with commandline options
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(false);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
-    soil_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? soil_block.generateParticles<ParticleGeneratorReload>(io_environment, soil_block.getName())
+        ? soil_block.generateParticles<ParticleGeneratorReload>(soil_block.getName())
         : soil_block.generateParticles<ParticleGeneratorLattice>();
     soil_block.addBodyStateForRecording<Real>("Pressure");
     soil_block.addBodyStateForRecording<Real>("Density");
@@ -103,26 +107,26 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation soil_block_inner(soil_block);
-    ContactRelation soil_block_contact(soil_block, {&wall_boundary});
+    ContactRelation soil_block_contact(soil_block, { &wall_boundary });
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     // run particle relaxation
     if (sph_system.RunParticleRelaxation())
     {
         /**
          * @brief 	Methods used for particle relaxation.
          */
-        /** Random reset the insert body particle position. */
+         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(soil_block);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_column_to_vtp(io_environment, soil_block);
+        BodyStatesRecordingToVtp write_column_to_vtp(soil_block);
         /** Write the particle reload files. */
 
-        ReloadParticleIO write_particle_reload_files(io_environment, soil_block);
+        ReloadParticleIO write_particle_reload_files(soil_block);
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(soil_block_inner);
         /**
@@ -157,7 +161,7 @@ int main(int ac, char *av[])
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.1);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
     Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
@@ -166,9 +170,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_soil_mechanical_energy(io_environment, soil_block, gravity_ptr);
+        write_soil_mechanical_energy(soil_block, gravity_ptr);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -232,8 +236,8 @@ int main(int ac, char *av[])
             {
                 Real dt = soil_acoustic_time_step.exec();
 
-                granular_stress_relaxation_1st.exec(dt);
                 stress_diffusion.exec();
+                granular_stress_relaxation_1st.exec(dt);
                 granular_stress_relaxation_2nd.exec(dt);
 
                 relaxation_time += dt;
@@ -246,8 +250,8 @@ int main(int ac, char *av[])
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
-                              << GlobalStaticVariables::physical_time_
-                              << std::scientific << "	dt = " << dt << "\n";
+                        << GlobalStaticVariables::physical_time_
+                        << std::scientific << "	dt = " << dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                     {
@@ -274,16 +278,15 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << std::fixed << "Total wall time for computation: " << tt.seconds()
-              << " seconds." << std::endl;
+        << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
+        << interval_computing_time_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_soil_stress_relaxation = "
-              << interval_computing_soil_stress_relaxation.seconds() << "\n";
+        << interval_computing_soil_stress_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-              << interval_updating_configuration.seconds() << "\n";
+        << interval_updating_configuration.seconds() << "\n";
     std::cout << "total time steps = " << number_of_iterations << "\n";
 
-    // sph_system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_soil_mechanical_energy.generateDataBase(1.0e-3);

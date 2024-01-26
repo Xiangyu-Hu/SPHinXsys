@@ -38,15 +38,15 @@ int main(int ac, char *av[])
 
     SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
     insert_body.defineAdaptationRatios(1.15, 2.0);
-    insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    insert_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     insert_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())
+        ? insert_body.generateParticles<ParticleGeneratorReload>(insert_body.getName())
         : insert_body.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
-    beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<FluidObserverParticleGenerator>();
     //----------------------------------------------------------------------
@@ -63,8 +63,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
         relax_dynamics::RelaxationStepInner relaxation_step_inner(insert_body_inner);
-        BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, {&insert_body});
-        ReloadParticleIO write_particle_reload_files(io_environment, {&insert_body});
+        BodyStatesRecordingToVtp write_insert_body_to_vtp({&insert_body});
+        ReloadParticleIO write_particle_reload_files({&insert_body});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Computing vorticity in the flow for visualization. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<KernelCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(insert_body_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
+    InteractionDynamics<solid_dynamics::AllForceFromFluid>
         fluid_force_on_solid_update(insert_body_contact, viscous_force_on_solid);
     /** Compute the average velocity of the insert body. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
@@ -163,12 +163,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_insert_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
+        write_total_viscous_force_on_insert_body(viscous_force_on_solid, "TotalViscousForceOnSolid");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
-    ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
+        write_beam_tip_displacement("Position", beam_observer_contact);
+    ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -215,7 +215,7 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_correction.exec();
 
             /** FSI for viscous force. */

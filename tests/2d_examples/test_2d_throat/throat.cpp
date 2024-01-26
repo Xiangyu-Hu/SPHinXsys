@@ -126,8 +126,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -141,7 +140,7 @@ int main(int ac, char *av[])
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd::Zero()};
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -177,7 +176,7 @@ int main(int ac, char *av[])
     // define external force
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_block_inner, fluid_block_contact);
     // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
@@ -190,11 +189,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_fluid_mechanical_energy(io_environment, fluid_block);
+        write_fluid_mechanical_energy(fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_fluid_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

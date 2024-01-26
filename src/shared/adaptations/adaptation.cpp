@@ -116,6 +116,15 @@ ParticleWithLocalRefinement::
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
 }
 //=================================================================================================//
+void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
+{
+    SPHAdaptation::initializeAdaptationVariables(base_particles);
+    base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", [&](size_t i) -> Real
+                                    { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
+    base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
+    base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
+}
+//=================================================================================================//
 size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
 {
     return size_t(local_refinement_level_);
@@ -124,15 +133,6 @@ size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
 size_t ParticleWithLocalRefinement::getLevelSetTotalLevel()
 {
     return getCellLinkedListTotalLevel() + 1;
-}
-//=================================================================================================//
-void ParticleWithLocalRefinement::registerAdaptationVariables(BaseParticles &base_particles)
-{
-    SPHAdaptation::registerAdaptationVariables(base_particles);
-
-    base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", Real(1.0));
-    base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
-    base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::

@@ -3,11 +3,9 @@
  * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
-#include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;
-#include "io_simbody_cable.h"   //output for cable data
-#include "io_simbody_free.h"    //output for free body data
 #include "nonlinear_wave_fsi.h" //header for this case
+#include "sphinxsys.h"          //SPHinXsys Library.
+using namespace SPH;
 
 int main(int ac, char *av[])
 {
@@ -17,13 +15,12 @@ int main(int ac, char *av[])
     //	Build up the Structure Relax SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
-    system_fit.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment_fit(system_fit);
+    system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment_fit);
+    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure_fit.generateParticles<ParticleGeneratorMultiResolution>();
+    structure_fit.generateParticles<ParticleGeneratorAdaptive>();
     structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     //----------------------------------------------------------------------
@@ -39,7 +36,7 @@ int main(int ac, char *av[])
     relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
     SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
     /** Write the particle reload files. */
-    ReloadParticleIO write_particle_reload_files(io_environment_fit, structure_fit);
+    ReloadParticleIO write_particle_reload_files(structure_fit);
 
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
@@ -71,8 +68,7 @@ int main(int ac, char *av[])
     //	Build up the Main environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -89,17 +85,17 @@ int main(int ac, char *av[])
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
+    structure.generateParticles<ParticleGeneratorReload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
-    observer.generateParticles<ObserverParticleGenerator>(
+    observer.generateParticles<ParticleGeneratorObserver>(
         StdVec<Vecd>{obs});
 
     ObserverBody WMobserver(sph_system, "WMObserver");
     WMobserver.defineAdaptationRatios(h, 2.0);
     Vecd WMpos0 = Vecd(0.0, -Maker_width / 2, HWM / 2);
-    WMobserver.generateParticles<ObserverParticleGenerator>(
+    WMobserver.generateParticles<ParticleGeneratorObserver>(
         StdVec<Vecd>{WMpos0});
 
     //---------------------------------------------------------
@@ -111,14 +107,14 @@ int main(int ac, char *av[])
     Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
-    fp1.generateParticles<ObserverParticleGenerator>(fp1l);
+    fp1.generateParticles<ParticleGeneratorObserver>(fp1l);
 
     ObserverBody bp1(sph_system, "BP1");
     Real bp1x = Strx - 0.295;
     Real bp1y = Stry + .035;
     Real bp1z = 0.933;
     StdVec<Vecd> bp1l = {Vecd(bp1x, bp1y, bp1z)};
-    bp1.generateParticles<ObserverParticleGenerator>(bp1l);
+    bp1.generateParticles<ParticleGeneratorObserver>(bp1l);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -166,7 +162,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
@@ -174,7 +170,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on structure. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_structure(structure_contact, viscous_force_on_solid);
+    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann> fluid_force_on_structure(structure_contact, viscous_force_on_solid);
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_wave_maker), wave_maker_shape));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
@@ -258,32 +254,32 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Cable SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_AR(io_environment, integ, tethering_springAR, "AR");
-    WriteSimBodyCableData write_cable_AL(io_environment, integ, tethering_springAL, "AL");
-    WriteSimBodyCableData write_cable_BR(io_environment, integ, tethering_springBR, "BR");
-    WriteSimBodyCableData write_cable_BL(io_environment, integ, tethering_springBL, "BL");
-    WriteSimBodyFreeRotationMatrix write_free_body_rotation(io_environment, integ, tethered_struct);
-    WriteSimBodyVelocity write_free_body_velocity(io_environment, integ, tethered_struct);
+    WriteSimBodyCableData write_cable_AR(sph_system, integ, tethering_springAR, "AR");
+    WriteSimBodyCableData write_cable_AL(sph_system, integ, tethering_springAL, "AL");
+    WriteSimBodyCableData write_cable_BR(sph_system, integ, tethering_springBR, "BR");
+    WriteSimBodyCableData write_cable_BL(sph_system, integ, tethering_springBL, "BL");
+    WriteSimBodyFreeRotationMatrix write_free_body_rotation(sph_system, integ, tethered_struct);
+    WriteSimBodyVelocity write_free_body_velocity(sph_system, integ, tethered_struct);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
-        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_str_displacement("Position", io_environment, observer_contact_with_structure);
+        write_str_displacement("Position", observer_contact_with_structure);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_WMobserver_position(WMobserver_contact_with_wall, "Position", "Position");
     ObservedQuantityRecording<Vecd>
-        write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
+        write_WM_displacement("Position", WMobserver_contact_with_wall);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp1_position(fp1_contact_s, "Position", "Position");
@@ -291,11 +287,11 @@ int main(int ac, char *av[])
         interpolation_bp1_position(bp1_contact_s, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
+        write_recorded_pressure_fp1("Pressure", fp1_contact_w);
     ObservedQuantityRecording<Real>
-        write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
+        write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
 
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
@@ -374,7 +370,7 @@ int main(int ac, char *av[])
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             corrected_configuration_fluid.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             /** Viscous force exerting on structure. */
             viscous_force_on_solid.exec();
 

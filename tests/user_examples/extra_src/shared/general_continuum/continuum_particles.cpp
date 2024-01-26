@@ -3,7 +3,7 @@
 namespace SPH
 {
     ContinuumParticles::
-        ContinuumParticles(SPHBody &sph_body, GeneralContinuum *continuum)
+        ContinuumParticles(SPHBody& sph_body, GeneralContinuum* continuum)
         : BaseParticles(sph_body, continuum), continuum_(*continuum) {}
     //=================================================================================================//
     void ContinuumParticles::initializeOtherVariables()
@@ -11,8 +11,6 @@ namespace SPH
         BaseParticles::initializeOtherVariables();
 
         registerVariable(acc_shear_, "AccelerationByShear");
-        registerVariable(stress_tensor_, "StressTensor");
-        registerVariable(stress_tensor_rate_, "StressTensorRate");
         registerVariable(shear_stress_, "ShearStress");
         registerVariable(shear_stress_rate_, "ShearStressRate");
         registerVariable(von_mises_stress_, "VonMisesStress");
@@ -24,8 +22,6 @@ namespace SPH
         //		register sortable particle data
         //----------------------------------------------------------------------
         registerSortableVariable<Vecd>("AccelerationByShear");
-        registerSortableVariable<Matd>("StressTensor");
-        registerSortableVariable<Matd>("StressTensorRate");
         registerSortableVariable<Matd>("ShearStress");
         registerSortableVariable<Matd>("ShearStressRate");
         registerSortableVariable<Real>("VonMisesStress");
@@ -35,11 +31,11 @@ namespace SPH
         registerSortableVariable<Matd>("StrainTensorRate");
         //----------------------------------------------------------------------
         registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd
-                         { return pos_[i]; });
+        { return pos_[i]; });
         registerVariable(n_, "NormalDirection");
         registerVariable(n0_, "InitialNormalDirection",
-                         [&](size_t i) -> Vecd
-                         { return n_[i]; });
+            [&](size_t i) -> Vecd
+        { return n_[i]; });
     }
     //=================================================================================================//
     PlasticContinuumParticles::
@@ -83,9 +79,9 @@ namespace SPH
     //=================================================================================================//
     Real  PlasticContinuumParticles::getDeviatoricPlasticStrain(Mat3d& strain_tensor)
     {
-        Mat3d deviatoric_strain_tensor = strain_tensor - (1 / (Real)Dimensions) * strain_tensor.trace() * Mat3d::Identity();
+        Mat3d deviatoric_strain_tensor = strain_tensor - (1.0 / (Real)Dimensions) * strain_tensor.trace() * Mat3d::Identity();
         Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
-        return sqrt(sum * 2 / 3);
+        return sqrt(sum * 2.0 / 3.0);
     }
 
 } // namespace SPH

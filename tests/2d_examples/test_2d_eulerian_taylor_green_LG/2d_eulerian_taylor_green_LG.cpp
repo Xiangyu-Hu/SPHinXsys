@@ -50,8 +50,8 @@ class TaylorGreenInitialCondition
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_), 
-        p_(*particles_->getVariableByName<Real>("Pressure"))
+          rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_),
+          p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");
         particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
@@ -93,8 +93,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
-    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -122,17 +121,17 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
-    InteractionDynamics<fluid_dynamics::EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
+    InteractionDynamics<fluid_dynamics::EulerianCompressibleViscousForceInner> viscous_force(water_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(water_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_total_mechanical_energy(io_environment, water_body);
+        write_total_mechanical_energy(water_body);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(io_environment, water_body);
+        write_maximum_speed(water_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configurations
     //	and case specified initial condition if necessary.
@@ -170,10 +169,10 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force. */
+            /** Force Prior due to viscous force. */
             time_step_initialization.exec();
             Real dt = get_fluid_time_step_size.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             /** Dynamics including pressure relaxation. */
             integration_time += dt;
             pressure_relaxation.exec(dt);

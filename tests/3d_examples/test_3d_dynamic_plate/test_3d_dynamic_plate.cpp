@@ -38,10 +38,10 @@ Real time_to_full_external_force = 0.0;
 Real gravitational_acceleration = 0.0;
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -180,9 +180,9 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_plate_max_displacement("Position", io_environment, plate_observer_contact);
+        write_plate_max_displacement("Position", plate_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();

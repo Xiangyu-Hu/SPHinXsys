@@ -83,30 +83,12 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 };
 
 /**
- * @class ParticleGeneratorInFVM
- * @brief Generate particle directly from position-and-volume data.
- */
-class ParticleGeneratorInFVM : public ParticleGenerator
-{
-  public:
-    ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
-    virtual ~ParticleGeneratorInFVM(){};
-    /** Initialize geometrical variable for observe particles. */
-    virtual void initializeGeometricVariables() override;
-
-  protected:
-    StdLargeVec<Vecd> &elements_centroids_;
-    StdLargeVec<Real> &elements_volumes_;
-};
-
-/**
  * @class NeighborBuilderInFVM
  * @brief Base neighbor relation between particles i and j.
  */
 class NeighborBuilderInFVM
 {
   protected:
-    Kernel *kernel_;
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
@@ -115,7 +97,7 @@ class NeighborBuilderInFVM
                             Vecd &interface_normal_direction, size_t j_index) const;
 
   public:
-    NeighborBuilderInFVM() : kernel_(nullptr){};
+    NeighborBuilderInFVM(){};
     virtual ~NeighborBuilderInFVM(){};
 };
 
@@ -197,7 +179,7 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
 class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, ANSYSMesh &ansys_mesh);
+    BodyStatesRecordingInMeshToVtp(SPHBody &body, ANSYSMesh &ansys_mesh);
     virtual ~BodyStatesRecordingInMeshToVtp(){};
 
   protected:

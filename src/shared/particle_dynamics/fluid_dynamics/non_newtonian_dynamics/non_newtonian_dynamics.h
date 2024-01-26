@@ -22,10 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file non_newtonian_dynamics.h
- * @brief Here, we define the algorithm classes for fluid dynamics within the body.
+ * @brief Here, we define the time integration algorithm classes for non-newtonian fluids.
  * @details We consider here weakly compressible fluids.
- * Note that, as these are local dynamics which are combined with particle dynamics
- * algorithms as template, the name-hiding is used for functions in the derived classes.
  * @author	Xiangyu Hu
  */
 
@@ -42,12 +40,8 @@ namespace fluid_dynamics
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration1stHalf;
 
-using Integration1stHalfInnerDissipative =
-    Integration1stHalf<Inner<>, DissipativeRiemannSolver, NoKernelCorrection>;
-
 template <>
-class Oldroyd_BIntegration1stHalf<Inner<>>
-    : public Integration1stHalfInnerDissipative
+class Oldroyd_BIntegration1stHalf<Inner<>> : public Integration1stHalfInnerRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
@@ -59,12 +53,11 @@ class Oldroyd_BIntegration1stHalf<Inner<>>
     StdLargeVec<Matd> tau_, dtau_dt_;
 };
 
-using Integration1stHalfContactWallDissipative =
-    Integration1stHalf<Contact<Wall>, DissipativeRiemannSolver, NoKernelCorrection>;
+using Integration1stHalfContactWallRiemann =
+    Integration1stHalf<Contact<Wall>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <>
-class Oldroyd_BIntegration1stHalf<Contact<Wall>>
-    : public Integration1stHalfContactWallDissipative
+class Oldroyd_BIntegration1stHalf<Contact<Wall>> : public Integration1stHalfContactWallRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation);
@@ -78,11 +71,8 @@ class Oldroyd_BIntegration1stHalf<Contact<Wall>>
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration2ndHalf;
 
-using Integration2ndHalfInnerDissipative =
-    Integration2ndHalf<Inner<>, DissipativeRiemannSolver>;
 template <>
-class Oldroyd_BIntegration2ndHalf<Inner<>>
-    : public Integration2ndHalfInnerDissipative
+class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiemann
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
@@ -96,11 +86,11 @@ class Oldroyd_BIntegration2ndHalf<Inner<>>
     Real mu_p_, lambda_;
 };
 
-using Integration2ndHalfWithWallDissipative =
-    Integration2ndHalf<Contact<Wall>, DissipativeRiemannSolver>;
+using Integration2ndHalfContactWallRiemann =
+    Integration2ndHalf<Contact<Wall>, AcousticRiemannSolver>;
+
 template <>
-class Oldroyd_BIntegration2ndHalf<Contact<Wall>>
-    : public Integration2ndHalfWithWallDissipative
+class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfContactWallRiemann
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);

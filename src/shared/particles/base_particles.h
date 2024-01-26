@@ -45,7 +45,6 @@ namespace SPH
 
 class SPHBody;
 class BaseMaterial;
-class ParticleGenerator;
 class BodySurface;
 template <class ReturnType>
 class BaseDynamics;
@@ -92,14 +91,14 @@ class BaseParticles
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~BaseParticles(){};
 
-    StdLargeVec<Vecd> pos_;       /**< Position */
-    StdLargeVec<Vecd> vel_;       /**< Velocity */
+    StdLargeVec<Vecd> pos_;         /**< Position */
+    StdLargeVec<Vecd> vel_;         /**< Velocity */
     StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
     StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
 
     StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
     StdLargeVec<Real> rho_;      /**< Density */
-    StdLargeVec<Real> mass_;     /**< Massive measure, also mass per-unit thickness and per-unit cross-section of surface and linear particle */
+    StdLargeVec<Real> mass_;     /**< Mass*/
     StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
@@ -191,7 +190,7 @@ class BaseParticles
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
-    virtual Real ParticleMass(size_t index) { return mass_[index]; }
+    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
     SPHBody &sph_body_;

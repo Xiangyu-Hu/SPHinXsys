@@ -49,10 +49,10 @@ TEST(Plate, MaxDisplacement)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -180,8 +180,8 @@ int main(int ac, char *av[])
         plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", plate_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();

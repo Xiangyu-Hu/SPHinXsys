@@ -61,12 +61,11 @@ void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
     }
 }
 
-void relaxParticlesSingleResolution(IOEnvironment &io_environment,
-                                    bool write_particle_relaxation_data,
+void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
                                     SolidBody &solid_body_from_mesh,
                                     InnerRelation &solid_body_from_mesh_inner)
 {
-    BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(io_environment, solid_body_from_mesh);
+    BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(solid_body_from_mesh);
 
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
@@ -116,9 +115,9 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 
     if (particle_relaxation)
     {
-        IOEnvironment io_environment(system);
+        system.setIOEnvironment();
         InnerRelation inner_relation(model);
-        relaxParticlesSingleResolution(io_environment, write_particle_relaxation_data, model, inner_relation);
+        relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
 
     return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().pos_, model.getBaseParticles().Vol_);
@@ -164,7 +163,7 @@ StructuralSimulationInput::StructuralSimulationInput(
     scale_system_boundaries_ = 1;
     // boundary conditions
     non_zero_gravity_ = {};
-    acceleration_bounding_box_tuple_ = {};
+    force_bounding_box_tuple_ = {};
     force_in_body_region_tuple_ = {};
     surface_pressure_tuple_ = {};
     spring_damper_tuple_ = {};
@@ -203,7 +202,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 
       // optional: boundary conditions
       non_zero_gravity_(input.non_zero_gravity_),
-      acceleration_bounding_box_tuple_(input.acceleration_bounding_box_tuple_),
+      force_bounding_box_tuple_(input.force_bounding_box_tuple_),
       force_in_body_region_tuple_(input.force_in_body_region_tuple_),
       surface_pressure_tuple_(input.surface_pressure_tuple_),
       spring_damper_tuple_(input.spring_damper_tuple_),
@@ -238,7 +237,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
     initializeAllContacts();
     // boundary conditions
     initializeGravity();
-    initializeAccelerationForBodyPartInBoundingBox();
+    initializeExternalForceInBoundingBox();
     initializeForceInBodyRegion();
     initializeSurfacePressure();
     initializeSpringDamperConstraintParticleWise();
@@ -420,14 +419,14 @@ void StructuralSimulation::initializeGravity()
     }
 }
 
-void StructuralSimulation::initializeAccelerationForBodyPartInBoundingBox()
+void StructuralSimulation::initializeExternalForceInBoundingBox()
 {
-    acceleration_bounding_box_ = {};
-    for (size_t i = 0; i < acceleration_bounding_box_tuple_.size(); i++)
+    force_bounding_box_ = {};
+    for (size_t i = 0; i < force_bounding_box_tuple_.size(); i++)
     {
-        SolidBody *solid_body = solid_body_list_[std::get<0>(acceleration_bounding_box_tuple_[i])]->getSolidBodyFromMesh();
-        acceleration_bounding_box_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>(
-            *solid_body, std::get<1>(acceleration_bounding_box_tuple_[i]), std::get<2>(acceleration_bounding_box_tuple_[i])));
+        SolidBody *solid_body = solid_body_list_[std::get<0>(force_bounding_box_tuple_[i])]->getSolidBodyFromMesh();
+        force_bounding_box_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::ExternalForceInBoundingBox>>(
+            *solid_body, std::get<1>(force_bounding_box_tuple_[i]), std::get<2>(force_bounding_box_tuple_[i])));
     }
 }
 
@@ -626,11 +625,11 @@ void StructuralSimulation::executeInitializeATimeStep()
     }
 }
 
-void StructuralSimulation::executeAccelerationForBodyPartInBoundingBox()
+void StructuralSimulation::executeExternalForceInBoundingBox()
 {
-    for (size_t i = 0; i < acceleration_bounding_box_.size(); i++)
+    for (size_t i = 0; i < force_bounding_box_.size(); i++)
     {
-        acceleration_bounding_box_[i]->exec();
+        force_bounding_box_[i]->exec();
     }
 }
 
@@ -846,7 +845,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     /** ACTIVE BOUNDARY CONDITIONS */
     // force (acceleration) based
     executeInitializeATimeStep();
-    executeAccelerationForBodyPartInBoundingBox();
+    executeExternalForceInBoundingBox();
     executeForceInBodyRegion();
     executeSurfacePressure();
     executeSpringDamperConstraintParticleWise();
@@ -893,7 +892,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 void StructuralSimulation::runSimulation(Real end_time)
 {
-    BodyStatesRecordingToVtp write_states(io_environment_, system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
 
     /** Statistics for computing time. */
     write_states.writeToFile(0);
@@ -929,7 +928,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 
 double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
-    BodyStatesRecordingToVtp write_states(io_environment_, system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
     GlobalStaticVariables::physical_time_ = 0.0;
 
     /** Statistics for computing time. */
@@ -975,7 +974,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)
     : StructuralSimulation(input),
-      write_states_(io_environment_, system_.real_bodies_),
+      write_states_(system_.real_bodies_),
       dt(0.0)
 {
     write_states_.writeToFile(0);

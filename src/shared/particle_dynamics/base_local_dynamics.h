@@ -39,8 +39,6 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction type identifies
 //----------------------------------------------------------------------
-class Base; /**< Indicating base class for a method */
-
 template <typename... InnerParameters>
 class Inner; /**< Inner interaction: interaction within a body*/
 
@@ -49,7 +47,6 @@ class Contact; /**< Contact interaction: interaction between a body with one or 
 
 class Boundary;        /**< Interaction with boundary */
 class Wall;            /**< Interaction with wall boundary */
-class Adaptive;        /**< Interaction with adaptive resolution */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
 //----------------------------------------------------------------------

@@ -42,6 +42,7 @@
 
 #include "base_data_type.h"
 
+#include <memory>
 #include <typeinfo>
 
 namespace SPH
