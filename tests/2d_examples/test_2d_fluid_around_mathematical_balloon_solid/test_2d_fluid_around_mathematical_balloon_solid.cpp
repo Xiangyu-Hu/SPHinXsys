@@ -1,7 +1,7 @@
 /**
- * @file 	test_2d_fluid_around_balloon_shell.cpp
- * @brief 	Test on fluid-shell interaction when 2 shell particles are close to each other
- * @details This is a case to test fluid-shell interaction.
+ * @file 	test_2d_fluid_around_balloon_balloon.cpp
+ * @brief 	Test on fluid-balloon interaction when 2 balloon particles are close to each other
+ * @details This is a case to test fluid-balloon interaction.
  * @author 	Weiyi Kong, Virtonomy GmbH
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -23,19 +23,15 @@ class CheckKernelCompleteness
     StdLargeVec<int> number_of_contact_neighbor;
 
   public:
-    CheckKernelCompleteness(BaseInnerRelation &inner_relation, std::vector<BaseContactRelation *> &contact_relations)
+    CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
         : particles_(&inner_relation.base_particles_),
           kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
           inner_configuration_(&inner_relation.inner_configuration_)
     {
-        for (size_t n = 0; n < contact_relations.size(); n++)
+        for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
         {
-            auto &contact_relation = *contact_relations[n];
-            for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
-            {
-                contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
-                contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
-            }
+            contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
+            contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
         }
         inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
         inner_relation.base_particles_.registerVariable(W_ijV_j_ttl_contact, "TotalKernelContact");
@@ -85,37 +81,9 @@ class CheckKernelCompleteness
     }
 };
 
-// Make sure the initial normal direction points from shell to fluid
-class CorrectNormalDirection
-{
-  private:
-    BaseParticles *particles_;
-    Vecd direction_point_;
-    bool if_reverse_;
-
-  public:
-    CorrectNormalDirection(SPHBody &shell, Vecd direction_point, bool if_reverse = false)
-        : particles_(&shell.getBaseParticles()), direction_point_(direction_point), if_reverse_(if_reverse){};
-    inline void exec()
-    {
-        auto &n = *particles_->getVariableByName<Vecd>("NormalDirection");
-        particle_for(
-            par,
-            particles_->total_real_particles_,
-            [&, this](size_t index_i)
-            {
-                Vecd displacement = particles_->pos_[index_i] - direction_point_;
-                if (if_reverse_)
-                    displacement *= -1;
-                if (n[index_i].dot(displacement) > 0)
-                    n[index_i] *= -1;
-            });
-    }
-};
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-const bool if_fsi = true;
 const Real scale = 0.001;
 const Real DH = 12.0 * scale; /**< Reference and the height of main channel. */
 const Real DL = 3.0 * DH;     /**< Reference length. */
@@ -123,15 +91,14 @@ const Real DL_balloon = 16.0 * scale;
 const Real radius_balloon = 3.5 * scale; // radius of the mid surface
 
 const Real resolution_ref = 0.3 * scale;
-const Real resolution_shell = 0.3 * scale;  // outer surface radius
-const Real thickness_balloon = 1.2 * scale; // thickness of the balloon
+const Real resolution_balloon = 0.3 * scale; // outer surface radius
+const Real thickness_balloon = 1.2 * scale;  // thickness of the balloon
 
 const Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 const Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 
-const Real radius_balloon_outer = radius_balloon + 0.5 * resolution_shell; // radius of the outer surface
-const Real radius_balloon_inner = radius_balloon - 0.5 * resolution_shell; // radius of the outer surface
-const Real level_set_refinement_ratio = resolution_shell / (0.1 * resolution_shell);
+const Real radius_balloon_outer = radius_balloon + 0.5 * resolution_balloon; // radius of the outer surface
+const Real radius_balloon_inner = radius_balloon_outer - thickness_balloon;  // radius of the outer surface
 
 const BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -0.5 * DH - BW), Vec2d(DL + BW, 0.5 * DH + BW));
 const Vec2d balloon_center(0.5 * DL, 0);
@@ -221,10 +188,10 @@ class WallBoundary : public MultiPolygonShape
         multi_polygon_.addAPolygon(createWallInnerShape(), ShapeBooleanOps::sub);
     }
 };
-class Shell : public MultiPolygonShape
+class Balloon : public MultiPolygonShape
 {
   public:
-    explicit Shell(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit Balloon(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addABox(Transform(balloon_center), Vec2d(0.5 * DL_balloon, radius_balloon_outer), ShapeBooleanOps::add);
         multi_polygon_.addACircle(circle_center_1, radius_balloon_outer, 100, ShapeBooleanOps::add);
@@ -252,9 +219,9 @@ struct InflowVelocity
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+        // Real run_time = GlobalStaticVariables::physical_time_;
+        // Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        target_velocity[0] = 1.5 * u_ref_ * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         return target_velocity;
     }
 };
@@ -275,10 +242,49 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (std::abs(base_particles_.pos_[index_i][1]) < resolution_shell)
+        if (std::abs(base_particles_.pos_[index_i][1]) < resolution_balloon)
         {
             body_part_particles_.push_back(index_i);
         }
+    };
+};
+class ForceBoundaryGeometry : public BodyPartByParticle
+{
+  public:
+    ForceBoundaryGeometry(SPHBody &body, const std::string &body_part_name)
+        : BodyPartByParticle(body, body_part_name)
+    {
+        TaggingParticleMethod tagging_particle_method = std::bind(&ForceBoundaryGeometry::tagManually, this, _1);
+        tagParticles(tagging_particle_method);
+    };
+
+  private:
+    void tagManually(size_t index_i)
+    {
+        if ((fabs(base_particles_.pos_[index_i].x() - balloon_center.x()) < DL_balloon) && (fabs(base_particles_.pos_[index_i].y() - balloon_center.y()) > radius_balloon_outer - 0.7 * resolution_balloon))
+        {
+            body_part_particles_.push_back(index_i);
+        }
+    };
+};
+const Real t_ref = 0.1;
+const Real force_prior = 10.0 * thickness_balloon;
+class BalloonForce : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+{
+  public:
+    explicit BalloonForce(BodyPartByParticle &body_part)
+        : BaseMotionConstraint<BodyPartByParticle>(body_part),
+          force_prior_(particles_->force_prior_){};
+
+  protected:
+    StdLargeVec<Vecd> &force_prior_;
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        Real run_time = GlobalStaticVariables::physical_time_;
+        Real x_ratio = (pos0_[index_i].x() - (balloon_center.x() - DL_balloon / 2.0)) / DL_balloon;
+        Real force_avg = 0.5 * force_prior * (1 - cos(Pi * (2.0 * run_time / t_ref + x_ratio)));
+        force_prior_[index_i] = -force_avg * n_[index_i];
     };
 };
 //----------------------------------------------------------------------
@@ -308,23 +314,55 @@ int main(int ac, char *av[])
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody shell(sph_system, makeShared<Shell>("Shell"));
-    shell.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    // shell.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
-    shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
-    if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    SolidBody balloon(sph_system, makeShared<Balloon>("balloon"));
+    balloon.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_balloon);
+    balloon.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    balloon.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? balloon.generateParticles<ParticleGeneratorReload>(io_environment, balloon.getName())
+        : balloon.generateParticles<ParticleGeneratorLattice>();
+    //----------------------------------------------------------------------
+    //	Run particle relaxation for body-fitted distribution if chosen.
+    //----------------------------------------------------------------------
+    if (sph_system.RunParticleRelaxation())
     {
-        shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
-    }
-    else
-    {
-        shell.defineBodyLevelSetShape(level_set_refinement_ratio);
-        shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(resolution_shell);
-    }
-
-    if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
-    {
-        std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
+        //----------------------------------------------------------------------
+        //	Define body relation map used for particle relaxation.
+        //----------------------------------------------------------------------
+        InnerRelation balloon_inner(balloon);
+        //----------------------------------------------------------------------
+        //	Define the methods for particle relaxation for wall boundary.
+        //----------------------------------------------------------------------
+        SimpleDynamics<RandomizeParticlePosition> balloon_random_particles(balloon);
+        relax_dynamics::RelaxationStepInner relaxation_step_balloon_inner(balloon_inner);
+        //----------------------------------------------------------------------
+        //	Output for particle relaxation.
+        //----------------------------------------------------------------------
+        BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
+        ReloadParticleIO write_particle_reload_files(io_environment, {&balloon});
+        //----------------------------------------------------------------------
+        //	Particle relaxation starts here.
+        //----------------------------------------------------------------------
+        balloon_random_particles.exec(0.25);
+        relaxation_step_balloon_inner.SurfaceBounding().exec();
+        write_relaxed_particles.writeToFile(0);
+        //----------------------------------------------------------------------
+        //	From here iteration for particle relaxation begins.
+        //----------------------------------------------------------------------
+        int ite = 0;
+        int relax_step = 1000;
+        while (ite < relax_step)
+        {
+            relaxation_step_balloon_inner.exec();
+            ite += 1;
+            if (ite % 100 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
+                write_relaxed_particles.writeToFile(ite);
+            }
+        }
+        std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
+        write_particle_reload_files.writeToFile(0);
         return 0;
     }
     //----------------------------------------------------------------------
@@ -336,85 +374,12 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_inner(water_block);
-    InnerRelation shell_inner(shell);
-    ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ContactRelationToShell water_shell_contact(water_block, {&shell}, true);
-    ContactRelationFromShell shell_water_contact(shell, {&water_block}, true);
-    ComplexRelation water_block_complex(water_inner, {&water_wall_contact, &water_shell_contact});
-    // inner relation to compute curvature
-    ShellInnerRelationWithContactKernel shell_curvature_inner(shell, water_block);
-    // shell self contact
-    ShellSelfContactRelation shell_self_contact(shell);
-    //----------------------------------------------------------------------
-    //	Run particle relaxation for body-fitted distribution if chosen.
-    //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation())
-    {
-        //----------------------------------------------------------------------
-        //	Define body relation map used for particle relaxation.
-        //----------------------------------------------------------------------
-        InnerRelation shell_inner(shell);
-        //----------------------------------------------------------------------
-        //	Define the methods for particle relaxation for wall boundary.
-        //----------------------------------------------------------------------
-        SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
-        relax_dynamics::ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
-        relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, resolution_shell, cos(Pi / 2.0));
-        shell.addBodyStateForRecording<int>("UpdatedIndicator");
-        CorrectNormalDirection correct_normal_direction(shell, balloon_center, true);
-        //----------------------------------------------------------------------
-        //	Output for particle relaxation.
-        //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-        MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, shell.getCellLinkedList());
-        ReloadParticleIO write_particle_reload_files(io_environment, {&shell});
-        //----------------------------------------------------------------------
-        //	Particle relaxation starts here.
-        //----------------------------------------------------------------------
-        shell_random_particles.exec(0.25);
-
-        relaxation_step_shell_inner.MidSurfaceBounding().exec();
-        write_relaxed_particles.writeToFile(0);
-        shell.updateCellLinkedList();
-        write_mesh_cell_linked_list.writeToFile(0);
-        //----------------------------------------------------------------------
-        //	From here iteration for particle relaxation begins.
-        //----------------------------------------------------------------------
-        int ite = 0;
-        int relax_step = 1000;
-        while (ite < relax_step)
-        {
-            for (int k = 0; k < 2; ++k)
-                relaxation_step_shell_inner.exec();
-            ite += 1;
-            if (ite % 100 == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
-                write_relaxed_particles.writeToFile(ite);
-            }
-        }
-        std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
-        correct_normal_direction.exec();
-        shell_normal_prediction.exec();
-        correct_normal_direction.exec();
-
-        shell.setNewlyUpdated();
-        write_relaxed_particles.writeToFile(ite);
-        write_particle_reload_files.writeToFile(0);
-        return 0;
-    }
-    auto update_shell_thickness = [&]()
-    {
-        auto &thickness = *shell.getBaseParticles().getVariableByName<Real>("Thickness");
-        particle_for(
-            par,
-            shell.getBaseParticles().total_real_particles_,
-            [&](size_t index_i)
-            {
-                thickness[index_i] = thickness_balloon;
-            });
-    };
-    update_shell_thickness();
+    InnerRelation balloon_inner(balloon);
+    ContactRelation water_solid_contact(water_block, {&wall_boundary, &balloon});
+    ContactRelation balloon_water_contact(balloon, {&water_block});
+    ComplexRelation water_block_complex(water_inner, {&water_solid_contact});
+    // balloon self contact
+    SelfSurfaceContactRelation balloon_self_contact(balloon);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -423,21 +388,21 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeStream>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_wall_contact, water_shell_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_wall_contact, water_shell_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, NoRiemannSolver>> fluid_density_relaxation(water_inner, water_wall_contact, water_shell_contact);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<Wall>, Contact<Wall>>>> viscous_acceleration(water_inner, water_wall_contact, water_shell_contact);
-    InteractionWithUpdate<ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>, Contact<>>>> inlet_outlet_surface_particle_indicator(water_inner, water_wall_contact, water_shell_contact);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SingleResolution>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_velocity_correction(water_inner, water_wall_contact, water_shell_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density_by_summation(water_inner, water_solid_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_inner, water_solid_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> fluid_density_relaxation(water_inner, water_solid_contact);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_inner, water_solid_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_inner, water_solid_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_inner, water_solid_contact);
     /** Algorithm for in-/outlet. */
-    Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
+    Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH + 2 * resolution_ref);
     Vec2d emitter_translation = Vec2d(-DL_sponge + 0.5 * BW, 0.0);
     BodyAlignedBoxByParticle emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
 
-    Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-    Vec2d inlet_buffer_translation = Vec2d(-0.5 * DL_sponge, 0.0);
+    Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH + 2 * resolution_ref);
+    Vec2d inlet_buffer_translation = Vec2d(-0.5 * DL_sponge - 2 * resolution_ref, 0.0);
     BodyAlignedBoxByCell emitter_buffer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
@@ -449,60 +414,43 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, xAxis);
     /** Algorithm for solid dynamics. */
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_time_step_size(shell);
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(shell_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(shell_inner, 3, true);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(shell_inner);
-    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_average_curvature(shell_curvature_inner);
-    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> shell_update_normal(shell);
-    /** Algorithms for shell self contact. */
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> shell_curvature(shell_inner);
-    InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> shell_self_contact_density(shell_self_contact);
-    InteractionDynamics<solid_dynamics::SelfContactForce> shell_self_contact_forces(shell_self_contact);
-    auto reset_force_prior = [&]()
-    {
-        const auto &force_from_fluid = *shell.getBaseParticles().getVariableByName<Vec2d>("AllForceFromFluid");
-        particle_for(
-            par,
-            shell.getBaseParticles().total_real_particles_,
-            [&](size_t index_i)
-            {
-                shell.getBaseParticles().force_prior_[index_i] = force_from_fluid[index_i];
-            });
-    };
-    auto update_shell_volume = [&]()
+    SimpleDynamics<NormalDirectionFromBodyShape> balloon_normal_direction(balloon);
+    SimpleDynamics<TimeStepInitialization> balloon_initialize_timestep(balloon);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> balloon_time_step_size(balloon);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> balloon_corrected_configuration(balloon_inner);
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> balloon_stress_relaxation_first(balloon_inner);
+    Dynamics1Level<solid_dynamics::Integration2ndHalf> balloon_stress_relaxation_second(balloon_inner);
+    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> balloon_update_normal(balloon);
+    /** Algorithms for balloon self contact. */
+    InteractionDynamics<solid_dynamics::SelfContactDensitySummation> balloon_self_contact_density(balloon_self_contact);
+    InteractionDynamics<solid_dynamics::SelfContactForce> balloon_self_contact_forces(balloon_self_contact);
+    auto update_balloon_volume = [&]()
     {
         particle_for(
             par,
-            shell.getBaseParticles().total_real_particles_,
+            balloon.getBaseParticles().total_real_particles_,
             [&](size_t index_i)
             {
-                shell.getBaseParticles().Vol_[index_i] = shell.getBaseParticles().mass_[index_i] / shell.getBaseParticles().rho_[index_i];
+                balloon.getBaseParticles().Vol_[index_i] = balloon.getBaseParticles().mass_[index_i] / balloon.getBaseParticles().rho_[index_i];
             });
     };
     /** FSI */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_shell(shell_water_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_shell_update(shell_water_contact, viscous_force_on_shell);
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell);
+    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(balloon);
     /** constraint and damping */
-    BoundaryGeometry shell_boundary_geometry(shell, "BoundaryGeometry");
-    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> shell_constrain(shell_boundary_geometry);
+    BoundaryGeometry balloon_boundary_geometry(balloon, "BoundaryGeometry");
+    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> balloon_constrain(balloon_boundary_geometry);
+    ForceBoundaryGeometry force_bc_geometry(balloon, "ForceBcGeometry");
+    SimpleDynamics<BalloonForce> balloon_force(force_bc_geometry);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        shell_position_damping(0.2, shell_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        shell_rotation_damping(0.2, shell_inner, "AngularVelocity", physical_viscosity);
+        balloon_position_damping(0.2, balloon_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");
-    shell.addBodyStateForRecording<Real>("Thickness");
-    shell.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    shell.addBodyStateForRecording<Real>("1stPrincipleCurvature");
-    shell.addBodyStateForRecording<Real>("SelfContactDensity");
-    shell.addBodyStateForRecording<Vecd>("AllForceFromFluid");
-    shell.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
+    balloon.addBodyStateForRecording<Real>("SelfContactDensity");
+    balloon.addBodyStateForRecording<Vecd>("PriorForce");
     BodyStatesRecordingToVtp write_body_states(io_environment, sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -511,15 +459,11 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    shell_corrected_configuration.exec();
-    shell_curvature.compute_initial_curvature();
-    shell_average_curvature.exec();
-    water_block_complex.updateConfiguration();
-    shell_water_contact.updateConfiguration();
+    balloon_normal_direction.exec();
+    balloon_corrected_configuration.exec();
 
     //   Check dWijVjeij
-    std::vector<BaseContactRelation *> contact_relations = {&water_shell_contact, &water_wall_contact};
-    CheckKernelCompleteness check_kernel_completeness(water_inner, contact_relations);
+    CheckKernelCompleteness check_kernel_completeness(water_inner, water_solid_contact);
     check_kernel_completeness.exec();
     water_block.addBodyStateForRecording<Real>("TotalKernel");
     water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
@@ -548,7 +492,68 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     const double Dt_ref = fluid_advection_time_step.exec();
     const double dt_ref = fluid_acoustic_time_step.exec();
-    const double dt_s_ref = shell_time_step_size.exec();
+    const double dt_s_ref = balloon_time_step_size.exec();
+    auto run_self_contact = [&]()
+    {
+        while (GlobalStaticVariables::physical_time_ < end_time)
+        {
+            Real integration_time = 0.0;
+            /** Integrate time (loop) until the next output time. */
+            while (integration_time < output_interval)
+            {
+                balloon_initialize_timestep.exec();
+
+                balloon_force.exec();
+
+                balloon_self_contact_density.exec();
+                balloon_self_contact_forces.exec();
+
+                Real dt_s = balloon_time_step_size.exec();
+                if (dt_s < dt_s_ref / 100)
+                {
+                    std::cout << "dt_s = " << dt_s << ", dt_s_ref = " << dt_s_ref << std::endl;
+                    std::cout << "balloon time step decreased too much!" << std::endl;
+                    throw std::runtime_error("balloon time step decreased too much!");
+                }
+
+                balloon_stress_relaxation_first.exec(dt_s);
+                balloon_constrain.exec();
+                balloon_position_damping.exec(dt_s);
+                balloon_constrain.exec();
+                balloon_stress_relaxation_second.exec(dt_s);
+
+                balloon_update_normal.exec();
+                update_balloon_volume();
+                balloon.updateCellLinkedList();
+                balloon_self_contact.updateConfiguration();
+
+                number_of_iterations++;
+                integration_time += dt_s;
+                GlobalStaticVariables::physical_time_ += dt_s;
+
+                if (number_of_iterations % screen_output_interval == 0)
+                {
+                    std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                              << GlobalStaticVariables::physical_time_
+                              << "  dt_s = " << dt_s << std::endl;
+                }
+            }
+
+            TickCount t2 = TickCount::now();
+            write_body_states.writeToFile();
+            TickCount t3 = TickCount::now();
+            interval += t3 - t2;
+        }
+        TickCount t4 = TickCount::now();
+
+        TimeInterval tt;
+        tt = t4 - t1 - interval;
+        std::cout << "Total wall time for computation: " << tt.seconds()
+                  << " seconds." << std::endl;
+    };
+
+    run_self_contact();
+    exit(0);
     auto run_simulation = [&]()
     {
         std::cout << "Simulation starts here" << std::endl;
@@ -571,9 +576,6 @@ int main(int ac, char *av[])
                 viscous_acceleration.exec();
                 transport_velocity_correction.exec();
 
-                // if (if_fsi)
-                viscous_force_on_shell.exec();
-
                 /** Dynamics including pressure relaxation. */
                 Real relaxation_time = 0.0;
                 while (relaxation_time < Dt)
@@ -588,66 +590,57 @@ int main(int ac, char *av[])
                     dt = SMIN(dt_temp, Dt - relaxation_time);
                     fluid_pressure_relaxation.exec(dt);
                     emitter_buffer_inflow_condition.exec();
-                    //       if (if_fsi)
-                    fluid_force_on_shell_update.exec();
-
-                    // check_kernel_completeness.exec();
-                    // water_block.setNewlyUpdated();
-                    // shell.setNewlyUpdated();
-                    // write_body_states.writeToFile();
-
                     fluid_density_relaxation.exec(dt);
 
                     /** Solid dynamics time stepping. */
-                    if (if_fsi)
+                    Real dt_s_sum = 0.0;
+                    average_velocity_and_acceleration.initialize_displacement_.exec();
+                    while (dt_s_sum < dt)
                     {
-                        Real dt_s_sum = 0.0;
-                        average_velocity_and_acceleration.initialize_displacement_.exec();
-                        while (dt_s_sum < dt)
+                        balloon_initialize_timestep.exec();
+
+                        balloon_force.exec();
+
+                        balloon_self_contact_density.exec();
+                        balloon_self_contact_forces.exec();
+
+                        Real dt_s_temp = balloon_time_step_size.exec();
+                        if (dt_s_temp < dt_s_ref / 100)
                         {
-                            reset_force_prior();
-
-                            shell_self_contact_density.exec();
-                            shell_self_contact_forces.exec();
-
-                            Real dt_s_temp = shell_time_step_size.exec();
-                            if (dt_s_temp < dt_s_ref / 100)
-                            {
-                                std::cout << "dt_s = " << dt_s_temp << ", dt_s_ref = " << dt_s_ref << std::endl;
-                                std::cout << "Shell time step decreased too much!" << std::endl;
-                                throw std::runtime_error("Shell time step decreased too much!");
-                            }
-                            dt_s = std::min(dt_s_temp, dt - dt_s_sum);
-
-                            shell_stress_relaxation_first.exec(dt_s);
-                            shell_constrain.exec();
-                            shell_position_damping.exec(dt_s);
-                            shell_rotation_damping.exec(dt_s);
-                            shell_constrain.exec();
-                            shell_stress_relaxation_second.exec(dt_s);
-
-                            update_shell_volume();
-                            shell_update_normal.exec();
-                            shell_curvature.exec();
-                            shell.updateCellLinkedList();
-                            shell_self_contact.updateConfiguration();
-
-                            dt_s_sum += dt_s;
+                            std::cout << "dt_s = " << dt_s_temp << ", dt_s_ref = " << dt_s_ref << std::endl;
+                            std::cout << "balloon time step decreased too much!" << std::endl;
+                            throw std::runtime_error("balloon time step decreased too much!");
                         }
-                        average_velocity_and_acceleration.update_averages_.exec(dt);
+                        dt_s = std::min(dt_s_temp, dt - dt_s_sum);
+
+                        balloon_stress_relaxation_first.exec(dt_s);
+                        balloon_constrain.exec();
+                        balloon_position_damping.exec(dt_s);
+                        balloon_constrain.exec();
+                        balloon_stress_relaxation_second.exec(dt_s);
+
+                        update_balloon_volume();
+                        balloon_update_normal.exec();
+                        balloon.updateCellLinkedList();
+                        balloon_self_contact.updateConfiguration();
+
+                        dt_s_sum += dt_s;
                     }
+                    average_velocity_and_acceleration.update_averages_.exec(dt);
 
                     relaxation_time += dt;
                     integration_time += dt;
                     GlobalStaticVariables::physical_time_ += dt;
+
+                    // write_body_states.writeToFile();
                 }
+
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                               << GlobalStaticVariables::physical_time_
-                              << "	Dt = " << Dt << "	dt = " << dt;
-                    if (if_fsi)
-                        std::cout << "  dt_s = " << dt_s;
+                              << "	Dt = " << Dt << "	dt = " << dt
+                              << "  dt_s = " << dt_s;
                     std::cout << "\n";
                 }
                 number_of_iterations++;
@@ -657,21 +650,17 @@ int main(int ac, char *av[])
                 disposer_outflow_deletion.exec();
 
                 /** Update cell linked list and configuration. */
-                water_block.updateCellLinkedList();
-                if (if_fsi)
-                {
-                    // update_shell_volume();
-                    shell_update_normal.exec();
-                    shell.updateCellLinkedList();
-                    shell_curvature_inner.updateConfiguration();
-                    shell_average_curvature.exec();
-                    shell_water_contact.updateConfiguration();
-                }
+                water_block.updateCellLinkedListWithParticleSort(100);
+
+                update_balloon_volume();
+                balloon_update_normal.exec();
+                balloon.updateCellLinkedList();
+                balloon_water_contact.updateConfiguration();
+
                 water_block_complex.updateConfiguration();
             }
-            // exit(0);
+
             TickCount t2 = TickCount::now();
-            check_kernel_completeness.exec();
             write_body_states.writeToFile();
             TickCount t3 = TickCount::now();
             interval += t3 - t2;
@@ -692,7 +681,7 @@ int main(int ac, char *av[])
     {
         std::cout << "Error catched..." << std::endl;
         water_block.setNewlyUpdated();
-        shell.setNewlyUpdated();
+        balloon.setNewlyUpdated();
         write_body_states.writeToFile(1e8);
     }
     return 0;
