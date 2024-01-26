@@ -12,7 +12,7 @@ case name: test_2d_poiseuille_flow
 
 case_name = "test_2d_poiseuille_flow"
 body_name = "WaterBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 
 
 number_of_run_times = 0
