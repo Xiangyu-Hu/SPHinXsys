@@ -8,10 +8,6 @@ namespace SPH
 namespace solid_dynamics
 {
 //=================================================================================================//
-LoadingForce::LoadingForce(SPHBody &sph_body, const std::string &loading_force_name)
-    : LocalDynamics(sph_body), ForcePrior(&base_particles_, loading_force_name),
-      loading_force_(*base_particles_.getVariableByName<Vecd>(loading_force_name)) {}
-//=================================================================================================//
 SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringDamperConstraintForce"), SolidDataSimple(sph_body),
@@ -171,7 +167,7 @@ void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
 //=================================================================================================//
 ForceInBodyRegion::
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
-    : LoadingForce(body_part.getSPHBody(), "ForceInBodyRegion"), SolidDataSimple(sph_body_),
+    : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"), SolidDataSimple(sph_body_),
       pos0_(particles_->pos0_), force_vector_(Vecd::Zero()), end_time_(end_time)
 {
     Real total_mass_in_region(0);
@@ -190,7 +186,7 @@ void ForceInBodyRegion::update(size_t index_i, Real dt)
 SurfacePressureFromSource::
     SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
                               StdVec<std::array<Real, 2>> pressure_over_time)
-    : LoadingForce(body_part.getSPHBody(), "SurfacePressureForce"), SolidDataSimple(sph_body_),
+    : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"), SolidDataSimple(sph_body_),
       pos0_(particles_->pos0_), n_(particles_->n_),
       mass_(particles_->mass_), pressure_over_time_(pressure_over_time),
       apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))

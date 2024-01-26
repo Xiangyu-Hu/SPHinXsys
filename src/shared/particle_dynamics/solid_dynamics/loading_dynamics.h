@@ -49,15 +49,20 @@ namespace solid_dynamics
 typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
 typedef DataDelegateInner<SolidParticles> SolidDataInner;
 
-class LoadingForce : public LocalDynamics, public ForcePrior
+template <class DynamicsIdentifier>
+class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public ForcePrior
 {
   public:
-    LoadingForce(SPHBody &sph_body, const std::string &loading_force_name);
-    virtual ~LoadingForce(){};
+    BaseLoadingForce(DynamicsIdentifier &identifier, const std::string &loading_force_name)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          ForcePrior(&this->base_particles_, loading_force_name),
+          loading_force_(*this->base_particles_.template getVariableByName<Vecd>(loading_force_name)){};
+    virtual ~BaseLoadingForce(){};
 
   protected:
     StdLargeVec<Vecd> &loading_force_;
 };
+using LoadingForce = BaseLoadingForce<SPHBody>;
 
 /**
  * @class SpringDamperConstraintParticleWise
@@ -160,7 +165,7 @@ class ExternalForceInBoundingBox : public LoadingForce, public SolidDataSimple
  * @class ForceInBodyRegion
  * @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
  */
-class ForceInBodyRegion : public LoadingForce, public SolidDataSimple
+class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>, public SolidDataSimple
 {
   public:
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time);
@@ -177,7 +182,7 @@ class ForceInBodyRegion : public LoadingForce, public SolidDataSimple
  * @class SurfacePressureFromSource
  * @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
  */
-class SurfacePressureFromSource : public LoadingForce, public SolidDataSimple
+class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>, public SolidDataSimple
 {
   public:
     SurfacePressureFromSource(BodyPartByParticle &body_part,

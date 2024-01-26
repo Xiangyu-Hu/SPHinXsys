@@ -41,13 +41,13 @@ class Beam : public ComplexShape
 };
 
 /* define load*/
-class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dynamics::ElasticSolidDataSimple
+class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>,
+                     public solid_dynamics::ElasticSolidDataSimple
 {
   public:
-    LoadForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
-        : BaseLocalDynamics<BodyPartByParticle>(body_part),
+    PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
+        : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
           solid_dynamics::ElasticSolidDataSimple(sph_body_),
-          force_prior(particles_->force_prior_),
           mass_n_(particles_->mass_),
           Vol_(particles_->Vol_),
           F_(particles_->F_),
@@ -74,11 +74,11 @@ class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dyn
         // current_area = J * area_0 * current_normal_norm
         Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
 
-        force_prior[index_i] += mean_force_ * normal;
+        loading_force_[index_i] = mean_force_ * normal;
+        ForcePrior::update(index_i, time);
     }
 
   protected:
-    StdLargeVec<Vecd> &force_prior;
     StdLargeVec<Real> &mass_n_;
     StdLargeVec<Real> area_0_;
     StdLargeVec<Real> &Vol_;
@@ -129,8 +129,6 @@ int main(int ac, char *av[])
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
-    /** initialize a time step */
-    SimpleDynamics<TimeStepInitialization> beam_initialize(beam_body);
 
     /** Corrected configuration. */
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(beam_body_inner);
@@ -155,7 +153,7 @@ int main(int ac, char *av[])
         {Real(0.1) * end_time, Real(0.1) * load_total_force},
         {Real(0.4) * end_time, load_total_force},
         {Real(end_time), Real(load_total_force)}};
-    SimpleDynamics<LoadForce> pull_force(load_surface, force_over_time);
+    SimpleDynamics<PullingForce> pull_force(load_surface, force_over_time);
     std::cout << "load surface particle number: " << load_surface.body_part_particles_.size() << std::endl;
 
     //=== define constraint ===
@@ -204,7 +202,6 @@ int main(int ac, char *av[])
                           << dt << "\n";
             }
 
-            beam_initialize.exec();
             pull_force.exec(GlobalStaticVariables::physical_time_);
 
             /** Stress relaxation and damping. */
