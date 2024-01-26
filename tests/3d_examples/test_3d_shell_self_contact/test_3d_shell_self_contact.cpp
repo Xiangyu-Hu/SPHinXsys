@@ -108,7 +108,7 @@ class UpperDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegi
   protected:
     void update(size_t index_i, Real dt = 0.0)
     {
-        vel_[index_i] = Vec3d(0, -0.06, 0);
+        vel_[index_i] = Vec3d(0, -0.1, 0);
     };
 };
 // class LowerDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
@@ -223,7 +223,8 @@ int main(int ac, char *av[])
     shell_corrected_configuration.exec();
     shell_curvature.compute_initial_curvature();
     /** Initial states output. */
-    shell.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    shell.addBodyStateForRecording<Real>("1stPrincipleCurvature");
+    shell.addBodyStateForRecording<Real>("2ndPrincipleCurvature");
     body_states_recording.writeToFile(0);
 
     /** Main loop. */

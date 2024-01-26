@@ -317,7 +317,7 @@ int main(int ac, char *av[])
     shell_corrected_configuration.exec();
     shell_curvature.compute_initial_curvature();
     /** Initial states output. */
-    shell.addBodyStateForRecording<Real>("TotalMeanCurvature");
+    shell.addBodyStateForRecording<Real>("1stPrincipleCurvature");
     body_states_recording.writeToFile(0);
     /** Main loop. */
     int ite = 0;

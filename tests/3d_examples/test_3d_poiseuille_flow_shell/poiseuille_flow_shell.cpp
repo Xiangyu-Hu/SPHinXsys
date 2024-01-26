@@ -208,7 +208,7 @@ class ShellBoundary : public SurfaceParticleGenerator
                 Real z = radius_mid_surface * sin(theta);
                 initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
                                                        resolution_shell * resolution_shell);
-                Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
+                Vec3d n_0 = Vec3d(-x / radius_mid_surface, 0.0, -z / radius_mid_surface);
                 initializeSurfaceProperties(n_0, shell_thickness);
             }
         }
@@ -347,7 +347,8 @@ int main()
     shell_boundary.addBodyStateForRecording<double>("Density");
     shell_boundary.addBodyStateForRecording<double>("VolumetricMeasure");
     shell_boundary.addBodyStateForRecording<double>("Thickness");
-    shell_boundary.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
+    shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
+    shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment,
                                                    system.real_bodies_);

@@ -10,73 +10,6 @@
 #include <gtest/gtest.h>
 using namespace SPH;
 
-class CheckKernelCompleteness
-{
-  private:
-    BaseParticles *particles_;
-    std::vector<SPH::BaseParticles *> contact_particles_;
-    ParticleConfiguration *inner_configuration_;
-    std::vector<ParticleConfiguration *> contact_configuration_;
-
-    StdLargeVec<Real> W_ijV_j_ttl;
-    StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
-    StdLargeVec<int> number_of_inner_neighbor;
-    StdLargeVec<int> number_of_contact_neighbor;
-
-  public:
-    CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
-    {
-        for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
-        {
-            contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
-            contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
-        }
-        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
-        inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
-        inner_relation.base_particles_.registerVariable(number_of_inner_neighbor, "InnerNeighborNumber");
-        inner_relation.base_particles_.registerVariable(number_of_contact_neighbor, "ContactNeighborNumber");
-    }
-
-    inline void exec()
-    {
-        particle_for(
-            par,
-            particles_->total_real_particles_,
-            [&, this](size_t index_i)
-            {
-                int N_inner_number = 0;
-                int N_contact_number = 0;
-                Real W_ijV_j_ttl_i = 0;
-                Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
-                const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    W_ijV_j_ttl_i += inner_neighborhood.W_ij_[n] * particles_->Vol_[index_j];
-                    dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-                    N_inner_number++;
-                }
-
-                for (size_t k = 0; k < contact_configuration_.size(); ++k)
-                {
-                    const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
-                    for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-                    {
-                        size_t index_j = wall_neighborhood.j_[n];
-                        W_ijV_j_ttl_i += wall_neighborhood.W_ij_[n] * contact_particles_[k]->Vol_[index_j];
-                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-                        N_contact_number++;
-                    }
-                }
-                W_ijV_j_ttl[index_i] = W_ijV_j_ttl_i;
-                dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
-                number_of_inner_neighbor[index_i] = N_inner_number;
-                number_of_contact_neighbor[index_i] = N_contact_number;
-            });
-    }
-};
-
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -85,7 +18,7 @@ const Real DH = 2.1;                                     /**< Tank height. */
 const Real Dam_L = 1.0;                                  /**< Water block width. */
 const Real Dam_H = 2.0;                                  /**< Water block height. */
 const Real Gate_thickness = 0.05;                        /**< Width of the gate. */
-const Real particle_spacing_gate = Gate_thickness / 4.0; /**< Initial reference particle spacing*/
+const Real particle_spacing_gate = Gate_thickness / 2.0; /**< Initial reference particle spacing*/
 const Real particle_spacing_ref = particle_spacing_gate; /**< Initial reference particle spacing*/
 const Real BW = particle_spacing_ref * 4.0;
 const BoundingBox system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
@@ -233,6 +166,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -319,7 +253,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<Real>("Pressure");
-    gate.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
+    gate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
+    gate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     gate.addBodyStateForRecording<Vecd>("PriorForce");
     /** Output body states for visualization. */
@@ -341,15 +276,6 @@ int main(int ac, char *av[])
     gate_curvature.exec();
     /** update fluid-shell contact*/
     water_block_contact.updateConfiguration();
-
-    // Check dWijVjeij
-    CheckKernelCompleteness check_kernel_completeness(water_block_inner,
-                                                      water_block_contact);
-    check_kernel_completeness.exec();
-    water_block.addBodyStateForRecording<Real>("TotalKernel");
-    water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
-    water_block.addBodyStateForRecording<int>("InnerNeighborNumber");
-    water_block.addBodyStateForRecording<int>("ContactNeighborNumber");
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
