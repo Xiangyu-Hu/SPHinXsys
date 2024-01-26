@@ -488,6 +488,86 @@ namespace SPH
 		{
 			vel_[index_i][1] = 0.0;
 		}
+		//=================================================================================================//
+		GetAcceleration::
+			GetAcceleration(SPHBody& sph_body)
+			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+			pos_(particles_->pos_), vel_(particles_->vel_),
+			acc_prior_(particles_->acc_prior_), acc_(particles_->acc_),
+			unsorted_id_(sph_body.getBaseParticles().unsorted_id_) 
+		{
+			monitor_index_ = 300;  //** Input mannually *
+		}
+		//=================================================================================================//
+		void GetAcceleration::update(size_t index_i, Real dt)
+		{
+			if (unsorted_id_[index_i] == monitor_index_)
+				sorted_id_monitor_ = index_i;
+		}
+		//=================================================================================================//
+		void GetAcceleration::output_time_history_of_acc_y_visc()
+		{
+			acc_y_visc_ = acc_prior_[sorted_id_monitor_][1];
+
+			std::string file_path_output = "../bin/output/acc_y_visc_of_" + std::to_string(monitor_index_) + ".dat";
+			std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
+			plt_engine_.writeAQuantity(out_file, acc_y_visc_);
+			out_file << "\n";
+			out_file.close();
+
+			//sorted_id_monitor_ = 0;
+		}
+		//=================================================================================================//
+		void GetAcceleration::output_time_history_of_acc_y_k_grad()
+		{
+			acc_y_k_grad_ = acc_[sorted_id_monitor_][1];
+
+			std::string file_path_output = "../bin/output/acc_y_k_grad_of_" + std::to_string(monitor_index_) + ".dat";
+			std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
+			plt_engine_.writeAQuantity(out_file, acc_y_k_grad_);
+			out_file << "\n";
+			out_file.close();
+
+			//sorted_id_monitor_ = 0;
+		}
+		//=================================================================================================//
+		void GetAcceleration::output_time_history_of_acc_y_p_grad()
+		{
+			acc_y_p_grad_ = acc_[sorted_id_monitor_][1]- acc_y_k_grad_;
+
+			std::string file_path_output = "../bin/output/acc_y_p_grad_of_" + std::to_string(monitor_index_) + ".dat";
+			std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
+			plt_engine_.writeAQuantity(out_file, acc_y_p_grad_);
+			out_file << "\n";
+			out_file.close();
+
+			//sorted_id_monitor_ = 0;
+		}
+		//=================================================================================================//
+		void GetAcceleration::output_time_history_of_acc_y_total()
+		{
+			acc_y_ = acc_y_k_grad_+ acc_y_p_grad_ + acc_y_visc_;
+
+			std::string file_path_output = "../bin/output/acc_y_total_of_" + std::to_string(monitor_index_) + ".dat";
+			std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
+			plt_engine_.writeAQuantity(out_file, acc_y_);
+			out_file << "\n";
+			out_file.close();
+		}
+		//=================================================================================================//
+		void GetAcceleration::output_time_history_of_pos_y()
+		{
+			std::string file_path_output = "../bin/output/pos_y_of_" + std::to_string(monitor_index_) + ".dat";
+			std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
+			plt_engine_.writeAQuantity(out_file, pos_[sorted_id_monitor_][1]);
+			out_file << "\n";
+			out_file.close();
+		}
 	}
 	//=================================================================================================//
 }

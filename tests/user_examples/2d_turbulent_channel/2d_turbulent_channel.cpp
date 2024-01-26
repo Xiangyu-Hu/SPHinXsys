@@ -122,7 +122,7 @@ int main(int ac, char* av[])
 	//ObservedQuantityRecording<Real> write_fluid_turbu_kinetic_energy("TurbulenceKineticEnergy", io_environment, fluid_observer_contact); //For test turbulent model
 	//ObservedQuantityRecording<Real> write_fluid_turbu_dissipation_rate("TurbulentDissipation", io_environment, fluid_observer_contact); //For test turbulent model
 	//ObservedQuantityRecording<Real> write_fluid_turbu_viscosity("TurbulentViscosity", io_environment, fluid_observer_contact); //For test turbulent model
-	SimpleDynamics<fluid_dynamics::ClearYPositionForTest> clear_y_displacement(water_block);
+	//SimpleDynamics<fluid_dynamics::ClearYPositionForTest> clear_y_displacement(water_block);
 
 
 	//----------------------------------------------------------------------
@@ -201,7 +201,7 @@ int main(int ac, char* av[])
 				GlobalStaticVariables::physical_time_ += dt;
 
 				//write_body_states.writeToFile();
-				clear_y_displacement.exec();
+				//clear_y_displacement.exec();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{

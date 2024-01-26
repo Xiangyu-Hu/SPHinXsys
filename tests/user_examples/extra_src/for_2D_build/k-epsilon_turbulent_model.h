@@ -128,7 +128,7 @@ namespace fluid_dynamics
 		virtual ~TKEnergyAcc() {};
 	protected:
 		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Vecd>& acc_prior_;
+		StdLargeVec<Vecd>& acc_;
 		StdLargeVec<Vecd>& pos_;
 		StdLargeVec<int>& indicator_;
 		StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;

@@ -49,7 +49,7 @@ namespace fluid_dynamics
 	TKEnergyAcc<Base, DataDelegationType>::
 		TKEnergyAcc(BaseRelationType& base_relation) :
 		BaseTurtbulentModel<Base, DataDelegationType>(base_relation),
-		acc_prior_(this->particles_->acc_prior_),
+		acc_(this->particles_->acc_),
 		indicator_(this->particles_->indicator_), pos_(this->particles_->pos_),
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		test_k_grad_rslt_(*this->particles_->template registerSharedVariable<Vecd>("TkeGradResult")){}

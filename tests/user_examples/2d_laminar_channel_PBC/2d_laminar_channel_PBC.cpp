@@ -38,7 +38,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real gravity_g = 1.0e-4;
+
 Real U_f = 1.0;
 Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
 
@@ -47,7 +47,7 @@ Real rho0_f = 1.0;                                            /**< Density. */
 Real mu_f = 0.01; /**< Dynamics viscosity. */
 Real Re = 100.0;                                              /**< Reynolds number. */
 
-
+Real gravity_g = 12.0 * mu_f* U_f / rho0_f / DH / DH;
 /**
  * @brief 	Fluid body definition.
  */
@@ -169,8 +169,8 @@ int main(int ac, char *av[])
      */
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 400.0;   /**< End time. */
-    Real Output_Time = 0.5; /**< Time stamps for output of body states. */
+    Real end_time = 1600.0;   /**< End time. */
+    Real Output_Time = 40; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
@@ -192,7 +192,7 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
-            update_density_by_summation.exec();
+            //update_density_by_summation.exec();
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

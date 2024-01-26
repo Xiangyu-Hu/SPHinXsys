@@ -116,8 +116,10 @@ int main(int ac, char *av[])
     
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
+    
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_wall_contact);
+    
     water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
     water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
     water_block.addBodyStateForRecording<Real>("Density"); // output for debug
@@ -156,8 +158,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 100.0;   /**< End time. */
-    Real Output_Time = end_time / 1000.0; /**< Time stamps for output of body states. */
+    Real end_time = 600.0;   /**< End time. */
+    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -167,6 +169,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
+    int num_output_file = 0;
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -179,7 +182,7 @@ int main(int ac, char *av[])
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
-            update_density_by_summation.exec();
+            //update_density_by_summation.exec();
 
             update_eddy_viscosity.exec();
 
@@ -240,6 +243,10 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
+        num_output_file++;
+        //if (num_output_file == 7)
+            //system("pause");
+
     }
     TickCount t4 = TickCount::now();
 

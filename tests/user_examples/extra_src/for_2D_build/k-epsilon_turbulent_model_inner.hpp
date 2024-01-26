@@ -81,7 +81,11 @@ namespace SPH
 					k_lap += 2.0 * mu_harmo * k_derivative * inner_neighborhood.dW_ijV_j_[n]/ rho_i;
 				}
 				strain_rate = 0.5 * (velocity_gradient_[index_i].transpose() + velocity_gradient_[index_i]);
-				Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
+				
+				//Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
+				Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i ;
+
+				
 				Matd k_production_matrix = Re_stress.array() * velocity_gradient_[index_i].array();
 				//** The near wall k production is updated in wall function part *
 				if (is_near_wall_P1_[index_i] != 1) 

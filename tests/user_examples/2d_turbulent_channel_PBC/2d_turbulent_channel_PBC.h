@@ -67,21 +67,41 @@ StdVec<Real> monitoring_bound = { DL / 2.0 - 10.0 * resolution_ref ,DL / 2.0 + 1
 //----------------------------------------------------------------------
 // @brief 	Fluid body definition.
 //----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
+std::vector<Vecd> createWaterBlockShape()
+{
+    std::vector<Vecd> water_block_shape;
+    water_block_shape.push_back(Vecd(0.0, 0.0));
+    water_block_shape.push_back(Vecd(0.0, DH));
+    water_block_shape.push_back(Vecd(DL, DH));
+    water_block_shape.push_back(Vecd(DL, 0.0));
+    water_block_shape.push_back(Vecd(0.0, 0.0));
+
+    return water_block_shape;
+}
+class WaterBlock : public ComplexShape
 {
 public:
-    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
+    explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        /** Geometry definition. */
-        std::vector<Vecd> water_block_shape;
-        water_block_shape.push_back(Vecd(0.0, 0.0));
-        water_block_shape.push_back(Vecd(0.0, DH));
-        water_block_shape.push_back(Vecd(DL, DH));
-        water_block_shape.push_back(Vecd(DL, 0.0));
-        water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        MultiPolygon outer_boundary(createWaterBlockShape());
+        add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
     }
 };
+//class WaterBlock : public MultiPolygonShape
+//{
+//public:
+//    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
+//    {
+//        /** Geometry definition. */
+//        std::vector<Vecd> water_block_shape;
+//        water_block_shape.push_back(Vecd(0.0, 0.0));
+//        water_block_shape.push_back(Vecd(0.0, DH));
+//        water_block_shape.push_back(Vecd(DL, DH));
+//        water_block_shape.push_back(Vecd(DL, 0.0));
+//        water_block_shape.push_back(Vecd(0.0, 0.0));
+//        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+//    }
+//};
 /**
  * @brief 	Wall boundary body definition.
  */

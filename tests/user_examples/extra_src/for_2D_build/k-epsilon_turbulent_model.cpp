@@ -72,7 +72,7 @@ namespace fluid_dynamics
 		//** For test *
 		//acceleration[0] = 0.0;
 		
-		acc_prior_[index_i] += acceleration;
+		acc_[index_i] += acceleration;
 
 		//for test
 		tke_acc_inner_[index_i] = acceleration;
@@ -108,7 +108,7 @@ namespace fluid_dynamics
 		//** For test *
 		//acceleration[0] = 0.0;
 
-		acc_prior_[index_i] += acceleration;
+		acc_[index_i] += acceleration;
 
 		//for test
 		tke_acc_wall_[index_i] = acceleration;
@@ -219,13 +219,19 @@ namespace fluid_dynamics
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *
 				WSS_j_tn(0, 0) = 0.0;
-				WSS_j_tn(0, 1) = rho_i* vel_fric_i.dot(vel_fric_i)* vel_i.dot(e_j_tau)/ (vel_i.norm() + 0.01 * smoothing_length_);
+
+				//WSS_j_tn(0, 1) = rho_i* vel_fric_i.dot(vel_fric_i)* vel_i.dot(e_j_tau)/ (vel_i.norm() + 0.01 * smoothing_length_);
+				//WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * vel_i.dot(e_j_tau) / (vel_i.norm() + TinyReal);
+				WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * boost::qvm::sign(vel_i.dot(e_j_tau));
+
 				WSS_j_tn(1, 0) = 0.0;
-				WSS_j_tn(1, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * vel_i.dot(e_j_n) / (vel_i.norm() + 0.01 * smoothing_length_);;
+
+				//WSS_j_tn(1, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * vel_i.dot(e_j_n) / (vel_i.norm() + 0.01 * smoothing_length_);;
+				WSS_j_tn(1, 1) = 0.0;
 				
 				//** Transform local wall shear stress to global   *
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
-				Vecd acc_j = -1.0 * -1.0 * 2.0 * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n]/rho_i;
+				Vecd acc_j = -1.0 * -1.0 * 2.0 * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 				//std::cout << "acc_j=" << acc_j << std::endl;
 				//std::cout << "vel_i=" << vel_i << std::endl;
 				//std::cout << "vel_fric_i=" << vel_fric_i << std::endl;

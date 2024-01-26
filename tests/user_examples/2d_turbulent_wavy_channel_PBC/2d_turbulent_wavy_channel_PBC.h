@@ -34,7 +34,7 @@ Real wave_length = 1;
 Real resolution_ref = DH / 20.0;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-2.0 * BW, -DH), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
+BoundingBox system_domain_bounds(Vec2d(-2.0 * BW- wave_length / 2.0, -DH), Vec2d(DL + 2.0 * BW + wave_length / 2.0, DH + 2.0 * BW ));
 StdVec<int> id_exclude;
 Real y_p_theo = 0.0;
 Real offset_dist_ref = 0.0;
