@@ -59,7 +59,7 @@ void ShearStressRelaxation::interaction(size_t index_i, Real dt)
     {
         size_t index_j = inner_neighborhood.j_[n];
         Real dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
-        Vecd& e_ij = inner_neighborhood.e_ij_[n];
+        Vecd &e_ij = inner_neighborhood.e_ij_[n];
         Vecd v_ij = vel_[index_i] - vel_[index_j];
         velocity_gradient -= v_ij * (B_[index_i] * e_ij * dW_ijV_j_).transpose();
     }
@@ -116,12 +116,15 @@ void ConstrainSolidBodyMassCenter::update(size_t index_i, Real dt)
 //=================================================================================================//
 BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), PlasticContinuumDataInner(inner_relation),
-      plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_), 
-      p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), mass_(particles_->mass_), pos_(particles_->pos_),
+      plastic_continuum_(particles_->plastic_continuum_), rho_(particles_->rho_),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")),
+      mass_(particles_->mass_), pos_(particles_->pos_),
       vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
       stress_tensor_3D_(particles_->stress_tensor_3D_), strain_tensor_3D_(particles_->strain_tensor_3D_),
       stress_rate_3D_(particles_->stress_rate_3D_), strain_rate_3D_(particles_->strain_rate_3D_),
-      elastic_strain_tensor_3D_(particles_->elastic_strain_tensor_3D_), elastic_strain_rate_3D_(particles_->elastic_strain_rate_3D_) {}
+      elastic_strain_tensor_3D_(particles_->elastic_strain_tensor_3D_),
+      elastic_strain_rate_3D_(particles_->elastic_strain_rate_3D_) {}
 Matd BaseRelaxationPlastic::reduceTensor(Mat3d tensor_3d)
 {
     Matd tensor_2d;
@@ -148,7 +151,9 @@ Mat3d BaseRelaxationPlastic::increaseTensor(Matd tensor_2d)
 }
 //====================================================================================//
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
-    : BaseRelaxationPlastic(inner_relation), fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()), smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+    : BaseRelaxationPlastic(inner_relation),
+      fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
 void StressDiffusion::interaction(size_t index_i, Real dt)
 {
@@ -168,9 +173,11 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(fai_)) * density * gravity * y_ij;
         diffusion_stress_(1, 1) = diffusion_stress_(1, 1) - density * gravity * y_ij;
         diffusion_stress_(2, 2) = diffusion_stress_(2, 2) - (1 - sin(fai_)) * density * gravity * y_ij;
-        diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ * diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
+        diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ *
+                                  diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate_;
 }
+//====================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH
