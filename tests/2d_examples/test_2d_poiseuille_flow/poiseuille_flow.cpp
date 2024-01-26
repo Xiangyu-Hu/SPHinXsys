@@ -4,35 +4,28 @@
  * @details This is the one of the basic test cases for validating viscous flow with low-Reynolds number flow (Re = 100).
  * @author 	Chi Zhang and Xiangyu Hu
  */
-/**
- * @brief 	SPHinXsys Library.
- */
-#include "sphinxsys.h"
-/**
- * @brief Namespace cite here.
- */
-using namespace SPH;
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
+#include "sphinxsys.h" //SPHinXsys Library.
+using namespace SPH;   // Namespace cite here.
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real DL = 6.0;                   /**< Tank length. */
 Real DH = 1.0;                   /**< Tank height. */
 Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-/**
- * @brief Material properties of the fluid.
- */
+//----------------------------------------------------------------------
+//	Material parameters.
+//----------------------------------------------------------------------
 Real rho0_f = 1.0;
 Real mu_f = 1.0e-1; /**< Viscosity. */
 Real U_f = 1.0;
 Real gravity_g = 12.0 * mu_f * U_f / rho0_f / DH / DH; /**< Gravity force of fluid. */
-Real U_max = 1.5 * U_f; //make sure the maximum anticipated speed 
-Real c_f = 10.0 * U_max; /**< Reference sound speed. */
-/**
- * @brief 	Fluid body definition.
- */
+Real U_max = 1.5 * U_f;                                // make sure the maximum anticipated speed
+Real c_f = 10.0 * U_max;                               /**< Reference sound speed. */
+//----------------------------------------------------------------------
+//	Geometric shapes used in this case.
+//----------------------------------------------------------------------
 class WaterBlock : public MultiPolygonShape
 {
   public:
@@ -48,9 +41,7 @@ class WaterBlock : public MultiPolygonShape
         multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
     }
 };
-/**
- * @brief 	Wall boundary body definition.
- */
+
 class WallBoundary : public MultiPolygonShape
 {
   public:
@@ -74,30 +65,33 @@ class WallBoundary : public MultiPolygonShape
         multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
     }
 };
-/**
- * @brief 	Main program starts here.
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    /**
-     * @brief Build up -- a SPHSystem --
-     */
+    //----------------------------------------------------------------------
+    //	Build up an SPHSystem and IO environment.
+    //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    /**
-     * @brief Material property, particles and body creation of fluid.
-     */
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<Real>("Density");
-    /**
-     * @brief 	Particle and body creation of wall boundary.
-     */
+
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    /** topology */
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     //----------------------------------------------------------------------
@@ -105,21 +99,16 @@ int main(int ac, char *av[])
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
-    /**
-     * @brief 	Define all numerical methods which are used in this case.
-     */
-    /**
-     * @brief 	Methods used for time stepping.
-     */
+    //----------------------------------------------------------------------
+    //	Define the numerical methods used in the simulation.
+    //	Note that there may be data dependence on the sequence of constructions.
+    //----------------------------------------------------------------------
     /** Define external force. */
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
-    /**
-     * @brief 	Algorithms of fluid dynamics.
-     */
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_wall_contact);
     /** Time step size without considering sound wave speed. */
@@ -134,15 +123,15 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
-    /**
-     * @brief Output.
-     */
-    IOEnvironment io_environment(sph_system);
-    /** Output the body states. */
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    /**
-     * @brief Setup geometry and initial conditions.
-     */
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     periodic_condition.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
@@ -156,7 +145,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     Real end_time = 100.0;  /**< End time. */
     Real Output_Time = 1.0; /**< Time stamps for output of body states. */
-    Real dt = 0.0;           /**< Default acoustic time step sizes. */
+    Real dt = 0.0;          /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
