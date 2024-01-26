@@ -5,6 +5,7 @@
  * solid simulation based on update Lagrange method                            *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
+ * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
 #include "all_continuum.h"
 #include "sphinxsys.h"
@@ -144,8 +145,7 @@ int main(int ac, char *av[])
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
-    InteractionDynamics<continuum_dynamics::AngularConservativeShearForceRelaxation>
-        beam_shear_force_angular_conservative(beam_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
     // for dual time step
@@ -200,8 +200,7 @@ int main(int ac, char *av[])
                 beam_pressure_relaxation.exec(acoustic_dt);
                 constraint_beam_base.exec();
                 beam_density_relaxation.exec(acoustic_dt);
-                // shear acceleration with angular conservative
-                beam_shear_force_angular_conservative.exec(acoustic_dt);
+                beam_shear_acceleration.exec(acoustic_dt);
                 ite++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
