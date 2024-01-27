@@ -198,6 +198,20 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>, p
     StdLargeVec<bool> apply_pressure_to_particle_;
     Real getPressure();
 };
+
+class PressureForceOnShell : public LoadingForce, public SolidDataSimple
+{
+  protected:
+    Real pressure_;
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &n_;
+
+  public:
+    PressureForceOnShell(SPHBody &sph_body, Real pressure);
+    virtual ~PressureForceOnShell(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
+
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // LOADING_DYNAMICS_H

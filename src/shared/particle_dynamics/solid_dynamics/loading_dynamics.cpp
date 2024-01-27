@@ -248,5 +248,15 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
+PressureForceOnShell::PressureForceOnShell(SPHBody &sph_body, Real pressure)
+    : LoadingForce(sph_body, "PressureForceOnShell"), SolidDataSimple(sph_body),
+      pressure_(pressure), Vol_(particles_->Vol_), n_(particles_->n_) {}
+//=================================================================================================//
+void PressureForceOnShell::update(size_t index_i, Real dt)
+{
+    loading_force_[index_i] = -pressure_ * Vol_[index_i] * n_[index_i];
+    ForcePrior::update(index_i, dt);
+}
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

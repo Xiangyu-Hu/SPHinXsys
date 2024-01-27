@@ -147,23 +147,15 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
+
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
+    SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
-
-    // pressure boundary condition
-    auto apply_pressure = [&]()
-    {
-        Real pressure_MPa = pressure * pow(unit_mm, 2);
-        for (size_t i = 0; i < shell_particles->force_prior_.size(); ++i)
-        {
-            // opposite to normals
-            shell_particles->force_prior_[i] -= pressure_MPa * shell_particles->Vol_[i] * shell_particles->n_[i];
-        }
-    };
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
@@ -186,6 +178,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
+    apply_constant_gravity.exec();
 
     {     // tests on initialization
         { // checking particle distances - avoid bugs of reading file
@@ -247,11 +240,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                               << dt << "\n";
                 }
 
-                initialize_external_force.exec(dt);
                 if (pressure > TinyReal)
                 {
                     normal_update.exec();
-                    apply_pressure();
+                    apply_pressure.exec();
                 }
 
                 dt = computing_time_step_size.exec();
