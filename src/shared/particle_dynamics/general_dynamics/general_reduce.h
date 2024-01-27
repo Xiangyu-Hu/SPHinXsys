@@ -172,7 +172,7 @@ class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<Var
           GeneralDataDelegateSimple(sph_body),
           variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
     {
-        this->quantity_name_ = variable_name + "Summation";
+        this->quantity_name_ = "Total" + variable_name;
     };
     virtual ~QuantitySummation(){};
 

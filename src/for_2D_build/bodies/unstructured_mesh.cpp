@@ -668,7 +668,7 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
         if (body->checkNewlyUpdated() && state_recording_)
         {
             // TODO: we can short the file name by without using SPHBody
-            std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";
+            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);
