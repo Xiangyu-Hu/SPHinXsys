@@ -174,9 +174,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_inner, water_block_contact);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
@@ -185,16 +184,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceFromFluid> fluid_force_on_solid_update(cylinder_contact, viscous_force_on_solid);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> fluid_force_on_solid_update(cylinder_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(viscous_force_on_solid, "TotalViscousForceOnSolid");
-    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(fluid_force_on_solid_update, "TotalPressureForceOnSolid");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>>
+        write_total_viscous_force_on_inserted_body(cylinder, "ViscousForceFromFluid");
+    ReducedQuantityRecording<QuantitySummation<Vecd>>
+        write_total_pressure_force_on_inserted_body(cylinder, "PressureForceFromFluid");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -233,7 +232,6 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real dt = get_fluid_time_step_size.exec();
             viscous_force.exec();
             pressure_relaxation.exec(dt);
@@ -256,7 +254,7 @@ int main(int ac, char *av[])
         write_real_body_states.writeToFile();
 
         write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
-        write_total_force_on_inserted_body.writeToFile(number_of_iterations);
+        write_total_pressure_force_on_inserted_body.writeToFile(number_of_iterations);
 
         write_maximum_speed.writeToFile(number_of_iterations);
         TickCount t3 = TickCount::now();

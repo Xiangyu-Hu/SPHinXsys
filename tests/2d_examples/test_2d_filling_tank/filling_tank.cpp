@@ -133,13 +133,12 @@ int main(int ac, char *av[])
     water_body.addBodyStateForRecording<Real>("PositionDivergence"); // for debug
     water_body.addBodyStateForRecording<int>("Indicator");           // for debug
 
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_body, gravity_ptr);
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_body, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-    BodyAlignedBoxByParticle emitter(
-        water_body, makeShared<AlignedBoxShape>(Transform(inlet_translation), inlet_halfsize));
+    BodyAlignedBoxByParticle emitter(water_body, makeShared<AlignedBoxShape>(Transform(inlet_translation), inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, 350, 0);
 
@@ -148,10 +147,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(water_body, gravity_ptr);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", fluid_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_body, gravity);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -160,6 +157,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_normal_direction.exec();
     indicate_free_surface.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Time stepping control parameters.
     //----------------------------------------------------------------------
@@ -185,8 +183,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Force Prior due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
 
