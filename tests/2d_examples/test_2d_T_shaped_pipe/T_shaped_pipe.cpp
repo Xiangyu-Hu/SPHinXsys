@@ -162,9 +162,12 @@ int main(int ac, char *av[])
         water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down, yAxis);
     //----------------------------------------------------------------------
-    //	Define the methods for I/O operations and observations of the simulation.
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_body_states(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_water_kinetic_energy(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -223,6 +226,7 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                write_water_kinetic_energy.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -247,6 +251,15 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_water_kinetic_energy.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_water_kinetic_energy.testResult();
+    }
 
     return 0;
 }
