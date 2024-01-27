@@ -122,11 +122,12 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
     repulsion_force_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
-RepulsionForce<Dynamic, Contact<Wall>>::
-    RepulsionForce(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength)
-    : RepulsionForce<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(&base_particles_, "RepulsionForce"), solid_(particles_->solid_),
-      vel_(particles_->vel_), penalty_strength_(penalty_strength)
+DynamicContactForceWithWall::
+    DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength)
+    : LocalDynamics(solid_body_contact_relation.getSPHBody()),
+      ContactDynamicsData(solid_body_contact_relation), solid_(particles_->solid_),
+      Vol_(particles_->Vol_), vel_(particles_->vel_),
+      force_prior_(particles_->force_prior_), penalty_strength_(penalty_strength)
 {
     impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());
     reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
@@ -137,7 +138,7 @@ RepulsionForce<Dynamic, Contact<Wall>>::
     }
 }
 //=================================================================================================//
-void RepulsionForce<Dynamic, Contact<Wall>>::interaction(size_t index_i, Real dt)
+void DynamicContactForceWithWall::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -169,7 +170,7 @@ void RepulsionForce<Dynamic, Contact<Wall>>::interaction(size_t index_i, Real dt
         }
     }
 
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    force_prior_[index_i] += force * Vol_[index_i];
 }
 //=================================================================================================//
 } // namespace solid_dynamics

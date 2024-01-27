@@ -3,10 +3,10 @@
  * @brief This is the case setup for plastic taylor bar.
  * @author Xiaojing Tang, Dong Wu and Xiangyu Hu
  * @ref 	doi.org/10.1007/s40571-019-00277-6
+ * //TODO: Seems that the wall contact force should be improved.
  */
-#include "sphinxsys.h"
-
 #include "taylor_bar.h" /**< Case setup for this example. */
+#include "sphinxsys.h"
 
 using namespace SPH;
 
@@ -89,7 +89,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
-    InteractionWithUpdate<solid_dynamics::DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
+    InteractionDynamics<solid_dynamics::DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     SimpleDynamics<InitialCondition> initial_condition(column);
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);

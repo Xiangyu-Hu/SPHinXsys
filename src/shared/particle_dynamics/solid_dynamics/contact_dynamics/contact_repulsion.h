@@ -119,22 +119,27 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, ContactDynam
 };
 using ContactForceToWall = RepulsionForce<Wall, Contact<>>;
 
-template <> // Computing the repulsion force from a rigid wall during dynamical impact.
-class RepulsionForce<Dynamic, Contact<Wall>> : public RepulsionForce<Base, ContactDynamicsData>, public ForcePrior
+/**
+ * @class DynamicContactForceWithWall
+ * @brief Computing the contact force with a rigid wall.
+ *  Note that the body surface of the wall should be
+ *  updated before computing the contact force.
+ */
+class DynamicContactForceWithWall : public LocalDynamics, public ContactDynamicsData
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
-    virtual ~RepulsionForce(){};
+    explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
+    virtual ~DynamicContactForceWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Solid &solid_;
-    StdLargeVec<Vecd> &vel_;
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
     StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_n_;
     Real penalty_strength_;
     Real impedance_, reference_pressure_;
 };
-using DynamicContactForceWithWall = RepulsionForce<Dynamic, Contact<Wall>>;
 
 } // namespace solid_dynamics
 } // namespace SPH
