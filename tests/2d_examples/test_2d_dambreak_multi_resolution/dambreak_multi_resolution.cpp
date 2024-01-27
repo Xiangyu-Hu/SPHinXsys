@@ -186,7 +186,6 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            fluid_step_initialization.exec();
             Real Dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
