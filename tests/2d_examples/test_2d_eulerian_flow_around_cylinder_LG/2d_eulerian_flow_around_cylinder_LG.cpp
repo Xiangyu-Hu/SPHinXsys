@@ -184,16 +184,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
-    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(cylinder_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> fluid_force_on_solid_update(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> pressure_force_from_fluid(cylinder_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>>
-        write_total_viscous_force_on_inserted_body(cylinder, "ViscousForceFromFluid");
+        write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>>
-        write_total_pressure_force_on_inserted_body(cylinder, "PressureForceFromFluid");
+        write_total_pressure_force_from_fluid_body(cylinder, "PressureForceFromFluid");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -252,9 +252,10 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();
-
-        write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
-        write_total_pressure_force_on_inserted_body.writeToFile(number_of_iterations);
+        viscous_force_from_fluid.exec();
+        pressure_force_from_fluid.exec();
+        write_total_viscous_force_from_fluid.writeToFile(number_of_iterations);
+        write_total_pressure_force_from_fluid_body.writeToFile(number_of_iterations);
 
         write_maximum_speed.writeToFile(number_of_iterations);
         TickCount t3 = TickCount::now();
@@ -266,7 +267,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_total_viscous_force_on_inserted_body.testResult();
+    write_total_viscous_force_from_fluid.testResult();
 
     return 0;
 }
