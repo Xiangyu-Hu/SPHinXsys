@@ -40,7 +40,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 
 Real U_f = 1.0;
-Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
+Real c_f = 15.0 * U_f;                                        /**< Speed of sound. */
 
 Real rho0_f = 1.0;                                            /**< Density. */
 
@@ -192,7 +192,7 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
-            //update_density_by_summation.exec();
+            update_density_by_summation.exec();
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

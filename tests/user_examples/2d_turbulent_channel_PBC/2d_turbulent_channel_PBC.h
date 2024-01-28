@@ -44,7 +44,7 @@ StdVec<Real> initial_turbu_values = { 1.0 ,1.0 ,1.0 };
 
 //Real u_max = 1.5;
 //Real U_f = u_max * 2.0 / 3.0; //*Characteristic velo is regarded as average velo here
-Real U_f = 2.0; //*Characteristic velo is regarded as average velo here
+Real U_f = 2.2; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
 
 Real rho0_f = 1.0;                                            /**< Density. */

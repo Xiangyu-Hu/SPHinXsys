@@ -145,26 +145,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class GetVelocityGradientInner
-		 * @brief  GetVelocityGradientInner
-		 */
-		//class GetVelocityGradientInner : public LocalDynamics, public FluidDataInner
-		//{
-		//public:
-		//	explicit GetVelocityGradientInner(BaseInnerRelation& inner_relation);
-		//	virtual ~GetVelocityGradientInner() {};
-
-		//	inline void interaction(size_t index_i, Real dt = 0.0);
-		//protected:
-		//	StdLargeVec<Vecd>& vel_, & pos_;
-		//	StdLargeVec<Matd>& velocity_gradient_;
-		//	StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
-
-		//	//**For test*
-		//	StdLargeVec<Matd> velocity_gradient_wall;
-		//};
-
-		/**
 		 * @class K_TurtbulentModelInner
 		 * @brief  K_TurtbulentModelInner
 		 */
@@ -210,45 +190,6 @@ namespace SPH
 			StdLargeVec<Real>& turbu_epsilon_;
 			StdLargeVec<Real> &k_production_;
 		};
-
-		/**
-		 * @class E_TurtbulentModelInner
-		 * @brief  E_TurtbulentModelInner
-		 */
-		//class TKEnergyAccInner : public BaseTurtbulentModelInner
-		//{
-		//public:
-		//	explicit TKEnergyAccInner(BaseInnerRelation& inner_relation);
-		//	virtual ~TKEnergyAccInner() {};
-
-		//	inline void interaction(size_t index_i, Real dt = 0.0);
-		//protected:
-		//	StdLargeVec<Real>& turbu_k_;
-		//	StdLargeVec<Vecd>& acc_prior_;
-		//	StdLargeVec<Vecd>& pos_;
-		//	StdLargeVec<int>& indicator_;
-		//	StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
-		//	StdLargeVec<Vecd> test_k_grad_rslt_;
-		//};
-
-		/**
-		 * @class TurbuViscousAccInner
-		 * @brief  the turbulent viscosity force induced acceleration
-		 */
-		//class TurbuViscousAccInner : public BaseViscousAccelerationInner, public BaseTurbuClosureCoeffInner
-		//{
-		//public:
-		//	explicit TurbuViscousAccInner(BaseInnerRelation& inner_relation) ;
-		//	virtual ~TurbuViscousAccInner() {};
-
-		//	inline void interaction(size_t index_i, Real dt = 0.0);
-		//protected:
-		//	StdLargeVec<Real>& turbu_mu_;
-		//	StdLargeVec<Real>& wall_Y_plus_;
-		//	StdLargeVec<Vecd>& velo_friction_;
-		//	StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
-		//	StdLargeVec<Real>& y_p_;
-		//};
 
 		/**
 		 * @class TurbuViscousAccInner

@@ -181,7 +181,7 @@ int main(int ac, char *av[])
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
-            if (GlobalStaticVariables::physical_time_ < end_time / 2.0)
+            //if (GlobalStaticVariables::physical_time_ < end_time / 2.0)
                 update_density_by_summation.exec();
 
             update_eddy_viscosity.exec();

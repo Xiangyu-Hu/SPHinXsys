@@ -161,6 +161,14 @@ namespace fluid_dynamics
 		//this->particles_->addVariableToWrite<Vecd>("ViscDirectionMatrix");
 	}
 //=================================================================================================//
+	Real TurbuViscousAcceleration<ContactWall<>>::standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho)
+	{
+		Real velo_fric = 0.0;
+		velo_fric = sqrt(abs(Karman * vel_t * pow(C_mu, 0.25) * pow(k_p, 0.5) /
+			log(turbu_const_E * pow(C_mu, 0.25) * pow(k_p, 0.5) * y_p * rho / mu_)));
+		return velo_fric;
+	}
+//=================================================================================================//
 
 	void TurbuViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
 	{
@@ -216,6 +224,10 @@ namespace fluid_dynamics
 				e_j_tau[1] = e_j_n[0] * (-1.0);
 				//if (vel_i.dot(e_j_tau) < 0.0)
 					//e_j_tau = -1.0 * e_j_tau;  //** Assume the tangential unit vector has the same direction of velocity *
+
+				//** Calculate the local friction velocity *
+				Real test = this->standard_wall_functon_for_wall_viscous(0.0, 0.0, 0.0, 0.0);
+
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *
 				WSS_j_tn(0, 0) = 0.0;

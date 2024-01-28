@@ -168,7 +168,7 @@ namespace fluid_dynamics
 	class TurbuViscousAcceleration;
 
 	template <class DataDelegationType>
-	class TurbuViscousAcceleration<DataDelegationType>: public ViscousAcceleration<DataDelegationType>
+	class TurbuViscousAcceleration<DataDelegationType>: public ViscousAcceleration<DataDelegationType>, public BaseTurbuClosureCoeff
 	{
 	public:
 		template <class BaseRelationType>
@@ -205,6 +205,7 @@ namespace fluid_dynamics
 		explicit TurbuViscousAcceleration(BaseContactRelation& wall_contact_relation);
 			//: BaseTurbuViscousAccelerationWithWall(wall_contact_relation) {};
 		virtual ~TurbuViscousAcceleration() {};
+		Real standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho_i);
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
 
