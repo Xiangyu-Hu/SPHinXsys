@@ -12,7 +12,7 @@ case name: test_2d_oscillating_beam_UL
 
 case_name = "test_2d_oscillating_beam_UL"
 body_name = "BeamBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 
 number_of_run_times = 0
 converged = 0
