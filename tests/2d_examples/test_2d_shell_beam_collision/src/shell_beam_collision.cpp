@@ -183,7 +183,6 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Define external force.*/
-    SimpleDynamics<TimeStepInitialization> beam_initialize_timestep(beam);
     InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
     /** stress relaxation for the walls. */
@@ -191,8 +190,8 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
     InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
-    InteractionDynamics<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
     BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
@@ -259,7 +258,6 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            beam_initialize_timestep.exec();
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
