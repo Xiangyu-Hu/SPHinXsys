@@ -148,7 +148,7 @@ int main(int ac, char *av[])
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
-    /** Time step initialization, add gravity. */
+    /** apply gravity. */
     Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity_to_fluid(water_block, gravity);
     /** Evaluation of density by summation approach. */
