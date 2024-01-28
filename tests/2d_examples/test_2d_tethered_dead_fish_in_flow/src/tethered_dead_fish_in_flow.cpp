@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    system.setReloadParticles(false);
+    system.setReloadParticles(true);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 
@@ -303,7 +303,6 @@ int main(int ac, char *av[])
     /**
      * Common particle dynamics.
      */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
@@ -314,7 +313,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Impose transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     /** Computing vorticity in the flow. */
@@ -327,8 +326,8 @@ int main(int ac, char *av[])
     /**
      * Fluid structure interaction model.
      */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
-    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_force_on_fish_body(fish_body_contact);
     /**
      * Solid dynamics.
      */
@@ -403,8 +402,7 @@ int main(int ac, char *av[])
         constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
     BodyStatesRecordingToVtp write_real_body_states(system.real_bodies_);
-    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_fish(fluid_force_on_fish_body, "TotalPressureForceOnSolid");
+    ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
     /**
      * Time steeping starts here.
@@ -447,7 +445,6 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_force.exec();
@@ -486,7 +483,7 @@ int main(int ac, char *av[])
                 }
                 // note that dt needs to sufficiently large to avoid divide zero
                 fish_body_average_velocity.update_averages_.exec(dt);
-                write_total_force_on_fish.writeToFile(number_of_iterations);
+                write_total_pressure_force_from_fluid.writeToFile(number_of_iterations);
 
                 relaxation_time += dt;
                 integration_time += dt;
