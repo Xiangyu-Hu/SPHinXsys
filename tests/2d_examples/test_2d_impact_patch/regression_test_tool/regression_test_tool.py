@@ -7,10 +7,10 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_standing_wave
+case name: test_2d_impact_patch
 """
 
-case_name = "test_2d_standing_wave"
+case_name = "test_2d_impact_patch"
 body_name = "WaterBody"
 parameter_name = "TotalMechanicalEnergy"
 body_name_1 = "WaveProbe"
