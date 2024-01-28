@@ -270,6 +270,349 @@ namespace fluid_dynamics
 
 
 //=================================================================================================//
+
+//*********************TESTING MODULES*********************
+//=================================================================================================//
+
+//=================================================================================================//
+	//template <class DataDelegationType>
+	BaseGetTimeAverageData::BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points)
+		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
+		pos_(particles_->pos_), num_cell(num_observer_points),
+		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")), plt_engine_()
+	{
+		num_data = 5;
+		file_name_.push_back("vel_x_sto_");
+		file_name_.push_back("turbu_k_sto_");
+		file_name_.push_back("turbu_epsilon_sto_");
+		file_name_.push_back("turbu_mu_sto_");
+		file_name_.push_back("vel_sto_");
+
+		num_in_cell_.resize(num_cell);
+		data_time_aver_sto_.resize(num_cell); //Rows
+
+		data_sto_.resize(num_cell); //Rows
+		for (size_t i = 0; i != num_cell; ++i)
+		{
+			data_sto_[i].resize(num_data); //Cols
+		}
+
+		for (size_t j = 0; j != num_data; ++j)
+		{
+			file_path_output_ = "../bin/output/" + file_name_[j] + ".dat";
+			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+			out_file << "run_time" << "   ";
+			for (size_t i = 0; i != num_cell; ++i)
+			{
+				std::string quantity_name_i = file_name_[j] + "[" + std::to_string(i) + "]";
+				plt_engine_.writeAQuantityHeader(out_file, data_sto_[i][j], quantity_name_i);
+			}
+			out_file << "\n";
+			out_file.close();
+		}
+	}
+	//=================================================================================================//
+	void BaseGetTimeAverageData::output_time_history_data(Real cutoff_time)
+	{
+		/** Output for .dat file. */
+		for (size_t j = 0; j != num_data; ++j)
+		{
+			file_path_output_ = "../bin/output/" + file_name_[j] + ".dat";
+			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
+			for (size_t i = 0; i != num_cell; ++i)
+			{
+				//if (num_in_cell_[i] == 0 && GlobalStaticVariables::physical_time_ > cutoff_time)
+				//{
+				//	std::cout << "There is a empaty monitoring cell, cell number=" << i << std::endl;
+				//	system("pause");
+				//}
+				num_in_cell_[i] == 0 ? plt_engine_.writeAQuantity(out_file, 0.0) :
+					plt_engine_.writeAQuantity(out_file, data_sto_[i][j] / num_in_cell_[i]);
+			}
+			out_file << "\n";
+			out_file.close();
+		}
+		//** Clear data *
+		for (int i = 0; i < num_cell; i++)
+		{
+			num_in_cell_[i] = 0;
+			for (size_t j = 0; j != num_data; ++j)
+			{
+				data_sto_[i][j] = 0.0;
+			}
+		}
+	}
+	//=================================================================================================//
+	void BaseGetTimeAverageData::get_time_average_data(Real cutoff_time)
+	{
+		for (size_t j = 0; j != num_data; ++j)
+		{
+			data_loaded_.clear();
+			int num_line_data = 0;
+			//** Load data *
+			file_path_input_ = "../bin/output/" + file_name_[j] + ".dat";
+			std::ifstream in_file(file_path_input_.c_str());
+			bool skipFirstLine = true;
+			std::string line;
+			while (std::getline(in_file, line))
+			{
+				if (skipFirstLine)
+				{
+					skipFirstLine = false;
+					continue;
+				}
+				num_line_data++;
+				std::vector<Real> data_point;
+				std::istringstream iss(line);
+				Real value;
+				while (iss >> value)
+				{
+					data_point.push_back(value);
+				}
+				data_loaded_.push_back(data_point);
+			}
+
+			in_file.close();
+			//** Deal with data *
+			for (size_t k = 0; k != num_cell; ++k)
+			{
+				Real sum = 0.0;
+				int count = 0;
+				for (size_t i = 0; i != num_line_data; ++i)
+				{
+					if (data_loaded_[i][0] > cutoff_time)
+					{
+						count++;
+						Real delta_t = data_loaded_[i][0] - data_loaded_[i - 1][0];
+						sum += data_loaded_[i][k + 1] * delta_t;
+						//sum += data_loaded_[i][k + 1]; //**the first col is time*
+					}
+				}
+				//data_time_aver_sto_[k] = sum / count;
+				data_time_aver_sto_[k] = sum / (data_loaded_[num_line_data - 1][0] - cutoff_time);
+			}
+			//** Output data *
+			file_path_output_ = "../bin/output/TimeAverageData.dat";
+			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+			out_file << file_name_[j] << "\n";
+			for (size_t k = 0; k != num_cell; ++k)
+			{
+				plt_engine_.writeAQuantity(out_file, data_time_aver_sto_[k]);
+			}
+			out_file << "\n";
+			out_file.close();
+		}
+		std::cout << "The cutoff_time is " << cutoff_time << std::endl;
+	}
+	//=================================================================================================//
+	GetTimeAverageCrossSectionData::GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation, int num_observer_points, const StdVec<Real>& bound_x, Real offset_dist_y)
+		: BaseGetTimeAverageData(inner_relation, num_observer_points)
+	{
+		x_min_ = bound_x[0];
+		x_max_ = bound_x[1];
+		offset_dist_y_ = offset_dist_y;
+		//** Get the center coordinate of the monitoring cell *
+		for (int i = 0; i < num_cell; i++)
+		{
+			Real upper_bound = ((i + 1) * particle_spacing_min_ + offset_dist_y_);
+			Real lower_bound = (i * particle_spacing_min_ + offset_dist_y_);
+			monitor_cellcenter_y.push_back((lower_bound + upper_bound) / 2.0);
+		}
+		file_path_output_ = "../bin/output/monitor_cell_center_y.dat";
+		std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+		for (size_t i = 0; i != num_cell; ++i)
+		{
+			plt_engine_.writeAQuantity(out_file, monitor_cellcenter_y[i]);
+			out_file << "\n";
+		}
+		out_file << "\n";
+		out_file.close();
+	}
+	//=================================================================================================//
+	void GetTimeAverageCrossSectionData::update(size_t index_i, Real dt)
+	{
+		//** Get data *
+		if (pos_[index_i][0] > x_min_ && pos_[index_i][0] <= x_max_)
+		{
+			for (int i = 0; i < num_cell; i++)
+			{
+				if (pos_[index_i][1] > (i * particle_spacing_min_ + offset_dist_y_) &&
+					pos_[index_i][1] <= ((i + 1) * particle_spacing_min_ + offset_dist_y_))
+				{
+					num_in_cell_[i] += 1;
+					data_sto_[i][0] += vel_[index_i][0];
+					data_sto_[i][1] += turbu_k_[index_i];
+					data_sto_[i][2] += turbu_epsilon_[index_i];
+					data_sto_[i][3] += turbu_mu_[index_i];
+					data_sto_[i][4] += vel_[index_i].norm();
+				}
+			}
+		}
+	}
+	//=================================================================================================//
+	GetTimeAverageCenterLineData::GetTimeAverageCenterLineData(BaseInnerRelation& inner_relation,
+		int num_observer_points, Real observe_x_ratio, const StdVec<Real>& bound_y, const StdVec<Real>& bound_x_f, const StdVec<Real>& bound_x_b)
+		: BaseGetTimeAverageData(inner_relation, num_observer_points), observe_x_ratio_(observe_x_ratio),
+		bound_x_f_(bound_x_f), bound_x_b_(bound_x_b), bound_y_(bound_y)
+	{
+		observe_x_spacing_ = particle_spacing_min_ * observe_x_ratio_;
+	}
+	//=================================================================================================//
+	void GetTimeAverageCenterLineData::update(size_t index_i, Real dt)
+	{
+		//** Get data *
+		if (pos_[index_i][1] > bound_y_[0] && pos_[index_i][1] <= bound_y_[1])
+		{
+			for (int i = 0; i < num_cell; i++)
+			{
+				if (i < bound_x_f_.size() - 1) //* Front of cylinder
+				{
+					if (pos_[index_i][0] > bound_x_f_[i] && pos_[index_i][0] <= bound_x_f_[i + 1])
+					{
+						num_in_cell_[i] += 1;
+						data_sto_[i][0] += vel_[index_i][0];
+						data_sto_[i][1] += turbu_k_[index_i];
+						data_sto_[i][2] += turbu_epsilon_[index_i];
+						data_sto_[i][3] += turbu_mu_[index_i];
+						data_sto_[i][4] += vel_[index_i].norm();
+					}
+				}
+				else if (i >= bound_x_f_.size() - 1) //* behind of cylinder
+				{
+					int j = i - (bound_x_f_.size() - 1);
+					if (pos_[index_i][0] > bound_x_b_[j] && pos_[index_i][0] <= bound_x_b_[j + 1])
+					{
+						num_in_cell_[i] += 1;
+						data_sto_[i][0] += vel_[index_i][0];
+						data_sto_[i][1] += turbu_k_[index_i];
+						data_sto_[i][2] += turbu_epsilon_[index_i];
+						data_sto_[i][3] += turbu_mu_[index_i];
+						data_sto_[i][4] += vel_[index_i].norm();
+					}
+				}
+			}
+
+		}
+	}
+	//=================================================================================================//
+	void GetTimeAverageCenterLineData::output_monitor_x_coordinate()
+	{
+		StdVec<Real> monitor_cellcenter_x;
+		for (int i = 0; i < bound_x_f_.size() - 1; i++)
+		{
+			monitor_cellcenter_x.push_back((bound_x_f_[i] + bound_x_f_[i + 1]) / 2.0);
+		}
+		for (int i = 0; i < bound_x_b_.size() - 1; i++)
+		{
+			monitor_cellcenter_x.push_back((bound_x_b_[i] + bound_x_b_[i + 1]) / 2.0);
+		}
+
+		file_path_output_ = "../bin/output/monitor_cell_center_x.dat";
+		std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
+		for (size_t i = 0; i != num_cell; ++i)
+		{
+			plt_engine_.writeAQuantity(out_file, monitor_cellcenter_x[i]);
+			out_file << "\n";
+		}
+		out_file << "\n";
+		out_file.close();
+	}
+//=================================================================================================//
+	ClearYPositionForTest::
+		ClearYPositionForTest(SPHBody& sph_body)
+		: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+		pos_(particles_->pos_), vel_(particles_->vel_) {}
+	//=================================================================================================//
+
+	void ClearYPositionForTest::update(size_t index_i, Real dt)
+	{
+		vel_[index_i][1] = 0.0;
+	}
+//=================================================================================================//
+	GetAcceleration::
+		GetAcceleration(SPHBody& sph_body)
+		: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+		pos_(particles_->pos_), vel_(particles_->vel_),
+		acc_prior_(particles_->acc_prior_), acc_(particles_->acc_),
+		unsorted_id_(sph_body.getBaseParticles().unsorted_id_)
+	{
+		monitor_index_ = 300;  //** Input mannually *
+	}
+	//=================================================================================================//
+	void GetAcceleration::update(size_t index_i, Real dt)
+	{
+		if (unsorted_id_[index_i] == monitor_index_)
+			sorted_id_monitor_ = index_i;
+	}
+	//=================================================================================================//
+	void GetAcceleration::output_time_history_of_acc_y_visc()
+	{
+		acc_y_visc_ = acc_prior_[sorted_id_monitor_][1];
+
+		std::string file_path_output = "../bin/output/acc_y_visc_of_" + std::to_string(monitor_index_) + ".dat";
+		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+		out_file << GlobalStaticVariables::physical_time_ << "   ";
+		plt_engine_.writeAQuantity(out_file, acc_y_visc_);
+		out_file << "\n";
+		out_file.close();
+
+		//sorted_id_monitor_ = 0;
+	}
+	//=================================================================================================//
+	void GetAcceleration::output_time_history_of_acc_y_k_grad()
+	{
+		acc_y_k_grad_ = acc_[sorted_id_monitor_][1];
+
+		std::string file_path_output = "../bin/output/acc_y_k_grad_of_" + std::to_string(monitor_index_) + ".dat";
+		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+		out_file << GlobalStaticVariables::physical_time_ << "   ";
+		plt_engine_.writeAQuantity(out_file, acc_y_k_grad_);
+		out_file << "\n";
+		out_file.close();
+
+		//sorted_id_monitor_ = 0;
+	}
+	//=================================================================================================//
+	void GetAcceleration::output_time_history_of_acc_y_p_grad()
+	{
+		acc_y_p_grad_ = acc_[sorted_id_monitor_][1] - acc_y_k_grad_;
+
+		std::string file_path_output = "../bin/output/acc_y_p_grad_of_" + std::to_string(monitor_index_) + ".dat";
+		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+		out_file << GlobalStaticVariables::physical_time_ << "   ";
+		plt_engine_.writeAQuantity(out_file, acc_y_p_grad_);
+		out_file << "\n";
+		out_file.close();
+
+		//sorted_id_monitor_ = 0;
+	}
+	//=================================================================================================//
+	void GetAcceleration::output_time_history_of_acc_y_total()
+	{
+		acc_y_ = acc_y_k_grad_ + acc_y_p_grad_ + acc_y_visc_;
+
+		std::string file_path_output = "../bin/output/acc_y_total_of_" + std::to_string(monitor_index_) + ".dat";
+		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+		out_file << GlobalStaticVariables::physical_time_ << "   ";
+		plt_engine_.writeAQuantity(out_file, acc_y_);
+		out_file << "\n";
+		out_file.close();
+	}
+	//=================================================================================================//
+	void GetAcceleration::output_time_history_of_pos_y()
+	{
+		std::string file_path_output = "../bin/output/pos_y_of_" + std::to_string(monitor_index_) + ".dat";
+		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
+		out_file << GlobalStaticVariables::physical_time_ << "   ";
+		plt_engine_.writeAQuantity(out_file, pos_[sorted_id_monitor_][1]);
+		out_file << "\n";
+		out_file.close();
+	}
+
+
 }
 //=================================================================================================//
 }

@@ -82,68 +82,6 @@ namespace SPH
 			int dimension_;
 		};
 
-		/** Note this is a temporary treatment *
-		* @class BaseGetTimeAverageData
-		* @brief  BaseGetTimeAverageData
-		*/
-		class BaseGetTimeAverageData : public BaseTurtbulentModelInner
-		{
-		public:
-			explicit BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points);
-			virtual ~BaseGetTimeAverageData() {};
-
-			//void update(size_t index_i, Real dt = 0.0);
-			void output_time_history_data(Real cutoff_time);
-			void get_time_average_data(Real cutoff_time);
-		protected:
-			PltEngine plt_engine_;
-
-			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<Real>& turbu_mu_, & turbu_k_, & turbu_epsilon_;
-			//std::vector<std::vector<Real>>  data_sto_;
-			StdLargeVec<std::vector<Real>> data_sto_, data_loaded_;
-			StdLargeVec<Real>  data_time_aver_sto_;
-			//ConcurrentVec<ConcurrentVec<Real>> data_sto_;
-			StdLargeVec<int> num_in_cell_;
-			int num_cell, num_data;
-			StdLargeVec<std::string> file_name_;
-			std::string file_path_output_, file_path_input_;
-		};
-
-		/** Note this is a temporary treatment *
-		* @class GetTimeAverageCrossSectionData
-		* @brief  GetTimeAverageCrossSectionData
-		*/
-		class GetTimeAverageCrossSectionData : public BaseGetTimeAverageData
-		{
-		public:
-			explicit GetTimeAverageCrossSectionData(BaseInnerRelation& inner_relation,int num_observer_points, const StdVec<Real>& bound_x, Real offset_dist_y = 0.0);
-			virtual ~GetTimeAverageCrossSectionData() {};
-
-			void update(size_t index_i, Real dt = 0.0);
-		protected:
-			Real x_min_, x_max_;
-			Real offset_dist_y_;
-			StdVec<Real> monitor_cellcenter_y;
-		};
-		/** Note this is a temporary treatment *
-		* @class GetTimeAverageCenterLineData
-		* @brief  GetTimeAverageCenterLineData
-		*/
-		class GetTimeAverageCenterLineData : public BaseGetTimeAverageData
-		{
-		public:
-			explicit GetTimeAverageCenterLineData(BaseInnerRelation& inner_relation, int num_observer_points,Real observe_x_ratio, 
-				const StdVec<Real>& bound_y, const StdVec<Real>& bound_x_f, const StdVec<Real>& bound_x_b);
-			virtual ~GetTimeAverageCenterLineData() {};
-
-			void update(size_t index_i, Real dt = 0.0);
-			void output_monitor_x_coordinate();
-		protected:
-			Real observe_x_ratio_, observe_x_spacing_;
-			StdVec<Real> bound_x_f_, bound_x_b_, bound_y_;
-		};
-
 		/**
 		 * @class K_TurtbulentModelInner
 		 * @brief  K_TurtbulentModelInner
@@ -255,52 +193,6 @@ namespace SPH
 			virtual Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k);
 			virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
 		};
-
-		/**
-		 * @class ClearYPositionForTest
-		 * @brief  Test
-		 */
-		class ClearYPositionForTest : public LocalDynamics,
-			public FluidDataSimple, public BaseTurbuClosureCoeffInner
-		{
-		public:
-			explicit ClearYPositionForTest(SPHBody& sph_body);
-			virtual ~ClearYPositionForTest() {};
-
-			void update(size_t index_i, Real dt = 0.0);
-		protected:
-			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<Vecd>& vel_;
-		};
-		/**
-		 * @class ClearYPositionForTest
-		 * @brief  Test
-		 */
-		class GetAcceleration : public LocalDynamics,
-			public FluidDataSimple, public BaseTurbuClosureCoeffInner
-		{
-		public:
-			explicit GetAcceleration(SPHBody& sph_body);
-			virtual ~GetAcceleration() {};
-
-			void update(size_t index_i, Real dt = 0.0);
-			void output_time_history_of_acc_y_k_grad();
-			void output_time_history_of_acc_y_p_grad();
-			void output_time_history_of_acc_y_visc();
-			void output_time_history_of_acc_y_total();
-			void output_time_history_of_pos_y();
-
-		protected:
-			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<Vecd>& vel_;
-			StdLargeVec<Vecd>& acc_prior_;
-			StdLargeVec<Vecd>& acc_;
-			StdLargeVec<size_t>& unsorted_id_;
-			PltEngine plt_engine_;
-			size_t sorted_id_monitor_, monitor_index_;
-			Real acc_y_k_grad_, acc_y_p_grad_, acc_y_visc_, acc_y_;
-		};
-
     }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_INNER_H
