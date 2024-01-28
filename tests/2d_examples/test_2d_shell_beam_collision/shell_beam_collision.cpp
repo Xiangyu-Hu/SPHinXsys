@@ -184,9 +184,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Define external force.*/
     InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
     /** stress relaxation for the walls. */
-    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> beam_stress_relaxation_first_half(beam_inner);
+    Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
     InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
@@ -201,6 +201,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_beam_kinetic_energy(beam);
     //----------------------------------------------------------------------
     /**
      * The multi body system from simbody.
@@ -216,7 +218,7 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Slider
         shellMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Gravity. */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(Real(-150.), 0.0, 0.0));
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(Real(-50.), 0.0, 0.0));
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
@@ -262,6 +264,7 @@ int main(int ac, char *av[])
             {
                 std::cout << "N=" << ite << " Time: "
                           << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                write_beam_kinetic_energy.writeToFile(ite);
             }
             beam_shell_update_contact_density.exec();
             beam_compute_solid_contact_forces.exec();
@@ -302,6 +305,15 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_beam_kinetic_energy.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_beam_kinetic_energy.testResult();
+    }
 
     return 0;
 }
