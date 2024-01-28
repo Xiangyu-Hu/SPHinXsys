@@ -209,6 +209,7 @@ class StructuralSimulation
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
+    StdVec<Gravity> gravity_list_;
     StdVec<SharedPtr<SimpleDynamics<GravityForce>>> initialize_gravity_;
     StdVec<GravityPair> non_zero_gravity_;
     // for ExternalForceInBoundingBox

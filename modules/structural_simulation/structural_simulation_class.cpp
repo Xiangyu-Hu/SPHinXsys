@@ -409,7 +409,8 @@ void StructuralSimulation::initializeGravity()
         if (count(gravity_indices.begin(), gravity_indices.end(), i))
         {
             SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(non_zero_gravity_[gravity_index_i].second);
-            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce>>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity_ptr.get()));
+            gravity_list_.emplace_back(non_zero_gravity_[gravity_index_i].second);
+            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce>>(*solid_body_list_[i]->getSolidBodyFromMesh(), gravity_list_.back()));
             gravity_index_i++;
         }
     }
