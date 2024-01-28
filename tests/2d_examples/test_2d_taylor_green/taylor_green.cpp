@@ -93,7 +93,6 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
-    SimpleDynamics<TimeStepInitialization> time_step_initialization(water_block);
     /** Pressure relaxation algorithm by using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous.
      * The other reason is that we are using transport velocity formulation,
@@ -101,7 +100,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerNoRiemann> density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
@@ -113,8 +112,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     ReloadParticleIO write_particle_reload_files(water_block);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_total_mechanical_energy(water_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_total_kinetic_energy(water_block);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(water_block);
     //----------------------------------------------------------------------
@@ -143,13 +142,12 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile(0);
-    write_total_mechanical_energy.writeToFile(0);
+    write_total_kinetic_energy.writeToFile(0);
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            time_step_initialization.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_force.exec();
@@ -185,7 +183,7 @@ int main(int ac, char *av[])
         }
 
         TickCount t2 = TickCount::now();
-        write_total_mechanical_energy.writeToFile(number_of_iterations);
+        write_total_kinetic_energy.writeToFile(number_of_iterations);
         write_maximum_speed.writeToFile(number_of_iterations);
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
@@ -202,12 +200,12 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_total_mechanical_energy.generateDataBase(1.0e-3);
+        write_total_kinetic_energy.generateDataBase(1.0e-3);
         write_maximum_speed.generateDataBase(1.0e-3);
     }
     else if (!sph_system.ReloadParticles())
     {
-        write_total_mechanical_energy.testResult();
+        write_total_kinetic_energy.testResult();
         write_maximum_speed.testResult();
     }
 
