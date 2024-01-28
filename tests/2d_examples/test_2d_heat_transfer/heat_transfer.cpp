@@ -252,8 +252,6 @@ int main(int ac, char *av[])
     SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
     SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(thermofluid_body);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_inner, fluid_body_contact);
     /** Time step size without considering sound wave speed. */
@@ -269,7 +267,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_body_inner, fluid_body_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_body_inner, fluid_body_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_body_inner, fluid_body_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_body_inner, fluid_body_contact);
     /** Apply transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_body_inner, fluid_body_contact);
     /** Computing vorticity in the flow. */
@@ -282,10 +280,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_fluid_phi("Phi", fluid_observer_contact);
-    ObservedQuantityRecording<Vecd>
-        write_fluid_velocity("Velocity", fluid_observer_contact);
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_fluid_phi("Phi", fluid_observer_contact);
+    ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -326,7 +322,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step.exec();
             update_density_by_summation.exec();
             viscous_force.exec();

@@ -236,8 +236,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Initialize particle acceleration. */ // TODO: this is missing for solid body.
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of fluid density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     /** Compute time step size without considering sound wave speed. */
@@ -247,7 +247,7 @@ int main(int ac, char *av[])
     /** Pressure relaxation using verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
         fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -267,7 +267,7 @@ int main(int ac, char *av[])
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionDynamics<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_gate(gate_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -290,6 +290,7 @@ int main(int ac, char *av[])
     gate_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     gate_corrected_configuration.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -315,8 +316,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Force Prior due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
             /** Update normal direction on elastic body. */
