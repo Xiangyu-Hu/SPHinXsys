@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
+    ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
     BodyRegionByParticle beam_left_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamLeftStretchShape()));
     SimpleDynamics<LeftStretchSolidBodyRegion> stretch_beam_left_end(beam_left_stretch);
@@ -265,20 +265,16 @@ int main(int ac, char *av[])
     SimpleDynamics<RightStretchSolidBodyRegion> stretch_beam_right_end(beam_right_stretch);
     BodyRegionByParticle beam_constrain(beam_body, makeShared<MultiPolygonShape>(createConstrainBeamShape()));
     SimpleDynamics<ConstrainXVelocity> constrain_beam_end(beam_constrain);
-
     InteractionDynamics<solid_dynamics::DeformationGradientBySummation> beam_deformation_gradient_tensor(beam_body_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
 
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
 
     BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
-    ReducedQuantityRecording<TotalMechanicalEnergy>
-        write_total_mechanical_energy(beam_body);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", beam_observer_contact);
+    ReducedQuantityRecording<TotalKineticEnergy> write_kinetic_mechanical_energy(beam_body);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -305,7 +301,7 @@ int main(int ac, char *av[])
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
-    write_total_mechanical_energy.writeToFile(0);
+    write_kinetic_mechanical_energy.writeToFile(0);
     write_displacement.writeToFile(0);
 
     // computation loop starts
@@ -349,7 +345,7 @@ int main(int ac, char *av[])
 
                     if (ite != 0 && ite % observation_sample_interval == 0)
                     {
-                        write_total_mechanical_energy.writeToFile(ite);
+                        write_kinetic_mechanical_energy.writeToFile(ite);
                         write_displacement.writeToFile(ite);
                     }
                 }
@@ -357,9 +353,6 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
             }
-
-            std::cout << "refer_total_kinetic_energy  " << refer_total_kinetic_energy
-                      << "    stress_ite  " << stress_ite << std::endl;
         }
 
         TickCount t2 = TickCount::now();
