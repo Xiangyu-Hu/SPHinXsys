@@ -41,46 +41,46 @@ namespace SPH
 		* @class BaseTurbuClosureCoeffInner
 		* @brief  Some turbulent empirical parameters
 		*/
-		class BaseTurbuClosureCoeffInner
-		{
-		public:
-			explicit BaseTurbuClosureCoeffInner();
-			virtual ~BaseTurbuClosureCoeffInner() {};
+		//class BaseTurbuClosureCoeffInner
+		//{
+		//public:
+		//	explicit BaseTurbuClosureCoeffInner();
+		//	virtual ~BaseTurbuClosureCoeffInner() {};
 
-		protected:
-			Real Karman;
-			Real turbu_const_E;
-			Real C_mu;
-			Real TurbulentIntensity;
-			//** Closure coefficients for K *
-			Real sigma_k;
+		//protected:
+		//	Real Karman;
+		//	Real turbu_const_E;
+		//	Real C_mu;
+		//	Real TurbulentIntensity;
+		//	//** Closure coefficients for K *
+		//	Real sigma_k;
 
-			//** Closure coefficients for Epsilon *
-			Real C_l, C_2;
-			Real sigma_E;
-		};
+		//	//** Closure coefficients for Epsilon *
+		//	Real C_l, C_2;
+		//	Real sigma_E;
+		//};
 
 		/**
 		 * @class BaseTurtbulentModelInner
 		 * @brief BaseTurtbulentModelInner
 		 */
-		class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbuClosureCoeffInner
-		{
-		public:
-			explicit BaseTurtbulentModelInner(BaseInnerRelation& inner_relation);
-			virtual ~BaseTurtbulentModelInner() {};
+		//class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbuClosureCoeffInner
+		//{
+		//public:
+		//	explicit BaseTurtbulentModelInner(BaseInnerRelation& inner_relation);
+		//	virtual ~BaseTurtbulentModelInner() {};
 
-		protected:
-			StdLargeVec<Real> turbu_mu_;
-			StdLargeVec<Real> turbu_k_;
-			StdLargeVec<Real> turbu_epsilon_;
-			Real smoothing_length_;
-			Real particle_spacing_min_;
-			Real mu_;
-			StdLargeVec<Real> & rho_;
-			StdLargeVec<Vecd>& vel_;
-			int dimension_;
-		};
+		//protected:
+		//	StdLargeVec<Real> turbu_mu_;
+		//	StdLargeVec<Real> turbu_k_;
+		//	StdLargeVec<Real> turbu_epsilon_;
+		//	Real smoothing_length_;
+		//	Real particle_spacing_min_;
+		//	Real mu_;
+		//	StdLargeVec<Real> & rho_;
+		//	StdLargeVec<Vecd>& vel_;
+		//	int dimension_;
+		//};
     }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_INNER_H

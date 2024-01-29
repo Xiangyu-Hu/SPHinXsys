@@ -323,11 +323,50 @@ namespace fluid_dynamics
 		virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
 	};
 //=================================================================================================//
+	/**
+	* @class StandardWallFunctionCorrection
+	* @brief this function is applied to turbulent flows
+	* @brief implicitly modify the values of k and epslion near wall
+	*/
+	class StandardWallFunctionCorrection : public LocalDynamics, public FSIContactData,
+		public BaseTurbuClosureCoeff
+	{
+	public:
+		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
+			BaseContactRelation& contact_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface);
+		virtual ~StandardWallFunctionCorrection() {};
+		inline void interaction(size_t index_i, Real dt = 0.0);
+	protected:
 
+		LevelSetShape* level_set_shape_;
+		StdLargeVec<Real> dist_to_dmy_itfc_ls_;
 
+		StdVec<StdLargeVec<Real>*> contact_Vol_;
 
+		Real offset_dist_;
+		StdVec<int> id_exclude_;
+		StdLargeVec<Real> y_p_;
+		StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
+		Real intial_distance_to_wall;
+		Real particle_spacing_, cutoff_radius_;
+		StdLargeVec<Real>& turbu_k_;
+		StdLargeVec<Real>& turbu_epsilon_;
+		StdLargeVec<Real>& turbu_mu_;
+		StdVec < StdLargeVec<Vecd>*>  contact_n_;
+		Real mu_;
+		StdLargeVec<int>& is_near_wall_P1_;
+		StdLargeVec<int> is_near_wall_P2_, is_near_wall_P1_pre_, is_migrate_;
+		StdLargeVec<Real> velo_tan_;
+		StdLargeVec<Vecd> velo_friction_;
+		StdLargeVec<int> index_nearest;
+		StdLargeVec<Real> dist_to_dmy_interface_, dist_to_dmy_itfc_aver_;
+		StdLargeVec<Vecd>& vel_, & pos_;
+		StdLargeVec<Real>& rho_;
+		int dimension_;
+		StdLargeVec<Matd>& velocity_gradient_;
+		StdLargeVec<Real>& k_production_;
+	};
 //=================================================================================================//
-
 //*********************TESTING MODULES*********************
 //=================================================================================================//
 	/** Note this is a temporary treatment *
