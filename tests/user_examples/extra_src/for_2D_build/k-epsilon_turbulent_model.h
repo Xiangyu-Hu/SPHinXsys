@@ -115,6 +115,52 @@ namespace fluid_dynamics
 	
 	//using GetVelocityGradientInner = BaseGetVelocityGradientInner<Inner<>>;
 //=================================================================================================//
+	/**
+	 * @class K_TurtbulentModelInner
+	 * @brief  K_TurtbulentModelInner
+	 */
+	class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	{
+	public:
+		explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values);
+		virtual ~K_TurtbulentModelInner() {};
+
+		inline void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Real> dk_dt_;
+		StdLargeVec<Matd> velocity_gradient_;
+		//StdLargeVec<Matd> B_;
+		StdLargeVec<Real> k_production_;
+
+		StdLargeVec<int> is_near_wall_P1_; //** This is used to specially treat near wall region  *
+		Real turbu_k_initial_, turbu_ep_initial_, turbu_mu_initial_;
+
+		//** for test */
+		StdLargeVec<Real>  k_diffusion_, vel_x_;
+		//StdLargeVec<Matd> velocity_gradient_wall;
+	};
+//=================================================================================================//
+	/**
+	 * @class E_TurtbulentModelInner
+	 * @brief  E_TurtbulentModelInner
+	 */
+	class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	{
+	public:
+		explicit E_TurtbulentModelInner(BaseInnerRelation& inner_relation);
+		virtual ~E_TurtbulentModelInner() {};
+
+		inline void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Real> dE_dt_, ep_production, ep_dissipation_, ep_diffusion_;
+		StdLargeVec<Real>& turbu_mu_;
+		StdLargeVec<Real>& turbu_k_;
+		StdLargeVec<Real>& turbu_epsilon_;
+		StdLargeVec<Real>& k_production_;
+	};
+//=================================================================================================//
 	template <typename... InteractionTypes>
 	class TKEnergyAcc;
 
@@ -211,10 +257,76 @@ namespace fluid_dynamics
 
 	//** Interface part *
 	using TurbulentViscousAccelerationWithWall = ComplexInteraction<TurbuViscousAcceleration<Inner<>, ContactWall<>>>;
+//=================================================================================================//
+	/**
+	 * @class TurbuViscousAccInner
+	 * @brief  the turbulent viscosity force induced acceleration
+	 */
+	class TurbulentEddyViscosity : public LocalDynamics,
+		public FluidDataSimple, public BaseTurbuClosureCoeff
+	{
+	public:
+		explicit TurbulentEddyViscosity(SPHBody& sph_body);
+		virtual ~TurbulentEddyViscosity() {};
 
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Real>& rho_;
+		StdLargeVec<Real>& turbu_mu_;
+		StdLargeVec<Real>& turbu_k_;
+		StdLargeVec<Real>& turbu_epsilon_;
+		StdLargeVec<Real>& wall_Y_plus_, & wall_Y_star_;
+		Real mu_;
+	};
+//=================================================================================================//
+	/**
+	 * @class TurbulentAdvectionTimeStepSize
+	 * @brief Computing the turbulent advection time step size
+	 */
+	class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>,
+		public FluidDataSimple
+	{
+	public:
+		explicit TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL = 0.25);
+		virtual ~TurbulentAdvectionTimeStepSize() {};
+		Real reduce(size_t index_i, Real dt = 0.0);
+		virtual Real outputResult(Real reduced_value) override;
+	protected:
+		StdLargeVec<Vecd>& vel_;
+		Real smoothing_length_min_;
+		Real advectionCFL_;
+		StdLargeVec<Real>& turbu_mu_;
+		Fluid& fluid_;
+	};
+//=================================================================================================//
+	/**
+	* @class   InflowTurbulentCondition
+	* @brief   Inflow boundary condition which imposes directly to a given velocity profile.
+	*          TargetVelocity gives the velocity profile along the inflow direction,
+	*          i.e. x direction in local frame.
+	*/
+	class InflowTurbulentCondition :public BaseFlowBoundaryCondition, public BaseTurbuClosureCoeff
+	{
+	public:
+		explicit InflowTurbulentCondition(BodyPartByCell& body_part,
+			Real CharacteristicLength, Real relaxation_rate = 1.0);
+		virtual ~InflowTurbulentCondition() {};
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		Real relaxation_rate_;
+		StdLargeVec<Real>& turbu_k_;
+		StdLargeVec<Real>& turbu_epsilon_;
+		Real TurbulentLength_;
+		Real CharacteristicLength_;
+
+		virtual Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k);
+		virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
+	};
 //=================================================================================================//
 
 
+
+//=================================================================================================//
 
 //*********************TESTING MODULES*********************
 //=================================================================================================//
