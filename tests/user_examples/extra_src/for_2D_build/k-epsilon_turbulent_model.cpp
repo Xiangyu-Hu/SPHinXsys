@@ -112,8 +112,8 @@ namespace fluid_dynamics
 		}
 		strain_rate = 0.5 * (velocity_gradient_[index_i].transpose() + velocity_gradient_[index_i]);
 
-		//Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
-		Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i;
+		Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
+		//Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i;
 
 		Matd k_production_matrix = Re_stress.array() * velocity_gradient_[index_i].array();
 		//** The near wall k production is updated in wall function part *
@@ -336,6 +336,7 @@ namespace fluid_dynamics
 
 	void TurbuViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
 	{
+		Real turbu_k_i = this->turbu_k_[index_i];
 		Real turbu_mu_i = this->turbu_mu_[index_i];
 		Real rho_i = this->rho_[index_i];
 		const Vecd& vel_i = this->vel_[index_i];
@@ -390,7 +391,8 @@ namespace fluid_dynamics
 					//e_j_tau = -1.0 * e_j_tau;  //** Assume the tangential unit vector has the same direction of velocity *
 
 				//** Calculate the local friction velocity *
-				Real test = this->standard_wall_functon_for_wall_viscous(0.0, 0.0, 0.0, 0.0);
+				Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
+				Real fric_vel_mag = this->standard_wall_functon_for_wall_viscous(vel_i_tau_mag, turbu_k_i, y_p, rho_i);
 
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *

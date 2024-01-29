@@ -118,7 +118,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     
     /** Evaluation of density by summation approach. */
-    //InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_wall_contact);
     
     water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
     water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
@@ -182,7 +182,7 @@ int main(int ac, char *av[])
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
-            //update_density_by_summation.exec();
+            update_density_by_summation.exec();
 
             update_eddy_viscosity.exec();
 

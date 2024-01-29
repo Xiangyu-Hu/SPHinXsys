@@ -4,8 +4,8 @@
  * @author 	Xiangyu Hu
  */
 #include "sphinxsys.h" // SPHinXsys Library.
-#include "k-epsilon_turbulent_model_complex.h"
-#include "k-epsilon_turbulent_model_complex.hpp"
+//#include "k-epsilon_turbulent_model_complex.h"
+//#include "k-epsilon_turbulent_model_complex.hpp"
 #include "k-epsilon_turbulent_model.cpp"
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------

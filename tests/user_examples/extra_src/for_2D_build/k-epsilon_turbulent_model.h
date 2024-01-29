@@ -221,6 +221,7 @@ namespace fluid_dynamics
 		explicit TurbuViscousAcceleration(BaseRelationType& base_relation);
 		virtual ~TurbuViscousAcceleration() {};
 	protected:
+		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_mu_;
 		StdLargeVec<Real>& wall_Y_plus_;
 		StdLargeVec<Vecd>& velo_friction_;
@@ -251,7 +252,10 @@ namespace fluid_dynamics
 		explicit TurbuViscousAcceleration(BaseContactRelation& wall_contact_relation);
 			//: BaseTurbuViscousAccelerationWithWall(wall_contact_relation) {};
 		virtual ~TurbuViscousAcceleration() {};
+		
+		//** This is a temporary treatment, the wall function should be defined in the base part *
 		Real standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho_i);
+		
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
 
