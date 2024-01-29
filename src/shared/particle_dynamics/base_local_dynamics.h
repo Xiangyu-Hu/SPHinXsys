@@ -49,6 +49,7 @@ class Boundary;        /**< Interaction with boundary */
 class Wall;            /**< Interaction with wall boundary */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
+class Dynamic;         /**< A dynamic interaction */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
@@ -230,14 +231,15 @@ class BaseLocalDynamics
 {
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier), sph_body_(identifier.getSPHBody()){};
+        : identifier_(identifier){};
     virtual ~BaseLocalDynamics(){};
     SPHBody &getSPHBody() { return sph_body_; };
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
   protected:
     DynamicsIdentifier &identifier_;
-    SPHBody &sph_body_;
+    SPHBody &sph_body_ = identifier_.getSPHBody();
+    BaseParticles &base_particles_ = sph_body_.getBaseParticles();
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 

@@ -270,14 +270,14 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
-        /** Random reset the insert body particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
         BodyStatesRecordingToVtp write_inserted_body_to_vtp({&cylinder});
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files({&cylinder});
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -307,8 +307,8 @@ int main(int ac, char *av[])
     //	Define the fluid dynamics used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex>
         free_stream_surface_indicator(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_block_contact);
@@ -320,7 +320,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define the wetting diffusion dynamics used in the simulation.
@@ -335,9 +335,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann>
-        fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_from_fluid(cylinder_contact);
     //----------------------------------------------------------------------
     //	Building Simbody.
     //----------------------------------------------------------------------
@@ -359,7 +358,8 @@ int main(int ac, char *av[])
      */
     Vecd displacement0 = cylinder_constraint_area.initial_mass_center_ - tethering_point;
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
-                                               SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)), tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
+                                               SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)),
+                                               tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
     // discreted forces acting on the bodies
     SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, Real(-9.81), 0.0), 0.0);
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
@@ -402,6 +402,7 @@ int main(int ac, char *av[])
     wetting_cylinder_initial_condition.exec();
     Real dt_thermal = get_thermal_time_step.exec();
     free_stream_surface_indicator.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -450,7 +451,6 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            fluid_step_initialization.exec();
             Real Dt = fluid_advection_time_step.exec();
 
             fluid_density_by_summation.exec();
@@ -461,13 +461,13 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real dt = 0.0;
-            fluid_viscous_force_on_inserted_body.exec();
+            viscous_force_from_fluid.exec();
             while (relaxation_time < Dt)
             {
                 /** inner loop for dual-time criteria time-stepping.  */
                 dt = SMIN(SMIN(dt_thermal, fluid_acoustic_time_step.exec()), Dt);
                 fluid_pressure_relaxation.exec(dt);
-                fluid_pressure_force_on_inserted_body.exec();
+                pressure_force_from_fluid.exec();
                 fluid_density_relaxation.exec(dt);
                 cylinder_wetting.exec(dt);
 

@@ -31,10 +31,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structure_fit);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
-    SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
     /** Write the particle reload files. */
     ReloadParticleIO write_particle_reload_files(structure_fit);
 
@@ -147,8 +148,9 @@ int main(int ac, char *av[])
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
-    /** Time step initialization, add gravity. */
-    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
+    /** apply gravity. */
+    Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity_to_fluid(water_block, gravity);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
     /** time step size without considering sound wave speed. */
@@ -162,15 +164,15 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
     BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on structure. */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann> fluid_force_on_structure(structure_contact, viscous_force_on_solid);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_wave_maker), wave_maker_shape));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
@@ -308,7 +310,6 @@ int main(int ac, char *av[])
     /** statistics for computing time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
-
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -319,7 +320,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
-
+    constant_gravity_to_fluid.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -365,8 +366,6 @@ int main(int ac, char *av[])
         Real integral_time = 0.0;
         while (integral_time < output_interval)
         {
-            initialize_time_step_to_fluid.exec();
-
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             corrected_configuration_fluid.exec();
@@ -380,7 +379,7 @@ int main(int ac, char *av[])
                 dt = get_fluid_time_step_size.exec();
 
                 pressure_relaxation.exec(dt);
-                fluid_force_on_structure.exec();
+                pressure_force_on_structure.exec();
                 density_relaxation.exec(dt);
                 /** coupled rigid body dynamics. */
                 if (total_time >= relax_time)

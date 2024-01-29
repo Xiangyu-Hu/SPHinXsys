@@ -101,14 +101,15 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for the ball.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        relax_dynamics::RelaxationStepInner ball_relaxation_step(ball_inner);
+        RelaxationStepInner ball_relaxation_step(ball_inner);
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for the rigid shell.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> rigid_shell_random_particles(rigid_shell);
-        relax_dynamics::ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner);
-        relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, thickness, cos(Pi / 3.75));
+        ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner);
+        ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, thickness, cos(Pi / 3.75));
         rigid_shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
@@ -161,13 +162,14 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<TimeStepInitialization> ball_initialize_time_step(ball, makeShared<Gravity>(gravity));
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
     InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
     InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -181,6 +183,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     ball_corrected_configuration.exec();
+    ball_constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -210,7 +213,6 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                ball_initialize_time_step.exec();
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "

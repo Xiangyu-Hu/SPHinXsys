@@ -70,7 +70,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
-    SimpleDynamics<RandomizeParticlePosition> random_solid_body_from_mesh_particles(solid_body_from_mesh);
+    SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_solid_body_from_mesh_particles(solid_body_from_mesh);
     /** A  Physics relaxation step. */
     relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(solid_body_from_mesh_inner);
     //----------------------------------------------------------------------
@@ -358,8 +358,8 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
     contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last - 1]));
     contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
 
-    contact_force_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactForce>>(*contact_list_[last - 1]));
-    contact_force_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactForce>>(*contact_list_[last]));
+    contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last - 1]));
+    contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
 }
 
 void StructuralSimulation::initializeAllContacts()
@@ -381,7 +381,7 @@ void StructuralSimulation::initializeAllContacts()
         contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*contact_body, target_list));
         int last = contact_list_.size() - 1;
         contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
-        contact_force_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactForce>>(*contact_list_[last]));
+        contact_force_list_.emplace_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
     }
     // continue appending the lists with the time dependent contacts
     for (size_t i = 0; i < time_dep_contacting_body_pairs_list_.size(); i++)
@@ -401,7 +401,7 @@ void StructuralSimulation::initializeGravity()
         gravity_indices.push_back(non_zero_gravity_[i].first);
     }
     // initialize gravity
-    initialize_time_step_ = {};
+    initialize_gravity_ = {};
     size_t gravity_index_i = 0; // iterating through gravity_indices
     for (size_t i = 0; i < solid_body_list_.size(); i++)
     {
@@ -409,12 +409,9 @@ void StructuralSimulation::initializeGravity()
         if (count(gravity_indices.begin(), gravity_indices.end(), i))
         {
             SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(non_zero_gravity_[gravity_index_i].second);
-            initialize_time_step_.emplace_back(makeShared<SimpleDynamics<TimeStepInitialization>>(*solid_body_list_[i]->getSolidBodyFromMesh(), gravity_ptr));
+            gravity_list_.emplace_back(non_zero_gravity_[gravity_index_i].second);
+            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce>>(*solid_body_list_[i]->getSolidBodyFromMesh(), gravity_list_.back()));
             gravity_index_i++;
-        }
-        else
-        {
-            initialize_time_step_.emplace_back(makeShared<SimpleDynamics<TimeStepInitialization>>(*solid_body_list_[i]->getSolidBodyFromMesh()));
         }
     }
 }
@@ -617,11 +614,11 @@ void StructuralSimulation::executeUpdateElasticNormalDirection()
     }
 }
 
-void StructuralSimulation::executeInitializeATimeStep()
+void StructuralSimulation::executeInitializeGravity()
 {
-    for (size_t i = 0; i < initialize_time_step_.size(); i++)
+    for (size_t i = 0; i < initialize_gravity_.size(); i++)
     {
-        initialize_time_step_[i]->exec();
+        initialize_gravity_[i]->exec();
     }
 }
 
@@ -844,7 +841,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
     /** ACTIVE BOUNDARY CONDITIONS */
     // force (acceleration) based
-    executeInitializeATimeStep();
+    executeInitializeGravity();
     executeExternalForceInBoundingBox();
     executeForceInBodyRegion();
     executeSurfacePressure();

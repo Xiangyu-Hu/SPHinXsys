@@ -66,8 +66,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_input_body_particles(input_body);
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

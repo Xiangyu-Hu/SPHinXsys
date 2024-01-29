@@ -12,7 +12,7 @@ case name: test_3d_oscillating_plate_UL
 
 case_name = "test_3d_oscillating_plate_UL"
 body_name = "PlateBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 
 number_of_run_times = 0
 converged = 0

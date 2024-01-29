@@ -43,7 +43,6 @@ int main(int ac, char *av[])
     /** Boundary conditions set up */
     DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
-    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, ansys_mesh.min_distance_between_nodes_, 0.2);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
@@ -83,7 +82,6 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real dt = get_fluid_time_step_size.exec();
             boundary_condition_setup.resetBoundaryConditions();
             pressure_relaxation.exec(dt);

@@ -106,10 +106,12 @@ MultiPolygon createSaturationConstrainShape()
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
-class SaturationInitialCondition : public multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
+class SaturationInitialCondition
+    : public multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
 {
   public:
-    SaturationInitialCondition(BodyPartByParticle &body_part) : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
+    SaturationInitialCondition(BodyPartByParticle &body_part)
+        : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
     virtual ~SaturationInitialCondition(){};
 
   protected:
@@ -177,7 +179,7 @@ int main(int ac, char *av[])
     SimpleDynamics<SaturationInitialCondition> constrain_beam_saturation(beam_saturation);
 
     // need to be done
-    ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
+    ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
     /** Damping */
     DampingWithRandomChoice<InteractionSplit<multi_species_continuum::PorousMediaDampingPairwiseInner<Vec2d>>>
@@ -292,7 +294,6 @@ int main(int ac, char *av[])
               << "  Iterations:  " << ite << std::endl;
     std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
               << "  Total iterations:  " << total_ite << std::endl;
-
 
     return 0;
 }

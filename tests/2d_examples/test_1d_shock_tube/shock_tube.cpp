@@ -47,7 +47,7 @@ class ShockTubeInitialCondition
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
+          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
           p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");
@@ -120,7 +120,6 @@ int main(int ac, char *av[])
     SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
     wave_body.addBodyStateForRecording<Real>("TotalEnergy");
     wave_body.addBodyStateForRecording<Real>("Density");
-    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
@@ -169,7 +168,6 @@ int main(int ac, char *av[])
         //	Integrate time (loop) until the next output time.
         while (integration_time < output_interval)
         {
-            initialize_wave_step.exec();
             Real dt = get_wave_time_step_size.exec();
             // Dynamics including pressure and density and energy relaxation.
             integration_time += dt;

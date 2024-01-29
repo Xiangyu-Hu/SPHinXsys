@@ -19,7 +19,7 @@ void ViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
         force += 2.0 * mass_[index_i] * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
     }
 
-    force_prior_[index_i] += force / rho_[index_i];
+    viscous_force_[index_i] = force / rho_[index_i];
 }
 //=================================================================================================//
 void ViscousForce<AngularConservative<Inner<>>>::interaction(size_t index_i, Real dt)
@@ -39,7 +39,7 @@ void ViscousForce<AngularConservative<Inner<>>>::interaction(size_t index_i, Rea
         force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] * e_ij;
     }
 
-    force_prior_[index_i] += force / rho_[index_i];
+    viscous_force_[index_i] = force / rho_[index_i];
 }
 //=================================================================================================//
 void ViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
@@ -62,7 +62,7 @@ void ViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
         }
     }
 
-    this->force_prior_[index_i] += force;
+    viscous_force_[index_i] += force;
 }
 //=================================================================================================//
 ViscousForce<Contact<>>::ViscousForce(BaseContactRelation &contact_relation)
@@ -92,7 +92,7 @@ void ViscousForce<Contact<>>::interaction(size_t index_i, Real dt)
             force += 2.0 * this->mass_[index_i] * contact_mu_k * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
         }
     }
-    force_prior_[index_i] += force / this->rho_[index_i];
+    viscous_force_[index_i] += force / this->rho_[index_i];
 }
 //=================================================================================================//
 VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)

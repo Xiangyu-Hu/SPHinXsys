@@ -142,7 +142,6 @@ int main(int ac, char *av[])
 
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
@@ -160,8 +159,8 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(beam_body, gravity_ptr);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_water_kinetic_energy(beam_body);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -183,7 +182,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
     write_beam_tip_displacement.writeToFile(0);
-    write_water_mechanical_energy.writeToFile(0);
+    write_water_kinetic_energy.writeToFile(0);
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < End_Time)
     {
@@ -218,7 +217,7 @@ int main(int ac, char *av[])
             correction_matrix.exec();
         }
         write_beam_tip_displacement.writeToFile(ite);
-        write_water_mechanical_energy.writeToFile(ite);
+        write_water_kinetic_energy.writeToFile(ite);
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -232,11 +231,11 @@ int main(int ac, char *av[])
     // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
-        write_water_mechanical_energy.generateDataBase(1.0e-3);
+        write_water_kinetic_energy.generateDataBase(1.0e-3);
     }
     else
     {
-        write_water_mechanical_energy.testResult();
+        write_water_kinetic_energy.testResult();
     }
 
     return 0;

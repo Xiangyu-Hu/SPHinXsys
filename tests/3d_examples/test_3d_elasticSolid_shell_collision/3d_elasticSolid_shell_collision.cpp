@@ -99,8 +99,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for ball.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        relax_dynamics::RelaxationStepInner ball_relaxation_step_inner(ball_inner);
+        RelaxationStepInner ball_relaxation_step_inner(ball_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -143,7 +144,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec3d(0.0, 0.0, -gravity_g)));
+    Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(ball, gravity);
     InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
@@ -151,7 +153,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
     /** Algorithms for solid-solid contact. */
     InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
     DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
         ball_friction(0.1, ball_contact, physical_viscosity);
     //----------------------------------------------------------------------
@@ -168,6 +170,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     ball_corrected_configuration.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -197,7 +200,6 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                ball_initialize_timestep.exec();
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "

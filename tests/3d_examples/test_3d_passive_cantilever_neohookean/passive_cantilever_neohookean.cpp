@@ -79,8 +79,8 @@ int main(int ac, char *av[])
     ContactRelation cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
     //-------- common particle dynamics ----------------------------------------
-    SimpleDynamics<TimeStepInitialization>
-        initialize_time_step(cantilever_body, makeShared<TimeDependentGravity>(Vec3d(0.0, -gravity_g, 0.0)));
+    TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
+    SimpleDynamics<GravityForce> apply_time_dependent_gravity(cantilever_body, gravity);
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -142,7 +142,7 @@ int main(int ac, char *av[])
                           << dt << "\n";
             }
 
-            initialize_time_step.exec(); // gravity force
+            apply_time_dependent_gravity.exec();
             stress_relaxation_first_half.exec(dt);
             constraint_holder.exec(dt);
             muscle_damping.exec(dt);

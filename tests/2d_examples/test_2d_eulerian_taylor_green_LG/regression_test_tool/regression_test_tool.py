@@ -12,7 +12,7 @@ case name: test_2d_eulerian_taylor_green
 
 case_name = "test_2d_eulerian_taylor_green"
 body_name = "WaterBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 body_name_1 = "WaterBody"
 parameter_name_1 = "MaximumSpeed"
 

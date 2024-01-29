@@ -115,23 +115,20 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
-    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> time_step_initialization(water_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
-    InteractionDynamics<fluid_dynamics::EulerianCompressibleViscousForceInner> viscous_force(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(water_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_total_mechanical_energy(water_body);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(water_body);
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<TotalKineticEnergy>> write_total_kinetic_energy(water_body);
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(water_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configurations
     //	and case specified initial condition if necessary.
@@ -159,7 +156,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_total_mechanical_energy.writeToFile();
+    write_total_kinetic_energy.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -169,8 +166,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Force Prior due to viscous force. */
-            time_step_initialization.exec();
             Real dt = get_fluid_time_step_size.exec();
             viscous_force.exec();
             /** Dynamics including pressure relaxation. */
@@ -189,7 +184,7 @@ int main(int ac, char *av[])
         }
 
         TickCount t2 = TickCount::now();
-        write_total_mechanical_energy.writeToFile(number_of_iterations);
+        write_total_kinetic_energy.writeToFile(number_of_iterations);
         write_maximum_speed.writeToFile(number_of_iterations);
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
@@ -202,7 +197,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
 
-    write_total_mechanical_energy.testResult();
+    write_total_kinetic_energy.testResult();
     write_maximum_speed.testResult();
 
     return 0;

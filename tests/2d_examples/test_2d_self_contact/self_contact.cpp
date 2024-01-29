@@ -139,20 +139,19 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
     InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> beam_self_contact_density(beam_self_contact);
-    InteractionDynamics<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
+    InteractionWithUpdate<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     //	outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
+    beam_body.addBodyStateForRecording<Real>("SelfRepulsionDensity");
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);
@@ -202,7 +201,6 @@ int main(int ac, char *av[])
                               << dt << "\n";
                 }
 
-                reset_prior_acceleration.exec();
                 beam_self_contact_density.exec();
                 beam_self_contact_forces.exec();
                 beam_body.updateCellLinkedList();
@@ -241,7 +239,6 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }
