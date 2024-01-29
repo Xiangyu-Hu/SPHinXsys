@@ -97,7 +97,7 @@ const Real H = 3.75 * scale; /**< Height of the container. */
 const Real R = 2.25 * scale; /**< Radius of the container. */
 const Real s = 0.2 * scale;  // Thickness of the container
 
-const Real resolution_container = s / 4.0;
+const Real resolution_container = s / 16.0;
 const Real resolution_ref = 2 * resolution_container;
 const Real BW = resolution_ref * 4; /**< Rigid wall thickness. */
 
@@ -105,12 +105,12 @@ const BoundingBox system_domain_bounds(Vec2d(-B * 0.5 - BW, -R - s), Vec2d(B * 0
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-const Real rho0_f = 1000.0;                     /**< Reference density of fluid. */
-const Real gravity_g = 9.81;                    /**< Gravity. */
-const Real mu_f = 50;                           /**< Dynamics viscosity. */
-const Real bulk_modulus_f = 1.75e7;             /**< Bulk modulus of fluid. */
-const Real c_f = sqrt(bulk_modulus_f / rho0_f); /** Reference sound speed */
-const Real U_f = c_f / 10.0;                    /**< Characteristic velocity. */
+const Real rho0_f = 1000.0;                           /**< Reference density of fluid. */
+const Real gravity_g = 9.81;                          /**< Gravity. */
+const Real mu_f = 50;                                 /**< Dynamics viscosity. */
+const Real bulk_modulus_f = 1.75e7;                   /**< Bulk modulus of fluid. */
+const Real c_f = sqrt(bulk_modulus_f / rho0_f);       /** Reference sound speed */
+const Real U_f = 2.0 * sqrt(gravity_g * (H + h + R)); /**< Characteristic velocity. */
 //----------------------------------------------------------------------
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
@@ -184,10 +184,10 @@ class Funnel : public MultiPolygonShape
         multi_polygon_.addAPolygon(createWallRightShape(), ShapeBooleanOps::add);
     }
 };
-class ContainerParticleGenerator : public SurfaceParticleGenerator
+class ContainerParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit ContainerParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit ContainerParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     void initializeGeometricVariables() override
     {
         Real mid_surface_radius = R + 0.5 * resolution_container;
@@ -265,7 +265,7 @@ int main(int ac, char *av[])
 
     ObserverBody disp_observer(sph_system, "Observer");
     StdVec<Vecd> observation_location = {Vec2d(0, -R - 0.5 * resolution_container)};
-    disp_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    disp_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -281,7 +281,6 @@ int main(int ac, char *av[])
     ContactRelationFromShell container_water_contact(container, {&water_block}, false);
     ComplexRelation water_block_complex(water_inner, {&water_funnel_contact, &water_container_contact});
     ShellInnerRelationWithContactKernel container_curvature_inner(container, water_block);
-    ShellSelfContactRelation shell_self_contact(container);
     ContactRelation disp_observer_contact(disp_observer, {&container});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
@@ -295,17 +294,27 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_funnel_contact, water_container_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_funnel_contact, water_container_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, NoRiemannSolver>> fluid_density_relaxation(water_inner, water_funnel_contact, water_container_contact);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousAcceleration<Inner<>, Contact<Wall>, Contact<Wall>>>> viscous_acceleration(water_inner, water_funnel_contact, water_container_contact);
+    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>>> viscous_acceleration(water_inner, water_funnel_contact, water_container_contact);
     InteractionWithUpdate<ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>, Contact<>>>> inlet_outlet_surface_particle_indicator(water_inner, water_funnel_contact, water_container_contact);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SingleResolution>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_velocity_correction(water_inner, water_funnel_contact, water_container_contact);
     /** Algorithm for solid dynamics. */
     SimpleDynamics<NormalDirectionFromBodyShape> funnel_normal_direction(funnel);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> container_time_step_size(container);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> container_corrected_configuration(container_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> container_stress_relaxation_first(container_inner, 3, 1);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> container_stress_relaxation_first(container_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> container_stress_relaxation_second(container_inner);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> container_average_curvature(container_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> container_update_normal(container);
+    auto update_container_volume = [&]()
+    {
+        particle_for(
+            par,
+            container.getBaseParticles().total_real_particles_,
+            [&](size_t index_i)
+            {
+                container.getBaseParticles().Vol_[index_i] = container.getBaseParticles().mass_[index_i] / container.getBaseParticles().rho_[index_i] / s;
+            });
+    };
     auto update_average_velocity = [&]()
     {
         auto avg_vel = *container.getBaseParticles().getVariableByName<Vecd>("AverageVelocity");
@@ -321,7 +330,7 @@ int main(int ac, char *av[])
     };
     /** FSI */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_container(container_water_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_container_update(container_water_contact, viscous_force_on_container);
+    InteractionDynamics<solid_dynamics::AllForceFromFluid> fluid_force_on_container_update(container_water_contact, viscous_force_on_container);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(container);
     /** constraint and damping */
     BoundaryGeometry container_boundary_geometry(container, "BoundaryGeometry");
@@ -339,8 +348,8 @@ int main(int ac, char *av[])
     container.addBodyStateForRecording<Vecd>("AllForceFromFluid");
     container.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
     container.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    BodyStatesRecordingToVtp write_body_states(io_environment, sph_system.real_bodies_);
-    ObservedQuantityRecording<Vecd> write_tip_displacement("Displacement", io_environment, disp_observer_contact);
+    BodyStatesRecordingToVtp write_body_states(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_tip_displacement("Displacement", disp_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -381,11 +390,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
-    // const double Dt_ref = fluid_advection_time_step.exec();
+    const double Dt_ref = fluid_advection_time_step.exec();
     const double dt_ref = fluid_acoustic_time_step.exec();
     const double dt_s_ref = container_time_step_size.exec();
-    // const double dt_stable = 4e-6;
-    // const double dt_s_stable = 8.6e-6;
+
     auto run_simulation = [&]()
     {
         std::cout << "Simulation starts here" << std::endl;
@@ -397,6 +405,13 @@ int main(int ac, char *av[])
             {
                 fluid_step_initialization.exec();
                 /** Dynamics including pressure relaxation. */
+                Real Dt = fluid_advection_time_step.exec();
+                if (Dt < Dt_ref / 20)
+                {
+                    std::cout << "Dt = " << Dt << ", Dt_ref = " << Dt_ref << std::endl;
+                    std::cout << "Advective time step decreased too much!" << std::endl;
+                    throw std::runtime_error("Advective time step decreased too much!");
+                }
                 Real dt_temp = fluid_acoustic_time_step.exec();
                 if (dt_temp < dt_ref / 20)
                 {
@@ -405,20 +420,20 @@ int main(int ac, char *av[])
                     throw std::runtime_error("Acoustic time step decreased too much!");
                 }
                 Real dt_s_temp = container_time_step_size.exec();
-                if (dt_s_temp < dt_s_ref / 100)
+                if (dt_s_temp < dt_s_ref / 20)
                 {
                     std::cout << "dt_s = " << dt_s_temp << ", dt_s_ref = " << dt_s_ref << std::endl;
                     std::cout << "container time step decreased too much!" << std::endl;
                     throw std::runtime_error("container time step decreased too much!");
                 }
-                Real dt = std::min(dt_s_temp, dt_temp);
+                Real dt = std::min({dt_s_temp, dt_temp, Dt});
                 // inlet_outlet_surface_particle_indicator.exec();
                 update_fluid_density_by_summation.exec();
                 viscous_acceleration.exec();
                 // transport_velocity_correction.exec();
                 if (if_fsi)
                     viscous_force_on_container.exec();
-                container_update_normal.exec();
+
                 fluid_pressure_relaxation.exec(dt);
                 if (if_fsi)
                     fluid_force_on_container_update.exec();
@@ -448,8 +463,11 @@ int main(int ac, char *av[])
                 water_block.updateCellLinkedList();
                 if (if_fsi)
                 {
-                    // update_container_volume();
+                    update_container_volume();
+                    container_update_normal.exec();
                     container.updateCellLinkedList();
+                    container_curvature_inner.updateConfiguration();
+                    container_average_curvature.exec();
                     container_water_contact.updateConfiguration();
                 }
                 water_block_complex.updateConfiguration();

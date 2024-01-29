@@ -207,7 +207,8 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
     explicit BaseNeighborBuilderContactShell(SPHBody &shell_body);
 
   protected:
-    StdLargeVec<Vecd> &n_;   // normal direction of contact body
+    StdLargeVec<Vecd> &n_; // normal direction of contact body
+    StdLargeVec<Real> &thickness_;
     Real particle_distance_; // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -249,7 +250,6 @@ class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
   private:
     StdLargeVec<Real> &k1_avg_; // 1st principle curvature of contact body
     StdLargeVec<Real> &k2_avg_; // 2nd principle curvature of contact body
-    StdLargeVec<Real> &thickness_;
     Real direction_correcter_;
 };
 
@@ -268,7 +268,6 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
     StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
     StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
     StdLargeVec<Vecd> &pos0_;
-    StdLargeVec<Real> &thickness_;
     UniquePtrKeeper<Kernel> kernel_keeper_;
 };
 

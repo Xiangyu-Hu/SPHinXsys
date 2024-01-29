@@ -124,22 +124,22 @@ class WaterBlock : public MultiPolygonShape
 };
 /** Particle generator and constraint boundary for shell baffle. */
 int particle_number_mid_surface = int((DL + DL_sponge + 2 * BW) / resolution_ref);
-class WallBoundaryParticleGenerator : public SurfaceParticleGenerator
+class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    void initializeGeometricVariables() override
     {
         for (int i = 0; i < particle_number_mid_surface; i++)
         {
             Real x = -DL_sponge - BW + (Real(i) + 0.5) * resolution_ref;
             // upper wall
-            Real y1 = DH + 0.5 * wall_thickness;
+            Real y1 = DH + 0.5 * resolution_ref;
             initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref);
             Vec2d normal_direction_1 = Vec2d(0, -1.0);
             initializeSurfaceProperties(normal_direction_1, wall_thickness);
             // lower wall
-            Real y2 = -0.5 * wall_thickness; // lower wall
+            Real y2 = -0.5 * resolution_ref; // lower wall
             initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref);
             Vec2d normal_direction_2 = Vec2d(0, 1.0);
             initializeSurfaceProperties(normal_direction_2, wall_thickness);
@@ -174,10 +174,10 @@ struct InflowVelocity
     }
 };
 /** fluid observer particle generator */
-class FluidObserverParticleGenerator : public ObserverParticleGenerator
+class FluidObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit FluidObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit FluidObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 21;

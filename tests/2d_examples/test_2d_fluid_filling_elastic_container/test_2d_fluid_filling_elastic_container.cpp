@@ -106,12 +106,12 @@ const BoundingBox system_domain_bounds(Vec2d(-B * 0.5 - BW, -R - s), Vec2d(B * 0
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-const Real rho0_f = 1000.0;                     /**< Reference density of fluid. */
-const Real gravity_g = 9.81;                    /**< Gravity. */
-const Real mu_f = 50;                           /**< Dynamics viscosity. */
-const Real bulk_modulus_f = 1.75e7;             /**< Bulk modulus of fluid. */
-const Real c_f = sqrt(bulk_modulus_f / rho0_f); /** Reference sound speed */
-const Real U_f = c_f / 10.0;                    /**< Characteristic velocity. */
+const Real rho0_f = 1000.0;                           /**< Reference density of fluid. */
+const Real gravity_g = 9.81;                          /**< Gravity. */
+const Real mu_f = 50;                                 /**< Dynamics viscosity. */
+const Real bulk_modulus_f = 1.75e7;                   /**< Bulk modulus of fluid. */
+const Real c_f = sqrt(bulk_modulus_f / rho0_f);       /** Reference sound speed */
+const Real U_f = 2.0 * sqrt(gravity_g * (H + h + R)); /**< Characteristic velocity. */
 //----------------------------------------------------------------------
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
@@ -251,7 +251,7 @@ int main(int ac, char *av[])
     container.defineBodyLevelSetShape();
     container.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        container.generateParticles<ParticleGeneratorReload>(io_environment, container.getName());
+        container.generateParticles<ParticleGeneratorReload>(container.getName());
     else
         container.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
@@ -274,8 +274,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files(io_environment, {&container});
+        BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+        ReloadParticleIO write_particle_reload_files({&container});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -326,7 +326,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density_by_summation(water_inner, water_solid_contact);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_inner, water_solid_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> fluid_density_relaxation(water_inner, water_solid_contact);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_inner, water_solid_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_inner, water_solid_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_inner, water_solid_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_inner, water_solid_contact);
     /** Algorithm for solid dynamics. */
@@ -337,16 +337,16 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> container_stress_relaxation_first(container_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> container_stress_relaxation_second(container_inner);
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> container_update_normal(container);
-    // auto update_container_volume = [&]()
-    // {
-    //     particle_for(
-    //         par,
-    //         container.getBaseParticles().total_real_particles_,
-    //         [&](size_t index_i)
-    //         {
-    //             container.getBaseParticles().Vol_[index_i] = container.getBaseParticles().mass_[index_i] / container.getBaseParticles().rho_[index_i];
-    //         });
-    // };
+    auto update_container_volume = [&]()
+    {
+        particle_for(
+            par,
+            container.getBaseParticles().total_real_particles_,
+            [&](size_t index_i)
+            {
+                container.getBaseParticles().Vol_[index_i] = container.getBaseParticles().mass_[index_i] / container.getBaseParticles().rho_[index_i];
+            });
+    };
     auto update_average_velocity = [&]()
     {
         auto avg_vel = *container.getBaseParticles().getVariableByName<Vecd>("AverageVelocity");
@@ -362,7 +362,7 @@ int main(int ac, char *av[])
     };
     /** FSI */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_container(container_water_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_container_update(container_water_contact, viscous_force_on_container);
+    InteractionDynamics<solid_dynamics::AllForceFromFluid> fluid_force_on_container_update(container_water_contact, viscous_force_on_container);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(container);
     /** constraint and damping */
     BoundaryGeometry container_boundary_geometry(container, "BoundaryGeometry");
@@ -377,7 +377,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Real>("Density");
     container.addBodyStateForRecording<Vecd>("AllForceFromFluid");
     container.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
-    BodyStatesRecordingToVtp write_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_body_states(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -463,8 +463,8 @@ int main(int ac, char *av[])
                     // average_velocity_and_acceleration.initialize_displacement_.exec();
                     container_stress_relaxation_first.exec(dt);
                     container_constrain.exec();
-                    container_position_damping.exec(dt);
-                    container_constrain.exec();
+                    // container_position_damping.exec(dt);
+                    // container_constrain.exec();
                     container_stress_relaxation_second.exec(dt);
                     // average_velocity_and_acceleration.update_averages_.exec(dt);
                     update_average_velocity();
@@ -481,7 +481,7 @@ int main(int ac, char *av[])
                 water_block.updateCellLinkedList();
                 if (if_fsi)
                 {
-                    // update_container_volume();
+                    update_container_volume();
                     container.updateCellLinkedList();
                     container_water_contact.updateConfiguration();
                 }

@@ -220,7 +220,9 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 }
 //=================================================================================================//
 BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_body)
-    : NeighborBuilder(), n_(*shell_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
+    : NeighborBuilder(shell_body.sph_adaptation_->getKernel()),
+      n_(*shell_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
+      thickness_(*shell_body.getBaseParticles().getVariableByName<Real>("Thickness")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -306,8 +308,8 @@ void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
         }
 
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
-        Real W_ij_corrected = W_ijV_j_ttl / Vol_j * particle_distance_; // from surface area to volume
-        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;    // from surface area to volume
+        Real W_ij_corrected = W_ijV_j_ttl / Vol_j * particle_distance_ / thickness_[index_j]; // from surface area to volume
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;                          // from surface area to volume
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_
@@ -321,7 +323,6 @@ NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, 
     : BaseNeighborBuilderContactShell(body),
       k1_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("Average1stPrincipleCurvature")),
       k2_avg_(*contact_body.getBaseParticles().registerSharedVariable<Real>("Average2ndPrincipleCurvature")),
-      thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness")),
       direction_correcter_(normal_correction ? -1 : 1)
 {
     // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
@@ -380,7 +381,7 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
         }
 
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
-        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_ / thickness_[index_i]; // from surface area to volume
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_; // from surface area to volume
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_
@@ -395,8 +396,7 @@ NeighborBuilderShellSelfContact::
     : BaseNeighborBuilderContactShell(body),
       k1_(*body.getBaseParticles().registerSharedVariable<Real>("1stPrincipleCurvature")),
       k2_(*body.getBaseParticles().registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      pos0_(*body.getBaseParticles().getVariableByName<Vecd>("InitialPosition")),
-      thickness_(*body.getBaseParticles().getVariableByName<Real>("Thickness"))
+      pos0_(*body.getBaseParticles().getVariableByName<Vecd>("InitialPosition"))
 {
     // create a unreduced kernel for shell self contact
     Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();

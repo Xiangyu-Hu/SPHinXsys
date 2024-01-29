@@ -168,11 +168,11 @@ class WallBoundary : public MultiPolygonShape
     }
 };
 /** Particle generator and constraint boundary for shell baffle. */
-class ShellBaffleParticleGenerator : public SurfaceParticleGenerator
+class ShellBaffleParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit ShellBaffleParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ShellBaffleParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    void initializeGeometricVariables() override
     {
         for (int i = 0; i < particle_number_mid_surface; i++)
         {

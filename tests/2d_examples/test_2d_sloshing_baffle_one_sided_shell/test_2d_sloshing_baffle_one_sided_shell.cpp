@@ -37,19 +37,19 @@ int main(int ac, char *av[])
     shell_baffle.addBodyStateForRecording<Vecd>("PseudoNormal");
     /** @brief 	Particle and body creation of baffle observer.*/
     ObserverBody baffle_disp_observer(sph_system, "BaffleDispObserver");
-    baffle_disp_observer.generateParticles<ObserverParticleGenerator>(baffle_disp_probe_location);
+    baffle_disp_observer.generateParticles<ParticleGeneratorObserver>(baffle_disp_probe_location);
     /** Pressure probe on Flap. */
     ObserverBody baffle_pressure_observer(sph_system, "BafflePressureObserver");
-    baffle_pressure_observer.generateParticles<ObserverParticleGenerator>(baffle_pressure_probe_location);
+    baffle_pressure_observer.generateParticles<ParticleGeneratorObserver>(baffle_pressure_probe_location);
     /** @brief 	Particle and body creation of fluid observer.*/
     ObserverBody fluid_observer(sph_system, "Fluidobserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(fluid_pressure_probe_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(fluid_pressure_probe_location);
     /** topology */
     InnerRelation water_inner(water_block);
     InnerRelation baffle_inner(shell_baffle);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ContactRelationToShell water_baffle_contact(water_block, {&shell_baffle});
-    ContactRelationFromShell baffle_water_contact(shell_baffle, {&water_block});
+    ContactRelationToShell water_baffle_contact(water_block, {&shell_baffle}, true);
+    ContactRelationFromShell baffle_water_contact(shell_baffle, {&water_block}, true);
     ShellInnerRelationWithContactKernel shell_curvature_inner(shell_baffle, water_block);
     ContactRelation observer_contact_with_water(fluid_observer, {&water_block});
     ContactRelation observer_contact_with_baffle(baffle_disp_observer, {&shell_baffle});
@@ -77,7 +77,7 @@ int main(int ac, char *av[])
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> shell_update_normal(shell_baffle);
     /** FSI */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_shell(baffle_water_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
+    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell_baffle);
     /** constraint and damping */
     BoundaryGeometry shell_boundary_geometry(shell_baffle, "BoundaryGeometry");
@@ -91,14 +91,14 @@ int main(int ac, char *av[])
      */
     shell_baffle.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     shell_baffle.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
-    BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, sph_system.real_bodies_);
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of baffle. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_baffle_displacement("Position", io_environment, observer_contact_with_baffle);
+        write_baffle_displacement("Position", observer_contact_with_baffle);
     /** Output the observed pressure of fluid. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_fluid_pressure_wall("Pressure", io_environment, observer_contact_with_water);
+        write_fluid_pressure_wall("Pressure", observer_contact_with_water);
     /**
      * @brief The time stepping starts here.
      */

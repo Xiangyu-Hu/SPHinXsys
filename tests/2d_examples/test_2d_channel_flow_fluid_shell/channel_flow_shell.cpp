@@ -37,7 +37,7 @@ int main(int ac, char *av[])
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(wall_boundary);
     ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, water_block);
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary});
+    ContactRelationToShell water_block_contact(water_block, {&wall_boundary}, true);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
@@ -71,17 +71,14 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
-    /** Wall boundary configuration correction*/
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    wall_boundary.addBodyStateForRecording<Real>("TotalMeanCurvature");
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    ObservedQuantityRecording<Vecd>
-        write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
+    wall_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -95,7 +92,6 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
 
     /** initial curvature*/
-    wall_corrected_configuration.exec();
     shell_curvature.exec();
     water_block_complex.updateConfiguration();
 

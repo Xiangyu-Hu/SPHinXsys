@@ -13,13 +13,13 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-const Real DL = 1.0;                                     /**< Tank length. */
-const Real DH = 2.1;                                     /**< Tank height. */
-const Real Dam_L = 1.0;                                  /**< Water block width. */
-const Real Dam_H = 2.0;                                  /**< Water block height. */
-const Real Gate_thickness = 0.05;                        /**< Width of the gate. */
-const Real particle_spacing_gate = Gate_thickness / 2.0; /**< Initial reference particle spacing*/
-const Real particle_spacing_ref = particle_spacing_gate; /**< Initial reference particle spacing*/
+const Real DL = 1.0;                                         /**< Tank length. */
+const Real DH = 2.1;                                         /**< Tank height. */
+const Real Dam_L = 1.0;                                      /**< Water block width. */
+const Real Dam_H = 2.0;                                      /**< Water block height. */
+const Real Gate_thickness = 0.05;                            /**< Width of the gate. */
+const Real particle_spacing_gate = Gate_thickness / 10.0;    /**< Initial reference particle spacing*/
+const Real particle_spacing_ref = 2 * particle_spacing_gate; /**< Initial reference particle spacing*/
 const Real BW = particle_spacing_ref * 4.0;
 const BoundingBox system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
 //----------------------------------------------------------------------
@@ -55,7 +55,7 @@ const Real mu_f = rho0_f * U_ref * DL / Re;       /**< Dynamics viscosity. */
 //	Material properties of the elastic gate.
 //----------------------------------------------------------------------
 const Real rho0_s = 2700.0; /**< Reference solid density. */
-const Real poisson = 0.49;  /**< Poisson ratio. */
+const Real poisson = 0.3;   /**< Poisson ratio. */
 const Real Ae = 6.75e10;    /**< Normalized Youngs Modulus. */
 const Real Youngs_modulus = Ae;
 const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * Gate_thickness;
@@ -85,11 +85,11 @@ class WaterBlock : public MultiPolygonShape
 //	wall body shape definition.
 //----------------------------------------------------------------------
 const int particle_number_wall = int(DH / particle_spacing_gate);
-class WallBoundaryParticleGenerator : public SurfaceParticleGenerator
+class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    void initializeGeometricVariables() override
     {
         for (int i = 0; i < particle_number_wall; i++)
         {
@@ -109,11 +109,11 @@ class WallBoundaryParticleGenerator : public SurfaceParticleGenerator
 //	wall body shape definition.
 //----------------------------------------------------------------------
 const int particle_number_gate = int((DL + 2 * BW) / particle_spacing_gate);
-class GateParticleGenerator : public SurfaceParticleGenerator
+class GateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit GateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit GateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    void initializeGeometricVariables() override
     {
         // generate particles for the elastic gate
         for (int i = 0; i < particle_number_gate; i++)
@@ -183,7 +183,8 @@ int main(int ac, char *av[])
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
-    gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    gate_observer.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
+    gate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -194,8 +195,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation gate_inner(gate);
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate});
-    ContactRelationFromShell gate_contact(gate, {&water_block});
+    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, true);
+    ContactRelationFromShell gate_contact(gate, {&water_block}, true);
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     // inner relation to compute curvature
     ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_block);
@@ -207,7 +208,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Initialize particle acceleration. */ // TODO: this is missing for solid body.
+    /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of fluid density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
@@ -223,6 +224,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define solid methods which are used in this case.
     //----------------------------------------------------------------------
+    auto shell_gravity = [&]()
+    {
+        particle_for(
+            par,
+            gate.getBaseParticles().total_real_particles_,
+            [&](size_t index_i)
+            {
+                gate.getBaseParticles().force_prior_[index_i] += Vecd(0.0, -gravity_g);
+            });
+    };
     /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
@@ -248,7 +259,7 @@ int main(int ac, char *av[])
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_gate(gate_contact);
+    InteractionDynamics<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -258,10 +269,9 @@ int main(int ac, char *av[])
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     gate.addBodyStateForRecording<Vecd>("PriorForce");
     /** Output body states for visualization. */
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of gate center. */
-    ObservedQuantityRecording<Vecd>
-        write_beam_tip_displacement("Displacement", io_environment, gate_observer_contact);
+    ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Displacement", gate_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -272,7 +282,6 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     /** computing linear reproducing configuration for the insert body. */
     gate_corrected_configuration.exec();
-    /** calculate initial curvature after corrected configuration*/
     gate_curvature.exec();
     /** update fluid-shell contact*/
     water_block_contact.updateConfiguration();
@@ -286,8 +295,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 0.5; /**< End time. */
-    Real output_interval = end_time / 50.0;
+    Real end_time = 1.0; /**< End time. */
+    Real output_interval = end_time / 100.0;
     Real dt = 0.0;   /**< Default acoustic time step sizes. */
     Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
     TickCount t1 = TickCount::now();
@@ -314,7 +323,10 @@ int main(int ac, char *av[])
                 fluid_damping.exec(dt);
                 /** Fluid relaxation and force computation. */
                 pressure_relaxation.exec(dt);
+
                 fluid_pressure_force_on_gate.exec();
+                shell_gravity();
+
                 density_relaxation.exec(dt);
                 /** Solid dynamics time stepping. */
                 Real dt_s_sum = 0.0;
@@ -333,6 +345,7 @@ int main(int ac, char *av[])
                     dt_s = gate_computing_time_step_size.exec();
                 }
                 average_velocity_and_acceleration.update_averages_.exec(dt);
+
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
@@ -347,10 +360,13 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             /** Update curvature. */
+            gate.updateCellLinkedList();
+            shell_curvature_inner.updateConfiguration();
             gate_curvature.exec();
+
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedList(); // water particle motion is small
-            gate.updateCellLinkedList();
+
             /** one need update configuration after periodic condition. */
             water_block_complex.updateConfiguration();
             gate_contact.updateConfiguration();
@@ -369,10 +385,10 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     // Compare with analytical solution
-    const Real p = rho0_f * gravity_g * Dam_H;
-    const Real I = 1 / 12.0 * 1.0 * std::pow(Gate_thickness, 3);
-    const Real max_disp_analytical = p * std::pow(Dam_L, 4) / 384.0 / Youngs_modulus / I;
-    const Real max_disp = std::abs((*write_beam_tip_displacement.interpolated_quantities_)[0][1]);
+    const Real p = (rho0_f * Dam_H + rho0_s * Gate_thickness) * gravity_g;
+    const Real D = 1 / 12.0 / (1 - poisson * poisson) * Youngs_modulus * std::pow(Gate_thickness, 3);
+    const Real max_disp_analytical = 0.0026 * p * std::pow(Dam_L, 4) / D;
+    const Real max_disp = std::abs((*write_beam_tip_displacement.getObservedQuantity())[0][1]);
     const Real error = std::abs((max_disp_analytical - max_disp) / max_disp_analytical) * 100.0;
 
     std::cout << "Analytical displacement: " << max_disp_analytical
