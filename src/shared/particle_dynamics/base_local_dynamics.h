@@ -93,33 +93,19 @@ class NotIndicatedParticles
     };
 };
 
-template <typename DataType>
-class PairAverageInner
+template <typename T>
+class PairAverage
 {
-    StdLargeVec<DataType> &variable_;
+    StdLargeVec<T> &v1_, &v2_;
 
   public:
-    explicit PairAverageInner(StdLargeVec<DataType> &variable)
-        : variable_(variable){};
-    DataType operator()(size_t index_i, size_t index_j)
+    explicit PairAverage(StdLargeVec<T> &v)
+        : v1_(v), v2_(v){};
+    PairAverage(StdLargeVec<T> &v1, StdLargeVec<T> &v2)
+        : v1_(v1), v2_(v2){};
+    T operator()(size_t index_i, size_t index_j)
     {
-        return 0.5 * (variable_[index_i] + variable_[index_j]);
-    };
-};
-
-template <typename DataType>
-class PairAverageContact
-{
-    StdLargeVec<DataType> &inner_variable_;
-    StdLargeVec<DataType> &contact_variable_;
-
-  public:
-    PairAverageContact(StdLargeVec<DataType> &inner_variable,
-                       StdLargeVec<DataType> &contact_variable)
-        : inner_variable_(inner_variable), contact_variable_(contact_variable){};
-    DataType operator()(size_t index_i, size_t index_j)
-    {
-        return 0.5 * (inner_variable_[index_i] + contact_variable_[index_j]);
+        return 0.5 * (v1_[index_i] + v2_[index_j]);
     };
 };
 
