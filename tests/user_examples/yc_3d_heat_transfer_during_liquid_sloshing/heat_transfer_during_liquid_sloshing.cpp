@@ -58,8 +58,7 @@ int main(int ac, char* av[])
 	gas_temperature_observer.generateParticles<GasTemperatureObserverParticleGenerator>();
 	*/
 	InnerRelation tank_inner(tank);
-	//InnerRelation water_inner(water_block);
-	//InnerRelation air_inner(air_block);
+	
 
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
@@ -74,11 +73,11 @@ int main(int ac, char* av[])
 		//SimpleDynamics<RandomizeParticlePosition> random_water_particles(water_block);
 		//SimpleDynamics<RandomizeParticlePosition> random_air_particles(air_block);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_tank_to_vtp(in_output, { &tank });
+		BodyStatesRecordingToVtp write_tank_to_vtp({ &tank });
 		//BodyStatesRecordingToVtp write_water_to_vtp(in_output, { &water_block });
 		//BodyStatesRecordingToVtp write_air_to_vtp(in_output, { &air_block });
 		/** Write the particle reload files. */
-		ReloadParticleIO write_tank_particle_reload_files(in_output, tank, "Tank");
+		ReloadParticleIO write_tank_particle_reload_files({ &tank });
 		//ReloadParticleIO write_water_particle_reload_files(in_output, water_block, "WaterBody");
 	//	ReloadParticleIO write_air_particle_reload_files(in_output, air_block, "AirBody");
 		/** A  Physics relaxation step. */
@@ -88,10 +87,10 @@ int main(int ac, char* av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_tank_particles.parallel_exec(0.25);
+		random_tank_particles.exec(0.25);
 		//random_water_particles.parallel_exec(0.25);
 		//random_air_particles.parallel_exec(0.25);
-		tank_relaxation_step_inner.SurfaceBounding().parallel_exec();
+		tank_relaxation_step_inner.SurfaceBounding().exec();
 		//water_relaxation_step_inner.SurfaceBounding().parallel_exec();
 		//air_relaxation_step_inner.SurfaceBounding().parallel_exec();
 		write_tank_to_vtp.writeToFile(0);
@@ -103,7 +102,7 @@ int main(int ac, char* av[])
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			tank_relaxation_step_inner.parallel_exec();
+			tank_relaxation_step_inner.exec();
 			//water_relaxation_step_inner.parallel_exec();
 			//air_relaxation_step_inner.parallel_exec();
 			ite_p += 1;
@@ -123,20 +122,23 @@ int main(int ac, char* av[])
 		return 0;
 	}
 
-
-	ContactRelation water_block_contact(water_block, { &tank });
-	ContactRelation air_block_contact(air_block, { &tank });
+	InnerRelation water_inner(water_block);
+	ContactRelation water_tank_contact(water_block, { &tank });
+	ContactRelation water_air_contact(water_block, { &air_block });
+	InnerRelation air_inner(air_block);
+	ContactRelation air_tank_contact(air_block, { &tank });
+	ContactRelation air_water_contact(air_block, { &water_block });
 	//ContactRelation liquid_temperature_observer_contact(liquid_temperature_observer, { &water_block });
 	//ContactRelation gas_temperature_observer_contact(gas_temperature_observer, { &air_block });
-	ComplexRelation water_air_complex(water_block, { &air_block });
-	ComplexRelation air_water_complex(air_block, { &water_block });
+	ComplexRelation water_air_complex(water_inner, { &water_air_contact, & water_tank_contact});
+	ComplexRelation air_water_complex(air_inner, { &air_water_contact, & air_tank_contact});
 
 
 	/*
 	@Brief define simple data file input and outputs functions.
 	*/
-	BodyStatesRecordingToVtp 			write_real_body_states(in_output, system.real_bodies_);
-	RestartIO							restart_io(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp 			write_real_body_states(system.real_bodies_);
+	RestartIO							restart_io(system.real_bodies_);
 	//ObservedQuantityRecording<Real> write_temperature_liquid("Phi", in_output, liquid_temperature_observer_contact);
 	//ObservedQuantityRecording<Real> write_temperature_gas("Phi", in_output, gas_temperature_observer_contact);
 
@@ -145,21 +147,21 @@ int main(int ac, char* av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, makeShared<VariableGravity>());
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, makeShared<VariableGravity>());
 	/* Fluid dynamics */
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_contact, water_air_complex.getInnerRelation());
-	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> air_density_by_summation(air_block_contact, air_water_complex);
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> air_transport_correction(air_block_contact, air_water_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> water_density_by_summation(water_inner, water_tank_contact);
+	InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>> air_density_by_summation(air_inner, air_water_contact, air_tank_contact);
+	InteractionDynamics<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>> air_transport_correction(air_inner, air_water_contact, air_tank_contact);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> viscous_acceleration_water(water_block_contact, water_air_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> viscous_acceleration_air(air_block_contact, air_water_complex);
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> water_advection_time_step(water_block, U_f);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> air_advection_time_step(air_block, U_g);
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> water_acoustic_time_step(water_block);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> air_acoustic_time_step(air_block);
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_contact, water_air_complex.getInnerRelation());
-	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_contact, water_air_complex.getInnerRelation());
-	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
-		air_pressure_relaxation(air_block_contact, air_water_complex, 2.0);
-	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-		air_density_relaxation(air_block_contact, air_water_complex);
+	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann> water_pressure_relaxation(water_inner, water_air_contact, water_tank_contact);
+	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann> water_density_relaxation(water_inner, water_air_contact, water_tank_contact);
+	Dynamics1Level<fluid_dynamics::ExtendedMultiPhaseIntegration1stHalfWithWallRiemann>
+		air_pressure_relaxation(air_inner, air_water_contact, ConstructorArgs(air_tank_contact,2.0));
+	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
+		air_density_relaxation(air_inner, air_water_contact, air_tank_contact);
 
 	SimpleDynamics<ThermoAirBodyInitialCondition> thermo_air_initial_condition(air_block);
 	SimpleDynamics<ThermoWaterBodyInitialCondition> thermo_water_initial_condition(water_block);
