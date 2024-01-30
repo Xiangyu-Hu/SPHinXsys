@@ -400,7 +400,9 @@ namespace fluid_dynamics
 
 				//WSS_j_tn(0, 1) = rho_i* vel_fric_i.dot(vel_fric_i)* vel_i.dot(e_j_tau)/ (vel_i.norm() + 0.01 * smoothing_length_);
 				//WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * vel_i.dot(e_j_tau) / (vel_i.norm() + TinyReal);
-				WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * boost::qvm::sign(vel_i.dot(e_j_tau));
+				//WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * boost::qvm::sign(vel_i.dot(e_j_tau));
+				WSS_j_tn(0, 1) = rho_i * fric_vel_mag * fric_vel_mag * boost::qvm::sign(vel_i.dot(e_j_tau));
+
 
 				WSS_j_tn(1, 0) = 0.0;
 
@@ -630,19 +632,18 @@ namespace fluid_dynamics
 		Real velo_fric(0.0);
 		const Vecd& vel_i = vel_[index_i];
 		Real rho_i = rho_[index_i];
-		Vecd e_ij_t = Vecd::Zero();
+		Vecd e_i_nearest_tau = Vecd::Zero();
 		Vecd e_n = Vecd::Zero();
-		Vecd n_k_j_nearest = Vecd::Zero();
+		Vecd e_i_nearest_n = Vecd::Zero();
 		Matd direc_matrix = Matd::Zero();
 		Real ttl_weight(0);
 		Real r_dmy_itfc_n_sum(0);
 		Real exclude_ttl_weight(0);
 		Real exclude_r_dmy_itfc_n_sum(0);
 		int count_average(0);
-		//if (index_i == 4297 && GlobalStaticVariables::physical_time_ > 1.35)
-		//{
-		//	system("pause");
-		//}
+
+		Matd vel_grad_i_tn = Matd::Zero();  //** velocity gradient of wall-nearest fluid particle i on t-n plane *
+		Matd Q = Matd::Zero();
 
 		for (size_t k = 0; k < contact_configuration_.size(); ++k)
 		{
@@ -708,11 +709,11 @@ namespace fluid_dynamics
 					//**If use level-set,this would not func.*
 					r_dummy_normal = r_dmy_n_j;
 
-					n_k_j_nearest = n_k[index_j];
+					e_i_nearest_n = n_k[index_j];
 					if (dimension_ == 2)
 					{
-						e_ij_t[0] = n_k_j_nearest[1];
-						e_ij_t[1] = n_k_j_nearest[0] * (-1.0);
+						e_i_nearest_tau[0] = e_i_nearest_n[1];
+						e_i_nearest_tau[1] = e_i_nearest_n[0] * (-1.0);
 					}
 					/*For testing*/
 					dist_to_dmy_interface_[index_i] = r_dummy_normal;
@@ -801,7 +802,7 @@ namespace fluid_dynamics
 		{
 			is_near_wall_P2_[index_i] = 10;
 			Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
-			velo_tan = abs(e_ij_t.dot(vel_i));
+			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
 			velo_tan_[index_i] = velo_tan;
 
 			//** Key statement for Offset Model *
@@ -822,7 +823,8 @@ namespace fluid_dynamics
 
 				system("pause");
 			}
-			velo_friction_[index_i] = velo_fric * e_ij_t;
+			
+			velo_friction_[index_i] = velo_fric * e_i_nearest_tau;
 			//** friction velocity have the same direction of vel_i, if not, change its direction *
 			if (vel_i.dot(velo_friction_[index_i]) < 0.0)
 				velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
@@ -837,14 +839,24 @@ namespace fluid_dynamics
 		is_near_wall_P1_pre_[index_i] = 0;
 		is_near_wall_P1_pre_[index_i] = is_near_wall_P1_[index_i];
 
-		direc_matrix = velo_friction_[index_i].normalized() * n_k_j_nearest.transpose();
+		direc_matrix = velo_friction_[index_i].normalized() * e_i_nearest_n.transpose();
 
 		if (is_near_wall_P1_[index_i] == 1) // ** Correct the near wall values *
 		{
 			turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
 			wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
 			Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
-			velocity_gradient_[index_i] = direc_matrix * velo_fric * velo_fric / denominator;
+			
+			//velocity_gradient_[index_i] = direc_matrix * velo_fric * velo_fric / denominator;
+
+			Real dudn = velo_fric * velo_fric * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator;
+			vel_grad_i_tn(0, 0) = 0.0;
+			vel_grad_i_tn(0, 1) = dudn;
+			vel_grad_i_tn(1, 0) = 0.0;
+			vel_grad_i_tn(1, 1) = 0.0;
+			Q = getTransformationMatrix(e_i_nearest_n);
+			velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
+
 			k_production_[index_i] = rho_i * pow(velo_fric, 4) / denominator;
 		}
 	}
