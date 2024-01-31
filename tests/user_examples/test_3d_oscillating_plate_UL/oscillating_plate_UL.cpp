@@ -2,8 +2,7 @@
  * @file 	oscillating_plate_UL.cpp
  * @brief 	This is the test case for the hourglass manuscript.
  * @details  We consider vibration deformation of a square plate under initial vertical velocity field.
- * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
- * @version  0.1
+ * @author 	Shuaihao Zhang, Dong Wu and Xiangyu Hu 
  */
 #include "all_continuum.h"
 #include "sphinxsys.h"

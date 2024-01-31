@@ -52,10 +52,6 @@ namespace SPH
         registerVariable(stress_tensor_3D_, "StressTensor3D");
         registerVariable(strain_rate_3D_, "StrainRate3D");
         registerVariable(stress_rate_3D_, "StressRate3D");
-        registerVariable(shear_stress_3D_, "ShearStress3D");
-        registerVariable(shear_strain_3D_, "ShearStrain3D");
-        registerVariable(shear_stress_rate_3D_, "ShearStressRate3D");
-        registerVariable(shear_strain_rate_3D_, "ShearStrainRate3D");
         registerVariable(vertical_stress_, "VerticalStress");
         registerVariable(acc_deviatoric_plastic_strain_, "AccDeviatoricPlasticStrain");
         //----------------------------------------------------------------------
@@ -67,12 +63,6 @@ namespace SPH
         registerSortableVariable<Mat3d>("StressTensor3D");
         registerSortableVariable<Mat3d>("StrainRate3D");
         registerSortableVariable<Mat3d>("StressRate3D");
-
-        registerSortableVariable<Mat3d>("ShearStress3D");
-        registerSortableVariable<Mat3d>("ShearStrain3D");
-        registerSortableVariable<Mat3d>("ShearStressRate3D");
-        registerSortableVariable<Mat3d>("ShearStrainRate3D");
-
         registerSortableVariable<Real>("VerticalStress");
         registerSortableVariable<Real>("AccDeviatoricPlasticStrain");
     }
@@ -83,5 +73,4 @@ namespace SPH
         Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
         return sqrt(sum * 2.0 / 3.0);
     }
-
 } // namespace SPH

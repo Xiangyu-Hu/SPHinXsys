@@ -39,7 +39,6 @@ Real N = cos(kl) + cosh(kl);
 Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
 Real vf = 0.05;
 Real R = PL / (0.5 * Pi);
-// for dual time-step
 Real U_ref = vf * c0 * (M * (cos(kl) - cosh(kl)) - N * (sin(kl) - sinh(kl))) / Q;
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
@@ -147,12 +146,11 @@ int main(int ac, char *av[])
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
-    // for dual time step
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<continuum_dynamics::FixConstraint<BodyPartByParticle>> constraint_beam_base(beam_base);
+    SimpleDynamics<continuum_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
@@ -160,7 +158,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
-        write_water_kinetic_energy(beam_body);
+        write_beam_kinetic_energy(beam_body);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -182,7 +180,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
     write_beam_tip_displacement.writeToFile(0);
-    write_water_kinetic_energy.writeToFile(0);
+    write_beam_kinetic_energy.writeToFile(0);
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < End_Time)
     {
@@ -217,7 +215,7 @@ int main(int ac, char *av[])
             correction_matrix.exec();
         }
         write_beam_tip_displacement.writeToFile(ite);
-        write_water_kinetic_energy.writeToFile(ite);
+        write_beam_kinetic_energy.writeToFile(ite);
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -231,11 +229,11 @@ int main(int ac, char *av[])
     // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
-        write_water_kinetic_energy.generateDataBase(1.0e-3);
+        write_beam_kinetic_energy.generateDataBase(1.0e-3);
     }
     else
     {
-        write_water_kinetic_energy.testResult();
+        write_beam_kinetic_energy.testResult();
     }
 
     return 0;

@@ -59,46 +59,46 @@ typedef DataDelegateInner<SolidParticles> SolidDataInner;
  * 			TODO: to clarify the treatment of particle position,
  * 			how to achieve consistency between velocity and position constraints.
  */
-template <class DynamicsIdentifier>
-class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public SolidDataSimple
+template <class DynamicsIdentifier, class DataDelegationType>
+class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public DataDelegationType
 {
-  public:
-    explicit BaseMotionConstraint(DynamicsIdentifier &identifier)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier), SolidDataSimple(identifier.getSPHBody()),
-          pos_(particles_->pos_), pos0_(particles_->pos0_),
-          n_(particles_->n_), n0_(particles_->n0_),
-          vel_(particles_->vel_), force_(particles_->force_), mass_(particles_->mass_){};
+public:
+    explicit BaseMotionConstraint(DynamicsIdentifier& identifier)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier), DataDelegationType(identifier.getSPHBody()),
+        pos_(this->particles_->pos_), pos0_(this->particles_->pos0_),
+        n_(this->particles_->n_), n0_(this->particles_->n0_),
+        vel_(this->particles_->vel_), force_(this->particles_->force_), mass_(this->particles_->mass_) {};
 
-    virtual ~BaseMotionConstraint(){};
+    virtual ~BaseMotionConstraint() {};
 
-  protected:
-    StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &n_, &n0_;
-    StdLargeVec<Vecd> &vel_, &force_;
-    StdLargeVec<Real> &mass_;
+protected:
+    StdLargeVec<Vecd>& pos_, & pos0_;
+    StdLargeVec<Vecd>& n_, & n0_;
+    StdLargeVec<Vecd>& vel_, & force_;
+    StdLargeVec<Real>& mass_;
 };
 
 /**@class FixConstraint
  * @brief Constraint with zero velocity.
  */
-template <class DynamicsIdentifier>
-class FixConstraint : public BaseMotionConstraint<DynamicsIdentifier>
+template <class DynamicsIdentifier, class DataDelegationType>
+class FixConstraint : public BaseMotionConstraint<DynamicsIdentifier, DataDelegationType>
 {
   public:
     explicit FixConstraint(DynamicsIdentifier &identifier)
-        : BaseMotionConstraint<DynamicsIdentifier>(identifier){};
+        : BaseMotionConstraint<DynamicsIdentifier, DataDelegationType>(identifier){};
     virtual ~FixConstraint(){};
 
     void update(size_t index_i, Real dt = 0.0) { this->vel_[index_i] = Vecd::Zero(); };
 };
-using FixBodyConstraint = FixConstraint<SPHBody>;
-using FixBodyPartConstraint = FixConstraint<BodyPartByParticle>;
+using FixBodyConstraint = FixConstraint<SPHBody, SolidDataSimple>;
+using FixBodyPartConstraint = FixConstraint<BodyPartByParticle, SolidDataSimple>;
 
 /**@class SpringConstrain
  * @brief Constrain with a spring for each constrained particles to its original position.
  * //TODO: a test case is required for this class.
  */
-class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle>
+class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>
 {
   public:
     SpringConstrain(BodyPartByParticle &body_part, Real stiffness);
@@ -118,7 +118,7 @@ class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle>
  * 			can be considered as a quasi-static position driven boundary condition.
  * 			Note that, this constraint is not for a elastic solid body.
  */
-class PositionSolidBody : public BaseMotionConstraint<SPHBody>
+class PositionSolidBody : public BaseMotionConstraint<SPHBody, SolidDataSimple>
 {
   public:
     PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center);
@@ -139,7 +139,7 @@ class PositionSolidBody : public BaseMotionConstraint<SPHBody>
  * 			can be considered as a quasi-static position driven boundary condition.
  * 			Note that, this constraint is not for a elastic solid body.
  */
-class PositionScaleSolidBody : public BaseMotionConstraint<SPHBody>
+class PositionScaleSolidBody : public BaseMotionConstraint<SPHBody, SolidDataSimple>
 {
   public:
     PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale);
@@ -161,11 +161,11 @@ class PositionScaleSolidBody : public BaseMotionConstraint<SPHBody>
  * 			Note that, this constraint is not for a elastic solid body.
  */
 template <class DynamicsIdentifier>
-class PositionTranslate : public BaseMotionConstraint<DynamicsIdentifier>
+class PositionTranslate : public BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>
 {
   public:
     PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation)
-        : BaseMotionConstraint<DynamicsIdentifier>(identifier),
+        : BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>(identifier),
           start_time_(start_time), end_time_(end_time), translation_(translation){};
     virtual ~PositionTranslate(){};
     void update(size_t index_i, Real dt = 0.0)
@@ -196,22 +196,33 @@ using TranslateSolidBodyPart = PositionTranslate<BodyPartByParticle>;
  * @class FixedInAxisDirection
  * @brief Constrain the velocity of a solid body part.
  */
-class FixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle>
+template <class DataDelegationType>
+class BaseFixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle, DataDelegationType>
 {
   public:
-    explicit FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero());
-    virtual ~FixedInAxisDirection(){};
-    void update(size_t index_i, Real dt = 0.0);
+      explicit BaseFixedInAxisDirection(BodyPartByParticle& body_part, Vecd constrained_axises = Vecd::Zero())
+          : BaseMotionConstraint<BodyPartByParticle, DataDelegationType>(body_part), constrain_matrix_(Matd::Identity())
+      {
+          for (int k = 0; k != Dimensions; ++k)
+              constrain_matrix_(k, k) = constrained_axises[k];
+      };
+    virtual ~BaseFixedInAxisDirection(){};
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        this->vel_[index_i] = constrain_matrix_ * this->vel_[index_i];
+    };
 
   protected:
     Matd constrain_matrix_;
 };
+using FixedInAxisDirection = BaseFixedInAxisDirection<SolidDataSimple>;
 
 /**
  * @class ConstrainSolidBodyMassCenter
  * @brief Constrain the mass center of a solid body.
  */
-class ConstrainSolidBodyMassCenter : public LocalDynamics, public SolidDataSimple
+template <class DataDelegationType>
+class BaseConstrainSolidBodyMassCenter : public LocalDynamics, public DataDelegationType
 {
   private:
     Real total_mass_;
@@ -221,21 +232,36 @@ class ConstrainSolidBodyMassCenter : public LocalDynamics, public SolidDataSimpl
     ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
 
   protected:
-    virtual void setupDynamics(Real dt = 0.0) override;
-
+      virtual void setupDynamics(Real dt = 0.0) override
+      {
+          velocity_correction_ =
+              correction_matrix_ * compute_total_momentum_.exec(dt) / total_mass_;
+      }
   public:
-    explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones());
-    virtual ~ConstrainSolidBodyMassCenter(){};
+      explicit BaseConstrainSolidBodyMassCenter(SPHBody& sph_body, Vecd constrain_direction = Vecd::Ones())
+          : LocalDynamics(sph_body), DataDelegationType(sph_body),
+            correction_matrix_(Matd::Identity()), vel_(this->particles_->vel_),
+            compute_total_momentum_(sph_body, "Velocity")
+      {
+          for (int i = 0; i != Dimensions; ++i)
+              correction_matrix_(i, i) = constrain_direction[i];
+          ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "Mass");
+          total_mass_ = compute_total_mass_.exec();
+      }
+    virtual ~BaseConstrainSolidBodyMassCenter(){};
 
-    void update(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        this->vel_[index_i] -= velocity_correction_;
+    }
 };
-
+using ConstrainSolidBodyMassCenter = BaseConstrainSolidBodyMassCenter<SolidDataSimple>;
 /**
  * @class ConstraintBySimBody
  * @brief Constrain by the motion computed from Simbody.
  */
 template <class DynamicsIdentifier>
-class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
+class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>
 {
   public:
     ConstraintBySimBody(DynamicsIdentifier &identifier,
