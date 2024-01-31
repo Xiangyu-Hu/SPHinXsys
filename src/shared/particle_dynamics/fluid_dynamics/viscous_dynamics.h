@@ -38,16 +38,16 @@ namespace SPH
 namespace fluid_dynamics
 {
 
-class ConstantViscosity : public PairGeomAverageConstant<Real>
+class FixedViscosity : public PairGeomAverageFixed<Real>
 {
   public:
-    ConstantViscosity(BaseParticles *particles1, BaseParticles *particles2)
-        : PairGeomAverageConstant<Real>(
+    FixedViscosity(BaseParticles *particles1, BaseParticles *particles2)
+        : PairGeomAverageFixed<Real>(
               DynamicCast<Fluid>(this, particles1->getBaseMaterial()).ReferenceViscosity(),
               DynamicCast<Fluid>(this, particles2->getBaseMaterial()).ReferenceViscosity()){};
-    explicit ConstantViscosity(BaseParticles *particles)
-        : ConstantViscosity(particles, particles){};
-    virtual ~ConstantViscosity(){};
+    explicit FixedViscosity(BaseParticles *particles)
+        : FixedViscosity(particles, particles){};
+    virtual ~FixedViscosity(){};
 };
 
 template <typename... InteractionTypes>
@@ -83,7 +83,7 @@ class ViscousForce<Inner<>, ViscosityType>
   protected:
     ViscosityType mu_;
 };
-using ViscousForceInner = ViscousForce<Inner<>, ConstantViscosity>;
+using ViscousForceInner = ViscousForce<Inner<>, FixedViscosity>;
 
 template <typename ViscosityType>
 class ViscousForce<AngularConservative<Inner<>>, ViscosityType>
@@ -117,8 +117,6 @@ class ViscousForce<Contact<Wall>, ViscosityType> : public BaseViscousForceWithWa
     ViscosityType mu_;
 };
 
-using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, ConstantViscosity>;
-
 template <typename ViscosityType>
 class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<FluidContactData>
 {
@@ -132,7 +130,8 @@ class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<FluidContactD
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
-using MultiPhaseViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<>, Contact<Wall>>, ConstantViscosity>;
+using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity>;
+using MultiPhaseViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<>, Contact<Wall>>, FixedViscosity>;
 
 /**
  * @class VorticityInner

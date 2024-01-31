@@ -162,7 +162,7 @@ class RobinWallBoundaryInitialCondition
     explicit RobinWallBoundaryInitialCondition(SolidBody &diffusion_body)
         : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
           convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-          T_infinity_(*(this->particles_->template getGlobalVariableByName<Real>("T_infinity")))
+          T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("T_infinity")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }

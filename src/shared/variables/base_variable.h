@@ -46,12 +46,12 @@ class BaseVariable
 };
 
 template <typename DataType>
-class GlobalVariable : public BaseVariable
+class SingleVariable : public BaseVariable
 {
   public:
-    GlobalVariable(const std::string &name, DataType &value)
+    SingleVariable(const std::string &name, DataType &value)
         : BaseVariable(name), value_(value){};
-    virtual ~GlobalVariable(){};
+    virtual ~SingleVariable(){};
 
     DataType *ValueAddress() { return &value_; };
 

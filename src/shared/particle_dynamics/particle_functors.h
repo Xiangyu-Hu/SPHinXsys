@@ -79,15 +79,15 @@ class NotIndicatedParticles
 // Particle average functors
 //----------------------------------------------------------------------
 template <typename T>
-class PairAverageConstant
+class PairAverageFixed
 {
     const T average_;
 
   public:
-    PairAverageConstant(const T &c1, const T &c2)
+    PairAverageFixed(const T &c1, const T &c2)
         : average_(0.5 * (c1 + c2)){};
-    explicit PairAverageConstant(const T &c)
-        : PairAverageConstant(c, c){};
+    explicit PairAverageFixed(const T &c)
+        : PairAverageFixed(c, c){};
     T operator()(size_t index_i, size_t index_j)
     {
         return average_;
@@ -107,15 +107,15 @@ class GeomAverage
 };
 
 template <typename T>
-class PairGeomAverageConstant : public GeomAverage
+class PairGeomAverageFixed : public GeomAverage
 {
     const T geom_average_;
 
   public:
-    PairGeomAverageConstant(const T &c1, const T &c2)
+    PairGeomAverageFixed(const T &c1, const T &c2)
         : GeomAverage(), geom_average_(2.0 * c1 * c2 * inverse(c1 + c2)){};
-    explicit PairGeomAverageConstant(const T &c)
-        : PairGeomAverageConstant(c, c){};
+    explicit PairGeomAverageFixed(const T &c)
+        : PairGeomAverageFixed(c, c){};
     T operator()(size_t index_i, size_t index_j)
     {
         return geom_average_;

@@ -84,7 +84,7 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
-    DataContainerUniquePtrAssemble<GlobalVariable> all_global_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
     UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_;
 
   public:
@@ -137,10 +137,10 @@ class BaseParticles
     ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
 
     template <typename DataType>
-    DataType *registerGlobalVariable(const std::string &variable_name,
+    DataType *registerSingleVariable(const std::string &variable_name,
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *getGlobalVariableByName(const std::string &variable_name);
+    DataType *getSingleVariableByName(const std::string &variable_name);
     //----------------------------------------------------------------------
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -200,7 +200,7 @@ class BaseParticles
     XmlParser reload_xml_parser_;
     ParticleData all_particle_data_;
     ParticleVariables all_discrete_variables_;
-    GlobalVariables all_global_variables_;
+    SingleVariables all_global_variables_;
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
