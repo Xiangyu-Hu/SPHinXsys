@@ -268,7 +268,7 @@ class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier, Soli
                         SimTK::MultibodySystem &MBsystem,
                         SimTK::MobilizedBody &mobod,
                         SimTK::RungeKuttaMersonIntegrator &integ)
-        : BaseMotionConstraint<DynamicsIdentifier>(identifier),
+        : BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
         simbody_state_ = &integ_.getState();
