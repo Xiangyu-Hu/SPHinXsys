@@ -77,6 +77,7 @@ protected:
     StdLargeVec<Vecd>& vel_, & force_;
     StdLargeVec<Real>& mass_;
 };
+using MotionConstraint = BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>;
 
 /**@class FixConstraint
  * @brief Constraint with zero velocity.
