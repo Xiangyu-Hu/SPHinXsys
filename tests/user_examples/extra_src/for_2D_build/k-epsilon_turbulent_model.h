@@ -453,35 +453,6 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd>& vel_;
 	};
 //=================================================================================================//
-	/**
-	 * @class ClearYPositionForTest
-	 * @brief  Test
-	 */
-	class GetAcceleration : public LocalDynamics,
-		public FluidDataSimple, public BaseTurbuClosureCoeff
-	{
-	public:
-		explicit GetAcceleration(SPHBody& sph_body);
-		virtual ~GetAcceleration() {};
-
-		void update(size_t index_i, Real dt = 0.0);
-		void output_time_history_of_acc_y_k_grad();
-		void output_time_history_of_acc_y_p_grad();
-		void output_time_history_of_acc_y_visc();
-		void output_time_history_of_acc_y_total();
-		void output_time_history_of_pos_y();
-
-	protected:
-		StdLargeVec<Vecd>& pos_;
-		StdLargeVec<Vecd>& vel_;
-		StdLargeVec<Vecd>& acc_prior_;
-		StdLargeVec<Vecd>& acc_;
-		StdLargeVec<size_t>& unsorted_id_;
-		PltEngine plt_engine_;
-		size_t sorted_id_monitor_, monitor_index_;
-		Real acc_y_k_grad_, acc_y_p_grad_, acc_y_visc_, acc_y_;
-	};
-
 }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_H

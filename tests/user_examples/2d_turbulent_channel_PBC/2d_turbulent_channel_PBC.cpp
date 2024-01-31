@@ -138,7 +138,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 
     //SimpleDynamics<fluid_dynamics::ClearYPositionForTest> clear_y_displacement(water_block);
-    SimpleDynamics<fluid_dynamics::GetAcceleration> get_acceleration(water_block);
+    //SimpleDynamics<fluid_dynamics::GetAcceleration> get_acceleration(water_block);
 
 
     /** Output the body states. */

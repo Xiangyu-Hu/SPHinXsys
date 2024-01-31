@@ -42,18 +42,15 @@ namespace fluid_dynamics
 		particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 		particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
 
-		//particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", 0.000180001);
 		particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", turbu_k_initial_);
 
 		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
 		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
 
-		//particles_->registerVariable(turbu_mu_, "TurbulentViscosity", 1.0e-9);
 		particles_->registerVariable(turbu_mu_, "TurbulentViscosity", turbu_mu_initial_);
 		particles_->registerSortableVariable<Real>("TurbulentViscosity");
 		particles_->addVariableToWrite<Real>("TurbulentViscosity");
 
-		//particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", 3.326679e-5);
 		particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", turbu_ep_initial_);
 
 		particles_->registerSortableVariable<Real>("TurbulentDissipation");
@@ -62,10 +59,6 @@ namespace fluid_dynamics
 		particles_->registerVariable(k_production_, "K_Production");
 		particles_->registerSortableVariable<Real>("K_Production");
 		particles_->addVariableToWrite<Real>("K_Production");
-
-		//particles_->registerVariable(B_, "CorrectionMatrix");
-		//particles_->registerSortableVariable<Matd>("CorrectionMatrix");
-		//particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 
 		particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
 		particles_->registerSortableVariable<int>("IsNearWallP1");
@@ -202,14 +195,12 @@ namespace fluid_dynamics
 		this->particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
 		this->particles_->addVariableToWrite<Vecd>("TkeAccInner");
 	}
-
 //=================================================================================================//
     void TKEnergyAcc<Inner<>>::interaction(size_t index_i, Real dt)
     {
 		Real turbu_k_i = turbu_k_[index_i];
 		Vecd acceleration = Vecd::Zero();
 		Vecd k_gradient = Vecd::Zero();
-		//Vecd nablaW_ijV_j_test= Vecd::Zero();
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
@@ -218,23 +209,9 @@ namespace fluid_dynamics
 			//** strong form * 
 			//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 			//** weak form * 
-			k_gradient += -1.0 * (-1.0) * (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
-
-			//nablaW_ijV_j_test = nablaW_ijV_j;
-
-			//** For test *
-			//if (GlobalStaticVariables::physical_time_ > 1.0 && pos_[index_i][1] > 0.95)
-			//{
-			//	std::cout << "index_i=" << index_i << std::endl;
-			//	std::cout << "index_j=" << index_j << std::endl;
-			//	std::cout << "nablaW_ijV_j=" << nablaW_ijV_j_test << std::endl;
-			//}
+			k_gradient +=  (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
 		}
 		acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
-
-
-		//** For test *
-		//acceleration[0] = 0.0;
 		
 		acc_[index_i] += acceleration;
 
@@ -264,13 +241,10 @@ namespace fluid_dynamics
 				size_t index_j = contact_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				//** weak form * 
-				k_gradient += -1.0 * (-1.0) * (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
+				k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
 			}
 		}
 		acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
-
-		//** For test *
-		//acceleration[0] = 0.0;
 
 		acc_[index_i] += acceleration;
 
@@ -284,8 +258,6 @@ namespace fluid_dynamics
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccInner");
-		//this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
-		//this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
 	}
 //=================================================================================================//
 	void TurbuViscousAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
@@ -308,9 +280,6 @@ namespace fluid_dynamics
 			acceleration += acc_j;
 		}
 
-		//** For test *
-		//acceleration[1] = 0.0;
-
 		acc_prior_[index_i] += acceleration / rho_[index_i];
 		//for test
 		visc_acc_inner_[index_i] = acceleration / rho_[index_i];
@@ -321,8 +290,6 @@ namespace fluid_dynamics
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
-		//this->particles_->registerVariable(visc_direction_matrix_, "ViscDirectionMatrix");
-		//this->particles_->addVariableToWrite<Vecd>("ViscDirectionMatrix");
 	}
 //=================================================================================================//
 	Real TurbuViscousAcceleration<ContactWall<>>::standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho)
@@ -333,32 +300,14 @@ namespace fluid_dynamics
 		return velo_fric;
 	}
 //=================================================================================================//
-
 	void TurbuViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
 	{
 		Real turbu_k_i = this->turbu_k_[index_i];
-		Real turbu_mu_i = this->turbu_mu_[index_i];
 		Real rho_i = this->rho_[index_i];
 		const Vecd& vel_i = this->vel_[index_i];
-		const Vecd& vel_fric_i = this->velo_friction_[index_i];
-
-		Vecd e_x = { 1.0, 0.0 };
-		Vecd e_y = { 0.0, 1.0 };
-		Real vel_fric_i_x = vel_fric_i.dot(e_x);
-		Real vel_fric_i_y = vel_fric_i.dot(e_y);
-
-		Vecd e_tau = vel_fric_i.normalized();
-		Real y_plus_i = this->wall_Y_plus_[index_i];
 		Real y_p = this->y_p_[index_i];
 
-		Real u_plus_i = 0.0;
-		Real mu_w = 0.0;
-		Real mu_p = 0.0;
-		Real theta = 0.0;
-
 		Vecd acceleration = Vecd::Zero();
-		Vecd vel_derivative = Vecd::Zero();
-		Matd direc_matrix = Matd::Zero();
 		
 		Vecd e_j_n = Vecd::Zero();
 		Vecd e_j_tau = Vecd::Zero();
@@ -370,70 +319,39 @@ namespace fluid_dynamics
 			StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
 			Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 			StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
-
-			
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = contact_neighborhood.j_[n];
 				Real r_ij = contact_neighborhood.r_ij_[n];
 				Vecd& e_ij = contact_neighborhood.e_ij_[n];
 
-				//Real e_ij_x = e_ij.dot(e_x);
-				//Real e_ij_y = e_ij.dot(e_y);
-				
 				e_j_n = n_k[index_j];
 				Q = getTransformationMatrix(e_j_n);
 
 				//** Get tangential unit vector, temporarily only suitable for 2D*
 				e_j_tau[0] = e_j_n[1];
 				e_j_tau[1] = e_j_n[0] * (-1.0);
-				//if (vel_i.dot(e_j_tau) < 0.0)
-					//e_j_tau = -1.0 * e_j_tau;  //** Assume the tangential unit vector has the same direction of velocity *
 
 				//** Calculate the local friction velocity *
 				Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 				Real fric_vel_mag = this->standard_wall_functon_for_wall_viscous(vel_i_tau_mag, turbu_k_i, y_p, rho_i);
 
-
 				//** Construct local wall shear stress, if this is on each wall particle j   *
 				WSS_j_tn(0, 0) = 0.0;
-
-				//WSS_j_tn(0, 1) = rho_i* vel_fric_i.dot(vel_fric_i)* vel_i.dot(e_j_tau)/ (vel_i.norm() + 0.01 * smoothing_length_);
-				//WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * vel_i.dot(e_j_tau) / (vel_i.norm() + TinyReal);
-				//WSS_j_tn(0, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * boost::qvm::sign(vel_i.dot(e_j_tau));
 				WSS_j_tn(0, 1) = rho_i * fric_vel_mag * fric_vel_mag * boost::qvm::sign(vel_i.dot(e_j_tau));
-
-
 				WSS_j_tn(1, 0) = 0.0;
-
-				//WSS_j_tn(1, 1) = rho_i * vel_fric_i.dot(vel_fric_i) * vel_i.dot(e_j_n) / (vel_i.norm() + 0.01 * smoothing_length_);;
 				WSS_j_tn(1, 1) = 0.0;
 				
 				//** Transform local wall shear stress to global   *
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
-				Vecd acc_j = -1.0 * -1.0 * 2.0 * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
-				//std::cout << "acc_j=" << acc_j << std::endl;
-				//std::cout << "vel_i=" << vel_i << std::endl;
-				//std::cout << "vel_fric_i=" << vel_fric_i << std::endl;
-				
-				//** Calculate the direction matrix of wall shear stress *
-				//direc_matrix = e_tau * e_j_n.transpose() + (e_tau * e_j_n.transpose()).transpose();
-				//Vecd acc_j = -1.0 * -1.0 * 2.0 * vel_fric_i.dot(vel_fric_i) * direc_matrix * e_ij * contact_neighborhood.dW_ijV_j_[n];
-				
-				//Vecd acc_j = Vecd::Zero();
-				//acc_j[0] = -1.0 * -1.0 * 2.0 * vel_fric_i_x * vel_fric_i_x  * e_ij_y * contact_neighborhood.dW_ijV_j_[n];
-				//acc_j[1] = -1.0 * -1.0 * 2.0 * vel_fric_i_y * vel_fric_i_y * e_ij_x * contact_neighborhood.dW_ijV_j_[n];;
+				Vecd acc_j =  2.0 * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 
 				acceleration += acc_j;
 			}
 		}
-		//** For test *
-		//acceleration[1] = 0.0;
-
 		this->acc_prior_[index_i] += acceleration;
 		//** For test *
 		this->visc_acc_wall_[index_i] = acceleration;
-		//this->visc_direction_matrix_[index_i] = direc_matrix;
 	}
 //=================================================================================================//
 	TurbulentEddyViscosity::
@@ -506,7 +424,6 @@ namespace fluid_dynamics
 		if (position[0] < 0.0)
 		{
 			turbu_k_original = temp_in_turbu_k;
-			//std::cout << "temp_in_turbu_k="<< temp_in_turbu_k << std::endl;
 		}
 		return turbu_k_original;
 	}
@@ -585,36 +502,17 @@ namespace fluid_dynamics
 		particles_->registerSortableVariable<Real>("DistanceToDummyInterface");
 		particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
 
-		/*definition of near wall particles*/
+		/** definition of near wall particles */
 		intial_distance_to_wall = 1.5 * particle_spacing_; //changed
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
 			contact_n_.push_back(&(contact_particles_[k]->n_));
 			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 		}
-		/*definition the specific particles where normal vectors do not exist*/
-		std::cout << "The id of excluded wall particle is: " << std::endl;
-		for (int i = 0; i != id_exclude_.size(); ++i)
-		{
-			std::cout << id_exclude_[i] << std::endl;
-		}
-		//std::cout << "Are you sure? " << std::endl;
-		//system("pause");
 	};
 	//=================================================================================================//
 	void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
 	{
-		if (is_migrate_[index_i] == 1) //If this particle has started migrating 
-		{
-			if (is_near_wall_P2_[index_i] == 1) //if it is in P2 region
-			{
-				is_migrate_[index_i] = 1;  //keep migration status
-			}
-			else if (is_near_wall_P2_[index_i] == 0) //if it is out of P2
-			{
-				is_migrate_[index_i] = 0; //ends migration status
-			}
-		}
 		is_near_wall_P2_[index_i] = 0;
 		index_nearest[index_i] = 0;
 		velo_tan_[index_i] = 0.0;
@@ -638,8 +536,6 @@ namespace fluid_dynamics
 		Matd direc_matrix = Matd::Zero();
 		Real ttl_weight(0);
 		Real r_dmy_itfc_n_sum(0);
-		Real exclude_ttl_weight(0);
-		Real exclude_r_dmy_itfc_n_sum(0);
 		int count_average(0);
 
 		Matd vel_grad_i_tn = Matd::Zero();  //** velocity gradient of wall-nearest fluid particle i on t-n plane *
@@ -652,31 +548,14 @@ namespace fluid_dynamics
 			Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 			if (contact_neighborhood.current_size_ != 0)
 			{
-				//** For multi-comtact problems, this would be more complicated *
 				//r_dummy_normal = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
 				dist_to_dmy_itfc_ls_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
 				//dist_to_dmy_itfc_ls_[index_i] = r_dummy_normal;
 			}
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
-				bool is_index_j_valid = true;
 				size_t index_j = contact_neighborhood.j_[n];
 				Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-
-				/*Specific wall particles are excluded*/
-				for (int ii = 0; ii != id_exclude_.size(); ++ii)
-				{
-					if (index_j == id_exclude_[ii])
-					{
-						is_index_j_valid = false;
-						break;
-					}
-				}
-				if (is_index_j_valid == false)
-				{
-					continue;
-				}
-
 				Real r_ij = contact_neighborhood.r_ij_[n];
 				Vecd& e_ij = contact_neighborhood.e_ij_[n];
 				Vecd& n_k_j = n_k[index_j];
@@ -684,29 +563,12 @@ namespace fluid_dynamics
 				//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
 				r_dmy_n_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
 
-				//if (index_i == 185 && GlobalStaticVariables::physical_time_ > 1.486)
-				//{
-				//	std::cout << "index_j=" << index_j << std::endl;
-				//	std::cout << "r_dmy_n_j=" << r_dmy_n_j << std::endl;
-				//	std::cout << "e_ij=" << e_ij << std::endl;
-				//	std::cout << "n_k_j=" << n_k_j << std::endl;
-				//	std::cout << "------------------" <<  std::endl;
-				//	system("pause");
-				//}
-
-				if (r_ij >= 100.0 * particle_spacing_)
-				{
-					//** Sum the projection distances according to the kernel approx. *  
-					exclude_r_dmy_itfc_n_sum += weight_j * r_dmy_n_j;
-					exclude_ttl_weight += weight_j;
-				}
-
 				/*Get the minimum distance, the distance to wall should not be negative*/
 				if (r_ij < r_min && r_dmy_n_j > 0.0 + TinyReal)
 				{
 					r_min = r_ij; //** Find the nearest wall particle *
 
-					//**If use level-set,this would not func.*
+					//**If use level-set,this would not activate.*
 					r_dummy_normal = r_dmy_n_j;
 
 					e_i_nearest_n = n_k[index_j];
@@ -749,7 +611,6 @@ namespace fluid_dynamics
 		}
 
 		//** Average the distance to wall *
-		//** Note! the denominator should not be added with TinyReal, because the weight can be extremely small, a TinyReal will affect the value largely *
 		if (is_near_wall_P2_[index_i] == 10 && ttl_weight != 0.0)
 		{
 			//** Check the function *
@@ -759,31 +620,11 @@ namespace fluid_dynamics
 				std::cout << "count=" << count_average << std::endl;
 				system("pause");
 			}
-			if (is_near_wall_P1_[index_i] == 1) // ** Different searching area *
-			{
-				//** Average the projection distances according to the kernel approx. *  
-				if (abs(r_dmy_itfc_n_sum - exclude_r_dmy_itfc_n_sum) >= TinyReal)
-				{
-					r_dummy_normal = (r_dmy_itfc_n_sum - exclude_r_dmy_itfc_n_sum) / (ttl_weight - exclude_ttl_weight);
-					dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
-					//dist_to_dmy_itfc_aver_[index_i] = (r_dmy_itfc_n_sum - exclude_r_dmy_itfc_n_sum) / (ttl_weight - exclude_ttl_weight + TinyReal);
-				}
-				else
-				{
-					r_dummy_normal = r_dmy_itfc_n_sum / ttl_weight;
-					dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
-					//dist_to_dmy_itfc_aver_[index_i] = r_dmy_itfc_n_sum / (ttl_weight + TinyReal);
-				}
-			}
-			else
-			{
-				r_dummy_normal = r_dmy_itfc_n_sum / (ttl_weight);
-				dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
-				//dist_to_dmy_itfc_aver_[index_i] = r_dmy_itfc_n_sum / (ttl_weight + TinyReal);
-			}
-			//std::cout << "r_dummy_normal=" << r_dummy_normal << std::endl;
+			//** Average the projection distances according to the kernel approx. *  
+			r_dummy_normal = r_dmy_itfc_n_sum / ttl_weight;
+			dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
 		}
-
+		//** Check the distance. *  
 		if (r_dummy_normal < 0.05 * particle_spacing_ && r_dummy_normal > 0.0)
 		{
 			std::cout << "There is a particle too close to wall" << std::endl;
@@ -797,10 +638,9 @@ namespace fluid_dynamics
 			system("pause");
 		}
 
-		if (r_dummy_normal < (cutoff_radius_ - 0.5 * particle_spacing_) + TinyReal &&
-			r_dummy_normal > 0.0 * particle_spacing_ + TinyReal)
+		//** Calculate friction velocity, including both P region and SUB region. *  
+		if (is_near_wall_P2_[index_i] == 10)
 		{
-			is_near_wall_P2_[index_i] = 10;
 			Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
 			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
 			velo_tan_[index_i] = velo_tan;
@@ -829,19 +669,14 @@ namespace fluid_dynamics
 			if (vel_i.dot(velo_friction_[index_i]) < 0.0)
 				velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
 
-			//** Calcualte Y+, including P layer and SUB layer *
+			//** Calcualte Y+ *
 			wall_Y_plus_[index_i] = y_p_[index_i] * velo_fric * rho_i / mu_;
 		}
-		if (is_near_wall_P1_[index_i] == 0 && is_near_wall_P1_pre_[index_i] == 1)
-		{
-			is_migrate_[index_i] = 1;
-		}
-		is_near_wall_P1_pre_[index_i] = 0;
-		is_near_wall_P1_pre_[index_i] = is_near_wall_P1_[index_i];
 
-		direc_matrix = velo_friction_[index_i].normalized() * e_i_nearest_n.transpose();
-
-		if (is_near_wall_P1_[index_i] == 1) // ** Correct the near wall values *
+		//direc_matrix = velo_friction_[index_i].normalized() * e_i_nearest_n.transpose();
+		
+		// ** Correct the near wall values, only for P region *
+		if (is_near_wall_P1_[index_i] == 1) 
 		{
 			turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
 			wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
@@ -1121,87 +956,6 @@ namespace fluid_dynamics
 		vel_[index_i][1] = 0.0;
 	}
 //=================================================================================================//
-	GetAcceleration::
-		GetAcceleration(SPHBody& sph_body)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body),
-		pos_(particles_->pos_), vel_(particles_->vel_),
-		acc_prior_(particles_->acc_prior_), acc_(particles_->acc_),
-		unsorted_id_(sph_body.getBaseParticles().unsorted_id_)
-	{
-		monitor_index_ = 300;  //** Input mannually *
-	}
-	//=================================================================================================//
-	void GetAcceleration::update(size_t index_i, Real dt)
-	{
-		if (unsorted_id_[index_i] == monitor_index_)
-			sorted_id_monitor_ = index_i;
-	}
-	//=================================================================================================//
-	void GetAcceleration::output_time_history_of_acc_y_visc()
-	{
-		acc_y_visc_ = acc_prior_[sorted_id_monitor_][1];
-
-		std::string file_path_output = "../bin/output/acc_y_visc_of_" + std::to_string(monitor_index_) + ".dat";
-		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
-		out_file << GlobalStaticVariables::physical_time_ << "   ";
-		plt_engine_.writeAQuantity(out_file, acc_y_visc_);
-		out_file << "\n";
-		out_file.close();
-
-		//sorted_id_monitor_ = 0;
-	}
-	//=================================================================================================//
-	void GetAcceleration::output_time_history_of_acc_y_k_grad()
-	{
-		acc_y_k_grad_ = acc_[sorted_id_monitor_][1];
-
-		std::string file_path_output = "../bin/output/acc_y_k_grad_of_" + std::to_string(monitor_index_) + ".dat";
-		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
-		out_file << GlobalStaticVariables::physical_time_ << "   ";
-		plt_engine_.writeAQuantity(out_file, acc_y_k_grad_);
-		out_file << "\n";
-		out_file.close();
-
-		//sorted_id_monitor_ = 0;
-	}
-	//=================================================================================================//
-	void GetAcceleration::output_time_history_of_acc_y_p_grad()
-	{
-		acc_y_p_grad_ = acc_[sorted_id_monitor_][1] - acc_y_k_grad_;
-
-		std::string file_path_output = "../bin/output/acc_y_p_grad_of_" + std::to_string(monitor_index_) + ".dat";
-		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
-		out_file << GlobalStaticVariables::physical_time_ << "   ";
-		plt_engine_.writeAQuantity(out_file, acc_y_p_grad_);
-		out_file << "\n";
-		out_file.close();
-
-		//sorted_id_monitor_ = 0;
-	}
-	//=================================================================================================//
-	void GetAcceleration::output_time_history_of_acc_y_total()
-	{
-		acc_y_ = acc_y_k_grad_ + acc_y_p_grad_ + acc_y_visc_;
-
-		std::string file_path_output = "../bin/output/acc_y_total_of_" + std::to_string(monitor_index_) + ".dat";
-		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
-		out_file << GlobalStaticVariables::physical_time_ << "   ";
-		plt_engine_.writeAQuantity(out_file, acc_y_);
-		out_file << "\n";
-		out_file.close();
-	}
-	//=================================================================================================//
-	void GetAcceleration::output_time_history_of_pos_y()
-	{
-		std::string file_path_output = "../bin/output/pos_y_of_" + std::to_string(monitor_index_) + ".dat";
-		std::ofstream out_file(file_path_output.c_str(), std::ios::app);
-		out_file << GlobalStaticVariables::physical_time_ << "   ";
-		plt_engine_.writeAQuantity(out_file, pos_[sorted_id_monitor_][1]);
-		out_file << "\n";
-		out_file.close();
-	}
-
-
 }
 //=================================================================================================//
 }
