@@ -2,24 +2,24 @@
  *                       SPHinXsys: 3D dambreak example                        *
  *-----------------------------------------------------------------------------*
  * This is the one of the basic test cases for efficient and accurate time     *
- * integration scheme investigation                                            *
+ * integration scheme investigation.                                            *
  *-----------------------------------------------------------------------------*/
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
 // general parameters for geometry
-Real resolution_ref = 0.05;   // particle spacing
-Real BW = resolution_ref * 4; // boundary width
-Real DL = 5.366;              // tank length
-Real DH = 2.0;                // tank height
-Real DW = 0.5;                // tank width
-Real LL = 2.0;                // liquid length
-Real LH = 1.0;                // liquid height
-Real LW = 0.5;                // liquid width
+Real DL = 1.610;                // tank length
+Real DH = 1.610;                // tank height
+Real DW = 0.15;                 // tank width
+Real LL = 0.6;                  // liquid length
+Real LH = 0.3;                  // liquid height
+Real LW = 0.15;                 // liquid width
+Real resolution_ref = LH / 40 ; // particle spacing
+Real BW = resolution_ref * 4;   // boundary width
 
 // for material properties of the fluid
-Real rho0_f = 1.0;
-Real gravity_g = 1.0;
+Real rho0_f = 1000;
+Real gravity_g = 9.81;
 Real U_f = 2.0 * sqrt(gravity_g * LH);
 Real c_f = 10.0 * U_f;
 
@@ -30,7 +30,8 @@ class WaterBlock : public ComplexShape
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
-        Transform translation_water(halfsize_water);
+        Vecd center_water(DL - 0.5 * LL, 0.5 * LH, 0.5 * LW);
+        Transform translation_water(center_water);
         add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
     }
 };
@@ -55,14 +56,20 @@ class WaterObserverParticleGenerator : public ObserverParticleGenerator
     explicit WaterObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
     {
         // add observation points
-        positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.1, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.2, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.24, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.252, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.266, 0.5 * DW));
+        positions_.push_back(Vecd(0.0, 0.003, 0.5 * DW));
+        positions_.push_back(Vecd(0.0, 0.03, 0.5 * DW));
+        positions_.push_back(Vecd(0.0, 0.08, 0.5 * DW));
     }
 };
+
+//WaveGauges 
+Real h = 1.3 * resolution_ref;
+Vecd halfsize_No1(h, 0.3, h);
+Vecd translation_No1(1.310, 0.3, 0.0);
+Vecd halfsize_No2(h, 0.3, h);
+Vecd translation_No2(0.496, 0.3, 0.0);
+Vecd halfsize_No3(h, 0.3, h);
+Vecd translation_No3(0.2485, 0.3, 0.0);
 
 // the main program with commandline options
 int main(int ac, char *av[])
@@ -80,6 +87,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.addBodyStateForRecording<Real>("Pressure");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -103,22 +111,41 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec3d(0.0, -gravity_g, 0.0));
+    //InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex, 0.5);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    water_block.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_water_block_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt write_water_block_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+
+    /** WaveProbes. */
+    BodyRegionByCell wave_probe_buffer_no_1(water_block, makeShared<TransformShape<GeometricShapeBox>>
+        (Transform(translation_No1), halfsize_No1, "WaveProbe_01"));
+    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
+        wave_probe_1(io_environment, wave_probe_buffer_no_1);
+
+    BodyRegionByCell wave_probe_buffer_no_2(water_block, makeShared<TransformShape<GeometricShapeBox>>
+        (Transform(translation_No2), halfsize_No2, "WaveProbe_02"));
+    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
+        wave_probe_2(io_environment, wave_probe_buffer_no_2);
+
+    BodyRegionByCell wave_probe_buffer_no_3(water_block, makeShared<TransformShape<GeometricShapeBox>>
+        (Transform(translation_No3), halfsize_No3, "WaveProbe_03"));
+    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
+        wave_probe_3(io_environment, wave_probe_buffer_no_3);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -126,13 +153,14 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
+    //kernel_correction_matrix.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 20.0;
-    Real output_interval = end_time / 20.0;
+    Real end_time = 2.0;
+    Real output_interval = end_time / 50.0;
     Real dt = 0.0; // default acoustic time step sizes
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -155,11 +183,11 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
+            //kernel_correction_matrix.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-
                 pressure_relaxation.exec(dt);
                 density_relaxation.exec(dt);
                 dt = get_fluid_time_step_size.exec();
@@ -179,11 +207,12 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
-            write_recorded_water_pressure.writeToFile(number_of_iterations);
+            write_recorded_water_pressure.writeToFile(number_of_iterations); //recording the pressure at probe 1,2,3;
+            wave_probe_1.writeToFile(); //recording the wave height at probe 1;
+            wave_probe_2.writeToFile(); //recording the wave height at probe 2;
+            wave_probe_3.writeToFile(); //recording the wave height at probe 3;
+            write_water_mechanical_energy.writeToFile(number_of_iterations);
         }
-
-        write_water_mechanical_energy.writeToFile(number_of_iterations);
-
         TickCount t2 = TickCount::now();
         write_water_block_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -197,13 +226,13 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_water_mechanical_energy.generateDataBase(1.0e-3);
-        write_recorded_water_pressure.generateDataBase(1.0e-3);
+        //write_water_mechanical_energy.generateDataBase(1.0e-3);
+        //write_recorded_water_pressure.generateDataBase(1.0e-3);
     }
     else
     {
-        write_water_mechanical_energy.testResult();
-        write_recorded_water_pressure.testResult();
+        //write_water_mechanical_energy.testResult();
+        //write_recorded_water_pressure.testResult();
     }
 
 

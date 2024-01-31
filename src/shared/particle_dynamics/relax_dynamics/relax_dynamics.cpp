@@ -221,9 +221,9 @@ void CheckL2NormError::interaction(size_t index_i, Real dt)
 
     analytical_[index_i] = -20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1);
  
-    L2_NKGC_[index_i] = (NKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
-    L2_SKGC_[index_i] = (SKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
-    L2_CKGC_[index_i] = (CKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    //L2_NKGC_[index_i] = (NKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    //L2_SKGC_[index_i] = (SKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    //L2_CKGC_[index_i] = (CKGC_error_ - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
 };
 //=================================================================================================//
 CheckConsistencyRealization::
@@ -291,15 +291,15 @@ void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
         PRERROR += scalar_[index_i] * e_ij * dW_ijV_j;
     }
     
-    ACterm_[index_i] = AC;
-    ACterm_norm_[index_i] = (AC - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
-    ASterm_[index_i] = AS;
-    ASterm_norm_[index_i] = AS.norm();
-    Cterm_[index_i] = C;
-    Cterm_norm_[index_i] = (C - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
-    NKGC_[index_i] = NKGC;
-    NKGC_norm_[index_i] = NKGC.norm();
-    PR_ERROR_[index_i] = PRERROR.norm();
+    //ACterm_[index_i] = AC;
+    //ACterm_norm_[index_i] = (AC - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    //ASterm_[index_i] = AS;
+    //ASterm_norm_[index_i] = AS.norm();
+    //Cterm_[index_i] = C;
+    //Cterm_norm_[index_i] = (C - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    ////NKGC_[index_i] = NKGC;
+    //NKGC_norm_[index_i] = NKGC.norm();
+    //PR_ERROR_[index_i] = PRERROR.norm();
 }
 //=================================================================================================//
 CheckReverseConsistencyRealization::
@@ -342,12 +342,12 @@ void CheckReverseConsistencyRealization::interaction(size_t index_i, Real dt)
         B -= (scalar_[index_i] - scalar_[index_j]) * B_[index_i] * e_ij * dW_ijV_j;
     }
 
-    ABterm_[index_i] = AB;
-    ABterm_norm_[index_i] = (AB - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
-    ARterm_[index_i] = AR;
-    ARterm_norm_[index_i] = AR.norm();
-    Bterm_[index_i] = B;
-    Bterm_norm_[index_i] = (B - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    //ABterm_[index_i] = AB;
+    //ABterm_norm_[index_i] = (AB - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
+    //ARterm_[index_i] = AR;
+    //ARterm_norm_[index_i] = AR.norm();
+    //Bterm_[index_i] = B;
+    //Bterm_norm_[index_i] = (B - Vec2d(-20 * pos_[index_i][0] * exp(-pos_[index_i][0] * pos_[index_i][0] / 0.1), 0)).norm();
 }
 //=================================================================================================//
 ShellMidSurfaceBounding::

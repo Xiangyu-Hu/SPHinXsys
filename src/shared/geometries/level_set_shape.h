@@ -61,7 +61,6 @@ class LevelSetShape : public Shape
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
-    Vecd computeStressKernelGradientIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
     Matd computeKernelSecondGradientIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
     Matd computeDisplacementKernelGradientIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
     /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */

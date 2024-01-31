@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // general parameters for geometry
-Real resolution_ref = 0.05;   // particle spacing
+Real resolution_ref = 0.025;   // particle spacing
 Real BW = resolution_ref * 4; // boundary width
 Real DL = 5.366;              // tank length
 Real DH = 2.0;                // tank height
@@ -80,6 +80,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.addBodyStateForRecording<Real>("Pressure");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();

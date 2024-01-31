@@ -258,7 +258,6 @@ class BaseIntegration1stHalf : public BaseIntegration
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0);
-
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

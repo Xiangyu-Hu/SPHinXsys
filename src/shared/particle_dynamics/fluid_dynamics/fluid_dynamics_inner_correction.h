@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_dynamics_inner_correction.h
+ * @file  fluid_dynamics_inner_correction.h
  * @brief Here, we define the algorithm classes for fluid dynamics,
  *        in which correction matrix is used to increase the approximation
  *        of pressure gradient.

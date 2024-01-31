@@ -33,12 +33,12 @@ void KernelCorrectionMatrixInner::update(size_t index_i, Real dt)
     Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
     B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
     
-   /* WKGC2 */
-    //Real det_sqr = alpha_;
-    //Matd inverse = B_[index_i].inverse();
-    //Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
-    //Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
-    //B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
+    /* WKGC2 */
+    /* Real det_sqr = alpha_;
+    Matd inverse = B_[index_i].inverse();
+    Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
+    Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
+    B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();*/
 }
 //=================================================================================================//
 KernelCorrectionMatrixInnerWithLevelSet::KernelCorrectionMatrixInnerWithLevelSet(BaseInnerRelation& inner_relation)
