@@ -74,12 +74,12 @@ namespace SPH
         using ConstrainSolidBodyMassCenter = solid_dynamics::BaseConstrainSolidBodyMassCenter<ContinuumDataSimple>;
 
         template <class DataDelegationType>
-        class BaseIntegrationPlastic : public fluid_dynamics::BaseIntegration<DataDelegationType>
+        class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelegationType>
         {
         public:
             template <class BaseRelationType>
-            explicit BaseIntegrationPlastic(BaseRelationType& base_relation);
-            virtual ~BaseIntegrationPlastic() {};
+            explicit BasePlasticIntegration(BaseRelationType& base_relation);
+            virtual ~BasePlasticIntegration() {};
             Matd reduceTensor(Mat3d tensor_3d);
             Mat3d increaseTensor(Matd tensor_2d);
         protected:
@@ -90,15 +90,15 @@ namespace SPH
         };
 
         template <typename... InteractionTypes>
-        class Integration1stHalfPlastic;
+        class PlasticIntegration1stHalf;
 
         template <class RiemannSolverType>
-        class Integration1stHalfPlastic<Inner<>, RiemannSolverType>
-            : public BaseIntegrationPlastic<PlasticContinuumDataInner>
+        class PlasticIntegration1stHalf<Inner<>, RiemannSolverType>
+            : public BasePlasticIntegration<PlasticContinuumDataInner>
         {
         public:
-            explicit Integration1stHalfPlastic(BaseInnerRelation& inner_relation);
-            virtual ~Integration1stHalfPlastic() {};
+            explicit PlasticIntegration1stHalf(BaseInnerRelation& inner_relation);
+            virtual ~PlasticIntegration1stHalf() {};
             void initialization(size_t index_i, Real dt = 0.0);
             void interaction(size_t index_i, Real dt = 0.0);
             void update(size_t index_i, Real dt = 0.0);
@@ -107,18 +107,18 @@ namespace SPH
         protected:
             RiemannSolverType riemann_solver_;
         };
-        using Integration1stHalfPlasticInnerNoRiemann = Integration1stHalfPlastic<Inner<>, NoRiemannSolver>;
-        using Integration1stHalfPlasticInnerRiemann = Integration1stHalfPlastic<Inner<>, AcousticRiemannSolver>;
+        using PlasticIntegration1stHalfInnerNoRiemann = PlasticIntegration1stHalf<Inner<>, NoRiemannSolver>;
+        using PlasticIntegration1stHalfInnerRiemann = PlasticIntegration1stHalf<Inner<>, AcousticRiemannSolver>;
 
-        using BaseIntegrationWithWall = InteractionWithWall<BaseIntegrationPlastic>;
+        using BaseIntegrationWithWall = InteractionWithWall<BasePlasticIntegration>;
 
         template <class RiemannSolverType>
-        class Integration1stHalfPlastic<Contact<Wall>, RiemannSolverType>
+        class PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>
             : public BaseIntegrationWithWall
         {
         public:
-            explicit Integration1stHalfPlastic(BaseContactRelation& wall_contact_relation);
-            virtual ~Integration1stHalfPlastic() {};
+            explicit PlasticIntegration1stHalf(BaseContactRelation& wall_contact_relation);
+            virtual ~PlasticIntegration1stHalf() {};
             inline void interaction(size_t index_i, Real dt = 0.0);
             virtual Vecd computeNonConservativeForce(size_t index_i);
 
@@ -127,20 +127,20 @@ namespace SPH
         };
         
         template <class RiemannSolverType>
-        using Integration1stHalfPlasticWithWall = ComplexInteraction<Integration1stHalfPlastic<Inner<>, Contact<Wall>>, RiemannSolverType>;
-        using Integration1stHalfPlasticWithWallNoRiemann = Integration1stHalfPlasticWithWall<NoRiemannSolver>;
-        using Integration1stHalfPlasticWithWallRiemann = Integration1stHalfPlasticWithWall<AcousticRiemannSolver>;
+        using PlasticIntegration1stHalfWithWall = ComplexInteraction<PlasticIntegration1stHalf<Inner<>, Contact<Wall>>, RiemannSolverType>;
+        using PlasticIntegration1stHalfWithWallNoRiemann = PlasticIntegration1stHalfWithWall<NoRiemannSolver>;
+        using PlasticIntegration1stHalfWithWallRiemann = PlasticIntegration1stHalfWithWall<AcousticRiemannSolver>;
 
         template <typename... InteractionTypes>
-        class Integration2ndHalf;
+        class PlasticIntegration2ndHalf;
 
         template <class RiemannSolverType>
-        class Integration2ndHalf<Inner<>, RiemannSolverType>
-            : public BaseIntegrationPlastic<PlasticContinuumDataInner>
+        class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
+            : public BasePlasticIntegration<PlasticContinuumDataInner>
         {
         public:
-            explicit Integration2ndHalf(BaseInnerRelation& inner_relation);
-            virtual ~Integration2ndHalf() {};
+            explicit PlasticIntegration2ndHalf(BaseInnerRelation& inner_relation);
+            virtual ~PlasticIntegration2ndHalf() {};
             void initialization(size_t index_i, Real dt = 0.0);
             void interaction(size_t index_i, Real dt = 0.0);
             void update(size_t index_i, Real dt = 0.0);
@@ -151,16 +151,16 @@ namespace SPH
             StdLargeVec<Real>& Vol_, & mass_;
             Real E_, nu_;
         };
-        using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSolver>;
-        using Integration2ndHalfInnerRiemann = Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
+        using PlasticIntegration2ndHalfInnerNoRiemann = PlasticIntegration2ndHalf<Inner<>, NoRiemannSolver>;
+        using PlasticIntegration2ndHalfInnerRiemann = PlasticIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
 
         template <class RiemannSolverType>
-        class Integration2ndHalf<Contact<Wall>, RiemannSolverType>
+        class PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
             : public BaseIntegrationWithWall
         {
         public:
-            explicit Integration2ndHalf(BaseContactRelation& wall_contact_relation);
-            virtual ~Integration2ndHalf() {};
+            explicit PlasticIntegration2ndHalf(BaseContactRelation& wall_contact_relation);
+            virtual ~PlasticIntegration2ndHalf() {};
             inline void interaction(size_t index_i, Real dt = 0.0);
 
         protected:
@@ -168,11 +168,11 @@ namespace SPH
         };
 
         template <class RiemannSolverType>
-        using Integration2ndHalfWithWall = ComplexInteraction<Integration2ndHalf<Inner<>, Contact<Wall>>, RiemannSolverType>;
-        using Integration2ndHalfWithWallNoRiemann = Integration2ndHalfWithWall<NoRiemannSolver>;
-        using Integration2ndHalfWithWallRiemann = Integration2ndHalfWithWall<AcousticRiemannSolver>;
+        using PlasticIntegration2ndHalfWithWall = ComplexInteraction<PlasticIntegration2ndHalf<Inner<>, Contact<Wall>>, RiemannSolverType>;
+        using PlasticIntegration2ndHalfWithWallNoRiemann = PlasticIntegration2ndHalfWithWall<NoRiemannSolver>;
+        using PlasticIntegration2ndHalfWithWallRiemann = PlasticIntegration2ndHalfWithWall<AcousticRiemannSolver>;
 
-        class StressDiffusion : public BaseIntegrationPlastic<PlasticContinuumDataInner>
+        class StressDiffusion : public BasePlasticIntegration<PlasticContinuumDataInner>
         {
         public:
             explicit StressDiffusion(BaseInnerRelation& inner_relation);

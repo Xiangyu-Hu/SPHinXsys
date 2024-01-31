@@ -18,7 +18,7 @@ void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-BaseIntegrationPlastic<DataDelegationType>::BaseIntegrationPlastic(BaseRelationType& base_relation)
+BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType& base_relation)
     : fluid_dynamics::BaseIntegration<DataDelegationType>(base_relation),
     plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
     stress_tensor_3D_(this->particles_->stress_tensor_3D_), strain_tensor_3D_(this->particles_->strain_tensor_3D_),
@@ -28,7 +28,7 @@ BaseIntegrationPlastic<DataDelegationType>::BaseIntegrationPlastic(BaseRelationT
     velocity_gradient_(this->particles_->velocity_gradient_) {}
 //=================================================================================================//
 template <class DataDelegationType>
-Matd BaseIntegrationPlastic<DataDelegationType>::reduceTensor(Mat3d tensor_3d)
+Matd BasePlasticIntegration<DataDelegationType>::reduceTensor(Mat3d tensor_3d)
 {
     Matd tensor_2d;
     for (int i = 0; i < (Real)Dimensions; i++)
@@ -42,7 +42,7 @@ Matd BaseIntegrationPlastic<DataDelegationType>::reduceTensor(Mat3d tensor_3d)
 }
 //=================================================================================================//
 template <class DataDelegationType>
-Mat3d BaseIntegrationPlastic<DataDelegationType>::increaseTensor(Matd tensor_2d)
+Mat3d BasePlasticIntegration<DataDelegationType>::increaseTensor(Matd tensor_2d)
 {
     Mat3d tensor_3d = Mat3d::Zero();
     for (int i = 0; i < (Real)Dimensions; i++)
@@ -56,13 +56,13 @@ Mat3d BaseIntegrationPlastic<DataDelegationType>::increaseTensor(Matd tensor_2d)
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Integration1stHalfPlastic<Inner<>, RiemannSolverType>::
-Integration1stHalfPlastic(BaseInnerRelation& inner_relation)
-    : BaseIntegrationPlastic<PlasticContinuumDataInner>(inner_relation),
+PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::
+PlasticIntegration1stHalf(BaseInnerRelation& inner_relation)
+    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
     riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration1stHalfPlastic<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
+void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     p_[index_i] = -stress_tensor_3D_[index_i].trace() / 3;
@@ -70,7 +70,7 @@ void Integration1stHalfPlastic<Inner<>, RiemannSolverType>::initialization(size_
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Vecd Integration1stHalfPlastic<Inner<>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
+Vecd PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
 {
     Vecd force = force_prior_[index_i] * rho_[index_i];
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -86,7 +86,7 @@ Vecd Integration1stHalfPlastic<Inner<>, RiemannSolverType>::computeNonConservati
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration1stHalfPlastic<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
@@ -108,19 +108,19 @@ void Integration1stHalfPlastic<Inner<>, RiemannSolverType>::interaction(size_t i
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration1stHalfPlastic<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
+void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
     vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Integration1stHalfPlastic<Contact<Wall>, RiemannSolverType>::
-Integration1stHalfPlastic(BaseContactRelation& wall_contact_relation)
+PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::
+PlasticIntegration1stHalf(BaseContactRelation& wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
       riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration1stHalfPlastic<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Vecd force_prior_i = computeNonConservativeForce(index_i);
     Vecd force = force_prior_i;
@@ -148,26 +148,26 @@ void Integration1stHalfPlastic<Contact<Wall>, RiemannSolverType>::interaction(si
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Vecd Integration1stHalfPlastic<Contact<Wall>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
+Vecd PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
 {
     return this->force_prior_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType> 
-Integration2ndHalf<Inner<>, RiemannSolverType>::Integration2ndHalf(BaseInnerRelation& inner_relation)
-    : BaseIntegrationPlastic<PlasticContinuumDataInner>(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
+PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation& inner_relation)
+    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       acc_deviatoric_plastic_strain_(particles_->acc_deviatoric_plastic_strain_),
       vertical_stress_(particles_->vertical_stress_), Vol_(particles_->Vol_), mass_(particles_->mass_),
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
+void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
 {
     pos_[index_i] += vel_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Real density_change_rate(0);
     Vecd p_dissipation = Vecd::Zero();
@@ -189,7 +189,7 @@ void Integration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i,
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
+void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Vol_[index_i] = mass_[index_i] / rho_[index_i];
@@ -213,13 +213,13 @@ void Integration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Integration2ndHalf<Contact<Wall>, RiemannSolverType>::
-Integration2ndHalf(BaseContactRelation& wall_contact_relation)
+PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::
+PlasticIntegration2ndHalf(BaseContactRelation& wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
     riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Real density_change_rate = 0.0;
     Vecd p_dissipation = Vecd::Zero();

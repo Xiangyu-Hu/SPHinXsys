@@ -78,7 +78,7 @@ void ShearStressRelaxation::update(size_t index_i, Real dt)
 }
 //====================================================================================//
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
-    : BaseIntegrationPlastic<PlasticContinuumDataInner>(inner_relation),
+    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
       fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
