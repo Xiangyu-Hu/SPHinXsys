@@ -69,7 +69,7 @@ KernelGradientCorrection<Contact<>>::
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_average_correction_matrix_.push_back(
-            PairAverage<Matd>(
+            PairAverageVariable<Matd>(
                 *particles_->getVariableByName<Matd>("KernelCorrectionMatrix"),
                 *contact_particles_[k]->getVariableByName<Matd>("KernelCorrectionMatrix")));
     }

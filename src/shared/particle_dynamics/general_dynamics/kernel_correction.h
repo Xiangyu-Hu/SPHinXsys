@@ -106,7 +106,7 @@ template <>
 class KernelGradientCorrection<Inner<>>
     : public KernelGradientCorrection<GeneralDataDelegateInner>
 {
-    PairAverage<Matd> average_correction_matrix_;
+    PairAverageVariable<Matd> average_correction_matrix_;
 
   public:
     explicit KernelGradientCorrection(BaseInnerRelation &inner_relation);
@@ -119,7 +119,7 @@ template <>
 class KernelGradientCorrection<Contact<>>
     : public KernelGradientCorrection<GeneralDataDelegateContact>
 {
-    StdVec<PairAverage<Matd>> contact_average_correction_matrix_;
+    StdVec<PairAverageVariable<Matd>> contact_average_correction_matrix_;
 
   public:
     KernelGradientCorrection(BaseContactRelation &contact_relation);
