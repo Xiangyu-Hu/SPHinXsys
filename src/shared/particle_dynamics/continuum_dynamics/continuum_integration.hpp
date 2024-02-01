@@ -18,14 +18,14 @@ void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType& base_relation)
+BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType &base_relation)
     : fluid_dynamics::BaseIntegration<DataDelegationType>(base_relation),
-    plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
-    stress_tensor_3D_(this->particles_->stress_tensor_3D_), strain_tensor_3D_(this->particles_->strain_tensor_3D_),
-    stress_rate_3D_(this->particles_->stress_rate_3D_), strain_rate_3D_(this->particles_->strain_rate_3D_),
-    elastic_strain_tensor_3D_(this->particles_->elastic_strain_tensor_3D_), 
-    elastic_strain_rate_3D_(this->particles_->elastic_strain_rate_3D_),
-    velocity_gradient_(this->particles_->velocity_gradient_) {}
+      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
+      stress_tensor_3D_(this->particles_->stress_tensor_3D_), strain_tensor_3D_(this->particles_->strain_tensor_3D_),
+      stress_rate_3D_(this->particles_->stress_rate_3D_), strain_rate_3D_(this->particles_->strain_rate_3D_),
+      elastic_strain_tensor_3D_(this->particles_->elastic_strain_tensor_3D_),
+      elastic_strain_rate_3D_(this->particles_->elastic_strain_rate_3D_),
+      velocity_gradient_(this->particles_->velocity_gradient_) {}
 //=================================================================================================//
 template <class DataDelegationType>
 Matd BasePlasticIntegration<DataDelegationType>::reduceTensor(Mat3d tensor_3d)
@@ -57,9 +57,9 @@ Mat3d BasePlasticIntegration<DataDelegationType>::increaseTensor(Matd tensor_2d)
 //=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::
-PlasticIntegration1stHalf(BaseInnerRelation& inner_relation)
+    PlasticIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
-    riemann_solver_(plastic_continuum_, plastic_continuum_) {}
+      riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -115,7 +115,7 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index_
 //=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::
-PlasticIntegration1stHalf(BaseContactRelation& wall_contact_relation)
+    PlasticIntegration1stHalf(BaseContactRelation &wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
       riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
@@ -128,13 +128,13 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Matd stress_tensor_i = reduceTensor(stress_tensor_3D_[index_i]);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd>& force_ave_k = *(wall_force_ave_[k]);
-        StdLargeVec<Real>& wall_mass_k = *(wall_mass_[k]);
-        Neighborhood& wall_neighborhood = (*contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
+        StdLargeVec<Real> &wall_mass_k = *(wall_mass_[k]);
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd& e_ij = wall_neighborhood.e_ij_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
             Real face_wall_external_acceleration = (force_prior_i / mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
@@ -153,8 +153,8 @@ Vecd PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::computeNonCons
     return this->force_prior_[index_i];
 }
 //=================================================================================================//
-template <class RiemannSolverType> 
-PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation& inner_relation)
+template <class RiemannSolverType>
+PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       acc_deviatoric_plastic_strain_(particles_->acc_deviatoric_plastic_strain_),
       vertical_stress_(particles_->vertical_stress_), Vol_(particles_->Vol_), mass_(particles_->mass_),
@@ -214,9 +214,9 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_
 //=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::
-PlasticIntegration2ndHalf(BaseContactRelation& wall_contact_relation)
+    PlasticIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
-    riemann_solver_(plastic_continuum_, plastic_continuum_) {}
+      riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
@@ -227,13 +227,13 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Matd velocity_gradient = Matd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd>& vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Vecd>& n_k = *(wall_n_[k]);
-        Neighborhood& wall_neighborhood = (*contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
+        StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd& e_ij = wall_neighborhood.e_ij_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
             density_change_rate += (vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;

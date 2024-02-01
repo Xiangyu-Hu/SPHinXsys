@@ -62,20 +62,20 @@ typedef DataDelegateInner<SolidParticles> SolidDataInner;
 template <class DynamicsIdentifier, class DataDelegationType>
 class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public DataDelegationType
 {
-public:
-    explicit BaseMotionConstraint(DynamicsIdentifier& identifier)
+  public:
+    explicit BaseMotionConstraint(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier), DataDelegationType(identifier.getSPHBody()),
-        pos_(this->particles_->pos_), pos0_(this->particles_->pos0_),
-        n_(this->particles_->n_), n0_(this->particles_->n0_),
-        vel_(this->particles_->vel_), force_(this->particles_->force_), mass_(this->particles_->mass_) {};
+          pos_(this->particles_->pos_), pos0_(this->particles_->pos0_),
+          n_(this->particles_->n_), n0_(this->particles_->n0_),
+          vel_(this->particles_->vel_), force_(this->particles_->force_), mass_(this->particles_->mass_){};
 
-    virtual ~BaseMotionConstraint() {};
+    virtual ~BaseMotionConstraint(){};
 
-protected:
-    StdLargeVec<Vecd>& pos_, & pos0_;
-    StdLargeVec<Vecd>& n_, & n0_;
-    StdLargeVec<Vecd>& vel_, & force_;
-    StdLargeVec<Real>& mass_;
+  protected:
+    StdLargeVec<Vecd> &pos_, &pos0_;
+    StdLargeVec<Vecd> &n_, &n0_;
+    StdLargeVec<Vecd> &vel_, &force_;
+    StdLargeVec<Real> &mass_;
 };
 using MotionConstraint = BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>;
 
@@ -201,12 +201,12 @@ template <class DataDelegationType>
 class BaseFixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle, DataDelegationType>
 {
   public:
-      explicit BaseFixedInAxisDirection(BodyPartByParticle& body_part, Vecd constrained_axises = Vecd::Zero())
-          : BaseMotionConstraint<BodyPartByParticle, DataDelegationType>(body_part), constrain_matrix_(Matd::Identity())
-      {
-          for (int k = 0; k != Dimensions; ++k)
-              constrain_matrix_(k, k) = constrained_axises[k];
-      };
+    explicit BaseFixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero())
+        : BaseMotionConstraint<BodyPartByParticle, DataDelegationType>(body_part), constrain_matrix_(Matd::Identity())
+    {
+        for (int k = 0; k != Dimensions; ++k)
+            constrain_matrix_(k, k) = constrained_axises[k];
+    };
     virtual ~BaseFixedInAxisDirection(){};
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -233,22 +233,23 @@ class BaseConstrainSolidBodyMassCenter : public LocalDynamics, public DataDelega
     ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
 
   protected:
-      virtual void setupDynamics(Real dt = 0.0) override
-      {
-          velocity_correction_ =
-              correction_matrix_ * compute_total_momentum_.exec(dt) / total_mass_;
-      }
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        velocity_correction_ =
+            correction_matrix_ * compute_total_momentum_.exec(dt) / total_mass_;
+    }
+
   public:
-      explicit BaseConstrainSolidBodyMassCenter(SPHBody& sph_body, Vecd constrain_direction = Vecd::Ones())
-          : LocalDynamics(sph_body), DataDelegationType(sph_body),
-            correction_matrix_(Matd::Identity()), vel_(this->particles_->vel_),
-            compute_total_momentum_(sph_body, "Velocity")
-      {
-          for (int i = 0; i != Dimensions; ++i)
-              correction_matrix_(i, i) = constrain_direction[i];
-          ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "Mass");
-          total_mass_ = compute_total_mass_.exec();
-      }
+    explicit BaseConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones())
+        : LocalDynamics(sph_body), DataDelegationType(sph_body),
+          correction_matrix_(Matd::Identity()), vel_(this->particles_->vel_),
+          compute_total_momentum_(sph_body, "Velocity")
+    {
+        for (int i = 0; i != Dimensions; ++i)
+            correction_matrix_(i, i) = constrain_direction[i];
+        ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "Mass");
+        total_mass_ = compute_total_mass_.exec();
+    }
     virtual ~BaseConstrainSolidBodyMassCenter(){};
 
     void update(size_t index_i, Real dt = 0.0)

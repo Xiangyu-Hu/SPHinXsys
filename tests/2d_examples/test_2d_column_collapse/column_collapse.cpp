@@ -22,10 +22,10 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-Real rho0_s = 2040;                                                 // reference density of soil
-Real gravity_g = 9.8;                                               // gravity force of soil
-Real Youngs_modulus = 5.84e6;                                       // reference Youngs modulus
-Real poisson = 0.3;                                                 // Poisson ratio
+Real rho0_s = 2040;                                                       // reference density of soil
+Real gravity_g = 9.8;                                                     // gravity force of soil
+Real Youngs_modulus = 5.84e6;                                             // reference Youngs modulus
+Real poisson = 0.3;                                                       // Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3.0 * (1.0 - 2.0 * poisson))); // sound speed
 Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
