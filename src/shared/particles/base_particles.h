@@ -200,7 +200,7 @@ class BaseParticles
     XmlParser reload_xml_parser_;
     ParticleData all_particle_data_;
     ParticleVariables all_discrete_variables_;
-    SingleVariables all_global_variables_;
+    SingleVariables all_single_variables_;
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
