@@ -1,4 +1,4 @@
-#include "2d_turbulent_channel_PBC.h"
+#include "2d_turbulent_half_CD_channel_PBC.h"
 using namespace SPH;            
 
 
@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
 
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -20,18 +20,19 @@ int main(int ac, char *av[])
      * @brief Material property, particles and body creation of fluid.
      */
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    //water_block.generateParticles<ParticleGeneratorLattice>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<ParticleGeneratorLattice>();
+
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    //wall_boundary.defineAdaptationRatios(1.15, 2.0);
+    wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
+        : wall_boundary.generateParticles<ParticleGeneratorLattice>();
     /** topology */
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
@@ -46,32 +47,29 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         /** body topology only for particle relaxation */
-        //InnerRelation water_block_inner_relax(water_block);
+        InnerRelation wall_boundary_inner(wall_boundary);
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         /** Random reset the insert body particle position. */
-        SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(water_block);
+        SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &water_block });
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &wall_boundary });
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, water_block);
+        ReloadParticleIO write_particle_reload_files(io_environment, wall_boundary);
         /** A  Physics relaxation step. */
-        //relax_dynamics::RelaxationStepInner relaxation_step_inner(water_block_inner_relax);
-        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, "OuterBoundary"), water_wall_contact);
-
+        relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
         random_inserted_body_particles.exec(0.25);
-        relaxation_step_complex.SurfaceBounding().exec();
+        relaxation_step_inner.SurfaceBounding().exec();
         write_inserted_body_to_vtp.writeToFile(0);
 
         int ite_p = 0;
         while (ite_p < 1000)
         {
-            relaxation_step_complex.exec();
+            relaxation_step_inner.exec();
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
@@ -79,7 +77,7 @@ int main(int ac, char *av[])
                 write_inserted_body_to_vtp.writeToFile(ite_p);
             }
         }
-        std::cout << "The physics relaxation process of the water_block finish !" << std::endl;
+        std::cout << "The physics relaxation process of the wall_boundary finish !" << std::endl;
 
         /** Output results. */
         write_particle_reload_files.writeToFile(0);
@@ -149,6 +147,7 @@ int main(int ac, char *av[])
     periodic_condition.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
+    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
     //----------------------------------------------------------------------
