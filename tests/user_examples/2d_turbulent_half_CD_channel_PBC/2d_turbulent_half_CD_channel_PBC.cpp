@@ -140,6 +140,7 @@ int main(int ac, char *av[])
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -251,5 +252,6 @@ int main(int ac, char *av[])
 
     get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
     std::cout << "The time-average data is output " << std::endl;
+
     return 0;
 }

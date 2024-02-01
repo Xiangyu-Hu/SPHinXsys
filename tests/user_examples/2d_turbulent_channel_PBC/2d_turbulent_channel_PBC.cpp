@@ -14,6 +14,8 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
 
+    sph_system.setGenerateRegressionData(true);
+
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     /**
@@ -32,9 +34,20 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    /** topology */
+    
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
+    StdVec<Vecd> observation_location = { Vecd(DL/2.0, DH/2.0) };
+    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
+    ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -142,6 +155,10 @@ int main(int ac, char *av[])
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
+        write_water_mechanical_energy(io_environment, water_block);
+
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -149,16 +166,21 @@ int main(int ac, char *av[])
     periodic_condition.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile(0);
+
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
+    int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 600.0;   /**< End time. */
     Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile();
+    write_water_mechanical_energy.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -221,6 +243,10 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                {
+                    write_water_mechanical_energy.writeToFile(number_of_iterations);
+                }
             }
             number_of_iterations++;
             /** Update cell linked list and configuration. */
@@ -232,11 +258,12 @@ int main(int ac, char *av[])
 
             get_time_average_cross_section_data.exec();
             get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
+            fluid_observer_contact.updateConfiguration();
 
         }
         TickCount t2 = TickCount::now();
         
-        body_states_recording.writeToFile();
+        //body_states_recording.writeToFile();
         num_output_file++;
         if (num_output_file == 20)
             //system("pause");
@@ -252,5 +279,15 @@ int main(int ac, char *av[])
 
     get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
     std::cout << "The time-average data is output " << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_water_mechanical_energy.generateDataBase(0.1);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_water_mechanical_energy.testResult();
+    }
+
     return 0;
 }
