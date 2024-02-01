@@ -5,7 +5,6 @@
  * 			SPH method for modelling granular materials such as soils and sands.
  * @author Shuaihao Zhang and Xiangyu Hu
  */
-#include "all_continuum.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
@@ -23,11 +22,11 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-Real rho0_s = 2040;                                                 // reference density of soil
-Real gravity_g = 9.8;                                               // gravity force of soil
-Real Youngs_modulus = 5.84e6;                                       // reference Youngs modulus
-Real poisson = 0.3;                                                 // Poisson ratio
-Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson))); // sound speed
+Real rho0_s = 2040;                                                       // reference density of soil
+Real gravity_g = 9.8;                                                     // gravity force of soil
+Real Youngs_modulus = 5.84e6;                                             // reference Youngs modulus
+Real poisson = 0.3;                                                       // Poisson ratio
+Real c_s = sqrt(Youngs_modulus / (rho0_s * 3.0 * (1.0 - 2.0 * poisson))); // sound speed
 Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
@@ -86,7 +85,6 @@ int main(int ac, char *av[])
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -109,8 +107,8 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
-    Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -172,8 +170,8 @@ int main(int ac, char *av[])
             {
                 Real dt = soil_acoustic_time_step.exec();
                 stress_diffusion.exec();
-                granular_stress_relaxation_1st.exec(dt);
-                granular_stress_relaxation_2nd.exec(dt);
+                granular_stress_relaxation.exec(dt);
+                granular_density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;

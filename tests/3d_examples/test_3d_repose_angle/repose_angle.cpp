@@ -5,7 +5,6 @@
  * 			SPH method for modelling granular materials such as soils and sands.
  * @author Shuaihao Zhang and Xiangyu Hu
  */
-#include "all_continuum.h"
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
@@ -86,9 +85,7 @@ int main(int ac, char *av[])
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
     soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? soil_block.generateParticles<ParticleGeneratorReload>(soil_block.getName())
-        : soil_block.generateParticles<ParticleGeneratorLattice>();
+    soil_block.generateParticles<ParticleGeneratorLattice>();
     soil_block.addBodyStateForRecording<Real>("Pressure");
     soil_block.addBodyStateForRecording<Real>("Density");
     soil_block.addBodyStateForRecording<Real>("VerticalStress");
@@ -114,43 +111,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    // run particle relaxation
-    if (sph_system.RunParticleRelaxation())
-    {
-        using namespace relax_dynamics;
-        /** Random reset the insert body particle position. */
-        SimpleDynamics<RandomizeParticlePosition> random_column_particles(soil_block);
-        /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_column_to_vtp(soil_block);
-        /** Write the particle reload files. */
-
-        ReloadParticleIO write_particle_reload_files(soil_block);
-        /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(soil_block_inner);
-        /**
-         * @brief 	Particle relaxation starts here.
-         */
-        random_column_particles.exec(0.25);
-        relaxation_step_inner.SurfaceBounding().exec();
-        body_states_recording.writeToFile(0.0);
-
-        /** relax particles of the insert body. */
-        int ite_p = 0;
-        while (ite_p < 1000)
-        {
-            relaxation_step_inner.exec();
-            ite_p += 1;
-            if (ite_p % 200 == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
-                write_column_to_vtp.writeToFile(ite_p);
-            }
-        }
-        std::cout << "The physics relaxation process of cylinder body finish !" << std::endl;
-        /** Output results. */
-        write_particle_reload_files.writeToFile(0.0);
-        return 0;
-    }
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
@@ -162,8 +122,8 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
-    Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -234,8 +194,8 @@ int main(int ac, char *av[])
                 Real dt = soil_acoustic_time_step.exec();
 
                 stress_diffusion.exec();
-                granular_stress_relaxation_1st.exec(dt);
-                granular_stress_relaxation_2nd.exec(dt);
+                granular_stress_relaxation.exec(dt);
+                granular_density_relaxation.exec(dt);
 
                 relaxation_time += dt;
                 integration_time += dt;

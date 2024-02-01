@@ -1,20 +1,19 @@
-/* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-update Lagrange           *
+/* ----------------------------------------------------------------------------*
+ *          SPHinXsys: 2D oscillation beam--updated Lagrangian method          *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases for understanding SPH method for    *
- * solid simulation based on update Lagrange method                            *
+ * solid simulation based on updated Lagrangian method                         *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
-#include "all_continuum.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
 Real PL = 0.2;  // beam length
-Real PH = 0.02; // for thick plate; =0.01 for thin plate
+Real PH = 0.02; // for thick plate
 Real SL = 0.06; // depth of the insert
 Real resolution_ref = PH / 10;
 Real BW = resolution_ref * 4; // boundary width, at least three particles
@@ -39,7 +38,6 @@ Real N = cos(kl) + cosh(kl);
 Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
 Real vf = 0.05;
 Real R = PL / (0.5 * Pi);
-// for dual time-step
 Real U_ref = vf * c0 * (M * (cos(kl) - cosh(kl)) - N * (sin(kl) - sinh(kl))) / Q;
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
@@ -106,10 +104,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-#ifdef BOOST_AVAILABLE
-    // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-#endif
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -125,7 +120,6 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
-
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -139,7 +133,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
-
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
@@ -147,20 +140,18 @@ int main(int ac, char *av[])
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
-    // for dual time step
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<continuum_dynamics::FixConstraint<BodyPartByParticle>> constraint_beam_base(beam_base);
+    SimpleDynamics<continuum_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
-        write_water_kinetic_energy(beam_body);
+        write_beam_kinetic_energy(beam_body);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -182,7 +173,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
     write_beam_tip_displacement.writeToFile(0);
-    write_water_kinetic_energy.writeToFile(0);
+    write_beam_kinetic_energy.writeToFile(0);
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < End_Time)
     {
@@ -217,7 +208,7 @@ int main(int ac, char *av[])
             correction_matrix.exec();
         }
         write_beam_tip_displacement.writeToFile(ite);
-        write_water_kinetic_energy.writeToFile(ite);
+        write_beam_kinetic_energy.writeToFile(ite);
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -228,14 +219,13 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
-        write_water_kinetic_energy.generateDataBase(1.0e-3);
+        write_beam_kinetic_energy.generateDataBase(1.0e-3);
     }
     else
     {
-        write_water_kinetic_energy.testResult();
+        write_beam_kinetic_energy.testResult();
     }
 
     return 0;

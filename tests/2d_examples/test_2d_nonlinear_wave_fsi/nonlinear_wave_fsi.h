@@ -425,7 +425,7 @@ MultiPolygon createWaveMakerShape()
 //----------------------------------------------------------------------
 //	Boundary condition for wavemaker
 //----------------------------------------------------------------------
-class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+class WaveMaking : public solid_dynamics::MotionConstraint
 {		
 		Real h;
 		Real tf;
@@ -534,7 +534,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 public:
 	WaveMaking(BodyPartByParticle &body_part)
-		: solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
+		: solid_dynamics::MotionConstraint(body_part),
 		h(WH),tf(20.480),xf(12.0),fmn(0.32),fmx(0.96),a(0.0068),N(32),g(gravity_g)
 		{
 			ComputeWaveChar();

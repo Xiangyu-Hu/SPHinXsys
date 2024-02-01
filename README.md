@@ -47,7 +47,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
-<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_column_collapse/column_collapse.cpp">
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_column_collapse/column_collapse.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/2d_column_collapse.gif" height="168px"></a>
 
 ## Fully compatible to classical FVM method
