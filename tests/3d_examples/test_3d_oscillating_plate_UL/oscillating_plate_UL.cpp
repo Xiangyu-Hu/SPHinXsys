@@ -4,7 +4,6 @@
  * @details  We consider vibration deformation of a square plate under initial vertical velocity field.
  * @author 	Shuaihao Zhang, Dong Wu and Xiangyu Hu 
  */
-#include "all_continuum.h"
 #include "sphinxsys.h"
 using namespace SPH;
 /**
@@ -104,7 +103,7 @@ int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
@@ -147,7 +146,6 @@ int main(int ac, char *av[])
     SimpleDynamics<continuum_dynamics::ConstrainSolidBodyMassCenter>
         constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
@@ -218,7 +216,7 @@ int main(int ac, char *av[])
             }
             plate_body.updateCellLinkedList();
             plate_body_inner.updateConfiguration();
-            corrected_configuration.exec(); // put correct matrix in the end
+            corrected_configuration.exec();
         }
         write_plate_displacement.writeToFile(number_of_iterations);
         write_kinetic_energy.writeToFile(number_of_iterations);
@@ -241,6 +239,5 @@ int main(int ac, char *av[])
     {
         write_kinetic_energy.testResult();
     }
-
     return 0;
 }

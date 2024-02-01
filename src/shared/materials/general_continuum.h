@@ -8,11 +8,11 @@ namespace SPH
     class GeneralContinuum : public WeaklyCompressibleFluid
     {
     protected:
-        Real E_;  /*< Youngs or tensile modules  */
-        Real G_;  /*< shear modules  */
-        Real K_;  /*< bulk modules  */
-        Real nu_; /*< Poisson ratio  */
-        Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
+        Real E_;  /* Youngs or tensile modules  */
+        Real G_;  /* shear modules  */
+        Real K_;  /* bulk modules  */
+        Real nu_; /* Poisson ratio  */
+        Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
     public:
         explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
             : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0), contact_stiffness_(c0* c0)
@@ -26,7 +26,7 @@ namespace SPH
         };
         virtual ~GeneralContinuum() {};
 
-        Real lambda0_; /*< first Lame parameter */
+        Real lambda0_; /* first Lame parameter */
         Real getYoungsModulus() { return E_; };
         Real getPoissonRatio() { return nu_; };
         Real getDensity() { return rho0_; };
@@ -44,12 +44,12 @@ namespace SPH
     class PlasticContinuum : public GeneralContinuum
     {
     protected:
-        Real c_;  /*< cohesion  */
-        Real phi_;  /*< friction angle  */
-        Real psi_;  /*< dilatancy angle  */
-        Real alpha_phi_;  /*< Drucker-Prager's constants  */
-        Real k_c_;  /*< Drucker-Prager's constants */
-        const Real stress_dimension_ = 3.0; // plain strain condition
+        Real c_;  /* cohesion  */
+        Real phi_;  /* friction angle  */
+        Real psi_;  /* dilatancy angle  */
+        Real alpha_phi_;  /* Drucker-Prager's constants */
+        Real k_c_;  /* Drucker-Prager's constants */
+        const Real stress_dimension_ = 3.0;  /* plain strain condition */
     public:
         explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real friction_angle, Real cohesion = 0, Real dilatancy = 0)
             : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),

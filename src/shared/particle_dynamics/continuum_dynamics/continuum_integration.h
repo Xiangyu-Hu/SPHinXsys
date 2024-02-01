@@ -180,7 +180,7 @@ namespace SPH
             void interaction(size_t index_i, Real dt = 0.0);
 
         protected:
-            Real zeta_ = 0.1, fai_; // diffusion coefficient
+            Real zeta_ = 0.1, fai_; /*diffusion coefficient*/
             Real smoothing_length_, sound_speed_;
         };
     } // namespace continuum_dynamics

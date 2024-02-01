@@ -2,6 +2,7 @@
 #include "general_continuum.h"
 namespace SPH
 {
+    //=================================================================================================//
     ContinuumParticles::
         ContinuumParticles(SPHBody& sph_body, GeneralContinuum* continuum)
         : BaseParticles(sph_body, continuum), continuum_(*continuum) {}
@@ -9,7 +10,9 @@ namespace SPH
     void ContinuumParticles::initializeOtherVariables()
     {
         BaseParticles::initializeOtherVariables();
-
+        //----------------------------------------------------------------------
+        //		register particle data
+        //----------------------------------------------------------------------
         registerVariable(acc_shear_, "AccelerationByShear");
         registerVariable(shear_stress_, "ShearStress");
         registerVariable(shear_stress_rate_, "ShearStressRate");
@@ -45,7 +48,9 @@ namespace SPH
     void PlasticContinuumParticles::initializeOtherVariables()
     {
         ContinuumParticles::initializeOtherVariables();
-
+        //----------------------------------------------------------------------
+        //		register particle data
+        //----------------------------------------------------------------------
         registerVariable(elastic_strain_tensor_3D_, "ElasticStrainTensor3D");
         registerVariable(elastic_strain_rate_3D_, "ElasticStrainRate3D");
         registerVariable(strain_tensor_3D_, "StrainTensor3D");

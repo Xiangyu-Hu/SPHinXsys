@@ -1,20 +1,19 @@
-/* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-update Lagrange           *
+/* ----------------------------------------------------------------------------*
+ *          SPHinXsys: 2D oscillation beam--updated Lagrangian method          *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases for understanding SPH method for    *
- * solid simulation based on update Lagrange method                            *
+ * solid simulation based on updated Lagrangian method                         *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
-#include "all_continuum.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
 Real PL = 0.2;  // beam length
-Real PH = 0.02; // for thick plate; =0.01 for thin plate
+Real PH = 0.02; // for thick plate
 Real SL = 0.06; // depth of the insert
 Real resolution_ref = PH / 10;
 Real BW = resolution_ref * 4; // boundary width, at least three particles
@@ -105,10 +104,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-#ifdef BOOST_AVAILABLE
-    // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-#endif
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -124,7 +120,6 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
-
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -138,7 +133,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
-
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
@@ -154,7 +148,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
@@ -226,7 +219,6 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_beam_kinetic_energy.generateDataBase(1.0e-3);
