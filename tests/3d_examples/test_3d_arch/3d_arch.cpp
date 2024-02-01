@@ -38,16 +38,16 @@ Real observation_rot_cos = cos(45.0 / 180.0 * Pi);
 StdVec<Vecd> observation_location = {rotation_matrix *
                                      Vecd(radius_mid_surface * observation_rot_cos, height / Real(2.0), radius_mid_surface *observation_rot_cos)};
 /** For material properties of the solid. */
-Real rho0_s = 7.800;             /** Normalized density. */
-Real Youngs_modulus = 210e6;     /** Normalized Youngs Modulus. */
-Real poisson = 0.3;              /** Poisson ratio. */
-Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
+Real rho0_s = 7.800;                         /** Normalized density. */
+Real Youngs_modulus = 210e6;                 /** Normalized Youngs Modulus. */
+Real poisson = 0.3;                          /** Poisson ratio. */
+Real physical_viscosity = 200.0 * thickness; /** physical damping, here we choose the same value as numerical viscosity. */
 
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -149,7 +149,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -180,9 +180,9 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_max_displacement("Position", cylinder_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
@@ -253,7 +253,6 @@ int main(int ac, char *av[])
     {
         write_cylinder_max_displacement.testResult();
     }
-
 
     return 0;
 }

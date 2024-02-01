@@ -94,15 +94,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     ANSYSMesh ansys_mesh(ansys_mesh_file_path);
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
+    water_block.generateParticles<ParticleGeneratorUnstructuredMesh>(ansys_mesh);
     water_block.addBodyStateForRecording<Real>("Density");
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh);
     //----------------------------------------------------------------------
@@ -119,23 +118,20 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 200.0);
     FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, ansys_mesh.min_distance_between_nodes_);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
     InteractionDynamics<fluid_dynamics::ViscousForceFromFluidInFVM> viscous_force_on_solid(water_block_inner, ghost_creation.each_boundary_type_contact_real_index_);
-    InteractionDynamics<fluid_dynamics::AllForceAccelerationFromFluidRiemannFVM> fluid_force_on_solid_update(water_block_inner, viscous_force_on_solid, ghost_creation.each_boundary_type_contact_real_index_);
+    InteractionDynamics<fluid_dynamics::PressureForceFromFluidRiemannInFVM> pressure_force_on_solid(water_block_inner, ghost_creation.each_boundary_type_contact_real_index_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, water_block, ansys_mesh);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
-    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
-    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
+    BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, ansys_mesh);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_on_inserted_body(water_block, "ViscousForceOnSolid");
+    ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_on_inserted_body(water_block, "PressureForceOnSolid");
+    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -165,10 +161,9 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real dt = get_fluid_time_step_size.exec();
             boundary_condition_setup.resetBoundaryConditions();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             pressure_relaxation.exec(dt);
             boundary_condition_setup.resetBoundaryConditions();
             density_relaxation.exec(dt);
@@ -180,14 +175,16 @@ int main(int ac, char *av[])
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
                      << GlobalStaticVariables::physical_time_
                      << "	dt = " << dt << "\n";
+                viscous_force_on_solid.exec();
+                pressure_force_on_solid.exec();
+                write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
+                write_total_pressure_force_on_inserted_body.writeToFile(number_of_iterations);
+                write_maximum_speed.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();
-        write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
-        write_total_force_on_inserted_body.writeToFile(number_of_iterations);
-        write_maximum_speed.writeToFile(number_of_iterations);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

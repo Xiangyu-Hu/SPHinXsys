@@ -89,28 +89,28 @@ class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
 };
 
 /**
- * @class BasePressureForceAccelerationFromFluidInFVM
+ * @class BasePressureForceFromFluidInFVM
  * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers in FVM.
  * The pressure force is added on the viscous force of the latter is computed.
  * time step size compared to the fluid dynamics
  */
 template <class RiemannSolverType>
-class BasePressureForceAccelerationFromFluidInFVM : public BaseForceFromFluidInFVM
+class BasePressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
 {
   public:
-    explicit BasePressureForceAccelerationFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    explicit BasePressureForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
         : BaseForceFromFluidInFVM(inner_relation), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), vel_(particles_->vel_),
           p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_),
           each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
     {
-        particles_->registerVariable(force_from_fluid_, "PressureForceFromFluid");
+        particles_->registerVariable(force_from_fluid_, "PressureForceOnSolid");
     };
     Fluid &fluid_;
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<Real> &p_, &rho_;
     RiemannSolverType riemann_solver_;
     vector<vector<size_t>> each_boundary_type_contact_real_index_;
-    virtual ~BasePressureForceAccelerationFromFluidInFVM(){};
+    virtual ~BasePressureForceFromFluidInFVM(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -133,36 +133,8 @@ class BasePressureForceAccelerationFromFluidInFVM : public BaseForceFromFluidInF
         }
     };
 };
-using PressureForceAccelerationFromFluidRiemannInFVM = BasePressureForceAccelerationFromFluidInFVM<EulerianAcousticRiemannSolver>;
+using PressureForceFromFluidRiemannInFVM = BasePressureForceFromFluidInFVM<EulerianAcousticRiemannSolver>;
 
-/**
- * @class BaseAllForceAccelerationFromFluidInFVM
- * @brief template class for computing force from fluid with updated viscous force in FVM
- */
-template <class PressureForceType>
-class BaseAllForceAccelerationFromFluidInFVM : public PressureForceType
-{
-  public:
-    template <class ViscousForceFromFluidType>
-    BaseAllForceAccelerationFromFluidInFVM(BaseInnerRelation &inner_relation,
-                                           ViscousForceFromFluidType &viscous_force_from_fluid, vector<vector<size_t>> each_boundary_type_contact_real_index)
-        : PressureForceType(inner_relation, each_boundary_type_contact_real_index),
-          viscous_force_from_fluid_(viscous_force_from_fluid.getForceFromFluid())
-    {
-        this->particles_->registerVariable(this->force_from_fluid_, "AllForceFromFluid");
-    };
-    virtual ~BaseAllForceAccelerationFromFluidInFVM(){};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        PressureForceType::interaction(index_i, dt);
-        this->force_from_fluid_[index_i] += viscous_force_from_fluid_[index_i];
-    };
-
-  protected:
-    StdLargeVec<Vecd> &viscous_force_from_fluid_;
-};
-using AllForceAccelerationFromFluidRiemannFVM = BaseAllForceAccelerationFromFluidInFVM<PressureForceAccelerationFromFluidRiemannInFVM>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H

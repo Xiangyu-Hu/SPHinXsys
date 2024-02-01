@@ -111,7 +111,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<Particles
             if (variable_k[index_j] > 0.0)
             {
                 // linear projection
-                VariableType variable_derivative = (variable_i - variable_k[index_j]);
+                VariableType variable_derivative = 2 * (variable_i - variable_k[index_j]);
                 Real diff_coff_ij = this->all_diffusion_[this->phi_]->getDiffusionCoeffWithBoundary(index_i);
                 Real parameter_b = 2.0 * diff_coff_ij * contact_neighborhood.dW_ijV_j_[n] * dt / contact_neighborhood.r_ij_[n];
 

@@ -38,10 +38,10 @@ Real time_to_full_external_force = 0.0;
 Real gravitational_acceleration = 0.0;
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -79,43 +79,6 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
-class TimeStepPartInitialization1 : public TimeStepInitialization
-{
-  public:
-    TimeStepPartInitialization1(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
-        : TimeStepInitialization(sph_body, gravity_ptr){};
-    virtual ~TimeStepPartInitialization1(){};
-
-  protected:
-    SolidParticles *solid_particles = dynamic_cast<SolidParticles *>(particles_);
-
-    virtual void update(size_t index_i, Real dt = 0.0)
-    {
-        if (solid_particles->pos0_[index_i][0] > 0.0 && solid_particles->pos0_[index_i][1] > 0.0 &&
-            solid_particles->pos0_[index_i][0] < PL && solid_particles->pos0_[index_i][1] < PH)
-        {
-            acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
-        }
-    }
-};
-class TimeStepPartInitialization2 : public TimeStepInitialization
-{
-  public:
-    TimeStepPartInitialization2(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
-        : TimeStepInitialization(sph_body, gravity_ptr){};
-    virtual ~TimeStepPartInitialization2(){};
-
-  protected:
-    SolidParticles *solid_particles = dynamic_cast<SolidParticles *>(particles_);
-    virtual void update(size_t index_i, Real dt = 0.0)
-    {
-        if (solid_particles->pos0_[index_i][0] < 0.0 || solid_particles->pos0_[index_i][1] < 0.0 ||
-            solid_particles->pos0_[index_i][0] > PL || solid_particles->pos0_[index_i][1] > PH)
-        {
-            acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
-        }
-    }
-};
 /**
  * define time dependent external force
  */
@@ -144,12 +107,12 @@ int main(int ac, char *av[])
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
-    plate_body.addBodyStateForRecording<Vec3d>("PriorAcceleration");
+    plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -158,9 +121,8 @@ int main(int ac, char *av[])
     InnerRelation plate_body_inner(plate_body);
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
-    /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(
-        plate_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -180,9 +142,9 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_plate_max_displacement("Position", io_environment, plate_observer_contact);
+        write_plate_max_displacement("Position", plate_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
@@ -220,7 +182,7 @@ int main(int ac, char *av[])
                           << GlobalStaticVariables::physical_time_ << "	dt: "
                           << dt << "\n";
             }
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
             constrain_holder.exec(dt);
             stress_relaxation_second_half.exec(dt);

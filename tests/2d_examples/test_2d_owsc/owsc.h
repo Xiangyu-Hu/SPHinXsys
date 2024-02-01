@@ -337,7 +337,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
         Real time = GlobalStaticVariables::physical_time_;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
-        acc_[index_i] = getAcceleration(time);
+        force_[index_i] = mass_[index_i] * getAcceleration(time);
     };
 };
 
@@ -385,10 +385,10 @@ MultiPolygon createWaveProbeShape12()
 //------------------------------------------------------------------------------
 // Case-dependent observer particle generator
 //------------------------------------------------------------------------------
-class FlapObserverParticleGenerator : public ObserverParticleGenerator
+class FlapObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** the measuring particle with zero volume */
         positions_.push_back(Vecd(7.862, 0.645));

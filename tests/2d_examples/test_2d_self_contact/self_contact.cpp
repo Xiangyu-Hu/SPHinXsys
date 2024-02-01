@@ -123,7 +123,7 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
-    beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(beam_observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -139,23 +139,22 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
     InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> beam_self_contact_density(beam_self_contact);
-    InteractionDynamics<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
+    InteractionWithUpdate<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     //	outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    beam_body.addBodyStateForRecording<Real>("SelfRepulsionDensity");
+    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
+        write_beam_tip_displacement("Position", beam_observer_contact);
     //-----------------------------------------------------------------------------
     //	Setup particle configuration and initial conditions
     //-----------------------------------------------------------------------------
@@ -202,7 +201,6 @@ int main(int ac, char *av[])
                               << dt << "\n";
                 }
 
-                reset_prior_acceleration.exec();
                 beam_self_contact_density.exec();
                 beam_self_contact_forces.exec();
                 beam_body.updateCellLinkedList();
@@ -241,7 +239,6 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }

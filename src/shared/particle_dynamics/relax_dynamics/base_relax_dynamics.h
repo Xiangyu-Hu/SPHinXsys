@@ -45,6 +45,26 @@ namespace relax_dynamics
 typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
 typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> RelaxDataDelegateContact;
+
+/**
+ * @class RandomizeParticlePosition
+ * @brief Randomize the initial particle position
+ */
+class RandomizeParticlePosition
+    : public LocalDynamics,
+      public RelaxDataDelegateSimple
+{
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    Real randomize_scale_;
+
+  public:
+    explicit RandomizeParticlePosition(SPHBody &sph_body);
+    virtual ~RandomizeParticlePosition(){};
+
+    void update(size_t index_i, Real dt = 0.0);
+};
+
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // BASE_RELAX_DYNAMICS_H

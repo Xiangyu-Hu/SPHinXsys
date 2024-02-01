@@ -56,7 +56,7 @@ class DensitySummation<Base, DataDelegationType>
 };
 
 template <>
-class DensitySummation<BaseInner> : public DensitySummation<Base, FluidDataInner>
+class DensitySummation<Inner<Base>> : public DensitySummation<Base, FluidDataInner>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation)
@@ -69,11 +69,11 @@ class DensitySummation<BaseInner> : public DensitySummation<Base, FluidDataInner
 };
 
 template <>
-class DensitySummation<Inner<>> : public DensitySummation<BaseInner>
+class DensitySummation<Inner<>> : public DensitySummation<Inner<Base>>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation)
-        : DensitySummation<BaseInner>(inner_relation){};
+        : DensitySummation<Inner<Base>>(inner_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
@@ -81,7 +81,7 @@ class DensitySummation<Inner<>> : public DensitySummation<BaseInner>
 using DensitySummationInner = DensitySummation<Inner<>>;
 
 template <>
-class DensitySummation<InnerAdaptive> : public DensitySummation<BaseInner>
+class DensitySummation<Inner<Adaptive>> : public DensitySummation<Inner<Base>>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation);
@@ -96,7 +96,7 @@ class DensitySummation<InnerAdaptive> : public DensitySummation<BaseInner>
 };
 
 template <>
-class DensitySummation<BaseContact> : public DensitySummation<Base, FluidContactData>
+class DensitySummation<Contact<Base>> : public DensitySummation<Base, FluidContactData>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation);
@@ -109,17 +109,17 @@ class DensitySummation<BaseContact> : public DensitySummation<Base, FluidContact
 };
 
 template <>
-class DensitySummation<Contact<>> : public DensitySummation<BaseContact>
+class DensitySummation<Contact<>> : public DensitySummation<Contact<Base>>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation)
-        : DensitySummation<BaseContact>(contact_relation){};
+        : DensitySummation<Contact<Base>>(contact_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 template <>
-class DensitySummation<ContactAdaptive> : public DensitySummation<BaseContact>
+class DensitySummation<Contact<Adaptive>> : public DensitySummation<Contact<Base>>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation);
@@ -131,23 +131,23 @@ class DensitySummation<ContactAdaptive> : public DensitySummation<BaseContact>
     StdLargeVec<Real> &h_ratio_;
 };
 
-template <class InteractionType>
-class DensitySummation<FreeSurface<InteractionType>> : public DensitySummation<InteractionType>
+template <typename... SummationType>
+class DensitySummation<Inner<FreeSurface, SummationType...>> : public DensitySummation<Inner<SummationType...>>
 {
   public:
     template <typename... Args>
     explicit DensitySummation(Args &&...args)
-        : DensitySummation<InteractionType>(std::forward<Args>(args)...){};
+        : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...){};
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0)
     {
-        DensitySummation<InteractionType>::reinitializeDensity(index_i);
+        DensitySummation<Inner<SummationType...>>::reinitializeDensity(index_i);
     };
 };
-using DensitySummationFreeSurfaceInner = DensitySummation<FreeSurface<Inner<>>>;
+using DensitySummationFreeSurfaceInner = DensitySummation<Inner<FreeSurface>>;
 
-template <class InteractionType>
-class DensitySummation<FreeStream<InteractionType>> : public DensitySummation<InteractionType>
+template <typename... SummationType>
+class DensitySummation<Inner<FreeStream, SummationType...>> : public DensitySummation<Inner<SummationType...>>
 {
   public:
     template <typename... Args>
@@ -164,11 +164,11 @@ template <class InnerInteractionType, class... ContactInteractionTypes>
 using BaseDensitySummationComplex = ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionTypes...>>;
 
 using DensitySummationComplex = BaseDensitySummationComplex<Inner<>, Contact<>>;
-using DensitySummationComplexAdaptive = BaseDensitySummationComplex<InnerAdaptive, ContactAdaptive>;
-using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<FreeSurface<Inner<>>, Contact<>>;
-using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<FreeSurface<InnerAdaptive>, ContactAdaptive>;
-using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<FreeStream<Inner<>>, Contact<>>;
-using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<FreeStream<InnerAdaptive>, ContactAdaptive>;
+using DensitySummationComplexAdaptive = BaseDensitySummationComplex<Inner<Adaptive>, Contact<Adaptive>>;
+using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>>;
+using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<Inner<FreeSurface, Adaptive>, Contact<Adaptive>>;
+using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<Inner<FreeStream>, Contact<>>;
+using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<FreeStream, Adaptive>, Contact<Adaptive>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H

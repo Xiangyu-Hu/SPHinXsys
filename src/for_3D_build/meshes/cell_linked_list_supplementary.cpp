@@ -82,8 +82,8 @@ void CellLinkedList ::InsertListDataEntry(size_t particle_index,
 //=================================================================================================//
 ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 {
-    Real min_distance_sqr = Infinity;
-    ListData nearest_entry = std::make_tuple(MaxSize_t, Infinity * Vecd::Ones(), Infinity);
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry = std::make_tuple(MaxSize_t, MaxReal * Vecd::Ones(), MaxReal);
 
     Array3i cell = CellIndexFromPosition(position);
     mesh_for_each(

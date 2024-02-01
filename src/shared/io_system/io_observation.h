@@ -54,9 +54,8 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
-                              BaseContactRelation &contact_relation)
-        : BodyStatesRecording(io_environment, contact_relation.getSPHBody()),
+    ObservedQuantityRecording(const std::string &quantity_name, BaseContactRelation &contact_relation)
+        : BodyStatesRecording(contact_relation.getSPHBody()),
           ObservingAQuantity<VariableType>(contact_relation, quantity_name),
           observer_(contact_relation.getSPHBody()), plt_engine_(),
           base_particles_(observer_.getBaseParticles()),
@@ -117,9 +116,10 @@ class ReducedQuantityRecording : public BaseIO
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    template <typename... Args>
-    ReducedQuantityRecording(IOEnvironment &io_environment, Args &&...args)
-        : BaseIO(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
+    template <class DynamicsIdentifier, typename... Args>
+    ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
+        : BaseIO(identifier.getSPHBody().getSPHSystem()), plt_engine_(),
+          reduce_method_(identifier, std::forward<Args>(args)...),
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {

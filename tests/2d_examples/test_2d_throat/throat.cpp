@@ -126,8 +126,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -141,7 +140,7 @@ int main(int ac, char *av[])
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd::Zero()};
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -176,9 +175,9 @@ int main(int ac, char *av[])
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     // define external force
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
-    // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
+    // computing viscous effect implicitly and with update velocity directly other than viscous force
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
     // impose transport velocity
@@ -190,11 +189,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_fluid_mechanical_energy(io_environment, fluid_block);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_fluid_kinetic_energy(fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_fluid_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -205,6 +204,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     // prepare quantities will be used once only
     wall_boundary_normal_direction.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -232,7 +232,6 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
 
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             transport_velocity_correction.exec();
@@ -257,7 +256,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_fluid_mechanical_energy.writeToFile(number_of_iterations);
+                    write_fluid_kinetic_energy.writeToFile(number_of_iterations);
                     write_recorded_fluid_pressure.writeToFile(number_of_iterations);
                 }
             }
@@ -284,12 +283,12 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_fluid_mechanical_energy.generateDataBase(1.0e-2);
+        write_fluid_kinetic_energy.generateDataBase(1.0e-2);
         write_recorded_fluid_pressure.generateDataBase(1.0e-2);
     }
     else
     {
-        write_fluid_mechanical_energy.testResult();
+        write_fluid_kinetic_energy.testResult();
         write_recorded_fluid_pressure.testResult();
     }
 

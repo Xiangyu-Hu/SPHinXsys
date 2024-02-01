@@ -50,10 +50,10 @@ TEST(Plate, RigidRotationTest)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -154,7 +154,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ControledRotation> controled_rotaton(controled_geometry);
     /** Output */
     IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system.real_bodies_);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -216,7 +216,7 @@ int main(int ac, char *av[])
 
     for (int i = 0; i < 10; i++)
     {
-        rondom_index.push_back((double)rand() / (RAND_MAX)*shell_particles->total_real_particles_);
+        rondom_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->total_real_particles_);
         von_mises_strain.push_back(shell_particles->getVonMisesStrain(rondom_index[i]));
     }
 

@@ -34,10 +34,10 @@ Real physical_viscosity = 2000.0; /** physical damping, here we choose the same 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10000.0;
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -96,7 +96,7 @@ int main(int ac, char *av[])
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    
+
     /** Create a Cylinder body. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -114,10 +114,8 @@ int main(int ac, char *av[])
     InnerRelation cylinder_body_inner(cylinder_body);
     ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
-    /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(
-        cylinder_body, makeShared<TimeDependentExternalForce>(Vec2d(0.0, gravitational_acceleration)));
-
+    TimeDependentExternalForce time_dependent_external_force(Vec2d(0.0, gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
     /**
      * This section define all numerical methods will be used in this case.
      */
@@ -140,9 +138,9 @@ int main(int ac, char *av[])
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_max_displacement("Position", cylinder_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
@@ -179,7 +177,7 @@ int main(int ac, char *av[])
                           << GlobalStaticVariables::physical_time_ << "	dt: "
                           << dt << "\n";
             }
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
             fixed_free_rotate_shell_boundary.exec(dt);
             cylinder_position_damping.exec(dt);
@@ -212,7 +210,6 @@ int main(int ac, char *av[])
     {
         write_cylinder_max_displacement.testResult();
     }
-
 
     return 0;
 }

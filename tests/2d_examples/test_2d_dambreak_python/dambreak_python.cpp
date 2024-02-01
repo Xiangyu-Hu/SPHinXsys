@@ -85,7 +85,7 @@ class PreSettingCase : public Parameter
         wall_boundary.generateParticles<ParticleGeneratorLattice>();
         wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-        fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+        fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     }
 };
 //----------------------------------------------------------------------
@@ -114,8 +114,8 @@ class Environment : public PreSettingCase
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation;
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation;
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
-    SharedPtr<Gravity> gravity_ptr;
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization;
+    Gravity gravity;
+    SimpleDynamics<GravityForce> constant_gravity;
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step;
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step;
     //----------------------------------------------------------------------
@@ -156,14 +156,14 @@ class Environment : public PreSettingCase
           fluid_density_relaxation(water_block_inner, water_wall_contact),
           fluid_density_by_summation(water_block_inner, water_wall_contact),
           wall_boundary_normal_direction(wall_boundary),
-          gravity_ptr(makeShared<Gravity>(Vecd(0.0, -gravity_g))),
-          fluid_step_initialization(water_block, gravity_ptr),
+          gravity(Vecd(0.0, -gravity_g)),
+          constant_gravity(water_block, gravity),
           fluid_advection_time_step(water_block, U_ref),
           fluid_acoustic_time_step(water_block),
-          body_states_recording(io_environment, sph_system.real_bodies_),
-          restart_io(io_environment, sph_system.real_bodies_),
-          write_water_mechanical_energy(io_environment, water_block, gravity_ptr),
-          write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact)
+          body_states_recording(sph_system.real_bodies_),
+          restart_io(sph_system.real_bodies_),
+          write_water_mechanical_energy(water_block, gravity),
+          write_recorded_water_pressure("Pressure", fluid_observer_contact)
     {
         //----------------------------------------------------------------------
         //	Prepare the simulation with cell linked list, configuration
@@ -172,6 +172,7 @@ class Environment : public PreSettingCase
         sph_system.initializeSystemCellLinkedLists();
         sph_system.initializeSystemConfigurations();
         wall_boundary_normal_direction.exec();
+        constant_gravity.exec();
         /** set restart step. */
         sph_system.setRestartStep(set_restart_step);
         //----------------------------------------------------------------------
@@ -215,7 +216,6 @@ class Environment : public PreSettingCase
             {
                 /** outer loop for dual-time criteria time-stepping. */
                 time_instance = TickCount::now();
-                fluid_step_initialization.exec();
                 Real advection_dt = fluid_advection_time_step.exec();
                 fluid_density_by_summation.exec();
                 interval_computing_time_step += TickCount::now() - time_instance;

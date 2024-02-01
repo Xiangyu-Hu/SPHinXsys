@@ -1,8 +1,9 @@
 /**
  * @file 	column_collapse.cpp
- * @brief 	2D dambreak example.
- * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for soil simulation.
+ * @brief 	2D column collapse.
+ * @details This is the one of the basic test cases, also the first case for understanding
+ * 			SPH method for modelling granular materials such as soils and sands.
+ * @author Shuaihao Zhang and Xiangyu Hu
  */
 #include "all_continuum.h"
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -10,12 +11,10 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-// unit system - 1
-Real DL = 0.5;  /**< Tank length. */
-Real DH = 0.15; /**< Tank height. */
-Real LL = 0.2;  /**< Liquid column length. */
-Real LH = 0.1;  /**< Liquid column height. */
-
+Real DL = 0.5;                       /**< Tank length. */
+Real DH = 0.15;                      /**< Tank height. */
+Real LL = 0.2;                       /**< Soil column length. */
+Real LH = 0.1;                       /**< Soil column height. */
 Real particle_spacing_ref = LH / 50; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -24,15 +23,12 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
-/*
- * Dilatancy angle is always zero for non-associate flow rule
- */
-Real rho0_s = 2650;           /**< Reference density of soil. */
-Real gravity_g = 9.8;         /**< Gravity force of soil. */
-Real Youngs_modulus = 0.84e6; // reference Youngs modulus
-Real poisson = 0.3;           // Poisson ratio
-Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
-Real friction_angle = 19.8 * Pi / 180;
+Real rho0_s = 2040;                                                 // reference density of soil
+Real gravity_g = 9.8;                                               // gravity force of soil
+Real Youngs_modulus = 5.84e6;                                       // reference Youngs modulus
+Real poisson = 0.3;                                                 // Poisson ratio
+Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson))); // sound speed
+Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -74,13 +70,10 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-#ifdef BOOST_AVAILABLE
-    // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-#endif //----------------------------------------------------------------------
-       //----------------------------------------------------------------------
-       //	Creating bodies with corresponding materials and particles.
-       //----------------------------------------------------------------------
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<Soil>("GranularBody"));
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<ParticleGeneratorLattice>();
@@ -111,24 +104,21 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> soil_step_initialization(soil_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.2);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    // stress relaxation with Riemann solver
     Dynamics1Level<continuum_dynamics::StressRelaxation1stHalfRiemannWithWall> granular_stress_relaxation_1st(soil_block_inner, soil_block_contact);
     Dynamics1Level<continuum_dynamics::StressRelaxation2ndHalfRiemannWithWall> granular_stress_relaxation_2nd(soil_block_inner, soil_block_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_mechanical_energy(io_environment, soil_block, gravity_ptr);
+        write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -136,6 +126,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -171,7 +162,6 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            soil_step_initialization.exec();
 
             soil_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -181,11 +171,9 @@ int main(int ac, char *av[])
             while (relaxation_time < Dt)
             {
                 Real dt = soil_acoustic_time_step.exec();
-
-                granular_stress_relaxation_1st.exec(dt);
                 stress_diffusion.exec();
+                granular_stress_relaxation_1st.exec(dt);
                 granular_stress_relaxation_2nd.exec(dt);
-
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
@@ -233,7 +221,6 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    // sph_system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
         write_mechanical_energy.generateDataBase(1.0e-3);

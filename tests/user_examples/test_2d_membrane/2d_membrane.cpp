@@ -106,10 +106,12 @@ MultiPolygon createSaturationConstrainShape()
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
-class SaturationInitialCondition : public multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
+class SaturationInitialCondition
+    : public multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
 {
   public:
-    SaturationInitialCondition(BodyPartByParticle &body_part) : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
+    SaturationInitialCondition(BodyPartByParticle &body_part)
+        : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
     virtual ~SaturationInitialCondition(){};
 
   protected:
@@ -143,7 +145,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "MembraneObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -177,7 +179,7 @@ int main(int ac, char *av[])
     SimpleDynamics<SaturationInitialCondition> constrain_beam_saturation(beam_saturation);
 
     // need to be done
-    ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
+    ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
     /** Damping */
     DampingWithRandomChoice<InteractionSplit<multi_species_continuum::PorousMediaDampingPairwiseInner<Vec2d>>>
@@ -186,11 +188,11 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     // note there is a line observation
 
     ObservedQuantityRecording<Vecd>
-        write_beam_tip_position("Position", io_environment, beam_observer_contact);
+        write_beam_tip_position("Position", beam_observer_contact);
 
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
@@ -292,7 +294,6 @@ int main(int ac, char *av[])
               << "  Iterations:  " << ite << std::endl;
     std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
               << "  Total iterations:  " << total_ite << std::endl;
-
 
     return 0;
 }

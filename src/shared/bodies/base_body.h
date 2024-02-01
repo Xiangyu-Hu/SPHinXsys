@@ -86,7 +86,8 @@ class SPHBody
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
-    BaseParticles &getBaseParticles() { return *base_particles_; };
+    BaseParticles &getBaseParticles();
+    BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     size_t &LoopRange() { return base_particles_->total_real_particles_; };
     size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
@@ -119,11 +120,11 @@ class SPHBody
     template <typename... Args>
     LevelSetShape *defineBodyLevelSetShape(Args &&...args)
     {
-        LevelSetShape *levelset_shape =
+        LevelSetShape *level_set_shape =
             shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *body_shape_, std::forward<Args>(args)...);
 
-        body_shape_ = levelset_shape;
-        return levelset_shape;
+        body_shape_ = level_set_shape;
+        return level_set_shape;
     };
 
     /** partial construct particles with an already constructed material */
@@ -147,11 +148,11 @@ class SPHBody
     template <class ParticleGeneratorType, typename... Args>
     void generateParticles(Args &&...args)
     {
-        sph_adaptation_->registerAdaptationVariables(*base_particles_);
         ParticleGeneratorType particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
-        base_material_->initializeLocalParameters(base_particles_);
+        sph_adaptation_->initializeAdaptationVariables(*base_particles_);
+        base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
     };
 
     template <typename DataType>

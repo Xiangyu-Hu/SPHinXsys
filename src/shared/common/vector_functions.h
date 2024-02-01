@@ -25,8 +25,8 @@
  * @brief 	Basic functions for vector type data.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef SMALL_VECTORS_H
-#define SMALL_VECTORS_H
+#ifndef VECTOR_FUNCTIONS_H
+#define VECTOR_FUNCTIONS_H
 
 #include "data_type.h"
 
@@ -81,4 +81,4 @@ Vec3d getPrincipalValuesFromMatrix(const Mat3d &A);
 Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
 } // namespace SPH
-#endif // SMALL_VECTORS_H
+#endif // VECTOR_FUNCTIONS_H

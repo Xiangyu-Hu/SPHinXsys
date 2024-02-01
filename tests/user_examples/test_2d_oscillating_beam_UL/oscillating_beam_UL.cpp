@@ -5,6 +5,7 @@
  * solid simulation based on update Lagrange method                            *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
+ * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
 #include "all_continuum.h"
 #include "sphinxsys.h"
@@ -123,7 +124,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -141,11 +142,9 @@ int main(int ac, char *av[])
 
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
-    InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
-        beam_shear_acceleration_angular_conservative(beam_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
     // for dual time step
@@ -158,11 +157,10 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, beam_body, gravity_ptr);
+    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_water_kinetic_energy(beam_body);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -184,7 +182,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
     write_beam_tip_displacement.writeToFile(0);
-    write_water_mechanical_energy.writeToFile(0);
+    write_water_kinetic_energy.writeToFile(0);
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < End_Time)
     {
@@ -201,8 +199,7 @@ int main(int ac, char *av[])
                 beam_pressure_relaxation.exec(acoustic_dt);
                 constraint_beam_base.exec();
                 beam_density_relaxation.exec(acoustic_dt);
-                // shear acceleration with angular conservative
-                beam_shear_acceleration_angular_conservative.exec(acoustic_dt);
+                beam_shear_acceleration.exec(acoustic_dt);
                 ite++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -220,7 +217,7 @@ int main(int ac, char *av[])
             correction_matrix.exec();
         }
         write_beam_tip_displacement.writeToFile(ite);
-        write_water_mechanical_energy.writeToFile(ite);
+        write_water_kinetic_energy.writeToFile(ite);
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -234,11 +231,11 @@ int main(int ac, char *av[])
     // system.GenerateRegressionData() = true;
     if (sph_system.GenerateRegressionData())
     {
-        write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
+        write_water_kinetic_energy.generateDataBase(1.0e-3);
     }
     else
     {
-        write_beam_tip_displacement.testResult();
+        write_water_kinetic_energy.testResult();
     }
 
     return 0;

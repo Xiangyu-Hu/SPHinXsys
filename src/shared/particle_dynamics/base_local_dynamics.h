@@ -39,28 +39,17 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction type identifies
 //----------------------------------------------------------------------
-class Base; /**< Indicating base class for a method */
-
 template <typename... InnerParameters>
 class Inner; /**< Inner interaction: interaction within a body*/
-
-class InnerAdaptive; /**< Inner interaction with adaptive resolution */
-class BaseInner;     /**< Base inner interaction */
 
 template <typename... ContactParameters>
 class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
 
-class ContactAdaptive; /**< Contact interaction with adaptive resolution */
-class BaseContact;     /**< Base contact interaction*/
-
-template <typename... ContactBoundaryParameters>
-class ContactBoundary; /**< Contact interaction with boundary */
-
-template <typename... ContactWallParameters>
-class ContactWall; /**< Contact interaction with wall boundary */
-
+class Boundary;        /**< Interaction with boundary */
+class Wall;            /**< Interaction with wall boundary */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
+class Dynamic;         /**< A dynamic interaction */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
@@ -242,14 +231,15 @@ class BaseLocalDynamics
 {
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier), sph_body_(identifier.getSPHBody()){};
+        : identifier_(identifier){};
     virtual ~BaseLocalDynamics(){};
     SPHBody &getSPHBody() { return sph_body_; };
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
   protected:
     DynamicsIdentifier &identifier_;
-    SPHBody &sph_body_;
+    SPHBody &sph_body_ = identifier_.getSPHBody();
+    BaseParticles &base_particles_ = sph_body_.getBaseParticles();
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 

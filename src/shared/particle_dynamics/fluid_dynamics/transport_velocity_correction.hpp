@@ -53,12 +53,12 @@ void TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
 }
 //=================================================================================================//
 template <typename... CommonControlTypes>
-TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
+TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation)
     : TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>(contact_relation) {}
 //=================================================================================================//
 template <typename... CommonControlTypes>
-void TransportVelocityCorrection<ContactBoundary<>, CommonControlTypes...>::
+void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))

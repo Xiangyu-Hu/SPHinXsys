@@ -158,10 +158,10 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 /**
  * Observer particle generator.
  */
-class FishObserverParticleGenerator : public ObserverParticleGenerator
+class FishObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         positions_.push_back(Vecd(cx + resolution_ref, cy));
         positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    system.setReloadParticles(false);
+    system.setReloadParticles(true);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 
@@ -228,7 +228,7 @@ int main(int ac, char *av[])
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
+        ? fish_body.generateParticles<ParticleGeneratorReload>(fish_body.getName())
         : fish_body.generateParticles<ParticleGeneratorLattice>();
     /**
      * @brief   Particle and body creation of fish observer.
@@ -252,15 +252,15 @@ int main(int ac, char *av[])
         /**
          * @brief 	Methods used for particle relaxation.
          */
-        /** Random reset the insert body particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_fish_body(io_environment, fish_body);
+        BodyStatesRecordingToVtp write_fish_body(fish_body);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, {&fish_body});
+        ReloadParticleIO write_particle_reload_files({&fish_body});
 
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_body_inner);
+        RelaxationStepInner relaxation_step_inner(fish_body_inner);
         /**
          * @brief 	Particle relaxation starts here.
          */
@@ -303,7 +303,6 @@ int main(int ac, char *av[])
     /**
      * Common particle dynamics.
      */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
@@ -314,7 +313,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Impose transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     /** Computing vorticity in the flow. */
@@ -327,8 +326,8 @@ int main(int ac, char *av[])
     /**
      * Fluid structure interaction model.
      */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_force_on_fish_body(fish_body_contact);
     /**
      * Solid dynamics.
      */
@@ -402,10 +401,9 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
         constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_fish(io_environment, fluid_force_on_fish_body, "TotalPressureForceOnSolid");
-    ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
+    BodyStatesRecordingToVtp write_real_body_states(system.real_bodies_);
+    ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
+    ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
     /**
      * Time steeping starts here.
      */
@@ -447,10 +445,9 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
             /** Viscous force exerting on fish body. */
             viscous_force_on_fish_body.exec();
@@ -486,7 +483,7 @@ int main(int ac, char *av[])
                 }
                 // note that dt needs to sufficiently large to avoid divide zero
                 fish_body_average_velocity.update_averages_.exec(dt);
-                write_total_force_on_fish.writeToFile(number_of_iterations);
+                write_total_pressure_force_from_fluid.writeToFile(number_of_iterations);
 
                 relaxation_time += dt;
                 integration_time += dt;

@@ -61,8 +61,8 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
     }
 }
 //=============================================================================================//
-MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field)
-    : BaseIO(io_environment), mesh_field_(mesh_field),
+MeshRecordingToPlt ::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field)
+    : BaseIO(sph_system), mesh_field_(mesh_field),
       filefullpath_(io_environment_.output_folder_ + "/" + mesh_field.Name() + ".dat") {}
 //=============================================================================================//
 void MeshRecordingToPlt::writeToFile(size_t iteration_step)

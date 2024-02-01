@@ -486,18 +486,6 @@ void BaseInnerRelationInFVM::resizeConfiguration()
     inner_configuration_.resize(updated_size, Neighborhood());
 }
 //=================================================================================================//
-ParticleGeneratorInFVM::ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh)
-    : ParticleGenerator(sph_body), elements_centroids_(ansys_mesh.elements_centroids_),
-      elements_volumes_(ansys_mesh.elements_volumes_) {}
-//=================================================================================================//
-void ParticleGeneratorInFVM::initializeGeometricVariables()
-{
-    for (size_t particle_index = 0; particle_index != elements_centroids_.size(); ++particle_index)
-    {
-        initializePositionAndVolumetricMeasure(elements_centroids_[particle_index], elements_volumes_[particle_index]);
-    }
-}
-//=================================================================================================//
 void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance,
                                           Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
 {
@@ -669,9 +657,8 @@ void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
     }
 };
 //=================================================================================================//
-BodyStatesRecordingInMeshToVtp::
-    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, ANSYSMesh &ansys_mesh)
-    : BodyStatesRecording(io_environment, body), node_coordinates_(ansys_mesh.node_coordinates_),
+BodyStatesRecordingInMeshToVtp::BodyStatesRecordingInMeshToVtp(SPHBody &body, ANSYSMesh &ansys_mesh)
+    : BodyStatesRecording(body), node_coordinates_(ansys_mesh.node_coordinates_),
       elements_nodes_connection_(ansys_mesh.elements_nodes_connection_){};
 //=================================================================================================//
 void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequence)
@@ -681,7 +668,7 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
         if (body->checkNewlyUpdated() && state_recording_)
         {
             // TODO: we can short the file name by without using SPHBody
-            std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";
+            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);
@@ -752,10 +739,13 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
     }
 }
 //=================================================================================================//
-BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation,
+                                                         vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
                                                          vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
-    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(particles_->vel_), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
+    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(particles_->vel_), pos_(particles_->pos_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+      total_ghost_particles_(particles_->total_ghost_particles_),
       real_particles_bound_(particles_->real_particles_bound_),
       each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
       each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),

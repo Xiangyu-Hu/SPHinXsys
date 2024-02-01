@@ -32,6 +32,7 @@
 #define SURFACE_TENSION_H
 
 #include "base_fluid_dynamics.h"
+#include "force_prior.h"
 
 namespace SPH
 {
@@ -51,42 +52,48 @@ class SurfaceTensionStress : public LocalDynamics, public FluidContactData
 };
 
 template <typename... T>
-class SurfaceStressAcceleration;
+class SurfaceStressForce;
 
-template <>
-class SurfaceStressAcceleration<Inner<>> : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class SurfaceStressForce<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
-    SurfaceStressAcceleration(BaseInnerRelation &inner_relation);
-    virtual ~SurfaceStressAcceleration(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    template <class BaseRelationType>
+    explicit SurfaceStressForce(BaseRelationType &base_relation);
+    virtual ~SurfaceStressForce(){};
 
   protected:
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Vecd> &acc_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &color_gradient_, &surface_tension_force_;
     StdLargeVec<Matd> &surface_tension_stress_;
 };
 
 template <>
-class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidContactData
+class SurfaceStressForce<Inner<>>
+    : public SurfaceStressForce<FluidDataInner>, public ForcePrior
 {
   public:
-    explicit SurfaceStressAcceleration(BaseContactRelation &contact_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    SurfaceStressForce(BaseInnerRelation &inner_relation);
+    virtual ~SurfaceStressForce(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+template <>
+class SurfaceStressForce<Contact<>> : public SurfaceStressForce<FluidContactData>
+{
+  public:
+    explicit SurfaceStressForce(BaseContactRelation &contact_relation);
+    virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Vecd> &acc_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
     StdVec<StdLargeVec<Vecd> *> contact_color_gradient_;
     StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 
-using SurfaceStressAccelerationComplex = ComplexInteraction<SurfaceStressAcceleration<Inner<>, Contact<>>>;
+using SurfaceStressForceComplex = ComplexInteraction<SurfaceStressForce<Inner<>, Contact<>>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_TENSION_H

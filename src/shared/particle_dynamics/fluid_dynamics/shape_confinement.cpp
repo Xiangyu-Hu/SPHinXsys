@@ -23,15 +23,15 @@ StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearSha
     : BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      pos_(particles_->pos_), vel_(particles_->vel_),
-      acc_(particles_->acc_),
+      mass_(particles_->mass_), pos_(particles_->pos_), vel_(particles_->vel_),
+      force_(particles_->force_),
       level_set_shape_(&near_surface.level_set_shape_),
       riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 {
     Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-    acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
+    force_[index_i] -= 2.0 * mass_[index_i] * p_[index_i] * kernel_gradient / rho_[index_i];
 }
 //=================================================================================================//
 StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)

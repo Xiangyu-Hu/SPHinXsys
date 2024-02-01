@@ -1,7 +1,7 @@
 /**
  * @file 	taylor_bar.h
  * @brief 	This is the case setup for plastic taylor bar.
- * @author 	xiaojing tang Chi Zhang and Xiangyu Hu
+ * @author 	Xiaojing Tang, Dong Wu and Xiangyu Hu
  */
 #pragma once
 
@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real PL = 0.0032; /**< X-direction domain. */
 Real PW = 0.0324; /**< Z-direction domain. */
-Real particle_spacing_ref = PL / 10.0;
+Real particle_spacing_ref = PL / 5.0;
 /** YOU can try PW = 0.2 and particle_spacing_ref = PH / 10.0 to see an interesting test. */
 Real SL = particle_spacing_ref * 4.0; /**< Length of the holder is one layer particle. */
 Real inner_circle_radius = PL;
@@ -31,10 +31,10 @@ Real Youngs_modulus = 1.17e11;
 Real yield_stress = 0.4e9;
 Real hardening_modulus = 0.1e9;
 
-class Wall : public ComplexShape
+class WallShape : public ComplexShape
 {
   public:
-    explicit Wall(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit WallShape(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
         Vecd translation_holder(0.0, 0.0, -0.5 * SL);
@@ -72,12 +72,80 @@ class InitialCondition
 };
 
 // define an observer body
-class ColumnObserverParticleGenerator : public ObserverParticleGenerator
+class ColumnObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         positions_.push_back(Vecd(0.0, 0.0, PW));
-        positions_.push_back(Vecd(PL, 0.0, 0.0));
     }
+};
+
+/**
+ * @class DynamicContactForceWithWall
+ * @brief Computing the contact force with a rigid wall.
+ *  Note that the body surface of the wall should be
+ *  updated before computing the contact force.
+ */
+class DynamicContactForceWithWall : public LocalDynamics,
+                                    public DataDelegateContact<SolidParticles, SolidParticles>
+{
+  public:
+    explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0)
+        : LocalDynamics(solid_body_contact_relation.getSPHBody()),
+          DataDelegateContact<SolidParticles, SolidParticles>(solid_body_contact_relation),
+          solid_(particles_->solid_), Vol_(particles_->Vol_), vel_(particles_->vel_),
+          force_prior_(particles_->force_prior_), penalty_strength_(penalty_strength)
+    {
+        impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());
+        reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_vel_.push_back(&(contact_particles_[k]->vel_));
+            contact_n_.push_back(&(contact_particles_[k]->n_));
+        }
+    };
+    virtual ~DynamicContactForceWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd force = Vecd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
+            Real particle_spacing_ratio2 =
+                1.0 / (sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
+            particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
+
+            StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
+            StdLargeVec<Vecd> &vel_n_k = *(contact_vel_[k]);
+
+            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Vecd e_ij = contact_neighborhood.e_ij_[n];
+                Vecd n_k_j = n_k[index_j];
+
+                Real impedance_p = 0.5 * impedance_ * (vel_[index_i] - vel_n_k[index_j]).dot(-n_k_j);
+                Real overlap = contact_neighborhood.r_ij_[n] * n_k_j.dot(e_ij);
+                Real delta = 2.0 * overlap * particle_spacing_j1;
+                Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
+                Real penalty_p = penalty_strength_ * beta * fabs(overlap) * reference_pressure_;
+
+                // force due to pressure
+                force -= 2.0 * (impedance_p + penalty_p) * e_ij.dot(n_k_j) *
+                         n_k_j * contact_neighborhood.dW_ijV_j_[n];
+            }
+        }
+
+        force_prior_[index_i] += force * Vol_[index_i];
+    };
+
+  protected:
+    Solid &solid_;
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
+    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_n_;
+    Real penalty_strength_;
+    Real impedance_, reference_pressure_;
 };

@@ -5,21 +5,14 @@
 
 namespace SPH
 {
-//=====================================================================================================//
 namespace solid_dynamics
 {
 //=================================================================================================//
-ImposeExternalForce::ImposeExternalForce(SPHBody &sph_body)
-    : LocalDynamics(sph_body), SolidDataSimple(sph_body), pos0_(particles_->pos0_), vel_(particles_->vel_) {}
-//=================================================================================================//
-void ImposeExternalForce::update(size_t index_i, Real dt)
-{
-    vel_[index_i] += dt * getAcceleration(pos0_[index_i]);
-}
-//=================================================================================================//
-SpringDamperConstraintParticleWise::SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
-    : LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_),
-      vel_(particles_->vel_), acc_prior_(particles_->acc_prior_)
+SpringDamperConstraintParticleWise::
+    SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
+    : LoadingForce(sph_body, "SpringDamperConstraintForce"), SolidDataSimple(sph_body),
+      pos_(particles_->pos_), pos0_(particles_->pos0_),
+      vel_(particles_->vel_), mass_(particles_->mass_)
 {
     // scale stiffness and damping by mass here, so it's not necessary in each iteration
     stiffness_ = stiffness / std::accumulate(&particles_->mass_[0], &particles_->mass_[particles_->total_real_particles_], 0.0);
@@ -49,15 +42,17 @@ Vecd SpringDamperConstraintParticleWise::getDampingForce(size_t index_i)
 void SpringDamperConstraintParticleWise::update(size_t index_i, Real dt)
 {
     Vecd delta_x = pos_[index_i] - pos0_[index_i];
-    acc_prior_[index_i] += getSpringForce(index_i, delta_x);
-    acc_prior_[index_i] += getDampingForce(index_i);
+    loading_force_[index_i] = getSpringForce(index_i, delta_x) * mass_[index_i] +
+                              getDampingForce(index_i) * mass_[index_i];
+    ForcePrior::update(index_i, dt);
 }
 //=================================================================================================//
-SpringNormalOnSurfaceParticles::SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
-                                                               Vecd source_point, Real stiffness, Real damping_ratio)
-    : LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_),
-      pos0_(particles_->pos0_), n_(particles_->n_), n0_(particles_->n0_), vel_(particles_->vel_),
-      acc_prior_(particles_->acc_prior_), mass_(particles_->mass_),
+SpringNormalOnSurfaceParticles::
+    SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
+                                   Vecd source_point, Real stiffness, Real damping_ratio)
+    : LoadingForce(sph_body, "NormalSpringForceOnSurface"), SolidDataSimple(sph_body),
+      pos_(particles_->pos_), pos0_(particles_->pos0_), n_(particles_->n_),
+      n0_(particles_->n0_), vel_(particles_->vel_), mass_(particles_->mass_),
       apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -112,14 +107,17 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
     if (apply_spring_force_to_particle_[index_i])
     {
         Vecd delta_x = pos_[index_i] - pos0_[index_i];
-        acc_prior_[index_i] += getSpringForce(index_i, delta_x) / mass_[index_i];
-        acc_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
+        loading_force_[index_i] = getSpringForce(index_i, delta_x) +
+                                  getDampingForce(index_i);
+        ForcePrior::update(index_i, dt);
     }
 }
 //=================================================================================================//
-SpringOnSurfaceParticles::SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
-    : LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_),
-      vel_(particles_->vel_), acc_prior_(particles_->acc_prior_), mass_(particles_->mass_),
+SpringOnSurfaceParticles::
+    SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
+    : LoadingForce(sph_body, "SpringForceOnSurface"), SolidDataSimple(sph_body),
+      pos_(particles_->pos_), pos0_(particles_->pos0_),
+      vel_(particles_->vel_), mass_(particles_->mass_),
       apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -141,8 +139,9 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
     {
         if (apply_spring_force_to_particle_[index_i])
         {
-            acc_prior_[index_i] += -stiffness_ * (pos_[index_i] - pos0_[index_i]) / mass_[index_i];
-            acc_prior_[index_i] += -damping_coeff_ * vel_[index_i] / mass_[index_i];
+            loading_force_[index_i] = -stiffness_ * (pos_[index_i] - pos0_[index_i]) -
+                                      damping_coeff_ * vel_[index_i];
+            ForcePrior::update(index_i, dt);
         }
     }
     catch (std::out_of_range &e)
@@ -151,38 +150,44 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-AccelerationForBodyPartInBoundingBox::AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
-    : LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_),
-      acc_prior_(particles_->acc_prior_), bounding_box_(bounding_box), acceleration_(acceleration) {}
+ExternalForceInBoundingBox::
+    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
+    : LoadingForce(sph_body, "ExternalForceInBoundingBox"), SolidDataSimple(sph_body),
+      pos_(particles_->pos_), mass_(particles_->mass_),
+      bounding_box_(bounding_box), acceleration_(acceleration) {}
 //=================================================================================================//
-void AccelerationForBodyPartInBoundingBox::update(size_t index_i, Real dt)
+void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
 {
     if (bounding_box_.checkContain(pos_[index_i]))
     {
-        acc_prior_[index_i] += acceleration_;
+        loading_force_[index_i] = acceleration_ * mass_[index_i];
+        ForcePrior::update(index_i, dt);
     }
 }
 //=================================================================================================//
-ForceInBodyRegion::ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), SolidDataSimple(sph_body_),
-      pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_), acceleration_(Vecd::Zero()), end_time_(end_time)
+ForceInBodyRegion::
+    ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
+    : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"), SolidDataSimple(sph_body_),
+      pos0_(particles_->pos0_), force_vector_(Vecd::Zero()), end_time_(end_time)
 {
     Real total_mass_in_region(0);
     for (size_t particle_i : body_part.body_part_particles_)
         total_mass_in_region += particles_->mass_[particle_i];
-    acceleration_ = force / total_mass_in_region;
+    force_vector_ = force;
 }
 //=================================================================================================//
 void ForceInBodyRegion::update(size_t index_i, Real dt)
 {
     Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, Real(1.0));
-    acc_prior_[index_i] = acceleration_ * time_factor;
+    loading_force_[index_i] = force_vector_ * time_factor;
+    ForcePrior::update(index_i, dt);
 }
 //=================================================================================================//
-SurfacePressureFromSource::SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
-                                                     StdVec<std::array<Real, 2>> pressure_over_time)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), SolidDataSimple(sph_body_),
-      pos0_(particles_->pos0_), n_(particles_->n_), acc_prior_(particles_->acc_prior_),
+SurfacePressureFromSource::
+    SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
+                              StdVec<std::array<Real, 2>> pressure_over_time)
+    : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"), SolidDataSimple(sph_body_),
+      pos0_(particles_->pos0_), n_(particles_->n_),
       mass_(particles_->mass_), pressure_over_time_(pressure_over_time),
       apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
@@ -237,9 +242,20 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
         Real area = pow(particles_->Vol_[index_i], 2.0 / 3.0);
         Real acc_from_pressure = getPressure() * area / mass_[index_i];
         // vector is made by multiplying it with the surface normal
-        // add the acceleration to the particle
-        acc_prior_[index_i] += (-1.0) * n_[index_i] * acc_from_pressure;
+        // add the force to the particle
+        loading_force_[index_i] = mass_[index_i] * (-1.0) * n_[index_i] * acc_from_pressure;
+        ForcePrior::update(index_i, dt);
     }
+}
+//=================================================================================================//
+PressureForceOnShell::PressureForceOnShell(SPHBody &sph_body, Real pressure)
+    : LoadingForce(sph_body, "PressureForceOnShell"), SolidDataSimple(sph_body),
+      pressure_(pressure), Vol_(particles_->Vol_), n_(particles_->n_) {}
+//=================================================================================================//
+void PressureForceOnShell::update(size_t index_i, Real dt)
+{
+    loading_force_[index_i] = -pressure_ * Vol_[index_i] * n_[index_i];
+    ForcePrior::update(index_i, dt);
 }
 //=================================================================================================//
 } // namespace solid_dynamics
