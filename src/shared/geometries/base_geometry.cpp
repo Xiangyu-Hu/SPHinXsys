@@ -48,7 +48,7 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
 //=================================================================================================//
 bool BinaryShapes::isValid()
 {
-    return shapes_and_ops_.size() == 0 ? false : true;
+    return sub_shapes_and_ops_.size() == 0 ? false : true;
 }
 //=================================================================================================//
 BoundingBox BinaryShapes::findBounds()
@@ -57,9 +57,9 @@ BoundingBox BinaryShapes::findBounds()
     Vecd lower_bound = MaxReal * Vecd::Ones();
     Vecd upper_bound = MinReal * Vecd::Ones();
 
-    for (auto &shape_and_op : shapes_and_ops_)
+    for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
-        BoundingBox shape_bounds = shape_and_op.first->getBounds();
+        BoundingBox shape_bounds = sub_shape_and_op.first->getBounds();
         for (int j = 0; j != Dimensions; ++j)
         {
             lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first_[j]);
@@ -74,10 +74,10 @@ bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
     bool exist = false;
     bool inside = false;
 
-    for (auto &shape_and_op : shapes_and_ops_)
+    for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
-        Shape *geometry = shape_and_op.first;
-        ShapeBooleanOps operation_string = shape_and_op.second;
+        Shape *geometry = sub_shape_and_op.first;
+        ShapeBooleanOps operation_string = sub_shape_and_op.second;
         switch (operation_string)
         {
         case ShapeBooleanOps::add:
@@ -111,9 +111,9 @@ Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
     Vecd pnt_closest = Vecd::Zero();
     Vecd pnt_found = Vecd::Zero();
 
-    for (auto &shape_and_op : shapes_and_ops_)
+    for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
-        Shape *geometry = shape_and_op.first;
+        Shape *geometry = sub_shape_and_op.first;
         pnt_found = geometry->findClosestPoint(probe_point);
         Real dist = (probe_point - pnt_found).norm();
 
@@ -127,13 +127,13 @@ Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
     return pnt_closest;
 }
 //=================================================================================================//
-ShapeAndOp *BinaryShapes::getShapeAndOpByName(const std::string &shape_name)
+SubShapeAndOp *BinaryShapes::getSubShapeAndOpByName(const std::string &shape_name)
 {
-    for (auto &shape_and_op : shapes_and_ops_)
+    for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
-        Shape *shape = shape_and_op.first;
+        Shape *shape = sub_shape_and_op.first;
         if (shape->getName() == shape_name)
-            return &shape_and_op;
+            return &sub_shape_and_op;
     }
     std::cout << "\n FAILURE: the shape " << shape_name << " has not been created!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -141,16 +141,16 @@ ShapeAndOp *BinaryShapes::getShapeAndOpByName(const std::string &shape_name)
     return nullptr;
 }
 //=================================================================================================//
-Shape *BinaryShapes::getShapeByName(const std::string &shape_name)
+Shape *BinaryShapes::getSubShapeByName(const std::string &shape_name)
 {
-    return getShapeAndOpByName(shape_name)->first;
+    return getSubShapeAndOpByName(shape_name)->first;
 }
 //=================================================================================================//
-size_t BinaryShapes::getShapeIndexByName(const std::string &shape_name)
+size_t BinaryShapes::getSubShapeIndexByName(const std::string &shape_name)
 {
-    for (size_t index = 0; index != shapes_and_ops_.size(); ++index)
+    for (size_t index = 0; index != sub_shapes_and_ops_.size(); ++index)
     {
-        if (shapes_and_ops_[index].first->getName() == shape_name)
+        if (sub_shapes_and_ops_[index].first->getName() == shape_name)
         {
             return index;
         }

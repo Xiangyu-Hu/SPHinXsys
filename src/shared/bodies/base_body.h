@@ -62,7 +62,7 @@ class BodySurface;
 class SPHBody
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
+    SharedPtrKeeper<Shape> initial_shape_ptr_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
@@ -74,7 +74,7 @@ class SPHBody
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
 
   public:
-    Shape *body_shape_;                    /**< volumetric geometry enclosing the body */
+    Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
@@ -113,7 +113,7 @@ class SPHBody
     template <typename... Args>
     LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
     {
-        ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, body_shape_);
+        ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, initial_shape_);
         return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<Args>(args)...);
     };
 
@@ -121,9 +121,9 @@ class SPHBody
     LevelSetShape *defineBodyLevelSetShape(Args &&...args)
     {
         LevelSetShape *level_set_shape =
-            shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *body_shape_, std::forward<Args>(args)...);
+            initial_shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
 
-        body_shape_ = level_set_shape;
+        initial_shape_ = level_set_shape;
         return level_set_shape;
     };
 

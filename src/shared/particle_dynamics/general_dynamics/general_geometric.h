@@ -45,23 +45,23 @@ class NormalDirectionFromBodyShape : public LocalDynamics, public GeneralDataDel
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Shape &body_shape_;
+    Shape &initial_shape_;
     StdLargeVec<Vecd> &pos_, &n_, &n0_;
 };
 
 /**
- * @class NormalDirectionFromShapeAndOp
+ * @class NormalDirectionFromSubShapeAndOp
  * @brief normal direction at particles
  */
-class NormalDirectionFromShapeAndOp : public LocalDynamics, public GeneralDataDelegateSimple
+class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public GeneralDataDelegateSimple
 {
   public:
-    explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
-    virtual ~NormalDirectionFromShapeAndOp(){};
+    explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
+    virtual ~NormalDirectionFromSubShapeAndOp(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    ShapeAndOp *shape_and_op_;
+    SubShapeAndOp *shape_and_op_;
     Shape *shape_;
     const Real switch_sign_;
     StdLargeVec<Vecd> &pos_, &n_, &n0_;
