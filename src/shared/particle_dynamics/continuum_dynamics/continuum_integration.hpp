@@ -27,34 +27,6 @@ BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationT
       elastic_strain_rate_3D_(this->particles_->elastic_strain_rate_3D_),
       velocity_gradient_(this->particles_->velocity_gradient_) {}
 //=================================================================================================//
-template <class DataDelegationType>
-Matd BasePlasticIntegration<DataDelegationType>::reduceTensor(Mat3d tensor_3d)
-{
-    Matd tensor_2d;
-    for (int i = 0; i < (Real)Dimensions; i++)
-    {
-        for (int j = 0; j < (Real)Dimensions; j++)
-        {
-            tensor_2d(i, j) = tensor_3d(i, j);
-        }
-    }
-    return tensor_2d;
-}
-//=================================================================================================//
-template <class DataDelegationType>
-Mat3d BasePlasticIntegration<DataDelegationType>::increaseTensor(Matd tensor_2d)
-{
-    Mat3d tensor_3d = Mat3d::Zero();
-    for (int i = 0; i < (Real)Dimensions; i++)
-    {
-        for (int j = 0; j < (Real)Dimensions; j++)
-        {
-            tensor_3d(i, j) = tensor_2d(i, j);
-        }
-    }
-    return tensor_3d;
-}
-//=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::
     PlasticIntegration1stHalf(BaseInnerRelation &inner_relation)
@@ -91,7 +63,7 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
     Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
     Real rho_i = rho_[index_i];
-    Matd stress_tensor_i = reduceTensor(stress_tensor_3D_[index_i]);
+    Matd stress_tensor_i = stress_tensor_3D_[index_i].block(0, 0, Dimensions, Dimensions);
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -99,7 +71,7 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
         size_t index_j = inner_neighborhood.j_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        Matd stress_tensor_j = reduceTensor(stress_tensor_3D_[index_j]);
+        Matd stress_tensor_j = stress_tensor_3D_[index_j].block(0, 0, Dimensions, Dimensions);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
@@ -125,7 +97,7 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Vecd force_prior_i = computeNonConservativeForce(index_i);
     Vecd force = force_prior_i;
     Real rho_dissipation(0);
-    Matd stress_tensor_i = reduceTensor(stress_tensor_3D_[index_i]);
+    Matd stress_tensor_i = stress_tensor_3D_[index_i].block(0, 0, Dimensions, Dimensions);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
@@ -193,7 +165,8 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Vol_[index_i] = mass_[index_i] / rho_[index_i];
-    Mat3d velocity_gradient = increaseTensor(velocity_gradient_[index_i]);
+    Mat3d velocity_gradient = Mat3d::Zero();
+    velocity_gradient.block(0, 0, Dimensions, Dimensions) = velocity_gradient_[index_i];
     Mat3d stress_tensor_rate_3D_ = plastic_continuum_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
     stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
