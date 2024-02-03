@@ -79,8 +79,8 @@ class SPHBody
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
-    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &body_name);
-    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
+    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr, const std::string &body_name);
+    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr);
     virtual ~SPHBody(){};
 
     std::string getName() { return body_name_; };

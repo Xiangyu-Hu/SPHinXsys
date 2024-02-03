@@ -124,9 +124,9 @@ class BinaryShapes : public Shape
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-    Shape *getSubShapeByName(const std::string &shape_name);
-    SubShapeAndOp *getSubShapeAndOpByName(const std::string &shape_name);
-    size_t getSubShapeIndexByName(const std::string &shape_name);
+    Shape *getSubShapeByName(const std::string &name);
+    SubShapeAndOp *getSubShapeAndOpByName(const std::string &name);
+    size_t getSubShapeIndexByName(const std::string &name);
 
   protected:
     UniquePtrsKeeper<Shape> sub_shape_ptrs_keeper_;

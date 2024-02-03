@@ -127,35 +127,35 @@ Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
     return pnt_closest;
 }
 //=================================================================================================//
-SubShapeAndOp *BinaryShapes::getSubShapeAndOpByName(const std::string &shape_name)
+SubShapeAndOp *BinaryShapes::getSubShapeAndOpByName(const std::string &name)
 {
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
         Shape *shape = sub_shape_and_op.first;
-        if (shape->getName() == shape_name)
+        if (shape->getName() == name)
             return &sub_shape_and_op;
     }
-    std::cout << "\n FAILURE: the shape " << shape_name << " has not been created!" << std::endl;
+    std::cout << "\n FAILURE: the shape " << name << " has not been created!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 
     return nullptr;
 }
 //=================================================================================================//
-Shape *BinaryShapes::getSubShapeByName(const std::string &shape_name)
+Shape *BinaryShapes::getSubShapeByName(const std::string &name)
 {
-    return getSubShapeAndOpByName(shape_name)->first;
+    return getSubShapeAndOpByName(name)->first;
 }
 //=================================================================================================//
-size_t BinaryShapes::getSubShapeIndexByName(const std::string &shape_name)
+size_t BinaryShapes::getSubShapeIndexByName(const std::string &name)
 {
     for (size_t index = 0; index != sub_shapes_and_ops_.size(); ++index)
     {
-        if (sub_shapes_and_ops_[index].first->getName() == shape_name)
+        if (sub_shapes_and_ops_[index].first->getName() == name)
         {
             return index;
         }
     }
-    std::cout << "\n FAILURE: the shape " << shape_name << " has not been created!" << std::endl;
+    std::cout << "\n FAILURE: the shape " << name << " has not been created!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 
     return MaxSize_t;
