@@ -110,8 +110,6 @@ class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelega
     template <class BaseRelationType>
     explicit BasePlasticIntegration(BaseRelationType &base_relation);
     virtual ~BasePlasticIntegration(){};
-    Matd reduceTensor(Mat3d tensor_3d);
-    Mat3d increaseTensor(Matd tensor_2d);
 
   protected:
     PlasticContinuum &plastic_continuum_;
