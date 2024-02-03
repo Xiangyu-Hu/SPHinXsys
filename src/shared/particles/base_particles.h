@@ -206,7 +206,6 @@ class BaseParticles
     ParticleVariables variables_to_reload_;
     StdVec<BaseDynamics<void> *> derived_variables_;
 
-    void addAParticleEntry(); /**< Add a particle entry to the particle array. */
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
     //----------------------------------------------------------------------

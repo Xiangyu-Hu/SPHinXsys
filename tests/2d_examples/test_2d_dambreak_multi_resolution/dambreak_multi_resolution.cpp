@@ -91,7 +91,7 @@ int main(int ac, char *av[])
                         Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<ParticleGeneratorLatticeWithBufferReservation>(2.0);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_inner, water_contact);
 
     MultiPolygonShape split_merge_region(createRefinementArea());
-    InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall, SequencedPolicy> particle_split_(water_inner, water_contact, split_merge_region, 8000);
+    InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall, SequencedPolicy> particle_split_(water_inner, water_contact, split_merge_region);
     InteractionDynamics<MergeWithMinimumDensityErrorWithWall, SequencedPolicy> particle_merge_(water_inner, water_contact, split_merge_region);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> fluid_density_by_summation(water_inner, water_contact);
 

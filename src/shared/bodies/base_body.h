@@ -97,7 +97,6 @@ class SPHBody
     bool checkNewlyUpdated() { return newly_updated_; };
     BoundingBox getBodyShapeBounds();
     BoundingBox getSPHSystemBounds();
-    void allocateConfigurationMemoriesForBufferParticles();
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------

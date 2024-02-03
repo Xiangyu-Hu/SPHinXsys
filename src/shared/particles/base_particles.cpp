@@ -64,15 +64,6 @@ void BaseParticles::initializeOtherVariables()
     }
 }
 //=================================================================================================//
-void BaseParticles::addAParticleEntry()
-{
-    unsorted_id_.push_back(sequence_.size());
-    sorted_id_.push_back(sequence_.size());
-    sequence_.push_back(0);
-
-    add_particle_data_with_default_value_(all_particle_data_);
-}
-//=================================================================================================//
 void BaseParticles::addBufferParticles(size_t buffer_size)
 {
     size_t old_real_particles_bound = real_particles_bound_;
@@ -107,7 +98,7 @@ size_t BaseParticles::insertAGhostParticle(size_t index)
     }
     else
     {
-        addAParticleEntry();
+        add_particle_data_with_default_value_(all_particle_data_);
         copyFromAnotherParticle(expected_particle_index, index);
         /** For a ghost particle, its sorted id is that of corresponding real particle. */
         sorted_id_[expected_particle_index] = index;

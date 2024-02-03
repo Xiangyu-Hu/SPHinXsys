@@ -51,14 +51,6 @@ BaseMaterial &SPHBody::getBaseMaterial()
     return *base_material_;
 };
 //=================================================================================================//
-void SPHBody::allocateConfigurationMemoriesForBufferParticles()
-{
-    for (size_t i = 0; i < body_relations_.size(); i++)
-    {
-        body_relations_[i]->resizeConfiguration();
-    }
-}
-//=================================================================================================//
 BoundingBox SPHBody::getBodyShapeBounds()
 {
     return initial_shape_->getBounds();
