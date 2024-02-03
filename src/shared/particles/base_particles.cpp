@@ -75,6 +75,15 @@ void BaseParticles::addBufferParticles(size_t buffer_size)
     real_particles_bound_ += buffer_size;
 }
 //=================================================================================================//
+void BaseParticles::addGhostParticles(size_t ghost_size)
+{
+    for (size_t i = 0; i != ghost_size; ++i)
+    {
+        add_particle_data_with_default_value_(all_particle_data_);
+    }
+    unsorted_id_.resize(real_particles_bound_ + ghost_size, 0);
+}
+//=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
     updateFromAnotherParticle(index, another_index);

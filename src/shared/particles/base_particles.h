@@ -116,6 +116,7 @@ class BaseParticles
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
     void addBufferParticles(size_t buffer_size);
+    void addGhostParticles(size_t ghost_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateFromAnotherParticle(size_t index, size_t another_index);
     size_t insertAGhostParticle(size_t index);

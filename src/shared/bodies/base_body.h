@@ -72,6 +72,8 @@ class SPHBody
     std::string body_name_;
     bool newly_updated_;            /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
+    bool is_bound_set_;             /**< whether the bounding box is set */
+    BoundingBox bound_;             /**< bounding box of the body */
 
   public:
     Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
@@ -95,7 +97,8 @@ class SPHBody
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };
     bool checkNewlyUpdated() { return newly_updated_; };
-    BoundingBox getBodyShapeBounds();
+    void setSPHBodyBounds(const BoundingBox &bound);
+    BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
     //----------------------------------------------------------------------
     //		Object factory template functions

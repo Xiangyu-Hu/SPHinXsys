@@ -9,7 +9,7 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr, const std::string &body_name)
     : sph_system_(sph_system), body_name_(body_name), newly_updated_(true), base_particles_(nullptr),
-      initial_shape_(initial_shape_ptr_keeper_.assignPtr(initial_shape_ptr)),
+      is_bound_set_(false), initial_shape_(initial_shape_ptr_keeper_.assignPtr(initial_shape_ptr)),
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
       base_material_(nullptr)
 {
@@ -51,9 +51,15 @@ BaseMaterial &SPHBody::getBaseMaterial()
     return *base_material_;
 };
 //=================================================================================================//
-BoundingBox SPHBody::getBodyShapeBounds()
+void SPHBody::setSPHBodyBounds(const BoundingBox &bound)
 {
-    return initial_shape_->getBounds();
+    bound_ = bound;
+    is_bound_set_ = true;
+}
+//=================================================================================================//
+BoundingBox SPHBody::getSPHBodyBounds()
+{
+    return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
 void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)

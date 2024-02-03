@@ -148,7 +148,7 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getSPHBodyBounds(), yAxis);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
