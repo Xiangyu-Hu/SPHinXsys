@@ -142,11 +142,11 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     /** Define the confinement condition for wall. */
     NearShapeSurface near_surface_wall(water_block, makeShared<WallShape>("Wall"));
-    near_surface_wall.level_set_shape_.writeLevelSet(sph_system);
+    near_surface_wall.getLevelSetShape().writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
     NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
-    near_surface_triangle.level_set_shape_.writeLevelSet(sph_system);
+    near_surface_triangle.getLevelSetShape().writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
     /** Push back the static confinement condition to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);

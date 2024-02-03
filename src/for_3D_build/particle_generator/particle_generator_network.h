@@ -62,7 +62,7 @@ class ParticleGenerator<Network> : public ParticleGenerator<Base>
     std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; /**< angles with respect to the initial edge of the fascicles.*/
     Real fascicle_ratio_ = 15.0;                        /**< ratio of length  of the fascicles. Include one per fascicle to include.*/
     SPHBody &sph_body_;
-    Shape &body_shape_;
+    Shape &initial_shape_;
     BaseCellLinkedList &cell_linked_list_;
     TreeBody *tree_;
     /**
