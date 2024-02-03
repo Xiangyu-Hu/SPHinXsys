@@ -63,7 +63,7 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
     Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
     Real rho_i = rho_[index_i];
-    Matd stress_tensor_i = stress_tensor_3D_[index_i].block(0, 0, Dimensions, Dimensions);
+    Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]); 
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -71,7 +71,7 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
         size_t index_j = inner_neighborhood.j_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        Matd stress_tensor_j = stress_tensor_3D_[index_j].block(0, 0, Dimensions, Dimensions);
+        Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
@@ -97,7 +97,7 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Vecd force_prior_i = computeNonConservativeForce(index_i);
     Vecd force = force_prior_i;
     Real rho_dissipation(0);
-    Matd stress_tensor_i = stress_tensor_3D_[index_i].block(0, 0, Dimensions, Dimensions);
+    Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
@@ -165,18 +165,17 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Vol_[index_i] = mass_[index_i] / rho_[index_i];
-    Mat3d velocity_gradient = Mat3d::Zero();
-    velocity_gradient.block(0, 0, Dimensions, Dimensions) = velocity_gradient_[index_i];
+    Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]); 
     Mat3d stress_tensor_rate_3D_ = plastic_continuum_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
     stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
-    // return mapping
+    /*return mapping*/
     Mat3d stress_tensor_ = plastic_continuum_.ReturnMapping(stress_tensor_3D_[index_i]);
     stress_tensor_3D_[index_i] = stress_tensor_;
     vertical_stress_[index_i] = stress_tensor_3D_[index_i](1, 1);
     strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
-    // calculate elastic strain
+    /*calculate elastic strain*/
     Mat3d deviatoric_stress = stress_tensor_3D_[index_i] - (1.0 / 3.0) * stress_tensor_3D_[index_i].trace() * Mat3d::Identity();
     Real hydrostatic_pressure = (1.0 / 3.0) * stress_tensor_3D_[index_i].trace();
     elastic_strain_tensor_3D_[index_i] = deviatoric_stress / (2.0 * plastic_continuum_.getShearModulus(E_, nu_)) +

@@ -61,7 +61,7 @@ void ShearStressRelaxation::interaction(size_t index_i, Real dt)
         velocity_gradient -= v_ij * (B_[index_i] * e_ij * dW_ijV_j_).transpose();
     }
     velocity_gradient_[index_i] = velocity_gradient;
-    // calculate strain
+    /*calculate strain*/
     Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_rate_[index_i] = strain_rate;
     strain_tensor_[index_i] += strain_tensor_rate_[index_i] * 0.5 * dt;
@@ -98,9 +98,9 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         Real y_ij = pos_[index_i](1, 0) - pos_[index_j](1, 0);
         diffusion_stress_ = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
-        diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(fai_)) * density * gravity * y_ij;
-        diffusion_stress_(1, 1) = diffusion_stress_(1, 1) - density * gravity * y_ij;
-        diffusion_stress_(2, 2) = diffusion_stress_(2, 2) - (1 - sin(fai_)) * density * gravity * y_ij;
+        diffusion_stress_(0, 0) -= (1 - sin(fai_)) * density * gravity * y_ij;
+        diffusion_stress_(1, 1) -= density * gravity * y_ij;
+        diffusion_stress_(2, 2) -= (1 - sin(fai_)) * density * gravity * y_ij;
         diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ *
                                   diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
