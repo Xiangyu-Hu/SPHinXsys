@@ -120,5 +120,35 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
 };
 using ParticleGeneratorReload = ParticleGenerator<Reload>;
 
+class BufferReservation;
+class GhostReservation;
+
+template <typename... OtherParameters>
+class ParticleGenerator<BufferReservation, OtherParameters...>
+    : public ParticleGenerator<OtherParameters...>
+{
+  public:
+    template <typename... Args>
+    ParticleGenerator(SPHBody &sph_body, size_t buffer_size_factor, Args &&...args)
+        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...),
+          buffer_size_factor_(buffer_size_factor){};
+    virtual ~ParticleGenerator(){};
+
+    virtual void generateParticlesWithBasicVariables() override
+    {
+        ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
+        reserveBufferParticles();
+    };
+
+  protected:
+    void reserveBufferParticles()
+    {
+        size_t buffer_size = this->base_particles_.total_real_particles_ * buffer_size_factor_;
+        this->base_particles_.addBufferParticles(buffer_size);
+    };
+
+  private:
+    size_t buffer_size_factor_;
+};
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H

@@ -49,7 +49,7 @@ class GeneratingMethod<Lattice>
   protected:
     Real lattice_spacing_;      /**< Initial particle spacing. */
     BoundingBox domain_bounds_; /**< Domain bounds. */
-    Shape &initial_shape_;         /**< Geometry shape for body. */
+    Shape &initial_shape_;      /**< Geometry shape for body. */
 };
 
 template <>
@@ -62,6 +62,7 @@ class ParticleGenerator<Lattice>
     virtual void initializeGeometricVariables() override;
 };
 using ParticleGeneratorLattice = ParticleGenerator<Lattice>;
+using ParticleGeneratorLatticeWithBufferReservation = ParticleGenerator<BufferReservation, Lattice>;
 
 template <> // For generating particles with adaptive resolution from lattice positions
 class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>

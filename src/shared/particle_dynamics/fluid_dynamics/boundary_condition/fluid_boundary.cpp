@@ -52,17 +52,21 @@ void EmitterInflowCondition ::update(size_t unsorted_index_i, Real dt)
     p_[sorted_index_i] = fluid_.getPressure(rho0_);
 }
 //=================================================================================================//
-EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
-                                               size_t body_buffer_width, int axis)
+EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       pos_(particles_->pos_), rho_(particles_->rho_),
       p_(*particles_->getVariableByName<Real>("Pressure")),
       axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
 {
-    size_t total_body_buffer_particles = aligned_box_part.body_part_particles_.size() * body_buffer_width;
-    particles_->addBufferParticles(total_body_buffer_particles);
-    sph_body_.allocateConfigurationMemoriesForBufferParticles();
+    if (particles_->total_real_particles_ == particles_->real_particles_bound_)
+    {
+        std::cout << "EmitterInflowBoundaryCondition constructor: \n"
+                  << "No buffer particles have been generated! "
+                  << "Please check the particle generator."
+                  << "\n";
+        exit(1);
+    }
 }
 //=================================================================================================//
 void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
