@@ -75,9 +75,11 @@ void BaseParticles::addAParticleEntry()
 //=================================================================================================//
 void BaseParticles::addBufferParticles(size_t buffer_size)
 {
+    size_t old_real_particles_bound = real_particles_bound_;
     for (size_t i = 0; i != buffer_size; ++i)
     {
-        addAParticleEntry();
+        unsorted_id_.push_back(old_real_particles_bound + i);
+        add_particle_data_with_default_value_(all_particle_data_);
     }
     real_particles_bound_ += buffer_size;
 }

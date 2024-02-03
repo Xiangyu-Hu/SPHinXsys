@@ -129,7 +129,7 @@ class ParticleGenerator<BufferReservation, OtherParameters...>
 {
   public:
     template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, size_t buffer_size_factor, Args &&...args)
+    ParticleGenerator(SPHBody &sph_body, Real buffer_size_factor, Args &&...args)
         : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...),
           buffer_size_factor_(buffer_size_factor){};
     virtual ~ParticleGenerator(){};
@@ -143,12 +143,12 @@ class ParticleGenerator<BufferReservation, OtherParameters...>
   protected:
     void reserveBufferParticles()
     {
-        size_t buffer_size = this->base_particles_.total_real_particles_ * buffer_size_factor_;
-        this->base_particles_.addBufferParticles(buffer_size);
+        Real buffer_size = Real(this->base_particles_.total_real_particles_) * buffer_size_factor_;
+        this->base_particles_.addBufferParticles(std::ceil(buffer_size));
     };
 
   private:
-    size_t buffer_size_factor_;
+    Real buffer_size_factor_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H

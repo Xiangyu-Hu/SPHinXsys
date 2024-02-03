@@ -21,4 +21,4 @@ target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, inlet, outlet")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "emitter, inlet, outlet")
