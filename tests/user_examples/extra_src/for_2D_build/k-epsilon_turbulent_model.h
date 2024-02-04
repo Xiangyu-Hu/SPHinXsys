@@ -162,43 +162,44 @@ namespace fluid_dynamics
 	};
 //=================================================================================================//
 	template <typename... InteractionTypes>
-	class TKEnergyAcc;
+	class TKEnergyForce;
 
 	template <class DataDelegationType>
-	class TKEnergyAcc<Base, DataDelegationType>
+	class TKEnergyForce<Base, DataDelegationType>
 		: public BaseTurtbulentModel<Base, DataDelegationType>
 	{
 	public:
 		template <class BaseRelationType>
-		explicit TKEnergyAcc(BaseRelationType& base_relation);
-		virtual ~TKEnergyAcc() {};
+		explicit TKEnergyForce(BaseRelationType& base_relation);
+		virtual ~TKEnergyForce() {};
 	protected:
 		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Vecd>& acc_;
+		StdLargeVec<Vecd>& force_;
 		StdLargeVec<Vecd>& pos_;
+		StdLargeVec<Real>& mass_;
 		StdLargeVec<int>& indicator_;
 		StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
 		StdLargeVec<Vecd> test_k_grad_rslt_;
 	};
 	//** Inner part *
 	template <>
-	class TKEnergyAcc<Inner<>> : public TKEnergyAcc<Base, FluidDataInner>
+	class TKEnergyForce<Inner<>> : public TKEnergyForce<Base, FluidDataInner>
 	{
 	public:
-		explicit TKEnergyAcc(BaseInnerRelation& inner_relation);
-		virtual ~TKEnergyAcc() {};
+		explicit TKEnergyForce(BaseInnerRelation& inner_relation);
+		virtual ~TKEnergyForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Vecd>  &test_k_grad_rslt_;
 	};
 	//** Wall part *
 	template <>
-	class TKEnergyAcc<Contact<>> : public TKEnergyAcc<Base, FluidContactData>
+	class TKEnergyForce<Contact<>> : public TKEnergyForce<Base, FluidContactData>
 	{
 	public:
-		explicit TKEnergyAcc(BaseContactRelation& contact_relation);
-			//: TKEnergyAcc<Base, FluidContactData>(contact_relation) {};
-		virtual ~TKEnergyAcc() {};
+		explicit TKEnergyForce(BaseContactRelation& contact_relation);
+			//: TKEnergyForce<Base, FluidContactData>(contact_relation) {};
+		virtual ~TKEnergyForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Vecd>& test_k_grad_rslt_;
@@ -206,20 +207,20 @@ namespace fluid_dynamics
 
 	//** Interface part *
 	template <class InnerInteractionType, class... ContactInteractionTypes>
-	using BaseTKEnergyAccComplex = ComplexInteraction<TKEnergyAcc<InnerInteractionType, ContactInteractionTypes...>>;
+	using BaseTKEnergyAccComplex = ComplexInteraction<TKEnergyForce<InnerInteractionType, ContactInteractionTypes...>>;
 
 	using TKEnergyAccComplex = BaseTKEnergyAccComplex<Inner<>, Contact<>>;
 //=================================================================================================//
 	template <typename... InteractionTypes>
-	class TurbuViscousAcceleration;
+	class TurbuViscousForce;
 
 	template <class DataDelegationType>
-	class TurbuViscousAcceleration<DataDelegationType>: public ViscousAcceleration<DataDelegationType>, public BaseTurbuClosureCoeff
+	class TurbuViscousForce<DataDelegationType>: public ViscousForce<DataDelegationType>, public BaseTurbuClosureCoeff
 	{
 	public:
 		template <class BaseRelationType>
-		explicit TurbuViscousAcceleration(BaseRelationType& base_relation);
-		virtual ~TurbuViscousAcceleration() {};
+		explicit TurbuViscousForce(BaseRelationType& base_relation);
+		virtual ~TurbuViscousForce() {};
 	protected:
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_mu_;
@@ -234,24 +235,23 @@ namespace fluid_dynamics
 
 	//** Inner part *
 	template <>
-	class TurbuViscousAcceleration<Inner<>> : public TurbuViscousAcceleration<FluidDataInner>
+	class TurbuViscousForce<Inner<>> : public TurbuViscousForce<FluidDataInner>, public ForcePrior
 	{
 	public:
-		explicit TurbuViscousAcceleration(BaseInnerRelation& inner_relation);
-			//: TurbuViscousAcceleration<FluidDataInner>(inner_relation) {};
-		virtual ~TurbuViscousAcceleration() {};
+		explicit TurbuViscousForce(BaseInnerRelation& inner_relation);
+		virtual ~TurbuViscousForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	//** Wall part *
-	using BaseTurbuViscousAccelerationWithWall = InteractionWithWall<TurbuViscousAcceleration>;
+	using BaseTurbuViscousAccelerationWithWall = InteractionWithWall<TurbuViscousForce>;
 	template <>
-	class TurbuViscousAcceleration<ContactWall<>> : public BaseTurbuViscousAccelerationWithWall
+	class TurbuViscousForce<Contact<Wall>> : public BaseTurbuViscousAccelerationWithWall
 	{
 	public:
-		explicit TurbuViscousAcceleration(BaseContactRelation& wall_contact_relation);
+		explicit TurbuViscousForce(BaseContactRelation& wall_contact_relation);
 			//: BaseTurbuViscousAccelerationWithWall(wall_contact_relation) {};
-		virtual ~TurbuViscousAcceleration() {};
+		virtual ~TurbuViscousForce() {};
 		
 		//** This is a temporary treatment, the wall function should be defined in the base part *
 		Real standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho_i);
@@ -260,7 +260,7 @@ namespace fluid_dynamics
 	};
 
 	//** Interface part *
-	using TurbulentViscousAccelerationWithWall = ComplexInteraction<TurbuViscousAcceleration<Inner<>, ContactWall<>>>;
+	using TurbulentViscousForceWithWall = ComplexInteraction<TurbuViscousForce<Inner<>, Contact<Wall>>>;
 //=================================================================================================//
 	/**
 	 * @class TurbuViscousAccInner

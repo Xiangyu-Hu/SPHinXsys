@@ -188,18 +188,18 @@ namespace fluid_dynamics
 		turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
 	}
 //=================================================================================================//
-	TKEnergyAcc<Inner<>>::TKEnergyAcc(BaseInnerRelation& inner_relation)
-		: TKEnergyAcc<Base, FluidDataInner>(inner_relation),
+	TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation& inner_relation)
+		: TKEnergyForce<Base, FluidDataInner>(inner_relation),
 		test_k_grad_rslt_(*this->particles_->template getVariableByName<Vecd>("TkeGradResult"))
 	{
 		this->particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
 		this->particles_->addVariableToWrite<Vecd>("TkeAccInner");
 	}
-//=================================================================================================//
-    void TKEnergyAcc<Inner<>>::interaction(size_t index_i, Real dt)
+	//=================================================================================================//
+    void TKEnergyForce<Inner<>>::interaction(size_t index_i, Real dt)
     {
 		Real turbu_k_i = turbu_k_[index_i];
-		Vecd acceleration = Vecd::Zero();
+		Vecd force = Vecd::Zero();
 		Vecd k_gradient = Vecd::Zero();
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -209,29 +209,28 @@ namespace fluid_dynamics
 			//** strong form * 
 			//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 			//** weak form * 
-			k_gradient +=  (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
+			k_gradient += (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
 		}
-		acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
-		
-		acc_[index_i] += acceleration;
+		force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
+		force_[index_i] += force;
 
 		//for test
-		tke_acc_inner_[index_i] = acceleration;
+		tke_acc_inner_[index_i] = force / mass_[index_i];
 		test_k_grad_rslt_[index_i] = k_gradient;
     }
-//=================================================================================================//
-	TKEnergyAcc<Contact<>>::TKEnergyAcc(BaseContactRelation& contact_relation)
-		: TKEnergyAcc<Base, FluidContactData>(contact_relation),
+	//=================================================================================================//
+	TKEnergyForce<Contact<>>::TKEnergyForce(BaseContactRelation& contact_relation)
+		: TKEnergyForce<Base, FluidContactData>(contact_relation),
 		test_k_grad_rslt_(*this->particles_->template getVariableByName<Vecd>("TkeGradResult"))
 	{
 		this->particles_->registerVariable(tke_acc_wall_, "TkeAccWall");
 		this->particles_->addVariableToWrite<Vecd>("TkeAccWall");
 	}
-//=================================================================================================//
-	void TKEnergyAcc<Contact<>>::interaction(size_t index_i, Real dt)
+	//=================================================================================================//
+	void TKEnergyForce<Contact<>>::interaction(size_t index_i, Real dt)
 	{
 		Real turbu_k_i = turbu_k_[index_i];
-		Vecd acceleration = Vecd::Zero();
+		Vecd force = Vecd::Zero();
 		Vecd k_gradient = Vecd::Zero();
 		for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
 		{
@@ -244,26 +243,26 @@ namespace fluid_dynamics
 				k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
 			}
 		}
-		acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
-
-		acc_[index_i] += acceleration;
+		force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
+		force_[index_i] += force;
 
 		//for test
-		tke_acc_wall_[index_i] = acceleration;
+		tke_acc_wall_[index_i] = force / mass_[index_i];
 		test_k_grad_rslt_[index_i] += k_gradient;
 	}
 //=================================================================================================//
-	TurbuViscousAcceleration<Inner<>>::TurbuViscousAcceleration(BaseInnerRelation& inner_relation)
-		: TurbuViscousAcceleration<FluidDataInner>(inner_relation)
+	TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation& inner_relation)
+		: TurbuViscousForce<FluidDataInner>(inner_relation),
+		ForcePrior(&base_particles_, "ViscousForce")
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccInner");
 	}
 //=================================================================================================//
-	void TurbuViscousAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
+	void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 	{
 		Real mu_eff_i = turbu_mu_[index_i] + mu_;
-		Vecd acceleration = Vecd::Zero();
+		Vecd force = Vecd::Zero();
 		Vecd vel_derivative = Vecd::Zero();
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 
@@ -276,23 +275,22 @@ namespace fluid_dynamics
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 
-			Vecd acc_j = 2.0 * mu_harmo * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
-			acceleration += acc_j;
+			Vecd force_j = 2.0 * mass_[index_i] * mu_harmo * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+			force += force_j;
 		}
-
-		acc_prior_[index_i] += acceleration / rho_[index_i];
+		viscous_force_[index_i] = force / rho_[index_i];
 		//for test
-		visc_acc_inner_[index_i] = acceleration / rho_[index_i];
+		visc_acc_inner_[index_i] = force / rho_[index_i]/ mass_[index_i];
 	}
 //=================================================================================================//
-	TurbuViscousAcceleration<ContactWall<>>::TurbuViscousAcceleration(BaseContactRelation& wall_contact_relation)
+	TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation& wall_contact_relation)
 		: BaseTurbuViscousAccelerationWithWall(wall_contact_relation)
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
 	}
 //=================================================================================================//
-	Real TurbuViscousAcceleration<ContactWall<>>::standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho)
+	Real TurbuViscousForce<Contact<Wall>>::standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho)
 	{
 		Real velo_fric = 0.0;
 		velo_fric = sqrt(abs(Karman * vel_t * pow(C_mu, 0.25) * pow(k_p, 0.5) /
@@ -300,14 +298,14 @@ namespace fluid_dynamics
 		return velo_fric;
 	}
 //=================================================================================================//
-	void TurbuViscousAcceleration<ContactWall<>>::interaction(size_t index_i, Real dt)
+	void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 	{
 		Real turbu_k_i = this->turbu_k_[index_i];
 		Real rho_i = this->rho_[index_i];
 		const Vecd& vel_i = this->vel_[index_i];
 		Real y_p = this->y_p_[index_i];
 
-		Vecd acceleration = Vecd::Zero();
+		Vecd force = Vecd::Zero();
 		
 		Vecd e_j_n = Vecd::Zero();
 		Vecd e_j_tau = Vecd::Zero();
@@ -344,14 +342,14 @@ namespace fluid_dynamics
 				
 				//** Transform local wall shear stress to global   *
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
-				Vecd acc_j =  2.0 * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+				Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 
-				acceleration += acc_j;
+				force += force_j;
 			}
 		}
-		this->acc_prior_[index_i] += acceleration;
+		viscous_force_[index_i] += force;
 		//** For test *
-		this->visc_acc_wall_[index_i] = acceleration;
+		this->visc_acc_wall_[index_i] = force/ mass_[index_i];
 	}
 //=================================================================================================//
 	TurbulentEddyViscosity::

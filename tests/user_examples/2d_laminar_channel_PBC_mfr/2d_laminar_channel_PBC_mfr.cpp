@@ -40,7 +40,7 @@ int main(int ac, char *av[])
         : wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_locations);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

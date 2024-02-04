@@ -31,7 +31,7 @@ int main(int ac, char* av[])
 
 	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.defineAdaptationRatios(0.0, 1.0);
-	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
+	fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_locations);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -62,19 +62,19 @@ int main(int ac, char* av[])
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
 	InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_force(water_block_inner, water_block_contact);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	
 	/** Turbulent standard wall function needs normal vectors of wall. */
 	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
-	near_surface.level_set_shape_.writeLevelSet(io_environment);
+	near_surface.level_set_shape_.writeLevelSet(system);
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
 
 	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points, monitoring_bound);
 
-	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_inner, water_block_contact);
-	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+	InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall, SequencedPolicy> turbulent_viscous_force(water_block_inner, water_block_contact);
+	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_force(water_block_inner, water_block_contact);
 
 	InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
 	InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_block_contact);
@@ -85,9 +85,9 @@ int main(int ac, char* av[])
 
 	/** Define the external force for turbulent startup to reduce instability at start-up stage, 1e-4 is from poisulle case */
 	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
-	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
-	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
-	
+	TimeDependentAcceleration time_dependent_force(Vec2d::Zero());
+	SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_force);
+
 	/** Turbulent advection time step. */
 	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
 	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
@@ -117,7 +117,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
+	BodyStatesRecordingToVtp write_body_states(system.real_bodies_);
 	//ObservedQuantityRecording<Real> write_fluid_x_velocity("Velocity_X", io_environment, fluid_observer_contact); //For test turbulent model
 	//ObservedQuantityRecording<Real> write_fluid_turbu_kinetic_energy("TurbulenceKineticEnergy", io_environment, fluid_observer_contact); //For test turbulent model
 	//ObservedQuantityRecording<Real> write_fluid_turbu_dissipation_rate("TurbulentDissipation", io_environment, fluid_observer_contact); //For test turbulent model
@@ -160,7 +160,7 @@ int main(int ac, char* av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.exec();
+			apply_gravity_force.exec();
 
 			Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 			//Real Dt = get_fluid_advection_time_step_size.exec();   //** 
@@ -170,8 +170,8 @@ int main(int ac, char* av[])
 			
 			update_eddy_viscosity.exec();
 
-			//viscous_acceleration.exec();  //**
-			turbulent_viscous_acceleration.exec();
+			//viscous_force.exec();  //**
+			turbulent_viscous_force.exec();
 			
 			transport_velocity_correction.exec();
 
@@ -181,7 +181,7 @@ int main(int ac, char* av[])
 			{
 				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 				
-				turbulent_kinetic_energy_acceleration.exec();
+				turbulent_kinetic_energy_force.exec();
 				
 				pressure_relaxation.exec(dt);
 

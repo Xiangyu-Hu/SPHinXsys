@@ -46,10 +46,10 @@ namespace fluid_dynamics
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
-	TKEnergyAcc<Base, DataDelegationType>::
-		TKEnergyAcc(BaseRelationType& base_relation) :
+	TKEnergyForce<Base, DataDelegationType>::
+		TKEnergyForce(BaseRelationType& base_relation) :
 		BaseTurtbulentModel<Base, DataDelegationType>(base_relation),
-		acc_(this->particles_->acc_),
+		force_(this->particles_->force_), mass_(this->particles_->mass_),
 		indicator_(this->particles_->indicator_), pos_(this->particles_->pos_),
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		test_k_grad_rslt_(*this->particles_->template registerSharedVariable<Vecd>("TkeGradResult")){}
@@ -71,8 +71,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
-	TurbuViscousAcceleration<DataDelegationType>::TurbuViscousAcceleration(BaseRelationType& base_relation)
-		: ViscousAcceleration<DataDelegationType>(base_relation),
+	TurbuViscousForce<DataDelegationType>::TurbuViscousForce(BaseRelationType& base_relation)
+		: ViscousForce<DataDelegationType>(base_relation),
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*this->particles_->template getVariableByName<Real>("TurbulentViscosity")),
 		wall_Y_plus_(*this->particles_->template getVariableByName<Real>("WallYplus")),

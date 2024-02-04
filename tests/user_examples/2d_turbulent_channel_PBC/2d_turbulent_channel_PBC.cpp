@@ -14,9 +14,9 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
 
-    sph_system.setGenerateRegressionData(true);
+    sph_system.setGenerateRegressionData(false);
 
-    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
     /**
      * @brief Material property, particles and body creation of fluid.
@@ -24,10 +24,8 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    //water_block.generateParticles<ParticleGeneratorLattice>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<ParticleGeneratorLattice>();
+
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
@@ -37,7 +35,7 @@ int main(int ac, char *av[])
     
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = { Vecd(DL/2.0, DH/2.0) };
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -64,11 +62,12 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         /** Random reset the insert body particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(water_block);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &water_block });
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp( { &water_block });
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, water_block);
+        ReloadParticleIO write_particle_reload_files(water_block);
         /** A  Physics relaxation step. */
         //relax_dynamics::RelaxationStepInner relaxation_step_inner(water_block_inner_relax);
         relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
@@ -110,21 +109,22 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_wall_contact);
+    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
 
     /** Define external force. */
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     /** Turbulent standard wall function needs normal vectors of wall. */
     NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
-    near_surface.level_set_shape_.writeLevelSet(io_environment);
+    near_surface.level_set_shape_.writeLevelSet(sph_system);
+
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, offset_dist_ref, id_exclude, near_surface);
 
     SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData, SequencedPolicy> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound);
 
-    /** Choose one, ordinary or turbulent. Computing viscous acceleration, */
-    InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_inner, water_wall_contact);
-    //InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_wall_contact);
+    /** Choose one, ordinary or turbulent. Computing viscous force, */
+    InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall,SequencedPolicy> turbulent_viscous_force(water_block_inner, water_wall_contact);
+    //InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
@@ -134,8 +134,10 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
     water_block.addBodyStateForRecording<Real>("Density"); // output for debug
 
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
+    /** Initialize particle force. */
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 
@@ -154,19 +156,20 @@ int main(int ac, char *av[])
 
 
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
 
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(io_environment, water_block);
+    //RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
+        //write_water_mechanical_energy(water_block);
 
-    /**
-     * @brief Setup geometry and initial conditions.
-     */
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     periodic_condition.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -180,7 +183,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_water_mechanical_energy.writeToFile(number_of_iterations);
+    //write_water_mechanical_energy.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -196,9 +199,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            /** Acceleration due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
-            
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
@@ -206,8 +206,8 @@ int main(int ac, char *av[])
 
             update_eddy_viscosity.exec();
 
-            //viscous_acceleration.exec();
-            turbulent_viscous_acceleration.exec();
+            //viscous_force.exec();
+            turbulent_viscous_force.exec();
 
             transport_velocity_correction.exec();
             /** Dynamics including pressure relaxation. */
@@ -219,7 +219,7 @@ int main(int ac, char *av[])
 
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 
-                turbulent_kinetic_energy_acceleration.exec();
+                turbulent_kinetic_energy_force.exec();
 
                 pressure_relaxation.exec(dt);
 
@@ -243,10 +243,10 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    write_water_mechanical_energy.writeToFile(number_of_iterations);
-                }
+                //if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                //{
+                   // write_water_mechanical_energy.writeToFile(number_of_iterations);
+                //}
             }
             number_of_iterations++;
             /** Update cell linked list and configuration. */
@@ -263,7 +263,7 @@ int main(int ac, char *av[])
         }
         TickCount t2 = TickCount::now();
         
-        //body_states_recording.writeToFile();
+        body_states_recording.writeToFile();
         num_output_file++;
         if (num_output_file == 20)
             //system("pause");
@@ -280,14 +280,14 @@ int main(int ac, char *av[])
     get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
     std::cout << "The time-average data is output " << std::endl;
 
-    if (sph_system.GenerateRegressionData())
-    {
-        write_water_mechanical_energy.generateDataBase(0.1);
-    }
-    else if (sph_system.RestartStep() == 0)
-    {
-        write_water_mechanical_energy.testResult();
-    }
+    //if (sph_system.GenerateRegressionData())
+    //{
+    //    write_water_mechanical_energy.generateDataBase(0.1);
+    //}
+    //else if (sph_system.RestartStep() == 0)
+    //{
+    //    write_water_mechanical_energy.testResult();
+    //}
 
     return 0;
 }
