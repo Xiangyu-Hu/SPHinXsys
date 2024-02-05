@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 #include "viscous_dynamics.h"
 
@@ -59,7 +59,7 @@ void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Rea
 {
     Real rho_i = rho_[index_i];
     const Vecd &vel_i = vel_[index_i];
-
+    
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {

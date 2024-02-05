@@ -140,6 +140,165 @@ void Oldroyd_BIntegration2ndHalf<Contact<Wall>>::interaction(size_t index_i, Rea
     }
     dtau_dt_[index_i] += stress_rate;
 }
+
 //=================================================================================================//
+// Herschel_Bulkley
+//=================================================================================================//
+HerschelBulkleyAcceleration<Inner<>>::HerschelBulkleyAcceleration(BaseInnerRelation &inner_relation)
+    : HerschelBulkleyAcceleration<FluidDataInner>(inner_relation),
+      ForcePrior(&base_particles_, "ViscousForce"),
+      mu_srd_(*particles_->getVariableByName<Real>("SRDViscosity"))
+{
+}
+
+void HerschelBulkleyAcceleration<Inner<>>::interaction(size_t index_i, Real dt)
+{
+    //* Force Calculation *//
+
+    Vecd force = Vecd::Zero();
+    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd &e_ij = inner_neighborhood.e_ij_[n];
+        Real r_ij = inner_neighborhood.r_ij_[n];
+        //* Monaghan 2005 (Rep. Prog. Phys.) with averaged viscosity
+
+        Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
+        Real avg_visc = 2.0 * (mu_srd_[index_i] * mu_srd_[index_j]) / (mu_srd_[index_i] + mu_srd_[index_j]);
+        Real eta_ij = 8.0 * avg_visc * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+        force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] * e_ij;
+    }
+    viscous_force_[index_i] = force / rho_[index_i];
+}
+//=================================================================================================//
+HerschelBulkleyAcceleration<Contact<Wall>>::HerschelBulkleyAcceleration(BaseContactRelation &contact_relation)
+    : BaseHerschelBulkleyAccelerationWithWall(contact_relation),
+      ForcePrior(&base_particles_, "ViscousForce"),
+      mu_srd_(*particles_->getVariableByName<Real>("SRDViscosity"))
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
+    }
+}
+
+void HerschelBulkleyAcceleration<Contact<Wall>>::interaction(size_t index_i, Real dt)
+{
+    //* Force Calculation *//
+    Vecd force = Vecd::Zero();
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    {
+        //! whats the difference?
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        // StdLargeVec<Vecd> &vel_k = *(wall_vel_ave_[k]);
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = wall_neighborhood.j_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            Real r_ij = wall_neighborhood.r_ij_[n];
+
+            Real v_r_ij = (vel_[index_i] - vel_k[index_j]).dot(r_ij * e_ij);
+            Real eta_ij = 2.0 * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+            force += eta_ij * mass_[index_i] * wall_neighborhood.dW_ijV_j_[n] * e_ij;
+        }
+    }
+    viscous_force_[index_i] += force / rho_[index_i];
+}
+//=================================================================================================//
+VelocityGradientInner::VelocityGradientInner(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()),
+      FluidDataInner(inner_relation),
+      vel_(particles_->vel_)
+{
+    particles_->registerVariable(combined_velocity_gradient_, "CombinedVelocityGradient");
+    particles_->addVariableToWrite<Matd>("CombinedVelocityGradient");
+}
+//=================================================================================================//
+void VelocityGradientInner::interaction(size_t index_i, Real dt)
+{
+    //? calculate velocity gradient
+    combined_velocity_gradient_[index_i] = Matd::Zero();
+    Matd velocity_gradient = Matd::Zero();
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        velocity_gradient += -(vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
+    }
+    combined_velocity_gradient_[index_i] = velocity_gradient;
+}
+//=================================================================================================//
+VelocityGradientContact::VelocityGradientContact(BaseContactRelation &contact_relation)
+    : LocalDynamics(contact_relation.getSPHBody()),
+      FluidContactData(contact_relation),
+      vel_(particles_->vel_),
+      combined_velocity_gradient_(*particles_->getVariableByName<Matd>("CombinedVelocityGradient"))
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
+    }
+}
+//=================================================================================================//
+void VelocityGradientContact::interaction(size_t index_i, Real dt)
+{
+    //? calculate velocity gradient
+    Matd velocity_gradient = Matd::Zero();
+
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            velocity_gradient += -(vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
+        }
+    }
+    combined_velocity_gradient_[index_i] += velocity_gradient;
+}
+//=================================================================================================//
+ShearRateDependentViscosity::ShearRateDependentViscosity(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()),
+      FluidDataInner(inner_relation),
+      combined_velocity_gradient_(*particles_->getVariableByName<Matd>("CombinedVelocityGradient")),
+      herschel_bulkley_fluid_(DynamicCast<HerschelBulkleyFluid>(this, this->particles_->getBaseMaterial()))
+{
+    particles_->registerVariable(mu_srd_, "SRDViscosity");
+    particles_->addVariableToWrite<Real>("SRDViscosity");
+    particles_->registerVariable(scalar_shear_rate_, "ScalarShearRate");
+    particles_->addVariableToWrite<Real>("ScalarShearRate");
+}
+
+void ShearRateDependentViscosity::interaction(size_t index_i, Real dt)
+{
+    //* Viscosity Calculation *//
+    Real tau_y = herschel_bulkley_fluid_.getYieldStress();
+    Real m = herschel_bulkley_fluid_.getPowerIndex();
+    Real K = herschel_bulkley_fluid_.getConsistencyIndex();
+    Real min_shear_rate = herschel_bulkley_fluid_.getMinShearRate();
+    Real max_shear_rate = herschel_bulkley_fluid_.getMaxShearRate();
+
+    //? Rate of Strain Tensor
+    Matd D_ij = 0.5 * (combined_velocity_gradient_[index_i] + combined_velocity_gradient_[index_i].transpose());
+
+    //? D_ij D_ij
+    Real second_invariant = D_ij(0, 0) * D_ij(0, 0) + D_ij(1, 0) * D_ij(1, 0) + D_ij(2, 0) * D_ij(2, 0) + D_ij(0, 1) * D_ij(0, 1) + D_ij(1, 1) * D_ij(1, 1) + D_ij(2, 1) * D_ij(2, 1) + D_ij(0, 2) * D_ij(0, 2) + D_ij(1, 2) * D_ij(1, 2) + D_ij(2, 2) * D_ij(2, 2);
+    // D_ij = D_ij.cwiseProduct(D_ij);
+    // Real second_invariant = D_ij.sum();
+
+    //? sqrt(2*D_ij D_ij)
+    second_invariant = (Real)std::sqrt(2 * second_invariant);
+
+    //? Herschel Blukley Model tau_y / gamma + K*gamma^(n-1) | Excess of shear rate prevention
+    Real capped_shear_rate = std::max(second_invariant, min_shear_rate);
+    capped_shear_rate = std::min(capped_shear_rate, max_shear_rate);
+    scalar_shear_rate_[index_i] = capped_shear_rate;
+    mu_srd_[index_i] = (tau_y + K * (std::pow(capped_shear_rate, m))) / capped_shear_rate;
+}
 } // namespace fluid_dynamics
 } // namespace SPH

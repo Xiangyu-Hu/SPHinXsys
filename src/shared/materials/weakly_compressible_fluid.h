@@ -127,5 +127,33 @@ class Oldroyd_B_Fluid : public WeaklyCompressibleFluid
     Real ReferencePolymericViscosity() { return mu_p_; };
     virtual Oldroyd_B_Fluid *ThisObjectPtr() override { return this; };
 };
+/**
+ * @class HerschelBulkleyFluid
+ * @brief Herschel Bulkley CE (shear rate dependent power law model)
+ */
+class HerschelBulkleyFluid : public WeaklyCompressibleFluid
+{
+  protected:
+    Real consistency_index;
+    Real power_index;
+    Real yield_stress;
+    Real min_shear_rate;
+    Real max_shear_rate;
+
+  public:
+    explicit HerschelBulkleyFluid(Real rho0, Real c0, Real consistency_index, Real power_index, Real yield_stress, Real min_shear_rate, Real max_shear_rate)
+        : WeaklyCompressibleFluid(rho0, c0), consistency_index(consistency_index), power_index(power_index), yield_stress(yield_stress), min_shear_rate(min_shear_rate), max_shear_rate(max_shear_rate)
+    {
+        material_type_name_ = "HerschelBulkleyFluid";
+    };
+    virtual ~HerschelBulkleyFluid(){};
+
+    Real getConsistencyIndex() { return consistency_index; };
+    Real getPowerIndex() { return power_index; };
+    Real getYieldStress() { return yield_stress; };
+    Real getMinShearRate() { return min_shear_rate; };
+    Real getMaxShearRate() { return max_shear_rate; };
+    virtual HerschelBulkleyFluid *ThisObjectPtr() override { return this; };
+};
 } // namespace SPH
 #endif // WEAKLY_COMPRESSIBLE_FLUID_H

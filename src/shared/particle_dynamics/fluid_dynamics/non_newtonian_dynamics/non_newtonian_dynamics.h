@@ -32,6 +32,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "fluid_integration.hpp"
+#include "force_prior.h"
 
 namespace SPH
 {
@@ -105,6 +106,127 @@ class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfCont
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
+// ********************** //
+// Herschel Bulkley Fluid
+// ********************** //
+//!
+// class ShearRateDependentViscosity : public PairGeomAverageFixed<Real>
+// {
+//   public:
+//     ShearRateDependentViscosity(Real visc1, Real visc2)
+//         : PairGeomAverageFixed<Real>(
+//               visc1,
+//               visc2){};
+//     explicit ShearRateDependentViscosity(Real visc)
+//         : ShearRateDependentViscosity(visc, visc){};
+//     virtual ~ShearRateDependentViscosity(){};
+
+// };
+
+template <typename... InteractionTypes>
+class HerschelBulkleyAcceleration;
+
+template <class DataDelegationType>
+class HerschelBulkleyAcceleration<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class BaseRelationType>
+    explicit HerschelBulkleyAcceleration(BaseRelationType &base_relation);
+    virtual ~HerschelBulkleyAcceleration(){};
+
+  protected:
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &vel_, &viscous_force_;
+    HerschelBulkleyFluid &herschel_bulkley_fluid_;
+    Real smoothing_length_;
+};
+
+template <>
+class HerschelBulkleyAcceleration<Inner<>> : public HerschelBulkleyAcceleration<FluidDataInner>, public ForcePrior
+{
+  public:
+    explicit HerschelBulkleyAcceleration(BaseInnerRelation &inner_relation);
+    virtual ~HerschelBulkleyAcceleration(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Real> &mu_srd_;
+};
+using HerschelBulkleyAccelerationInner = HerschelBulkleyAcceleration<Inner<>>;
+
+using BaseHerschelBulkleyAccelerationWithWall = InteractionWithWall<HerschelBulkleyAcceleration>;
+template <>
+class HerschelBulkleyAcceleration<Contact<Wall>> : BaseHerschelBulkleyAccelerationWithWall, public ForcePrior
+{
+  public:
+    explicit HerschelBulkleyAcceleration(BaseContactRelation &contact_relation);
+    virtual ~HerschelBulkleyAcceleration(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Real> &mu_srd_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+};
+using HerschelBulkleyAccelerationWall = HerschelBulkleyAcceleration<Contact<Wall>>;
+using ViscousShearRateDependent = ComplexInteraction<HerschelBulkleyAcceleration<Inner<>, Contact<Wall>>>;
+
+/**
+ * @class VelocityGradientInner
+ * @brief  computes the shear rate of the fluid
+ */
+
+class VelocityGradientInner : public LocalDynamics, public FluidDataInner
+{
+  public:
+    explicit VelocityGradientInner(BaseInnerRelation &inner_relation);
+    virtual ~VelocityGradientInner(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Vecd> &vel_;
+    StdLargeVec<Matd> combined_velocity_gradient_;
+};
+
+/**
+ * @class VelocityGradientContact
+ * @brief  computes the shear rate of the fluid at the boundary
+ */
+
+class VelocityGradientContact : public LocalDynamics, public FluidContactData
+{
+  public:
+    explicit VelocityGradientContact(BaseContactRelation &contact_relation);
+    virtual ~VelocityGradientContact(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Vecd> &vel_;
+    StdLargeVec<Matd> &combined_velocity_gradient_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+};
+
+class ShearRateDependentViscosity : public LocalDynamics, public FluidDataInner
+{
+  public:
+    explicit ShearRateDependentViscosity(BaseInnerRelation &inner_relation);
+    virtual ~ShearRateDependentViscosity(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &combined_velocity_gradient_;
+    HerschelBulkleyFluid &herschel_bulkley_fluid_;
+    StdLargeVec<Real> mu_srd_;
+    StdLargeVec<Real> scalar_shear_rate_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
+
+#include "non_newtonian_dynamics.hpp"
 #endif // NON_NEWTONIAN_DYNAMICS_H
