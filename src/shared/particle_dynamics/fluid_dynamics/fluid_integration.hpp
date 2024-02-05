@@ -24,22 +24,24 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     : BaseIntegration<FluidDataInner>(inner_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_)
 {
-    /**
-     *	register sortable particle data
-     */
+    //----------------------------------------------------------------------
+    //		register sortable particle data
+    //----------------------------------------------------------------------
     particles_->registerSortableVariable<Vecd>("Position");
     particles_->registerSortableVariable<Vecd>("Velocity");
     particles_->registerSortableVariable<Real>("Mass");
     particles_->registerSortableVariable<Vecd>("ForcePrior");
     particles_->registerSortableVariable<Vecd>("Force");
-    particles_->registerSortableVariable<Real>("DensityChangeRate");    
+    particles_->registerSortableVariable<Real>("DensityChangeRate");
     particles_->registerSortableVariable<Real>("Density");
     particles_->registerSortableVariable<Real>("Pressure");
     particles_->registerSortableVariable<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
     //		add restart output particle data
     //----------------------------------------------------------------------
-    particles_->addVariableToRestart<Real>("Pressure");
+    particles_->addVariableToRestart<Vecd>("ForcePrior");
+    particles_->addVariableToRestart<Vecd>("Force");
+    particles_->addVariableToRestart<Real>("DensityChangeRate");
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
