@@ -18,7 +18,7 @@ const Real DH = 2.1;                                         /**< Tank height. *
 const Real Dam_L = 1.0;                                      /**< Water block width. */
 const Real Dam_H = 2.0;                                      /**< Water block height. */
 const Real Gate_thickness = 0.05;                            /**< Width of the gate. */
-const Real particle_spacing_gate = Gate_thickness / 10.0;    /**< Initial reference particle spacing*/
+const Real particle_spacing_gate = Gate_thickness / 4.0;     /**< Initial reference particle spacing*/
 const Real particle_spacing_ref = 2 * particle_spacing_gate; /**< Initial reference particle spacing*/
 const Real BW = particle_spacing_ref * 4.0;
 const BoundingBox system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
@@ -55,10 +55,10 @@ const Real mu_f = rho0_f * U_ref * DL / Re;       /**< Dynamics viscosity. */
 //	Material properties of the elastic gate.
 //----------------------------------------------------------------------
 const Real rho0_s = 2700.0; /**< Reference solid density. */
-const Real poisson = 0.3;   /**< Poisson ratio. */
+const Real poisson = 0.34;  /**< Poisson ratio. */
 const Real Ae = 6.75e10;    /**< Normalized Youngs Modulus. */
 const Real Youngs_modulus = Ae;
-const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * Gate_thickness;
+const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * Gate_thickness * Gate_thickness;
 //----------------------------------------------------------------------
 //	Geometry definition.
 //----------------------------------------------------------------------
@@ -156,6 +156,10 @@ MultiPolygon createGateConstrainShape()
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
+    const Real p = (rho0_f * Dam_H + rho0_s * Gate_thickness) * gravity_g;
+    const Real D = 1 / 12.0 / (1 - poisson * poisson) * Youngs_modulus * std::pow(Gate_thickness, 3);
+    const Real max_disp_analytical = 0.0026 * p * std::pow(Dam_L, 4) / D;
+    std::cout << max_disp_analytical << std::endl;
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
@@ -221,19 +225,6 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
         fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
-    //----------------------------------------------------------------------
-    //	Define solid methods which are used in this case.
-    //----------------------------------------------------------------------
-    auto shell_gravity = [&]()
-    {
-        particle_for(
-            par,
-            gate.getBaseParticles().total_real_particles_,
-            [&](size_t index_i)
-            {
-                gate.getBaseParticles().force_prior_[index_i] += Vecd(0.0, -gravity_g);
-            });
-    };
     /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
@@ -325,7 +316,6 @@ int main(int ac, char *av[])
                 pressure_relaxation.exec(dt);
 
                 fluid_pressure_force_on_gate.exec();
-                shell_gravity();
 
                 density_relaxation.exec(dt);
                 /** Solid dynamics time stepping. */
@@ -385,9 +375,6 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     // Compare with analytical solution
-    const Real p = (rho0_f * Dam_H + rho0_s * Gate_thickness) * gravity_g;
-    const Real D = 1 / 12.0 / (1 - poisson * poisson) * Youngs_modulus * std::pow(Gate_thickness, 3);
-    const Real max_disp_analytical = 0.0026 * p * std::pow(Dam_L, 4) / D;
     const Real max_disp = std::abs((*write_beam_tip_displacement.getObservedQuantity())[0][1]);
     const Real error = std::abs((max_disp_analytical - max_disp) / max_disp_analytical) * 100.0;
 
