@@ -1,9 +1,9 @@
 /**
  * @file 	elastic_gate.cpp
  * @brief 	2D elastic gate deformation due to dam break force.
- * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for fluid-structure-interaction (FSI) simulation.
- * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @details This is the one of the basic test cases for
+ * 			understanding SPH method for fluid-shell-interaction simulation.
+ * @author 	Weiyi Kong
  */
 #include "sphinxsys.h" //	SPHinXsys Library.
 using namespace SPH;   //	Namespace cite here.
@@ -17,7 +17,7 @@ Real Dam_L = 100.0 * scale;                /**< Water block width. */
 Real Dam_H = 140.0 * scale;                /**< Water block height. */
 Real Gate_width = 5.0 * scale;             /**< Width of the gate. */
 Real Base_bottom_position = 79.0 * scale;  /**< Position of gate base. (In Y direction) */
-Real resolution_gate = Gate_width / 32.0;  /**< Initial reference particle spacing of the gate. */
+Real resolution_gate = Gate_width / 4.0;   /**< Initial reference particle spacing of the gate. */
 Real resolution_ref = 2 * resolution_gate; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4.0;            /**< Extending width for BCs. */
 /** The offset that the rubber gate shifted above the tank. */
@@ -186,10 +186,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(water_block_inner, water_wall_contact, water_gate_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(water_block_inner, water_wall_contact, water_gate_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_density_by_summation(water_block_inner, water_wall_contact, water_gate_contact);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
@@ -198,7 +199,7 @@ int main(int ac, char *av[])
     SimpleDynamics<OffsetInitialPosition> gate_offset_position(gate, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> gate_corrected_configuration(gate_inner);
-    InteractionDynamics<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------
     //	Algorithms of Elastic dynamics.
@@ -230,6 +231,7 @@ int main(int ac, char *av[])
     gate_average_curvature.exec();
     water_block_complex.updateConfiguration();
     gate_water_contact.updateConfiguration();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -256,7 +258,6 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             /** Force Prior due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
 

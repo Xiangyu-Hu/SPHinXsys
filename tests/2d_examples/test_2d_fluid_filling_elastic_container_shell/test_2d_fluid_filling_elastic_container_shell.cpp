@@ -1,89 +1,11 @@
 /**
- * @file 	test_2d_fluid_around_balloon_container.cpp
- * @brief 	Test on fluid-container interaction when 2 container particles are close to each other
- * @details This is a case to test fluid-container interaction.
+ * @file 	test_2d_fluid_filling_elastic_container_shell.cpp
+ * @brief 	Test on fluid filling into an elastic shell container
+ * @details This is a case to test fluid-shell interaction.
  * @author 	Weiyi Kong, Virtonomy GmbH
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
-
-class CheckKernelCompleteness
-{
-  private:
-    BaseParticles *particles_;
-    Kernel *kernel_;
-    std::vector<SPH::BaseParticles *> contact_particles_;
-    ParticleConfiguration *inner_configuration_;
-    std::vector<ParticleConfiguration *> contact_configuration_;
-
-    StdLargeVec<Real> W_ijV_j_ttl;
-    StdLargeVec<Real> W_ijV_j_ttl_contact;
-    StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
-    StdLargeVec<int> number_of_inner_neighbor;
-    StdLargeVec<int> number_of_contact_neighbor;
-
-  public:
-    CheckKernelCompleteness(BaseInnerRelation &inner_relation, std::vector<BaseContactRelation *> &contact_relations)
-        : particles_(&inner_relation.base_particles_),
-          kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
-          inner_configuration_(&inner_relation.inner_configuration_)
-    {
-        for (size_t n = 0; n < contact_relations.size(); n++)
-        {
-            auto &contact_relation = *contact_relations[n];
-            for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
-            {
-                contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
-                contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
-            }
-        }
-        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
-        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl_contact, "TotalKernelContact");
-        inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
-        inner_relation.base_particles_.registerVariable(number_of_inner_neighbor, "InnerNeighborNumber");
-        inner_relation.base_particles_.registerVariable(number_of_contact_neighbor, "ContactNeighborNumber");
-    }
-
-    inline void exec()
-    {
-        particle_for(
-            par,
-            particles_->total_real_particles_,
-            [&, this](size_t index_i)
-            {
-                int N_inner_number = 0;
-                int N_contact_number = 0;
-                Real W_ijV_j_ttl_i = particles_->Vol_[index_i] * kernel_->W(0, ZeroVecd);
-                Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
-                const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    W_ijV_j_ttl_i += inner_neighborhood.W_ij_[n] * particles_->Vol_[index_j];
-                    dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-                    N_inner_number++;
-                }
-
-                double W_ijV_j_ttl_contact_i = 0;
-                for (size_t k = 0; k < contact_configuration_.size(); ++k)
-                {
-                    const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
-                    for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-                    {
-                        size_t index_j = wall_neighborhood.j_[n];
-                        W_ijV_j_ttl_contact_i += wall_neighborhood.W_ij_[n] * contact_particles_[k]->Vol_[index_j];
-                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-                        N_contact_number++;
-                    }
-                }
-                W_ijV_j_ttl[index_i] = W_ijV_j_ttl_i + W_ijV_j_ttl_contact_i;
-                W_ijV_j_ttl_contact[index_i] = W_ijV_j_ttl_contact_i;
-                dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
-                number_of_inner_neighbor[index_i] = N_inner_number;
-                number_of_contact_neighbor[index_i] = N_contact_number;
-            });
-    }
-};
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -97,7 +19,7 @@ const Real H = 3.75 * scale; /**< Height of the container. */
 const Real R = 2.25 * scale; /**< Radius of the container. */
 const Real s = 0.2 * scale;  // Thickness of the container
 
-const Real resolution_container = s / 16.0;
+const Real resolution_container = s / 4.0;
 const Real resolution_ref = 2 * resolution_container;
 const Real BW = resolution_ref * 4; /**< Rigid wall thickness. */
 
@@ -287,16 +209,14 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Algorithm for fluid dynamics. */
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_funnel_contact, water_container_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_funnel_contact, water_container_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, NoRiemannSolver>> fluid_density_relaxation(water_inner, water_funnel_contact, water_container_contact);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>>> viscous_acceleration(water_inner, water_funnel_contact, water_container_contact);
-    InteractionWithUpdate<ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>, Contact<>>>> inlet_outlet_surface_particle_indicator(water_inner, water_funnel_contact, water_container_contact);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SingleResolution>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_velocity_correction(water_inner, water_funnel_contact, water_container_contact);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(water_inner, water_funnel_contact, water_container_contact);
     /** Algorithm for solid dynamics. */
     SimpleDynamics<NormalDirectionFromBodyShape> funnel_normal_direction(funnel);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> container_time_step_size(container);
@@ -329,9 +249,8 @@ int main(int ac, char *av[])
             });
     };
     /** FSI */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_container(container_water_contact);
-    InteractionDynamics<solid_dynamics::AllForceFromFluid> fluid_force_on_container_update(container_water_contact, viscous_force_on_container);
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(container);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_container(container_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> pressure_force_on_container(container_water_contact);
     /** constraint and damping */
     BoundaryGeometry container_boundary_geometry(container, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> container_constrain(container_boundary_geometry);
@@ -345,7 +264,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
-    container.addBodyStateForRecording<Vecd>("AllForceFromFluid");
+    container.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     container.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
     container.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     BodyStatesRecordingToVtp write_body_states(sph_system.real_bodies_);
@@ -361,15 +280,7 @@ int main(int ac, char *av[])
     container_average_curvature.exec();
     water_block_complex.updateConfiguration();
     container_water_contact.updateConfiguration();
-
-    //   Check dWijVjeij
-    std::vector<BaseContactRelation *> contact_relations = {&water_funnel_contact, &water_container_contact};
-    CheckKernelCompleteness check_kernel_completeness(water_inner, contact_relations);
-    check_kernel_completeness.exec();
-    water_block.addBodyStateForRecording<Real>("TotalKernel");
-    water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
-    water_block.addBodyStateForRecording<int>("InnerNeighborNumber");
-    water_block.addBodyStateForRecording<int>("ContactNeighborNumber");
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -403,7 +314,6 @@ int main(int ac, char *av[])
             /** Integrate time (loop) until the next output time. */
             while (integration_time < output_interval)
             {
-                fluid_step_initialization.exec();
                 /** Dynamics including pressure relaxation. */
                 Real Dt = fluid_advection_time_step.exec();
                 if (Dt < Dt_ref / 20)
@@ -427,28 +337,24 @@ int main(int ac, char *av[])
                     throw std::runtime_error("container time step decreased too much!");
                 }
                 Real dt = std::min({dt_s_temp, dt_temp, Dt});
-                // inlet_outlet_surface_particle_indicator.exec();
                 update_fluid_density_by_summation.exec();
                 viscous_acceleration.exec();
-                // transport_velocity_correction.exec();
                 if (if_fsi)
                     viscous_force_on_container.exec();
 
                 fluid_pressure_relaxation.exec(dt);
                 if (if_fsi)
-                    fluid_force_on_container_update.exec();
+                    pressure_force_on_container.exec();
                 fluid_density_relaxation.exec(dt);
                 /** Solid dynamics time stepping. */
                 if (if_fsi)
                 {
-                    // average_velocity_and_acceleration.initialize_displacement_.exec();
                     container_stress_relaxation_first.exec(dt);
                     container_constrain.exec();
                     container_position_damping.exec(dt);
                     container_rotation_damping.exec(dt);
                     container_constrain.exec();
                     container_stress_relaxation_second.exec(dt);
-                    // average_velocity_and_acceleration.update_averages_.exec(dt);
                     update_average_velocity();
                 }
                 if (number_of_iterations % screen_output_interval == 0)
@@ -475,9 +381,7 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
             }
-            // exit(0);
             TickCount t2 = TickCount::now();
-            check_kernel_completeness.exec();
             write_body_states.writeToFile();
             write_tip_displacement.writeToFile(number_of_iterations);
             TickCount t3 = TickCount::now();

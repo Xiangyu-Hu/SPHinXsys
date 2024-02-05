@@ -1,8 +1,8 @@
 /**
  * @file 	2d_cylinder_flow.h
- * @brief 	This is the case file for the test of flow passing by a cylinder.
- * @details  We consider a flow passing by a cylinder in 2D.
- * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
+ * @brief 	This is the case file for the test of flow passing by a shell cylinder.
+ * @details  We consider a flow passing by a shell cylinder in 2D.
+ * @author 	Weiyi Kong
  */
 
 #include "sphinxsys.h"
@@ -10,9 +10,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 15.0;             /**< Channel length. */
-Real DH = 10.0;             /**< Channel height. */
-Real resolution_ref = 0.05; /**< Initial reference particle spacing. */
+Real DL = 15.0;            /**< Channel length. */
+Real DH = 10.0;            /**< Channel height. */
+Real resolution_ref = 0.1; /**< Initial reference particle spacing. */
 Real resolution_shell = 0.5 * resolution_ref;
 Real DL_sponge = resolution_ref * 10.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0;  /**< Sponge region to impose freestream condition. */

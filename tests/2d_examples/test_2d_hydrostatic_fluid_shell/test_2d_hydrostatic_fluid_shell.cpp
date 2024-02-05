@@ -1,10 +1,9 @@
 /**
  * @file 	hydrostatic_fsi.cpp
- * @brief 	structure deformation due to hydrostatic pressure under gravity.
+ * @brief 	shell deformation due to hydrostatic pressure under gravity.
  * @details This is the one of the basic test cases
- * for understanding SPH method for fluid-structure-interaction (FSI) simulation.
- * @author 	Yujie Zhu, Chi Zhang and Xiangyu Hu
- * @version 0.1
+ * for understanding SPH method for fluid-shell-interaction (FSI) simulation.
+ * @author 	Weiyi Kong
  */
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
@@ -55,7 +54,7 @@ const Real mu_f = rho0_f * U_ref * DL / Re;       /**< Dynamics viscosity. */
 //	Material properties of the elastic gate.
 //----------------------------------------------------------------------
 const Real rho0_s = 2700.0; /**< Reference solid density. */
-const Real poisson = 0.34;  /**< Poisson ratio. */
+const Real poisson = 0.495; /**< Poisson ratio. */
 const Real Ae = 6.75e10;    /**< Normalized Youngs Modulus. */
 const Real Youngs_modulus = Ae;
 const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * Gate_thickness * Gate_thickness;
@@ -156,10 +155,6 @@ MultiPolygon createGateConstrainShape()
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    const Real p = (rho0_f * Dam_H + rho0_s * Gate_thickness) * gravity_g;
-    const Real D = 1 / 12.0 / (1 - poisson * poisson) * Youngs_modulus * std::pow(Gate_thickness, 3);
-    const Real max_disp_analytical = 0.0026 * p * std::pow(Dam_L, 4) / D;
-    std::cout << max_disp_analytical << std::endl;
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
@@ -212,8 +207,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of fluid density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     /** Compute time step size without considering sound wave speed. */
@@ -250,7 +245,7 @@ int main(int ac, char *av[])
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionDynamics<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -258,7 +253,6 @@ int main(int ac, char *av[])
     gate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     gate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
-    gate.addBodyStateForRecording<Vecd>("PriorForce");
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of gate center. */
@@ -276,6 +270,7 @@ int main(int ac, char *av[])
     gate_curvature.exec();
     /** update fluid-shell contact*/
     water_block_contact.updateConfiguration();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -286,7 +281,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 1.0; /**< End time. */
+    Real end_time = 0.5; /**< End time. */
     Real output_interval = end_time / 100.0;
     Real dt = 0.0;   /**< Default acoustic time step sizes. */
     Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
@@ -301,8 +296,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
             /** Update normal direction on elastic body. */
@@ -314,9 +307,7 @@ int main(int ac, char *av[])
                 fluid_damping.exec(dt);
                 /** Fluid relaxation and force computation. */
                 pressure_relaxation.exec(dt);
-
                 fluid_pressure_force_on_gate.exec();
-
                 density_relaxation.exec(dt);
                 /** Solid dynamics time stepping. */
                 Real dt_s_sum = 0.0;
@@ -374,6 +365,11 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+    // analytical solution
+    const Real p = rho0_f * gravity_g * Dam_H;
+    const Real I = 1 / 12.0 * 1.0 * std::pow(Gate_thickness, 3);
+    const Real max_disp_analytical = p * std::pow(Dam_L, 4) / 384.0 / Youngs_modulus / I;
+
     // Compare with analytical solution
     const Real max_disp = std::abs((*write_beam_tip_displacement.getObservedQuantity())[0][1]);
     const Real error = std::abs((max_disp_analytical - max_disp) / max_disp_analytical) * 100.0;
@@ -384,7 +380,7 @@ int main(int ac, char *av[])
               << std::endl;
 
     // gtest
-    EXPECT_NEAR(max_disp_analytical, max_disp, max_disp_analytical * 20e-2); // it's below 5% but 20% for CI
+    EXPECT_NEAR(max_disp_analytical, max_disp, max_disp_analytical * 5e-2);
 
     return 0;
 }

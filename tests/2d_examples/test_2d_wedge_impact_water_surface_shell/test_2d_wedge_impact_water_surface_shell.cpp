@@ -1,13 +1,11 @@
 /**
  * @file 	wedge_impact_water_surface.cpp
  * @brief 	high speed impact of aluminum wedge on water surface.
- * @details This is the one of the basic test cases
- * for understanding SPH method for fluid-structure-interaction (FSI) simulation.
- * @author 	Yujie Zhu, Chi Zhang and Xiangyu Hu
+ * @details Test for fluid-shell interaction
+ * @author 	Weiyi Kong
  * @version 0.1
  */
 #include "sphinxsys.h"
-#include <gtest/gtest.h>
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -17,7 +15,7 @@ const Real DL_half = 1.5;                                     /**< Tank half len
 const Real DH = 1.0;                                          /**< Tank height. */
 const Real wedge_length = 0.6;                                /**< Length of the wedge. */
 const Real wedge_thickness = 0.04;                            /**< Thickness of the wedge. */
-const Real particle_spacing_shell = wedge_thickness / 16.0;   /**< Initial reference particle spacing*/
+const Real particle_spacing_shell = wedge_thickness / 2.0;    /**< Initial reference particle spacing*/
 const Real particle_spacing_ref = 2 * particle_spacing_shell; /**< Initial reference particle spacing*/
 const Real BW = particle_spacing_ref * 4.0;                   /**< Wall boundary thickness*/
 const Real initial_gap = wedge_thickness;
@@ -237,8 +235,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Evaluation of fluid density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_fluid_density(water_block_inner, water_wall_contact, water_wedge_contact);
     /** Compute time step size without considering sound wave speed. */
@@ -262,25 +258,30 @@ int main(int ac, char *av[])
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> wedge_update_normal(wedge);
     /** Curvature calculation for elastic wedge. */
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> wedge_curvature(shell_curvature_inner);
-    /**Damping.  */
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        wedge_position_damping(0.2, wedge_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        wedge_rotation_damping(0.2, wedge_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Compute the average velocity of wedge. */
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(wedge);
     /** Compute the force exerted on elastic wedge due to fluid pressure. */
-    InteractionDynamics<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_wedge(wedge_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_wedge(wedge_water_contact);
+    auto update_average_velocity = [&]()
+    {
+        auto avg_vel = *wedge.getBaseParticles().getVariableByName<Vecd>("AverageVelocity");
+        auto avg_force = *wedge.getBaseParticles().getVariableByName<Vecd>("AverageForce");
+        particle_for(
+            par,
+            wedge.getBaseParticles().total_real_particles_,
+            [&](size_t index_i)
+            {
+                avg_vel[index_i] = wedge.getBaseParticles().vel_[index_i];
+                avg_force[index_i] = wedge.getBaseParticles().force_[index_i];
+            });
+    };
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<Real>("Pressure");
     wedge.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     wedge.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
-    wedge.addBodyStateForRecording<Vecd>("PriorForce");
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of wedge center. */
@@ -335,20 +336,6 @@ int main(int ac, char *av[])
                 wedge.getBaseParticles().vel_[index_i][1] = -U_ref;
             });
     }
-
-    auto update_average_velocity = [&]()
-    {
-        auto avg_vel = *wedge.getBaseParticles().getVariableByName<Vecd>("AverageVelocity");
-        auto avg_force = *wedge.getBaseParticles().getVariableByName<Vecd>("AverageForce");
-        particle_for(
-            par,
-            wedge.getBaseParticles().total_real_particles_,
-            [&](size_t index_i)
-            {
-                avg_vel[index_i] = wedge.getBaseParticles().vel_[index_i];
-                avg_force[index_i] = wedge.getBaseParticles().force_[index_i];
-            });
-    };
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
@@ -358,8 +345,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             Real dt_temp = get_fluid_time_step_size.exec();
             Real dt_s_temp = wedge_computing_time_step_size.exec();
@@ -374,9 +359,6 @@ int main(int ac, char *av[])
             /** Solid dynamics time stepping. */
             wedge_stress_relaxation_first_half.exec(dt);
             wedge_velocity_constraint.exec();
-            // wedge_position_damping.exec(dt);
-            // wedge_rotation_damping.exec(dt);
-            // wedge_velocity_constraint.exec();
             wedge_stress_relaxation_second_half.exec(dt);
             update_average_velocity();
 

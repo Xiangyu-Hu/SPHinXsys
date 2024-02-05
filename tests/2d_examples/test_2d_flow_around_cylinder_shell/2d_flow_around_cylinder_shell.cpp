@@ -58,7 +58,6 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> cylinder_average_curvature(cylinder_curvature_inner);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
@@ -66,7 +65,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionDynamics<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
@@ -75,8 +74,8 @@ int main(int ac, char *av[])
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_cylinder(cylinder_contact);
-    InteractionDynamics<solid_dynamics::PressureForceFromFluid> pressure_force_on_cylinder(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_cylinder(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> pressure_force_on_cylinder(cylinder_contact);
     /** Computing viscous force acting on wall with wall model. */
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
@@ -85,10 +84,8 @@ int main(int ac, char *av[])
     cylinder.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
     cylinder.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
-        write_total_viscous_force_on_inserted_body(viscous_force_on_cylinder, "TotalViscousForceOnSolid");
-    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
-        write_total_force_on_inserted_body(pressure_force_on_cylinder, "TotalPressureForceOnSolid");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
+    ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(cylinder, "PressureForceFromFluid");
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
@@ -133,7 +130,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_force.exec();
@@ -183,8 +179,8 @@ int main(int ac, char *av[])
         /** write run-time observation into file */
         compute_vorticity.exec();
         write_real_body_states.writeToFile();
-        write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
-        write_total_force_on_inserted_body.writeToFile(number_of_iterations);
+        write_total_viscous_force_from_fluid.writeToFile(number_of_iterations);
+        write_total_pressure_force_from_fluid.writeToFile(number_of_iterations);
         fluid_observer_contact.updateConfiguration();
         write_fluid_velocity.writeToFile(number_of_iterations);
 
@@ -197,7 +193,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_total_viscous_force_on_inserted_body.testResult();
+    write_total_viscous_force_from_fluid.testResult();
 
     return 0;
 }

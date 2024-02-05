@@ -163,7 +163,7 @@ class ContactRelationToShell : public ContactRelationCrossResolution
     UniquePtrsKeeper<NeighborBuilderContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
 
   public:
-    ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction);
+    ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction = false);
     virtual ~ContactRelationToShell(){};
     virtual void updateConfiguration() override;
 

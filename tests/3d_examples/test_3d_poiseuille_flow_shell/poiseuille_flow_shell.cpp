@@ -2,89 +2,19 @@
  * @file 	poiseuille_flow.cpp
  * @brief 	3D poiseuille flow example
  * @details This is the one of the basic test cases for validating fluid-rigid shell interaction
- * @author
+ * @author  Weiyi Kong
  */
-/**
- * @brief 	SPHinXsys Library.
- */
-#include "base_data_type.h"
+
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
 using namespace SPH;
 
-class CheckKernelCompleteness
-{
-  private:
-    BaseParticles *particles_;
-    std::vector<SPH::BaseParticles *> contact_particles_;
-    ParticleConfiguration *inner_configuration_;
-    std::vector<ParticleConfiguration *> contact_configuration_;
-
-    StdLargeVec<Real> W_ijV_j_ttl;
-    StdLargeVec<Vecd> dW_ijV_je_ij_ttl;
-    StdLargeVec<int> number_of_inner_neighbor;
-    StdLargeVec<int> number_of_contact_neighbor;
-
-  public:
-    CheckKernelCompleteness(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : particles_(&inner_relation.base_particles_), inner_configuration_(&inner_relation.inner_configuration_)
-    {
-        for (size_t i = 0; i != contact_relation.contact_bodies_.size(); ++i)
-        {
-            contact_particles_.push_back(&contact_relation.contact_bodies_[i]->getBaseParticles());
-            contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
-        }
-        inner_relation.base_particles_.registerVariable(W_ijV_j_ttl, "TotalKernel");
-        inner_relation.base_particles_.registerVariable(dW_ijV_je_ij_ttl, "TotalKernelGrad");
-        inner_relation.base_particles_.registerVariable(number_of_inner_neighbor, "InnerNeighborNumber");
-        inner_relation.base_particles_.registerVariable(number_of_contact_neighbor, "ContactNeighborNumber");
-    }
-
-    inline void exec()
-    {
-        particle_for(
-            par,
-            particles_->total_real_particles_,
-            [&, this](size_t index_i)
-            {
-                int N_inner_number = 0;
-                int N_contact_number = 0;
-                Real W_ijV_j_ttl_i = 0;
-                Vecd dW_ijV_je_ij_ttl_i = Vecd::Zero();
-                const Neighborhood &inner_neighborhood = (*inner_configuration_)[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    W_ijV_j_ttl_i += inner_neighborhood.W_ij_[n] * particles_->Vol_[index_j];
-                    dW_ijV_je_ij_ttl_i += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-                    N_inner_number++;
-                }
-
-                for (size_t k = 0; k < contact_configuration_.size(); ++k)
-                {
-                    const SPH::Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
-                    for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-                    {
-                        size_t index_j = wall_neighborhood.j_[n];
-                        W_ijV_j_ttl_i += wall_neighborhood.W_ij_[n] * contact_particles_[k]->Vol_[index_j];
-                        dW_ijV_je_ij_ttl_i += wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-                        N_contact_number++;
-                    }
-                }
-                W_ijV_j_ttl[index_i] = W_ijV_j_ttl_i;
-                dW_ijV_je_ij_ttl[index_i] = dW_ijV_je_ij_ttl_i;
-                number_of_inner_neighbor[index_i] = N_inner_number;
-                number_of_contact_neighbor[index_i] = N_contact_number;
-            });
-    }
-};
-
-class ObersverAxial : public ObserverParticleGenerator
+class ObersverAxial : public ParticleGeneratorObserver
 {
   public:
     ObersverAxial(SPHBody &sph_body, double full_length,
                   Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ObserverParticleGenerator(sph_body)
+        : ParticleGeneratorObserver(sph_body)
     {
         int ny = 51;
         for (int i = 0; i < ny; i++)
@@ -96,13 +26,13 @@ class ObersverAxial : public ObserverParticleGenerator
     }
 };
 
-class ObserverRadial : public ObserverParticleGenerator
+class ObserverRadial : public ParticleGeneratorObserver
 {
   public:
     ObserverRadial(SPHBody &sph_body, double full_length, double diameter,
                    int number_of_particles,
                    Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ObserverParticleGenerator(sph_body)
+        : ParticleGeneratorObserver(sph_body)
     {
 
         int n = number_of_particles + 1;
@@ -119,13 +49,8 @@ class ObserverRadial : public ObserverParticleGenerator
 };
 
 /**
- * @brief Namespace cite here.
- */
-using namespace SPH;
-/**
  * @brief Basic geometry parameters and numerical setup.
  */
-
 const Real scale = 0.001;
 const Real diameter = 6.35 * scale;
 const Real fluid_radius = 0.5 * diameter;
@@ -191,11 +116,11 @@ class WaterBlock : public ComplexShape
 /**
  * @brief Define wall shape
  */
-class ShellBoundary : public SurfaceParticleGenerator
+class ShellBoundary : public ParticleGeneratorSurface
 {
   public:
     explicit ShellBoundary(SPHBody &sph_body)
-        : SurfaceParticleGenerator(sph_body){};
+        : ParticleGeneratorSurface(sph_body){};
     void initializeGeometricVariables() override
     {
         for (int i = 0; i < particle_number_mid_surface; i++)
@@ -208,7 +133,7 @@ class ShellBoundary : public SurfaceParticleGenerator
                 Real z = radius_mid_surface * sin(theta);
                 initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
                                                        resolution_shell * resolution_shell);
-                Vec3d n_0 = Vec3d(-x / radius_mid_surface, 0.0, -z / radius_mid_surface);
+                Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
                 initializeSurfaceProperties(n_0, shell_thickness);
             }
         }
@@ -256,7 +181,6 @@ int main()
      * @brief Material property, particles and body creation of fluid.
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     /**
@@ -264,7 +188,7 @@ int main()
      */
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_f, 1e3, 0.45);
+    shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1, 1e3, 0.45);
     shell_boundary.generateParticles<ShellBoundary>();
     /** topology */
     InnerRelation water_block_inner(water_block);
@@ -277,14 +201,6 @@ int main()
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
-    /**
-     * @brief 	Define all numerical methods which are used in this case.
-     */
-    /**
-     * @brief 	Methods used for time stepping.
-     */
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     /**
      * @brief 	Algorithms of fluid dynamics.
      */
@@ -308,7 +224,7 @@ int main()
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann>
         density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall>
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
         viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
@@ -343,15 +259,14 @@ int main()
      */
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
-    shell_boundary.addBodyStateForRecording<double>("MassiveMeasure");
+    shell_boundary.addBodyStateForRecording<double>("Mass");
     shell_boundary.addBodyStateForRecording<double>("Density");
     shell_boundary.addBodyStateForRecording<double>("VolumetricMeasure");
     shell_boundary.addBodyStateForRecording<double>("Thickness");
     shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment,
-                                                   system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(system.real_bodies_);
     /**
      * @brief OBSERVER.
      */
@@ -363,9 +278,9 @@ int main()
     ContactRelation observer_contact_axial(observer_axial, {&water_block});
     ContactRelation observer_contact_radial(observer_radial, {&water_block});
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial(
-        "Velocity", io_environment, observer_contact_axial);
+        "Velocity", observer_contact_axial);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial(
-        "Velocity", io_environment, observer_contact_radial);
+        "Velocity", observer_contact_radial);
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -376,14 +291,6 @@ int main()
     wall_corrected_configuration.exec();
     shell_curvature.exec();
     water_block_complex.updateConfiguration();
-
-    // Check dWijVjeij
-    CheckKernelCompleteness check_kernel_completeness(water_block_inner, water_block_contact);
-    check_kernel_completeness.exec();
-    water_block.addBodyStateForRecording<Vecd>("TotalKernelGrad");
-    water_block.addBodyStateForRecording<Real>("TotalKernel");
-    water_block.addBodyStateForRecording<int>("InnerNeighborNumber");
-    water_block.addBodyStateForRecording<int>("ContactNeighborNumber");
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
@@ -414,7 +321,6 @@ int main()
         {
             /** Acceleration due to viscous force and gravity. */
             time_instance = TickCount::now();
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             inlet_outlet_surface_particle_indicator.exec();
             update_density_by_summation.exec();
@@ -456,7 +362,6 @@ int main()
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
-        check_kernel_completeness.exec();
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
