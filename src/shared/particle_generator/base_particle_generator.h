@@ -65,7 +65,7 @@ class ParticleGenerator<Base>
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() = 0;
-    virtual void generateParticlesWithBasicVariables();
+    void generateParticlesWithBasicVariables();
 
   protected:
     BaseParticles &base_particles_;
@@ -116,85 +116,8 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
     ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name);
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
-    virtual void generateParticlesWithBasicVariables() override;
 };
 using ParticleGeneratorReload = ParticleGenerator<Reload>;
 
-class BufferReservation;
-class GhostReservation;
-
-template <class T, class = void>
-struct has_ghost_particles : std::false_type
-{
-};
-
-template <class T>
-struct has_ghost_particles<T, std::void_t<decltype(&T::reserveGhostParticles)>> : std::true_type
-{
-};
-
-template <typename... OtherParameters>
-class ParticleGenerator<BufferReservation, OtherParameters...>
-    : public ParticleGenerator<OtherParameters...>
-{
-  public:
-    template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, Real buffer_size_factor, Args &&...args)
-        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...),
-          buffer_size_factor_(buffer_size_factor)
-    {
-        static_assert(!has_ghost_particles<ParticleGenerator<OtherParameters...>>::value,
-                      "ParticleGenerator: GhostReservation is not allowed ahead of BufferReservation.");
-    };
-    virtual ~ParticleGenerator(){};
-
-    virtual void generateParticlesWithBasicVariables() override
-    {
-        ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
-        reserveBufferParticles();
-    };
-
-  protected:
-    void reserveBufferParticles()
-    {
-        Real buffer_size = Real(this->base_particles_.total_real_particles_) * buffer_size_factor_;
-        this->base_particles_.addBufferParticles(std::ceil(buffer_size));
-    };
-
-  private:
-    Real buffer_size_factor_;
-};
-
-template <typename... OtherParameters>
-class ParticleGenerator<GhostReservation, OtherParameters...>
-    : public ParticleGenerator<OtherParameters...>
-{
-  public:
-    template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, Vecd ghost_axises, Args &&...args)
-        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...)
-    {
-        Real resolution = sph_body.getSPHSystem().ReferenceResolution();
-        Vecd bound_size = sph_body.getSPHBodyBounds().getBoundSize();
-        ghost_size_ = std::ceil(2.0 * ghost_width_ * ghost_axises.dot(bound_size) / resolution);
-    };
-    virtual ~ParticleGenerator(){};
-
-    virtual void generateParticlesWithBasicVariables() override
-    {
-        ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
-        reserveGhostParticles();
-    };
-
-  protected:
-    void reserveGhostParticles()
-    {
-        this->base_particles_.addGhostParticles(ghost_size_);
-    };
-
-  private:
-    Real ghost_width_ = 4.0;
-    size_t ghost_size_;
-};
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H

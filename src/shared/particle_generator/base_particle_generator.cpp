@@ -24,8 +24,7 @@ void ParticleGenerator<Base>::initializePosition(const Vecd &position)
 void ParticleGenerator<Base>::generateParticlesWithBasicVariables()
 {
     initializeGeometricVariables();
-    // should be determined first before register other variables
-    base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
+    base_particles_.initializeAllParticlesBounds();
 }
 //=================================================================================================//
 void ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
@@ -70,15 +69,8 @@ ParticleGenerator<Reload>::ParticleGenerator(SPHBody &sph_body, const std::strin
 //=================================================================================================//
 void ParticleGenerator<Reload>::initializeGeometricVariables()
 {
-    base_particles_.readFromXmlForReloadParticle(file_path_);
-}
-//=================================================================================================//
-void ParticleGenerator<Reload>::generateParticlesWithBasicVariables()
-{
     base_material_.registerReloadLocalParameters(&base_particles_);
-    initializeGeometricVariables();
-    // should be determined first before register other variables
-    base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
+    base_particles_.readFromXmlForReloadParticle(file_path_);
 }
 //=================================================================================================//
 } // namespace SPH

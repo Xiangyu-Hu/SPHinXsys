@@ -64,8 +64,21 @@ void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::exec(Real dt)
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::setupDynamics(Real dt)
 {
-    for (size_t i = 0; i != ghost_particles_.size(); ++i)
-        ghost_particles_[i].clear();
+    particles_->total_ghost_particles_ = 0;
+}
+//=================================================================================================//
+void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::exec(Real dt)
+{
+    setupDynamics(dt);
+
+    ghost_ranges_.[0].first =
+        particle_for(execution::ParallelPolicy(), bound_cells_data_[0].first,
+                     [&](size_t i)
+                     { checkLowerBound(i, dt); });
+
+    particle_for(execution::ParallelPolicy(), bound_cells_data_[1].first,
+                 [&](size_t i)
+                 { checkUpperBound(i, dt); });
 }
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)

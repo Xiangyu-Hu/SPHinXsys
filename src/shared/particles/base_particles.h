@@ -104,8 +104,8 @@ class BaseParticles
     // Global information for defining particle groups
     //----------------------------------------------------------------------
     size_t total_real_particles_;
-    size_t real_particles_bound_; /**< Maximum possible number of real particles. Also start index of ghost particles. */
-    size_t total_ghost_particles_;
+    size_t real_particles_bound_; /**< Maximum possible number of real particles. Also starting index for ghost particles. */
+    size_t particles_bound_;      /**< Total number of particles in all types. */
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
@@ -115,11 +115,13 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
+    void initializeAllParticlesBounds();
+    void updateAllParticlesBounds(size_t buffer_size);
     void addBufferParticles(size_t buffer_size);
-    void addGhostParticles(size_t ghost_size);
+    size_t addGhostParticles(size_t ghost_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateFromAnotherParticle(size_t index, size_t another_index);
-    size_t insertAGhostParticle(size_t index);
+    void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
     //----------------------------------------------------------------------
     //		Parameterized management on generalized particle data

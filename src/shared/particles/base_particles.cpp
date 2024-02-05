@@ -11,7 +11,7 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
+    : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
       particle_sorting_(*this),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
@@ -64,6 +64,18 @@ void BaseParticles::initializeOtherVariables()
     }
 }
 //=================================================================================================//
+void BaseParticles::initializeAllParticlesBounds()
+{
+    real_particles_bound_ = total_real_particles_;
+    particles_bound_ = real_particles_bound_;
+}
+//=================================================================================================//
+void BaseParticles::updateAllParticlesBounds(size_t buffer_size)
+{
+    real_particles_bound_ += buffer_size;
+    particles_bound_ += buffer_size;
+}
+//=================================================================================================//
 void BaseParticles::addBufferParticles(size_t buffer_size)
 {
     size_t old_real_particles_bound = real_particles_bound_;
@@ -72,16 +84,20 @@ void BaseParticles::addBufferParticles(size_t buffer_size)
         unsorted_id_.push_back(old_real_particles_bound + i);
         add_particle_data_with_default_value_(all_particle_data_);
     }
-    real_particles_bound_ += buffer_size;
+    updateAllParticlesBounds(buffer_size);
 }
 //=================================================================================================//
-void BaseParticles::addGhostParticles(size_t ghost_size)
+size_t BaseParticles::addGhostParticles(size_t ghost_size)
 {
+    size_t ghost_lower_bound = particles_bound_;
     for (size_t i = 0; i != ghost_size; ++i)
     {
         add_particle_data_with_default_value_(all_particle_data_);
     }
-    unsorted_id_.resize(real_particles_bound_ + ghost_size, 0);
+    particles_bound_ += ghost_size;
+    unsorted_id_.resize(particles_bound_, 0);
+
+    return ghost_lower_bound;
 }
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
@@ -94,25 +110,11 @@ void BaseParticles::updateFromAnotherParticle(size_t index, size_t another_index
     copy_particle_data_(all_particle_data_, index, another_index);
 }
 //=================================================================================================//
-size_t BaseParticles::insertAGhostParticle(size_t index)
+void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
 {
-    total_ghost_particles_ += 1;
-    size_t expected_size = real_particles_bound_ + total_ghost_particles_;
-    size_t expected_particle_index = expected_size - 1;
-    if (expected_size <= pos_.size())
-    {
-        copyFromAnotherParticle(expected_particle_index, index);
-        /** For a ghost particle, its sorted id is that of corresponding real particle. */
-        sorted_id_[expected_particle_index] = index;
-    }
-    else
-    {
-        add_particle_data_with_default_value_(all_particle_data_);
-        copyFromAnotherParticle(expected_particle_index, index);
-        /** For a ghost particle, its sorted id is that of corresponding real particle. */
-        sorted_id_[expected_particle_index] = index;
-    }
-    return expected_particle_index;
+    copyFromAnotherParticle(ghost_index, index);
+    /** For a ghost particle, its sorted id is that of corresponding real particle. */
+    sorted_id_[ghost_index] = index;
 }
 //=================================================================================================//
 void BaseParticles::switchToBufferParticle(size_t index)
