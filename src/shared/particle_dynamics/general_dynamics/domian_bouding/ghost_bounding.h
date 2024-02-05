@@ -33,30 +33,15 @@
 
 namespace SPH
 {
-struct PeriodicAlongAxis
-{
-    Vecd periodic_translation_;
-    int axis_;
-
-    PeriodicAlongAxis(int axis, BoundingBox bounding_bounds)
-        : axis_(axis), periodic_translation_(Vecd::Zero())
-    {
-        periodic_translation_[axis] =
-            bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
-    };
-    virtual ~PeriodicAlongAxis(){};
-};
-
 template <>
 class Ghost<PeriodicAlongAxis>
 {
   public:
-    Ghost(SPHBody &sph_body, int ghost_axis)
-        : periodic_along_axis_(ghost_axis, sph_body.getSPHBodyBounds()),
-          bounding_bounds_(sph_body.getSPHBodyBounds())
+    Ghost(BoundingBox bounding_bounds, int axis)
+        : periodic_along_axis_(bounding_bounds, axis),
     {
-        int next_axis = NextAxis(ghost_axis);
-        Real bound_size = bounding_bounds_.second_[next_axis] - bounding_bounds_.first_[next_axis];
+        int next_axis = NextAxis(axis);
+        Real bound_size = bounding_bounds.second_[next_axis] - bounding_bounds.first_[next_axis];
         Real resolution = sph_body.getSPHSystem().ReferenceResolution();
         Real ghost_width = 4.0;
         ghost_size_ = std::ceil(2.0 * ghost_width * ABS(bound_size) / resolution);
@@ -68,14 +53,13 @@ class Ghost<PeriodicAlongAxis>
         lower_ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
         upper_ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
     };
+
     std::pair<size_t, size_t> &LowerGhostBound() { return lower_ghost_bound_; };
     std::pair<size_t, size_t> &UpperGhostBound() { return upper_ghost_bound_; };
-    BoundingBox &BoundingBounds() { return bounding_bounds_; };
-    int Axis() { return periodic_along_axis_.axis_; };
+    PeriodicAlongAxis &getPeriodicAlongAxis() { return periodic_along_axis_; };
 
   protected:
     PeriodicAlongAxis periodic_along_axis_;
-    BoundingBox bounding_bounds_;
 
   private:
     size_t ghost_size_;

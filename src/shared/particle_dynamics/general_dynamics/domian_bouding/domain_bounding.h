@@ -38,20 +38,30 @@ namespace SPH
  * @brief Bounding particle position in along axis.
  * The axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
-class BoundingAlongAxis : public BaseDynamics<void>,
-                          public LocalDynamics,
-                          public GeneralDataDelegateSimple
+class BoundingAlongAxis
 {
   protected:
     const int axis_;              /**< the axis directions for bounding*/
     BoundingBox bounding_bounds_; /**< lower and upper bound for checking. */
-    StdLargeVec<Vecd> &pos_;
-    BaseCellLinkedList &cell_linked_list_;
-    Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 
   public:
-    BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis);
+    BoundingAlongAxis(BoundingBox bounding_bounds, int axis);
     virtual ~BoundingAlongAxis(){};
+};
+
+struct PeriodicAlongAxis : public BoundingAlongAxis
+{
+  protected:
+    Vecd periodic_translation_;
+
+    PeriodicAlongAxis(BoundingBox bounding_bounds, int axis)
+        : BoundingAlongAxis(bounding_bounds, axis),
+          periodic_translation_(Vecd::Zero())
+    {
+        periodic_translation_[axis] =
+            bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
+    };
+    virtual ~PeriodicAlongAxis(){};
 };
 
 /**
@@ -62,24 +72,16 @@ template <class ExecutionPolicy>
 class BasePeriodicCondition
 {
   protected:
-    Vecd periodic_translation_;
     StdVec<CellLists> bound_cells_data_;
-    Vecd setPeriodicTranslation(BoundingBox &bounding_bounds, int axis)
-    {
-        Vecd periodic_translation = Vecd::Zero();
-        periodic_translation[axis] =
-            bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
-        return periodic_translation;
-    };
-
     /**
      * @class PeriodicBounding
      * @brief Periodic bounding particle position in an axis direction
      */
-    class PeriodicBounding : public BoundingAlongAxis
+    class PeriodicBounding : public BaseDynamics<void>,
+                             public LocalDynamics,
+                             public PeriodicAlongAxis
     {
       protected:
-        Vecd &periodic_translation_;
         StdVec<CellLists> &bound_cells_data_;
 
         virtual void checkLowerBound(size_t index_i, Real dt = 0.0)
@@ -95,11 +97,10 @@ class BasePeriodicCondition
         };
 
       public:
-        PeriodicBounding(Vecd &periodic_translation,
-                         StdVec<CellLists> &bound_cells_data,
+        PeriodicBounding(StdVec<CellLists> &bound_cells_data,
                          RealBody &real_body, BoundingBox bounding_bounds, int axis)
-            : BoundingAlongAxis(real_body, bounding_bounds, axis),
-              periodic_translation_(periodic_translation),
+            : LocalDynamics(real_body), GeneralDataDelegateSimple(real_body),
+              PeriodicAlongAxis(bounding_bounds, axis),
               bound_cells_data_(bound_cells_data){};
         virtual ~PeriodicBounding(){};
 
@@ -119,8 +120,9 @@ class BasePeriodicCondition
 
   public:
     BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-        : periodic_translation_(setPeriodicTranslation(bounding_bounds, axis))
+        : bounding_bounds_(bounding_bounds), axis_(axis), periodic_translation_(Vecd::Zero())
     {
+        periodic_translation_[axis] = bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
         bound_cells_data_.resize(2);
         BaseCellLinkedList &cell_linked_list = real_body.getCellLinkedList();
         cell_linked_list.tagBoundingCells(bound_cells_data_, bounding_bounds, axis);
