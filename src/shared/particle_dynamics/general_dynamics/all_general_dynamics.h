@@ -32,6 +32,7 @@
 #include "all_surface_indication.h"
 #include "base_general_dynamics.h"
 #include "domain_bounding.h"
+#include "force_prior.h"
 #include "general_constraint.h"
 #include "general_geometric.h"
 #include "general_interpolation.h"
@@ -40,4 +41,3 @@
 #include "general_refinement.h"
 #include "kernel_correction.hpp"
 #include "particle_smoothing.hpp"
-#include "time_step_initialization.h"

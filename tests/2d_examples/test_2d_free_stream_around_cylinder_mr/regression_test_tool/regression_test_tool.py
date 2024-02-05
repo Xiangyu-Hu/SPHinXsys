@@ -7,12 +7,12 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_free_stream_around_cylinder
+case name: test_2d_free_stream_around_cylinder_mr
 """
 
-case_name = "test_2d_free_stream_around_cylinder"
+case_name = "test_2d_free_stream_around_cylinder_mr"
 body_name = "Cylinder"
-parameter_name = "TotalViscousForceOnSolid"
+parameter_name = "TotalViscousForceFromFluid"
 
 number_of_run_times = 0
 converged = 0

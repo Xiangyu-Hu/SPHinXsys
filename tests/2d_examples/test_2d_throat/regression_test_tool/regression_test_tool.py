@@ -12,7 +12,7 @@ case name: test_2d_throat
 
 case_name = "test_2d_throat"
 body_name = "FluidBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 body_name_1 = "FluidObserver"
 parameter_name_1 = "Pressure"
 

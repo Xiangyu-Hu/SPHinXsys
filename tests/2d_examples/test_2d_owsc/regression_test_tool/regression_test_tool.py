@@ -12,7 +12,7 @@ case name: test_2d_owsc
 
 case_name = "test_2d_owsc"
 body_name = "Flap"
-parameter_name = "TotalForceOnSolid"
+parameter_name = "TotalViscousForceFromFluid"
 
 number_of_run_times = 0
 converged = 0

@@ -153,9 +153,8 @@ int main(int ac, char *av[])
     ContactRelation bar_observer_contact(bar_observer, {&bar_body});
 
     /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(
-        bar_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
-
+    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(bar_body, time_dependent_external_force);
     /**
      * This section define all numerical methods will be used in this case.
      */
@@ -223,7 +222,7 @@ int main(int ac, char *av[])
                           << GlobalStaticVariables::physical_time_ << "	dt: "
                           << dt << "\n";
             }
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
             constrain_holder_x.exec(dt);
             constrain_holder_y.exec(dt);

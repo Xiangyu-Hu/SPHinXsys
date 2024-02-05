@@ -12,7 +12,7 @@ case name: test_2d_square_droplet
 
 case_name = "test_2d_square_droplet"
 body_name = "WaterBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 
 
 number_of_run_times = 0

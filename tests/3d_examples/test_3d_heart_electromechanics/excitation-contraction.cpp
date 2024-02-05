@@ -284,10 +284,9 @@ int main(int ac, char *av[])
         herat_model.generateParticles<ParticleGeneratorLattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
-        /** Random reset the relax solid particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
-        /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
+        RelaxationStepInner relaxation_step_inner(herat_model_inner);
         /** Time step for diffusion. */
         GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
         /** Diffusion process for diffusion body. */

@@ -80,10 +80,6 @@ int main(int ac, char *av[])
     stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     stationary_plate.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
-    //	Define simple file input and outputs functions.
-    //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
@@ -95,6 +91,10 @@ int main(int ac, char *av[])
     SelfSurfaceContactRelation coil_self_contact(coil);
     SurfaceContactRelation coil_contact(coil_self_contact, {&stationary_plate});
     //----------------------------------------------------------------------
+    //	Define simple file input and outputs functions.
+    //----------------------------------------------------------------------
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    //----------------------------------------------------------------------
     //	check whether run particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
@@ -102,12 +102,12 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
-        // Random reset the insert body particle position.
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(coil);
         // Write the particle reload files.
         ReloadParticleIO write_particle_reload_files(coil);
         // A  Physics relaxation step.
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(coil_inner);
+        RelaxationStepInner relaxation_step_inner(coil_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -136,8 +136,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	This section define all numerical methods will be used in this case.
     //----------------------------------------------------------------------
-    // initialize a time step
-    SimpleDynamics<TimeStepInitialization> initialization_with_gravity(coil, makeShared<Gravity>(Vecd(0.0, -1.0, 0.0)));
+    Gravity gravity(Vec3d(0.0, -1.0, 0.0));
+    SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(coil_inner);
     // Time step size
@@ -147,19 +147,24 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
     // Algorithms for solid-solid contacts.
     InteractionDynamics<solid_dynamics::ContactDensitySummation> coil_update_contact_density(coil_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
-    InteractionDynamics<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
+    InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
     // Damping the velocity field for quasi-static solution
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_coil_kinetic_energy(coil);
     //----------------------------------------------------------------------
     //	From here the time stepping begins.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    // apply initial condition
     corrected_configuration.exec();
+    coil_constant_gravity.exec();
     write_states.writeToFile(0);
     // Setup time stepping control parameters.
     int ite = 0;
@@ -182,8 +187,8 @@ int main(int ac, char *av[])
                 std::cout << "N=" << ite << " Time: "
                           << GlobalStaticVariables::physical_time_ << "	dt: "
                           << dt << "\n";
+                write_coil_kinetic_energy.writeToFile(ite);
             }
-            initialization_with_gravity.exec();
             // contact dynamics.
             coil_self_contact_density.exec();
             coil_self_contact_forces.exec();
@@ -215,6 +220,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+    if (sph_system.GenerateRegressionData())
+    {
+        write_coil_kinetic_energy.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_coil_kinetic_energy.testResult();
+    }
 
     return 0;
 }

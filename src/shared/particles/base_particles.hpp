@@ -51,21 +51,21 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::registerGlobalVariable(const std::string &variable_name, DataType initial_value)
+DataType *BaseParticles::registerSingleVariable(const std::string &variable_name, DataType initial_value)
 {
-    GlobalVariable<DataType> *variable = findVariableByName<DataType>(all_global_variables_, variable_name);
+    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
 
     return variable != nullptr
                ? variable->ValueAddress()
-               : addVariableToAssemble<DataType>(all_global_variables_,
+               : addVariableToAssemble<DataType>(all_single_variables_,
                                                  all_global_variable_ptrs_, variable_name, initial_value)
                      ->ValueAddress();
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
+DataType *BaseParticles::getSingleVariableByName(const std::string &variable_name)
 {
-    GlobalVariable<DataType> *variable = findVariableByName<DataType>(all_global_variables_, variable_name);
+    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
 
     if (variable != nullptr)
     {

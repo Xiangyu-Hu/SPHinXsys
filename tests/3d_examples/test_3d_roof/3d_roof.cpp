@@ -132,8 +132,8 @@ int main(int ac, char *av[])
     ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
     /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(cylinder_body,
-                                                                     makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, gravitational_acceleration)));
+    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -197,7 +197,7 @@ int main(int ac, char *av[])
                           << dt << "\n";
             }
             dt = computing_time_step_size.exec();
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
 
             constrain_holder.exec();

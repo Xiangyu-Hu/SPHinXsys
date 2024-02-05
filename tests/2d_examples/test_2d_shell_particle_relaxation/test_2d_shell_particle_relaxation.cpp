@@ -53,17 +53,12 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states({pipe_body});
     MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, pipe_body.getCellLinkedList());
 
-    /** Set body contact map
-     *  The contact map gives the data connections between the bodies
-     *  basically the the range of bodies to build neighbor particle lists
-     */
     InnerRelation pipe_body_inner(pipe_body);
-
-    /** Random reset the particle position. */
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_pipe_body_particles(pipe_body);
     /** A  Physics relaxation step. */
-    relax_dynamics::ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner);
-    relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
+    ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner);
+    ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
     pipe_body.addBodyStateForRecording<int>("UpdatedIndicator");
     /**
      * @brief 	Particle relaxation starts here.
