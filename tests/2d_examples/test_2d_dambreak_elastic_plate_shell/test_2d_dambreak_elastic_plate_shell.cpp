@@ -177,14 +177,14 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     // fluid
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec2d(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
+    Gravity gravity(Vec2d(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    InteractionDynamics<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>>> viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
     // solid
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
@@ -215,8 +215,8 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         plate_rotation_damping(0.2, plate_inner, "AngularVelocity", physical_viscosity);
     // FSI
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_plate(plate_water_contact);
-    InteractionDynamics<solid_dynamics::AllForceFromFluidRiemann> fluid_force_on_plate_update(plate_water_contact, viscous_force_on_plate);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_plate(plate_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_on_plate(plate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(plate);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -224,7 +224,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<Real>("Pressure");
     plate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    plate.addBodyStateForRecording<Vec2d>("AllForceFromFluid");
+    plate.addBodyStateForRecording<Vec2d>("PressureForceFromFluid");
     BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Vec2d> write_displacement_1("Displacement", disp_observer_contact_1);
     //----------------------------------------------------------------------
@@ -239,6 +239,7 @@ int main(int ac, char *av[])
     plate_average_curvature.exec();
     water_block_complex.updateConfiguration();
     plate_water_contact.updateConfiguration();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -265,7 +266,6 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_acceleration.exec();
@@ -277,7 +277,7 @@ int main(int ac, char *av[])
             {
                 pressure_relaxation.exec(dt);
 
-                fluid_force_on_plate_update.exec();
+                pressure_force_on_plate.exec();
                 density_relaxation.exec(dt);
 
                 /** Solid dynamics time stepping. */
