@@ -23,7 +23,7 @@ Real gravity_g = 9.81;
 Real U_f = 2.0 * sqrt(gravity_g * LH);
 Real c_f = 10.0 * U_f;
 Real K = 1;
-Real n = 0.8;
+Real n = 1;
 Real yield_stress = 0;
 
 //	define the water block shape
