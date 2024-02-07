@@ -163,7 +163,7 @@ class ContactRelationToShell : public ContactRelationCrossResolution
     UniquePtrsKeeper<NeighborBuilderContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
 
   public:
-    ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction = false);
+    ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections);
     virtual ~ContactRelationToShell(){};
     virtual void updateConfiguration() override;
 
@@ -181,12 +181,30 @@ class ContactRelationFromShell : public ContactRelationCrossResolution
     UniquePtrsKeeper<NeighborBuilderContactFromShell> neighbor_builder_contact_from_shell_ptrs_keeper_;
 
   public:
-    ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction);
+    ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections);
     virtual ~ContactRelationFromShell(){};
     virtual void updateConfiguration() override;
 
   protected:
     StdVec<NeighborBuilderContactFromShell *> get_contact_neighbors_;
+};
+
+/**
+ * @class SurfaceContactRelation
+ * @brief The relation between a solid body and its contact shell bodies
+ */
+class SurfaceContactRelationToShell : public SurfaceContactRelation
+{
+  public:
+    SurfaceContactRelationToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections);
+    SurfaceContactRelationToShell(SelfSurfaceContactRelation &solid_body_relation_self_contact,
+                                  const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections)
+        : SurfaceContactRelationToShell(*solid_body_relation_self_contact.real_body_, contact_bodies, normal_corrections){};
+    void updateConfiguration() override;
+
+  private:
+    UniquePtrsKeeper<NeighborBuilderSurfaceContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
+    StdVec<NeighborBuilderSurfaceContactToShell *> get_shell_contact_neighbors_;
 };
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H

@@ -128,14 +128,15 @@ void AdaptiveContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction)
+ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies,
+                                               const StdVec<bool> &normal_corrections)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_shell_contact_neighbors_.push_back(
             neighbor_builder_contact_to_shell_ptrs_keeper_.createPtr<NeighborBuilderContactToShell>(
-                sph_body_, *contact_bodies_[k], normal_correction));
+                sph_body_, *contact_bodies_[k], normal_corrections[k]));
     }
 }
 //=================================================================================================//
@@ -150,14 +151,15 @@ void ContactRelationToShell::updateConfiguration()
     }
 }
 //=================================================================================================//
-ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies, bool normal_correction)
+ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies,
+                                                   const StdVec<bool> &normal_corrections)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_contact_neighbors_.push_back(
             neighbor_builder_contact_from_shell_ptrs_keeper_.createPtr<NeighborBuilderContactFromShell>(
-                sph_body_, *contact_bodies_[k], normal_correction));
+                sph_body_, *contact_bodies_[k], normal_corrections[k]));
     }
 }
 //=================================================================================================//
@@ -169,6 +171,29 @@ void ContactRelationFromShell::updateConfiguration()
         target_cell_linked_lists_[k]->searchNeighborsByParticles(
             sph_body_, contact_configuration_[k],
             *get_search_depths_[k], *get_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
+SurfaceContactRelationToShell::SurfaceContactRelationToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies,
+                                                             const StdVec<bool> &normal_corrections)
+    : SurfaceContactRelation(sph_body, contact_bodies)
+{
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_shell_contact_neighbors_.push_back(
+            neighbor_builder_contact_to_shell_ptrs_keeper_
+                .createPtr<NeighborBuilderSurfaceContactToShell>(sph_body_, *contact_bodies_[k], normal_corrections[k]));
+    }
+}
+//=================================================================================================//
+void SurfaceContactRelationToShell::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            *body_surface_layer_, contact_configuration_[k],
+            *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
     }
 }
 //=================================================================================================//

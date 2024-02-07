@@ -209,7 +209,9 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
   protected:
     StdLargeVec<Vecd> &n_; // normal direction of contact body
     StdLargeVec<Real> &thickness_;
-    Real particle_distance_; // reference spacing of contact body
+    StdLargeVec<Real> &k1_ave_; // 1st principle curvature of contact body
+    StdLargeVec<Real> &k2_ave_; // 2nd principle curvature of contact body
+    Real particle_distance_;    // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         size_t index_j, const Real &W_ij,
@@ -227,18 +229,23 @@ class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
 {
   public:
     NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+    inline void operator()(Neighborhood &neighborhood,
+                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+    {
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius());
+    }
 
   private:
-    StdLargeVec<Real> &k1_avg_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_avg_; // 2nd principle curvature of contact body
-    Real direction_correcter_;
+    Real direction_corrector_;
+
+  protected:
+    void update_neighbors(Neighborhood &neighborhood,
+                          const Vecd &pos_i, size_t index_i, const ListData &list_data_j, Real radius);
 };
 
 /**
  * @class NeighborBuilderContactFromShell
- * @brief A contact neighbor builder functor for contact relation from shell and fluid.
+ * @brief A contact neighbor builder functor for contact relation from shell to fluid.
  */
 class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
 {
@@ -248,9 +255,26 @@ class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   private:
-    StdLargeVec<Real> &k1_avg_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_avg_; // 2nd principle curvature of contact body
-    Real direction_correcter_;
+    Real direction_corrector_;
+};
+
+/**
+ * @class NeighborBuilderSurfaceContactToShell
+ * @brief A solid contact neighbor builder functor between solid and a shell
+ */
+class NeighborBuilderSurfaceContactToShell : public NeighborBuilderContactToShell
+{
+  public:
+    NeighborBuilderSurfaceContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    inline void operator()(Neighborhood &neighborhood,
+                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+    {
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, particle_distance_ave_);
+    }
+
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+    Real particle_distance_ave_;
 };
 
 /**
