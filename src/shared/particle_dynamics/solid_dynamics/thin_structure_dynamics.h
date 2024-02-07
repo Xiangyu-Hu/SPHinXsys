@@ -412,8 +412,8 @@ class AverageShellCurvature : public LocalDynamics, public thin_structure_dynami
 
   private:
     StdLargeVec<Vecd> &n_;
-    StdLargeVec<Real> &k1_avg_; // first principle curvature
-    StdLargeVec<Real> &k2_avg_; // second principle curvature
+    StdLargeVec<Real> &k1_ave_; // first principle curvature
+    StdLargeVec<Real> &k2_ave_; // second principle curvature
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH

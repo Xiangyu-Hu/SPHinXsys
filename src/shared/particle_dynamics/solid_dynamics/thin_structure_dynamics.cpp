@@ -345,8 +345,8 @@ void ShellCurvature::update(size_t index_i, Real)
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
       n_(particles_->n_),
-      k1_avg_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
-      k2_avg_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};
+      k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
+      k2_ave_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};
 //=================================================================================================//
 void AverageShellCurvature::update(size_t index_i, Real)
 {
@@ -359,8 +359,8 @@ void AverageShellCurvature::update(size_t index_i, Real)
         dn_i -= (n_[index_i] - n_[index_j]) * gradW_ijV_j.transpose();
     }
     auto [k1, k2] = get_principle_curvatures(dn_i);
-    k1_avg_[index_i] = k1;
-    k2_avg_[index_i] = k2;
+    k1_ave_[index_i] = k1;
+    k2_ave_[index_i] = k2;
 }
 //=================================================================================================//
 } // namespace thin_structure_dynamics
