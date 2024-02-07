@@ -199,8 +199,8 @@ int main(int ac, char *av[])
     InnerRelation water_inner(water_block);
     InnerRelation container_inner(container);
     ContactRelation water_funnel_contact(water_block, {&funnel});
-    ContactRelationToShell water_container_contact(water_block, {&container}, false);
-    ContactRelationFromShell container_water_contact(container, {&water_block}, false);
+    ContactRelationToShell water_container_contact(water_block, {&container}, {false});
+    ContactRelationFromShell container_water_contact(container, {&water_block}, {false});
     ComplexRelation water_block_complex(water_inner, {&water_funnel_contact, &water_container_contact});
     ShellInnerRelationWithContactKernel container_curvature_inner(container, water_block);
     ContactRelation disp_observer_contact(disp_observer, {&container});

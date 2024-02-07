@@ -173,8 +173,8 @@ int main(int ac, char *av[])
     InnerRelation water_block_inner(water_block);
     InnerRelation plate_inner(plate);
     ContactRelation water_wall_contact(water_block, {&wall_boundary, &gate});
-    ContactRelationToShell water_plate_contact(water_block, {&plate}, false);
-    ContactRelationFromShell plate_water_contact(plate, {&water_block}, false);
+    ContactRelationToShell water_plate_contact(water_block, {&plate}, {false});
+    ContactRelationFromShell plate_water_contact(plate, {&water_block}, {false});
     ShellInnerRelationWithContactKernel plate_curvature_inner(plate, water_block);
     ContactRelation disp_observer_contact_1(disp_observer_1, {&plate});
     ContactRelation disp_observer_contact_2(disp_observer_2, {&plate});

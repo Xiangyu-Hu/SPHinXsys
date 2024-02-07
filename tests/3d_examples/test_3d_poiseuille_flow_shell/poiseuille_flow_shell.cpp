@@ -195,7 +195,7 @@ int main()
     InnerRelation shell_boundary_inner(shell_boundary);
     ShellInnerRelationWithContactKernel wall_curvature_inner(shell_boundary, water_block);
     // contact
-    ContactRelationToShell water_block_contact(water_block, {&shell_boundary});
+    ContactRelationToShell water_block_contact(water_block, {&shell_boundary}, {false});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.

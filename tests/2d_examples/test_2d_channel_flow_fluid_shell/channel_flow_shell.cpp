@@ -177,7 +177,7 @@ int main(int ac, char *av[])
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(wall_boundary);
     ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, water_block);
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary});
+    ContactRelationToShell water_block_contact(water_block, {&wall_boundary}, {false});
     ContactRelation fluid_axial_observer_contact(fluid_axial_observer, {&water_block});
     ContactRelation fluid_radial_observer_contact(fluid_radial_observer, {&water_block});
     //----------------------------------------------------------------------

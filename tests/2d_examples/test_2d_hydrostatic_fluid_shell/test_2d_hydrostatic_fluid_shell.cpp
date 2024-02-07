@@ -194,8 +194,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation gate_inner(gate);
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, true);
-    ContactRelationFromShell gate_contact(gate, {&water_block}, true);
+    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, {true});
+    ContactRelationFromShell gate_contact(gate, {&water_block}, {true});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     // inner relation to compute curvature
     ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_block);

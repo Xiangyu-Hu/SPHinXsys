@@ -44,8 +44,8 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    ContactRelationToShell water_block_contact(water_block, {&cylinder}, true);
-    ContactRelationFromShell cylinder_contact(cylinder, {&water_block}, true);
+    ContactRelationToShell water_block_contact(water_block, {&cylinder}, {true});
+    ContactRelationFromShell cylinder_contact(cylinder, {&water_block}, {true});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     ShellInnerRelationWithContactKernel cylinder_curvature_inner(cylinder, water_block);
     //----------------------------------------------------------------------

@@ -169,9 +169,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ContactRelationToShell water_gate_contact(water_block, {&gate}, false);
+    ContactRelationToShell water_gate_contact(water_block, {&gate}, {false});
     InnerRelation gate_inner(gate);
-    ContactRelationFromShell gate_water_contact(gate, {&water_block}, false);
+    ContactRelationFromShell gate_water_contact(gate, {&water_block}, {false});
     ShellInnerRelationWithContactKernel gate_curvature_inner(gate, water_block);
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     //----------------------------------------------------------------------

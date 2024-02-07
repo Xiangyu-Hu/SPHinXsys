@@ -220,8 +220,8 @@ int main(int ac, char *av[])
     InnerRelation water_block_inner(water_block);
     InnerRelation wedge_inner(wedge);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ContactRelationToShell water_wedge_contact(water_block, {&wedge}, false);
-    ContactRelationFromShell wedge_water_contact(wedge, {&water_block}, false);
+    ContactRelationToShell water_wedge_contact(water_block, {&wedge}, {false});
+    ContactRelationFromShell wedge_water_contact(wedge, {&water_block}, {false});
     ContactRelation disp_observer_contact(disp_observer, {&wedge});
     ContactRelation pressure_observer_A_contact(pressure_observer_A, {&water_block});
     ContactRelation pressure_observer_D_contact(pressure_observer_D, {&water_block});

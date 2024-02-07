@@ -120,7 +120,7 @@ int main(int ac, char *av[])
     // Must construct ShellCurvature before ShellContactRelation
     InnerRelation fluid_block_inner(fluid_block);
     InnerRelation wall_boundary_inner(wall_boundary);
-    ContactRelationToShell fluid_wall_contact(fluid_block, {&wall_boundary});
+    ContactRelationToShell fluid_wall_contact(fluid_block, {&wall_boundary}, {false});
     ComplexRelation fluid_block_complex(fluid_block_inner, fluid_wall_contact);
     ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, fluid_block);
     //----------------------------------------------------------------------
