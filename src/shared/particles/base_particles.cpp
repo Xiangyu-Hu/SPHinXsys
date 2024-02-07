@@ -52,6 +52,7 @@ void BaseParticles::initializeOtherVariables()
      */
     addVariableToList<Vecd>(variables_to_restart_, "Position");
     addVariableToList<Vecd>(variables_to_restart_, "Velocity");
+    addVariableToList<Vecd>(variables_to_restart_, "ForcePrior");
     addVariableToList<Vecd>(variables_to_restart_, "Force");
     addVariableToList<Real>(variables_to_restart_, "VolumetricMeasure");
     //----------------------------------------------------------------------

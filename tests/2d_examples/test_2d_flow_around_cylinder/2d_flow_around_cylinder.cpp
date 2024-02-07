@@ -234,7 +234,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_total_viscous_force_from_fluid.testResult();
+    if (sph_system.GenerateRegressionData())
+    {
+        write_total_viscous_force_from_fluid.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_total_viscous_force_from_fluid.testResult();
+    }
 
     return 0;
 }
