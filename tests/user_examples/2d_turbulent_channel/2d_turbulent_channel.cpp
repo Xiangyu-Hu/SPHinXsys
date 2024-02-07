@@ -69,11 +69,11 @@ int main(int ac, char* av[])
 	/** Turbulent standard wall function needs normal vectors of wall. */
 	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
 	near_surface.level_set_shape_.writeLevelSet(system);
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
 
 	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points, monitoring_bound);
 
-	InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall, SequencedPolicy> turbulent_viscous_force(water_block_inner, water_block_contact);
+	InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_block_contact);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_force(water_block_inner, water_block_contact);
 
 	InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
