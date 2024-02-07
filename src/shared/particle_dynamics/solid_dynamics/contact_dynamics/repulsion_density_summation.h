@@ -110,7 +110,20 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, ContactDynami
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};
     const StdVec<Real> three_gaussian_weights_ = {0.5555555555555556, 0.8888888888888889, 0.5555555555555556};
 };
+/**
+ * @class RepulsionDensitySummationToShell
+ * @brief Computing the contact density due to shell contact using dummy particle.
+ */
+class ShellContactDensityUsingDummyParticles : public RepulsionDensitySummation<Base, ContactDynamicsData>
+{
+  public:
+    explicit ShellContactDensityUsingDummyParticles(SurfaceContactRelationToShell &solid_body_contact_relation);
+    void interaction(size_t index_i, Real dt = 0.0);
 
+  private:
+    StdLargeVec<Real> &mass_;
+    StdVec<StdLargeVec<Real> *> contact_mass_;
+};
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // REPULSION_DENSITY_SUMMATION_H

@@ -121,5 +121,31 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
     repulsion_density_[index_i] = contact_density_i;
 }
 //=================================================================================================//
+ShellContactDensityUsingDummyParticles::
+    ShellContactDensityUsingDummyParticles(SurfaceContactRelationToShell &solid_body_contact_relation)
+    : RepulsionDensitySummation<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionDensity"),
+      mass_(particles_->mass_)
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+    }
+}
+//=================================================================================================//
+void ShellContactDensityUsingDummyParticles::interaction(size_t index_i, Real dt)
+{
+    /** Contact interaction. */
+    Real sigma = 0.0;
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
+        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            sigma += contact_neighborhood.W_ij_[n] * contact_mass_k[contact_neighborhood.j_[n]];
+    }
+    repulsion_density_[index_i] = sigma;
+};
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
