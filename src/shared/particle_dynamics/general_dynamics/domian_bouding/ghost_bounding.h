@@ -34,37 +34,34 @@
 namespace SPH
 {
 template <>
-class Ghost<PeriodicAlongAxis>
+class Ghost<PeriodicAlongAxis> : public PeriodicAlongAxis
 {
   public:
     Ghost(BoundingBox bounding_bounds, int axis)
-        : periodic_along_axis_(bounding_bounds, axis),
-    {
-        int next_axis = NextAxis(axis);
-        Real bound_size = bounding_bounds.second_[next_axis] - bounding_bounds.first_[next_axis];
-        Real resolution = sph_body.getSPHSystem().ReferenceResolution();
-        Real ghost_width = 4.0;
-        ghost_size_ = std::ceil(2.0 * ghost_width * ABS(bound_size) / resolution);
-    };
+        : PeriodicAlongAxis(bounding_bounds, axis){};
     virtual ~Ghost(){};
 
-    void reserveGhostParticle(BaseParticles &base_particles)
+    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing)
     {
-        lower_ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
-        upper_ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
+        size_t ghost_size = getGhostSize(particle_spacing);
+        lower_ghost_bound_.first = base_particles.addGhostParticles(ghost_size);
+        upper_ghost_bound_.first = base_particles.addGhostParticles(ghost_size);
     };
 
     std::pair<size_t, size_t> &LowerGhostBound() { return lower_ghost_bound_; };
     std::pair<size_t, size_t> &UpperGhostBound() { return upper_ghost_bound_; };
-    PeriodicAlongAxis &getPeriodicAlongAxis() { return periodic_along_axis_; };
-
-  protected:
-    PeriodicAlongAxis periodic_along_axis_;
 
   private:
-    size_t ghost_size_;
     std::pair<size_t, size_t> lower_ghost_bound_;
     std::pair<size_t, size_t> upper_ghost_bound_;
+
+    size_t getGhostSize(Real particle_spacing)
+    {
+        int next_axis = NextAxis(axis_);
+        Real bound_size = bounding_bounds_.second_[next_axis] - bounding_bounds_.first_[next_axis];
+        Real ghost_width = 4.0;
+        return std::ceil(2.0 * ghost_width * ABS(bound_size) / particle_spacing);
+    };
 };
 
 /**

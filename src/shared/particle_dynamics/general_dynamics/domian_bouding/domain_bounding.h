@@ -34,28 +34,19 @@
 namespace SPH
 {
 /**
- * @class BoundingAlongAxis
+ * @class PeriodicAlongAxis
  * @brief Bounding particle position in along axis.
  * The axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
-class BoundingAlongAxis
+struct PeriodicAlongAxis
 {
   protected:
-    const int axis_;              /**< the axis directions for bounding*/
     BoundingBox bounding_bounds_; /**< lower and upper bound for checking. */
-
-  public:
-    BoundingAlongAxis(BoundingBox bounding_bounds, int axis);
-    virtual ~BoundingAlongAxis(){};
-};
-
-struct PeriodicAlongAxis : public BoundingAlongAxis
-{
-  protected:
+    const int axis_;              /**< the axis directions for bounding*/
     Vecd periodic_translation_;
 
     PeriodicAlongAxis(BoundingBox bounding_bounds, int axis)
-        : BoundingAlongAxis(bounding_bounds, axis),
+        : bounding_bounds_(bounding_bounds), axis_(axis),
           periodic_translation_(Vecd::Zero())
     {
         periodic_translation_[axis] =
@@ -71,18 +62,32 @@ struct PeriodicAlongAxis : public BoundingAlongAxis
 template <class ExecutionPolicy>
 class BasePeriodicCondition
 {
+  public:
+    BasePeriodicCondition(RealBody &real_body, PeriodicAlongAxis &periodic_box)
+    {
+        bound_cells_data_.resize(2);
+        BaseCellLinkedList &cell_linked_list = real_body.getCellLinkedList();
+        cell_linked_list.tagBoundingCells(
+            bound_cells_data_, periodic_box.bounding_bounds_, periodic_box.axis_);
+    };
+    virtual ~BasePeriodicCondition(){};
+
   protected:
     StdVec<CellLists> bound_cells_data_;
+
     /**
      * @class PeriodicBounding
      * @brief Periodic bounding particle position in an axis direction
      */
     class PeriodicBounding : public BaseDynamics<void>,
                              public LocalDynamics,
-                             public PeriodicAlongAxis
     {
       protected:
+        BoundingBox bounding_bounds_;
+        const int axis_;
+        Vecd periodic_translation_;
         StdVec<CellLists> &bound_cells_data_;
+        StdLargeVec<Vecd> &pos_;
 
         virtual void checkLowerBound(size_t index_i, Real dt = 0.0)
         {
@@ -98,10 +103,12 @@ class BasePeriodicCondition
 
       public:
         PeriodicBounding(StdVec<CellLists> &bound_cells_data,
-                         RealBody &real_body, BoundingBox bounding_bounds, int axis)
-            : LocalDynamics(real_body), GeneralDataDelegateSimple(real_body),
-              PeriodicAlongAxis(bounding_bounds, axis),
-              bound_cells_data_(bound_cells_data){};
+                         RealBody &real_body, PeriodicAlongAxis &periodic_box)
+            : BaseDynamics<void>(real_body), LocalDynamics(real_body),
+              bounding_bounds_(periodic_box.bounding_bounds_), axis_(periodic_box.axis_),
+              periodic_translation_(periodic_box.periodic_translation_),
+              bound_cells_data_(bound_cells_data),
+              pos_(base_particles_.pos_){};
         virtual ~PeriodicBounding(){};
 
         virtual void exec(Real dt = 0.0) override
@@ -117,23 +124,6 @@ class BasePeriodicCondition
                          { checkUpperBound(i, dt); });
         };
     };
-
-  public:
-    BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-        : bounding_bounds_(bounding_bounds), axis_(axis), periodic_translation_(Vecd::Zero())
-    {
-        periodic_translation_[axis] = bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
-        bound_cells_data_.resize(2);
-        BaseCellLinkedList &cell_linked_list = real_body.getCellLinkedList();
-        cell_linked_list.tagBoundingCells(bound_cells_data_, bounding_bounds, axis);
-        if (periodic_translation_.norm() < real_body.sph_adaptation_->ReferenceSpacing())
-        {
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            std::cout << "\n Periodic bounding failure: bounds not defined!" << std::endl;
-            exit(1);
-        }
-    };
-    virtual ~BasePeriodicCondition(){};
 };
 
 /**
@@ -151,37 +141,34 @@ class PeriodicConditionUsingCellLinkedList : public BasePeriodicCondition<execut
      * @class PeriodicCellLinkedList
      * @brief Periodic boundary condition in an axis direction
      */
-    class PeriodicCellLinkedList : public BoundingAlongAxis
+    class PeriodicCellLinkedList : public PeriodicBounding
     {
       protected:
         std::mutex mutex_cell_list_entry_; /**< mutex exclusion for memory conflict */
-        Vecd &periodic_translation_;
         StdVec<CellLists> &bound_cells_data_;
+        BaseCellLinkedList &cell_linked_list_;
+        Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
+
         virtual void checkLowerBound(ListDataVector &cell_list_data, Real dt = 0.0);
         virtual void checkUpperBound(ListDataVector &cell_list_data, Real dt = 0.0);
 
       public:
-        PeriodicCellLinkedList(Vecd &periodic_translation,
-                               StdVec<CellLists> &bound_cells_data,
-                               RealBody &real_body, BoundingBox bounding_bounds, int axis)
-            : BoundingAlongAxis(real_body, bounding_bounds, axis),
-              periodic_translation_(periodic_translation),
-              bound_cells_data_(bound_cells_data){};
-        ;
+        PeriodicCellLinkedList(StdVec<CellLists> &bound_cells_data,
+                               RealBody &real_body, PeriodicAlongAxis &periodic_box);
         virtual ~PeriodicCellLinkedList(){};
 
         virtual void exec(Real dt = 0.0) override;
     };
 
   public:
-    PeriodicConditionUsingCellLinkedList(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-        : BasePeriodicCondition<execution::ParallelPolicy>(real_body, bounding_bounds, axis),
-          bounding_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis),
-          update_cell_linked_list_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis){};
-    virtual ~PeriodicConditionUsingCellLinkedList(){};
-
     PeriodicBounding bounding_;
     PeriodicCellLinkedList update_cell_linked_list_;
+
+    PeriodicConditionUsingCellLinkedList(RealBody &real_body, PeriodicAlongAxis &periodic_box)
+        : BasePeriodicCondition<execution::ParallelPolicy>(real_body, periodic_box),
+          bounding_(bound_cells_data_, real_body, periodic_box),
+          update_cell_linked_list_(bound_cells_data_, real_body, periodic_box){};
+    virtual ~PeriodicConditionUsingCellLinkedList(){};
 };
 } // namespace SPH
 #endif // DOMAIN_BOUNDING_H
