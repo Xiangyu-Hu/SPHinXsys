@@ -287,9 +287,9 @@ void ShearRateDependentViscosity::interaction(size_t index_i, Real dt)
     Matd D_ij = 0.5 * (combined_velocity_gradient_[index_i] + combined_velocity_gradient_[index_i].transpose());
 
     //? D_ij D_ij
-    Real second_invariant = D_ij(0, 0) * D_ij(0, 0) + D_ij(1, 0) * D_ij(1, 0) + D_ij(2, 0) * D_ij(2, 0) + D_ij(0, 1) * D_ij(0, 1) + D_ij(1, 1) * D_ij(1, 1) + D_ij(2, 1) * D_ij(2, 1) + D_ij(0, 2) * D_ij(0, 2) + D_ij(1, 2) * D_ij(1, 2) + D_ij(2, 2) * D_ij(2, 2);
-    // D_ij = D_ij.cwiseProduct(D_ij);
-    // Real second_invariant = D_ij.sum();
+    // Real second_invariant = D_ij(0, 0) * D_ij(0, 0) + D_ij(1, 0) * D_ij(1, 0) + D_ij(2, 0) * D_ij(2, 0) + D_ij(0, 1) * D_ij(0, 1) + D_ij(1, 1) * D_ij(1, 1) + D_ij(2, 1) * D_ij(2, 1) + D_ij(0, 2) * D_ij(0, 2) + D_ij(1, 2) * D_ij(1, 2) + D_ij(2, 2) * D_ij(2, 2);
+    D_ij = D_ij.cwiseProduct(D_ij);
+    Real second_invariant = D_ij.sum();
 
     //? sqrt(2*D_ij D_ij)
     second_invariant = (Real)std::sqrt(2 * second_invariant);
