@@ -49,7 +49,7 @@ class FlowPressureBuffer : public BaseFlowBoundaryCondition
 
   protected:
     StdLargeVec<Vecd> &kernel_sum_;   
-    Vecd direction;
+    Vecd direction_;
     /** Profile to be defined in applications,
      * argument parameters and return value are in frame (local) coordinate */
     virtual Real getTargetPressure(Real dt) = 0;

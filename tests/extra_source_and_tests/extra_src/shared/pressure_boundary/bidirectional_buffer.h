@@ -41,7 +41,7 @@ namespace fluid_dynamics
 class BidirectionalBuffer
 {
   protected:
-    ConcurrentIndexVector buffer_particle_list;
+    ConcurrentIndexVector buffer_particle_list_;
     virtual Real getTargetPressure(Real dt) = 0;
 
     template <class ExecutionPolicy>
@@ -140,10 +140,10 @@ class BidirectionalBuffer
   public:
     BidirectionalBuffer(RealBody &real_body, SharedPtr<AlignedBoxShape> shape_ptr,
                         size_t body_buffer_width, int axis_direction) : 
-        tag_buffer_particles(this->buffer_particle_list, real_body, shape_ptr),                                                                                                                     
-        injection(this->buffer_particle_list, real_body, shape_ptr, body_buffer_width, axis_direction, *this)
+        tag_buffer_particles(this->buffer_particle_list_, real_body, shape_ptr),                                                                                                                     
+        injection(this->buffer_particle_list_, real_body, shape_ptr, body_buffer_width, axis_direction, *this)
     {
-        buffer_particle_list.clear();
+        buffer_particle_list_.clear();
     };
     virtual ~BidirectionalBuffer(){};
     
