@@ -94,6 +94,27 @@ class AdvectionTimeStepSize : public AdvectionTimeStepSizeForImplicitViscosity
   protected:
     Fluid &fluid_;
 };
+
+/**
+ * @class SRDViscousTimeStepSize
+ * @brief Computing the viscous time step size using the SRD viscosity
+ */
+class SRDViscousTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+{
+  public:
+    explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
+    virtual ~SRDViscousTimeStepSize(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Real smoothing_length_;
+    StdLargeVec<Real> &rho_;
+    StdLargeVec<Real> &mu_srd_;
+    Real diffusionCFL;
+    Real max_viscosity = 0;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_TIME_STEP_H

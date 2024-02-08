@@ -58,6 +58,26 @@ Real AdvectionTimeStepSize::reduce(size_t index_i, Real dt)
 {
     return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
 }
+
+SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL) : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+                                                                                       FluidDataSimple(sph_body),
+                                                                                       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+                                                                                       rho_(this->particles_->rho_),
+                                                                                       mu_srd_(*this->particles_->getVariableByName<Real>("SRDViscosity")),
+                                                                                       diffusionCFL(diffusionCFL)
+{
+}
+
+Real SRDViscousTimeStepSize::outputResult(size_t index_i, Real dt)
+{
+    return this->diffusionCFL * smoothing_length_ * smoothing_length_ * rho_ / max_viscosity;
+}
+
+Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
+{
+    max_viscosity = SMAX(mu_srd_[index_i], max_viscosity);
+    return max_viscosity;
+}
 //=================================================================================================//
 } // namespace fluid_dynamics
   //=====================================================================================================//

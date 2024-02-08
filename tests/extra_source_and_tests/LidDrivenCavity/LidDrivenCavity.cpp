@@ -13,16 +13,16 @@ Real gravity_g = 1;
 
 // material properties
 Real rho = 1.0;          // reference density
-Real u_lid = 1.0;        // lid velocity
+Real u_lid = 10.0;       // lid velocity
 Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
-Real K = 1.0;   // consistency index
-Real n = 1.5;   // power index
+Real K = 1;     // consistency index
+Real n = 0.5;   // power index
 Real tau_y = 0; // yield stress
 
-Real min_shear_rate = 1e-3; // cutoff low shear rate
-Real max_shear_rate = 1e+3; // cutoff high shear rate
+Real min_shear_rate = 1e-2; // cutoff low shear rate
+Real max_shear_rate = 1e+2; // cutoff high shear rate
 
 // mesh geometry data
 std::string path_to_lid_boundary = "./input/lid_boundary.stl";
@@ -66,6 +66,24 @@ class FluidFilling : public ComplexShape
     }
 };
 
+class InitialVelocity
+    : public fluid_dynamics::FluidInitialCondition
+{
+  public:
+    InitialVelocity(SPHBody &sph_body)
+        : fluid_dynamics::FluidInitialCondition(sph_body),
+          fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())){};
+
+    void update(size_t index_i, Real dt)
+    {
+        /** initial velocity profile */
+        vel_[index_i][1] = u_lid;
+    }
+
+  protected:
+    BaseParticles *fluid_particles_;
+};
+
 int main(int ac, char *av[])
 {
     //	Build up an SPHSystem
@@ -96,14 +114,14 @@ int main(int ac, char *av[])
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
     ContactRelation fluid_all_walls(fluid, {&lid_boundary, &slip_boundary, &no_slip_boundary});
-    ContactRelation fluid_no_slip(fluid, {&no_slip_boundary});
-    ContactRelation fluid_lid(fluid, {&lid_boundary});
+    ContactRelation fluid_no_slip(fluid, {&no_slip_boundary, &lid_boundary});
 
     ComplexRelation fluid_walls_complex(fluid_inner, fluid_all_walls);
 
     //	Define the numerical methods used in the simulation
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
+    SimpleDynamics<InitialVelocity> initial_condition(lid_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_inner, fluid_all_walls);
@@ -114,8 +132,11 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::ViscousShearRateDependent> viscous_acceleration(fluid_inner, fluid_no_slip);
 
+    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
+
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
+    ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_acoustic_time_step_size(fluid_inner);
 
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
@@ -124,11 +145,12 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     constant_gravity.exec();
+    initial_condition.exec();
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    Real end_time = 1.0;
-    int output_interval = 10;
+    Real end_time = 30.0;
+    int output_interval = 50;
     Real dt = 0.0;
     int iteration = 0;
 
@@ -142,7 +164,10 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
         Real Dt = get_fluid_advection_time_step_size.exec();
-        Dt = SMIN(0.0001, Dt);
+        Real smth_lngth = 1.3 * particle_spacing;
+        Real max_viscosity = tau_y / min_shear_rate + K * pow(min_shear_rate, n - 1);
+        Real Dt_visc = 0.125 * smth_lngth * smth_lngth * rho / max_viscosity;
+        Dt = SMIN(Dt_visc, Dt);
         std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
@@ -151,6 +176,7 @@ int main(int ac, char *av[])
         vel_grad_calc_contact.exec(Dt);
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
+        // transport_velocity_correction.exec();
 
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
@@ -160,18 +186,17 @@ int main(int ac, char *av[])
             dt = SMIN(dt, Dt);
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
-            dt = get_fluid_time_step_size.exec();
+            dt = get_acoustic_time_step_size.exec();
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
-        fluid.updateCellLinkedListWithParticleSort(100);
-        fluid_walls_complex.updateConfiguration();
-        fluid_no_slip.updateConfiguration();
-        fluid_lid.updateConfiguration();
         if (iteration % output_interval == 0)
         {
             write_fluid_states.writeToFile();
         }
+        fluid.updateCellLinkedListWithParticleSort(100);
+        fluid_walls_complex.updateConfiguration();
+        fluid_no_slip.updateConfiguration();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
