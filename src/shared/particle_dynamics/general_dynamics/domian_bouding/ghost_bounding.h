@@ -40,28 +40,19 @@ class Ghost<PeriodicAlongAxis> : public PeriodicAlongAxis
     Ghost(BoundingBox bounding_bounds, int axis)
         : PeriodicAlongAxis(bounding_bounds, axis){};
     virtual ~Ghost(){};
-
-    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing)
-    {
-        size_t ghost_size = getGhostSize(particle_spacing);
-        lower_ghost_bound_.first = base_particles.addGhostParticles(ghost_size);
-        upper_ghost_bound_.first = base_particles.addGhostParticles(ghost_size);
-    };
-
+    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing);
     std::pair<size_t, size_t> &LowerGhostBound() { return lower_ghost_bound_; };
     std::pair<size_t, size_t> &UpperGhostBound() { return upper_ghost_bound_; };
+    void checkGhostParticlesReserved();
+    size_t getGhostSize() { return ghost_size_; };
+    void checkWithinGhostSize(const std::pair<size_t, size_t> &ghost_bound);
 
   private:
-    std::pair<size_t, size_t> lower_ghost_bound_;
-    std::pair<size_t, size_t> upper_ghost_bound_;
-
-    size_t getGhostSize(Real particle_spacing)
-    {
-        int next_axis = NextAxis(axis_);
-        Real bound_size = bounding_bounds_.second_[next_axis] - bounding_bounds_.first_[next_axis];
-        Real ghost_width = 4.0;
-        return std::ceil(2.0 * ghost_width * ABS(bound_size) / particle_spacing);
-    };
+    bool is_ghost_particles_reserved_ = false;
+    std::pair<size_t, size_t> lower_ghost_bound_ = {0, 0};
+    std::pair<size_t, size_t> upper_ghost_bound_ = {0, 0};
+    size_t ghost_size_ = 0;
+    size_t calculateGhostSize(Real particle_spacing);
 };
 
 /**
@@ -85,20 +76,22 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
     {
       protected:
         std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
-        StdVec<std::pair<size_t, size_t>> &ghost_ranges_;
+        Ghost<PeriodicAlongAxis> &ghost_boundary_;
+        std::pair<size_t, size_t> &lower_ghost_bound_;
+        std::pair<size_t, size_t> &upper_ghost_bound_;
+        BaseCellLinkedList &cell_linked_list_;
         StdLargeVec<Real> &Vol_;
-        virtual void setupDynamics(Real dt = 0.0) override;
+
         virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
         virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
 
       public:
-        CreatPeriodicGhostParticles(Vecd &periodic_translation,
-                                    StdVec<CellLists> &bound_cells_data,
-                                    StdVec<std::pair<size_t, size_t>> &ghost_ranges,
-                                    RealBody &real_body, BoundingBox bounding_bounds, int axis)
-            : PeriodicBounding(periodic_translation, bound_cells_data, real_body, bounding_bounds, axis),
-              ghost_ranges_(ghost_ranges), Vol_(particles_->Vol_){};
+        CreatPeriodicGhostParticles(StdVec<CellLists> &bound_cells_data, RealBody &real_body,
+                                    Ghost<PeriodicAlongAxis> &ghost_boundary);
         virtual ~CreatPeriodicGhostParticles(){};
+
+        virtual void setupDynamics(Real dt = 0.0) override;
+        virtual void exec(Real dt = 0.0) override;
     };
 
     /**
@@ -108,32 +101,22 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
     class UpdatePeriodicGhostParticles : public PeriodicBounding
     {
       protected:
-        StdVec<std::pair<size_t, size_t>> &ghost_ranges_;
+        std::pair<size_t, size_t> &lower_ghost_bound_;
+        std::pair<size_t, size_t> &upper_ghost_bound_;
+
         void checkLowerBound(size_t index_i, Real dt = 0.0) override;
         void checkUpperBound(size_t index_i, Real dt = 0.0) override;
 
       public:
-        UpdatePeriodicGhostParticles(Vecd &periodic_translation,
-                                     StdVec<CellLists> &bound_cells_data,
-                                     StdVec<std::pair<size_t, size_t>> &ghost_ranges,
-                                     RealBody &real_body, BoundingBox bounding_bounds, int axis)
-            : PeriodicBounding(periodic_translation, bound_cells_data, real_body, bounding_bounds, axis),
-              ghost_ranges_(ghost_ranges){};
+        UpdatePeriodicGhostParticles(StdVec<CellLists> &bound_cells_data, RealBody &real_body,
+                                     Ghost<PeriodicAlongAxis> &ghost_boundary);
         virtual ~UpdatePeriodicGhostParticles(){};
 
         virtual void exec(Real dt = 0.0) override;
     };
 
   public:
-    PeriodicConditionUsingGhostParticles(RealBody &real_body, Ghost<PeriodicAlongAxis> &ghost_boundary)
-        : BasePeriodicCondition<execution::ParallelPolicy>(real_body, ghost_boundary.BoundingBounds(), ghost_boundary.Axis()),
-          bounding_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis),
-          ghost_creation_(periodic_translation_, bound_cells_data_, ghost_ranges_, real_body, bounding_bounds, axis),
-          ghost_update_(periodic_translation_, bound_cells_data_, ghost_ranges_, real_body, bounding_bounds, axis)
-    {
-        ghost_ranges_.resize(2);
-    };
-
+    PeriodicConditionUsingGhostParticles(RealBody &real_body, Ghost<PeriodicAlongAxis> &ghost_boundary);
     virtual ~PeriodicConditionUsingGhostParticles(){};
 
     PeriodicBounding bounding_;

@@ -3,13 +3,17 @@
 namespace SPH
 {
 //=================================================================================================//
+PeriodicConditionUsingCellLinkedList::
+    PeriodicConditionUsingCellLinkedList(RealBody &real_body, PeriodicAlongAxis &periodic_box)
+    : BasePeriodicCondition<execution::ParallelPolicy>(real_body, periodic_box),
+      bounding_(bound_cells_data_, real_body, periodic_box),
+      update_cell_linked_list_(bound_cells_data_, real_body, periodic_box) {}
+//=================================================================================================//
 PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::
     PeriodicCellLinkedList(StdVec<CellLists> &bound_cells_data,
-                           RealBody &real_body, BoundingBox bounding_bounds, int axis)
-    : PeriodicBounding(bound_cells_data, real_body, bounding_bounds, axis),
-      bound_cells_data_(bound_cells_data),
-      cell_linked_list_(real_body.getCellLinkedList()),
-      cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()) {}
+                           RealBody &real_body, PeriodicAlongAxis &periodic_box)
+    : PeriodicBounding(bound_cells_data, real_body, periodic_box),
+      cell_linked_list_(real_body.getCellLinkedList()) {}
 //=================================================================================================//
 void PeriodicConditionUsingCellLinkedList::
     PeriodicCellLinkedList::checkUpperBound(ListDataVector &cell_list_data, Real dt)
