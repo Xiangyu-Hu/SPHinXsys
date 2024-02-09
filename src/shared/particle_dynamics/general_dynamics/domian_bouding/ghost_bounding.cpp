@@ -45,6 +45,11 @@ void Ghost<PeriodicAlongAxis>::checkGhostParticlesReserved()
     };
 }
 //=================================================================================================//
+IndexRange Ghost<PeriodicAlongAxis>::getGhostParticleRange(const std::pair<size_t, size_t> &ghost_bound)
+{
+    return IndexRange(ghost_bound.first, ghost_bound.second);
+}
+//=================================================================================================//
 PeriodicConditionUsingGhostParticles::
     PeriodicConditionUsingGhostParticles(RealBody &real_body, Ghost<PeriodicAlongAxis> &ghost_boundary)
     : BasePeriodicCondition<execution::ParallelPolicy>(real_body, ghost_boundary),
@@ -127,18 +132,20 @@ PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::
     UpdatePeriodicGhostParticles(StdVec<CellLists> &bound_cells_data, RealBody &real_body,
                                  Ghost<PeriodicAlongAxis> &ghost_boundary)
     : PeriodicBounding(bound_cells_data, real_body, ghost_boundary),
+      ghost_boundary_(ghost_boundary),
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
-      upper_ghost_bound_(ghost_boundary.UpperGhostBound()) {}
+      upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
+      sorted_id_(base_particles_.sorted_id_) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 {
-    particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
+    base_particles_.updateFromAnotherParticle(index_i, sorted_id_[index_i]);
     pos_[index_i] += periodic_translation_;
 }
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 {
-    particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
+    base_particles_.updateFromAnotherParticle(index_i, sorted_id_[index_i]);
     pos_[index_i] -= periodic_translation_;
 }
 //=================================================================================================//
@@ -146,11 +153,11 @@ void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::exec(Re
 {
     setupDynamics(dt);
 
-    particle_for(execution::ParallelPolicy(), ghost_particles_[0],
+    particle_for(execution::ParallelPolicy(), ghost_boundary_.getGhostParticleRange(lower_ghost_bound_),
                  [&](size_t i)
                  { checkLowerBound(i, dt); });
 
-    particle_for(execution::ParallelPolicy(), ghost_particles_[1],
+    particle_for(execution::ParallelPolicy(), ghost_boundary_.getGhostParticleRange(upper_ghost_bound_),
                  [&](size_t i)
                  { checkUpperBound(i, dt); });
 }
