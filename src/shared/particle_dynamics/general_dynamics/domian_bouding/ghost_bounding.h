@@ -37,8 +37,7 @@ template <>
 class Ghost<PeriodicAlongAxis> : public PeriodicAlongAxis
 {
   public:
-    Ghost(BoundingBox bounding_bounds, int axis)
-        : PeriodicAlongAxis(bounding_bounds, axis){};
+    Ghost(BoundingBox bounding_bounds, int axis);
     virtual ~Ghost(){};
     void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing);
     std::pair<size_t, size_t> &LowerGhostBound() { return lower_ghost_bound_; };
@@ -46,6 +45,7 @@ class Ghost<PeriodicAlongAxis> : public PeriodicAlongAxis
     void checkGhostParticlesReserved();
     size_t getGhostSize() { return ghost_size_; };
     void checkWithinGhostSize(const std::pair<size_t, size_t> &ghost_bound);
+    IndexRange getGhostParticleRange(const std::pair<size_t, size_t> &ghost_bound);
 
   private:
     bool is_ghost_particles_reserved_ = false;
@@ -101,8 +101,10 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
     class UpdatePeriodicGhostParticles : public PeriodicBounding
     {
       protected:
+        Ghost<PeriodicAlongAxis> &ghost_boundary_;
         std::pair<size_t, size_t> &lower_ghost_bound_;
         std::pair<size_t, size_t> &upper_ghost_bound_;
+        StdLargeVec<size_t> &sorted_id_;
 
         void checkLowerBound(size_t index_i, Real dt = 0.0) override;
         void checkUpperBound(size_t index_i, Real dt = 0.0) override;

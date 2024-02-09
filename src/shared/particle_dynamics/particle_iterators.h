@@ -47,23 +47,23 @@ void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &
 };
 
 /**
- * Body-wise iterators (for sequential and parallel computing).
+ * Range-wise iterators (for sequential and parallel computing).
  */
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const SequencedPolicy &seq, const size_t &all_real_particles,
+inline void particle_for(const SequencedPolicy &seq, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
-    for (size_t i = 0; i < all_real_particles; ++i)
+    for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
         local_dynamics_function(i);
 };
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par, const size_t &all_real_particles,
+inline void particle_for(const ParallelPolicy &par, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     parallel_for(
-        IndexRange(0, all_real_particles),
+        particles_range,
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
