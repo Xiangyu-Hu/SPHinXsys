@@ -47,6 +47,9 @@ class SolidBody;
 class BodyPart;
 class BaseParticles;
 
+template <typename... T>
+class Ghost;
+
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
 using SolidBodyVector = StdVec<SolidBody *>;

@@ -256,11 +256,11 @@ void particle_reduce(const ExecutionPolicy &execution_policy, const DynamicsRang
  * Body-wise reduce iterators (for sequential and parallel computing).
  */
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const SequencedPolicy &seq, const IndexRange &particles_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    for (size_t i = 0; i < all_real_particles; ++i)
+    for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
     {
         temp = operation(temp, local_dynamics_function(i));
     }
@@ -268,12 +268,12 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelPolicy &par, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const ParallelPolicy &par, const IndexRange &particles_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     return parallel_reduce(
-        IndexRange(0, all_real_particles),
+        particles_range,
         temp, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
 				for (size_t i = r.begin(); i != r.end(); ++i)

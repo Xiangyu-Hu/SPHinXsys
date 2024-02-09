@@ -31,7 +31,7 @@
 #define PARTICLE_GENERATOR_LATTICE_H
 
 #include "base_particle_generator.h"
-
+#include "particle_generator_reserve.h"
 namespace SPH
 {
 
@@ -63,7 +63,6 @@ class ParticleGenerator<Lattice>
 };
 using ParticleGeneratorLattice = ParticleGenerator<Lattice>;
 using ParticleGeneratorLatticeWithBufferReservation = ParticleGenerator<BufferReservation, Lattice>;
-
 template <> // For generating particles with adaptive resolution from lattice positions
 class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
 {

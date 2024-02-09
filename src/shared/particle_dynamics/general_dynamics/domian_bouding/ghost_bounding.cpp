@@ -97,14 +97,13 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkLow
         particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
     {
         mutex_create_ghost_particle_.lock();
-        lower_ghost_bound_.second++;
-        ghost_boundary_.checkWithinGhostSize(lower_ghost_bound_);
-
         base_particles_.updateGhostParticle(lower_ghost_bound_.second, index_i);
         pos_[lower_ghost_bound_.second] = particle_position + periodic_translation_;
         /** insert ghost particle to cell linked list */
         cell_linked_list_.InsertListDataEntry(lower_ghost_bound_.second,
                                               pos_[lower_ghost_bound_.second], Vol_[index_i]);
+        lower_ghost_bound_.second++;
+        ghost_boundary_.checkWithinGhostSize(lower_ghost_bound_);
         mutex_create_ghost_particle_.unlock();
     }
 }
@@ -116,14 +115,13 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkUpp
         particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
     {
         mutex_create_ghost_particle_.lock();
-        upper_ghost_bound_.second++;
-        ghost_boundary_.checkWithinGhostSize(upper_ghost_bound_);
-
         base_particles_.updateGhostParticle(upper_ghost_bound_.second, index_i);
         pos_[upper_ghost_bound_.second] = particle_position + periodic_translation_;
         /** insert ghost particle to cell linked list */
         cell_linked_list_.InsertListDataEntry(upper_ghost_bound_.second,
                                               pos_[upper_ghost_bound_.second], Vol_[index_i]);
+        upper_ghost_bound_.second++;
+        ghost_boundary_.checkWithinGhostSize(upper_ghost_bound_);
         mutex_create_ghost_particle_.unlock();
     }
 }

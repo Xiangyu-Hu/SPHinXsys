@@ -120,7 +120,6 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
 void RealBody::updateCellLinkedList()
 {
     getCellLinkedList().UpdateCellLists(*base_particles_);
-    base_particles_->total_ghost_particles_ = 0;
 }
 //=================================================================================================//
 void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)

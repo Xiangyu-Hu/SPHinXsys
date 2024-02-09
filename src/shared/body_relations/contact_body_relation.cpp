@@ -110,7 +110,6 @@ AdaptiveContactRelation::AdaptiveContactRelation(SPHBody &sph_body, RealBodyVect
                         sph_body, *contact_sph_bodies[k]));
         }
     }
-    resizeConfiguration();
 }
 //=================================================================================================//
 void AdaptiveContactRelation::updateConfiguration()

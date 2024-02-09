@@ -69,7 +69,7 @@ class ParticleGenerator<BufferReservation, OtherParameters...>
   protected:
     void reserveBufferParticles()
     {
-        Real this->base_particles_.addBufferParticles(buffer_size);
+        this->base_particles_.addBufferParticles(buffer_size_);
     };
 
   private:
@@ -95,9 +95,9 @@ class ParticleGenerator<Ghost<BoundaryType>, OtherParameters...>
   protected:
     Ghost<BoundaryType> &ghost_boundary_;
 
-    void reserveGhostParticles() :
+    void reserveGhostParticles()
     {
-        ghost_boundary_.reserveGhostParticle(this->base_particles_);
+        ghost_boundary_.reserveGhostParticle(this->base_particles_, this->particle_spacing_);
     };
 };
 } // namespace SPH

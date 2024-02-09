@@ -46,9 +46,6 @@ class Inner; /**< Inner interaction: interaction within a body*/
 template <typename... ContactParameters>
 class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
 
-template <typename BoundaryType>
-class Ghost; /**< Ghost particle methods: using ghost particles for boundary conditions */
-
 class Boundary;        /**< Interaction with boundary */
 class Wall;            /**< Interaction with wall boundary */
 class Extended;        /**< An extened method of an interaction type */

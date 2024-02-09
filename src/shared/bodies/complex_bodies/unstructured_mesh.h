@@ -78,8 +78,6 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 
     explicit BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
     virtual ~BaseInnerRelationInFVM(){};
-
-    virtual void resizeConfiguration() override;
 };
 
 /**
@@ -142,8 +140,32 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
     /** generalized particle search algorithm */
     template <typename GetParticleIndex, typename GetNeighborRelation>
     void searchNeighborsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-                                    ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation);
+                                    ParticleConfiguration &particle_configuration,
+                                    GetParticleIndex &get_particle_index,
+                                    GetNeighborRelation &get_neighbor_relation);
     virtual void updateConfiguration() override;
+};
+
+template <>
+class Ghost<UnstructuredMesh>
+{
+  public:
+    Ghost(ANSYSMesh &ansys_mesh) : ansys_mesh_(ansys_mesh){};
+    virtual ~Ghost(){};
+    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing);
+    std::pair<size_t, size_t> &GhostBound() { return ghost_bound_; };
+    void checkGhostParticlesReserved();
+    size_t getGhostSize() { return ghost_size_; };
+    void checkWithinGhostSize(const std::pair<size_t, size_t> &ghost_bound);
+    IndexRange getGhostParticleRange(const std::pair<size_t, size_t> &ghost_bound);
+    ANSYSMesh &getUnstructuredMesh() { return ansys_mesh_; };
+
+  private:
+    ANSYSMesh &ansys_mesh_;
+    bool is_ghost_particles_reserved_ = false;
+    std::pair<size_t, size_t> ghost_bound_ = {0, 0};
+    size_t ghost_size_ = 0;
+    size_t calculateGhostSize(Real particle_spacing);
 };
 
 /**
@@ -153,22 +175,24 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
 class GhostCreationFromMesh : public GeneralDataDelegateSimple
 {
   public:
-    GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh);
+    GhostCreationFromMesh(RealBody &real_body, Ghost<UnstructuredMesh> &ghost_boundary);
     virtual ~GhostCreationFromMesh(){};
-    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
-    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
 
   protected:
+    Ghost<UnstructuredMesh> &ghost_boundary_;
+    ANSYSMesh &ansys_mesh_;
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     StdLargeVec<Vecd> &node_coordinates_;
     vector<vector<vector<size_t>>> &mesh_topology_;
     StdLargeVec<Vecd> &pos_;
-    StdVec<IndexVector> ghost_particles_;
     StdLargeVec<Real> &Vol_;
-    size_t &total_ghost_particles_;
-    size_t &real_particles_bound_;
     void addGhostParticleAndSetInConfiguration();
+
+  public:
+    std::pair<size_t, size_t> &ghost_bound_;
+    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
+    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
+    vector<vector<size_t>> each_boundary_type_contact_real_index_;
 };
 
 /**
@@ -194,10 +218,8 @@ class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
 class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
 {
   public:
-    BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                                vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index);
+    BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation);
     virtual ~BoundaryConditionSetupInFVM(){};
-
     virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
     virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i){};
     virtual void applyGivenValueInletFlow(size_t ghost_index){};
@@ -210,11 +232,10 @@ class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
   protected:
     StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
     StdLargeVec<Vecd> &vel_, &pos_, &mom_;
-    size_t &total_ghost_particles_;
-    size_t &real_particles_bound_;
-    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
-    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
+    std::pair<size_t, size_t> &ghost_bound_;
+    vector<vector<size_t>> &each_boundary_type_with_all_ghosts_index_;
+    vector<vector<Vecd>> &each_boundary_type_with_all_ghosts_eij_;
+    vector<vector<size_t>> &each_boundary_type_contact_real_index_;
 };
 } // namespace SPH
 #endif // UNSTRUCTURED_MESH_H
