@@ -199,7 +199,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 {
   public:
     explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                            int number_of_gaussian_points = 3, bool hourglass_control = false);
+                                            int number_of_gaussian_points = 3, bool hourglass_control = false, double hourglass_control_factor = 0.002);
     virtual ~ShellStressRelaxationFirstHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
 

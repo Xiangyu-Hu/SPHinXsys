@@ -78,7 +78,7 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                   int number_of_gaussian_points, bool hourglass_control)
+                                   int number_of_gaussian_points, bool hourglass_control, double hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
       global_stress_(particles_->global_stress_),
@@ -92,6 +92,7 @@ ShellStressRelaxationFirstHalf::
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
+      hourglass_control_factor_(hourglass_control_factor),
       hourglass_control_(hourglass_control),
       number_of_gaussian_points_(number_of_gaussian_points)
 {
@@ -110,8 +111,6 @@ ShellStressRelaxationFirstHalf::
         gaussian_point_ = three_gaussian_points_;
         gaussian_weight_ = three_gaussian_weights_;
     }
-    /** Define the factor of hourglass control algorithm. */
-    hourglass_control_factor_ = 0.002;
 }
 //=================================================================================================//
 void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
