@@ -8,8 +8,8 @@
 using namespace SPH;
 
 // geometric data
-Real particle_spacing = 0.02;
-Real gravity_g = 1;
+Real particle_spacing = 0.03;
+Real gravity_g = 0.1;
 
 // material properties
 Real rho = 1.0;          // reference density
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
     ComplexRelation fluid_walls_complex(fluid_inner, fluid_all_walls);
 
     //	Define the numerical methods used in the simulation
-    Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
+    Gravity gravity(Vec3d(0.0, 0.0, gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
     SimpleDynamics<InitialVelocity> initial_condition(lid_boundary);
 
@@ -136,7 +136,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
-    ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_acoustic_time_step_size(fluid_inner);
+    ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
@@ -149,10 +149,13 @@ int main(int ac, char *av[])
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    Real end_time = 30.0;
-    int output_interval = 50;
-    Real dt = 0.0;
+    Real end_time = 10.0;
+    int nmbr_of_outputs = 100;
+    Real output_interval = end_time / nmbr_of_outputs;
+    Real dt = 0;
+    Real Dt = 0;
     int iteration = 0;
+    int output_counter = 1;
 
     //	First output before the main loop.
     write_fluid_states.writeToFile(0);
@@ -163,12 +166,11 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Real Dt = get_fluid_advection_time_step_size.exec();
-        Real smth_lngth = 1.3 * particle_spacing;
-        Real max_viscosity = tau_y / min_shear_rate + K * pow(min_shear_rate, n - 1);
-        Real Dt_visc = 0.125 * smth_lngth * smth_lngth * rho / max_viscosity;
-        Dt = SMIN(Dt_visc, Dt);
-        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
+        Real saftey_factor = 0.8;
+        Real Dt_adv = get_fluid_advection_time_step_size.exec();
+        Real Dt_visc = get_viscous_time_step_size.exec() * saftey_factor;
+        Dt = SMIN(Dt_visc, Dt_adv);
+        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
 
@@ -176,7 +178,6 @@ int main(int ac, char *av[])
         vel_grad_calc_contact.exec(Dt);
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
-        // transport_velocity_correction.exec();
 
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
@@ -190,9 +191,10 @@ int main(int ac, char *av[])
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
-        if (iteration % output_interval == 0)
+        if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             write_fluid_states.writeToFile();
+            output_counter++;
         }
         fluid.updateCellLinkedListWithParticleSort(100);
         fluid_walls_complex.updateConfiguration();
