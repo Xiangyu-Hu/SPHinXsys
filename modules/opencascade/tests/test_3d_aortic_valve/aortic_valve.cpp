@@ -57,7 +57,7 @@ class CylinderParticleGenerator : public ParticleGeneratorSurface
     explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body), sph_body_(sph_body){};
     virtual void initializeGeometricVariables() override
     {
-        SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.body_shape_);
+        SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.initial_shape_);
 
         Standard_Real u1 = 0;
         Standard_Real v1 = DELTA1;

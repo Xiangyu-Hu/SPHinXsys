@@ -42,7 +42,7 @@ class SPHSystem;
 class FluidBody : public RealBody
 {
   public:
-    explicit FluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
+    explicit FluidBody(SPHSystem &system, SharedPtr<Shape> initial_shape_ptr);
     virtual ~FluidBody(){};
     virtual FluidBody *ThisObjectPtr() override { return this; };
 };

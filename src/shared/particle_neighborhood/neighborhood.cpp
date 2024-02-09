@@ -141,7 +141,7 @@ void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
 };
 //=================================================================================================//
 NeighborBuilderContact::NeighborBuilderContact(SPHBody &body, SPHBody &contact_body)
-    : NeighborBuilder(this->chooseKernel(body, contact_body)) {}
+    : NeighborBuilder(NeighborBuilder::chooseKernel(body, contact_body)) {}
 //=================================================================================================//
 void NeighborBuilderContact::operator()(Neighborhood &neighborhood,
                                         const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -167,7 +167,7 @@ NeighborBuilderSurfaceContact::NeighborBuilderSurfaceContact(SPHBody &body, SPHB
 }
 //=================================================================================================//
 NeighborBuilderContactBodyPart::NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part)
-    : NeighborBuilder(this->chooseKernel(body, contact_body_part.getSPHBody()))
+    : NeighborBuilder(NeighborBuilder::chooseKernel(body, contact_body_part.getSPHBody()))
 {
     contact_body_part.getSPHBody().getBaseParticles().registerVariable(part_indicator_, "BodyPartByParticleIndicator");
     BodyPartByParticle &contact_body_part_by_particle = DynamicCast<BodyPartByParticle>(this, contact_body_part);

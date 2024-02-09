@@ -10,7 +10,7 @@ StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surfac
       rho0_(sph_body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
       mass_(particles_->mass_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")),
-      pos_(particles_->pos_), level_set_shape_(&near_surface.level_set_shape_) {}
+      pos_(particles_->pos_), level_set_shape_(&near_surface.getLevelSetShape()) {}
 //=================================================================================================//
 void StaticConfinementDensity::update(size_t index_i, Real dt)
 {
@@ -25,7 +25,7 @@ StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearSha
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       mass_(particles_->mass_), pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
-      level_set_shape_(&near_surface.level_set_shape_),
+      level_set_shape_(&near_surface.getLevelSetShape()),
       riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
@@ -40,7 +40,7 @@ StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearSha
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
       pos_(particles_->pos_), vel_(particles_->vel_),
-      level_set_shape_(&near_surface.level_set_shape_),
+      level_set_shape_(&near_surface.getLevelSetShape()),
       riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
