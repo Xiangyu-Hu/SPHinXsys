@@ -41,7 +41,7 @@ template <class ExecutionPolicy, typename DynamicsRange, class LocalDynamicsFunc
 void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &dynamics_range,
                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle dynamics !" << std::endl;
+    std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle_for !" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     exit(1);
 };
