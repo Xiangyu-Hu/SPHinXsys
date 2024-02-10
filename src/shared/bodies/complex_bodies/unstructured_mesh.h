@@ -150,9 +150,17 @@ template <>
 class Ghost<UnstructuredMesh>
 {
   public:
-    Ghost(ANSYSMesh &ansys_mesh) : ansys_mesh_(ansys_mesh){};
+    Ghost(ANSYSMesh &ansys_mesh, Real ghost_size_factor)
+        : ansys_mesh_(ansys_mesh), ghost_size_factor_(ghost_size_factor){};
     virtual ~Ghost(){};
-    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing);
+    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing)
+    {
+        ghost_size_ = std::ceil(Real(base_particles.total_real_particles_) * ghost_size_factor_);
+
+        ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
+
+        is_ghost_particles_reserved_ = true;
+    };
     std::pair<size_t, size_t> &GhostBound() { return ghost_bound_; };
     void checkGhostParticlesReserved();
     size_t getGhostSize() { return ghost_size_; };
@@ -162,10 +170,10 @@ class Ghost<UnstructuredMesh>
 
   private:
     ANSYSMesh &ansys_mesh_;
+    Real ghost_size_factor_;
     bool is_ghost_particles_reserved_ = false;
     std::pair<size_t, size_t> ghost_bound_ = {0, 0};
     size_t ghost_size_ = 0;
-    size_t calculateGhostSize(Real particle_spacing);
 };
 
 /**

@@ -104,10 +104,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    PeriodicAlongAxis periodic_condition_x(water_block.getSPHBodyBounds(), xAxis);
-    PeriodicAlongAxis periodic_condition_y(water_block.getSPHBodyBounds(), yAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, periodic_condition_x);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, periodic_condition_y);
+    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_y(water_block.getSPHBodyBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, periodic_along_x);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, periodic_along_y);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
