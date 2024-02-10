@@ -58,19 +58,20 @@ int main(int ac, char* av[])
 	//**Attention! the original one does use Riemann solver for density
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
 	
+	/** Turbulent standard wall function needs normal vectors of wall. */
+	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
+	near_surface.level_set_shape_.writeLevelSet(system);
+	
 	/** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
+	InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall, SequencedPolicy> update_near_wall_status(water_block_inner, water_block_contact, near_surface);
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
 	InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
 	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_force(water_block_inner, water_block_contact);
+	SimpleDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction(water_block, offset_dist_ref);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	
-	/** Turbulent standard wall function needs normal vectors of wall. */
-	NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
-	near_surface.level_set_shape_.writeLevelSet(system);
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
-
 	SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData,SequencedPolicy> get_time_average_cross_section_data(water_block_inner,num_observer_points, monitoring_bound);
 
 	InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_block_contact);
@@ -191,10 +192,11 @@ int main(int ac, char* av[])
 
 				density_relaxation.exec(dt);
 
+				update_near_wall_status.exec();
 				get_velocity_gradient.exec(dt);
+				standard_wall_function_correction.exec();
 				k_equation_relaxation.exec(dt);
 				epsilon_equation_relaxation.exec(dt);
-				standard_wall_function_correction.exec();
 
 				relaxation_time += dt;
 				integration_time += dt;
