@@ -100,7 +100,8 @@ int main(int ac, char *av[])
     FluidBody water_body(sph_system, water_inlet_shape_ptr, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_body.generateParticles<ParticleGeneratorLatticeWithBufferReservation>(350.0);
+    Buffer<ReserveSizeFactor> inlet_buffer(350.0);
+    water_body.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Lattice>>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -138,7 +139,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     BodyAlignedBoxByParticle emitter(water_body, makeShared<AlignedBoxShape>(Transform(inlet_translation), inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, xAxis);
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer, xAxis);
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------

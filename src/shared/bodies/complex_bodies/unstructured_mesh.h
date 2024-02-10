@@ -153,12 +153,13 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
 class GhostCreationFromMesh : public GeneralDataDelegateSimple
 {
   public:
-    GhostCreationFromMesh(RealBody &real_body, Ghost<UnstructuredMesh> &ghost_boundary);
+    GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
+                          Ghost<ReserveSizeFactor> &ghost_boundary);
     virtual ~GhostCreationFromMesh(){};
 
   protected:
-    Ghost<UnstructuredMesh> &ghost_boundary_;
     ANSYSMesh &ansys_mesh_;
+    Ghost<ReserveSizeFactor> &ghost_boundary_;
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     StdLargeVec<Vecd> &node_coordinates_;
     vector<vector<vector<size_t>>> &mesh_topology_;

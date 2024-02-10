@@ -69,6 +69,7 @@ class ParticleGenerator<Base>
 
   protected:
     BaseParticles &base_particles_;
+    Real particle_spacing_ref_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<size_t> &unsorted_id_;

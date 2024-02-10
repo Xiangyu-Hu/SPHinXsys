@@ -567,15 +567,16 @@ void InnerRelationInFVM::updateConfiguration()
                                get_particle_index_, get_inner_neighbor_);
 }
 //=================================================================================================//
-GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, Ghost<UnstructuredMesh> &ghost_boundary)
+GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
+                                             Ghost<ReserveSizeFactor> &ghost_boundary)
     : GeneralDataDelegateSimple(real_body),
-      ghost_boundary_(ghost_boundary),
-      ansys_mesh_(ghost_boundary.getUnstructuredMesh()),
+      ansys_mesh_(ansys_mesh), ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh_.node_coordinates_),
       mesh_topology_(ansys_mesh_.mesh_topology_),
       pos_(particles_->pos_), Vol_(particles_->Vol_),
       ghost_bound_(ghost_boundary.GhostBound())
 {
+    ghost_boundary.checkParticlesReserved();
     each_boundary_type_with_all_ghosts_index_.resize(50);
     each_boundary_type_with_all_ghosts_eij_.resize(50);
     each_boundary_type_contact_real_index_.resize(50);

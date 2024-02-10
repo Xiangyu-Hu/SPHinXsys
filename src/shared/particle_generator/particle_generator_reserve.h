@@ -64,7 +64,7 @@ class Buffer<Base> : public ParticleReserve
   public:
     Buffer() : ParticleReserve(){};
     virtual ~Buffer(){};
-    void checkEnoughBuffer(BaseParticles &base_particles, size_t index_i);
+    void checkEnoughBuffer(BaseParticles &base_particles);
     void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
 };
 
@@ -103,23 +103,24 @@ class ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>
   public:
     template <typename... Args>
     ParticleGenerator(SPHBody &sph_body, Buffer<BufferSizeEstimator> &buffer_boundary, Args &&...args)
-        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...)
+        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...),
+          buffer_boundary_(buffer_boundary)
     {
         static_assert(!has_ghost_particles<ParticleGenerator<OtherParameters...>>::value,
                       "ParticleGenerator: GhostReservation is not allowed ahead of BufferReservation.");
     };
     virtual ~ParticleGenerator(){};
 
-    virtual void generateParticlesWithBasicVariables() override
+    void generateParticlesWithBasicVariables()
     {
         ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
-        reserveBufferParticles();
+        ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>::reserveBufferParticles();
     };
 
   protected:
     void reserveBufferParticles()
     {
-        buffer_boundary_.reserveBufferParticles(this->base_particles_, this->particle_spacing_);
+        buffer_boundary_.reserveBufferParticles(this->base_particles_, this->particle_spacing_ref_);
     };
 
   private:
@@ -171,10 +172,10 @@ class ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>
         : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...){};
     virtual ~ParticleGenerator(){};
 
-    virtual void generateParticlesWithBasicVariables() override
+    void generateParticlesWithBasicVariables()
     {
         ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
-        reserveGhostParticles();
+        ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>::reserveGhostParticles();
     };
 
   protected:
@@ -182,7 +183,7 @@ class ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>
 
     void reserveGhostParticles()
     {
-        ghost_boundary_.reserveGhostParticles(this->base_particles_, this->particle_spacing_);
+        ghost_boundary_.reserveGhostParticles(this->base_particles_, this->particle_spacing_ref_);
     };
 };
 } // namespace SPH

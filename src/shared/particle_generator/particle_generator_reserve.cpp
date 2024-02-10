@@ -19,9 +19,9 @@ void ParticleReserve::checkParticlesReserved()
     };
 }
 //=================================================================================================//
-void Buffer<Base>::checkEnoughBuffer(BaseParticles &base_particles, size_t index_i)
+void Buffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 {
-    if (index_i >= base_particles.real_particles_bound_)
+    if (base_particles.total_real_particles_ >= base_particles.real_particles_bound_)
     {
         std::cout << "\n ERROR: Not enough buffer particles have been reserved!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
