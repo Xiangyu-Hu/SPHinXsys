@@ -22,8 +22,15 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file particle_generator_reserve.h
- * @brief TBD
- * @author Chi Zhang and Xiangyu Hu
+ * @brief Buffer particles are saved behind real particles.
+ * They may be switched from real particles or switch to real particles.
+ * Ghost particles whose states are updated according to
+ * boundary condition if their indices are included in the neighbor particle list.
+ * The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
+ * @details Note that, due to present arrangement of memories,
+ * the generation of buffer particles must be done before the generation of ghost particles.
+ * Therefore, type traits are used to check the order of the particle generation.
+ * @author Xiangyu Hu
  */
 
 #ifndef PARTICLE_GENERATOR_RESERVE_H
@@ -33,7 +40,51 @@
 
 namespace SPH
 {
-class BufferReservation;
+struct ReserveSizeFactor
+{
+    Real size_factor_;
+    ReserveSizeFactor(Real size_factor) : size_factor_(size_factor){};
+    size_t operator()(BaseParticles &base_particles, Real particle_spacing);
+};
+
+class ParticleReserve
+{
+  public:
+    ParticleReserve(){};
+    void checkParticlesReserved();
+    virtual ~ParticleReserve(){};
+
+  protected:
+    bool is_particles_reserved_ = false;
+};
+
+template <>
+class Buffer<Base> : public ParticleReserve
+{
+  public:
+    Buffer() : ParticleReserve(){};
+    virtual ~Buffer(){};
+    void checkEnoughBuffer(BaseParticles &base_particles, size_t index_i);
+    void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
+};
+
+template <class BufferSizeEstimator>
+class Buffer<BufferSizeEstimator> : public Buffer<Base>
+{
+  public:
+    template <typename... Args>
+    Buffer(Args &&...args) : Buffer<Base>(), buffer_size_estimator_(std::forward<Args>(args)...){};
+    virtual ~Buffer(){};
+    void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
+    {
+        size_t ghost_size = buffer_size_estimator_(base_particles, particle_spacing);
+        allocateBufferParticles(base_particles, ghost_size);
+        is_particles_reserved_ = true;
+    };
+
+  private:
+    BufferSizeEstimator buffer_size_estimator_;
+};
 
 template <class T, class = void>
 struct has_ghost_particles : std::false_type
@@ -45,18 +96,17 @@ struct has_ghost_particles<T, std::void_t<decltype(&T::reserveGhostParticles)>> 
 {
 };
 
-template <typename... OtherParameters>
-class ParticleGenerator<BufferReservation, OtherParameters...>
+template <class BufferSizeEstimator, typename... OtherParameters>
+class ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>
     : public ParticleGenerator<OtherParameters...>
 {
   public:
     template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, Real buffer_size_factor, Args &&...args)
+    ParticleGenerator(SPHBody &sph_body, Buffer<BufferSizeEstimator> &buffer_boundary, Args &&...args)
         : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...)
     {
         static_assert(!has_ghost_particles<ParticleGenerator<OtherParameters...>>::value,
                       "ParticleGenerator: GhostReservation is not allowed ahead of BufferReservation.");
-        buffer_size_ = std::ceil(Real(this->base_particles_.total_real_particles_) * buffer_size_factor);
     };
     virtual ~ParticleGenerator(){};
 
@@ -69,20 +119,55 @@ class ParticleGenerator<BufferReservation, OtherParameters...>
   protected:
     void reserveBufferParticles()
     {
-        this->base_particles_.addBufferParticles(buffer_size_);
+        buffer_boundary_.reserveBufferParticles(this->base_particles_, this->particle_spacing_);
     };
 
   private:
-    Real buffer_size_;
+    Buffer<BufferSizeEstimator> &buffer_boundary_;
 };
 
-template <typename BoundaryType, typename... OtherParameters>
-class ParticleGenerator<Ghost<BoundaryType>, OtherParameters...>
+template <>
+class Ghost<Base> : public ParticleReserve
+{
+  public:
+    Ghost() : ParticleReserve(){};
+    virtual ~Ghost(){};
+    size_t getGhostSize() { return ghost_size_; };
+    void checkWithinGhostSize(const ParticlesBound &ghost_bound);
+    IndexRange getGhostParticleRange(const ParticlesBound &ghost_bound);
+    size_t allocateGhostParticles(BaseParticles &base_particles, size_t ghost_size);
+
+  protected:
+    size_t ghost_size_ = 0;
+};
+
+template <class GhostSizeEstimator>
+class Ghost<GhostSizeEstimator> : public Ghost<Base>
+{
+  public:
+    template <typename... Args>
+    Ghost(Args &&...args) : Ghost<Base>(), ghost_size_estimator_(std::forward<Args>(args)...){};
+    virtual ~Ghost(){};
+    void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
+    {
+        ghost_size_ = ghost_size_estimator_(base_particles, particle_spacing);
+        ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
+        is_particles_reserved_ = true;
+    };
+    ParticlesBound &GhostBound() { return ghost_bound_; };
+
+  private:
+    GhostSizeEstimator ghost_size_estimator_;
+    ParticlesBound ghost_bound_ = {0, 0};
+};
+
+template <typename GhostParameter, typename... OtherParameters>
+class ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>
     : public ParticleGenerator<OtherParameters...>
 {
   public:
     template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, Ghost<BoundaryType> &ghost_boundary, Args &&...args)
+    ParticleGenerator(SPHBody &sph_body, Ghost<GhostParameter> &ghost_boundary, Args &&...args)
         : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...){};
     virtual ~ParticleGenerator(){};
 
@@ -93,11 +178,11 @@ class ParticleGenerator<Ghost<BoundaryType>, OtherParameters...>
     };
 
   protected:
-    Ghost<BoundaryType> &ghost_boundary_;
+    Ghost<GhostParameter> &ghost_boundary_;
 
     void reserveGhostParticles()
     {
-        ghost_boundary_.reserveGhostParticle(this->base_particles_, this->particle_spacing_);
+        ghost_boundary_.reserveGhostParticles(this->base_particles_, this->particle_spacing_);
     };
 };
 } // namespace SPH

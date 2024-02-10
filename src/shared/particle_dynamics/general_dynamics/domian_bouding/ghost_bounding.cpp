@@ -16,16 +16,6 @@ void Ghost<PeriodicAlongAxis>::reserveGhostParticle(BaseParticles &base_particle
     is_ghost_particles_reserved_ = true;
 }
 //=================================================================================================//
-void Ghost<PeriodicAlongAxis>::checkWithinGhostSize(const std::pair<size_t, size_t> &ghost_bound)
-{
-    if (ghost_bound.second - lower_ghost_bound_.first > ghost_size_)
-    {
-        std::cout << "\n ERROR: Not enough ghost particles have been reserved!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    };
-}
-//=================================================================================================//
 size_t Ghost<PeriodicAlongAxis>::calculateGhostSize(Real particle_spacing)
 {
     int next_axis = NextAxis(axis_);

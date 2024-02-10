@@ -62,7 +62,7 @@ class ParticleGenerator<Lattice>
     virtual void initializeGeometricVariables() override;
 };
 using ParticleGeneratorLattice = ParticleGenerator<Lattice>;
-using ParticleGeneratorLatticeWithBufferReservation = ParticleGenerator<BufferReservation, Lattice>;
+
 template <> // For generating particles with adaptive resolution from lattice positions
 class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
 {

@@ -65,9 +65,10 @@ class BaseDynamics;
  * 		  the first buffer particle and increase total_real_particles_ by one.
  * 		  The other is ghost particles whose states are updated according to
  * 		  boundary condition if their indices are included in the neighbor particle list.
- * 		  The ghost particles are saved behind the buffer particles.
- * 		  The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles.
- * 		  The global value of total_ghost_particles_ indicates the total number of ghost particles in use.
+ * 		  Ghost particles whose states are updated according to
+ *      boundary condition if their indices are included in the neighbor particle list.
+ *      The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
+ *      All particles are bounded by particle_bound_, which is the total number of particles in all types.
  * 		  It will be initialized to zero before a time step.
  * 		  In SPHinXsys, the discrete variables (state of each particle) registered in general particle data
  *      (ParticleData) belong to a hierarchy of two layers.
@@ -215,9 +216,13 @@ class BaseParticles
     //		Small structs for generalize particle operations
     //----------------------------------------------------------------------
     template <typename DataType>
-    struct resizeParticleData
+    class resizeParticleData
     {
-        void operator()(ParticleData &particle_data, size_t new_size) const;
+        ParticleData &all_particle_data_;
+
+      public:
+        resizeParticleData(ParticleData &all_particle_data);
+        void operator()(size_t new_size) const;
     };
 
     /** Add a particle data with default value. */
@@ -232,6 +237,8 @@ class BaseParticles
     {
         void operator()(ParticleData &particle_data, size_t index, size_t another_index) const;
     };
+
+  public:
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------

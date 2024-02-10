@@ -71,7 +71,7 @@ using DataContainerUniquePtrAssemble =
 
 /** a type irrelevant operation on the data assembles  */
 template <template <typename> typename OperationType>
-struct DataAssembleOperation
+class DataAssembleOperation
 {
     OperationType<Real> scalar_operation;
     OperationType<Vec2d> vector2d_operation;
@@ -80,6 +80,15 @@ struct DataAssembleOperation
     OperationType<Mat3d> matrix3d_operation;
     OperationType<int> integer_operation;
 
+  public:
+    template <typename... Args>
+    DataAssembleOperation(Args &&...args)
+        : scalar_operation(std::forward<Args>(args)...),
+          vector2d_operation(std::forward<Args>(args)...),
+          vector3d_operation(std::forward<Args>(args)...),
+          matrix2d_operation(std::forward<Args>(args)...),
+          matrix3d_operation(std::forward<Args>(args)...),
+          integer_operation(std::forward<Args>(args)...){};
     template <typename... OperationArgs>
     void operator()(OperationArgs &&...operation_args)
     {

@@ -16,7 +16,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles")
+      reload_xml_parser_("xml_particle_reload", "particles"),
+      resize_particle_data_(all_particle_data_)
 {
     //----------------------------------------------------------------------
     //		register geometric data only
@@ -365,7 +366,7 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
     {
         unsorted_id_.push_back(i);
     };
-    resize_particle_data_(all_particle_data_, total_real_particles_);
+    resize_particle_data_(total_real_particles_);
     ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);

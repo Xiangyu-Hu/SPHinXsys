@@ -48,7 +48,9 @@ class BodyPart;
 class BaseParticles;
 
 template <typename... T>
-class Ghost;
+class Ghost; // Indicating with ghost particles
+template <typename... T>
+class Buffer; // Indicating with buffer particles
 
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
@@ -58,6 +60,7 @@ using BodyPartVector = StdVec<BodyPart *>;
 
 using IndexVector = StdVec<size_t>;
 using ConcurrentIndexVector = ConcurrentVec<size_t>;
+using ParticlesBound = std::pair<size_t, size_t>;
 
 /** List data pair: first for indexes, second for particle position. */
 using ListData = std::tuple<size_t, Vecd, Real>;
