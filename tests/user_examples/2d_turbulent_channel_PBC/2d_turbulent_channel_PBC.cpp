@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
+        ? wall_boundary.generateParticles<ParticleGeneratorReload>(wall_boundary.getName())
         : wall_boundary.generateParticles<ParticleGeneratorLattice>();
     
     ObserverBody fluid_observer(sph_system, "FluidObserver");

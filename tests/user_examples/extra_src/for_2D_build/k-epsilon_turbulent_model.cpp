@@ -33,33 +33,19 @@ namespace fluid_dynamics
 //=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
-		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
+		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
+		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))
 	{
-		//** Obtain Initial values for transport equations *
-		turbu_k_initial_ = initial_values[0];
-		turbu_ep_initial_ = initial_values[1];
-		turbu_mu_initial_ = initial_values[2];
-
 		particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 		particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
 
-		particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", turbu_k_initial_);
-		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
-		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
-
-		particles_->registerVariable(turbu_k_prior_, "TurbulenceKineticEnergyPrior", turbu_k_initial_);
-		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergyPrior");
-
-		particles_->registerVariable(turbu_mu_, "TurbulentViscosity", turbu_mu_initial_);
-		particles_->registerSortableVariable<Real>("TurbulentViscosity");
-		particles_->addVariableToWrite<Real>("TurbulentViscosity");
-
-		particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", turbu_ep_initial_);
-		particles_->registerSortableVariable<Real>("TurbulentDissipation");
-		particles_->addVariableToWrite<Real>("TurbulentDissipation");
-
-		particles_->registerVariable(turbu_epsilon_prior_, "TurbulentDissipationPrior", turbu_ep_initial_);
-		particles_->registerSortableVariable<Real>("TurbulentDissipationPrior");
+		particles_->registerVariable(velocity_gradient_, "VelocityGradient");
+		particles_->registerSortableVariable<Matd>("VelocityGradient");
+		particles_->addVariableToWrite<Matd>("VelocityGradient");
 
 		particles_->registerVariable(k_production_, "K_Production");
 		particles_->registerSortableVariable<Real>("K_Production");
@@ -68,17 +54,31 @@ namespace fluid_dynamics
 		particles_->registerVariable(k_production_prior_, "K_ProductionPrior");
 		particles_->registerSortableVariable<Real>("K_ProductionPrior");
 
+		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
+		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
+
+		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergyPrior");
+
+		particles_->registerSortableVariable<Real>("TurbulentViscosity");
+		particles_->addVariableToWrite<Real>("TurbulentViscosity");
+
+		particles_->registerSortableVariable<Real>("TurbulentDissipation");
+		particles_->addVariableToWrite<Real>("TurbulentDissipation");
+
+		particles_->registerSortableVariable<Real>("TurbulentDissipationPrior");
+
+		//** Obtain Initial values for transport equations *		
+		std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
+		std::fill(turbu_k_prior_.begin(), turbu_k_prior_.end(), initial_values[0]);
+		std::fill(turbu_epsilon_.begin(), turbu_epsilon_.end(), initial_values[1]);
+		std::fill(turbu_epsilon_prior_.begin(), turbu_epsilon_prior_.end(), initial_values[1]);
+		std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
+
 		//** for test */
 		particles_->registerVariable(k_diffusion_, "K_Diffusion");
 		particles_->registerSortableVariable<Real>("K_Diffusion");
 		particles_->addVariableToWrite<Real>("K_Diffusion");
-
 		particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
-
-		particles_->registerVariable(velocity_gradient_, "VelocityGradient");
-		particles_->registerSortableVariable<Matd>("VelocityGradient");
-		particles_->addVariableToWrite<Matd>("VelocityGradient");
-
 		particles_->registerVariable(vel_x_, "Velocity_X");
 		particles_->registerSortableVariable<Real>("Velocity_X");
 	}
@@ -622,7 +622,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	StandardWallFunctionCorrection::
 		StandardWallFunctionCorrection(SPHBody& sph_body, Real offset_dist)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body), offset_dist_(offset_dist),
+		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
+		offset_dist_(offset_dist),
 		vel_(particles_->vel_), rho_(particles_->rho_),
 		mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
@@ -651,14 +652,13 @@ namespace fluid_dynamics
 		particles_->registerSortableVariable<Real>("WallYstar");
 		particles_->addVariableToWrite<Real>("WallYstar");
 
-		particles_->registerVariable(velo_friction_, "FrictionVelocity");
-		particles_->registerSortableVariable<Vecd>("FrictionVelocity");
-		particles_->addVariableToWrite<Vecd>("FrictionVelocity");
-
 		particles_->registerVariable(velo_tan_, "TangentialVelocity");
 		particles_->registerSortableVariable<Real>("TangentialVelocity");
 		particles_->addVariableToWrite<Real>("TangentialVelocity");
 
+		particles_->registerVariable(velo_friction_, "FrictionVelocity");
+		particles_->registerSortableVariable<Vecd>("FrictionVelocity");
+		particles_->addVariableToWrite<Vecd>("FrictionVelocity");
 	};
 	//=================================================================================================//
 	void StandardWallFunctionCorrection::update(size_t index_i, Real dt)

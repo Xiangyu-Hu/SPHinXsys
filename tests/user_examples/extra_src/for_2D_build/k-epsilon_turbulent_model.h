@@ -56,30 +56,6 @@ namespace fluid_dynamics
 		Real sigma_E;
 	};
 //=================================================================================================//
-	template <typename... T>
-	class BaseTurtbulentModel;
-	
-	template <class DataDelegationType>
-	class BaseTurtbulentModel<Base, DataDelegationType>
-		: public LocalDynamics, public DataDelegationType, public BaseTurbuClosureCoeff
-	{
-	public:
-		template <class BaseRelationType>
-		explicit BaseTurtbulentModel(BaseRelationType& base_relation);
-		virtual ~BaseTurtbulentModel() {};
-	protected:
-		StdLargeVec<Real> turbu_mu_;
-		StdLargeVec<Real> turbu_k_, turbu_k_prior_;
-		StdLargeVec<Real> turbu_epsilon_, turbu_epsilon_prior_;
-
-		Real smoothing_length_;
-		Real particle_spacing_min_;
-		Real mu_;
-		StdLargeVec<Real>& rho_;
-		StdLargeVec<Vecd>& vel_;
-		int dimension_;
-	};
-//=================================================================================================//
 	template <typename... InteractionTypes>
 	class GetVelocityGradient;
 
@@ -113,8 +89,31 @@ namespace fluid_dynamics
 	//** Interface part *
 	//template <class InnerInteractionType>
 	//using BaseGetVelocityGradientInner = GetVelocityGradient<InnerInteractionType>;
-	
+
 	//using GetVelocityGradientInner = BaseGetVelocityGradientInner<Inner<>>;
+//=================================================================================================//
+	template <typename... T>
+	class BaseTurtbulentModel;
+	
+	template <class DataDelegationType>
+	class BaseTurtbulentModel<Base, DataDelegationType>
+		: public LocalDynamics, public DataDelegationType, public BaseTurbuClosureCoeff
+	{
+	public:
+		template <class BaseRelationType>
+		explicit BaseTurtbulentModel(BaseRelationType& base_relation);
+		virtual ~BaseTurtbulentModel() {};
+	protected:
+		StdLargeVec<Real> turbu_k_, turbu_k_prior_;
+		StdLargeVec<Real> turbu_epsilon_, turbu_epsilon_prior_;
+		StdLargeVec<Real> turbu_mu_;
+		
+		Real mu_, smoothing_length_, particle_spacing_min_;
+		StdLargeVec<Real>& rho_;
+		StdLargeVec<Vecd>& vel_;
+		int dimension_;
+	};
+
 //=================================================================================================//
 	/**
 	 * @class K_TurtbulentModelInner
@@ -128,18 +127,21 @@ namespace fluid_dynamics
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
+		void update_prior_turbulent_value();
 	protected:
 		StdLargeVec<Real> dk_dt_;
 		StdLargeVec<Matd> velocity_gradient_;
-		//StdLargeVec<Matd> B_;
 		StdLargeVec<Real> k_production_, k_production_prior_;
 
+		StdLargeVec<Real>& turbu_k_;
+		StdLargeVec<Real>& turbu_k_prior_;
+		StdLargeVec<Real>& turbu_epsilon_;
+		StdLargeVec<Real>& turbu_epsilon_prior_;
+		StdLargeVec<Real>& turbu_mu_;
 		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
-		Real turbu_k_initial_, turbu_ep_initial_, turbu_mu_initial_;
 
 		//** for test */
 		StdLargeVec<Real>  k_diffusion_, vel_x_;
-		//StdLargeVec<Matd> velocity_gradient_wall;
 	};
 //=================================================================================================//
 	/**
@@ -157,7 +159,8 @@ namespace fluid_dynamics
 	protected:
 		StdLargeVec<Real> dE_dt_, ep_production, ep_dissipation_, ep_diffusion_;
 		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<Real>& turbu_k_, turbu_k_prior_;
+		StdLargeVec<Real>& turbu_k_;
+		StdLargeVec<Real>& turbu_k_prior_;
 		StdLargeVec<Real>& turbu_epsilon_, turbu_epsilon_prior_;
 		StdLargeVec<Real>& k_production_,k_production_prior_;
 		StdLargeVec<int>& is_near_wall_P1_;
@@ -339,18 +342,19 @@ namespace fluid_dynamics
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		LevelSetShape* level_set_shape_;
 		StdLargeVec<Real> distance_to_dummy_interface_levelset_;
 		StdLargeVec<Real> distance_to_dummy_interface_;
 		StdLargeVec<Real> distance_to_dummy_interface_up_average_;
-		StdLargeVec<Vecd> & pos_;
-		StdLargeVec<Vecd> e_nearest_tau_, e_nearest_normal_;
-		StdVec<StdLargeVec<Real>*> contact_Vol_;
-		Real particle_spacing_;
-		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 		StdLargeVec<int> is_near_wall_P1_;
 		StdLargeVec<int> is_near_wall_P2_;
 		StdLargeVec<int> index_nearest_;
+		StdLargeVec<Vecd> e_nearest_tau_, e_nearest_normal_;
+
+		LevelSetShape* level_set_shape_;
+		StdLargeVec<Vecd> & pos_;
+		StdVec<StdLargeVec<Real>*> contact_Vol_;
+		Real particle_spacing_;
+		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 		int dimension_;
 	};
 
@@ -368,21 +372,21 @@ namespace fluid_dynamics
 		virtual ~StandardWallFunctionCorrection() {};
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
+		Real offset_dist_;
+		StdLargeVec<Real> y_p_;
+		StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
+		StdLargeVec<Real> velo_tan_;
+		StdLargeVec<Vecd> velo_friction_;
 
 		StdLargeVec<Real>& distance_to_dummy_interface_levelset_;
 		StdLargeVec<Real>& distance_to_dummy_interface_;
 		StdLargeVec<Real>& distance_to_dummy_interface_up_average_;
-		Real offset_dist_;
-		StdLargeVec<Real> y_p_;
-		StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_epsilon_;
 		StdLargeVec<Real>& turbu_mu_;
 		Real mu_;
 		StdLargeVec<int>& is_near_wall_P1_;
 		StdLargeVec<int>& is_near_wall_P2_;
-		StdLargeVec<Real> velo_tan_;
-		StdLargeVec<Vecd> velo_friction_;
 		StdLargeVec<int>& index_nearest;
 		StdLargeVec<Vecd>& vel_;
 		StdLargeVec<Real>& rho_;

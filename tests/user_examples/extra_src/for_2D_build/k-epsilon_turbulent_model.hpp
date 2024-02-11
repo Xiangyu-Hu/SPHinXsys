@@ -42,7 +42,13 @@ namespace fluid_dynamics
 		particle_spacing_min_(base_relation.getSPHBody().sph_adaptation_->MinimumSpacing()),
 		rho_(this->particles_->rho_), vel_(this->particles_->vel_),
 		mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()), dimension_(Vecd(0).size()),
-		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
+		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+		turbu_k_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergy"))),
+		turbu_k_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergyPrior"))),
+		turbu_epsilon_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipation"))),
+		turbu_epsilon_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipationPrior"))),
+		turbu_mu_(*(this->particles_->template registerSharedVariable<Real>("TurbulentViscosity")))
+	{}
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
