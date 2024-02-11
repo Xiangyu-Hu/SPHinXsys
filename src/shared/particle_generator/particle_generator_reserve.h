@@ -169,7 +169,8 @@ class ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>
   public:
     template <typename... Args>
     ParticleGenerator(SPHBody &sph_body, Ghost<GhostParameter> &ghost_boundary, Args &&...args)
-        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...){};
+        : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...),
+          ghost_boundary_(ghost_boundary){};
     virtual ~ParticleGenerator(){};
 
     void generateParticlesWithBasicVariables()
