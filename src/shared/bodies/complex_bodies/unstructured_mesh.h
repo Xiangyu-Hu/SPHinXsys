@@ -158,7 +158,6 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
     virtual ~GhostCreationFromMesh(){};
 
   protected:
-    ANSYSMesh &ansys_mesh_;
     Ghost<ReserveSizeFactor> &ghost_boundary_;
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     StdLargeVec<Vecd> &node_coordinates_;

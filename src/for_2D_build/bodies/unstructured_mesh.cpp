@@ -570,9 +570,9 @@ void InnerRelationInFVM::updateConfiguration()
 GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
                                              Ghost<ReserveSizeFactor> &ghost_boundary)
     : GeneralDataDelegateSimple(real_body),
-      ansys_mesh_(ansys_mesh), ghost_boundary_(ghost_boundary),
-      node_coordinates_(ansys_mesh_.node_coordinates_),
-      mesh_topology_(ansys_mesh_.mesh_topology_),
+      ghost_boundary_(ghost_boundary),
+      node_coordinates_(ansys_mesh.node_coordinates_),
+      mesh_topology_(ansys_mesh.mesh_topology_),
       pos_(particles_->pos_), Vol_(particles_->Vol_),
       ghost_bound_(ghost_boundary.GhostBound())
 {
@@ -596,42 +596,35 @@ void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
             {
                 mutex_create_ghost_particle_.lock();
                 size_t ghost_particle_index = ghost_bound_.second;
-                particles_->updateGhostParticle(ghost_particle_index, index_i);
+                ghost_bound_.second++;
+                ghost_boundary_.checkWithinGhostSize(ghost_bound_);
 
-                mesh_topology_[index_i][neighbor_index][0] = ghost_particle_index + 1;
+                particles_->updateGhostParticle(ghost_particle_index, index_i);
                 size_t node1_index = mesh_topology_[index_i][neighbor_index][2];
                 size_t node2_index = mesh_topology_[index_i][neighbor_index][3];
                 Vecd node1_position = node_coordinates_[node1_index];
                 Vecd node2_position = node_coordinates_[node2_index];
                 Vecd ghost_particle_position = 0.5 * (node1_position + node2_position);
-                pos_[ghost_particle_index] = ghost_particle_position;
 
-                ghost_bound_.second++;
-                ghost_boundary_.checkWithinGhostSize(ghost_bound_);
+                mesh_topology_[index_i][neighbor_index][0] = ghost_particle_index + 1;
+                pos_[ghost_particle_index] = ghost_particle_position;
                 mutex_create_ghost_particle_.unlock();
 
-                mesh_topology_.resize(ghost_particle_index);
                 std::vector<std::vector<size_t>> new_element;
-
                 // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
                 std::vector<size_t> sub_element1 = {index_i + 1, boundary_type, node1_index, node2_index};
                 new_element.push_back(sub_element1);
-
                 // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
                 std::vector<size_t> sub_element2 = {index_i + 1, boundary_type, node1_index, node2_index};
                 new_element.push_back(sub_element2);
-
                 // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
                 std::vector<size_t> sub_element3 = {index_i + 1, boundary_type, node1_index, node2_index};
                 new_element.push_back(sub_element3);
-
                 // Add the new element to mesh_topology_
                 mesh_topology_.push_back(new_element);
                 // mesh_topology_[ghost_particle_index][0][0].push_back(size_t(0);
-
                 // creating the boundary files with ghost particle index
                 each_boundary_type_with_all_ghosts_index_[boundary_type].push_back(ghost_particle_index);
-
                 // creating the boundary files with contact real particle index
                 each_boundary_type_contact_real_index_[boundary_type].push_back(index_i);
 

@@ -58,7 +58,7 @@ void BaseParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
-    for (size_t i = 0; i != real_particles_bound_; ++i)
+    for (size_t i = 0; i != particles_bound_; ++i)
     {
         sorted_id_.push_back(sequence_.size());
         sequence_.push_back(0);
