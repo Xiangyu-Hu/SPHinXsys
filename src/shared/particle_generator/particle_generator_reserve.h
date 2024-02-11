@@ -77,8 +77,8 @@ class Buffer<BufferSizeEstimator> : public Buffer<Base>
     virtual ~Buffer(){};
     void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
     {
-        size_t ghost_size = buffer_size_estimator_(base_particles, particle_spacing);
-        allocateBufferParticles(base_particles, ghost_size);
+        size_t buffer_size = buffer_size_estimator_(base_particles, particle_spacing);
+        allocateBufferParticles(base_particles, buffer_size);
         is_particles_reserved_ = true;
     };
 

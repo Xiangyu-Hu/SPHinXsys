@@ -68,13 +68,14 @@ void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
     size_t sorted_index_i = sorted_id_[unsorted_index_i];
     if (aligned_box_.checkUpperBound(axis_, pos_[sorted_index_i]))
     {
+        mutex_switch_to_real_.lock();
         buffer_.checkEnoughBuffer(*particles_);
         /** Buffer Particle state copied from real particle. */
         particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
         /** Realize the buffer particle by increasing the number of real particle in the body.  */
         particles_->total_real_particles_ += 1;
-
         mutex_switch_to_real_.unlock();
+
         /** Periodic bounding. */
         pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_[sorted_index_i]);
         rho_[sorted_index_i] = fluid_.ReferenceDensity();
