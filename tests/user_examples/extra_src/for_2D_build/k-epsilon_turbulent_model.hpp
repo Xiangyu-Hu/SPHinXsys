@@ -66,9 +66,12 @@ namespace fluid_dynamics
 		GetVelocityGradient(BaseRelationType& base_relation) 
 		:LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
 		vel_(this->particles_->vel_), pos_(this->particles_->pos_),
-		velocity_gradient_(*this->particles_->template getVariableByName<Matd>("VelocityGradient")),
 		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1"))
 	{
+		this->particles_->registerVariable(velocity_gradient_, "VelocityGradient");
+		this->particles_->registerSortableVariable<Matd>("VelocityGradient");
+		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
+
 		//for test
 		this->particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
 		this->particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");

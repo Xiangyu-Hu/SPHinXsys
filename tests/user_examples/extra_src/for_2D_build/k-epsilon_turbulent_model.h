@@ -69,9 +69,9 @@ namespace fluid_dynamics
 		virtual ~GetVelocityGradient() {};
 	protected:
 		StdLargeVec<Vecd>& vel_, & pos_;
-		StdLargeVec<Matd>& velocity_gradient_;
 		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
 
+		StdLargeVec<Matd> velocity_gradient_;
 		//**For test*
 		StdLargeVec<Matd> velocity_gradient_wall;
 	};
@@ -130,15 +130,15 @@ namespace fluid_dynamics
 		void update_prior_turbulent_value();
 	protected:
 		StdLargeVec<Real> dk_dt_;
-		StdLargeVec<Matd> velocity_gradient_;
 		StdLargeVec<Real> k_production_, k_production_prior_;
 
+		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
+		StdLargeVec<Matd>& velocity_gradient_;
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_k_prior_;
 		StdLargeVec<Real>& turbu_epsilon_;
 		StdLargeVec<Real>& turbu_epsilon_prior_;
 		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
 
 		//** for test */
 		StdLargeVec<Real>  k_diffusion_, vel_x_;
@@ -158,11 +158,14 @@ namespace fluid_dynamics
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Real> dE_dt_, ep_production, ep_dissipation_, ep_diffusion_;
+		
 		StdLargeVec<Real>& turbu_mu_;
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_k_prior_;
-		StdLargeVec<Real>& turbu_epsilon_, turbu_epsilon_prior_;
-		StdLargeVec<Real>& k_production_,k_production_prior_;
+		StdLargeVec<Real>& turbu_epsilon_;
+		StdLargeVec<Real>& turbu_epsilon_prior_;
+		StdLargeVec<Real>& k_production_;
+		StdLargeVec<Real>& k_production_prior_;
 		StdLargeVec<int>& is_near_wall_P1_;
 	};
 //=================================================================================================//

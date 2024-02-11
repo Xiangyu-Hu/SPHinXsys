@@ -12,28 +12,28 @@ namespace fluid_dynamics
 //=================================================================================================//
     void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
     {
-		//** The near wall velo grad is updated in wall function part *
-		if (is_near_wall_P1_[index_i] == 1)
-		{
-			return;
-		}
-		Vecd vel_i = vel_[index_i];
 		velocity_gradient_[index_i] = Matd::Zero();
-		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		//** The near wall velo grad is updated in wall function part *
+		if (is_near_wall_P1_[index_i] != 1)
 		{
-			size_t index_j = inner_neighborhood.j_[n];
-			Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-			//** Strong form *
-			velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
-			//** Weak form *
-			//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+			Vecd vel_i = vel_[index_i];
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				//** Strong form *
+				velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+				//** Weak form *
+				//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+			}
 		}
     }
 //=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
@@ -42,10 +42,6 @@ namespace fluid_dynamics
 	{
 		particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 		particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
-
-		particles_->registerVariable(velocity_gradient_, "VelocityGradient");
-		particles_->registerSortableVariable<Matd>("VelocityGradient");
-		particles_->addVariableToWrite<Matd>("VelocityGradient");
 
 		particles_->registerVariable(k_production_, "K_Production");
 		particles_->registerSortableVariable<Real>("K_Production");
@@ -137,6 +133,13 @@ namespace fluid_dynamics
 	{
 		turbu_k_[index_i] += dk_dt_[index_i] * dt;
 	}
+	//=================================================================================================//
+	void K_TurtbulentModelInner::update_prior_turbulent_value()
+	{
+		k_production_prior_ = k_production_;
+		turbu_k_prior_ = turbu_k_;
+		turbu_epsilon_prior_ = turbu_epsilon_;
+	}
 //=================================================================================================//
 	E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
@@ -156,9 +159,11 @@ namespace fluid_dynamics
 		particles_->registerVariable(ep_production, "Ep_Production");
 		particles_->registerSortableVariable<Real>("Ep_Production");
 		particles_->addVariableToWrite<Real>("Ep_Production");
+
 		particles_->registerVariable(ep_dissipation_, "Ep_Dissipation_");
 		particles_->registerSortableVariable<Real>("Ep_Dissipation_");
 		particles_->addVariableToWrite<Real>("Ep_Dissipation_");
+
 		particles_->registerVariable(ep_diffusion_, "Ep_Diffusion_");
 		particles_->registerSortableVariable<Real>("Ep_Diffusion_");
 		particles_->addVariableToWrite<Real>("Ep_Diffusion_");
@@ -206,12 +211,9 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void E_TurtbulentModelInner::update(size_t index_i, Real dt)
 	{
+		//** The near wall epsilon value is updated in wall function part *
 		if (is_near_wall_P1_[index_i] != 1)
 			turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
-		//** Get the prior(star) value *
-		k_production_prior_[index_i] = k_production_[index_i];
-		turbu_k_prior_[index_i] = turbu_k_[index_i];
-		turbu_epsilon_prior_[index_i] = turbu_epsilon_[index_i];
 	}
 //=================================================================================================//
 	TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation& inner_relation)
