@@ -120,8 +120,8 @@ int main(int ac, char *av[])
     SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
     wave_body.addBodyStateForRecording<Real>("TotalEnergy");
     wave_body.addBodyStateForRecording<Real>("Density");
-    PeriodicAlongAxis periodic_condition_x(wave_body.getSPHBodyBounds(), xAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, periodic_condition_x);
+    PeriodicAlongAxis periodic_along_y(wave_body.getSPHBodyBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
