@@ -22,7 +22,7 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
 
     if (variable == nullptr)
     {
-        variable_addrs.resize(real_particles_bound_, initial_value);
+        variable_addrs.resize(particles_bound_, initial_value);
 
         constexpr int type_index = DataTypeIndex<DataType>::value;
         std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
@@ -44,7 +44,7 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
                                      const std::string &variable_name, const InitializationFunction &initialization)
 {
     registerVariable(variable_addrs, variable_name);
-    for (size_t i = 0; i != real_particles_bound_; ++i)
+    for (size_t i = 0; i != particles_bound_; ++i)
     {
         variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
     }

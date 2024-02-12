@@ -79,6 +79,7 @@ class DMFInitialCondition
         particles_->registerVariable(dE_dt_prior_, "OtherEnergyChangeRate");
         gamma_ = heat_capacity_ratio;
     };
+    virtual ~DMFInitialCondition(){};
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - 1.0 / 6.0))
