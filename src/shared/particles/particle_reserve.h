@@ -39,6 +39,11 @@
 
 namespace SPH
 {
+template <typename... T>
+class Ghost; // Indicating with ghost particles
+template <typename... T>
+class ParticleBuffer; // Indicating with buffer particles
+
 struct ReserveSizeFactor
 {
     Real size_factor_;
@@ -58,22 +63,22 @@ class ParticleReserve
 };
 
 template <>
-class Buffer<Base> : public ParticleReserve
+class ParticleBuffer<Base> : public ParticleReserve
 {
   public:
-    Buffer() : ParticleReserve(){};
-    virtual ~Buffer(){};
+    ParticleBuffer() : ParticleReserve(){};
+    virtual ~ParticleBuffer(){};
     void checkEnoughBuffer(BaseParticles &base_particles);
     void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
 };
 
 template <class BufferSizeEstimator>
-class Buffer<BufferSizeEstimator> : public Buffer<Base>
+class ParticleBuffer<BufferSizeEstimator> : public ParticleBuffer<Base>
 {
   public:
     template <typename... Args>
-    Buffer(Args &&...args) : Buffer<Base>(), buffer_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~Buffer(){};
+    ParticleBuffer(Args &&...args) : ParticleBuffer<Base>(), buffer_size_estimator_(std::forward<Args>(args)...){};
+    virtual ~ParticleBuffer(){};
     void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
     {
         size_t buffer_size = buffer_size_estimator_(base_particles, particle_spacing);

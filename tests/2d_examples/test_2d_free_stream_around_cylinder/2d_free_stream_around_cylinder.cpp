@@ -26,8 +26,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    Buffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_block.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Lattice>>(inlet_particle_buffer);
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    water_block.generateParticles<ParticleGenerator<ParticleBuffer<ReserveSizeFactor>, Lattice>>(inlet_particle_buffer);
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 2.0);

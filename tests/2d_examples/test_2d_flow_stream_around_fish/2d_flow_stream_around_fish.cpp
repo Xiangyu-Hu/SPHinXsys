@@ -25,8 +25,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    Buffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_block.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Lattice>>(inlet_particle_buffer);
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    water_block.generateParticles<ParticleGenerator<ParticleBuffer<ReserveSizeFactor>, Lattice>>(inlet_particle_buffer);
 
     SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);

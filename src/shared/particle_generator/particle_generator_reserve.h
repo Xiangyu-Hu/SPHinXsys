@@ -51,12 +51,12 @@ struct has_ghost_particles<T, std::void_t<decltype(&T::reserveGhostParticles)>> 
 };
 
 template <class BufferSizeEstimator, typename... OtherParameters>
-class ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>
+class ParticleGenerator<ParticleBuffer<BufferSizeEstimator>, OtherParameters...>
     : public ParticleGenerator<OtherParameters...>
 {
   public:
     template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, Buffer<BufferSizeEstimator> &buffer_boundary, Args &&...args)
+    ParticleGenerator(SPHBody &sph_body, ParticleBuffer<BufferSizeEstimator> &buffer_boundary, Args &&...args)
         : ParticleGenerator<OtherParameters...>(sph_body, std::forward<Args>(args)...),
           buffer_boundary_(buffer_boundary)
     {
@@ -68,7 +68,7 @@ class ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>
     void generateParticlesWithBasicVariables()
     {
         ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
-        ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>::reserveBufferParticles();
+        ParticleGenerator<ParticleBuffer<BufferSizeEstimator>, OtherParameters...>::reserveBufferParticles();
     };
 
   protected:
@@ -78,7 +78,7 @@ class ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>
     };
 
   private:
-    Buffer<BufferSizeEstimator> &buffer_boundary_;
+    ParticleBuffer<BufferSizeEstimator> &buffer_boundary_;
 };
 
 template <typename GhostParameter, typename... OtherParameters>

@@ -53,7 +53,7 @@ void EmitterInflowCondition ::update(size_t unsorted_index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowInjection::
-    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, Buffer<Base> &buffer, int axis)
+    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       pos_(particles_->pos_), rho_(particles_->rho_),

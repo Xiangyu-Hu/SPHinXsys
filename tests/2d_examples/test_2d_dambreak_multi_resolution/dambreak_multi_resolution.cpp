@@ -91,8 +91,8 @@ int main(int ac, char *av[])
                         Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    Buffer<ReserveSizeFactor> particle_split_buffer(20.0);
-    water_block.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Lattice>>(particle_split_buffer);
+    ParticleBuffer<ReserveSizeFactor> particle_split_buffer(20.0);
+    water_block.generateParticles<ParticleGenerator<ParticleBuffer<ReserveSizeFactor>, Lattice>>(particle_split_buffer);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 

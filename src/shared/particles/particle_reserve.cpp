@@ -19,7 +19,7 @@ void ParticleReserve::checkParticlesReserved()
     };
 }
 //=================================================================================================//
-void Buffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
+void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 {
     if (base_particles.total_real_particles_ >= base_particles.real_particles_bound_)
     {
@@ -29,7 +29,7 @@ void Buffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-void Buffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
+void ParticleBuffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
 {
     size_t old_bound = base_particles.real_particles_bound_;
     base_particles.increaseAllParticlesBounds(buffer_size);

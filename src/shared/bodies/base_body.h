@@ -39,6 +39,7 @@
 #include "all_geometries.h"
 #include "base_data_package.h"
 #include "base_material.h"
+#include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "particle_sorting.h"
@@ -147,10 +148,10 @@ class SPHBody
 
     /** initialize particle data using a particle generator for geometric data.
      * the local material parameters are also initialized. */
-    template <class ParticleGeneratorType, typename... Args>
+    template <class... Parameters, typename... Args>
     void generateParticles(Args &&...args)
     {
-        ParticleGeneratorType particle_generator(*this, std::forward<Args>(args)...);
+        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);

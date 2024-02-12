@@ -47,11 +47,6 @@ class SolidBody;
 class BodyPart;
 class BaseParticles;
 
-template <typename... T>
-class Ghost; // Indicating with ghost particles
-template <typename... T>
-class Buffer; // Indicating with buffer particles
-
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
 using SolidBodyVector = StdVec<SolidBody *>;

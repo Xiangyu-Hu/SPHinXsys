@@ -29,9 +29,9 @@ int main(int ac, char *av[])
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
-    Buffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Reload>>(inlet_particle_buffer, water_block.getName())
+        ? water_block.generateParticles<ParticleGenerator<ParticleBuffer<ReserveSizeFactor>, Reload>>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorAdaptive>(refinement_region);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 

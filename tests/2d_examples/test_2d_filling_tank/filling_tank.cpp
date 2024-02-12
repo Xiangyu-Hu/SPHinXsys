@@ -100,15 +100,15 @@ int main(int ac, char *av[])
     FluidBody water_body(sph_system, water_inlet_shape_ptr, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    Buffer<ReserveSizeFactor> inlet_buffer(350.0);
-    water_body.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Lattice>>(inlet_buffer);
+    ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
+    water_body.generateParticles<ParticleBuffer<ReserveSizeFactor>, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall.generateParticles<ParticleGeneratorLattice>();
+    wall.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
