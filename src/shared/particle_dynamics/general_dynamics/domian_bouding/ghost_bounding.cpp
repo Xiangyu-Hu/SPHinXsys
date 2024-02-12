@@ -8,7 +8,7 @@ Ghost<PeriodicAlongAxis>::Ghost(BoundingBox bounding_bounds, int axis)
 //=================================================================================================//
 void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
 {
-    size_t ghost_size_ = calculateGhostSize(particle_spacing);
+    ghost_size_ = calculateGhostSize(particle_spacing);
 
     lower_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
     upper_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
@@ -90,7 +90,7 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkUpp
     {
         mutex_create_ghost_particle_.lock();
         base_particles_.updateGhostParticle(upper_ghost_bound_.second, index_i);
-        pos_[upper_ghost_bound_.second] = particle_position + periodic_translation_;
+        pos_[upper_ghost_bound_.second] = particle_position - periodic_translation_;
         /** insert ghost particle to cell linked list */
         cell_linked_list_.InsertListDataEntry(upper_ghost_bound_.second,
                                               pos_[upper_ghost_bound_.second], Vol_[index_i]);
