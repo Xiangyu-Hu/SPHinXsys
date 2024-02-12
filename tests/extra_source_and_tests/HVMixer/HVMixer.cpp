@@ -94,7 +94,7 @@ int main(int ac, char *av[])
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
-    fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, K, n, tau_y, min_shear_rate, max_shear_rate);
+    fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     fluid.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody mixer_housing(sph_system, makeShared<Mixer_Housing>("Mixer_Housing"));
@@ -125,10 +125,9 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(fluid_inner, fluid_wall_contact);
 
-    InteractionDynamics<fluid_dynamics::VelocityGradientInner> vel_grad_calc_inner(fluid_inner);
-    InteractionDynamics<fluid_dynamics::VelocityGradientContact> vel_grad_calc_contact(fluid_wall_contact);
+    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_wall_contact);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
-    InteractionWithUpdate<fluid_dynamics::ViscousShearRateDependent> viscous_acceleration(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid);
@@ -234,8 +233,7 @@ int main(int ac, char *av[])
 
         update_density_by_summation.exec(Dt);
 
-        vel_grad_calc_inner.exec(Dt);
-        vel_grad_calc_contact.exec(Dt);
+        vel_grad_calculation.exec(Dt);
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
 

@@ -8,8 +8,8 @@
 using namespace SPH;
 
 // geometric data
-Real particle_spacing = 0.03;
-Real gravity_g = 0.1;
+Real particle_spacing = 0.01;
+Real gravity_g = 0.0;
 
 // material properties
 Real rho = 1.0;          // reference density
@@ -17,7 +17,7 @@ Real u_lid = 10.0;       // lid velocity
 Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
-Real K = 0.01;  // consistency index
+Real K = 1;     // consistency index
 Real n = 1;     // power index
 Real tau_y = 0; // yield stress
 
@@ -93,7 +93,7 @@ int main(int ac, char *av[])
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<FluidFilling>("FluidBody"));
-    fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, K, n, tau_y, min_shear_rate, max_shear_rate);
+    fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     fluid.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));
@@ -128,10 +128,9 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_inner, fluid_all_walls);
 
-    InteractionDynamics<fluid_dynamics::VelocityGradientInner> vel_grad_calc_inner(fluid_inner);
-    InteractionDynamics<fluid_dynamics::VelocityGradientContact> vel_grad_calc_contact(fluid_no_slip);
+    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_no_slip);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
-    InteractionWithUpdate<fluid_dynamics::ViscousShearRateDependent> viscous_acceleration(fluid_inner, fluid_no_slip);
+    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_no_slip);
 
     // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
@@ -140,6 +139,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
     //	Define the methods for I/O operations, observations
+    fluid.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
 
     //	Prepare the simulation
@@ -167,16 +167,16 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Real saftey_factor = 0.1;
+        Real saftey_factor = 1.0;
         Real Dt_adv = get_fluid_advection_time_step_size.exec();
         Real Dt_visc = get_viscous_time_step_size.exec() * saftey_factor;
+        // Dt_visc = SMIN(Dt_visc, 1e-5);
         Dt = SMIN(Dt_visc, Dt_adv);
         std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
 
-        vel_grad_calc_inner.exec(Dt);
-        vel_grad_calc_contact.exec(Dt);
+        vel_grad_calculation.exec(Dt);
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
 

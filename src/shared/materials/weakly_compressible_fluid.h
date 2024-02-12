@@ -127,22 +127,43 @@ class Oldroyd_B_Fluid : public WeaklyCompressibleFluid
     Real ReferencePolymericViscosity() { return mu_p_; };
     virtual Oldroyd_B_Fluid *ThisObjectPtr() override { return this; };
 };
+
+/**
+ * @class GeneralizedNewtonianFluid
+ * @brief Herschel Bulkley Model [for more information see: https://en.wikipedia.org/wiki/Generalized_Newtonian_fluid]
+ */
+class GeneralizedNewtonianFluid : public WeaklyCompressibleFluid
+{
+  protected:
+    Real min_shear_rate;
+    Real max_shear_rate;
+
+  public:
+    explicit GeneralizedNewtonianFluid(Real rho0, Real c0, Real min_shear_rate, Real max_shear_rate)
+        : WeaklyCompressibleFluid(rho0, c0), min_shear_rate(min_shear_rate), max_shear_rate(max_shear_rate) {}
+
+    virtual ~GeneralizedNewtonianFluid(){};
+
+    virtual Real getViscosity(Real capped_shear_rate) = 0;
+
+    Real getMinShearRate() { return min_shear_rate; };
+    Real getMaxShearRate() { return max_shear_rate; };
+};
+
 /**
  * @class HerschelBulkleyFluid
- * @brief Herschel Bulkley CE (shear rate dependent power law model)
+ * @brief Herschel Bulkley Model [for more information see: https://en.wikipedia.org/wiki/Herschel%E2%80%93Bulkley_fluid]
  */
-class HerschelBulkleyFluid : public WeaklyCompressibleFluid
+class HerschelBulkleyFluid : public GeneralizedNewtonianFluid
 {
   protected:
     Real consistency_index;
     Real power_index;
     Real yield_stress;
-    Real min_shear_rate;
-    Real max_shear_rate;
 
   public:
-    explicit HerschelBulkleyFluid(Real rho0, Real c0, Real consistency_index, Real power_index, Real yield_stress, Real min_shear_rate, Real max_shear_rate)
-        : WeaklyCompressibleFluid(rho0, c0), consistency_index(consistency_index), power_index(power_index), yield_stress(yield_stress), min_shear_rate(min_shear_rate), max_shear_rate(max_shear_rate)
+    explicit HerschelBulkleyFluid(Real rho0, Real c0, Real min_shear_rate, Real max_shear_rate, Real consistency_index, Real power_index, Real yield_stress)
+        : GeneralizedNewtonianFluid(rho0, c0, min_shear_rate, max_shear_rate), consistency_index(consistency_index), power_index(power_index), yield_stress(yield_stress)
     {
         material_type_name_ = "HerschelBulkleyFluid";
     };
@@ -151,9 +172,39 @@ class HerschelBulkleyFluid : public WeaklyCompressibleFluid
     Real getConsistencyIndex() { return consistency_index; };
     Real getPowerIndex() { return power_index; };
     Real getYieldStress() { return yield_stress; };
-    Real getMinShearRate() { return min_shear_rate; };
-    Real getMaxShearRate() { return max_shear_rate; };
+
+    Real getViscosity(Real capped_shear_rate) override;
     virtual HerschelBulkleyFluid *ThisObjectPtr() override { return this; };
 };
+
+/**
+ * @class CarreauFluid
+ * @brief Carreau Bulkley Model [for more information see: https://en.wikipedia.org/wiki/Carreau_fluid]
+ */
+class CarreauFluid : public GeneralizedNewtonianFluid
+{
+  protected:
+    Real characteristic_time;
+    Real mu_infty;
+    Real mu_0;
+    Real power_index;
+
+  public:
+    explicit CarreauFluid(Real rho0, Real c0, Real min_shear_rate, Real max_shear_rate, Real characteristic_time, Real mu_infty, Real mu_0, Real power_index)
+        : GeneralizedNewtonianFluid(rho0, c0, min_shear_rate, max_shear_rate), characteristic_time(characteristic_time), mu_infty(mu_infty), mu_0(mu_0), power_index(power_index)
+    {
+        material_type_name_ = "CarreauFluid";
+    };
+    virtual ~CarreauFluid(){};
+
+    Real getCharacteristicTime() { return characteristic_time; };
+    Real getMuInfty() { return mu_infty; };
+    Real getMu0() { return mu_0; };
+    Real getPowerIndex() { return power_index; };
+
+    Real getViscosity(Real capped_shear_rate) override;
+    virtual CarreauFluid *ThisObjectPtr() override { return this; };
+};
+
 } // namespace SPH
 #endif // WEAKLY_COMPRESSIBLE_FLUID_H

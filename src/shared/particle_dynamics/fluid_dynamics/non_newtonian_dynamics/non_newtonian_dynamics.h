@@ -106,63 +106,52 @@ class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfCont
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
-// ********************** //
-// Herschel Bulkley Fluid
-// ********************** //
-//!
-// class ShearRateDependentViscosity : public PairGeomAverageFixed<Real>
-// {
-//   public:
-//     ShearRateDependentViscosity(Real visc1, Real visc2)
-//         : PairGeomAverageFixed<Real>(
-//               visc1,
-//               visc2){};
-//     explicit ShearRateDependentViscosity(Real visc)
-//         : ShearRateDependentViscosity(visc, visc){};
-//     virtual ~ShearRateDependentViscosity(){};
 
-// };
-
+/**
+ * @class GenearlizedNewtonianViscousForce
+ * @brief Calculates the viscous force based on a generalized Newtonian fluid model
+ * @note This needs the VelocityGradient & ShearRateDependentViscosity to work
+ */
 template <typename... InteractionTypes>
-class HerschelBulkleyAcceleration;
+class GeneralizedNewtonianViscousForce;
 
 template <class DataDelegationType>
-class HerschelBulkleyAcceleration<DataDelegationType>
+class GeneralizedNewtonianViscousForce<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit HerschelBulkleyAcceleration(BaseRelationType &base_relation);
-    virtual ~HerschelBulkleyAcceleration(){};
+    explicit GeneralizedNewtonianViscousForce(BaseRelationType &base_relation);
+    virtual ~GeneralizedNewtonianViscousForce(){};
 
   protected:
     StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Vecd> &vel_, &viscous_force_;
-    HerschelBulkleyFluid &herschel_bulkley_fluid_;
+    GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
     Real smoothing_length_;
 };
 
 template <>
-class HerschelBulkleyAcceleration<Inner<>> : public HerschelBulkleyAcceleration<FluidDataInner>, public ForcePrior
+class GeneralizedNewtonianViscousForce<Inner<>> : public GeneralizedNewtonianViscousForce<FluidDataInner>, public ForcePrior
 {
   public:
-    explicit HerschelBulkleyAcceleration(BaseInnerRelation &inner_relation);
-    virtual ~HerschelBulkleyAcceleration(){};
+    explicit GeneralizedNewtonianViscousForce(BaseInnerRelation &inner_relation);
+    virtual ~GeneralizedNewtonianViscousForce(){};
 
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdLargeVec<Real> &mu_srd_;
 };
-using HerschelBulkleyAccelerationInner = HerschelBulkleyAcceleration<Inner<>>;
+using GeneralizedNewtonianViscousForceInner = GeneralizedNewtonianViscousForce<Inner<>>;
 
-using BaseHerschelBulkleyAccelerationWithWall = InteractionWithWall<HerschelBulkleyAcceleration>;
+using BaseGeneralizedNewtonianViscousForceWithWall = InteractionWithWall<GeneralizedNewtonianViscousForce>;
 template <>
-class HerschelBulkleyAcceleration<Contact<Wall>> : BaseHerschelBulkleyAccelerationWithWall, public ForcePrior
+class GeneralizedNewtonianViscousForce<Contact<Wall>> : BaseGeneralizedNewtonianViscousForceWithWall, public ForcePrior
 {
   public:
-    explicit HerschelBulkleyAcceleration(BaseContactRelation &contact_relation);
-    virtual ~HerschelBulkleyAcceleration(){};
+    explicit GeneralizedNewtonianViscousForce(BaseContactRelation &contact_relation);
+    virtual ~GeneralizedNewtonianViscousForce(){};
 
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -170,46 +159,64 @@ class HerschelBulkleyAcceleration<Contact<Wall>> : BaseHerschelBulkleyAccelerati
     StdLargeVec<Real> &mu_srd_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
-using HerschelBulkleyAccelerationWall = HerschelBulkleyAcceleration<Contact<Wall>>;
-using ViscousShearRateDependent = ComplexInteraction<HerschelBulkleyAcceleration<Inner<>, Contact<Wall>>>;
+using GeneralizedNewtonianViscousForceWall = GeneralizedNewtonianViscousForce<Contact<Wall>>;
+using GeneralizedNewtonianViscousForceWithWall = ComplexInteraction<GeneralizedNewtonianViscousForce<Inner<>, Contact<Wall>>>;
 
 /**
- * @class VelocityGradientInner
- * @brief  computes the shear rate of the fluid
+ * @class VelocityGradient
+ * @brief computes the shear rate of the fluid
+ * @note this is needed for the ShearRateDependentViscosity (and therefore also the GeneralizedNewtonianViscousForce)
  */
+template <typename... InteractionTypes>
+class VelocityGradient;
 
-class VelocityGradientInner : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class VelocityGradient<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit VelocityGradientInner(BaseInnerRelation &inner_relation);
-    virtual ~VelocityGradientInner(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
+    template <class BaseRelationType>
+    explicit VelocityGradient(BaseRelationType &base_relation);
+    virtual ~VelocityGradient(){};
 
   protected:
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<Matd> combined_velocity_gradient_;
 };
 
-/**
- * @class VelocityGradientContact
- * @brief  computes the shear rate of the fluid at the boundary
- */
-
-class VelocityGradientContact : public LocalDynamics, public FluidContactData
+template <>
+class VelocityGradient<Inner<>> : public VelocityGradient<FluidDataInner>
 {
   public:
-    explicit VelocityGradientContact(BaseContactRelation &contact_relation);
-    virtual ~VelocityGradientContact(){};
+    explicit VelocityGradient(BaseInnerRelation &inner_relation);
+    virtual ~VelocityGradient(){};
 
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_;
     StdLargeVec<Matd> &combined_velocity_gradient_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
+template <>
+class VelocityGradient<Contact<Wall>> : InteractionWithWall<VelocityGradient>
+{
+  public:
+    explicit VelocityGradient(BaseContactRelation &contact_relation);
+    virtual ~VelocityGradient(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdLargeVec<Matd> &combined_velocity_gradient_;
+};
+using VelocityGradientWithWall = ComplexInteraction<VelocityGradient<Inner<>, Contact<Wall>>>;
+
+/**
+ * @class ShearRateDependentViscosity
+ * @brief computes the viscosity based on the generalized Newtonian fluid model specified
+ * @note needs VelocityGradient to work and is needed for GenearlizedNewtonianViscousForce
+ */
 class ShearRateDependentViscosity : public LocalDynamics, public FluidDataInner
 {
   public:
@@ -220,7 +227,7 @@ class ShearRateDependentViscosity : public LocalDynamics, public FluidDataInner
 
   protected:
     StdLargeVec<Matd> &combined_velocity_gradient_;
-    HerschelBulkleyFluid &herschel_bulkley_fluid_;
+    GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
     StdLargeVec<Real> mu_srd_;
     StdLargeVec<Real> scalar_shear_rate_;
 };
