@@ -71,42 +71,13 @@ void BaseParticles::initializeAllParticlesBounds()
     particles_bound_ = real_particles_bound_;
 }
 //=================================================================================================//
-void BaseParticles::updateAllParticlesBounds(size_t buffer_size)
+void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
 {
     real_particles_bound_ += buffer_size;
     particles_bound_ += buffer_size;
 }
 //=================================================================================================//
-void BaseParticles::addBufferParticles(size_t buffer_size)
-{
-    size_t old_real_particles_bound = real_particles_bound_;
-    for (size_t i = 0; i != buffer_size; ++i)
-    {
-        unsorted_id_.push_back(old_real_particles_bound + i);
-        add_particle_data_with_default_value_(all_particle_data_);
-    }
-    updateAllParticlesBounds(buffer_size);
-}
-//=================================================================================================//
-size_t BaseParticles::addGhostParticles(size_t ghost_size)
-{
-    size_t ghost_lower_bound = particles_bound_;
-    for (size_t i = 0; i != ghost_size; ++i)
-    {
-        add_particle_data_with_default_value_(all_particle_data_);
-    }
-    particles_bound_ += ghost_size;
-    unsorted_id_.resize(particles_bound_, 0);
-
-    return ghost_lower_bound;
-}
-//=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
-{
-    updateFromAnotherParticle(index, another_index);
-}
-//=================================================================================================//
-void BaseParticles::updateFromAnotherParticle(size_t index, size_t another_index)
 {
     copy_particle_data_(all_particle_data_, index, another_index);
 }
@@ -123,7 +94,7 @@ void BaseParticles::switchToBufferParticle(size_t index)
     size_t last_real_particle_index = total_real_particles_ - 1;
     if (index < last_real_particle_index)
     {
-        updateFromAnotherParticle(index, last_real_particle_index);
+        copyFromAnotherParticle(index, last_real_particle_index);
         // update unsorted and sorted_id as well
         std::swap(unsorted_id_[index], unsorted_id_[last_real_particle_index]);
         sorted_id_[unsorted_id_[index]] = index;

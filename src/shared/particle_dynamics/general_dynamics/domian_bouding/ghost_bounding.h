@@ -30,28 +30,23 @@
 #define GHOST_BOUNDING_H
 
 #include "domain_bounding.h"
+#include "particle_reserve.h"
 
 namespace SPH
 {
 template <>
-class Ghost<PeriodicAlongAxis> : public PeriodicAlongAxis
+class Ghost<PeriodicAlongAxis> : public Ghost<Base>, public PeriodicAlongAxis
 {
   public:
     Ghost(BoundingBox bounding_bounds, int axis);
     virtual ~Ghost(){};
-    void reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing);
-    std::pair<size_t, size_t> &LowerGhostBound() { return lower_ghost_bound_; };
-    std::pair<size_t, size_t> &UpperGhostBound() { return upper_ghost_bound_; };
-    void checkGhostParticlesReserved();
-    size_t getGhostSize() { return ghost_size_; };
-    void checkWithinGhostSize(const std::pair<size_t, size_t> &ghost_bound);
-    IndexRange getGhostParticleRange(const std::pair<size_t, size_t> &ghost_bound);
+    void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing);
+    ParticlesBound &LowerGhostBound() { return lower_ghost_bound_; };
+    ParticlesBound &UpperGhostBound() { return upper_ghost_bound_; };
 
   private:
-    bool is_ghost_particles_reserved_ = false;
-    std::pair<size_t, size_t> lower_ghost_bound_ = {0, 0};
-    std::pair<size_t, size_t> upper_ghost_bound_ = {0, 0};
-    size_t ghost_size_ = 0;
+    ParticlesBound lower_ghost_bound_ = {0, 0};
+    ParticlesBound upper_ghost_bound_ = {0, 0};
     size_t calculateGhostSize(Real particle_spacing);
 };
 

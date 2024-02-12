@@ -1,13 +1,13 @@
-#include "particle_generator_reserve.h"
+#include "particle_reserve.h"
 
-#include "base_particles.hpp"
 namespace SPH
 {
 //=================================================================================================//
 size_t ReserveSizeFactor::operator()(BaseParticles &base_particles, Real particle_spacing)
 {
     return std::ceil(Real(base_particles.total_real_particles_) * size_factor_);
-} //=================================================================================================//
+}
+//=================================================================================================//
 void ParticleReserve::checkParticlesReserved()
 {
     if (!is_particles_reserved_)
@@ -32,7 +32,7 @@ void Buffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 void Buffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
 {
     size_t old_bound = base_particles.real_particles_bound_;
-    base_particles.updateAllParticlesBounds(buffer_size);
+    base_particles.increaseAllParticlesBounds(buffer_size);
     size_t new_bound = base_particles.real_particles_bound_;
 
     base_particles.resize_particle_data_(new_bound);

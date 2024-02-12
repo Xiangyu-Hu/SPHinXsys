@@ -4,16 +4,16 @@ namespace SPH
 {
 //=================================================================================================//
 Ghost<PeriodicAlongAxis>::Ghost(BoundingBox bounding_bounds, int axis)
-    : PeriodicAlongAxis(bounding_bounds, axis) {}
+    : Ghost<Base>(), PeriodicAlongAxis(bounding_bounds, axis) {}
 //=================================================================================================//
-void Ghost<PeriodicAlongAxis>::reserveGhostParticle(BaseParticles &base_particles, Real particle_spacing)
+void Ghost<PeriodicAlongAxis>::reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
 {
     size_t ghost_size_ = calculateGhostSize(particle_spacing);
 
-    lower_ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
-    upper_ghost_bound_.first = base_particles.addGhostParticles(ghost_size_);
+    lower_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
+    upper_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
 
-    is_ghost_particles_reserved_ = true;
+    is_particles_reserved_ = true;
 }
 //=================================================================================================//
 size_t Ghost<PeriodicAlongAxis>::calculateGhostSize(Real particle_spacing)
@@ -24,22 +24,6 @@ size_t Ghost<PeriodicAlongAxis>::calculateGhostSize(Real particle_spacing)
     return std::ceil(2.0 * ghost_width * ABS(bound_size) / particle_spacing);
 }
 //=================================================================================================//
-void Ghost<PeriodicAlongAxis>::checkGhostParticlesReserved()
-{
-    if (!is_ghost_particles_reserved_)
-    {
-        std::cout << "\n ERROR: The ghost particles are not reserved yet!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        std::cout << " The ghost particles should be reserved before using!" << std::endl;
-        exit(1);
-    };
-}
-//=================================================================================================//
-IndexRange Ghost<PeriodicAlongAxis>::getGhostParticleRange(const std::pair<size_t, size_t> &ghost_bound)
-{
-    return IndexRange(ghost_bound.first, ghost_bound.second);
-}
-//=================================================================================================//
 PeriodicConditionUsingGhostParticles::
     PeriodicConditionUsingGhostParticles(RealBody &real_body, Ghost<PeriodicAlongAxis> &ghost_boundary)
     : BasePeriodicCondition<execution::ParallelPolicy>(real_body, ghost_boundary),
@@ -47,7 +31,7 @@ PeriodicConditionUsingGhostParticles::
       ghost_creation_(bound_cells_data_, real_body, ghost_boundary),
       ghost_update_(bound_cells_data_, real_body, ghost_boundary)
 {
-    ghost_boundary.checkGhostParticlesReserved();
+    ghost_boundary.checkParticlesReserved();
 }
 //=================================================================================================//
 PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::
@@ -127,13 +111,13 @@ PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 {
-    base_particles_.updateFromAnotherParticle(index_i, sorted_id_[index_i]);
+    base_particles_.copyFromAnotherParticle(index_i, sorted_id_[index_i]);
     pos_[index_i] += periodic_translation_;
 }
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 {
-    base_particles_.updateFromAnotherParticle(index_i, sorted_id_[index_i]);
+    base_particles_.copyFromAnotherParticle(index_i, sorted_id_[index_i]);
     pos_[index_i] -= periodic_translation_;
 }
 //=================================================================================================//

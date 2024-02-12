@@ -37,55 +37,9 @@
 #define PARTICLE_GENERATOR_RESERVE_H
 
 #include "base_particle_generator.h"
-
+#include "particle_reserve.h"
 namespace SPH
 {
-struct ReserveSizeFactor
-{
-    Real size_factor_;
-    ReserveSizeFactor(Real size_factor) : size_factor_(size_factor){};
-    size_t operator()(BaseParticles &base_particles, Real particle_spacing);
-};
-
-class ParticleReserve
-{
-  public:
-    ParticleReserve(){};
-    void checkParticlesReserved();
-    virtual ~ParticleReserve(){};
-
-  protected:
-    bool is_particles_reserved_ = false;
-};
-
-template <>
-class Buffer<Base> : public ParticleReserve
-{
-  public:
-    Buffer() : ParticleReserve(){};
-    virtual ~Buffer(){};
-    void checkEnoughBuffer(BaseParticles &base_particles);
-    void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
-};
-
-template <class BufferSizeEstimator>
-class Buffer<BufferSizeEstimator> : public Buffer<Base>
-{
-  public:
-    template <typename... Args>
-    Buffer(Args &&...args) : Buffer<Base>(), buffer_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~Buffer(){};
-    void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
-    {
-        size_t buffer_size = buffer_size_estimator_(base_particles, particle_spacing);
-        allocateBufferParticles(base_particles, buffer_size);
-        is_particles_reserved_ = true;
-    };
-
-  private:
-    BufferSizeEstimator buffer_size_estimator_;
-};
-
 template <class T, class = void>
 struct has_ghost_particles : std::false_type
 {
@@ -125,41 +79,6 @@ class ParticleGenerator<Buffer<BufferSizeEstimator>, OtherParameters...>
 
   private:
     Buffer<BufferSizeEstimator> &buffer_boundary_;
-};
-
-template <>
-class Ghost<Base> : public ParticleReserve
-{
-  public:
-    Ghost() : ParticleReserve(){};
-    virtual ~Ghost(){};
-    size_t getGhostSize() { return ghost_size_; };
-    void checkWithinGhostSize(const ParticlesBound &ghost_bound);
-    IndexRange getGhostParticleRange(const ParticlesBound &ghost_bound);
-    size_t allocateGhostParticles(BaseParticles &base_particles, size_t ghost_size);
-
-  protected:
-    size_t ghost_size_ = 0;
-};
-
-template <class GhostSizeEstimator>
-class Ghost<GhostSizeEstimator> : public Ghost<Base>
-{
-  public:
-    template <typename... Args>
-    Ghost(Args &&...args) : Ghost<Base>(), ghost_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~Ghost(){};
-    void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
-    {
-        ghost_size_ = ghost_size_estimator_(base_particles, particle_spacing);
-        ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
-        is_particles_reserved_ = true;
-    };
-    ParticlesBound &GhostBound() { return ghost_bound_; };
-
-  private:
-    GhostSizeEstimator ghost_size_estimator_;
-    ParticlesBound ghost_bound_ = {0, 0};
 };
 
 template <typename GhostParameter, typename... OtherParameters>
