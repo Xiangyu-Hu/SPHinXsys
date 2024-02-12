@@ -25,9 +25,9 @@ void BidirectionalBuffer::Injection<execution::ParallelPolicy>::update(size_t in
             particles_->total_real_particles_ += 1;
             mutex_switch_to_real_.unlock();
             pos_n_[sorted_index_i]=aligned_box_.getUpperPeriodic(axis_, pos_n_[sorted_index_i]);
-            Real sound_speed = pow(fluid_.getSoundSpeed(rho_n_[sorted_index_i]), 2.0);
+            Real sound_speed = fluid_.getSoundSpeed(rho_n_[sorted_index_i]);
             p_[sorted_index_i] = buffer_.getTargetPressure(dt); 
-            rho_n_[sorted_index_i] = p_[sorted_index_i] / sound_speed + fluid_.ReferenceDensity();
+            rho_n_[sorted_index_i] = p_[sorted_index_i] / pow(sound_speed,2.0) + fluid_.ReferenceDensity();
             previous_surface_indicator_[sorted_index_i] = 1;
         }
 }

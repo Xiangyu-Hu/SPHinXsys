@@ -228,7 +228,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer, xAxis);
     /** surface particle identification */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
-        free_stream_surface_indicator(water_block_inner, water_block_contact);
+        boundary_indicator(water_block_inner, water_block_contact);
     /** bidrectional buffer */
     LeftBidirectionalBufferCondition left_emitter_inflow_injection(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_bidirectional_translation)), 
@@ -276,7 +276,7 @@ int main(int ac, char *av[])
      */
     sph_system.initializeSystemCellLinkedLists(); 
     sph_system.initializeSystemConfigurations();
-    free_stream_surface_indicator.exec();
+    boundary_indicator.exec();
     left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
     wall_boundary_normal_direction.exec();
@@ -354,12 +354,13 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
-            free_stream_surface_indicator.exec();
+            boundary_indicator.exec();
             left_emitter_inflow_injection.tag_buffer_particles.exec();
             right_emitter_inflow_injection.tag_buffer_particles.exec();
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();  
+        velocity_observer_contact.updateConfiguration();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
