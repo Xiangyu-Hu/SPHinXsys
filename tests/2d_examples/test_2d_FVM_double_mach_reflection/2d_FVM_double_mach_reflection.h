@@ -13,9 +13,8 @@ using namespace std;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 4.0;                           /**< Computation domain length. */
-Real DH = 1.0;                           /**< Computation domain height. */
-Real particle_spacing_ref = 1.0 / 240.0; /**< Initial reference particle spacing. */
+Real DL = 4.0; /**< Computation domain length. */
+Real DH = 1.0; /**< Computation domain height. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------

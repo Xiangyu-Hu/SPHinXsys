@@ -115,8 +115,10 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
-    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getSPHBodyBounds(), xAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getSPHBodyBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_x(water_body.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_y(water_body.getSPHBodyBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, periodic_along_x);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);

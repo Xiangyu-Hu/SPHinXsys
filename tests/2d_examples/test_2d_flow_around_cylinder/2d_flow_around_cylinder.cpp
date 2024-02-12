@@ -107,8 +107,10 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getSPHBodyBounds(), xAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getSPHBodyBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_y(water_block.getSPHBodyBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, periodic_along_x);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, periodic_along_y);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);

@@ -52,14 +52,16 @@ class ANSYSMesh
     StdLargeVec<Real> elements_volumes_;
     StdLargeVec<StdVec<size_t>> elements_nodes_connection_;
     vector<vector<vector<size_t>>> mesh_topology_;
-    double min_distance_between_nodes_;
+    Real MinMeshEdge() { return min_distance_between_nodes_; }
 
   protected:
+    double min_distance_between_nodes_;
+
     void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates);
     void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec3d> &node_coordinates);
     void getDataFromMeshFile(const std::string &full_path);
     void getElementCenterCoordinates();
-    void gerMinimumDistanceBetweenNodes();
+    void computeMinimumDistanceBetweenNodes();
 };
 
 /**

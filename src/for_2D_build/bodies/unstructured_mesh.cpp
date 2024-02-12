@@ -8,7 +8,7 @@ ANSYSMesh::ANSYSMesh(const std::string &full_path)
 {
     getDataFromMeshFile(full_path);
     getElementCenterCoordinates();
-    gerMinimumDistanceBetweenNodes();
+    computeMinimumDistanceBetweenNodes();
 }
 //=================================================================================================//
 void ANSYSMesh::readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates)
@@ -429,7 +429,7 @@ void ANSYSMesh::getElementCenterCoordinates()
     elements_nodes_connection_.erase(elements_nodes_connection_.begin());
 }
 //=================================================================================================//
-void ANSYSMesh::gerMinimumDistanceBetweenNodes()
+void ANSYSMesh::computeMinimumDistanceBetweenNodes()
 {
     vector<Real> all_data_of_distance_between_nodes;
     all_data_of_distance_between_nodes.resize(0);

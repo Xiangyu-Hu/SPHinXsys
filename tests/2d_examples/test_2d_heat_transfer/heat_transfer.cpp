@@ -248,7 +248,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, thermofluid_body.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
     SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
     SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
