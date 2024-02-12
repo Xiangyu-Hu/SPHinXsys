@@ -40,7 +40,7 @@ class Ghost<PeriodicAlongAxis> : public Ghost<Base>, public PeriodicAlongAxis
   public:
     Ghost(BoundingBox bounding_bounds, int axis);
     virtual ~Ghost(){};
-    void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing);
+    void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing);
     ParticlesBound &LowerGhostBound() { return lower_ghost_bound_; };
     ParticlesBound &UpperGhostBound() { return upper_ghost_bound_; };
 

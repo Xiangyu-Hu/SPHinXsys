@@ -6,7 +6,7 @@ namespace SPH
 Ghost<PeriodicAlongAxis>::Ghost(BoundingBox bounding_bounds, int axis)
     : Ghost<Base>(), PeriodicAlongAxis(bounding_bounds, axis) {}
 //=================================================================================================//
-void Ghost<PeriodicAlongAxis>::reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
+void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
 {
     size_t ghost_size_ = calculateGhostSize(particle_spacing);
 

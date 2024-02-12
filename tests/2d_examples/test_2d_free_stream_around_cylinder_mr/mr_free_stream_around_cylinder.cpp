@@ -29,8 +29,9 @@ int main(int ac, char *av[])
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
+    Buffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGenerator<BufferReservation, Reload>>(0.5, water_block.getName())
+        ? water_block.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Reload>>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorAdaptive>(refinement_region);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
@@ -120,7 +121,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     BodyAlignedBoxByParticle emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, xAxis);
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
     /** Emitter buffer inflow condition. */
     BodyAlignedBoxByCell emitter_buffer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));

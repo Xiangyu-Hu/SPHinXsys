@@ -132,7 +132,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
     fluid_block.defineParticlesAndMaterial<BaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
-    fluid_block.generateParticles<ParticleGeneratorLattice>();
+    Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
+    fluid_block.generateParticles<ParticleGenerator<Ghost<PeriodicAlongAxis>, Lattice>>(ghost_along_x);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -161,7 +162,7 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
     /** Periodic BCs in x direction. */
-    PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);
     // evaluation of density by summation approach
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
     // time step size without considering sound wave speed and viscosity

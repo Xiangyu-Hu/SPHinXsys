@@ -102,8 +102,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLatticeWithBufferReservation>(0.5);
-
+    Buffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    water_block.generateParticles<ParticleGenerator<Buffer<ReserveSizeFactor>, Lattice>>(inlet_particle_buffer);
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
@@ -140,16 +140,13 @@ int main(int ac, char *av[])
 
     Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-    BodyAlignedBoxByParticle emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, xAxis);
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
 
-    Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-    Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
-    BodyAlignedBoxByCell emitter_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
-
+    Vec2d inlet_flow_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+    Vec2d inlet_flow_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_flow_buffer_halfsize;
+    BodyAlignedBoxByCell inlet_flow_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_flow_buffer_translation)), inlet_flow_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_condition(inlet_flow_buffer);
     Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
     Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
     BodyAlignedBoxByCell disposer_up(
@@ -213,7 +210,7 @@ int main(int ac, char *av[])
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
                 pressure_relaxation.exec(dt);
-                emitter_buffer_inflow_condition.exec();
+                inflow_condition.exec();
                 density_relaxation.exec(dt);
 
                 relaxation_time += dt;
