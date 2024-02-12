@@ -143,7 +143,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
     bar_observer.defineParticlesAndMaterial();
-    bar_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    bar_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

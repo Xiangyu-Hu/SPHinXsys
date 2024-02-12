@@ -221,11 +221,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
     water_block.defineParticlesAndMaterial<DiffusionFluidParticles, WettingFluidBodyMaterial>();
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<DiffusionWallParticles, WettingWallBodyMaterial>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
@@ -233,14 +233,14 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<DiffusionCylinderParticles, WettingCylinderBodyMaterial>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
-        : cylinder.generateParticles<ParticleGeneratorLattice>();
+        ? cylinder.generateParticles<Reload>(cylinder.getName())
+        : cylinder.generateParticles<Lattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observer_location);
+    cylinder_observer.generateParticles<Observer>(observer_location);
 
     ObserverBody wetting_observer(sph_system, "WettingObserver");
-    wetting_observer.generateParticles<ParticleGeneratorObserver>(wetting_observer_location);
+    wetting_observer.generateParticles<Observer>(wetting_observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -219,14 +219,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
     thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
-    thermofluid_body.generateParticles<ParticleGeneratorLattice>();
+    thermofluid_body.generateParticles<Lattice>();
 
     SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
     thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
-    thermosolid_body.generateParticles<ParticleGeneratorLattice>();
+    thermosolid_body.generateParticles<Lattice>();
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
-    temperature_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    temperature_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

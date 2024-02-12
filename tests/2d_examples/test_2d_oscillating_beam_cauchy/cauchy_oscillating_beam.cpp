@@ -108,11 +108,11 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

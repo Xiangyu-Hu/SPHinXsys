@@ -77,8 +77,8 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     // Using relaxed particle distribution if needed
     sph_system.ReloadParticles()
-        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorLattice>();
+        ? water_block.generateParticles<Reload>(water_block.getName())
+        : water_block.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

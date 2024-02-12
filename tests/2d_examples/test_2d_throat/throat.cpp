@@ -133,15 +133,15 @@ int main(int ac, char *av[])
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
     fluid_block.defineParticlesAndMaterial<BaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
-    fluid_block.generateParticles<ParticleGenerator<Ghost<PeriodicAlongAxis>, Lattice>>(ghost_along_x);
+    fluid_block.generateParticlesWithReserve<Lattice>(ghost_along_x);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd::Zero()};
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

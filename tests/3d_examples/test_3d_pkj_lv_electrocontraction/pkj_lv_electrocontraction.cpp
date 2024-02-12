@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     {
         SolidBody herat_model(sph_system, level_set_heart_model);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
-        herat_model.generateParticles<ParticleGeneratorLattice>();
+        herat_model.generateParticles<Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
         using namespace relax_dynamics;
@@ -131,16 +131,16 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : physiology_heart.generateParticles<ParticleGeneratorLattice>();
+        ? physiology_heart.generateParticles<Reload>("HeartModel")
+        : physiology_heart.generateParticles<Lattice>();
 
     /** create a SPH body, material and particles */
     SolidBody mechanics_heart(sph_system, level_set_heart_model, "MechanicalHeart");
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
+        ? mechanics_heart.generateParticles<Reload>("HeartModel")
+        : mechanics_heart.generateParticles<Lattice>();
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
     TreeBody pkj_body(sph_system, level_set_heart_model, "Purkinje");

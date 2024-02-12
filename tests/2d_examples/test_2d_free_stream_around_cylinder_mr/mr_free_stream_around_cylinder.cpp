@@ -31,8 +31,8 @@ int main(int ac, char *av[])
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGenerator<ParticleBuffer<ReserveSizeFactor>, Reload>>(inlet_particle_buffer, water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorAdaptive>(refinement_region);
+        ? water_block.generateParticlesWithReserve<Reload>(inlet_particle_buffer, water_block.getName())
+        : water_block.generateParticles<Lattice, Adaptive>(refinement_region);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
@@ -40,11 +40,11 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
-        : cylinder.generateParticles<ParticleGeneratorLattice>();
+        ? cylinder.generateParticles<Reload>(cylinder.getName())
+        : cylinder.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_locations);
+    fluid_observer.generateParticles<Observer>(observation_locations);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

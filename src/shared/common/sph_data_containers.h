@@ -46,6 +46,7 @@ class RealBody;
 class SolidBody;
 class BodyPart;
 class BaseParticles;
+class UserDefined; // Indicating with user defined type in apps
 
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;

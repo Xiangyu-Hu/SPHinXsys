@@ -24,10 +24,10 @@ Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate 
 //----------------------------------------------------------------------
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
-class AnisotropicParticleGenerator : public ParticleGenerator<Base>
+class ParticleGeneratorAnisotropic : public ParticleGenerator<Base>
 {
   public:
-    AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
+    ParticleGeneratorAnisotropic(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
 
     virtual void initializeGeometricVariables() override
     {
@@ -191,11 +191,12 @@ int main(int ac, char *av[])
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<AnisotropicParticleGenerator>();
+    ParticleGeneratorAnisotropic beam_particle_generator(beam_body);
+    beam_body.generateParticles(beam_particle_generator);
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -148,14 +148,26 @@ class SPHBody
 
     /** initialize particle data using a particle generator for geometric data.
      * the local material parameters are also initialized. */
-    template <class... Parameters, typename... Args>
-    void generateParticles(Args &&...args)
+    template <class ParticleGeneratorType>
+    void generateParticles(ParticleGeneratorType &particle_generator)
     {
-        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
+    };
+
+    template <class... Parameters, typename... Args>
+    void generateParticles(Args &&...args)
+    {
+        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
+        generateParticles(particle_generator);
+    };
+
+    template <class... Parameters, class ReserveType, typename... Args>
+    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    {
+        generateParticles<ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
     template <typename DataType>

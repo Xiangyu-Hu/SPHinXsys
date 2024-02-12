@@ -73,12 +73,12 @@ int main(int ac, char *av[])
     coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? coil.generateParticles<ParticleGeneratorReload>(coil.getName())
-        : coil.generateParticles<ParticleGeneratorLattice>();
+        ? coil.generateParticles<Reload>(coil.getName())
+        : coil.generateParticles<Lattice>();
 
     SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
     stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    stationary_plate.generateParticles<ParticleGeneratorLattice>();
+    stationary_plate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

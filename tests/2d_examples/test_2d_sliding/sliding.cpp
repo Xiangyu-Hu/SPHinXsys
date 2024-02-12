@@ -76,14 +76,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
     free_cube.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    free_cube.generateParticles<ParticleGeneratorLattice>();
+    free_cube.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
-    cube_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    cube_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

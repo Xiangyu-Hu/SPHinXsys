@@ -92,16 +92,16 @@ int main(int ac, char *av[])
     water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> particle_split_buffer(20.0);
-    water_block.generateParticles<ParticleGenerator<ParticleBuffer<ReserveSizeFactor>, Lattice>>(particle_split_buffer);
+    water_block.generateParticlesWithReserve<Lattice>(particle_split_buffer);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

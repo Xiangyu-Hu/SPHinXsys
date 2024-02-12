@@ -122,12 +122,12 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorLattice>();
+        ? water_block.generateParticles<Reload>(water_block.getName())
+        : water_block.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //-------------------------------------------------------------------------------------------------------------------------------------------
     InnerRelation water_body_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});

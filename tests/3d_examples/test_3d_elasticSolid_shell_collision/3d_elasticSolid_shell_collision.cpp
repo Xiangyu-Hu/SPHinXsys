@@ -77,16 +77,16 @@ int main(int ac, char *av[])
     ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<ParticleGeneratorReload>(ball.getName());
+        ball.generateParticles<Reload>(ball.getName());
     }
     else
     {
         ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<ParticleGeneratorLattice>();
+        ball.generateParticles<Lattice>();
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<ParticleGeneratorObserver>(StdVec<Vec3d>{ball_center});
+    ball_observer.generateParticles<Observer>(StdVec<Vec3d>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

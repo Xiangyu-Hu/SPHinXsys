@@ -64,11 +64,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    myocardium_body.generateParticles<ParticleGeneratorLattice>();
+    myocardium_body.generateParticles<Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    moving_plate.generateParticles<ParticleGeneratorLattice>();
+    moving_plate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

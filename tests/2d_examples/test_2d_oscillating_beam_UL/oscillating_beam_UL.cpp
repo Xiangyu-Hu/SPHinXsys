@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     RealBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
     beam_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
     beam_body.addBodyStateForRecording<Real>("VonMisesStress");
     beam_body.addBodyStateForRecording<Real>("VonMisesStrain");
     beam_body.addBodyStateForRecording<Real>("Pressure");
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
-    water_block.generateParticles<ParticleGenerator<Ghost<ReserveSizeFactor>, UnstructuredMesh>>(ghost_boundary, ansys_mesh);
+    water_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, ansys_mesh);
     water_block.addBodyStateForRecording<Real>("Density");
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh, ghost_boundary);
     //----------------------------------------------------------------------

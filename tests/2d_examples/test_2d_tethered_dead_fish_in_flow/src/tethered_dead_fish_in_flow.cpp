@@ -212,13 +212,13 @@ int main(int ac, char *av[])
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for fish.
      */
@@ -228,13 +228,14 @@ int main(int ac, char *av[])
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<ParticleGeneratorReload>(fish_body.getName())
-        : fish_body.generateParticles<ParticleGeneratorLattice>();
+        ? fish_body.generateParticles<Reload>(fish_body.getName())
+        : fish_body.generateParticles<Lattice>();
     /**
      * @brief   Particle and body creation of fish observer.
      */
     ObserverBody fish_observer(system, "Observer");
-    fish_observer.generateParticles<FishObserverParticleGenerator>();
+    FishObserverParticleGenerator fish_observer_particle_generator(fish_observer);
+    fish_observer.generateParticles(fish_observer_particle_generator);
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation fish_body_inner(fish_body);

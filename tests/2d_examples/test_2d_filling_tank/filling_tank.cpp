@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
-    water_body.generateParticles<ParticleBuffer<ReserveSizeFactor>, Lattice>(inlet_buffer);
+    water_body.generateParticlesWithReserve<Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, Solid>();
