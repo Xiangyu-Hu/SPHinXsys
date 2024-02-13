@@ -289,7 +289,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 	void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 	{
-		Real mu_eff_i = turbu_mu_[index_i] + mu_;
+		Real mu_eff_i = turbu_mu_[index_i] + molecular_viscosity_;
 		Vecd force = Vecd::Zero();
 		Vecd vel_derivative = Vecd::Zero();
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -299,7 +299,7 @@ namespace fluid_dynamics
 			size_t index_j = inner_neighborhood.j_[n];
 			const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-			Real mu_eff_j = turbu_mu_[index_j] + mu_;
+			Real mu_eff_j = turbu_mu_[index_j] + molecular_viscosity_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 
@@ -312,7 +312,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation& wall_contact_relation)
-		: BaseTurbuViscousAccelerationWithWall(wall_contact_relation)
+		: BaseTurbuViscousForceWithWall(wall_contact_relation)
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
@@ -322,7 +322,7 @@ namespace fluid_dynamics
 	{
 		Real velo_fric = 0.0;
 		velo_fric = sqrt(abs(Karman * vel_t * pow(C_mu, 0.25) * pow(k_p, 0.5) /
-			log(turbu_const_E * pow(C_mu, 0.25) * pow(k_p, 0.5) * y_p * rho / mu_)));
+			log(turbu_const_E * pow(C_mu, 0.25) * pow(k_p, 0.5) * y_p * rho / molecular_viscosity_)));
 		return velo_fric;
 	}
 //=================================================================================================//
@@ -470,7 +470,7 @@ namespace fluid_dynamics
 		JudgeIsNearWall(BaseInnerRelation& inner_relation,
 			BaseContactRelation& contact_relation, NearShapeSurface& near_surface)
 		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
-		pos_(particles_->pos_),level_set_shape_(&near_surface.level_set_shape_), dimension_(Vecd(0).size()),
+		pos_(particles_->pos_),level_set_shape_(&near_surface.getLevelSetShape()), dimension_(Vecd(0).size()),
 		particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
