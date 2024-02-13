@@ -18,9 +18,9 @@ void ParticleGenerator<Lattice>::initializeGeometricVariables()
         for (int j = 0; j < number_of_lattices[1]; ++j)
         {
             Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j));
-            if (body_shape_.checkNotFar(particle_position, lattice_spacing_))
+            if (initial_shape_.checkNotFar(particle_position, lattice_spacing_))
             {
-                if (body_shape_.checkContain(particle_position))
+                if (initial_shape_.checkContain(particle_position))
                 {
                     initializePositionAndVolumetricMeasure(particle_position, particle_volume);
                 }
@@ -38,9 +38,9 @@ void ParticleGenerator<Surface, Lattice, ReducedOrder>::initializeGeometricVaria
         for (int j = 0; j < number_of_lattices[1]; ++j)
         {
             Vecd particle_position = mesh->CellPositionFromIndex(Arrayi(i, j));
-            if (body_shape_.checkNotFar(particle_position, lattice_spacing_))
+            if (initial_shape_.checkNotFar(particle_position, lattice_spacing_))
             {
-                if (body_shape_.checkContain(particle_position))
+                if (initial_shape_.checkContain(particle_position))
                 {
                     all_cells_++;
                     total_volume_ += lattice_spacing_ * lattice_spacing_;
@@ -64,16 +64,16 @@ void ParticleGenerator<Surface, Lattice, ReducedOrder>::initializeGeometricVaria
         for (int j = 0; j < number_of_lattices[1]; ++j)
         {
             Vecd particle_position = mesh->CellPositionFromIndex(Arrayi(i, j));
-            if (body_shape_.checkNotFar(particle_position, lattice_spacing_))
+            if (initial_shape_.checkNotFar(particle_position, lattice_spacing_))
             {
-                if (body_shape_.checkContain(particle_position))
+                if (initial_shape_.checkContain(particle_position))
                 {
                     Real random_real = unif(rng);
                     // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles
                     if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
                     {
                         initializePositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / thickness_);
-                        initializeSurfaceProperties(body_shape_.findNormalDirection(particle_position), thickness_);
+                        initializeSurfaceProperties(initial_shape_.findNormalDirection(particle_position), thickness_);
                     }
                 }
             }

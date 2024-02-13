@@ -89,7 +89,7 @@ class Shape
     virtual BoundingBox findBounds() = 0;
 };
 
-using ShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
+using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 /**
  * @class BinaryShapes
  * @brief a collections of shapes with binary operations
@@ -102,35 +102,35 @@ class BinaryShapes : public Shape
 {
   public:
     BinaryShapes() : Shape("BinaryShapes"){};
-    explicit BinaryShapes(const std::string &shapes_name) : Shape(shapes_name){};
+    explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name){};
     virtual ~BinaryShapes(){};
 
-    template <class ShapeType, typename... Args>
+    template <class SubShapeType, typename... Args>
     void add(Args &&...args)
     {
-        Shape *shape = shapes_ptr_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
-        ShapeAndOp shape_and_op(shape, ShapeBooleanOps::add);
-        shapes_and_ops_.push_back(shape_and_op);
+        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::add);
+        sub_shapes_and_ops_.push_back(sub_shape_and_op);
     };
 
-    template <class ShapeType, typename... Args>
+    template <class SubShapeType, typename... Args>
     void subtract(Args &&...args)
     {
-        Shape *shape = shapes_ptr_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
-        ShapeAndOp shape_and_op(shape, ShapeBooleanOps::sub);
-        shapes_and_ops_.push_back(shape_and_op);
+        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::sub);
+        sub_shapes_and_ops_.push_back(sub_shape_and_op);
     };
 
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-    Shape *getShapeByName(const std::string &shape_name);
-    ShapeAndOp *getShapeAndOpByName(const std::string &shape_name);
-    size_t getShapeIndexByName(const std::string &shape_name);
+    Shape *getSubShapeByName(const std::string &name);
+    SubShapeAndOp *getSubShapeAndOpByName(const std::string &name);
+    size_t getSubShapeIndexByName(const std::string &name);
 
   protected:
-    UniquePtrsKeeper<Shape> shapes_ptr_keeper_;
-    StdVec<ShapeAndOp> shapes_and_ops_;
+    UniquePtrsKeeper<Shape> sub_shape_ptrs_keeper_;
+    StdVec<SubShapeAndOp> sub_shapes_and_ops_;
 
     virtual BoundingBox findBounds() override;
 };

@@ -81,11 +81,11 @@ class RegressionTestBase : public ObserveMethodType
 
   public:
     template <typename... Args>
-    explicit RegressionTestBase(Args &&...args) 
-    : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
-                                                             observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
-                                                             result_xml_engine_in_("result_xml_engine_in", "result"),
-                                                             result_xml_engine_out_("result_xml_engine_out", "result")
+    explicit RegressionTestBase(Args &&...args)
+        : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
+          observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
+          result_xml_engine_in_("result_xml_engine_in", "result"),
+          result_xml_engine_out_("result_xml_engine_out", "result")
     {
         input_folder_path_ = this->io_environment_.input_folder_;
         in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".xml";
@@ -126,6 +126,12 @@ class RegressionTestBase : public ObserveMethodType
     /** the interface to write observed quantity into xml memory. */
     void writeToFile(size_t iteration = 0) override
     {
+        if (!isIterationStepChanged(iteration))
+        {
+            std::cout << "\n Error: the iteration step is not changed (duplicated observation)." << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
         ObserveMethodType::writeToFile(iteration); /* used for visualization (.dat)*/
         writeToXml(this, iteration);               /* used for regression test. (.xml) */
     };
@@ -142,6 +148,19 @@ class RegressionTestBase : public ObserveMethodType
     void readXmlFromXmlFile()
     {
         readFromXml(this);
+    };
+
+  private:
+    size_t last_iteration_step_ = MaxSize_t;
+
+    bool isIterationStepChanged(size_t iteration_step)
+    {
+        if (iteration_step != last_iteration_step_)
+        {
+            last_iteration_step_ = iteration_step;
+            return true;
+        }
+        return false;
     };
 };
 }; // namespace SPH

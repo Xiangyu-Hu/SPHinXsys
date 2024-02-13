@@ -7,12 +7,13 @@ namespace relax_dynamics
 //=================================================================================================//
 RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
     : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
-      relax_shape_(*sph_body_.body_shape_){};
+      relax_shape_(*sph_body_.initial_shape_){};
 //=================================================================================================//
 RelaxationResidue<Inner<>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name)
+    RelaxationResidue(BaseInnerRelation &inner_relation, std::string sub_shape_name)
     : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
-      relax_shape_(*DynamicCast<ComplexShape>(this, *sph_body_.body_shape_).getShapeByName(shape_name)) {}
+      relax_shape_(*DynamicCast<ComplexShape>(this, *sph_body_.initial_shape_)
+                        .getSubShapeByName(sub_shape_name)) {}
 //=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -81,7 +82,7 @@ UpdateSmoothingLengthRatioByShape::
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::UpdateSmoothingLengthRatioByShape(SPHBody &sph_body)
-    : UpdateSmoothingLengthRatioByShape(sph_body, *sph_body.body_shape_) {}
+    : UpdateSmoothingLengthRatioByShape(sph_body, *sph_body.initial_shape_) {}
 //=================================================================================================//
 void UpdateSmoothingLengthRatioByShape::update(size_t index_i, Real dt_square)
 {
