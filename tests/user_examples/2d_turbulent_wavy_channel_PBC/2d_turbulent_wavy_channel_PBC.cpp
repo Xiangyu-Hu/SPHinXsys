@@ -103,12 +103,12 @@ int main(int ac, char *av[])
     near_surface.level_set_shape_.writeLevelSet(sph_system);
 
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-    InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall, SequencedPolicy> update_near_wall_status(water_block_inner, water_wall_contact, near_surface);
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
+    InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact, near_surface);
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
-    SimpleDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction(water_block, offset_dist_ref);
+    SimpleDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block, offset_dist_ref);
 
     SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound, observe_offset_y);
 
@@ -211,6 +211,7 @@ int main(int ac, char *av[])
                 standard_wall_function_correction.exec();
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
+                k_equation_relaxation.update_prior_turbulent_value();
 
                 relaxation_time += dt;
                 integration_time += dt;

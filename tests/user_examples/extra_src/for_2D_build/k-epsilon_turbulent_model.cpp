@@ -115,12 +115,12 @@ namespace fluid_dynamics
 		if (is_near_wall_P1_[index_i] != 1)
 			k_production_[index_i] = k_production_matrix.sum();
 			
-		k_production = k_production_[index_i];
-		k_dissipation = turbu_epsilon_[index_i] ;
+		//k_production = k_production_[index_i];
+		//k_dissipation = turbu_epsilon_[index_i] ;
 
 		//** Linearize the source term *
-		//k_production = k_production_prior_[index_i];
-		//k_dissipation = (turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_k_[index_i];
+		k_production = k_production_prior_[index_i];
+		k_dissipation = ( turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i] ) * turbu_k_[index_i];
 		
 		dk_dt_[index_i] = k_production - k_dissipation + k_lap;
 
@@ -194,12 +194,12 @@ namespace fluid_dynamics
 			epsilon_lap += 2.0 * mu_harmo * epsilon_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 		}
 
-		epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
-		epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
+		//epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
+		//epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
 		
 		//** Linearize the source term *
-		//epsilon_production = C_l * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
-		//epsilon_dissipation = (C_2 * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
+		epsilon_production = C_l * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
+		epsilon_dissipation = (C_2 * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
 		
 		dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 
