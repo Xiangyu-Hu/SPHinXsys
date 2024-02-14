@@ -191,7 +191,9 @@ class BaseInteractionComplex : public InteractionInnerType, public ContactDataTy
     BaseInteractionComplex(BaseContactRelation &contact_relation,
                            BaseInnerRelation &inner_relation, Args &&...args)
         : InteractionInnerType(inner_relation, std::forward<Args>(args)...),
-          ContactDataType(contact_relation){};
+          ContactDataType(contact_relation),
+          contact_relation_(contact_relation),
+          inner_relation_(inner_relation){};
     template <typename... Args>
     BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
         : BaseInteractionComplex(complex_relation.getContactRelation(),
@@ -204,6 +206,10 @@ class BaseInteractionComplex : public InteractionInnerType, public ContactDataTy
         this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
     };
     virtual ~BaseInteractionComplex(){};
+
+  protected:
+    const BaseContactRelation& contact_relation_;
+    const BaseInnerRelation& inner_relation_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

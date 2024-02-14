@@ -142,6 +142,9 @@ class BaseInnerRelation : public SPHRelation
     void allocateInnerConfigurationDevice();
     void copyInnerConfigurationToDevice();
     void copyInnerConfigurationFromDevice();
+
+    virtual CellLinkedListKernel* getInnerCellLinkedListDevice() const { return nullptr; }
+    virtual NeighborBuilderInnerKernel* getInnerNeighborBuilderDevice() const { return nullptr; }
 };
 
 /**
@@ -190,6 +193,9 @@ class BaseContactRelation : public SPHRelation
             for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
                 contact_configuration_.at(k).at(i) = contact_configuration_device_.at(k).at(i);
     }
+
+    virtual CellLinkedListKernel **getContactCellLinkedListsDevice() const { return nullptr; }
+    virtual NeighborBuilderContactKernel **getContactNeighborBuilderDevice() const { return nullptr; }
 };
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H

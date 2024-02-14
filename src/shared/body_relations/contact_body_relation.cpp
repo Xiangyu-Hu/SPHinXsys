@@ -6,13 +6,18 @@ namespace SPH
 {
 //=================================================================================================//
 ContactRelation::ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
-    : ContactRelationCrossResolution(sph_body, contact_bodies)
+    : ContactRelationCrossResolution(sph_body, contact_bodies),
+      contact_cell_linked_lists_device_(allocateSharedData<CellLinkedListKernel*>(contact_bodies.size())),
+      contact_neighbor_builder_device_(allocateSharedData<NeighborBuilderContactKernel*>(contact_bodies.size()))
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        get_contact_neighbors_.push_back(
+        auto* new_neighbor_builder =
             neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContact>(
-                sph_body_, *contact_bodies_[k]));
+                sph_body_, *contact_bodies_[k]);
+        get_contact_neighbors_.push_back(new_neighbor_builder);
+        contact_neighbor_builder_device_[k] = new_neighbor_builder->device_kernel.get_ptr();
+        contact_cell_linked_lists_device_[k] = &contact_bodies.at(k)->getCellLinkedList(execution::par_sycl);
     }
 }
 //=================================================================================================//
@@ -38,6 +43,14 @@ execution::ExecutionEvent ContactRelation::updateDeviceConfiguration()
             *get_search_depths_[k], *get_contact_neighbors_[k], reset_event));
     }
     return std::move(update_events);
+}
+CellLinkedListKernel **ContactRelation::getContactCellLinkedListsDevice() const
+{
+    return contact_cell_linked_lists_device_;
+}
+NeighborBuilderContactKernel **ContactRelation::getContactNeighborBuilderDevice() const
+{
+    return contact_neighbor_builder_device_;
 }
 //=================================================================================================//
 SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)

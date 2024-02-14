@@ -178,9 +178,13 @@ BaseDensitySummationComplex<DensitySummationInnerType>::
       contact_inv_rho0_device_(this->contact_particles_.size(), executionQueue.getQueue()),
       contact_mass_(this->contact_particles_.size()),
       contact_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
       device_kernel(contact_inv_rho0_device_.data(), contact_mass_device_.data(),
-                   this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
-                   this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0)
+                    this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
+                    this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0)
+#else
+      device_kernel(contact_inv_rho0_device_.data(), contact_mass_device_.data(), this->contact_relation_)
+#endif
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {

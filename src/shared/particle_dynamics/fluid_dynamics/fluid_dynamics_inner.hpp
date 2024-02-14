@@ -167,7 +167,12 @@ void Oldroyd_BIntegration2ndHalf::
 //=================================================================================================//
 template <class RiemannSolverType>
 BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_)
+    : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
+      device_kernel(particles_, this->inner_configuration_device_->data(), riemann_solver_)
+#else
+      device_kernel(inner_relation, particles_, riemann_solver_)
+#endif
 {
     /**
      *	register sortable particle data
@@ -224,7 +229,12 @@ void BaseIntegration1stHalf<RiemannSolverType>::
 template <class RiemannSolverType>
 BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_),
-      Vol_(particles_->Vol_), mass_(particles_->mass_) {}
+      Vol_(particles_->Vol_), mass_(particles_->mass_),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
+      device_kernel(particles_, this->inner_configuration_device_->data(), riemann_solver_) {}
+#else
+      device_kernel(inner_relation, particles_, riemann_solver_) {}
+#endif
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)

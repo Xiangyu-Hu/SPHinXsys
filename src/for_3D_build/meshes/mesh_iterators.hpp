@@ -40,6 +40,16 @@ inline Array3i mesh_find_if3d(const CheckOnEach &function)
 }
 //=================================================================================================//
 template <typename LowerArray, typename UpperArray, typename FunctionOnEach>
+void mesh_for_each_array(const LowerArray &lower, const UpperArray &upper,
+                   const FunctionOnEach &function)
+{
+    for (int l = lower[0]; l != upper[0]; ++l)
+        for (int m = lower[1]; m != upper[1]; ++m)
+            for (int n = lower[2]; n != upper[2]; ++n)
+                function(DeviceArray3i{l, m, n});
+}
+//=================================================================================================//
+template <typename LowerArray, typename UpperArray, typename FunctionOnEach>
 void mesh_for_each(const LowerArray &lower, const UpperArray &upper, const FunctionOnEach &function)
 {
     for (int l = lower[0]; l != upper[0]; ++l)

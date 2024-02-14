@@ -154,7 +154,7 @@ class BaseParticles
     DeviceDataType *registerDeviceVariable(const std::string &variable_name, std::size_t size,
                                            const HostDataType* host_value = nullptr);
     template <typename DeviceDataType>
-    DeviceDataType *getDeviceVariableByName(const std::string &variable_name)
+    DeviceDataType *getDeviceVariableByName(const std::string &variable_name) const
     {
         DeviceVariable<DeviceDataType> *variable = findVariableByName<DeviceDataType>(all_device_variables_, variable_name);
 

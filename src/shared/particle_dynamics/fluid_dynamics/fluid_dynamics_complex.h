@@ -83,6 +83,15 @@ class BaseDensitySummationComplexKernel {
                                       contact_configuration_(contactConfiguration),
                                       contact_configuration_size_(contactConfigurationSize) {}
 
+    BaseDensitySummationComplexKernel(DeviceReal *contactInvRho0, DeviceReal **contactMass,
+                                      const BaseContactRelation& contact_relation) :
+                                      contact_inv_rho0_(contactInvRho0),
+                                      contact_mass_(contactMass),
+                                      particles_position_(contact_relation.base_particles_.getDeviceVariableByName<DeviceVecd>("Position")),
+                                      contact_cell_linked_lists_(contact_relation.getContactCellLinkedListsDevice()),
+                                      contact_neighbor_builders_(contact_relation.getContactNeighborBuilderDevice()),
+                                      contact_bodies_size_(contact_relation.contact_bodies_.size()) {}
+
     template<class RealType, class ContactMassFunc, class ContactConfigFunc>
     static RealType ContactSummation(size_t index_i, std::size_t contact_configuration_size,
                                   const RealType* contact_inv_rho0, ContactMassFunc&& contactMassFunc,
@@ -102,15 +111,39 @@ class BaseDensitySummationComplexKernel {
 
     DeviceReal ContactSummation(size_t index_i)
     {
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
         return BaseDensitySummationComplexKernel::ContactSummation(index_i, contact_configuration_size_,
                 contact_inv_rho0_, [&](auto k){ return contact_mass_[k]; },
                 [&](auto k, auto index_i) -> NeighborhoodDevice& { return contact_configuration_[k][index_i]; });
+#else
+        DeviceReal sigma(0.0);
+        for (size_t k = 0; k < contact_bodies_size_; ++k)
+        {
+            const DeviceReal* contact_mass_k = contact_mass_[k];
+            const DeviceReal& contact_inv_rho0_k = contact_inv_rho0_[k];
+            const auto& neighbor_builder = *contact_neighbor_builders_[k];
+            contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
+                                                           [&](const DeviceVecd &pos_i, size_t index_j,
+                                                               const DeviceVecd &pos_j, const DeviceReal& Vol_j)
+                                                           {
+                                                               if(neighbor_builder.isWithinCutoff(pos_i, pos_j))
+                                                                   sigma += neighbor_builder.W_ij(pos_i, pos_j) *
+                                                                            contact_inv_rho0_k * contact_mass_k[index_j];
+                                                           });
+        }
+        return sigma;
+#endif
     };
 
   private:
     DeviceReal *contact_inv_rho0_, **contact_mass_;
     NeighborhoodDevice** contact_configuration_;
     std::size_t contact_configuration_size_;
+
+    DeviceVecd *particles_position_;
+    CellLinkedListKernel **contact_cell_linked_lists_;
+    NeighborBuilderContactKernel **contact_neighbor_builders_;
+    size_t contact_bodies_size_;
 };
 
 /**
@@ -253,12 +286,24 @@ class TransportVelocityCorrectionComplexAdaptive
 template <class BaseIntegration1stHalfType>
 class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
   public:
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
     template<class ...BaseArgs>
     BaseIntegration1stHalfWithWallKernel(StdSharedVec<NeighborhoodDevice*> &contact_configuration,
                                          DeviceVecd** wall_acc_ave, BaseArgs&& ...args) :
-                                         BaseIntegration1stHalfType(args...),
+                                         BaseIntegration1stHalfType(std::forward<BaseArgs>(args)...),
                                          contact_configuration_(contact_configuration),
                                          wall_acc_ave_(wall_acc_ave) {}
+#endif
+
+    template<class ...BaseArgs>
+    BaseIntegration1stHalfWithWallKernel(const BaseContactRelation& contact_relation,
+                                         DeviceVecd** wall_acc_ave, BaseArgs&& ...args)
+        : BaseIntegration1stHalfType(std::forward<BaseArgs>(args)...),
+          wall_acc_ave_(wall_acc_ave),
+          contact_bodies_size_(contact_relation.contact_bodies_.size()),
+          contact_cell_linked_lists_(contact_relation.getContactCellLinkedListsDevice()),
+          contact_neighbor_builders_(contact_relation.getContactNeighborBuilderDevice()),
+          particles_position_(contact_relation.base_particles_.getDeviceVariableByName<DeviceVecd>("Position")) {}
 
     template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
              class NonConservativeAccFunc, class WallAccAveFunc>
@@ -293,15 +338,52 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
     void interaction(size_t index_i, Real dt = 0.0) {
         BaseIntegration1stHalfType::interaction(index_i, dt);
 
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
         interaction(index_i, dt, this->p_, this->rho_, this->drho_dt_, this->acc_, this->riemann_solver_,
                     contact_configuration_.size(), [&](auto index_i){ return this->acc_prior_[index_i]; },
                     [&](auto k){ return this->wall_acc_ave_[k]; },
                     [&](auto k, auto index_i) -> const NeighborhoodDevice&
                         { return this->contact_configuration_[k][index_i]; });
+#else
+        const DeviceVecd acc_prior_i = this->acc_prior_[index_i];
+        DeviceVecd acceleration = VecdZero<DeviceVecd>();
+        DeviceReal rho_dissipation{0}, min_external_acc{0};
+        const DeviceReal pressure_i{this->p_[index_i]}, rho_i{this->rho_[index_i]};
+        for (size_t k = 0; k < contact_bodies_size_; ++k)
+        {
+            const DeviceVecd* acc_ave_k = this->wall_acc_ave_[k];
+            const auto& neighbor_builder = *contact_neighbor_builders_[k];
+            contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
+                                                           [&](const DeviceVecd &pos_i, size_t index_j,
+                                                               const DeviceVecd &pos_j, const DeviceReal& Vol_j)
+                                                           {
+                                                               if (neighbor_builder.isWithinCutoff(pos_i, pos_j))
+                                                               {
+                                                                   const auto e_ij = neighbor_builder.e_ij(pos_i, pos_j);
+                                                                   const auto dW_ijV_j = neighbor_builder.dW_ijV_j(pos_i, pos_j, Vol_j);
+                                                                   const auto r_ij = neighbor_builder.r_ij(pos_i, pos_j);
+
+                                                                   const DeviceReal face_wall_external_acceleration = VecdDot(DeviceVecd(acc_prior_i - acc_ave_k[index_j]), DeviceVecd(-e_ij));
+                                                                   const auto p_in_wall = pressure_i + rho_i * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
+                                                                   acceleration -= (pressure_i + p_in_wall) * dW_ijV_j * e_ij;
+                                                                   rho_dissipation += this->riemann_solver_.DissipativeUJump(pressure_i - p_in_wall) * dW_ijV_j;
+                                                               }
+                                                           });
+        }
+        this->acc_[index_i] += acceleration / this->rho_[index_i];
+        this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
+#endif
     }
   private:
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
     StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
+#endif
     DeviceVecd** wall_acc_ave_;
+
+    size_t contact_bodies_size_;
+    CellLinkedListKernel **contact_cell_linked_lists_;
+    NeighborBuilderContactKernel **contact_neighbor_builders_;
+    DeviceVecd *particles_position_;
 };
 
 /**
@@ -315,13 +397,37 @@ class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegratio
 
   public:
     template <typename... Args>
-    BaseIntegration1stHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...),
+    BaseIntegration1stHalfWithWall(BaseContactRelation& contact_relation, BaseInnerRelation& inner_relation, Args &&...args)
+        : InteractionWithWall<BaseIntegration1stHalfType>(contact_relation, inner_relation, std::forward<Args>(args)...),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
           device_kernel(*this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
                         BaseIntegration1stHalfType::particles_,
                         BaseIntegration1stHalfType::inner_configuration_device_ ?
                             BaseIntegration1stHalfType::inner_configuration_device_->data() : nullptr,
-                        this->riemann_solver_) {};
+                        this->riemann_solver_) {}
+#else
+          device_kernel(contact_relation, this->wall_acc_ave_device_.data(),
+                        inner_relation, BaseIntegration1stHalfType::particles_,
+                        this->riemann_solver_) {}
+#endif
+
+    template <typename... Args>
+    BaseIntegration1stHalfWithWall(ComplexRelation& complex_relation, Args &&...args)
+        : InteractionWithWall<BaseIntegration1stHalfType>(complex_relation, std::forward<Args>(args)...),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
+          device_kernel(*this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
+                        BaseIntegration1stHalfType::particles_,
+                        BaseIntegration1stHalfType::inner_configuration_device_ ?
+                            BaseIntegration1stHalfType::inner_configuration_device_->data() : nullptr,
+                        this->riemann_solver_) {}
+#else
+          device_kernel(complex_relation.getContactRelation(),
+                        this->wall_acc_ave_device_.data(),
+                        complex_relation.getInnerRelation(),
+                        BaseIntegration1stHalfType::particles_,
+                        this->riemann_solver_) {}
+#endif
+
     virtual ~BaseIntegration1stHalfWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
@@ -380,11 +486,23 @@ template <class BaseIntegration2ndHalfType>
 class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
   public:
     template<class ...BaseArgs>
+    BaseIntegration2ndHalfWithWallKernel(const BaseContactRelation& contact_relation,
+                                         DeviceVecd** wall_vel_ave, DeviceVecd** wall_n, BaseArgs&& ...args)
+        : BaseIntegration2ndHalfType(std::forward<BaseArgs>(args)...),
+          wall_vel_ave_(wall_vel_ave), wall_n_(wall_n),
+          contact_bodies_size_(contact_relation.contact_bodies_.size()),
+          contact_cell_linked_lists_(contact_relation.getContactCellLinkedListsDevice()),
+          contact_neighbor_builders_(contact_relation.getContactNeighborBuilderDevice()),
+          particles_position_(contact_relation.base_particles_.getDeviceVariableByName<DeviceVecd>("Position")) {}
+
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
+    template<class ...BaseArgs>
     BaseIntegration2ndHalfWithWallKernel(StdSharedVec<NeighborhoodDevice*> &contact_configuration,
                                          DeviceVecd** wall_vel_ave, DeviceVecd** wall_n, BaseArgs&& ...args) :
-            BaseIntegration2ndHalfType(args...),
+            BaseIntegration2ndHalfType(std::forward<BaseArgs>(args)...),
             contact_configuration_(contact_configuration),
             wall_vel_ave_(wall_vel_ave), wall_n_(wall_n) {}
+#endif
 
     template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
              class WallVelAveFunc, class WallNormalFunc>
@@ -418,15 +536,51 @@ class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
     void interaction(size_t index_i, Real dt = 0.0) {
         BaseIntegration2ndHalfType::interaction(index_i, dt);
 
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
         interaction(index_i, dt, this->rho_, this->drho_dt_, this->vel_, this->acc_, this->riemann_solver_,
                     contact_configuration_.size(), [&](auto k){ return this->wall_vel_ave_[k]; },
                     [&](auto k){ return this->wall_n_[k]; },
                     [&](auto k, auto index_i) -> const NeighborhoodDevice&
                         { return this->contact_configuration_[k][index_i]; });
+#else
+        DeviceReal density_change_rate{0};
+        auto p_dissipation = VecdZero<DeviceVecd>();
+        const DeviceVecd vel_i = this->vel_[index_i];
+        for (size_t k = 0; k < contact_bodies_size_; ++k)
+        {
+            const DeviceVecd *vel_ave_k = this->wall_vel_ave_[k];
+            const DeviceVecd *n_k = this->wall_n_[k];
+            const auto& neighbor_builder = *contact_neighbor_builders_[k];
+            contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
+                                                           [&](const DeviceVecd &pos_i, size_t index_j,
+                                                               const DeviceVecd &pos_j, const DeviceReal &Vol_j)
+                                                           {
+                                                               if (neighbor_builder.isWithinCutoff(pos_i, pos_j))
+                                                               {
+                                                                   const auto e_ij = neighbor_builder.e_ij(pos_i, pos_j);
+                                                                   const auto dW_ijV_j = neighbor_builder.dW_ijV_j(pos_i, pos_j, Vol_j);
+
+                                                                   const DeviceVecd vel_in_wall = static_cast<DeviceReal>(2.0) * vel_ave_k[index_j] - vel_i;
+                                                                   density_change_rate += VecdDot(DeviceVecd(vel_i - vel_in_wall), e_ij) * dW_ijV_j;
+                                                                   const DeviceReal u_jump = static_cast<DeviceReal>(2.0) * VecdDot(DeviceVecd(vel_i - vel_ave_k[index_j]), n_k[index_j]);
+                                                                   p_dissipation += static_cast<DeviceReal>(this->riemann_solver_.DissipativePJump(u_jump)) * dW_ijV_j * n_k[index_j];
+                                                               }
+                                                           });
+        }
+        this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+        this->acc_[index_i] += p_dissipation / this->rho_[index_i];
+#endif
     }
   private:
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
     StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
+#endif
     DeviceVecd **wall_vel_ave_, **wall_n_;
+
+    size_t contact_bodies_size_;
+    CellLinkedListKernel **contact_cell_linked_lists_;
+    NeighborBuilderContactKernel **contact_neighbor_builders_;
+    DeviceVecd *particles_position_;
 };
 
 
@@ -442,13 +596,37 @@ class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegratio
 
   public:
     template <typename... Args>
-    BaseIntegration2ndHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...),
+    BaseIntegration2ndHalfWithWall(BaseContactRelation& contact_relation, BaseInnerRelation& inner_relation, Args &&...args)
+        : InteractionWithWall<BaseIntegration2ndHalfType>(contact_relation, inner_relation, std::forward<Args>(args)...),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
           device_kernel(*this->contact_configuration_device_, this->wall_vel_ave_device_.data(),
                         this->wall_n_device_.data(), BaseIntegration2ndHalfType::particles_,
                         BaseIntegration2ndHalfType::inner_configuration_device_ ?
                             BaseIntegration2ndHalfType::inner_configuration_device_->data() : nullptr,
-                        this->riemann_solver_) {};
+                        this->riemann_solver_) {}
+#else
+          device_kernel(contact_relation, this->wall_vel_ave_device_.data(),
+                        this->wall_n_device_.data(), inner_relation,
+                        BaseIntegration2ndHalfType::particles_, this->riemann_solver_) {}
+#endif
+
+          template <typename... Args>
+          BaseIntegration2ndHalfWithWall(ComplexRelation& complex_relation, Args &&...args)
+              : InteractionWithWall<BaseIntegration2ndHalfType>(complex_relation, std::forward<Args>(args)...),
+#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
+                device_kernel(*this->contact_configuration_device_, this->wall_vel_ave_device_.data(),
+                              this->wall_n_device_.data(), BaseIntegration2ndHalfType::particles_,
+                              BaseIntegration2ndHalfType::inner_configuration_device_ ?
+                                                                                      BaseIntegration2ndHalfType::inner_configuration_device_->data() : nullptr,
+                              this->riemann_solver_) {}
+#else
+                device_kernel(complex_relation.getContactRelation(), this->wall_vel_ave_device_.data(),
+                              this->wall_n_device_.data(),
+                              complex_relation.getInnerRelation(),
+                              BaseIntegration2ndHalfType::particles_,
+                              this->riemann_solver_) {}
+#endif
+
     virtual ~BaseIntegration2ndHalfWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);

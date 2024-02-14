@@ -113,7 +113,9 @@ add_subdirectory(modules)
     add_subdirectory(tests)
 endif()]]
 add_subdirectory(tests/2d_examples/test_2d_dambreak)
+add_subdirectory(tests/3d_examples/test_3d_dambreak)
 add_subdirectory(tests/2d_examples/test_2d_dambreak_sycl)
+add_subdirectory(tests/3d_examples/test_3d_dambreak_sycl)
 add_subdirectory(tests/2d_examples/test_2d_sycl_performance)
 
 # ------ Extra scripts to install

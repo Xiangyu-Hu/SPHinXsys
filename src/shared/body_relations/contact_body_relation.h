@@ -79,12 +79,21 @@ class ContactRelation : public ContactRelationCrossResolution
 
   public:
     ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
-    virtual ~ContactRelation(){};
+    virtual ~ContactRelation(){
+        freeDeviceData(contact_cell_linked_lists_device_);
+        freeDeviceData(contact_neighbor_builder_device_);
+    };
     virtual void updateConfiguration() override;
     virtual execution::ExecutionEvent updateDeviceConfiguration() override;
 
+    CellLinkedListKernel **getContactCellLinkedListsDevice() const override;
+    NeighborBuilderContactKernel **getContactNeighborBuilderDevice() const override;
+
   protected:
     StdVec<NeighborBuilderContact *> get_contact_neighbors_;
+
+    CellLinkedListKernel **contact_cell_linked_lists_device_;
+    NeighborBuilderContactKernel **contact_neighbor_builder_device_;
 };
 
 /**

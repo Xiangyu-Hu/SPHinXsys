@@ -145,6 +145,36 @@ class NeighborBuilderInnerKernel : public NeighborBuilderKernel {
 
     SYCL_EXTERNAL void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
                     const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const;
+
+    inline bool isWithinCutoff(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        const DeviceReal distance_metric = VecdSquareNorm(displacement);
+        return distance_metric < smoothing_kernel.CutOffRadiusSqr();
+    }
+
+    inline DeviceReal W_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        return smoothing_kernel.W(VecdNorm(displacement), displacement);
+    }
+
+    inline DeviceReal dW_ijV_j(const DeviceVecd &pos_i, const DeviceVecd &pos_j, const DeviceReal& Vol_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        return smoothing_kernel.dW(VecdNorm(displacement), displacement) * Vol_j;
+    }
+
+    inline DeviceReal r_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        return VecdNorm(DeviceVecd(pos_i - pos_j));
+    }
+
+    inline DeviceVecd e_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        return displacement / (VecdNorm(displacement) + TinyReal);
+    }
 };
 
 /**
@@ -209,6 +239,36 @@ class NeighborBuilderContactKernel : public NeighborBuilderKernel {
                                                         sycl::access::address_space::global_space>(*neighborhood.current_size_);
             initializeNeighbor(neighborhood, current_size_atomic++, distance, displacement, index_j, Vol_j);
         }
+    }
+
+    inline bool isWithinCutoff(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        const DeviceReal distance = VecdNorm(displacement);
+        return distance < smoothing_kernel.CutOffRadius();
+    }
+
+    inline DeviceReal W_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        return smoothing_kernel.W(VecdNorm(displacement), displacement);
+    }
+
+    inline DeviceReal dW_ijV_j(const DeviceVecd &pos_i, const DeviceVecd &pos_j, const DeviceReal& Vol_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        return smoothing_kernel.dW(VecdNorm(displacement), displacement) * Vol_j;
+    }
+
+    inline DeviceReal r_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        return VecdNorm(DeviceVecd(pos_i - pos_j));
+    }
+
+    inline DeviceVecd e_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        return displacement / (VecdNorm(displacement) + TinyReal);
     }
 };
 

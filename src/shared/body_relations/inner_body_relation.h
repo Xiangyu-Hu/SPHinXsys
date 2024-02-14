@@ -44,12 +44,18 @@ class InnerRelation : public BaseInnerRelation
     NeighborBuilderInner get_inner_neighbor_;
     CellLinkedList &cell_linked_list_;
 
+    CellLinkedListKernel* inner_cell_linked_list_device_;
+    NeighborBuilderInnerKernel* inner_neighbor_builder_device_;
+
   public:
     explicit InnerRelation(RealBody &real_body);
     virtual ~InnerRelation(){};
 
     virtual void updateConfiguration() override;
     virtual execution::ExecutionEvent updateDeviceConfiguration() override;
+
+    CellLinkedListKernel *getInnerCellLinkedListDevice() const override;
+    NeighborBuilderInnerKernel *getInnerNeighborBuilderDevice() const override;
 };
 
 /**
