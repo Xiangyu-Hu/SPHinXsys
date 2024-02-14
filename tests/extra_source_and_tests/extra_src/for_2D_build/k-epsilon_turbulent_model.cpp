@@ -12,69 +12,69 @@ namespace fluid_dynamics
 //=================================================================================================//
     void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
     {
-		//** The near wall velo grad is updated in wall function part *
-		if (is_near_wall_P1_[index_i] == 1)
-		{
-			return;
-		}
-		Vecd vel_i = vel_[index_i];
 		velocity_gradient_[index_i] = Matd::Zero();
-		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		//** The near wall velo grad is updated in wall function part *
+		if (is_near_wall_P1_[index_i] != 1)
 		{
-			size_t index_j = inner_neighborhood.j_[n];
-			Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-			//** Strong form *
-			velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
-			//** Weak form *
-			//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+			Vecd vel_i = vel_[index_i];
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				//** Strong form *
+				velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+				//** Weak form *
+				//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+			}
 		}
     }
 //=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
-		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation)
+		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
+		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
+		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))
 	{
-		//** Obtain Initial values for transport equations *
-		turbu_k_initial_ = initial_values[0];
-		turbu_ep_initial_ = initial_values[1];
-		turbu_mu_initial_ = initial_values[2];
-
 		particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 		particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
-
-		particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", turbu_k_initial_);
-
-		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
-		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
-
-		particles_->registerVariable(turbu_mu_, "TurbulentViscosity", turbu_mu_initial_);
-		particles_->registerSortableVariable<Real>("TurbulentViscosity");
-		particles_->addVariableToWrite<Real>("TurbulentViscosity");
-
-		particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", turbu_ep_initial_);
-
-		particles_->registerSortableVariable<Real>("TurbulentDissipation");
-		particles_->addVariableToWrite<Real>("TurbulentDissipation");
 
 		particles_->registerVariable(k_production_, "K_Production");
 		particles_->registerSortableVariable<Real>("K_Production");
 		particles_->addVariableToWrite<Real>("K_Production");
 
-		particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
-		particles_->registerSortableVariable<int>("IsNearWallP1");
-		particles_->addVariableToWrite<int>("IsNearWallP1");
+		particles_->registerVariable(k_production_prior_, "K_ProductionPrior");
+		particles_->registerSortableVariable<Real>("K_ProductionPrior");
+
+		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
+		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
+
+		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergyPrior");
+
+		particles_->registerSortableVariable<Real>("TurbulentViscosity");
+		particles_->addVariableToWrite<Real>("TurbulentViscosity");
+
+		particles_->registerSortableVariable<Real>("TurbulentDissipation");
+		particles_->addVariableToWrite<Real>("TurbulentDissipation");
+
+		particles_->registerSortableVariable<Real>("TurbulentDissipationPrior");
+
+		//** Obtain Initial values for transport equations *		
+		std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
+		std::fill(turbu_k_prior_.begin(), turbu_k_prior_.end(), initial_values[0]);
+		std::fill(turbu_epsilon_.begin(), turbu_epsilon_.end(), initial_values[1]);
+		std::fill(turbu_epsilon_prior_.begin(), turbu_epsilon_prior_.end(), initial_values[1]);
+		std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
 
 		//** for test */
 		particles_->registerVariable(k_diffusion_, "K_Diffusion");
 		particles_->registerSortableVariable<Real>("K_Diffusion");
 		particles_->addVariableToWrite<Real>("K_Diffusion");
-
 		particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
-
-		particles_->registerVariable(velocity_gradient_, "VelocityGradient");
-		particles_->registerSortableVariable<Matd>("VelocityGradient");
-		particles_->addVariableToWrite<Matd>("VelocityGradient");
-
 		particles_->registerVariable(vel_x_, "Velocity_X");
 		particles_->registerSortableVariable<Real>("Velocity_X");
 	}
@@ -94,6 +94,8 @@ namespace fluid_dynamics
 		Matd strain_rate = Matd::Zero();
 		Matd Re_stress = Matd::Zero();
 
+		Real k_production(0.0);
+		Real k_dissipation(0.0);
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
@@ -112,8 +114,15 @@ namespace fluid_dynamics
 		//** The near wall k production is updated in wall function part *
 		if (is_near_wall_P1_[index_i] != 1)
 			k_production_[index_i] = k_production_matrix.sum();
+			
+		//k_production = k_production_[index_i];
+		//k_dissipation = turbu_epsilon_[index_i] ;
 
-		dk_dt_[index_i] = k_production_[index_i] - turbu_epsilon_[index_i] + k_lap;
+		//** Linearize the source term *
+		k_production = k_production_prior_[index_i];
+		k_dissipation = ( turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i] ) * turbu_k_[index_i];
+		
+		dk_dt_[index_i] = k_production - k_dissipation + k_lap;
 
 		//** for test */
 		k_diffusion_[index_i] = k_lap;
@@ -124,13 +133,24 @@ namespace fluid_dynamics
 	{
 		turbu_k_[index_i] += dk_dt_[index_i] * dt;
 	}
+	//=================================================================================================//
+	void K_TurtbulentModelInner::update_prior_turbulent_value()
+	{
+		k_production_prior_ = k_production_;
+		turbu_k_prior_ = turbu_k_;
+		turbu_epsilon_prior_ = turbu_epsilon_;
+	}
 //=================================================================================================//
 	E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
 		k_production_(*particles_->getVariableByName<Real>("K_Production")),
+		k_production_prior_(*particles_->getVariableByName<Real>("K_ProductionPrior")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
-		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
+		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
+		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
 	{
 		particles_->registerVariable(dE_dt_, "ChangeRateOfTDR");
 		particles_->registerSortableVariable<Real>("ChangeRateOfTDR");
@@ -139,9 +159,11 @@ namespace fluid_dynamics
 		particles_->registerVariable(ep_production, "Ep_Production");
 		particles_->registerSortableVariable<Real>("Ep_Production");
 		particles_->addVariableToWrite<Real>("Ep_Production");
+
 		particles_->registerVariable(ep_dissipation_, "Ep_Dissipation_");
 		particles_->registerSortableVariable<Real>("Ep_Dissipation_");
 		particles_->addVariableToWrite<Real>("Ep_Dissipation_");
+
 		particles_->registerVariable(ep_diffusion_, "Ep_Diffusion_");
 		particles_->registerSortableVariable<Real>("Ep_Diffusion_");
 		particles_->addVariableToWrite<Real>("Ep_Diffusion_");
@@ -172,9 +194,13 @@ namespace fluid_dynamics
 			epsilon_lap += 2.0 * mu_harmo * epsilon_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 		}
 
-		epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
-		epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
-
+		//epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
+		//epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
+		
+		//** Linearize the source term *
+		epsilon_production = C_l * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
+		epsilon_dissipation = (C_2 * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
+		
 		dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 
 		//** for test */
@@ -185,7 +211,9 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void E_TurtbulentModelInner::update(size_t index_i, Real dt)
 	{
-		turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
+		//** The near wall epsilon value is updated in wall function part *
+		if (is_near_wall_P1_[index_i] != 1)
+			turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
 	}
 //=================================================================================================//
 	TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation& inner_relation)
@@ -261,7 +289,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 	void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 	{
-		Real mu_eff_i = turbu_mu_[index_i] + mu_;
+		Real mu_eff_i = turbu_mu_[index_i] + molecular_viscosity_;
 		Vecd force = Vecd::Zero();
 		Vecd vel_derivative = Vecd::Zero();
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -271,7 +299,7 @@ namespace fluid_dynamics
 			size_t index_j = inner_neighborhood.j_[n];
 			const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-			Real mu_eff_j = turbu_mu_[index_j] + mu_;
+			Real mu_eff_j = turbu_mu_[index_j] + molecular_viscosity_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 
@@ -284,7 +312,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation& wall_contact_relation)
-		: BaseTurbuViscousAccelerationWithWall(wall_contact_relation)
+		: BaseTurbuViscousForceWithWall(wall_contact_relation)
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
@@ -294,7 +322,7 @@ namespace fluid_dynamics
 	{
 		Real velo_fric = 0.0;
 		velo_fric = sqrt(abs(Karman * vel_t * pow(C_mu, 0.25) * pow(k_p, 0.5) /
-			log(turbu_const_E * pow(C_mu, 0.25) * pow(k_p, 0.5) * y_p * rho / mu_)));
+			log(turbu_const_E * pow(C_mu, 0.25) * pow(k_p, 0.5) * y_p * rho / molecular_viscosity_)));
 		return velo_fric;
 	}
 //=================================================================================================//
@@ -438,30 +466,182 @@ namespace fluid_dynamics
 		return turbu_E_original;
 	}
 //=================================================================================================//
+	JudgeIsNearWall::
+		JudgeIsNearWall(BaseInnerRelation& inner_relation,
+			BaseContactRelation& contact_relation, NearShapeSurface& near_surface)
+		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
+		pos_(particles_->pos_),level_set_shape_(&near_surface.getLevelSetShape()), dimension_(Vecd(0).size()),
+		particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
+	{
+		for (size_t k = 0; k != contact_particles_.size(); ++k)
+		{
+			contact_n_.push_back(&(contact_particles_[k]->n_));
+			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+		}
+		particles_->registerVariable(distance_to_dummy_interface_levelset_, "DistanceToDummyInterfaceLS");
+		particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceLS");
+		particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceLS");
+
+		particles_->registerVariable(distance_to_dummy_interface_up_average_, "DistanceToDummyInterfaceUpAver");
+		particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceUpAver");
+		particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceUpAver");
+
+		particles_->registerVariable(distance_to_dummy_interface_, "DistanceToDummyInterface");
+		particles_->registerSortableVariable<Real>("DistanceToDummyInterface");
+		particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
+
+		particles_->registerVariable(index_nearest_, "NearestIndex");
+		particles_->registerSortableVariable<int>("NearestIndex");
+		particles_->addVariableToWrite<int>("NearestIndex");
+
+		particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
+		particles_->registerSortableVariable<int>("IsNearWallP1");
+		particles_->addVariableToWrite<int>("IsNearWallP1");
+		
+		particles_->registerVariable(is_near_wall_P2_, "IsNearWallP2");
+		particles_->registerSortableVariable<int>("IsNearWallP2");
+		particles_->addVariableToWrite<int>("IsNearWallP2");
+
+		particles_->registerVariable(e_nearest_tau_, "WallNearestTangentialUnitVector");
+		particles_->registerSortableVariable<Vecd>("WallNearestTangentialUnitVector");
+
+		particles_->registerVariable(e_nearest_normal_, "WallNearestNormalUnitVector");
+		particles_->registerSortableVariable<Vecd>("WallNearestNormalUnitVector");
+	};
+	//=================================================================================================//
+	void JudgeIsNearWall::interaction(size_t index_i, Real dt)
+	{
+		//** If not clear the values completely, particles that leave P2 region will still carry the values. *
+		is_near_wall_P2_[index_i] = 0;
+		index_nearest_[index_i] = 0;
+		distance_to_dummy_interface_[index_i] = 0.0;
+		distance_to_dummy_interface_levelset_[index_i] = 0.0;
+		distance_to_dummy_interface_up_average_[index_i] = 0.0;
+		e_nearest_normal_[index_i] = Vecd::Zero();
+		e_nearest_tau_[index_i] = Vecd::Zero();
+
+		int id_nearest_j = 0;
+		Real r_dummy_normal = 0.0;
+		Real r_dummy_normal_j = 0.0;
+		Real r_min = 1.0e3;
+		Vecd e_i_nearest_tau = Vecd::Zero();
+		Vecd e_i_nearest_n = Vecd::Zero();
+		Real ttl_weight(0);
+		Real r_dmy_itfc_n_sum(0);
+		int count_average(0);
+		int is_near_contact = 0;
+
+		//** Calculate nearest info. *
+		for (size_t k = 0; k < contact_configuration_.size(); ++k)
+		{
+			StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+			StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
+			Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+			
+			if (contact_neighborhood.current_size_ != 0)
+				is_near_contact++;
+
+			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = contact_neighborhood.j_[n];
+				Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+				Real r_ij = contact_neighborhood.r_ij_[n];
+				Vecd& e_ij = contact_neighborhood.e_ij_[n];
+				Vecd& n_k_j = n_k[index_j];
+
+				//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
+				r_dummy_normal_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
+
+				/** Get the minimum distance, the distance to wall should not be negative*/
+				if (r_ij < r_min && r_dummy_normal_j > 0.0 + TinyReal)
+				{
+					r_min = r_ij; //** Find the nearest wall particle *
+					//**If use level-set,this would not activate.*
+					r_dummy_normal = r_dummy_normal_j;
+					e_i_nearest_n = n_k[index_j];
+					id_nearest_j = index_j;
+				}
+				//** Only average the bigger value or itself*
+				if (r_dummy_normal_j - r_dummy_normal > (-1.0 * TinyReal))
+				{
+					count_average++;
+					//** Sum the projection distances according to the kernel approx. *  
+					r_dmy_itfc_n_sum += weight_j * r_dummy_normal_j;
+					ttl_weight += weight_j;
+				}
+			}
+		} 
+
+		if (is_near_contact > 0)
+		{
+			is_near_wall_P2_[index_i] = 10; //** Particles that have contact are defined as in region P2 *  					
+			//** Get the tangential unit vector *
+			if (dimension_ == 2)
+			{
+				e_i_nearest_tau[0] = e_i_nearest_n[1];
+				e_i_nearest_tau[1] = e_i_nearest_n[0] * (-1.0);
+			}
+			//** Check the function *
+			if (r_dmy_itfc_n_sum <= 0.0)
+			{
+				std::cout << "r_dmy_itfc_n_sum is almost zero" << std::endl;
+				std::cout << "count=" << count_average << std::endl;
+				system("pause");
+			}
+			//** Average the projection distances according to the kernel approx. *  
+			distance_to_dummy_interface_up_average_[index_i] = r_dmy_itfc_n_sum / ttl_weight;
+			
+			//** Store wall-nearest values. *  
+			index_nearest_[index_i] = id_nearest_j;
+			e_nearest_normal_[index_i] = e_i_nearest_n;
+			e_nearest_tau_[index_i] = e_i_nearest_tau;
+			distance_to_dummy_interface_[index_i] = r_dummy_normal;
+			distance_to_dummy_interface_levelset_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+		}
+	}
+	//=================================================================================================//
+	void JudgeIsNearWall::update(size_t index_i, Real dt)
+	{
+		is_near_wall_P1_[index_i] = 0;
+		if (is_near_wall_P2_[index_i] == 10)
+		{
+			Real distance = distance_to_dummy_interface_[index_i]; //** Choose one kind of the distance to classify *
+			//** Classify the wall-nearest paritcles *
+			if (distance < 1.0 * particle_spacing_)
+				is_near_wall_P1_[index_i] = 1;
+			//** Check the distance. *  
+			if (distance < 0.05 * particle_spacing_)
+			{
+				std::cout << "There is a particle too close to wall" << std::endl;
+				std::cout << "index_i=" << index_i << std::endl;
+				std::cout << "distance=" << distance << std::endl;
+				std::cout << "is_near_wall_P2_[index_i]=" << is_near_wall_P2_[index_i] << std::endl;
+				system("pause");
+			}
+		}
+		
+	}
+//=================================================================================================//
 	StandardWallFunctionCorrection::
-		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
-			BaseContactRelation& contact_relation, Real offset_dist, const StdVec<int>& id_exclude, NearShapeSurface& near_surface)
-		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation), id_exclude_(id_exclude),
-		level_set_shape_(&near_surface.level_set_shape_),
-		offset_dist_(offset_dist), vel_(particles_->vel_), pos_(particles_->pos_), dimension_(Vecd(0).size()),
-		rho_(particles_->rho_), mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
-		particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
-		cutoff_radius_(inner_relation.getSPHBody().sph_adaptation_->getKernel()->CutOffRadius()),
+		StandardWallFunctionCorrection(SPHBody& sph_body, Real offset_dist)
+		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
+		offset_dist_(offset_dist),
+		vel_(particles_->vel_), rho_(particles_->rho_),
+		mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+		is_near_wall_P2_(*particles_->getVariableByName<int>("IsNearWallP2")),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
-		k_production_(*particles_->getVariableByName<Real>("K_Production"))
+		k_production_(*particles_->getVariableByName<Real>("K_Production")),
+		distance_to_dummy_interface_(*particles_->getVariableByName<Real>("DistanceToDummyInterface")),
+		distance_to_dummy_interface_up_average_(*particles_->getVariableByName<Real>("DistanceToDummyInterfaceUpAver")),
+		distance_to_dummy_interface_levelset_(*particles_->getVariableByName<Real>("DistanceToDummyInterfaceLS")),
+		index_nearest(*particles_->getVariableByName<int>("NearestIndex")),
+		e_nearest_tau_(*particles_->getVariableByName<Vecd>("WallNearestTangentialUnitVector")),
+		e_nearest_normal_(*particles_->getVariableByName<Vecd>("WallNearestNormalUnitVector"))
 	{
-		particles_->registerVariable(dist_to_dmy_itfc_ls_, "DistanceToDummyInterfaceLS");
-		particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceLS");
-		particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceLS");
-
-		particles_->registerVariable(dist_to_dmy_itfc_aver_, "DistanceToDummyInterfaceAver");
-		particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceAver");
-		particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceAver");
-
 		particles_->registerVariable(y_p_, "Y_P");
 		particles_->registerSortableVariable<Real>("Y_P");
 		particles_->addVariableToWrite<Real>("Y_P");
@@ -474,177 +654,50 @@ namespace fluid_dynamics
 		particles_->registerSortableVariable<Real>("WallYstar");
 		particles_->addVariableToWrite<Real>("WallYstar");
 
-		particles_->registerVariable(is_near_wall_P2_, "IsNearWallP2");
-		particles_->registerSortableVariable<int>("IsNearWallP2");
-		particles_->addVariableToWrite<int>("IsNearWallP2");
-		particles_->registerVariable(is_near_wall_P1_pre_, "IsNearWallP1Pre");
-		particles_->registerSortableVariable<int>("IsNearWallP1Pre");
-		particles_->addVariableToWrite<int>("IsNearWallP1Pre");
-		particles_->registerVariable(is_migrate_, "IsMigrate");
-		particles_->registerSortableVariable<int>("IsMigrate");
-		particles_->addVariableToWrite<int>("IsMigrate");
-
-		particles_->registerVariable(velo_friction_, "FrictionVelocity");
-		particles_->registerSortableVariable<Vecd>("FrictionVelocity");
-		particles_->addVariableToWrite<Vecd>("FrictionVelocity");
-
 		particles_->registerVariable(velo_tan_, "TangentialVelocity");
 		particles_->registerSortableVariable<Real>("TangentialVelocity");
 		particles_->addVariableToWrite<Real>("TangentialVelocity");
 
-		particles_->registerVariable(index_nearest, "NearestIndex");
-		particles_->registerSortableVariable<int>("NearestIndex");
-		particles_->addVariableToWrite<int>("NearestIndex");
-
-		particles_->registerVariable(dist_to_dmy_interface_, "DistanceToDummyInterface");
-		particles_->registerSortableVariable<Real>("DistanceToDummyInterface");
-		particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
-
-		/** definition of near wall particles */
-		intial_distance_to_wall = 1.5 * particle_spacing_; //changed
-		for (size_t k = 0; k != contact_particles_.size(); ++k)
-		{
-			contact_n_.push_back(&(contact_particles_[k]->n_));
-			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-		}
+		particles_->registerVariable(velo_friction_, "FrictionVelocity");
+		particles_->registerSortableVariable<Vecd>("FrictionVelocity");
+		particles_->addVariableToWrite<Vecd>("FrictionVelocity");
 	};
 	//=================================================================================================//
-	void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
+	void StandardWallFunctionCorrection::update(size_t index_i, Real dt)
 	{
-		is_near_wall_P2_[index_i] = 0;
-		index_nearest[index_i] = 0;
+		y_p_[index_i] = 0.0;
 		velo_tan_[index_i] = 0.0;
 		velo_friction_[index_i] = Vecd::Zero();
 		wall_Y_plus_[index_i] = 0.0;
 		wall_Y_star_[index_i] = 0.0;
-		dist_to_dmy_interface_[index_i] = 0.0;
-		dist_to_dmy_itfc_ls_[index_i] = 0.0;
-		dist_to_dmy_itfc_aver_[index_i] = 0.0;
-		is_near_wall_P1_[index_i] = 0;
-		y_p_[index_i] = 0.0;
-		Real r_dummy_normal = 0.0;
-		Real r_dmy_n_j = 0.0;
-		Real r_min = 1.0e3;
-		Real velo_fric(0.0);
-		const Vecd& vel_i = vel_[index_i];
-		Real rho_i = rho_[index_i];
-		Vecd e_i_nearest_tau = Vecd::Zero();
-		Vecd e_n = Vecd::Zero();
-		Vecd e_i_nearest_n = Vecd::Zero();
-		Matd direc_matrix = Matd::Zero();
-		Real ttl_weight(0);
-		Real r_dmy_itfc_n_sum(0);
-		int count_average(0);
 
-		Matd vel_grad_i_tn = Matd::Zero();  //** velocity gradient of wall-nearest fluid particle i on t-n plane *
-		Matd Q = Matd::Zero();
-
-		for (size_t k = 0; k < contact_configuration_.size(); ++k)
-		{
-			StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-			StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
-			Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-			if (contact_neighborhood.current_size_ != 0)
-			{
-				//r_dummy_normal = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
-				dist_to_dmy_itfc_ls_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
-				//dist_to_dmy_itfc_ls_[index_i] = r_dummy_normal;
-			}
-			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = contact_neighborhood.j_[n];
-				Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-				Real r_ij = contact_neighborhood.r_ij_[n];
-				Vecd& e_ij = contact_neighborhood.e_ij_[n];
-				Vecd& n_k_j = n_k[index_j];
-
-				//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
-				r_dmy_n_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
-
-				/*Get the minimum distance, the distance to wall should not be negative*/
-				if (r_ij < r_min && r_dmy_n_j > 0.0 + TinyReal)
-				{
-					r_min = r_ij; //** Find the nearest wall particle *
-
-					//**If use level-set,this would not activate.*
-					r_dummy_normal = r_dmy_n_j;
-
-					e_i_nearest_n = n_k[index_j];
-					if (dimension_ == 2)
-					{
-						e_i_nearest_tau[0] = e_i_nearest_n[1];
-						e_i_nearest_tau[1] = e_i_nearest_n[0] * (-1.0);
-					}
-					/*For testing*/
-					dist_to_dmy_interface_[index_i] = r_dummy_normal;
-					index_nearest[index_i] = index_j;
-				}
-				/*Double checking*/
-				if (r_dummy_normal < 0.0 - TinyReal)
-				{
-					std::cout << "dist_to_dmy_interface_[index_i] <= 0.0 + TinyReal strange" << std::endl;
-					std::cout << r_dmy_n_j << std::endl;
-					system("pause");
-				}
-				//** Only average the bigger value or itself*
-				if (r_dmy_n_j - r_dummy_normal > (-1.0 * TinyReal))
-				{
-					count_average++;
-					//** Sum the projection distances according to the kernel approx. *  
-					r_dmy_itfc_n_sum += weight_j * r_dmy_n_j;
-					ttl_weight += weight_j;
-				}
-			}
-		} //This for statement is to calculate nearest info.
-
-		//** Classify the near wall and sub-near wall paritcles *
-		if (r_dummy_normal < (cutoff_radius_ - 0.5 * particle_spacing_) + TinyReal &&
-			r_dummy_normal > 0.0 * particle_spacing_ + TinyReal)
-		{
-			is_near_wall_P2_[index_i] = 10;
-			if (r_dummy_normal < 1.0 * particle_spacing_)
-			{
-				is_near_wall_P1_[index_i] = 1;
-			}
-		}
-
-		//** Average the distance to wall *
-		if (is_near_wall_P2_[index_i] == 10 && ttl_weight != 0.0)
-		{
-			//** Check the function *
-			if (r_dmy_itfc_n_sum <= 0.0)
-			{
-				std::cout << "r_dmy_itfc_n_sum is almost zero" << std::endl;
-				std::cout << "count=" << count_average << std::endl;
-				system("pause");
-			}
-			//** Average the projection distances according to the kernel approx. *  
-			r_dummy_normal = r_dmy_itfc_n_sum / ttl_weight;
-			dist_to_dmy_itfc_aver_[index_i] = r_dummy_normal;
-		}
-		//** Check the distance. *  
-		if (r_dummy_normal < 0.05 * particle_spacing_ && r_dummy_normal > 0.0)
-		{
-			std::cout << "There is a particle too close to wall" << std::endl;
-			std::cout << "index_i=" << index_i << std::endl;
-			std::cout << "DistanceToDummyInterface=" << dist_to_dmy_interface_[index_i] << std::endl;
-			std::cout << "DistanceToDummyInterface/dp=" << dist_to_dmy_interface_[index_i] / particle_spacing_ << std::endl;
-			std::cout << "DistanceToDummyInterfaceLS=" << dist_to_dmy_itfc_ls_[index_i] << std::endl;
-			std::cout << "DistanceToDummyInterfaceLS/dp=" << dist_to_dmy_itfc_ls_[index_i] / particle_spacing_ << std::endl;
-			std::cout << "DistanceToDummyInterfaceAver=" << dist_to_dmy_itfc_aver_[index_i] << std::endl;
-			std::cout << "DistanceToDummyInterfaceAver/dp=" << dist_to_dmy_itfc_aver_[index_i] / particle_spacing_ << std::endl;
-			system("pause");
-		}
-
-		//** Calculate friction velocity, including both P region and SUB region. *  
 		if (is_near_wall_P2_[index_i] == 10)
 		{
-			Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
-			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
-			velo_tan_[index_i] = velo_tan;
+			//** Choose one kind of the distance to calculate the wall-nearest values *
+			Real r_dummy_normal = distance_to_dummy_interface_up_average_[index_i];
+			//Real r_dummy_normal = distance_to_dummy_interface_[index_i];
+
+			if (r_dummy_normal <= TinyReal)
+			{
+				std::cout << "r_dummy_normal <= TinyReal" << std::endl;
+				system("pause");
+			}
+			Vecd e_i_nearest_tau = e_nearest_tau_[index_i];
+			Vecd e_i_nearest_n = e_nearest_normal_[index_i];
+			const Vecd& vel_i = vel_[index_i];
+			Real rho_i = rho_[index_i];
 
 			//** Key statement for Offset Model *
 			y_p_[index_i] = r_dummy_normal + offset_dist_;
+			
+			Real velo_fric(0.0);
+			Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
+			Matd vel_grad_i_tn = Matd::Zero();  //** velocity gradient of wall-nearest fluid particle i on t-n plane *
+			Matd Q = Matd::Zero();
+
+			//** Calculate friction velocity, including P2 region. *  
+			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
+			velo_tan_[index_i] = velo_tan;
 
 			velo_fric = sqrt(abs(Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
 				log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * y_p_[index_i] * rho_i / mu_)));
@@ -661,7 +714,7 @@ namespace fluid_dynamics
 
 				system("pause");
 			}
-			
+
 			velo_friction_[index_i] = velo_fric * e_i_nearest_tau;
 			//** friction velocity have the same direction of vel_i, if not, change its direction *
 			if (vel_i.dot(velo_friction_[index_i]) < 0.0)
@@ -669,28 +722,25 @@ namespace fluid_dynamics
 
 			//** Calcualte Y+ *
 			wall_Y_plus_[index_i] = y_p_[index_i] * velo_fric * rho_i / mu_;
-		}
 
-		//direc_matrix = velo_friction_[index_i].normalized() * e_i_nearest_n.transpose();
-		
-		// ** Correct the near wall values, only for P region *
-		if (is_near_wall_P1_[index_i] == 1) 
-		{
-			turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
-			wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
-			Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
-			
-			//velocity_gradient_[index_i] = direc_matrix * velo_fric * velo_fric / denominator;
+			// ** Correct the near wall values, only for P1 region *
+			if (is_near_wall_P1_[index_i] == 1)
+			{
+				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
+				wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
+				Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
+				//Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * 0.5 * 0.05; //** 0.50 is particle spacing *
 
-			Real dudn = velo_fric * velo_fric * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator;
-			vel_grad_i_tn(0, 0) = 0.0;
-			vel_grad_i_tn(0, 1) = dudn;
-			vel_grad_i_tn(1, 0) = 0.0;
-			vel_grad_i_tn(1, 1) = 0.0;
-			Q = getTransformationMatrix(e_i_nearest_n);
-			velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
+				Real dudn = velo_fric * velo_fric * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator;
+				vel_grad_i_tn(0, 0) = 0.0;
+				vel_grad_i_tn(0, 1) = dudn;
+				vel_grad_i_tn(1, 0) = 0.0;
+				vel_grad_i_tn(1, 1) = 0.0;
+				Q = getTransformationMatrix(e_i_nearest_n);
+				velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
 
-			k_production_[index_i] = rho_i * pow(velo_fric, 4) / denominator;
+				k_production_[index_i] =  rho_i * pow(velo_fric, 4) / denominator;
+			}
 		}
 	}
 //=================================================================================================//

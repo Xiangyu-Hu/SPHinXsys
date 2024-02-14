@@ -12,7 +12,7 @@ using namespace SPH;   // Namespace cite here.
 //	Global parameters on the turbulent properties
 //----------------------------------------------------------------------
 Real y_p_theo = 0.05;                 /**< Theoretical distance from the first particle P to wall  */
-Real resolution_ref = 0.082609;			  /**< Initial reference particle spacing. */
+Real resolution_ref = 0.1;			  /**< Initial reference particle spacing. */
 Real offset_dist_ref = y_p_theo - 0.5 * resolution_ref;
 //Real offset_dist_ref = 0.0;
 //** Intial values for K, Epsilon and Mu_t *

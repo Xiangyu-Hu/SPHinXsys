@@ -14,7 +14,7 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(true);
 
-    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
     /**
      * @brief Material property, particles and body creation of fluid.
@@ -32,7 +32,7 @@ int main(int ac, char *av[])
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
+        ? wall_boundary.generateParticles<ParticleGeneratorReload>( wall_boundary.getName())
         : wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 
@@ -49,6 +49,7 @@ int main(int ac, char *av[])
 //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
+        using namespace relax_dynamics;
         /** body topology only for particle relaxation */
         InnerRelation wall_boundary_inner(wall_boundary);
         //----------------------------------------------------------------------
@@ -57,9 +58,9 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &wall_boundary });
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp( { &wall_boundary });
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, wall_boundary);
+        ReloadParticleIO write_particle_reload_files( wall_boundary);
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
         //----------------------------------------------------------------------
@@ -93,26 +94,27 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
-
-    /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
-    InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_wall_contact);
-
-    /** Define external force. */
+   
+    
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-
+    
     /** Turbulent standard wall function needs normal vectors of wall. */
     NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
-    near_surface.level_set_shape_.writeLevelSet(io_environment);
-    InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, offset_dist_ref, id_exclude, near_surface);
+    near_surface.level_set_shape_.writeLevelSet(sph_system);
+
+    /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
+    InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact, near_surface);
+    InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
+    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
+    SimpleDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block, offset_dist_ref);
 
     SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound, observe_offset_y);
 
-    /** Choose one, ordinary or turbulent. Computing viscous acceleration, */
-    InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_inner, water_wall_contact);
-    //InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_wall_contact);
+    /** Choose one, ordinary or turbulent. Computing viscous force, */
+    InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
@@ -124,8 +126,9 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
     water_block.addBodyStateForRecording<Real>("Density"); // output for debug
 
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
+    /** Initialize particle force. */
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 
@@ -142,7 +145,7 @@ int main(int ac, char *av[])
 
 
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -151,8 +154,11 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+
+    constant_gravity.exec();
+
     /** Output the start states of bodies. */
-    body_states_recording.writeToFile(0);
+    body_states_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -176,9 +182,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            /** Acceleration due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
-            
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
@@ -186,8 +189,8 @@ int main(int ac, char *av[])
 
             update_eddy_viscosity.exec();
 
-            //viscous_acceleration.exec();
-            turbulent_viscous_acceleration.exec();
+            //viscous_force.exec();
+            turbulent_viscous_force.exec();
 
             transport_velocity_correction.exec();
             /** Dynamics including pressure relaxation. */
@@ -197,16 +200,18 @@ int main(int ac, char *av[])
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 
-                turbulent_kinetic_energy_acceleration.exec();
+                turbulent_kinetic_energy_force.exec();
 
                 pressure_relaxation.exec(dt);
 
                 density_relaxation.exec(dt);
                 
+                update_near_wall_status.exec();
                 get_velocity_gradient.exec(dt);
+                standard_wall_function_correction.exec();
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
-                standard_wall_function_correction.exec();
+                k_equation_relaxation.update_prior_turbulent_value();
 
                 relaxation_time += dt;
                 integration_time += dt;

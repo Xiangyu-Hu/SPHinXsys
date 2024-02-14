@@ -42,7 +42,13 @@ namespace fluid_dynamics
 		particle_spacing_min_(base_relation.getSPHBody().sph_adaptation_->MinimumSpacing()),
 		rho_(this->particles_->rho_), vel_(this->particles_->vel_),
 		mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()), dimension_(Vecd(0).size()),
-		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
+		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+		turbu_k_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergy"))),
+		turbu_k_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergyPrior"))),
+		turbu_epsilon_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipation"))),
+		turbu_epsilon_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipationPrior"))),
+		turbu_mu_(*(this->particles_->template registerSharedVariable<Real>("TurbulentViscosity")))
+	{}
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
@@ -60,9 +66,12 @@ namespace fluid_dynamics
 		GetVelocityGradient(BaseRelationType& base_relation) 
 		:LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
 		vel_(this->particles_->vel_), pos_(this->particles_->pos_),
-		velocity_gradient_(*this->particles_->template getVariableByName<Matd>("VelocityGradient")),
 		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1"))
 	{
+		this->particles_->registerVariable(velocity_gradient_, "VelocityGradient");
+		this->particles_->registerSortableVariable<Matd>("VelocityGradient");
+		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
+
 		//for test
 		this->particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
 		this->particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
@@ -77,7 +86,8 @@ namespace fluid_dynamics
 		turbu_mu_(*this->particles_->template getVariableByName<Real>("TurbulentViscosity")),
 		wall_Y_plus_(*this->particles_->template getVariableByName<Real>("WallYplus")),
 		velo_friction_(*this->particles_->template getVariableByName<Vecd>("FrictionVelocity")),
-		y_p_(*this->particles_->template getVariableByName<Real>("Y_P")){}
+		y_p_(*this->particles_->template getVariableByName<Real>("Y_P")),
+		molecular_viscosity_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()) {}
 //=================================================================================================//
 
 }

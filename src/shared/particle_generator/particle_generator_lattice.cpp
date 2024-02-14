@@ -11,11 +11,11 @@ namespace SPH
 GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
     : lattice_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),
       domain_bounds_(sph_body.getSPHSystemBounds()),
-      body_shape_(*sph_body.body_shape_)
+      initial_shape_(*sph_body.initial_shape_)
 {
-    if (!body_shape_.isValid())
+    if (!initial_shape_.isValid())
     {
-        std::cout << "\n BaseParticleGeneratorLattice Error: body_shape_ is invalid." << std::endl;
+        std::cout << "\n BaseParticleGeneratorLattice Error: initial_shape_ is invalid." << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         throw;
     }
@@ -32,7 +32,7 @@ ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body, Shape
 }
 //=================================================================================================//
 ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Lattice, Adaptive>(sph_body, *sph_body.body_shape_) {}
+    : ParticleGenerator<Lattice, Adaptive>(sph_body, *sph_body.initial_shape_) {}
 //=================================================================================================//
 void ParticleGenerator<Lattice, Adaptive>::
     initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
