@@ -119,10 +119,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_wall_contact);
 
     //!
-    InteractionDynamics<fluid_dynamics::VelocityGradientInner> vel_grad_calc_inner(water_block_inner);
-    InteractionDynamics<fluid_dynamics::VelocityGradientContact> vel_grad_calc_contact(water_wall_contact);
+    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::ViscousShearRateDependent> viscous_acceleration(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(water_block_inner, water_wall_contact);
 
     // InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
 
@@ -174,8 +173,7 @@ int main(int ac, char *av[])
             update_density_by_summation.exec(Dt);
 
             //! Viscous Force Steps
-            vel_grad_calc_inner.exec(Dt);
-            vel_grad_calc_contact.exec(Dt);
+            vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);
 

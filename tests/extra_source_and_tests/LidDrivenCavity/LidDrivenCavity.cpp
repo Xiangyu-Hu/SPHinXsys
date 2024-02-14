@@ -8,12 +8,12 @@
 using namespace SPH;
 
 // geometric data
-Real particle_spacing = 0.03;
+Real particle_spacing = 0.025;
 Real gravity_g = 0.1;
 
 // material properties
 Real rho = 1.0;          // reference density
-Real u_lid = 10.0;       // lid velocity
+Real u_lid = 1.0;        // lid velocity
 Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
@@ -21,8 +21,8 @@ Real K = 1;     // consistency index
 Real n = 0.5;   // power index
 Real tau_y = 0; // yield stress
 
-Real min_shear_rate = 1e-2; // cutoff low shear rate
-Real max_shear_rate = 1e+2; // cutoff high shear rate
+Real min_shear_rate = 1e-3; // cutoff low shear rate
+Real max_shear_rate = 1e+3; // cutoff high shear rate
 
 // mesh geometry data
 std::string path_to_lid_boundary = "./input/lid_boundary.stl";
@@ -149,7 +149,7 @@ int main(int ac, char *av[])
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    Real end_time = 10.0;
+    Real end_time = 30.0;
     int nmbr_of_outputs = 100;
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
@@ -166,9 +166,10 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Real saftey_factor = 0.8;
+        Real saftey_factor = 1;
         Real Dt_adv = get_fluid_advection_time_step_size.exec();
         Real Dt_visc = get_viscous_time_step_size.exec() * saftey_factor;
+        Dt_visc = SMAX(Dt_visc, 0.00001);
         Dt = SMIN(Dt_visc, Dt_adv);
         std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
 
@@ -181,12 +182,10 @@ int main(int ac, char *av[])
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
         {
-            // TODO Write Viscous Time Step Criterion
-            //  Real Dt = SMIN(get_fluid_advection_time_step_size.exec(), get_fluid_viscous_time_step_size.exec());
+            dt = get_acoustic_time_step_size.exec();
             dt = SMIN(dt, Dt);
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
-            dt = get_acoustic_time_step_size.exec();
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
