@@ -29,17 +29,32 @@ void DensitySummation<Inner<FreeSurface, SummationType...>>::update(size_t index
 }
 //=================================================================================================//
 template <typename... SummationType>
-template <typename... Args>
-DensitySummation<Inner<FreeStream, SummationType...>>::DensitySummation(Args &&...args)
-    : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...),
-      indicator_(*this->particles_->template getVariableByName<int>("Indicator")){};
+DensitySummation<Inner<FreeStream, SummationType...>>::
+    DensitySummation(BaseInnerRelation &inner_relation, Real free_stream_pressure)
+    : DensitySummation<Inner<SummationType...>>(inner_relation),
+      indicator_(*this->particles_->template getVariableByName<int>("Indicator"))
+{
+    free_stream_rho_ = DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())
+                           .DensityFromPressure(free_stream_pressure);
+};
 //=================================================================================================//
 template <typename... SummationType>
 void DensitySummation<Inner<FreeStream, SummationType...>>::update(size_t index_i, Real dt)
 {
-    this->rho_[index_i] = isNearFreeSurface(index_i)
-                              ? reinitializeDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
-                              : this->rho_sum_[index_i];
+    if (this->rho_sum_[index_i] < free_stream_rho_ && isNearFreeSurface(index_i))
+    {
+        this->rho_[index_i] = reinitializeDensity(this->rho_sum_[index_i], free_stream_rho_, this->rho_[index_i]);
+    }
+    else
+    {
+        this->rho_[index_i] = this->rho_sum_[index_i];
+    }
+}
+//=================================================================================================//
+template <typename... SummationType>
+Real DensitySummation<Inner<FreeStream, SummationType...>>::reinitializeDensity(Real rho_sum, Real rho0, Real rho)
+{
+    return rho_sum + SMAX(0.0, (rho - rho_sum)) * rho0 / rho;
 }
 //=================================================================================================//
 template <typename... SummationType>

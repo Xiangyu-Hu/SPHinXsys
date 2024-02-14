@@ -142,20 +142,18 @@ template <typename... SummationType>
 class DensitySummation<Inner<FreeStream, SummationType...>> : public DensitySummation<Inner<SummationType...>>
 {
   public:
-    template <typename... Args>
-    explicit DensitySummation(Args &&...args);
+    explicit DensitySummation(BaseInnerRelation &inner_relation, Real free_stream_pressure = 0.0);
+    template <typename InnerRelationType, typename FirstArg>
+    explicit DensitySummation(ConstructorArgs<InnerRelationType, FirstArg> parameters)
+        : DensitySummation(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    Real free_stream_rho_ = this->rho0_;
     StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
-
-  private:
-    Real reinitializeDensity(Real rho_sum, Real rho0, Real rho)
-    {
-        return rho_sum + SMAX(0.0, (rho - rho_sum)) * rho0 / rho;
-    };
+    Real reinitializeDensity(Real rho_sum, Real rho0, Real rho);
 };
 
 template <class InnerInteractionType, class... ContactInteractionTypes>

@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     /** Time-space method to detect surface particles. */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
     /** Evaluation of density by freestream approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(ConstructorArgs(water_block_inner, 0.0), water_block_contact);
     /** We can output a method-specific particle data for debug */
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("Indicator");
