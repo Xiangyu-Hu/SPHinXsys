@@ -37,9 +37,9 @@ DensitySummation<Inner<FreeStream, SummationType...>>::DensitySummation(Args &&.
 template <typename... SummationType>
 void DensitySummation<Inner<FreeStream, SummationType...>>::update(size_t index_i, Real dt)
 {
-    isNearFreeSurface(index_i)
-        ? reinitializeDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
-        : this->rho_[index_i] = this->rho_sum_[index_i];
+    this->rho_[index_i] = isNearFreeSurface(index_i)
+                              ? reinitializeDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
+                              : this->rho_sum_[index_i];
 }
 //=================================================================================================//
 template <typename... SummationType>
