@@ -156,6 +156,7 @@ void GeneralizedNewtonianViscousForce<Inner<>>::interaction(size_t index_i, Real
     //* Force Calculation *//
 
     Vecd force = Vecd::Zero();
+    Real dim = 3.0;
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -167,7 +168,7 @@ void GeneralizedNewtonianViscousForce<Inner<>>::interaction(size_t index_i, Real
 
         Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
         Real avg_visc = 2.0 * (mu_srd_[index_i] * mu_srd_[index_j]) / (mu_srd_[index_i] + mu_srd_[index_j]);
-        Real eta_ij = 8.0 * avg_visc * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+        Real eta_ij = 2 * (dim + 2) * avg_visc * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
         force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] * e_ij;
     }
     viscous_force_[index_i] = force / rho_[index_i];
@@ -188,19 +189,18 @@ void GeneralizedNewtonianViscousForce<Contact<Wall>>::interaction(size_t index_i
 {
     //* Force Calculation *//
     Vecd force = Vecd::Zero();
+    Vecd vel_derivative = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        StdLargeVec<Vecd> &vel_k = *(wall_vel_ave_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
-            Real v_r_ij = (vel_[index_i] - vel_k[index_j]).dot(r_ij * e_ij);
-            Real eta_ij = 2.0 * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
-            force += eta_ij * mass_[index_i] * wall_neighborhood.dW_ijV_j_[n] * e_ij;
+            vel_derivative = 2.0 * (vel_[index_i] - vel_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
+            force += 2.0 * mu_srd_[index_i] * mass_[index_i] * vel_derivative * wall_neighborhood.dW_ijV_j_[n];
         }
     }
     viscous_force_[index_i] += force / rho_[index_i];

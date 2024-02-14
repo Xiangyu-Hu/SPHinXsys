@@ -7,9 +7,10 @@
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
-// geometric data
+// setup data
 Real particle_spacing = 0.025;
 Real gravity_g = 0.1;
+Real end_time = 30.0;
 
 // material properties
 Real rho = 1.0;          // reference density
@@ -149,7 +150,6 @@ int main(int ac, char *av[])
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    Real end_time = 30.0;
     int nmbr_of_outputs = 100;
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
         Real saftey_factor = 1;
         Real Dt_adv = get_fluid_advection_time_step_size.exec();
         Real Dt_visc = get_viscous_time_step_size.exec() * saftey_factor;
-        Dt_visc = SMAX(Dt_visc, 0.00001);
+        // Dt_visc = SMAX(Dt_visc, 0.00001);
         Dt = SMIN(Dt_visc, Dt_adv);
         std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
 

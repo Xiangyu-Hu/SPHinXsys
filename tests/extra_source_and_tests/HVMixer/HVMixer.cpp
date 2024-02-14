@@ -7,24 +7,24 @@
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
-// geometric data
-Real particle_spacing = 0.00125;
+// setup data
+Real particle_spacing = 0.002;
 Real gravity_g = 9.81;
+Real end_time = 0.1;
 
 // material properties
 Real rho = 1000.0; // reference density
 Real omega = 7 * 3.14 * 2;
 Real U_ref = 0.0735 * 0.5 * omega;
-Real saftey_factor = 2;                  //! in use because of penetration
-Real SOS = 10.0 * U_ref * saftey_factor; /**< Reference sound speed. */
+Real SOS = 10.0 * U_ref; /**< Reference sound speed. */
 
 // non-Newtonian properties
-Real K = 4.58;   // consistency index
-Real n = 0.46;   // power index
+Real K = 4.58;     // consistency index
+Real n = 0.46;     // power index
 Real tau_y = 18.9; // yield stress
 
 Real min_shear_rate = 1e-3; // cutoff low shear rate
-Real max_shear_rate = 1e+3; // cutoff high shear rate
+Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
 std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
@@ -131,6 +131,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid);
+    ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
     SimpleDynamics<NormalDirectionFromBodyShape> housing_normal_direction(mixer_housing);
     SimpleDynamics<NormalDirectionFromBodyShape> shaft_normal_direction(mixer_shaft);
@@ -209,10 +210,11 @@ int main(int ac, char *av[])
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    Real end_time = 0.1;
-    int output_interval = 10;
+    int nmbr_of_outputs = 100;
+    Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0.0;
     int iteration = 0;
+    int output_counter = 1;
 
     //	First output before the main loop.
     write_fluid_states.writeToFile(0);
@@ -224,9 +226,7 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
         Real Dt = get_fluid_advection_time_step_size.exec();
-        Real smth_lngth = 1.3 * particle_spacing;
-        Real max_viscosity = tau_y / min_shear_rate + K * pow(min_shear_rate, n - 1);
-        Real Dt_visc = 0.125 * smth_lngth * smth_lngth * rho / max_viscosity;
+        Real Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt);
 
         std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
@@ -240,8 +240,6 @@ int main(int ac, char *av[])
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
         {
-            // TODO Write Viscous Time Step Criterion
-            //  Real Dt = SMIN(get_fluid_advection_time_step_size.exec(), get_fluid_viscous_time_step_size.exec());
             dt = SMIN(dt, Dt);
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
@@ -252,9 +250,10 @@ int main(int ac, char *av[])
             integ.stepBy(dt);
             constraint_rotation.exec();
         }
-        if (iteration % output_interval == 0)
+        if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             write_fluid_states.writeToFile();
+            output_counter++;
         }
         fluid.updateCellLinkedListWithParticleSort(100);
         fluid_wall_complex.updateConfiguration();
