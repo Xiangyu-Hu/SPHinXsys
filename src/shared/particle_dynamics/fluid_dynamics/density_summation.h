@@ -62,10 +62,6 @@ class DensitySummation<Inner<Base>> : public DensitySummation<Base, FluidDataInn
     explicit DensitySummation(BaseInnerRelation &inner_relation)
         : DensitySummation<Base, FluidDataInner>(inner_relation){};
     virtual ~DensitySummation(){};
-
-  protected:
-    void assignDensity(size_t index_i) { rho_[index_i] = rho_sum_[index_i]; };
-    void reinitializeDensity(size_t index_i) { rho_[index_i] = SMAX(rho_sum_[index_i], rho0_); };
 };
 
 template <>
@@ -76,7 +72,7 @@ class DensitySummation<Inner<>> : public DensitySummation<Inner<Base>>
         : DensitySummation<Inner<Base>>(inner_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
+    void update(size_t index_i, Real dt = 0.0);
 };
 using DensitySummationInner = DensitySummation<Inner<>>;
 
@@ -87,7 +83,7 @@ class DensitySummation<Inner<Adaptive>> : public DensitySummation<Inner<Base>>
     explicit DensitySummation(BaseInnerRelation &inner_relation);
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
+    void update(size_t index_i, Real dt = 0.0);
 
   protected:
     SPHAdaptation &sph_adaptation_;
@@ -136,13 +132,9 @@ class DensitySummation<Inner<FreeSurface, SummationType...>> : public DensitySum
 {
   public:
     template <typename... Args>
-    explicit DensitySummation(Args &&...args)
-        : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...){};
+    explicit DensitySummation(Args &&...args);
     virtual ~DensitySummation(){};
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        DensitySummation<Inner<SummationType...>>::reinitializeDensity(index_i);
-    };
+    void update(size_t index_i, Real dt = 0.0);
 };
 using DensitySummationFreeSurfaceInner = DensitySummation<Inner<FreeSurface>>;
 
@@ -158,6 +150,12 @@ class DensitySummation<Inner<FreeStream, SummationType...>> : public DensitySumm
   protected:
     StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
+
+  private:
+    Real reinitializeDensity(Real rho_sum, Real rho0, Real rho)
+    {
+        return rho_sum + SMAX(0.0, (rho - rho_sum)) * rho0 / rho;
+    };
 };
 
 template <class InnerInteractionType, class... ContactInteractionTypes>

@@ -19,6 +19,17 @@ DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &b
 //=================================================================================================//
 template <typename... SummationType>
 template <typename... Args>
+DensitySummation<Inner<FreeSurface, SummationType...>>::DensitySummation(Args &&...args)
+    : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...) {}
+//=================================================================================================//
+template <typename... SummationType>
+void DensitySummation<Inner<FreeSurface, SummationType...>>::update(size_t index_i, Real dt)
+{
+    this->rho_[index_i] = SMAX(this->rho_sum_[index_i], this->rho0_);
+}
+//=================================================================================================//
+template <typename... SummationType>
+template <typename... Args>
 DensitySummation<Inner<FreeStream, SummationType...>>::DensitySummation(Args &&...args)
     : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...),
       indicator_(*this->particles_->template getVariableByName<int>("Indicator")){};
@@ -26,14 +37,9 @@ DensitySummation<Inner<FreeStream, SummationType...>>::DensitySummation(Args &&.
 template <typename... SummationType>
 void DensitySummation<Inner<FreeStream, SummationType...>>::update(size_t index_i, Real dt)
 {
-    if (this->rho_sum_[index_i] < this->rho0_ && isNearFreeSurface(index_i))
-    {
-        this->reinitializeDensity(index_i);
-    }
-    else
-    {
-        this->assignDensity(index_i);
-    }
+    isNearFreeSurface(index_i)
+        ? reinitializeDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
+        : this->rho_[index_i] = this->rho_sum_[index_i];
 }
 //=================================================================================================//
 template <typename... SummationType>
