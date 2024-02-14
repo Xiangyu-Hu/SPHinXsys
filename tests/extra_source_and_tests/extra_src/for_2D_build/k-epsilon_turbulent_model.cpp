@@ -729,6 +729,7 @@ namespace fluid_dynamics
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
 				wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
 				Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
+				//Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * 0.5 * 0.05; //** 0.50 is particle spacing *
 
 				Real dudn = velo_fric * velo_fric * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator;
 				vel_grad_i_tn(0, 0) = 0.0;
@@ -738,7 +739,7 @@ namespace fluid_dynamics
 				Q = getTransformationMatrix(e_i_nearest_n);
 				velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
 
-				k_production_[index_i] = rho_i * pow(velo_fric, 4) / denominator;
+				k_production_[index_i] =  rho_i * pow(velo_fric, 4) / denominator;
 			}
 		}
 	}
