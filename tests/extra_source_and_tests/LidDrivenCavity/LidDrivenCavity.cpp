@@ -8,14 +8,14 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.025;
-Real gravity_g = 0.1;
+Real particle_spacing = 0.01;
+Real gravity_g = 0.0;
 Real end_time = 30.0;
 
 // material properties
-Real rho = 1000.0;             // reference density
-Real u_lid = 1.0;              // lid velocity
-Real SOS = 10.0 * u_lid * 1.2; // numerical speed of sound
+Real rho = 1000.0;       // reference density
+Real u_lid = 1.0;        // lid velocity
+Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
 Real K = 1;     // consistency index
@@ -154,6 +154,9 @@ int main(int ac, char *av[])
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
     Real Dt = 0;
+    Real Dt_visc = 0;
+    Real Dt_adv = 0;
+    Real Dt_aco = 0;
     int iteration = 0;
     int output_counter = 1;
 
@@ -166,10 +169,10 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Real Dt_adv = get_fluid_advection_time_step_size.exec();
-        Real Dt_visc = get_viscous_time_step_size.exec();
+        Dt_adv = get_fluid_advection_time_step_size.exec();
+        Dt_visc = get_viscous_time_step_size.exec() * 0.1;
         Dt = SMIN(Dt_visc, Dt_adv);
-        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
+        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
 
@@ -180,8 +183,8 @@ int main(int ac, char *av[])
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
         {
-            dt = get_acoustic_time_step_size.exec();
-            dt = SMIN(dt, Dt);
+            Dt_aco = get_acoustic_time_step_size.exec();
+            dt = SMIN(Dt_aco, Dt);
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
             relaxation_time += dt;
