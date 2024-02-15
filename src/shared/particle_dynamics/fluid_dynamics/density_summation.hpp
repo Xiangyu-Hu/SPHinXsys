@@ -28,37 +28,23 @@ void DensitySummation<Inner<FreeSurface, SummationType...>>::update(size_t index
     this->rho_[index_i] = SMAX(this->rho_sum_[index_i], this->rho0_);
 }
 //=================================================================================================//
-template <typename... SummationType>
-DensitySummation<Inner<FreeStream, SummationType...>>::
-    DensitySummation(BaseInnerRelation &inner_relation, Real free_stream_pressure)
-    : DensitySummation<Inner<SummationType...>>(inner_relation),
-      indicator_(*this->particles_->template getVariableByName<int>("Indicator"))
-{
-    free_stream_rho_ = DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())
-                           .DensityFromPressure(free_stream_pressure);
-};
+template <typename NearSurfaceType, typename... SummationType>
+template <typename... Args>
+DensitySummation<Inner<NearSurfaceType, SummationType...>>::DensitySummation(Args &&...args)
+    : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...),
+      indicator_(*this->particles_->template getVariableByName<int>("Indicator")){};
 //=================================================================================================//
-template <typename... SummationType>
-void DensitySummation<Inner<FreeStream, SummationType...>>::update(size_t index_i, Real dt)
+template <typename NearSurfaceType, typename... SummationType>
+void DensitySummation<Inner<NearSurfaceType, SummationType...>>::update(size_t index_i, Real dt)
 {
-    if (this->rho_sum_[index_i] < free_stream_rho_ && isNearFreeSurface(index_i))
-    {
-        this->rho_[index_i] = reinitializeDensity(this->rho_sum_[index_i], free_stream_rho_, this->rho_[index_i]);
-    }
-    else
-    {
-        this->rho_[index_i] = this->rho_sum_[index_i];
-    }
+    this->rho_[index_i] =
+        isNearFreeSurface(index_i)
+            ? near_surface_rho_(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
+            : this->rho_sum_[index_i];
 }
 //=================================================================================================//
-template <typename... SummationType>
-Real DensitySummation<Inner<FreeStream, SummationType...>>::reinitializeDensity(Real rho_sum, Real rho0, Real rho)
-{
-    return rho_sum + SMAX(0.0, (rho - rho_sum)) * rho0 / rho;
-}
-//=================================================================================================//
-template <typename... SummationType>
-bool DensitySummation<Inner<FreeStream, SummationType...>>::isNearFreeSurface(size_t index_i)
+template <typename NearSurfaceType, typename... SummationType>
+bool DensitySummation<Inner<NearSurfaceType, SummationType...>>::isNearFreeSurface(size_t index_i)
 {
     bool is_near_surface = false;
     const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];

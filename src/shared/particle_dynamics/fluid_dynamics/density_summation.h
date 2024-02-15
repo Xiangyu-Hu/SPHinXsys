@@ -138,22 +138,40 @@ class DensitySummation<Inner<FreeSurface, SummationType...>> : public DensitySum
 };
 using DensitySummationFreeSurfaceInner = DensitySummation<Inner<FreeSurface>>;
 
-template <typename... SummationType>
-class DensitySummation<Inner<FreeStream, SummationType...>> : public DensitySummation<Inner<SummationType...>>
+struct FreeStream
+{
+    Real operator()(Real rho_sum, Real rho0, Real rho)
+    {
+        if (rho_sum < rho)
+        {
+            return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
+        }
+        return rho_sum;
+    };
+};
+
+struct NotNearSurface
+{
+    Real operator()(Real rho_sum, Real rho0, Real rho)
+    {
+        return rho;
+    };
+};
+
+template <typename NearSurfaceType, typename... SummationType>
+class DensitySummation<Inner<NearSurfaceType, SummationType...>>
+    : public DensitySummation<Inner<SummationType...>>
 {
   public:
-    explicit DensitySummation(BaseInnerRelation &inner_relation, Real free_stream_pressure = 0.0);
-    template <typename InnerRelationType, typename FirstArg>
-    explicit DensitySummation(ConstructorArgs<InnerRelationType, FirstArg> parameters)
-        : DensitySummation(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    template <typename... Args>
+    explicit DensitySummation(Args &&...args);
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real free_stream_rho_ = this->rho0_;
+    NearSurfaceType near_surface_rho_;
     StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
-    Real reinitializeDensity(Real rho_sum, Real rho0, Real rho);
 };
 
 template <class InnerInteractionType, class... ContactInteractionTypes>
@@ -165,6 +183,7 @@ using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<Inner<Fre
 using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<Inner<FreeSurface, Adaptive>, Contact<Adaptive>>;
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<Inner<FreeStream>, Contact<>>;
 using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<FreeStream, Adaptive>, Contact<Adaptive>>;
+using DensitySummationNotNearSurfaceComplex = BaseDensitySummationComplex<Inner<NotNearSurface>, Contact<>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H
