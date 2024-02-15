@@ -7,10 +7,10 @@
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
-// geometric data
+// setup properties
 Real particle_spacing = 0.025;
 Real gravity_g = 0.0;
-Real end_time = 30.0;
+Real end_time = 15.0;
 
 // material properties
 Real rho = 1.0;          // reference density
@@ -23,7 +23,7 @@ Real n = 1;     // power index
 Real tau_y = 0; // yield stress
 
 Real min_shear_rate = 1e-2; // cutoff low shear rate
-Real max_shear_rate = 1e+1; // cutoff high shear rate
+Real max_shear_rate = 1e+2; // cutoff high shear rate
 
 // mesh geometry data
 std::string path_to_lid_boundary = "./input/lid_boundary.stl";
@@ -67,6 +67,24 @@ class FluidFilling : public ComplexShape
     }
 };
 
+class BoundaryVelocity
+    : public fluid_dynamics::FluidInitialCondition
+{
+  public:
+    BoundaryVelocity(SPHBody &sph_body)
+        : fluid_dynamics::FluidInitialCondition(sph_body),
+          fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())){};
+
+    void update(size_t index_i, Real dt)
+    {
+        /** initial velocity profile */
+        vel_[index_i][1] = u_lid;
+    }
+
+  protected:
+    BaseParticles *fluid_particles_;
+};
+
 class InitialVelocity
     : public fluid_dynamics::FluidInitialCondition
 {
@@ -78,7 +96,7 @@ class InitialVelocity
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        vel_[index_i][1] = u_lid;
+        vel_[index_i][1] = pos_[index_i][2] + 0.5;
     }
 
   protected:
@@ -122,7 +140,8 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation
     Gravity gravity(Vec3d(0.0, gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
-    SimpleDynamics<InitialVelocity> initial_condition(lid_boundary);
+    SimpleDynamics<BoundaryVelocity> boundary_condition(lid_boundary);
+    SimpleDynamics<InitialVelocity> initial_condition(fluid);
     PeriodicConditionUsingCellLinkedList periodic_condition(fluid, fluid.getBodyShapeBounds(), yAxis);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_all_walls);
@@ -132,8 +151,6 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_no_slip);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_no_slip);
-
-    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -147,6 +164,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     constant_gravity.exec();
+    boundary_condition.exec();
     initial_condition.exec();
 
     //	Setup for time-stepping control
@@ -155,6 +173,9 @@ int main(int ac, char *av[])
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
     Real Dt = 0;
+    Real Dt_visc = 0;
+    Real Dt_adv = 0;
+    Real Dt_aco = 0;
     int iteration = 0;
     int output_counter = 1;
 
@@ -167,10 +188,10 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Real Dt_adv = get_fluid_advection_time_step_size.exec();
-        Real Dt_visc = SMIN(get_viscous_time_step_size.exec(), 0.01);
+        Dt_adv = get_fluid_advection_time_step_size.exec();
+        Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt_adv);
-        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
+        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
 
@@ -181,10 +202,10 @@ int main(int ac, char *av[])
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
         {
-            dt = SMIN(dt, Dt);
+            Dt_aco = get_acoustic_time_step_size.exec();
+            dt = SMIN(Dt_aco, Dt);
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
-            dt = get_acoustic_time_step_size.exec();
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
@@ -203,5 +224,6 @@ int main(int ac, char *av[])
     TimeInterval te;
     te = t3 - t1;
     std::cout << "Done with iterations: " << iteration << " | Total computation time in s: " << (t3 - t1).seconds() << std::endl;
+    std::cout << "Dt " << Dt << " | Dt_adv " << Dt_adv << " | Dt_visc " << Dt_visc << " | dt " << dt << std::endl;
     return 0;
 }

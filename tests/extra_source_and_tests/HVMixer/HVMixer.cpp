@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.002;
+Real particle_spacing = 0.001;
 Real gravity_g = 9.81;
 Real end_time = 0.1;
 
@@ -27,9 +27,13 @@ Real min_shear_rate = 1e-3; // cutoff low shear rate
 Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
-std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
+// std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
+std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
+
 std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
+
 std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
+
 std::string full_path_to_refinement = "./input/Refinement.stl";
 
 Vecd translation(0.0, 0.0, 0.0);
@@ -72,7 +76,7 @@ class Fluid_Filling : public ComplexShape
   public:
     explicit Fluid_Filling(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_fluid, translation, length_scale);
+        add<TriangleMeshShapeSTL>(full_path_to_fluid, translation, length_scale, "OuterBoundary");
     }
 };
 class Refinement : public ComplexShape
@@ -90,10 +94,11 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vecd(-0.085, -0.085, -0.01), Vecd(0.085, 0.085, 0.22));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    sph_system.setRunParticleRelaxation(false);
+    sph_system.setRunParticleRelaxation(true);
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
+    fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     fluid.generateParticles<ParticleGeneratorLattice>();
 
@@ -103,6 +108,7 @@ int main(int ac, char *av[])
     mixer_housing.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody mixer_shaft(sph_system, makeShared<Mixer_Shaft>("Mixer_Shaft"));
+    mixer_shaft.defineBodyLevelSetShape();
     mixer_shaft.defineParticlesAndMaterial<SolidParticles, Solid>();
     mixer_shaft.generateParticles<ParticleGeneratorLattice>();
     mixer_shaft.addBodyStateForRecording<Vec3d>("NormalDirection");
@@ -112,6 +118,7 @@ int main(int ac, char *av[])
     InnerRelation shaft_inner(mixer_shaft);
     InnerRelation housing_inner(mixer_housing);
     ContactRelation fluid_wall_contact(fluid, {&mixer_housing, &mixer_shaft});
+    ContactRelation fluid_shaft_contact(fluid, {&mixer_shaft});
     ContactRelation shaft_fluid_contact(mixer_shaft, {&fluid});
     ContactRelation housing_fluid_contact(mixer_housing, {&fluid});
 
@@ -141,18 +148,19 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation.
         //----------------------------------------------------------------------
-        SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_housing_particles(mixer_housing);
+        // SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_housing_particles(mixer_housing);
         SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_shaft_particles(mixer_shaft);
-        // SimpleDynamics<RandomizeParticlePosition> random_input_fluid_particles(fluid);
-        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_housing(housing_inner);
+        SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_fluid_particles(fluid);
+        // relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_housing(housing_inner);
         relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_shaft(shaft_inner);
-        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex_fluid(ConstructorArgs(fluid_inner, "OuterBoundary"), fluid_wall_contact);
+        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex_fluid(ConstructorArgs(fluid_inner, "OuterBoundary"), fluid_shaft_contact);
 
         Real relax_time = 0.1;
         random_input_shaft_particles.exec(relax_time);
-        random_input_housing_particles.exec(relax_time);
+        // random_input_housing_particles.exec(relax_time);
+        random_input_fluid_particles.exec(relax_time);
         relaxation_step_inner_shaft.SurfaceBounding().exec();
-        relaxation_step_inner_housing.SurfaceBounding().exec();
+        // relaxation_step_inner_housing.SurfaceBounding().exec();
         relaxation_step_complex_fluid.SurfaceBounding().exec();
         //? mixer_shaft.updateCellLinkedList();
         //? mixer_housing.updateCellLinkedList();
@@ -164,7 +172,7 @@ int main(int ac, char *av[])
         int relax_step = 10;
         while (ite < relax_step)
         {
-            relaxation_step_inner_housing.exec();
+            // relaxation_step_inner_housing.exec();
             relaxation_step_inner_shaft.exec();
             relaxation_step_complex_fluid.exec();
             ite += 1;

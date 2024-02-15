@@ -112,7 +112,7 @@ class SRDViscousTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, publ
     StdLargeVec<Real> &rho_;
     StdLargeVec<Real> &mu_srd_;
     Real diffusionCFL;
-    Real max_viscosity = 0;
+    Real max_viscosity = 1e-12;
 };
 
 } // namespace fluid_dynamics

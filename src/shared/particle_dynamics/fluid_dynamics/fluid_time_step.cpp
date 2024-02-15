@@ -70,8 +70,8 @@ SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusion
 
 Real SRDViscousTimeStepSize::outputResult(Real reduced_value)
 {
-    max_viscosity = 0;
-    return this->diffusionCFL * smoothing_length_ * smoothing_length_ / reduced_value;
+    max_viscosity = TinyReal;
+    return this->diffusionCFL * smoothing_length_ * smoothing_length_ / (reduced_value + TinyReal);
 }
 
 Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
