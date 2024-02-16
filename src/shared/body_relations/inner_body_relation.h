@@ -52,7 +52,6 @@ class InnerRelation : public BaseInnerRelation
     virtual ~InnerRelation(){};
 
     virtual void updateConfiguration() override;
-    virtual execution::ExecutionEvent updateDeviceConfiguration() override;
 
     CellLinkedListKernel *getInnerCellLinkedListDevice() const override;
     NeighborBuilderInnerKernel *getInnerNeighborBuilderDevice() const override;

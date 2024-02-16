@@ -67,10 +67,4 @@ void ComplexRelation::updateConfiguration()
     contact_relation_.updateConfiguration();
 }
 //=================================================================================================//
-execution::ExecutionEvent ComplexRelation::updateDeviceConfiguration()
-{
-    return std::move(inner_relation_.updateDeviceConfiguration()
-                         .add(contact_relation_.updateDeviceConfiguration()));
-}
-//=================================================================================================//
 } // namespace SPH

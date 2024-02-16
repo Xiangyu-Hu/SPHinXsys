@@ -32,22 +32,11 @@ void ContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-execution::ExecutionEvent ContactRelation::updateDeviceConfiguration()
-{
-    auto reset_event = resetNeighborhoodDeviceCurrentSize();
-    execution::ExecutionEvent update_events;
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        update_events.add(target_cell_linked_lists_[k]->device_kernel.get_ptr()->searchNeighborsByParticles(
-            sph_body_, contact_configuration_device_[k].data(),
-            *get_search_depths_[k], *get_contact_neighbors_[k], reset_event));
-    }
-    return std::move(update_events);
-}
 CellLinkedListKernel **ContactRelation::getContactCellLinkedListsDevice() const
 {
     return contact_cell_linked_lists_device_;
 }
+//=================================================================================================//
 NeighborBuilderContactKernel **ContactRelation::getContactNeighborBuilderDevice() const
 {
     return contact_neighbor_builder_device_;

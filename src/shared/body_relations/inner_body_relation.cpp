@@ -20,17 +20,11 @@ void InnerRelation::updateConfiguration()
         get_single_search_depth_, get_inner_neighbor_);
 }
 //=================================================================================================//
-execution::ExecutionEvent InnerRelation::updateDeviceConfiguration()
-{
-    auto reset_event = resetNeighborhoodDeviceCurrentSize();
-    return cell_linked_list_.device_kernel.get_ptr()->searchNeighborsByParticles(
-        sph_body_, inner_configuration_device_->data(),
-        get_single_search_depth_, get_inner_neighbor_, std::move(reset_event));
-}
 CellLinkedListKernel *InnerRelation::getInnerCellLinkedListDevice() const
 {
     return inner_cell_linked_list_device_;
 }
+//=================================================================================================//
 NeighborBuilderInnerKernel *InnerRelation::getInnerNeighborBuilderDevice() const
 {
     return inner_neighbor_builder_device_;

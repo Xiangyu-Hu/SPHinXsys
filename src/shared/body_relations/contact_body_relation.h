@@ -84,7 +84,6 @@ class ContactRelation : public ContactRelationCrossResolution
         freeDeviceData(contact_neighbor_builder_device_);
     };
     virtual void updateConfiguration() override;
-    virtual execution::ExecutionEvent updateDeviceConfiguration() override;
 
     CellLinkedListKernel **getContactCellLinkedListsDevice() const override;
     NeighborBuilderContactKernel **getContactNeighborBuilderDevice() const override;

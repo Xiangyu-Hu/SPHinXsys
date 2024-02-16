@@ -116,7 +116,6 @@ class SPHRelation
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void resizeConfiguration() = 0;
     virtual void updateConfiguration() = 0;
-    virtual execution::ExecutionEvent updateDeviceConfiguration() { return {}; }
 };
 
 /**
@@ -127,21 +126,15 @@ class BaseInnerRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    virtual execution::ExecutionEvent resetNeighborhoodDeviceCurrentSize();
 
   public:
     RealBody *real_body_;
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
-    SharedPtr<StdSharedVec<NeighborhoodDevice>> inner_configuration_device_;
 
     explicit BaseInnerRelation(RealBody &real_body);
     virtual ~BaseInnerRelation(){};
 
     virtual void resizeConfiguration() override;
-
-    void allocateInnerConfigurationDevice();
-    void copyInnerConfigurationToDevice();
-    void copyInnerConfigurationFromDevice();
 
     virtual CellLinkedListKernel* getInnerCellLinkedListDevice() const { return nullptr; }
     virtual NeighborBuilderInnerKernel* getInnerNeighborBuilderDevice() const { return nullptr; }
@@ -155,15 +148,10 @@ class BaseContactRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    virtual execution::ExecutionEvent resetNeighborhoodDeviceCurrentSize();
-
-  private:
-    bool device_configuration_allocated_;
 
   public:
     RealBodyVector contact_bodies_;
     StdVec<ParticleConfiguration> contact_configuration_; /**< Configurations for particle interaction between bodies. */
-    StdVec<StdSharedVec<NeighborhoodDevice>> contact_configuration_device_;
 
     BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
@@ -171,28 +159,6 @@ class BaseContactRelation : public SPHRelation
     virtual ~BaseContactRelation(){};
 
     virtual void resizeConfiguration() override;
-
-    bool isDeviceConfigurationAllocated() { return device_configuration_allocated_; }
-
-    void allocateContactConfiguration() {
-        for (const auto & body : contact_configuration_)
-            contact_configuration_device_.emplace_back(body.size(), execution::executionQueue.getQueue());
-        device_configuration_allocated_ = true;
-    }
-
-    void copyContactConfigurationToDevice() {
-        assert(device_configuration_allocated_);
-        for (int k = 0; k < contact_configuration_.size(); ++k)
-            for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
-                contact_configuration_device_.at(k).at(i) = contact_configuration_.at(k).at(i);
-    }
-
-    void copyContactConfigurationFromDevice() {
-        assert(device_configuration_allocated_);
-        for (int k = 0; k < contact_configuration_.size(); ++k)
-            for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
-                contact_configuration_.at(k).at(i) = contact_configuration_device_.at(k).at(i);
-    }
 
     virtual CellLinkedListKernel **getContactCellLinkedListsDevice() const { return nullptr; }
     virtual NeighborBuilderContactKernel **getContactNeighborBuilderDevice() const { return nullptr; }
