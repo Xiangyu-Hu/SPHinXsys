@@ -73,6 +73,8 @@ class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
     : public BaseIntegration<FluidDataInner>
 {
   public:
+    typedef RiemannSolverType RiemannSolver;
+
     explicit Integration1stHalf(BaseInnerRelation &inner_relation);
     virtual ~Integration1stHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
