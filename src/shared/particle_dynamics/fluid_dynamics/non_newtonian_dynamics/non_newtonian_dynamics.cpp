@@ -255,7 +255,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        StdLargeVec<Vecd> &vel_k = *(this->wall_vel_ave_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

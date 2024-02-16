@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.01;
+Real particle_spacing = 0.02;
 Real gravity_g = 0.0;
 Real end_time = 30.0;
 
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_no_slip);
 
-    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -170,15 +170,16 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
         Dt_adv = get_fluid_advection_time_step_size.exec();
-        Dt_visc = get_viscous_time_step_size.exec() * 0.1;
+        Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt_adv);
-        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
 
         vel_grad_calculation.exec(Dt);
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
+
+        transport_velocity_correction.exec();
 
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
@@ -190,6 +191,12 @@ int main(int ac, char *av[])
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
+
+        if (iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
+        {
+            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
+        }
+
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             write_fluid_states.writeToFile();

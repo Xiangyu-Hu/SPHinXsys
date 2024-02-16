@@ -10,7 +10,7 @@ using namespace SPH;
 // setup data
 Real particle_spacing = 0.001;
 Real gravity_g = 9.81;
-Real end_time = 0.1;
+Real end_time = 0.5;
 
 // material properties
 Real rho = 1000.0; // reference density
@@ -237,8 +237,6 @@ int main(int ac, char *av[])
         Real Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt);
 
-        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt << "\r" << std::flush;
-
         update_density_by_summation.exec(Dt);
 
         vel_grad_calculation.exec(Dt);
@@ -258,6 +256,12 @@ int main(int ac, char *av[])
             integ.stepBy(dt);
             constraint_rotation.exec();
         }
+
+        if (iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
+        {
+            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
+        }
+
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             write_fluid_states.writeToFile();

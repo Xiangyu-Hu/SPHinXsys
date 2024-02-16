@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.01;
+Real particle_spacing = 0.025;
 Real gravity_g = 0.0;
 Real end_time = 15.0;
 
@@ -191,7 +191,6 @@ int main(int ac, char *av[])
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt_adv);
-        std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
 
         update_density_by_summation.exec(Dt);
 
@@ -209,6 +208,12 @@ int main(int ac, char *av[])
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
+
+        if(iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_ )
+        {
+          std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
+        }
+
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             write_fluid_states.writeToFile();
