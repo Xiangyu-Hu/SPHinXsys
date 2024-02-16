@@ -94,11 +94,6 @@ class CellLinkedListKernel {
     execution::ExecutionEvent clearCellLists();
     execution::ExecutionEvent UpdateCellLists(BaseParticles &base_particles);
 
-    template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-    execution::ExecutionEvent searchNeighborsByParticles(DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
-                                    GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
-                                                         execution::ExecutionEvent dependency_event = {});
-
     template <typename FunctionOnEach>
     void forEachNeighbor(size_t index_i, const DeviceVecd *self_position,
                          const FunctionOnEach &function) const
