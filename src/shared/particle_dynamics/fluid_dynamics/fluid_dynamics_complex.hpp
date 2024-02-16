@@ -178,13 +178,7 @@ BaseDensitySummationComplex<DensitySummationInnerType>::
       contact_inv_rho0_device_(this->contact_particles_.size(), executionQueue.getQueue()),
       contact_mass_(this->contact_particles_.size()),
       contact_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
-#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
-      device_kernel(contact_inv_rho0_device_.data(), contact_mass_device_.data(),
-                    this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
-                    this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0)
-#else
       device_kernel(contact_inv_rho0_device_.data(), contact_mass_device_.data(), this->contact_relation_)
-#endif
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
@@ -201,10 +195,19 @@ BaseDensitySummationComplex<DensitySummationInnerType>::
 template <class DensitySummationInnerType>
 Real BaseDensitySummationComplex<DensitySummationInnerType>::ContactSummation(size_t index_i)
 {
-    return BaseDensitySummationComplexKernel::ContactSummation(index_i, this->contact_configuration_.size(),
-               contact_inv_rho0_.data(), [&](auto k){ return this->contact_mass_.at(k)->data(); },
-               [&](auto k, auto index_i) -> Neighborhood& { return this->contact_configuration_.at(k)->at(index_i); });
-}
+    Real sigma(0.0);
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
+        Real contact_inv_rho0_k = contact_inv_rho0_[k];
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+        }
+    }
+    return sigma;
+};
 //=================================================================================================//
 template <class ViscousAccelerationInnerType>
 void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
@@ -240,14 +243,29 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
 {
     BaseIntegration1stHalfType::interaction(index_i, dt);
 
-    using BaseIntegration1stHalfTypeKernel = typename decltype(BaseIntegration1stHalfType::device_kernel)::KernelType;
-    BaseIntegration1stHalfWithWallKernel<BaseIntegration1stHalfTypeKernel>::interaction(
-            index_i, dt, this->p_.data(), this->rho_.data(), this->drho_dt_.data(), this->acc_.data(),
-            this->riemann_solver_, FluidWallData::contact_configuration_.size(),
-            [&](auto index_i){ return computeNonConservativeAcceleration(index_i); },
-            [&](auto k){ return this->wall_acc_ave_[k]->data(); },
-            [&](auto k, auto index_i) -> Neighborhood&
-               { return (*FluidWallData::contact_configuration_[k])[index_i]; });
+    Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
+
+    Vecd acceleration = Vecd::Zero();
+    Real rho_dissipation(0);
+    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
+        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = wall_neighborhood.j_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real r_ij = wall_neighborhood.r_ij_[n];
+
+            Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
+            Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+            acceleration -= (this->p_[index_i] + p_in_wall) * dW_ijV_j * e_ij;
+            rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
+        }
+    }
+    this->acc_[index_i] += acceleration / this->rho_[index_i];
+    this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 }
 //=================================================================================================//
 template <class BaseIntegration1stHalfType>
@@ -317,14 +335,27 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
 {
     BaseIntegration2ndHalfType::interaction(index_i, dt);
 
-    using BaseIntegration2ndHalfTypeKernel = typename decltype(BaseIntegration2ndHalfType::device_kernel)::KernelType;
-    BaseIntegration2ndHalfWithWallKernel<BaseIntegration2ndHalfTypeKernel>::interaction(
-            index_i, dt, this->rho_.data(), this->drho_dt_.data(), this->vel_.data(), this->acc_.data(),
-            this->riemann_solver_, FluidWallData::contact_configuration_.size(),
-            [&](auto k){ return this->wall_vel_ave_[k]->data(); },
-            [&](auto k){ return this->wall_n_[k]->data(); },
-            [&](auto k, auto index_i) -> const Neighborhood&
-            { return (*FluidWallData::contact_configuration_[k])[index_i]; });
+    Real density_change_rate = 0.0;
+    Vecd p_dissipation = Vecd::Zero();
+    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
+        StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = wall_neighborhood.j_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
+            density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
+            Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
+            p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
+        }
+    }
+    this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+    this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
