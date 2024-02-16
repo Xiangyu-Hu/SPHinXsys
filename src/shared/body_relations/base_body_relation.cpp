@@ -44,41 +44,9 @@ namespace SPH
 			},
 			ap);
 	}
-        //=================================================================================================//
-        execution::ExecutionEvent BaseInnerRelation::resetNeighborhoodDeviceCurrentSize()
-        {
-                const auto total_real_particles = base_particles_.total_real_particles_;
-                NeighborhoodDevice *inner_configuration_device = inner_configuration_device_->data();
-                return execution::executionQueue.getQueue()
-                    .submit(
-                        [&](sycl::handler &cgh) {
-                            cgh.parallel_for(execution::executionQueue.getUniformNdRange(total_real_particles),
-                                             [=](sycl::nd_item<1> it) {
-                                                 if(it.get_global_id() < total_real_particles) {
-                                                     *inner_configuration_device[it.get_global_id()].current_size_ = 0;
-                                                 }
-                                             });
-                        });
-        }
-
-    void BaseInnerRelation::allocateInnerConfigurationDevice() {
-        inner_configuration_device_ = makeShared<StdSharedVec<NeighborhoodDevice>>(inner_configuration_.size(),
-                execution::executionQueue.getQueue());
-    }
-
-    void BaseInnerRelation::copyInnerConfigurationToDevice() {
-        for (std::size_t i = 0; i < inner_configuration_.size(); ++i)
-            inner_configuration_device_->at(i) = inner_configuration_.at(i);
-    }
-
-    void BaseInnerRelation::copyInnerConfigurationFromDevice() {
-        for (std::size_t i = 0; i < inner_configuration_.size(); ++i)
-            inner_configuration_.at(i) = inner_configuration_device_->at(i);
-    }
-
     //=================================================================================================//
 	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
-		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies), device_configuration_allocated_(false)
+		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 	{
 		subscribeToBody();
 		contact_configuration_.resize(contact_bodies_.size());
@@ -109,26 +77,5 @@ namespace SPH
 				ap);
 		}
 	}
-        //=================================================================================================//
-        execution::ExecutionEvent BaseContactRelation::resetNeighborhoodDeviceCurrentSize()
-        {
-                execution::ExecutionEvent reset_events;
-                for (size_t k = 0; k != contact_bodies_.size(); ++k)
-                {
-                        const auto total_real_particles = base_particles_.total_real_particles_;
-                        NeighborhoodDevice *contact_configuration_device = contact_configuration_device_.at(k).data();
-                        reset_events.add(execution::executionQueue.getQueue()
-                            .submit(
-                                [&](sycl::handler &cgh) {
-                                    cgh.parallel_for(execution::executionQueue.getUniformNdRange(total_real_particles),
-                                                     [=](sycl::nd_item<1> it) {
-                                                         if(it.get_global_id() < total_real_particles) {
-                                                             *contact_configuration_device[it.get_global_id()].current_size_ = 0;
-                                                         }
-                                                     });
-                                }));
-                }
-                return reset_events;
-        }
 	//=================================================================================================//
 }

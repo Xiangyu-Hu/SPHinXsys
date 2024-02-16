@@ -41,15 +41,6 @@ void SPHSystem::initializeSystemConfigurations()
     }
 }
 //=================================================================================================//
-execution::ExecutionEvent SPHSystem::initializeSystemDeviceConfigurations()
-{
-    execution::ExecutionEvent update_events;
-    for (auto &body : sph_bodies_)
-        for (auto & body_relation : body->body_relations_)
-            update_events.add(body_relation->updateDeviceConfiguration());
-    return update_events;
-}
-//=================================================================================================//
 Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 {
     Real dt = Infinity;

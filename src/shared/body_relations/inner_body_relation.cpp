@@ -8,7 +8,9 @@ namespace SPH
 //=================================================================================================//
 InnerRelation::InnerRelation(RealBody &real_body)
     : BaseInnerRelation(real_body), get_inner_neighbor_(real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
+      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
+      inner_cell_linked_list_device_(&real_body.getCellLinkedList(execution::par_sycl)),
+      inner_neighbor_builder_device_(get_inner_neighbor_.device_kernel.get_ptr()) {}
 //=================================================================================================//
 void InnerRelation::updateConfiguration()
 {
@@ -18,12 +20,14 @@ void InnerRelation::updateConfiguration()
         get_single_search_depth_, get_inner_neighbor_);
 }
 //=================================================================================================//
-execution::ExecutionEvent InnerRelation::updateDeviceConfiguration()
+CellLinkedListKernel *InnerRelation::getInnerCellLinkedListDevice() const
 {
-    auto reset_event = resetNeighborhoodDeviceCurrentSize();
-    return cell_linked_list_.device_kernel.get_ptr()->searchNeighborsByParticles(
-        sph_body_, inner_configuration_device_->data(),
-        get_single_search_depth_, get_inner_neighbor_, std::move(reset_event));
+    return inner_cell_linked_list_device_;
+}
+//=================================================================================================//
+NeighborBuilderInnerKernel *InnerRelation::getInnerNeighborBuilderDevice() const
+{
+    return inner_neighbor_builder_device_;
 }
 //=================================================================================================//
 AdaptiveInnerRelation::

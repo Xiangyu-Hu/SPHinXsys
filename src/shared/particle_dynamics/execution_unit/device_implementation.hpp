@@ -15,7 +15,7 @@ class DeviceImplementation
 
     template <class... Args>
     explicit DeviceImplementation(Args &&...device_args)
-        : device_(std::make_shared<Device>(std::forward<Args>(device_args)...)) {}
+        : device_(makeSharedDevice<Device>(std::forward<Args>(device_args)...)) {}
 
     using KernelType = Device;
 

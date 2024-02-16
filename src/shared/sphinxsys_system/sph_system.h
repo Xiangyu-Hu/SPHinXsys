@@ -88,7 +88,6 @@ class SPHSystem
     execution::ExecutionEvent initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy);
     /** Initialize particle configuration for the SPH system. */
     void initializeSystemConfigurations();
-    execution::ExecutionEvent initializeSystemDeviceConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     /** Command line handle for Ctest. */

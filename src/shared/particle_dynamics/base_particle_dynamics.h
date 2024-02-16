@@ -130,14 +130,12 @@ class DataDelegateInner : public BaseDataDelegateType
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
         : BaseDataDelegateType(inner_relation.getSPHBody()),
-          inner_configuration_(inner_relation.inner_configuration_),
-          inner_configuration_device_(inner_relation.inner_configuration_device_) {};
+          inner_configuration_(inner_relation.inner_configuration_) {};
     virtual ~DataDelegateInner(){};
 
   protected:
     /** inner configuration of the designated body */
     ParticleConfiguration &inner_configuration_;
-    SharedPtr<StdSharedVec<NeighborhoodDevice>> inner_configuration_device_;
 };
 
 /**
@@ -159,7 +157,6 @@ class DataDelegateContact : public BaseDataDelegateType
     StdVec<ContactParticlesType *> contact_particles_;
     /** Configurations for particle interaction between bodies. */
     StdVec<ParticleConfiguration *> contact_configuration_;
-    SharedPtr<StdSharedVec<NeighborhoodDevice*>> contact_configuration_device_;
 };
 
 /**
@@ -191,7 +188,9 @@ class BaseInteractionComplex : public InteractionInnerType, public ContactDataTy
     BaseInteractionComplex(BaseContactRelation &contact_relation,
                            BaseInnerRelation &inner_relation, Args &&...args)
         : InteractionInnerType(inner_relation, std::forward<Args>(args)...),
-          ContactDataType(contact_relation){};
+          ContactDataType(contact_relation),
+          contact_relation_(contact_relation),
+          inner_relation_(inner_relation){};
     template <typename... Args>
     BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
         : BaseInteractionComplex(complex_relation.getContactRelation(),
@@ -204,6 +203,10 @@ class BaseInteractionComplex : public InteractionInnerType, public ContactDataTy
         this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
     };
     virtual ~BaseInteractionComplex(){};
+
+  protected:
+    const BaseContactRelation& contact_relation_;
+    const BaseInnerRelation& inner_relation_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

@@ -34,6 +34,15 @@ inline Array2i mesh_find_if2d(const CheckOnEach &function)
         }
     return Array2i(upper0, upper1);
 }
+
+//=================================================================================================//
+template <typename LowerArray, typename UpperArray, typename FunctionOnEach>
+void mesh_for_each_array(const LowerArray &lower, const UpperArray &upper, const FunctionOnEach &function)
+{
+    for (int l = lower[0]; l != upper[0]; ++l)
+        for (int m = lower[1]; m != upper[1]; ++m)
+            function(DeviceArray2i{l, m});
+}
 //=================================================================================================//
 template <typename LowerArray, typename UpperArray, typename FunctionOnEach>
 void mesh_for_each(const LowerArray &lower, const UpperArray &upper, const FunctionOnEach &function)

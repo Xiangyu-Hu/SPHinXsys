@@ -39,10 +39,14 @@ template<class DataType>
 class BaseInterpolationKernel {
 
   public:
-    BaseInterpolationKernel(NeighborhoodDevice **contact_configuration_device,
-                            size_t contact_size, DataType *interpolated_quantities)
-        : contact_configuration_(contact_configuration_device), contact_size_(contact_size),
-          interpolated_quantities_(interpolated_quantities) {}
+    BaseInterpolationKernel(const BaseParticles& particles,
+                            const BaseContactRelation& contact_relation,
+                            DataType *interpolated_quantities)
+            : contact_size_(contact_relation.contact_bodies_.size()),
+              interpolated_quantities_(interpolated_quantities),
+              particles_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
+              contact_cell_linked_lists_(contact_relation.getContactCellLinkedListsDevice()),
+              contact_neighbor_builders_(contact_relation.getContactNeighborBuilderDevice()) {}
 
     void interaction(size_t index_i, Real dt = 0.0) {
         DataType observed_quantity(0);
@@ -52,15 +56,18 @@ class BaseInterpolationKernel {
         {
             const auto *Vol_k = contact_Vol_[k];
             const auto *data_k = contact_data_[k];
-            const auto &contact_neighborhood = contact_configuration_[k][index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size(); ++n)
-            {
-                const auto index_j = contact_neighborhood.j_[n];
-                const auto weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-
-                observed_quantity += weight_j * data_k[index_j];
-                ttl_weight += weight_j;
-            }
+            const auto& neighbor_builder = *contact_neighbor_builders_[k];
+            contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_pos_,
+                                                           [&](const DeviceVecd &pos_i, size_t index_j,
+                                                               const DeviceVecd &pos_j, const DeviceReal &Vol_j)
+                                                           {
+                                                               if (neighbor_builder.isWithinCutoff(pos_i, pos_j))
+                                                               {
+                                                                   const auto weight_j = neighbor_builder.W_ij(pos_i, pos_j) * Vol_j;
+                                                                   observed_quantity += weight_j * data_k[index_j];
+                                                                   ttl_weight += weight_j;
+                                                               }
+                                                           });
         }
         interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
     }
@@ -69,11 +76,14 @@ class BaseInterpolationKernel {
     void setContactData(DataType **contact_data) { contact_data_ = contact_data; }
 
   private:
-    NeighborhoodDevice** contact_configuration_;
     DeviceReal** contact_Vol_;
     DataType** contact_data_;
     size_t contact_size_;
     DataType* interpolated_quantities_;
+
+    DeviceVecd* particles_pos_;
+    CellLinkedListKernel** contact_cell_linked_lists_;
+    NeighborBuilderContactKernel** contact_neighbor_builders_;
 };
 
 /**
@@ -136,10 +146,9 @@ class BaseInterpolation<DataType, true> : public LocalDynamics, public Interpola
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
           interpolated_quantities_(nullptr),
-          device_kernel(this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
-                        this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0,
+          device_kernel(*particles_, contact_relation,
                         particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_type>(
-                          variable_name, particles_->total_real_particles_))
+                            variable_name, particles_->total_real_particles_))
     {
             using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_type;
 

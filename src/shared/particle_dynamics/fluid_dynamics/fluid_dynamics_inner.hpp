@@ -18,8 +18,12 @@ namespace fluid_dynamics
 void DensitySummationInner::
     interaction(size_t index_i, Real dt)
 {
-    DensitySummationInnerKernel::interaction(index_i, dt, inner_configuration_.data(), W0_, rho_sum_.data(),
-                                             rho0_, inv_sigma0_);
+    Real sigma = W0_;
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        sigma += inner_neighborhood.W_ij_[n];
+
+    rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 }
 //=================================================================================================//
 void DensitySummationInnerAdaptive::
@@ -167,7 +171,8 @@ void Oldroyd_BIntegration2ndHalf::
 //=================================================================================================//
 template <class RiemannSolverType>
 BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_)
+    : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_),
+      device_kernel(inner_relation, particles_, riemann_solver_)
 {
     /**
      *	register sortable particle data
@@ -217,14 +222,27 @@ template <class RiemannSolverType>
 void BaseIntegration1stHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
-    decltype(device_kernel)::KernelType::interaction(index_i, dt, p_.data(), rho_.data(), drho_dt_.data(), acc_.data(),
-                              inner_configuration_.data(), riemann_solver_);
+    Vecd acceleration = Vecd::Zero();
+    Real rho_dissipation(0);
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
+
+        acceleration -= (p_[index_i] + p_[index_j]) * dW_ijV_j * e_ij;
+        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
+    }
+    acc_[index_i] += acceleration / rho_[index_i];
+    drho_dt_[index_i] = rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_),
-      Vol_(particles_->Vol_), mass_(particles_->mass_) {}
+      Vol_(particles_->Vol_), mass_(particles_->mass_),
+      device_kernel(inner_relation, particles_, riemann_solver_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -242,8 +260,21 @@ template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
-    decltype(device_kernel)::KernelType::interaction(index_i, dt, rho_.data(), drho_dt_.data(), vel_.data(),
-                              acc_.data(), inner_configuration_.data(), riemann_solver_);
+    Real density_change_rate(0);
+    Vecd p_dissipation = Vecd::Zero();
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+
+        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
+        density_change_rate += u_jump * dW_ijV_j;
+        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+    }
+    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    acc_[index_i] = p_dissipation / rho_[index_i];
 };
 //=================================================================================================//
 } // namespace fluid_dynamics

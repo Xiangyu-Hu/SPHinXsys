@@ -21,49 +21,6 @@ void Neighborhood::removeANeighbor(size_t neighbor_n)
     r_ij_[neighbor_n] = r_ij_[current_size_];
     e_ij_[neighbor_n] = e_ij_[current_size_];
 }
-
-Neighborhood& Neighborhood::operator=(const NeighborhoodDevice &device) {
-    copyDataFromDevice(&current_size_, device.current_size_, 1)
-        .add(copyDataFromDevice(j_.data(), device.j_, current_size_))
-        .add(copyDataFromDevice(W_ij_.data(), device.W_ij_, current_size_))
-        .add(copyDataFromDevice(dW_ijV_j_.data(), device.dW_ijV_j_, current_size_))
-        .add(copyDataFromDevice(r_ij_.data(), device.r_ij_, current_size_))
-        .add(copyDataFromDevice(e_ij_.data(), device.e_ij_, current_size_))
-        .wait();
-    return *this;
-}
-
-NeighborhoodDevice::NeighborhoodDevice() : current_size_(allocateDeviceData<size_t>(1)),
-                                           allocated_size_(Dimensions == 2 ? 28 : 86),
-                                           j_(allocateDeviceData<size_t>(allocated_size_)),
-                                           W_ij_(allocateDeviceData<DeviceReal>(allocated_size_)),
-                                           dW_ijV_j_(allocateDeviceData<DeviceReal>(allocated_size_)),
-                                           r_ij_(allocateDeviceData<DeviceReal>(allocated_size_)),
-                                           e_ij_(allocateDeviceData<DeviceVecd>(allocated_size_)) {}
-
-NeighborhoodDevice::~NeighborhoodDevice() {
-    freeDeviceData(current_size_);
-    freeDeviceData(j_);
-    freeDeviceData(W_ij_);
-    freeDeviceData(dW_ijV_j_);
-    freeDeviceData(r_ij_);
-    freeDeviceData(e_ij_);
-}
-
-NeighborhoodDevice& NeighborhoodDevice::operator=(const Neighborhood &host) {
-    if(allocated_size_ < host.current_size_)
-        throw std::runtime_error("NeighborhoodDevice allocation size (" + std::to_string(allocated_size_) +
-                                 ") is smaller than host Neighborhood size (" + std::to_string(host.current_size_) + ")");
-    copyDataToDevice(host.j_.data(), j_, host.current_size_)
-        .add(copyDataToDevice(host.W_ij_.data(), W_ij_, host.current_size_))
-        .add(copyDataToDevice(host.dW_ijV_j_.data(), dW_ijV_j_, host.current_size_))
-        .add(copyDataToDevice(host.r_ij_.data(), r_ij_, host.current_size_))
-        .add(copyDataToDevice(host.e_ij_.data(), e_ij_, host.current_size_))
-        .add(copyDataToDevice(&host.current_size_, current_size_, 1))
-        .wait();
-    return *this;
-}
-
 //=================================================================================================//
 void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
                                      const Vecd &displacement, size_t index_j, const Real &Vol_j)
@@ -272,18 +229,5 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
         neighborhood.current_size_++;
     }
 }
-//=================================================================================================//
-void NeighborBuilderInnerKernel::operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i, const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
-    {
-        DeviceVecd displacement = pos_i - pos_j;
-        DeviceReal distance_metric = VecdSquareNorm(displacement);
-        if (distance_metric < smoothing_kernel.CutOffRadiusSqr() && index_i != index_j)
-        {
-            auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,
-                                      sycl::memory_scope::device,
-                                      sycl::access::address_space::global_space>(*neighborhood.current_size_);
-            initializeNeighbor(neighborhood, current_size_atomic++, sycl::sqrt(distance_metric), displacement, index_j, Vol_j);
-        }
-    }
 } // namespace SPH
 //=================================================================================================//

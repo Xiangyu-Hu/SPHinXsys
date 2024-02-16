@@ -65,15 +65,19 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 
 class BaseDensitySummationInnerKernel {
   public:
-    BaseDensitySummationInnerKernel(NeighborhoodDevice* inner_configuration, BaseParticles* particles,
-                                    DeviceReal rho0, DeviceReal invSigma0) :
-        inner_configuration_(inner_configuration), rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
-        rho_sum_(particles->registerDeviceVariable<DeviceReal>("DensitySummation", particles->total_real_particles_)),
-        mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")), rho0_(rho0), inv_sigma0_(invSigma0) {}
+    BaseDensitySummationInnerKernel(const BaseInnerRelation& inner_relation, BaseParticles* particles,
+                                    DeviceReal rho0,DeviceReal invSigma0)
+        : rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
+          rho_sum_(particles->registerDeviceVariable<DeviceReal>("DensitySummation", particles->total_real_particles_)),
+          mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")), rho0_(rho0), inv_sigma0_(invSigma0),
+          cell_linked_list_(inner_relation.getInnerCellLinkedListDevice()),
+          inner_neighbor_builder_(inner_relation.getInnerNeighborBuilderDevice()) {}
+
   protected:
-    NeighborhoodDevice* inner_configuration_;
     DeviceReal *rho_, *rho_sum_, *mass_;
     DeviceReal rho0_, inv_sigma0_;
+    CellLinkedListKernel* cell_linked_list_;
+    NeighborBuilderInnerKernel *inner_neighbor_builder_;
 };
 
 /**
@@ -95,21 +99,19 @@ class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
 class DensitySummationInnerKernel : public BaseDensitySummationInnerKernel {
   public:
     template<class ...Args>
-    DensitySummationInnerKernel(DeviceReal W0, Args ...baseArgs) :
+    DensitySummationInnerKernel(DeviceReal W0, Args &&...baseArgs) :
         BaseDensitySummationInnerKernel(std::forward<Args>(baseArgs)...),  W0_(W0) {}
 
-    template<class RealType, class NeighborhoodType>
-    static void interaction(size_t index_i, Real dt, NeighborhoodType* inner_configuration, RealType W0,
-                            RealType* rho_sum, RealType rho0, RealType inv_sigma0) {
-        RealType sigma = W0;
-        const auto& inner_neighborhood = inner_configuration[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size(); ++n)
-            sigma += inner_neighborhood.W_ij_[n];
-        rho_sum[index_i] = sigma * rho0 * inv_sigma0;
-    }
-
     void interaction(size_t index_i, Real dt = 0.0) {
-        interaction(index_i, dt, inner_configuration_, W0_, rho_sum_, rho0_, inv_sigma0_);
+        DeviceReal sigma = W0_;
+        const auto &neighbor_builder = *inner_neighbor_builder_;
+        cell_linked_list_->forEachInnerNeighbor(index_i, [&](const DeviceVecd &pos_i, size_t index_j,
+                                                             const DeviceVecd &pos_j, const DeviceReal &Vol_j)
+                                                {
+                                                    if(neighbor_builder.isWithinCutoff(pos_i, pos_j) && index_i != index_j)
+                                                        sigma += neighbor_builder.W_ij(pos_i, pos_j);
+                                                });
+        rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
     }
 
   private:
@@ -401,11 +403,13 @@ class BaseIntegration : public LocalDynamics, public FluidDataInner
 template<class RiemannSolverType, class MaterialType>
 class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<MaterialType> {
   public:
-    BaseIntegration1stHalfKernel(BaseParticles* particles, NeighborhoodDevice* inner_configuration,
-                                 const RiemannSolverType& riemannSolver) :
-                                 BaseIntegrationKernel<MaterialType>(particles),
-                                 riemann_solver_(this->fluid_, this->fluid_),
-                                 inner_configuration_(inner_configuration){}
+    BaseIntegration1stHalfKernel(BaseInnerRelation& inner_relation,
+                                 BaseParticles* particles,
+                                 const RiemannSolverType& riemannSolver)
+        : BaseIntegrationKernel<MaterialType>(particles),
+          riemann_solver_(this->fluid_, this->fluid_),
+          cell_linked_list_(inner_relation.getInnerCellLinkedListDevice()),
+          inner_neighbor_builder_(inner_relation.getInnerNeighborBuilderDevice()) {}
 
     template<class RealType, class VecType, class FluidType>
     static void initialization(size_t index_i, Real dt, RealType* rho, const RealType *drho_dt, RealType *p, VecType* pos,
@@ -419,25 +423,6 @@ class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<MaterialType> 
     static void update(size_t index_i, Real dt, Vec *vel, const Vec *acc_prior, const Vec *acc) {
         vel[index_i] += (acc_prior[index_i] + acc[index_i]) * dt;
     }
-
-    template<class RealType, class VecType, class NeighborhoodType, class RiemannSolver>
-    static void interaction(size_t index_i, Real dt, RealType *p, RealType *rho, RealType *drho_dt, VecType* acc,
-                            NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver) {
-        auto acceleration = VecdZero<VecType>();
-        RealType rho_dissipation(0);
-        const auto &inner_neighborhood = inner_configuration[index_i];
-        for (size_t n = 0; n < inner_neighborhood.current_size(); ++n)
-        {
-            const auto& index_j = inner_neighborhood.j_[n];
-            const auto& dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-            const auto &e_ij = inner_neighborhood.e_ij_[n];
-            
-            acceleration -= (p[index_i] + p[index_j]) * dW_ijV_j * e_ij;
-            rho_dissipation += riemann_solver.DissipativeUJump(p[index_i] - p[index_j]) * dW_ijV_j;
-        }
-        acc[index_i] += acceleration / rho[index_i];
-        drho_dt[index_i] = rho_dissipation * rho[index_i];
-    }
     
     void initialization(size_t index_i, Real dt = 0.0) {
         initialization(index_i, dt, this->rho_, this->drho_dt_, this->p_, this->pos_, this->vel_, this->fluid_);
@@ -448,12 +433,30 @@ class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<MaterialType> 
     }
     
     void interaction(size_t index_i, Real dt = 0.0) {
-        interaction(index_i, dt, this->p_, this->rho_, this->drho_dt_, this->acc_, inner_configuration_, riemann_solver_);
+        auto acceleration = VecdZero<DeviceVecd>();
+        DeviceReal rho_dissipation(0);
+        const auto &pressure_i = this->p_[index_i];
+        const auto& neighbor_builder = *inner_neighbor_builder_;
+        cell_linked_list_->forEachInnerNeighbor(index_i, [&](const DeviceVecd &pos_i, size_t index_j,
+                                                             const DeviceVecd &pos_j, const DeviceReal& Vol_j)
+                                                {
+                                                    if(neighbor_builder.isWithinCutoff(pos_i, pos_j) && index_i != index_j)
+                                                    {
+                                                        const auto& dW_ijV_j = neighbor_builder.dW_ijV_j(pos_i, pos_j, Vol_j);
+                                                        const auto &e_ij = neighbor_builder.e_ij(pos_i, pos_j);
+
+                                                        acceleration -= (pressure_i + this->p_[index_j]) * dW_ijV_j * e_ij;
+                                                        rho_dissipation += this->riemann_solver_.DissipativeUJump(pressure_i - this->p_[index_j]) * dW_ijV_j;
+                                                    }
+                                                });
+        this->acc_[index_i] += acceleration / this->rho_[index_i];
+        this->drho_dt_[index_i] = rho_dissipation * this->rho_[index_i];
     }
     
   protected:
     RiemannSolverType riemann_solver_;
-    NeighborhoodDevice* inner_configuration_;
+    CellLinkedListKernel* cell_linked_list_;
+    NeighborBuilderInnerKernel* inner_neighbor_builder_;
 };
 
 /**
@@ -488,11 +491,13 @@ using Integration1stHalfDissipativeRiemann = BaseIntegration1stHalf<DissipativeR
 template<class RiemannSolverType, class FluidKernel>
 class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<FluidKernel> {
   public:
-    BaseIntegration2ndHalfKernel(BaseParticles* particles, NeighborhoodDevice* inner_configuration,
-                                 const RiemannSolverType& riemannSolver) :
-            BaseIntegrationKernel<FluidKernel>(particles),
-            riemann_solver_(this->fluid_, this->fluid_),
-            inner_configuration_(inner_configuration){}
+    BaseIntegration2ndHalfKernel(BaseInnerRelation& inner_relation,
+                                 BaseParticles* particles,
+                                 const RiemannSolverType& riemannSolver)
+        : BaseIntegrationKernel<FluidKernel>(particles),
+          riemann_solver_(this->fluid_, this->fluid_),
+          cell_linked_list_(inner_relation.getInnerCellLinkedListDevice()),
+          inner_neighbor_builder_(inner_relation.getInnerNeighborBuilderDevice()) {}
 
     template<class VecType>
     static inline void initialization(size_t index_i, Real dt, VecType* pos, VecType *vel) {
@@ -505,26 +510,6 @@ class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<FluidKernel> {
         Vol[index_i] = mass[index_i] / rho[index_i];
     }
 
-    template<class RealType, class VecType, class NeighborhoodType, class RiemannSolver>
-    static void interaction(size_t index_i, Real dt, RealType *rho, RealType *drho_dt, VecType* vel, VecType* acc,
-                            NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver) {
-        RealType density_change_rate(0);
-        auto p_dissipation = VecdZero<VecType>();
-        const auto &inner_neighborhood = inner_configuration[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size(); ++n)
-        {
-            const auto &index_j = inner_neighborhood.j_[n];
-            const auto &e_ij = inner_neighborhood.e_ij_[n];
-            const auto &dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-            const RealType u_jump = VecdDot(VecType(vel[index_i] - vel[index_j]), e_ij);
-            density_change_rate += u_jump * dW_ijV_j;
-            p_dissipation += static_cast<RealType>(riemann_solver.DissipativePJump(u_jump)) * dW_ijV_j * e_ij;
-        }
-        drho_dt[index_i] += density_change_rate * rho[index_i];
-        acc[index_i] = p_dissipation / rho[index_i];
-    }
-
     void initialization(size_t index_i, Real dt = 0.0) {
         initialization(index_i, dt, this->pos_, this->vel_);
     }
@@ -534,12 +519,31 @@ class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<FluidKernel> {
     }
 
     void interaction(size_t index_i, Real dt = 0.0) {
-        interaction(index_i, dt, this->rho_, this->drho_dt_, this->vel_, this->acc_, inner_configuration_, riemann_solver_);
+        DeviceReal density_change_rate(0);
+        auto p_dissipation = VecdZero<DeviceVecd>();
+        const DeviceVecd & vel_i = this->vel_[index_i];
+        const auto& neighbor_builder = *inner_neighbor_builder_;
+        cell_linked_list_->forEachInnerNeighbor(index_i, [&](const DeviceVecd &pos_i, size_t index_j,
+                                                             const DeviceVecd &pos_j, const DeviceReal& Vol_j)
+                                                {
+                                                    if(neighbor_builder.isWithinCutoff(pos_i, pos_j) && index_i != index_j)
+                                                    {
+                                                        const auto &e_ij = neighbor_builder.e_ij(pos_i, pos_j);
+                                                        const auto &dW_ijV_j = neighbor_builder.dW_ijV_j(pos_i, pos_j, Vol_j);
+
+                                                        const DeviceReal u_jump = VecdDot(DeviceVecd(vel_i - this->vel_[index_j]), e_ij);
+                                                        density_change_rate += u_jump * dW_ijV_j;
+                                                        p_dissipation += static_cast<DeviceReal>(this->riemann_solver_.DissipativePJump(u_jump)) * dW_ijV_j * e_ij;
+                                                    }
+                                                });
+        this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+        this->acc_[index_i] = p_dissipation / this->rho_[index_i];
     }
 
   protected:
     RiemannSolverType riemann_solver_;
-    NeighborhoodDevice* inner_configuration_;
+    CellLinkedListKernel* cell_linked_list_;
+    NeighborBuilderInnerKernel* inner_neighbor_builder_;
 };
 
 

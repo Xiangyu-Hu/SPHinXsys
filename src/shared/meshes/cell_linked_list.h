@@ -34,6 +34,7 @@
 
 #include "base_mesh.h"
 #include "neighborhood.h"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
@@ -93,10 +94,34 @@ class CellLinkedListKernel {
     execution::ExecutionEvent clearCellLists();
     execution::ExecutionEvent UpdateCellLists(BaseParticles &base_particles);
 
-    template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-    execution::ExecutionEvent searchNeighborsByParticles(DynamicsRange &dynamics_range, NeighborhoodDevice *particle_configuration,
-                                    GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
-                                                         execution::ExecutionEvent dependency_event = {});
+    template <typename FunctionOnEach>
+    void forEachNeighbor(size_t index_i, const DeviceVecd *self_position,
+                         const FunctionOnEach &function) const
+    {
+        const DeviceVecd pos_i = self_position[index_i];
+        const size_t search_depth = 1;
+        const auto target_cell_index = CellIndexFromPosition(pos_i, *mesh_lower_bound_,
+                                                             *grid_spacing_, *all_grid_points_);
+        mesh_for_each_array(
+            VecdMax(DeviceArrayi{0}, DeviceArrayi{target_cell_index - search_depth}),
+            VecdMin(*all_cells_, DeviceArrayi{target_cell_index + search_depth + 1}),
+            [&](DeviceArrayi&& cell_index) {
+                const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells_);
+                size_t index_j = index_head_list_[linear_cell_index];
+                // Cell list ends when index_j == 0, if index_j is already zero then cell is empty.
+                while(index_j--) {  // abbreviates while(index_j != 0) { index_j -= 1; ... }
+                    function(pos_i, index_j, list_data_pos_[index_j], list_data_Vol_[index_j]);
+                    index_j = index_list_[index_j];
+                }
+            });
+    }
+
+    template <typename FunctionOnEach>
+    void forEachInnerNeighbor(size_t index_i, const FunctionOnEach &function) const
+    {
+        forEachNeighbor(index_i, list_data_pos_, function);
+    }
+
 
     size_t* computingSequence(BaseParticles &baseParticles);
 

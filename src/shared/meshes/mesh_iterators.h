@@ -92,6 +92,8 @@ inline bool mesh_any_of3d(const CheckOnEach &function)
 
 template <typename LowerArray, typename UpperArray, typename FunctionOnEach>
 void mesh_for_each(const LowerArray &lower, const UpperArray &upper, const FunctionOnEach &function);
+template <typename LowerArray, typename UpperArray, typename  FunctionOnEach>
+SYCL_EXTERNAL void mesh_for_each_array(const LowerArray &lower, const UpperArray &upper, const FunctionOnEach &function);
 template <typename FunctionOnEach>
 Arrayi mesh_find_if(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
 template <typename FunctionOnEach>
