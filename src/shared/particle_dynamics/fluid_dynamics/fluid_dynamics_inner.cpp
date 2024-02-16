@@ -28,11 +28,7 @@ void BaseDensitySummationInner::update(size_t index_i, Real dt)
 DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
     : BaseDensitySummationInner(inner_relation),
       W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
-#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
-      device_kernel(W0_, inner_configuration_device_ ? inner_configuration_device_->data() : nullptr, particles_, rho0_, inv_sigma0_) {}
-#else
       device_kernel(W0_, inner_relation, particles_, rho0_, inv_sigma0_) {}
-#endif
 //=================================================================================================//
 DensitySummationInnerAdaptive::
     DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
