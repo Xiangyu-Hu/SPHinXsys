@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
     SimpleDynamics<NormalDirectionFromBodyShape> housing_normal_direction(mixer_housing);
@@ -220,7 +220,11 @@ int main(int ac, char *av[])
     // size_t number_of_iterations = sph_system.RestartStep();
     int nmbr_of_outputs = 100;
     Real output_interval = end_time / nmbr_of_outputs;
-    Real dt = 0.0;
+    Real dt = 0;
+    Real Dt = 0;
+    Real Dt_visc = 0;
+    Real Dt_adv = 0;
+    Real Dt_aco = 0;
     int iteration = 0;
     int output_counter = 1;
 
@@ -233,8 +237,8 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Real Dt = get_fluid_advection_time_step_size.exec();
-        Real Dt_visc = get_viscous_time_step_size.exec();
+        Dt = get_fluid_advection_time_step_size.exec();
+        Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt);
 
         update_density_by_summation.exec(Dt);
@@ -246,10 +250,10 @@ int main(int ac, char *av[])
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
         {
-            dt = SMIN(dt, Dt);
+            Dt_aco = get_acoustic_time_step_size.exec();
+            dt = SMIN(Dt_aco, Dt);
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
-            dt = get_fluid_time_step_size.exec();
             relaxation_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
 
