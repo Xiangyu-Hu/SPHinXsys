@@ -39,11 +39,6 @@ template<class DataType>
 class BaseInterpolationKernel {
 
   public:
-    BaseInterpolationKernel(NeighborhoodDevice **contact_configuration_device,
-                            size_t contact_size, DataType *interpolated_quantities)
-        : contact_configuration_(contact_configuration_device), contact_size_(contact_size),
-          interpolated_quantities_(interpolated_quantities) {}
-
     BaseInterpolationKernel(const BaseParticles& particles,
                             const BaseContactRelation& contact_relation,
                             DataType *interpolated_quantities)
@@ -61,17 +56,6 @@ class BaseInterpolationKernel {
         {
             const auto *Vol_k = contact_Vol_[k];
             const auto *data_k = contact_data_[k];
-#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
-            const auto &contact_neighborhood = contact_configuration_[k][index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size(); ++n)
-            {
-                const auto index_j = contact_neighborhood.j_[n];
-                const auto weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-
-                observed_quantity += weight_j * data_k[index_j];
-                ttl_weight += weight_j;
-            }
-#else
             const auto& neighbor_builder = *contact_neighbor_builders_[k];
             contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_pos_,
                                                            [&](const DeviceVecd &pos_i, size_t index_j,
@@ -84,7 +68,6 @@ class BaseInterpolationKernel {
                                                                    ttl_weight += weight_j;
                                                                }
                                                            });
-#endif
         }
         interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
     }
@@ -93,7 +76,6 @@ class BaseInterpolationKernel {
     void setContactData(DataType **contact_data) { contact_data_ = contact_data; }
 
   private:
-    NeighborhoodDevice** contact_configuration_;
     DeviceReal** contact_Vol_;
     DataType** contact_data_;
     size_t contact_size_;
@@ -164,16 +146,9 @@ class BaseInterpolation<DataType, true> : public LocalDynamics, public Interpola
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
           interpolated_quantities_(nullptr),
-#ifdef SPHINXSYS_SYCL_COMPUTE_NEIGHBORHOOD
-          device_kernel(this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
-                        this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0,
-                        particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_type>(
-                          variable_name, particles_->total_real_particles_))
-#else
           device_kernel(*particles_, contact_relation,
                         particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_type>(
                             variable_name, particles_->total_real_particles_))
-#endif
     {
             using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_type;
 
