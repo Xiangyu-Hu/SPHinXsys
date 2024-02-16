@@ -42,7 +42,6 @@ namespace SPH
 class SPHBody;
 class BodyPart;
 class SPHAdaptation;
-class NeighborhoodDevice;
 
 /**
  * @class Neighborhood
@@ -64,31 +63,8 @@ class Neighborhood
     ~Neighborhood(){};
 
     void removeANeighbor(size_t neighbor_n);
-
-    inline size_t current_size() const { return current_size_; }
-
-    Neighborhood& operator=(const NeighborhoodDevice& device);
 };
 using ParticleConfiguration = StdLargeVec<Neighborhood>;
-
-class NeighborhoodDevice {
-  public:
-    size_t* current_size_;	/**< the current number of neighbors */
-    size_t allocated_size_;  /**< the limit of neighbors does not require memory allocation  */
-
-    size_t *j_;  /**< index of the neighbor particle. */
-    DeviceReal *W_ij_;  /**< kernel value or particle volume contribution */
-    DeviceReal *dW_ijV_j_;  /**< derivative of kernel function or inter-particle surface contribution */
-    DeviceReal *r_ij_;  /**< distance between j and i. */
-    DeviceVecd *e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
-
-    inline size_t current_size() const { return *current_size_; }
-
-    NeighborhoodDevice();
-    ~NeighborhoodDevice();
-
-    NeighborhoodDevice& operator=(const Neighborhood& host);
-};
 
 class NeighborBuilderKernel {
   public:
@@ -142,9 +118,6 @@ class NeighborBuilder
 class NeighborBuilderInnerKernel : public NeighborBuilderKernel {
   public:
     NeighborBuilderInnerKernel(Kernel& kernel) : NeighborBuilderKernel(kernel) {}
-
-    SYCL_EXTERNAL void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
-                    const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const;
 
     inline bool isWithinCutoff(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
     {
@@ -226,20 +199,6 @@ class NeighborBuilderSelfContact : public NeighborBuilder
 class NeighborBuilderContactKernel : public NeighborBuilderKernel {
   public:
     NeighborBuilderContactKernel(Kernel& kernel) : NeighborBuilderKernel(kernel) {}
-
-    void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
-                    const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
-    {
-        const DeviceVecd displacement = pos_i - pos_j;
-        const DeviceReal distance = VecdNorm(displacement);
-        if (distance < smoothing_kernel.CutOffRadius())
-        {
-            auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,
-                                                        sycl::memory_scope::device,
-                                                        sycl::access::address_space::global_space>(*neighborhood.current_size_);
-            initializeNeighbor(neighborhood, current_size_atomic++, distance, displacement, index_j, Vol_j);
-        }
-    }
 
     inline bool isWithinCutoff(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
     {
