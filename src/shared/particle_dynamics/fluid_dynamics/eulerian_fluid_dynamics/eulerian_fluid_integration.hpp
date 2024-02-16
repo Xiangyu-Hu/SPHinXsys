@@ -75,7 +75,7 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
             Real p_in_wall = state_i.p_;
             Real rho_in_wall = state_i.rho_;
             FluidStateIn state_j(rho_in_wall, vel_in_wall, p_in_wall);
-            FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, -n_k[index_j]);
+            FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, n_k[index_j]);
             Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
             momentum_change_rate -= 2.0 * Vol_[index_i] * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
         }
@@ -142,7 +142,7 @@ void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(s
             Real rho_in_wall = state_i.rho_;
 
             FluidStateIn state_j(rho_in_wall, vel_in_wall, p_in_wall);
-            FluidStateOut interface_state = this->riemann_solver_.InterfaceState(state_i, state_j, -n_k[index_j]);
+            FluidStateOut interface_state = this->riemann_solver_.InterfaceState(state_i, state_j, n_k[index_j]);
             mass_change_rate -= 2.0 * this->Vol_[index_i] * (interface_state.rho_ * interface_state.vel_).dot(e_ij) * dW_ijV_j;
         }
     }

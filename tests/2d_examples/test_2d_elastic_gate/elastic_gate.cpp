@@ -200,7 +200,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------
     //	Algorithms of Elastic dynamics.
