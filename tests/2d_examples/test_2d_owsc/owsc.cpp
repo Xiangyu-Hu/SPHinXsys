@@ -30,8 +30,7 @@ int main(int ac, char *av[])
     flap.generateParticles<Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
-    MyObserverParticleGenerator observer_particle_generator(observer);
-    observer.generateParticles(observer_particle_generator);
+    observer.generateParticles<Observer>(creatObserverPositions());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

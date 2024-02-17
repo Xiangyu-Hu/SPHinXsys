@@ -104,6 +104,12 @@ class SPHBody
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
+    template <class SelfDefinedType, typename... Args>
+    SelfDefinedType makeSelfDefined(Args &&...args)
+    {
+        return SelfDefinedType(*this, std::forward<Args>(args)...);
+    }
+
     virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
