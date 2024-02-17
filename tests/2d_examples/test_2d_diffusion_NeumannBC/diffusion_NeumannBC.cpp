@@ -35,8 +35,8 @@ int main(int ac, char *av[])
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    ParticleGeneratorTemperatureObserver observer_particle_generator(temperature_observer);
-    temperature_observer.generateParticles(observer_particle_generator);
+    auto my_particle_generator = temperature_observer.makeSelfDefined<ParticleGeneratorTemperatureObserver>();
+    temperature_observer.generateParticles(my_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

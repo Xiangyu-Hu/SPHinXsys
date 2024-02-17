@@ -48,7 +48,7 @@ int main(int ac, char *av[])
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
     beam_observer.generateParticles<Observer>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    ParticleGeneratorFluidObserver fluid_observer_particle_generator(fluid_observer);
+    auto fluid_observer_particle_generator = fluid_observer.makeSelfDefined<ParticleGeneratorFluidObserver>();
     fluid_observer.generateParticles(fluid_observer_particle_generator);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
