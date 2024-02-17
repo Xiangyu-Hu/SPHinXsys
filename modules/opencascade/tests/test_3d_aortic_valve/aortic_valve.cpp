@@ -51,10 +51,10 @@ class BoundaryGeometry : public BodyPartByParticle
     };
 };
 
-class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
+class LeafletParticleGenerator : public ParticleGenerator<Surface>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body)
+    explicit LeafletParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Surface>(sph_body), sph_body_(sph_body){};
     virtual void initializeGeometricVariables() override
     {
@@ -129,7 +129,8 @@ int main(int ac, char *av[])
     SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     leaflet.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-    leaflet.generateParticles<Cylinder>();
+    auto leaflet_particle_generator = leaflet.makeSelfDefined<LeafletParticleGenerator>();
+    leaflet.generateParticles(leaflet_particle_generator);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

@@ -108,7 +108,7 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    PlateParticleGenerator plate_particle_generator(plate_body);
+    auto plate_particle_generator = plate_body.makeSelfDefined<PlateParticleGenerator>();
     plate_body.generateParticles(plate_particle_generator);
     // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");

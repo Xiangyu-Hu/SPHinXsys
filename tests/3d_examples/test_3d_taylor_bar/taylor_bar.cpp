@@ -39,7 +39,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
-    ColumnObserverParticleGenerator observer_particle_generator(my_observer);
+    auto observer_particle_generator = my_observer.makeSelfDefined<ColumnObserverParticleGenerator>();
     my_observer.generateParticles(observer_particle_generator);
 
     /**body relation topology */

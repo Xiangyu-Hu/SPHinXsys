@@ -125,8 +125,8 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    ParticleGeneratorPlate particle_generator(plate_body);
-    plate_body.generateParticles(particle_generator);
+    auto plate_particle_generator = plate_body.makeSelfDefined<ParticleGeneratorPlate>();
+    plate_body.generateParticles(plate_particle_generator);
     auto shell_particles = dynamic_cast<ShellParticles *>(&plate_body.getBaseParticles());
     plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
 

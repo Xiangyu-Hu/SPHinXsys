@@ -232,7 +232,7 @@ return_data bending_circular_plate(Real dp_ratio)
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-    ShellCircleParticleGenerator shell_particle_generator(shell_body, obj_vertices, sym_vec, particle_area, thickness);
+    auto shell_particle_generator = shell_body.makeSelfDefined<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
     shell_body.generateParticles(shell_particle_generator);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output

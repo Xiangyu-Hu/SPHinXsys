@@ -71,7 +71,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    CylinderParticleGenerator cylinder_particle_generator(shell);
+    auto cylinder_particle_generator = shell.makeSelfDefined<CylinderParticleGenerator>();
     shell.generateParticles(cylinder_particle_generator);
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));

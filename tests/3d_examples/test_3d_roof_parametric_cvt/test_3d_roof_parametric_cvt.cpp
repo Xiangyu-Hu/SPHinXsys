@@ -310,13 +310,13 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     if (cvt)
     {
-        ShellRoofParticleGenerator roof_particle_generator(shell_body, obj_vertices, center, particle_area, thickness);
+        auto roof_particle_generator = shell_body.makeSelfDefined<ShellRoofParticleGenerator>(obj_vertices, center, particle_area, thickness);
         shell_body.generateParticles(roof_particle_generator);
     }
 
     else
     {
-        CylinderParticleGenerator cylinder_particle_generator(shell_body, particle_number);
+        auto cylinder_particle_generator = shell_body.makeSelfDefined<CylinderParticleGenerator>(particle_number);
         shell_body.generateParticles(cylinder_particle_generator);
     }
 
