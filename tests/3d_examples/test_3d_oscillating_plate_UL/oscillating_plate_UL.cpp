@@ -2,7 +2,7 @@
  * @file 	oscillating_plate_UL.cpp
  * @brief 	This is the test case for the hourglass manuscript.
  * @details  We consider vibration deformation of a square plate under initial vertical velocity field.
- * @author 	Shuaihao Zhang, Dong Wu and Xiangyu Hu 
+ * @author 	Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
 #include "sphinxsys.h"
 using namespace SPH;
@@ -108,7 +108,8 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
+    PlateParticleGenerator plate_particle_generator(plate_body);
+    plate_body.generateParticles(plate_particle_generator);
     // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");

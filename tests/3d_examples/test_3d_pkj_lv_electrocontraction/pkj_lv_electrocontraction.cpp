@@ -148,15 +148,18 @@ int main(int ac, char *av[])
     pkj_body.defineParticlesAndMaterial<
         ElectroPhysiologyReducedParticles, MonoFieldElectroPhysiology>(
         pkj_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coeff * acceleration_factor, bias_coeff, fiber_direction);
-    pkj_body.generateParticles<NetworkGeneratorWithExtraCheck>(starting_point, second_point, 50, 1.0);
+    NetworkGeneratorWithExtraCheck network_particle_generator(pkj_body, starting_point, second_point, 50, 1.0);
+    pkj_body.generateParticles(network_particle_generator);
     TreeTerminates pkj_leaves(pkj_body);
     //----------------------------------------------------------------------
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<HeartObserverParticleGenerator>();
+    HeartObserverParticleGenerator voltage_observer_particle_generator(voltage_observer);
+    voltage_observer.generateParticles(voltage_observer_particle_generator);
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
+    HeartObserverParticleGenerator myocardium_observer_particle_generator(myocardium_observer);
+    myocardium_observer.generateParticles(myocardium_observer_particle_generator);
 
     /** topology */
     InnerRelation physiology_heart_inner(physiology_heart);

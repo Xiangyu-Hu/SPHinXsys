@@ -145,10 +145,12 @@ class SPHBody
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
         defineParticlesWithMaterial<ParticleType>(material);
     };
-
-    /** initialize particle data using a particle generator for geometric data.
-     * the local material parameters are also initialized. */
-    template <class ParticleGeneratorType>
+    //----------------------------------------------------------------------
+    // Particle generating methods
+    // Initialize particle data using a particle generator for geometric data.
+    // The local material parameters are also initialized.
+    //----------------------------------------------------------------------
+    template <class ParticleGeneratorType> // for self-defined particle generator
     void generateParticles(ParticleGeneratorType &particle_generator)
     {
         particle_generator.generateParticlesWithBasicVariables();
@@ -156,14 +158,14 @@ class SPHBody
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
     };
-
+    // Using predefined particle generator
     template <class... Parameters, typename... Args>
     void generateParticles(Args &&...args)
     {
         ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
         generateParticles(particle_generator);
     };
-
+    // Buffer or ghost particles can be generated together with real particles
     template <class... Parameters, class ReserveType, typename... Args>
     void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {

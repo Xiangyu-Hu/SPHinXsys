@@ -49,10 +49,11 @@ class WallBoundary : public ComplexShape
 };
 
 //	define an observer particle generator
-class WaterObserverParticleGenerator : public ParticleGeneratorObserver
+class WaterObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit WaterObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit WaterObserverParticleGenerator(SPHBody &sph_body)
+        : ParticleGenerator<Observer>(sph_body)
     {
         // add observation points
         positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));
@@ -86,7 +87,8 @@ int main(int ac, char *av[])
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<WaterObserverParticleGenerator>();
+    WaterObserverParticleGenerator fluid_observer_particle_generator(fluid_observer);
+    fluid_observer.generateParticles(fluid_observer_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -158,10 +158,10 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 /**
  * Observer particle generator.
  */
-class FishObserverParticleGenerator : public ParticleGeneratorObserver
+class FishObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         positions_.push_back(Vecd(cx + resolution_ref, cy));
         positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));

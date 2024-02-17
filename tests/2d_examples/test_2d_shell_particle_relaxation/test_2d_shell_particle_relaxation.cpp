@@ -45,8 +45,7 @@ int main(int ac, char *av[])
     pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     pipe_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-    ParticleGeneratorThickSurface thick_surface_particle_generator(pipe_body, thickness);
-    pipe_body.generateParticles(thick_surface_particle_generator);
+    pipe_body.generateParticles<ThickSurface, Lattice>(thickness);
     pipe_body.addBodyStateForRecording<Vecd>("NormalDirection");
     /**
      * @brief define simple data file input and outputs functions.

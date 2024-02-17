@@ -29,10 +29,10 @@ Real poisson = 0.45;
 Real physical_viscosity = 1.0e6;
 //----------------------------------------------------------------------
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGeneratorSurface
+class CylinderParticleGenerator : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -71,7 +71,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    shell.generateParticles<CylinderParticleGenerator>();
+    CylinderParticleGenerator cylinder_particle_generator(shell);
+    shell.generateParticles(cylinder_particle_generator);
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
     ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);

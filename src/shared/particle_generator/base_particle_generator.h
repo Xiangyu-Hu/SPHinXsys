@@ -89,7 +89,6 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
     StdLargeVec<Real> &thickness_; /**< surface thickness */
     virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
 };
-using ParticleGeneratorSurface = ParticleGenerator<Surface>;
 
 template <> // generate observer particles
 class ParticleGenerator<Observer> : public ParticleGenerator<Base>
@@ -105,7 +104,6 @@ class ParticleGenerator<Observer> : public ParticleGenerator<Base>
   protected:
     StdVec<Vecd> positions_;
 };
-using ParticleGeneratorObserver = ParticleGenerator<Observer>;
 
 template <> // generate particles by reloading dynamically relaxed particles
 class ParticleGenerator<Reload> : public ParticleGenerator<Base>
@@ -118,7 +116,6 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 };
-using ParticleGeneratorReload = ParticleGenerator<Reload>;
 
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H
