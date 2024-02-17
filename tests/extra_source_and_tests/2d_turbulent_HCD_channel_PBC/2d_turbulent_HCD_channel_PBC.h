@@ -6,7 +6,7 @@
  */
 
 #include "sphinxsys.h"
-//#include "k-epsilon_turbulent_model.cpp"
+#include "k-epsilon_turbulent_model.cpp"
 using namespace SPH;
 
 
@@ -27,7 +27,7 @@ Real c_f = 10.0 * U_f;*/
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 6.0;                         /**< Channel length. */
-Real resolution_ref = DH / 20;              /**< Initial reference particle spacing. */
+Real resolution_ref = DH / 40;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 Real DL1 = 1.0;
 Real DL2 = 1.5;
@@ -43,12 +43,12 @@ StdVec<Real> initial_turbu_values = { 0.01 ,0.1 ,0.001 };
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real U_max = 1.3;
+Real U_max = 1.0;
 Real U_f = 1.0; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 Real rho0_f = 1.0;                                            /**< Density. */
-Real mu_f = 0.01;
-Real gravity_g = 0.0517263;
+Real mu_f = 0.0001;
+Real gravity_g = 0.00872269;
 Real Re = U_f * DH * rho0_f / mu_f;
 
 //----------------------------------------------------------------------
