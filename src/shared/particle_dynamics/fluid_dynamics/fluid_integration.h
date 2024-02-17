@@ -157,6 +157,8 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
     : public BaseIntegration<FluidDataInner>
 {
   public:
+    typedef RiemannSolverType RiemannSolver;
+
     explicit Integration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~Integration2ndHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
