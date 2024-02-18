@@ -62,7 +62,7 @@ void BaseIntegration1stHalfConsistencyWithWall<BaseIntegration1stHalfConsistency
 
             Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration -= (this->p_[index_i] + p_in_wall) * this->B_[index_i] * e_ij * dW_ijV_j;
+            acceleration -= (this->p_[index_i] * wall_B_k[index_j] + p_in_wall * this->B_[index_i]) * e_ij * dW_ijV_j;
             rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
