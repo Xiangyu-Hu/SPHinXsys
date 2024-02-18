@@ -56,6 +56,30 @@ namespace fluid_dynamics
 		Real sigma_E;
 	};
 //=================================================================================================//
+	class WallFunction : public BaseTurbuClosureCoeff
+	{
+	public:
+		explicit WallFunction() {};
+		virtual ~WallFunction() {};
+
+		Real get_dimensionless_velocity(Real y_star)
+		{
+			Real dimensionless_velocity = log_law_wall_functon(y_star);
+			//if (y_star < 11.25 )
+				//dimensionless_velocity = laminar_law_wall_functon(y_star);
+			return dimensionless_velocity;
+		}
+
+		Real log_law_wall_functon(Real y_star)
+		{
+			return log(turbu_const_E * y_star) / Karman;
+		}
+		Real laminar_law_wall_functon(Real y_star)
+		{
+			return y_star;
+		}
+	};
+//=================================================================================================//
 	template <typename... InteractionTypes>
 	class GetVelocityGradient;
 
@@ -103,7 +127,9 @@ namespace fluid_dynamics
 		template <class BaseRelationType>
 		explicit BaseTurtbulentModel(BaseRelationType& base_relation);
 		virtual ~BaseTurtbulentModel() {};
+
 	protected:
+		
 		StdLargeVec<Real> turbu_k_, turbu_k_prior_;
 		StdLargeVec<Real> turbu_epsilon_, turbu_epsilon_prior_;
 		StdLargeVec<Real> turbu_mu_;
@@ -113,7 +139,6 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd>& vel_;
 		int dimension_;
 	};
-
 //=================================================================================================//
 	/**
 	 * @class K_TurtbulentModelInner
@@ -223,7 +248,7 @@ namespace fluid_dynamics
 	class TurbuViscousForce;
 
 	template <class DataDelegationType>
-	class TurbuViscousForce<DataDelegationType>: public ViscousForce<DataDelegationType>, public BaseTurbuClosureCoeff
+	class TurbuViscousForce<DataDelegationType>: public ViscousForce<DataDelegationType>, public WallFunction
 	{
 	public:
 		template <class BaseRelationType>
@@ -233,6 +258,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_mu_;
 		StdLargeVec<Real>& wall_Y_plus_;
+		StdLargeVec<Real>& wall_Y_star_;
 		StdLargeVec<Vecd>& velo_friction_;
 		StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
 		StdLargeVec<Real>& y_p_;
@@ -260,10 +286,6 @@ namespace fluid_dynamics
 	public:
 		explicit TurbuViscousForce(BaseContactRelation& wall_contact_relation);
 		virtual ~TurbuViscousForce() {};
-		
-		//** This is a temporary treatment, the wall function should be defined in the base part *
-		Real standard_wall_functon_for_wall_viscous(Real vel_t, Real k_p, Real y_p, Real rho_i);
-		
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
 
@@ -360,20 +382,15 @@ namespace fluid_dynamics
 		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 		int dimension_;
 	};
-
 //=================================================================================================//
-	/**
-	* @class StandardWallFunctionCorrection
-	* @brief this function is applied to turbulent flows
-	* @brief implicitly modify the values of k and epslion near wall
-	*/
-	class StandardWallFunctionCorrection : public LocalDynamics, public FluidDataSimple,
-		public BaseTurbuClosureCoeff
+	class StandardWallFunctionCorrection : 
+		public LocalDynamics, public FluidDataSimple, public WallFunction
 	{
 	public:
 		StandardWallFunctionCorrection(SPHBody& sph_body, Real offset_dist);
 		virtual ~StandardWallFunctionCorrection() {};
 		void update(size_t index_i, Real dt = 0.0);
+
 	protected:
 		Real offset_dist_;
 		StdLargeVec<Real> y_p_;
@@ -387,7 +404,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_epsilon_;
 		StdLargeVec<Real>& turbu_mu_;
-		Real mu_;
+		Real molecular_viscosity_;
 		StdLargeVec<int>& is_near_wall_P1_;
 		StdLargeVec<int>& is_near_wall_P2_;
 		StdLargeVec<int>& index_nearest;

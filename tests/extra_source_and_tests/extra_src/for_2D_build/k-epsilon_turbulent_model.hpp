@@ -85,6 +85,7 @@ namespace fluid_dynamics
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*this->particles_->template getVariableByName<Real>("TurbulentViscosity")),
 		wall_Y_plus_(*this->particles_->template getVariableByName<Real>("WallYplus")),
+		wall_Y_star_(*this->particles_->template getVariableByName<Real>("WallYstar")),
 		velo_friction_(*this->particles_->template getVariableByName<Vecd>("FrictionVelocity")),
 		y_p_(*this->particles_->template getVariableByName<Real>("Y_P")),
 		molecular_viscosity_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()) {}
