@@ -8,7 +8,31 @@ namespace fluid_dynamics
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 		: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
-		C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793) {}
+		C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), start_time_laminar_(50.0){}
+//=================================================================================================//
+	Real WallFunction:: get_dimensionless_velocity(Real y_star)
+	{
+		Real dimensionless_velocity = log_law_wall_functon(y_star);
+		//if (y_star < 11.225 && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+			//dimensionless_velocity = laminar_law_wall_functon(y_star);
+		return dimensionless_velocity;
+	}
+	Real WallFunction::log_law_wall_functon(Real y_star)
+	{
+		Real u_star = log(turbu_const_E * y_star ) / Karman;
+		if (std::isnan(u_star) || std::isinf(u_star))
+		{
+			std::cout << "u_star=" << u_star << std::endl;
+			std::cout << "y_star=" << y_star << std::endl;
+			system("pause");
+		}
+		return u_star;
+	}
+	Real WallFunction::laminar_law_wall_functon(Real y_star)
+	{
+		Real u_star = y_star ;
+		return u_star;
+	}
 //=================================================================================================//
     void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
     {
@@ -325,9 +349,12 @@ namespace fluid_dynamics
 		const Vecd& vel_i = this->vel_[index_i];
 		Real y_p = this->y_p_[index_i];
 		Real y_star = this->wall_Y_star_[index_i];
+		int is_near_wall_P2 = this->is_near_wall_P2_[index_i];
+		//** Wall viscous force only affects P2 region fluid particles *
+		if (this->is_near_wall_P2_[index_i] != 10)
+			return;
 
-		Vecd force = Vecd::Zero();
-		
+		Vecd force = Vecd::Zero();		
 		Vecd e_j_n = Vecd::Zero();
 		Vecd e_j_tau = Vecd::Zero();
 		Matd WSS_j_tn = Matd::Zero();  //** Wall shear stress of wall particle j on t-n plane *
@@ -643,7 +670,8 @@ namespace fluid_dynamics
 		particles_->registerSortableVariable<Real>("WallYplus");
 		particles_->addVariableToWrite<Real>("WallYplus");
 
-		particles_->registerVariable(wall_Y_star_, "WallYstar");
+		//** Initial value is important, especially when use log law *
+		particles_->registerVariable(wall_Y_star_, "WallYstar", TinyReal);
 		particles_->registerSortableVariable<Real>("WallYstar");
 		particles_->addVariableToWrite<Real>("WallYstar");
 

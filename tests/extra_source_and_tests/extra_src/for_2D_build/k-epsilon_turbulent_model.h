@@ -54,6 +54,9 @@ namespace fluid_dynamics
 		//** Closure coefficients for Epsilon *
 		Real C_l, C_2;
 		Real sigma_E;
+		
+		//** Start time for laminar law *
+		Real start_time_laminar_;
 	};
 //=================================================================================================//
 	class WallFunction : public BaseTurbuClosureCoeff
@@ -62,22 +65,10 @@ namespace fluid_dynamics
 		explicit WallFunction() {};
 		virtual ~WallFunction() {};
 
-		Real get_dimensionless_velocity(Real y_star)
-		{
-			Real dimensionless_velocity = log_law_wall_functon(y_star);
-			//if (y_star < 11.25 )
-				//dimensionless_velocity = laminar_law_wall_functon(y_star);
-			return dimensionless_velocity;
-		}
+		Real get_dimensionless_velocity(Real y_star);
 
-		Real log_law_wall_functon(Real y_star)
-		{
-			return log(turbu_const_E * y_star) / Karman;
-		}
-		Real laminar_law_wall_functon(Real y_star)
-		{
-			return y_star;
-		}
+		Real log_law_wall_functon(Real y_star);
+		Real laminar_law_wall_functon(Real y_star);
 	};
 //=================================================================================================//
 	template <typename... InteractionTypes>
@@ -260,12 +251,14 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& wall_Y_plus_;
 		StdLargeVec<Real>& wall_Y_star_;
 		StdLargeVec<Vecd>& velo_friction_;
-		StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
 		StdLargeVec<Real>& y_p_;
 		Real molecular_viscosity_;
+		StdLargeVec<int>& is_near_wall_P2_;
 
 		//** For test *
 		//StdLargeVec<Matd> visc_direction_matrix_;
+		StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
+
 	};
 
 	//** Inner part *
