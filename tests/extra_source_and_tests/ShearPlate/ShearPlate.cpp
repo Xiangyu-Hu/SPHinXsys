@@ -145,12 +145,14 @@ int main(int ac, char *av[])
     PeriodicConditionUsingCellLinkedList periodic_condition(fluid, fluid.getBodyShapeBounds(), yAxis);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_all_walls);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_inner, fluid_all_walls);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_inner, fluid_all_walls);
 
     InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_no_slip);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_no_slip);
+
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -198,6 +200,8 @@ int main(int ac, char *av[])
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
 
+        transport_velocity_correction.exec(Dt);
+
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
         {
@@ -209,9 +213,9 @@ int main(int ac, char *av[])
             GlobalStaticVariables::physical_time_ += dt;
         }
 
-        if(iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_ )
+        if (iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
-          std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
+            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
         }
 
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
