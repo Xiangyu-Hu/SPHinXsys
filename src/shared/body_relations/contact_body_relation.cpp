@@ -2,6 +2,7 @@
 #include "all_particles.h"
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
+#include <numeric>
 
 namespace SPH
 {
@@ -187,6 +188,37 @@ SurfaceContactRelationToShell::SurfaceContactRelationToShell(SPHBody &sph_body, 
 }
 //=================================================================================================//
 void SurfaceContactRelationToShell::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            *body_surface_layer_, contact_configuration_[k],
+            *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
+SurfaceContactRelationFromShell::SurfaceContactRelationFromShell(SPHBody &sph_body, const RealBodyVector &contact_bodies)
+    : SurfaceContactRelation(sph_body, contact_bodies)
+{
+    // Fix invalid list of particles ids with shell (in case body shape is absent by the time of construction)
+    body_part_particles_.resize(sph_body.getBaseParticles().total_real_particles_);
+    std::iota(body_part_particles_.begin(), body_part_particles_.end(), 0);
+}
+//=================================================================================================//
+SurfaceContactRelationFromShellToShell::SurfaceContactRelationFromShellToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies,
+                                                                               const StdVec<bool> &normal_corrections)
+    : SurfaceContactRelationFromShell(sph_body, contact_bodies)
+{
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_shell_contact_neighbors_.push_back(
+            neighbor_builder_contact_to_shell_ptrs_keeper_
+                .createPtr<NeighborBuilderSurfaceContactToShell>(sph_body_, *contact_bodies_[k], normal_corrections[k]));
+    }
+}
+//=================================================================================================//
+void SurfaceContactRelationFromShellToShell::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     for (size_t k = 0; k != contact_bodies_.size(); ++k)

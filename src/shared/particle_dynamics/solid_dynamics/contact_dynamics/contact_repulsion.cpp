@@ -6,7 +6,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 RepulsionForce<Contact<Inner<>>>::
-    RepulsionForce(SelfSurfaceContactRelation &self_contact_relation)
+    RepulsionForce(BaseInnerRelation &self_contact_relation)
     : RepulsionForce<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionForce"),
       ForcePrior(&base_particles_, "SelfRepulsionForce"), solid_(particles_->solid_),
       self_repulsion_density_(*particles_->getVariableByName<Real>("SelfRepulsionDensity")),
@@ -27,7 +27,7 @@ void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
         // force to mimic pressure
         force -= 2.0 * (p_star + impedance_p) * e_ij * inner_neighborhood.dW_ijV_j_[n];
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
 RepulsionForce<Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
@@ -122,5 +122,10 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
     repulsion_force_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
+void ShellContactForce::interaction(size_t index_i, Real dt)
+{
+    ContactForce::interaction(index_i, dt);
+    repulsion_force_[index_i] *= particles_->getSPHBody().getSPHBodyResolutionRef();
+}
 } // namespace solid_dynamics
 } // namespace SPH

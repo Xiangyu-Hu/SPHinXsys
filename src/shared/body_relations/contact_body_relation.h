@@ -190,7 +190,7 @@ class ContactRelationFromShell : public ContactRelationCrossResolution
 };
 
 /**
- * @class SurfaceContactRelation
+ * @class SurfaceContactRelationToShell
  * @brief The relation between a solid body and its contact shell bodies
  */
 class SurfaceContactRelationToShell : public SurfaceContactRelation
@@ -200,6 +200,35 @@ class SurfaceContactRelationToShell : public SurfaceContactRelation
     SurfaceContactRelationToShell(SelfSurfaceContactRelation &solid_body_relation_self_contact,
                                   const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections)
         : SurfaceContactRelationToShell(*solid_body_relation_self_contact.real_body_, contact_bodies, normal_corrections){};
+    void updateConfiguration() override;
+
+  private:
+    UniquePtrsKeeper<NeighborBuilderSurfaceContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
+    StdVec<NeighborBuilderSurfaceContactToShell *> get_shell_contact_neighbors_;
+};
+/**
+ * @class SurfaceContactRelationFromShell
+ * @brief The relation between a shell body and its contact solid bodies
+ */
+class SurfaceContactRelationFromShell : public SurfaceContactRelation
+{
+  public:
+    SurfaceContactRelationFromShell(SPHBody &sph_body, const RealBodyVector &contact_bodies);
+    SurfaceContactRelationFromShell(SelfSurfaceContactRelation &solid_body_relation_self_contact,
+                                    const RealBodyVector &contact_bodies)
+        : SurfaceContactRelationFromShell(*solid_body_relation_self_contact.real_body_, contact_bodies){};
+};
+/**
+ * @class SurfaceContactRelationFromShellToShell
+ * @brief The relation between a shell body and its contact shell bodies
+ */
+class SurfaceContactRelationFromShellToShell : public SurfaceContactRelationFromShell
+{
+  public:
+    SurfaceContactRelationFromShellToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections);
+    SurfaceContactRelationFromShellToShell(SelfSurfaceContactRelation &solid_body_relation_self_contact,
+                                           const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections)
+        : SurfaceContactRelationFromShellToShell(*solid_body_relation_self_contact.real_body_, contact_bodies, normal_corrections){};
     void updateConfiguration() override;
 
   private:
