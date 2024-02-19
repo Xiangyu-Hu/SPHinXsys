@@ -24,11 +24,11 @@ BoundingBox system_domain_bounds(Vec2d(-radius_x, -radius_y), Vec2d(radius_x, ra
 //----------------------------------------------------------------------
 /** Particle generator and constraint boundary for shell baffle. */
 // x=R*cos(theta), y=R*sin(theta)
-class ShellParticleGenerator : public SurfaceParticleGenerator
+class ShellParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit ShellParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ShellParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    void initializeGeometricVariables() override
     {
         Real theta = 0;
         while (theta < 2 * Pi)
@@ -61,7 +61,7 @@ int main(int ac, char *av[])
     shell.generateParticles<ShellParticleGenerator>();
 
     ObserverBody observer_curvature(sph_system, "observer_curvature");
-    observer_curvature.generateParticles<ObserverParticleGenerator>(observer_position);
+    observer_curvature.generateParticles<ParticleGeneratorObserver>(observer_position);
     //----------------------------------------------------------------------
     // Contact
     //----------------------------------------------------------------------
@@ -74,9 +74,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    shell.addBodyStateForRecording<Real>("AverageTotalMeanCurvature");
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    ObservingAQuantity<Real> observe_curvature(observer_contact, "AverageTotalMeanCurvature");
+    shell.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    ObservingAQuantity<Real> observe_curvature(observer_contact, "Average1stPrincipleCurvature");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -97,8 +97,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     const Real x_curvature_analytical = radius_x / radius_y / radius_y;
     const Real y_curvature_analytical = radius_y / radius_x / radius_x;
-    const Real x_curvature = (*observe_curvature.interpolated_quantities_)[0];
-    const Real y_curvature = (*observe_curvature.interpolated_quantities_)[1];
+    const Real x_curvature = (*observe_curvature.getParticles()->getVariableByName<Real>("Average1stPrincipleCurvature"))[0];
+    const Real y_curvature = (*observe_curvature.getParticles()->getVariableByName<Real>("Average1stPrincipleCurvature"))[1];
 
     std::cout << "Analytical curvature x: " << x_curvature_analytical
               << "\t Curvature x: " << x_curvature

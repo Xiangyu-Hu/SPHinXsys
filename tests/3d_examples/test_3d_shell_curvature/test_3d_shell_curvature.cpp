@@ -23,7 +23,7 @@ Real physical_viscosity = 200.0;
 //----------------------------------------------------------------------
 //	Define the body shape.
 //----------------------------------------------------------------------
-class ParticleGeneratorDirect final : public SPH::ParticleGenerator
+class ParticleGeneratorDirect final : public SPH::ParticleGenerator<Base>
 {
     // Particle generation fully performed by SPHBody::generateParticles(...) in base_body.h
     // Enable construction only by a SPHBody to prevent misuse
@@ -49,11 +49,11 @@ class ParticleGeneratorDirect final : public SPH::ParticleGenerator
         }
     };
 };
-class ShellParticleGenerator : public SurfaceParticleGenerator
+class ShellParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit ShellParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ShellParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    void initializeGeometricVariables() override
     {
         Real dphi = resolution_ref / radius;
         int particle_number_phi = int(2 * Pi / dphi);
@@ -177,7 +177,7 @@ int main(int ac, char *av[])
     shell.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     shell.addBodyStateForRecording<Real>("1stPrincipleCurvature");
     shell.addBodyStateForRecording<Real>("2ndPrincipleCurvature");
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     write_real_body_states.writeToFile();
     /**
      * From here the time stepping begins.
