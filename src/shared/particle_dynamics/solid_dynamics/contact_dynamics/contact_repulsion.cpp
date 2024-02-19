@@ -27,7 +27,7 @@ void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
         // force to mimic pressure
         force -= 2.0 * (p_star + impedance_p) * e_ij * inner_neighborhood.dW_ijV_j_[n];
     }
-    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
+    repulsion_force_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 RepulsionForce<Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)

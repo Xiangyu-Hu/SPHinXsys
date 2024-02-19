@@ -464,7 +464,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
         Real W_ij_corrected = W_ijV_j_ttl / Vol_j * particle_distance_ / thickness_[index_j];
         // change surface mass and area to volumetric mass and volume
-        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_ * particle_distance_;
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_

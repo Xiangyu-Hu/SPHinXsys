@@ -45,7 +45,7 @@ const Real c_f = 10.0 * U_max;
 const Real rho0_s = 1250.0; /**< Reference density.*/
 const Real hardness = 50;   // Durometer hardnes: 50A
 const Real youngs_modulus =
-    std::pow(10, 0.0235 * hardness - 0.6403) * 1e3; // actual: 1e6, ref: https://doi.org/10.5254/1.3547752 eq. 12A
+    std::pow(10, 0.0235 * hardness - 0.6403) * 1e5; // actual: 1e6, ref: https://doi.org/10.5254/1.3547752 eq. 12A
 const Real poisson_ratio = 0.495;
 const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * youngs_modulus) * thickness_balloon;
 //----------------------------------------------------------------------
@@ -407,7 +407,7 @@ int main(int ac, char *av[])
                     }
                     dt = SMIN(dt_temp, Dt - relaxation_time);
                     fluid_pressure_relaxation.exec(dt);
-                    // emitter_buffer_inflow_condition.exec();
+                    emitter_buffer_inflow_condition.exec();
                     pressure_force_on_shell.exec();
 
                     fluid_density_relaxation.exec(dt);
