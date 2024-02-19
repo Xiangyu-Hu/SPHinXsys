@@ -8,14 +8,14 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.025;
+Real particle_spacing = 0.01;
 Real gravity_g = 0.0;
 Real end_time = 30.0;
 
 // material properties
-Real rho = 1000.0;        // reference density
-Real u_lid = 1.0;         // lid velocity
-Real SOS = 50.0 * u_lid; // numerical speed of sound
+Real rho = 1000.0;       // reference density
+Real u_lid = 1.0;        // lid velocity
+Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
 Real K = 1;     // consistency index
@@ -26,8 +26,8 @@ Real min_shear_rate = 1e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+3; // cutoff high shear rate
 
 // mesh geometry data
-std::string path_to_lid_boundary = "./input/lid_boundary.stl";
-std::string path_to_no_slip_boundary = "./input/no_slip_boundary.stl";
+std::string path_to_lid_boundary = "./input/lid_boundary_adapted.stl";
+std::string path_to_no_slip_boundary = "./input/no_slip_boundary_adapted.stl";
 std::string path_to_slip_boundary = "./input/slip_boundary.stl";
 std::string path_to_fluid = "./input/fluid.stl";
 
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_no_slip);
 
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
+    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -178,7 +178,7 @@ int main(int ac, char *av[])
         vel_grad_calculation.exec(Dt);
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
-        transport_velocity_correction.exec(Dt);
+        // transport_velocity_correction.exec(Dt);
 
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
