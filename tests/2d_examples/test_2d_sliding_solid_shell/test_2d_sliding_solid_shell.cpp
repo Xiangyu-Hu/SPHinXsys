@@ -17,7 +17,7 @@ const Real Lx = DL * cos(angle);
 const Real Ly = DL * sin(angle);
 const Real resolution_ref = L / 20.0; /**< reference particle spacing. */
 const Real resolution_shell = 0.5 * resolution_ref;
-const Real thickness_shell = resolution_shell;
+const Real thickness_shell = resolution_ref;
 const Real BW = resolution_ref * 4; /**< wall width for BCs. */
 /** Domain bounds of the system. */
 const BoundingBox system_domain_bounds(Vec2d(-BW *cos(angle), -Ly - BW * sin(angle)), Vec2d(Lx + BW * cos(angle), L));
@@ -88,6 +88,7 @@ int main(int ac, char *av[])
     free_cube.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
+    wall_boundary.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<WallBoundaryParticleGenerator>();
 
@@ -123,7 +124,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ShellContactDensityUsingDummyParticles> free_cube_update_contact_density(free_cube_contact);
+    InteractionDynamics<solid_dynamics::ContactDensitySummation> free_cube_update_contact_density(free_cube_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     /** Damping*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
@@ -189,7 +190,9 @@ int main(int ac, char *av[])
                 }
                 free_cube_update_contact_density.exec();
                 free_cube_compute_solid_contact_forces.exec();
+
                 free_cube_stress_relaxation_first_half.exec(dt);
+                damping.exec(dt);
                 free_cube_stress_relaxation_second_half.exec(dt);
 
                 free_cube.updateCellLinkedList();
