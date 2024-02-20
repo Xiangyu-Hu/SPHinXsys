@@ -13,19 +13,19 @@ namespace fluid_dynamics
 	Real WallFunction:: get_dimensionless_velocity(Real y_star)
 	{
 		Real dimensionless_velocity = log_law_wall_functon(y_star);
-		//if (y_star < 11.225 && GlobalStaticVariables::physical_time_ > start_time_laminar_)
-			//dimensionless_velocity = laminar_law_wall_functon(y_star);
+		if (y_star < 11.225 && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+			dimensionless_velocity = laminar_law_wall_functon(y_star);
+		if (std::isnan(dimensionless_velocity) || std::isinf(dimensionless_velocity))
+		{
+			std::cout << "u_star=" << dimensionless_velocity << std::endl;
+			std::cout << "y_star=" << y_star << std::endl;
+			system("pause");
+		}
 		return dimensionless_velocity;
 	}
 	Real WallFunction::log_law_wall_functon(Real y_star)
 	{
 		Real u_star = log(turbu_const_E * y_star ) / Karman;
-		if (std::isnan(u_star) || std::isinf(u_star))
-		{
-			std::cout << "u_star=" << u_star << std::endl;
-			std::cout << "y_star=" << y_star << std::endl;
-			system("pause");
-		}
 		return u_star;
 	}
 	Real WallFunction::laminar_law_wall_functon(Real y_star)
@@ -151,6 +151,7 @@ namespace fluid_dynamics
 		//** for test */
 		k_diffusion_[index_i] = k_lap;
 		vel_x_[index_i] = vel_[index_i][0];
+
 	}
 	//=================================================================================================//
 	void K_TurtbulentModelInner::update(size_t index_i, Real dt)
@@ -308,12 +309,16 @@ namespace fluid_dynamics
 		ForcePrior(&base_particles_, "ViscousForce")
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
+		this->particles_->registerSortableVariable<Vecd>("ViscousAccInner");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccInner");
 	}
 //=================================================================================================//
 	void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 	{
 		Real mu_eff_i = turbu_mu_[index_i] + molecular_viscosity_;
+		
+		visc_acc_inner_[index_i] = Vecd::Zero();
+
 		Vecd force = Vecd::Zero();
 		Vecd vel_derivative = Vecd::Zero();
 		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -339,6 +344,7 @@ namespace fluid_dynamics
 		: BaseTurbuViscousForceWithWall(wall_contact_relation)
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
+		this->particles_->registerSortableVariable<Vecd>("ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
 	}
 //=================================================================================================//
@@ -350,6 +356,9 @@ namespace fluid_dynamics
 		Real y_p = this->y_p_[index_i];
 		Real y_star = this->wall_Y_star_[index_i];
 		int is_near_wall_P2 = this->is_near_wall_P2_[index_i];
+		
+		this->visc_acc_wall_[index_i] = Vecd::Zero();
+		
 		//** Wall viscous force only affects P2 region fluid particles *
 		if (this->is_near_wall_P2_[index_i] != 10)
 			return;

@@ -40,20 +40,20 @@ StdVec<Real> initial_turbu_values = { 1.0 ,1.0 ,1.0 };
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 //**Data package from FVM13 *
-Real U_max = 2.2;
-Real U_f = 2.2; //*Characteristic velo is regarded as average velo here
-Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
-Real rho0_f = 1.0;                                            /**< Density. */
-Real mu_f = 0.00005;
-Real gravity_g = 0.0191737;
-
-//**Data package from FVM14 *
-//Real U_max = 2.4;
-//Real U_f = 2.0; //*Characteristic velo is regarded as average velo here
+//Real U_max = 2.2;
+//Real U_f = 2.2; //*Characteristic velo is regarded as average velo here
 //Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 //Real rho0_f = 1.0;                                            /**< Density. */
-//Real mu_f = 0.0005;
-//Real gravity_g = 0.04770717;
+//Real mu_f = 0.00005;
+//Real gravity_g = 0.0191737;
+
+//**Data package from FVM14 *
+Real U_max = 2.4;
+Real U_f = 2.0; //*Characteristic velo is regarded as average velo here
+Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
+Real rho0_f = 1.0;                                            /**< Density. */
+Real mu_f = 0.0005;
+Real gravity_g = 0.04770717;
 
 //**Data package from FVM15 *
 //Real U_max = 2.4;
