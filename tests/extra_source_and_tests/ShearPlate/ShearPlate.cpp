@@ -11,7 +11,7 @@ using namespace SPH;
 Real particle_spacing = 0.01;
 Real gravity_g = 0.0;
 Real end_time = 10.0;
-int nmbr_of_outputs = 1000;
+int nmbr_of_outputs = 100;
 
 // material properties
 Real rho = 1.0;          // reference density
