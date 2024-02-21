@@ -66,9 +66,12 @@ namespace fluid_dynamics
 		virtual ~WallFunction() {};
 
 		Real get_dimensionless_velocity(Real y_star);
+		Real get_near_wall_velocity_gradient_magnitude(Real y_star, Real vel_fric_mag, Real denominator_log_law, Real dynamic_viscosity);
 
 		Real log_law_wall_functon(Real y_star);
 		Real laminar_law_wall_functon(Real y_star);
+		Real log_law_velocity_gradient(Real vel_fric_mag, Real denominator_log_law);
+		Real laminar_law_velocity_gradient(Real vel_fric_mag, Real dynamic_viscosity);
 	};
 //=================================================================================================//
 	template <typename... InteractionTypes>

@@ -23,15 +23,35 @@ namespace fluid_dynamics
 		}
 		return dimensionless_velocity;
 	}
+	//=================================================================================================//
+	Real WallFunction:: get_near_wall_velocity_gradient_magnitude(Real y_star, Real vel_fric_mag, Real denominator_log_law, Real dynamic_viscosity)
+	{
+		Real vel_grad_mag = log_law_velocity_gradient(vel_fric_mag, denominator_log_law);
+		//if (y_star < 11.225 && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+			//vel_grad_mag = laminar_law_velocity_gradient(vel_fric_mag, dynamic_viscosity);
+		return vel_grad_mag;
+	}
+	//=================================================================================================//
 	Real WallFunction::log_law_wall_functon(Real y_star)
 	{
 		Real u_star = log(turbu_const_E * y_star ) / Karman;
 		return u_star;
 	}
+	//=================================================================================================//
 	Real WallFunction::laminar_law_wall_functon(Real y_star)
 	{
 		Real u_star = y_star ;
 		return u_star;
+	}
+	//=================================================================================================//
+	Real WallFunction::log_law_velocity_gradient(Real vel_fric_mag, Real denominator_log_law)
+	{
+		return vel_fric_mag * vel_fric_mag / denominator_log_law;
+	}
+	//=================================================================================================//
+	Real WallFunction::laminar_law_velocity_gradient(Real vel_fric_mag, Real dynamic_viscosity)
+	{
+		return vel_fric_mag * vel_fric_mag / dynamic_viscosity;
 	}
 //=================================================================================================//
     void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
@@ -704,8 +724,9 @@ namespace fluid_dynamics
 		if (is_near_wall_P2_[index_i] == 10)
 		{
 			//** Choose one kind of the distance to calculate the wall-nearest values *
-			Real r_dummy_normal = distance_to_dummy_interface_up_average_[index_i];
+			//Real r_dummy_normal = distance_to_dummy_interface_up_average_[index_i];
 			//Real r_dummy_normal = distance_to_dummy_interface_[index_i];
+			Real r_dummy_normal = distance_to_dummy_interface_levelset_[index_i];
 
 			if (r_dummy_normal <= TinyReal)
 			{
@@ -724,7 +745,7 @@ namespace fluid_dynamics
 			wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / molecular_viscosity_;
 			
 			//** Calculate friction velocity, including P2 region. *  
-			Real velo_fric(0.0);
+			Real velo_fric_mag = 0.0;
 			Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
 
 			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
@@ -734,12 +755,12 @@ namespace fluid_dynamics
 				//log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * y_p_[index_i] * rho_i / mu_)));
 
 			Real u_star = get_dimensionless_velocity(wall_Y_star_[index_i]);
-			velo_fric = sqrt(pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * velo_tan/ u_star);
+			velo_fric_mag = sqrt(pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * velo_tan/ u_star);
 
-			if (velo_fric != static_cast<Real>(velo_fric))
+			if (velo_fric_mag != static_cast<Real>(velo_fric_mag))
 			{
 				std::cout << "friction velocity is not a real, please check" << std::endl;
-				std::cout << "velo_fric=" << velo_fric << "velo_tan=" << velo_tan << std::endl;
+				std::cout << "velo_fric=" << velo_fric_mag << "velo_tan=" << velo_tan << std::endl;
 				std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
 				std::cout << "sum=" << (Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
 					log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_)) << std::endl;
@@ -750,12 +771,12 @@ namespace fluid_dynamics
 			}
 
 			//** friction velocity have the same direction of vel_i, if not, change its direction *
-			velo_friction_[index_i] = velo_fric * e_i_nearest_tau;
+			velo_friction_[index_i] = velo_fric_mag * e_i_nearest_tau;
 			if (vel_i.dot(velo_friction_[index_i]) < 0.0)
 				velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
 
 			//** Calcualte Y_plus  *
-			wall_Y_plus_[index_i] = y_p_[index_i] * velo_fric * rho_i / molecular_viscosity_;
+			wall_Y_plus_[index_i] = y_p_[index_i] * velo_fric_mag * rho_i / molecular_viscosity_;
 			
 			// ** Correct the near wall values, only for P1 region *
 			Matd vel_grad_i_tn = Matd::Zero();  //** velocity gradient of wall-nearest fluid particle i on t-n plane *
@@ -763,10 +784,13 @@ namespace fluid_dynamics
 			if (is_near_wall_P1_[index_i] == 1)
 			{
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
-				Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
-				//Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * 0.5 * 0.05; //** 0.50 is particle spacing *
+				
+				Real denominator_log_law = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
+				//Real denominator_log_law = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * 0.5 * 0.05; //** 0.50 is particle spacing *
 
-				Real dudn = velo_fric * velo_fric * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator;
+				//Real dudn = velo_fric_mag * velo_fric_mag * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator_log_law;
+				Real dudn_mag = get_near_wall_velocity_gradient_magnitude(wall_Y_star_[index_i], velo_fric_mag, denominator_log_law, molecular_viscosity_ / rho_i);
+				Real dudn = dudn_mag * boost::qvm::sign(vel_i.dot(e_i_nearest_tau));
 				vel_grad_i_tn(0, 0) = 0.0;
 				vel_grad_i_tn(0, 1) = dudn;
 				vel_grad_i_tn(1, 0) = 0.0;
@@ -774,7 +798,8 @@ namespace fluid_dynamics
 				Q = getTransformationMatrix(e_i_nearest_n);
 				velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
 
-				k_production_[index_i] =  rho_i * pow(velo_fric, 4) / denominator;
+				k_production_[index_i] = rho_i * velo_fric_mag * velo_fric_mag * dudn_mag;
+				//k_production_[index_i] =  rho_i * pow(velo_fric_mag, 4) / denominator_log_law;
 			}
 		}
 	}
