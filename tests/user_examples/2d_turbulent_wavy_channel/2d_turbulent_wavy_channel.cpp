@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
+    InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
 
     /** Turbulent standard wall function needs normal vectors of wall. */
     NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));

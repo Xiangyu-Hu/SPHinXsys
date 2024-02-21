@@ -100,7 +100,7 @@ protected:
 	
 	//** Test K gradient *
 	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner, SequencedPolicy> turbulent_kinetic_energy_acceleration;
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
+	InteractionDynamics<fluid_dynamics::TKEnergyForceComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
 
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;

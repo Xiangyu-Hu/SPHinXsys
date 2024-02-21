@@ -57,6 +57,7 @@ namespace fluid_dynamics
 		
 		//** Start time for laminar law *
 		Real start_time_laminar_;
+		Real y_star_threshold_;
 	};
 //=================================================================================================//
 	class WallFunction : public BaseTurbuClosureCoeff
@@ -104,11 +105,23 @@ namespace fluid_dynamics
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
 	using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
+	
+	//** Wall part *
+	template <>
+	class GetVelocityGradient<Contact<>> : public GetVelocityGradient<Base, FluidContactData>
+	{
+	public:
+		explicit GetVelocityGradient(BaseContactRelation& contact_relation)
+			: GetVelocityGradient<Base, FluidContactData>(contact_relation) {};
+		virtual ~GetVelocityGradient() {};
+		void interaction(size_t index_i, Real dt = 0.0);
+	};
+	
 	//** Interface part *
-	//template <class InnerInteractionType>
-	//using BaseGetVelocityGradientInner = GetVelocityGradient<InnerInteractionType>;
+	template <class InnerInteractionType, class... ContactInteractionTypes>
+	using BaseGetVelocityGradientComplex = ComplexInteraction<GetVelocityGradient<InnerInteractionType, ContactInteractionTypes...>>;
 
-	//using GetVelocityGradientInner = BaseGetVelocityGradientInner<Inner<>>;
+	using GetVelocityGradientComplex = BaseGetVelocityGradientComplex<Inner<>, Contact<>>;
 //=================================================================================================//
 	template <typename... T>
 	class BaseTurtbulentModel;
@@ -234,9 +247,9 @@ namespace fluid_dynamics
 
 	//** Interface part *
 	template <class InnerInteractionType, class... ContactInteractionTypes>
-	using BaseTKEnergyAccComplex = ComplexInteraction<TKEnergyForce<InnerInteractionType, ContactInteractionTypes...>>;
+	using BaseTKEnergyForceComplex = ComplexInteraction<TKEnergyForce<InnerInteractionType, ContactInteractionTypes...>>;
 
-	using TKEnergyAccComplex = BaseTKEnergyAccComplex<Inner<>, Contact<>>;
+	using TKEnergyForceComplex = BaseTKEnergyForceComplex<Inner<>, Contact<>>;
 //=================================================================================================//
 	template <typename... InteractionTypes>
 	class TurbuViscousForce;

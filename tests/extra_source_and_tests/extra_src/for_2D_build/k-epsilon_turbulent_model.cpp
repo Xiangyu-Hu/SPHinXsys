@@ -8,12 +8,13 @@ namespace fluid_dynamics
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 		: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
-		C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), start_time_laminar_(50.0){}
+		C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), 
+		start_time_laminar_(50.0), y_star_threshold_(11.225){}
 //=================================================================================================//
 	Real WallFunction:: get_dimensionless_velocity(Real y_star)
 	{
 		Real dimensionless_velocity = log_law_wall_functon(y_star);
-		if (y_star < 11.225 && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+		if (y_star < y_star_threshold_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
 			dimensionless_velocity = laminar_law_wall_functon(y_star);
 		if (std::isnan(dimensionless_velocity) || std::isinf(dimensionless_velocity))
 		{
@@ -27,7 +28,7 @@ namespace fluid_dynamics
 	Real WallFunction:: get_near_wall_velocity_gradient_magnitude(Real y_star, Real vel_fric_mag, Real denominator_log_law, Real dynamic_viscosity)
 	{
 		Real vel_grad_mag = log_law_velocity_gradient(vel_fric_mag, denominator_log_law);
-		//if (y_star < 11.225 && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+		//if (y_star < y_star_threshold_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
 			//vel_grad_mag = laminar_law_velocity_gradient(vel_fric_mag, dynamic_viscosity);
 		return vel_grad_mag;
 	}
@@ -73,6 +74,11 @@ namespace fluid_dynamics
 			}
 		}
     }
+	//=================================================================================================//
+	void GetVelocityGradient<Contact<>>::interaction(size_t index_i, Real dt)
+	{
+
+	}
 //=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
@@ -800,6 +806,12 @@ namespace fluid_dynamics
 
 				k_production_[index_i] = rho_i * velo_fric_mag * velo_fric_mag * dudn_mag;
 				//k_production_[index_i] =  rho_i * pow(velo_fric_mag, 4) / denominator_log_law;
+
+				//** In the laminar region, generation equals dissipation *
+				//if (wall_Y_star_[index_i] < y_star_threshold_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+				//{
+				//	k_production_[index_i] = turbu_epsilon_[index_i];
+				//}
 			}
 		}
 	}
