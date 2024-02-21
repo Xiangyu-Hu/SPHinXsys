@@ -241,10 +241,6 @@ VelocityGradient<Contact<Wall>>::VelocityGradient(BaseContactRelation &contact_r
     : InteractionWithWall<VelocityGradient>(contact_relation),
       combined_velocity_gradient_(*particles_->getVariableByName<Matd>("CombinedVelocityGradient"))
 {
-    for (size_t k = 0; k != contact_particles_.size(); ++k)
-    {
-        contact_vel_.push_back(&(contact_particles_[k]->vel_));
-    }
 }
 
 //=================================================================================================//

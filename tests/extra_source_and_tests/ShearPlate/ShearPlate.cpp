@@ -8,9 +8,10 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.025;
+Real particle_spacing = 0.01;
 Real gravity_g = 0.0;
-Real end_time = 15.0;
+Real end_time = 10.0;
+int nmbr_of_outputs = 1000;
 
 // material properties
 Real rho = 1.0;          // reference density
@@ -25,11 +26,11 @@ Real tau_y = 0; // yield stress
 Real min_shear_rate = 1e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+2; // cutoff high shear rate
 
-// mesh geometry data
-std::string path_to_lid_boundary = "./input/lid_boundary.stl";
-std::string path_to_no_slip_boundary = "./input/no_slip_walls.stl";
-std::string path_to_slip_boundary = "./input/slip_walls.stl";
-std::string path_to_fluid = "./input/fluid.stl";
+// geometry data
+Real height = 1;
+Real width = 1;
+Real length = particle_spacing * 5;         // length in periodic direction
+Real boundary_width = particle_spacing * 4; // boundary width
 
 //----------------------------------------------------------------------
 //	Complex shapes for wall boundary
@@ -39,7 +40,11 @@ class Lid_Boundary : public ComplexShape
   public:
     explicit Lid_Boundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(path_to_lid_boundary, Vecd(0.0, 0.0, 0.0), 1.0);
+        Vecd scaled_container(0.5 * width + boundary_width, 0.5 * boundary_width, 0.5 * length + boundary_width);
+        Transform translate_to_origin(scaled_container);
+        Vecd transform(-boundary_width, height, -boundary_width);
+        Transform translate_to_position(transform + scaled_container);
+        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_position), scaled_container);
     }
 };
 class No_Slip_Boundary : public ComplexShape
@@ -47,15 +52,11 @@ class No_Slip_Boundary : public ComplexShape
   public:
     explicit No_Slip_Boundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(path_to_no_slip_boundary, Vecd(0.0, 0.0, 0.0), 1.0);
-    }
-};
-class Slip_Boundary : public ComplexShape
-{
-  public:
-    explicit Slip_Boundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<TriangleMeshShapeSTL>(path_to_slip_boundary, Vecd(0.0, 0.0, 0.0), 1.0);
+        Vecd scaled_container(0.5 * width + boundary_width, 0.5 * boundary_width, 0.5 * length + boundary_width);
+        Transform translate_to_origin(scaled_container);
+        Vecd transform(-boundary_width, -boundary_width, -boundary_width);
+        Transform translate_to_position(transform + scaled_container);
+        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_position), scaled_container);
     }
 };
 class FluidFilling : public ComplexShape
@@ -63,7 +64,9 @@ class FluidFilling : public ComplexShape
   public:
     explicit FluidFilling(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(path_to_fluid, Vecd(0.0, 0.0, 0.0), 1.0);
+        Vecd scaled_container(0.5 * width, 0.5 * height, 0.5 * length);
+        Transform translate_to_origin(scaled_container);
+        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin), scaled_container);
     }
 };
 
@@ -78,7 +81,7 @@ class BoundaryVelocity
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        vel_[index_i][1] = u_lid;
+        vel_[index_i][0] = u_lid;
     }
 
   protected:
@@ -96,7 +99,7 @@ class InitialVelocity
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        vel_[index_i][1] = pos_[index_i][2] + 0.5;
+        vel_[index_i][0] = pos_[index_i][1];
     }
 
   protected:
@@ -106,7 +109,7 @@ class InitialVelocity
 int main(int ac, char *av[])
 {
     //	Build up an SPHSystem
-    BoundingBox system_domain_bounds(Vecd(-0.3, -0.7, -0.7), Vecd(0.3, 0.7, 0.7));
+    BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2, -boundary_width), Vecd(width + boundary_width * 2, height + boundary_width * 2, length + boundary_width * 3));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
@@ -120,11 +123,6 @@ int main(int ac, char *av[])
     no_slip_boundary.generateParticles<ParticleGeneratorLattice>();
     no_slip_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-    SolidBody slip_boundary(sph_system, makeShared<Slip_Boundary>("SlipWall"));
-    slip_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    slip_boundary.generateParticles<ParticleGeneratorLattice>();
-    slip_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
-
     SolidBody lid_boundary(sph_system, makeShared<Lid_Boundary>("LidWall"));
     lid_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     lid_boundary.generateParticles<ParticleGeneratorLattice>();
@@ -132,8 +130,7 @@ int main(int ac, char *av[])
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
-    ContactRelation fluid_all_walls(fluid, {&lid_boundary, &slip_boundary, &no_slip_boundary});
-    ContactRelation fluid_no_slip(fluid, {&lid_boundary, &no_slip_boundary});
+    ContactRelation fluid_all_walls(fluid, {&lid_boundary, &no_slip_boundary});
 
     ComplexRelation fluid_walls_complex(fluid_inner, fluid_all_walls);
 
@@ -142,15 +139,16 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
     SimpleDynamics<BoundaryVelocity> boundary_condition(lid_boundary);
     SimpleDynamics<InitialVelocity> initial_condition(fluid);
-    PeriodicConditionUsingCellLinkedList periodic_condition(fluid, fluid.getBodyShapeBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(fluid, fluid.getBodyShapeBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_z(fluid, fluid.getBodyShapeBounds(), zAxis);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_inner, fluid_all_walls);
 
-    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_no_slip);
+    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_all_walls);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
-    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_no_slip);
+    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_all_walls);
 
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
@@ -164,6 +162,8 @@ int main(int ac, char *av[])
 
     //	Prepare the simulation
     sph_system.initializeSystemCellLinkedLists();
+    periodic_condition_x.update_cell_linked_list_.exec();
+    periodic_condition_z.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     constant_gravity.exec();
     boundary_condition.exec();
@@ -171,7 +171,6 @@ int main(int ac, char *av[])
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    int nmbr_of_outputs = 100;
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
     Real Dt = 0;
@@ -215,7 +214,7 @@ int main(int ac, char *av[])
 
         if (iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
-            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
+            std::cout << std::fixed << std::setprecision(2) << std::scientific << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
         }
 
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
@@ -223,11 +222,13 @@ int main(int ac, char *av[])
             write_fluid_states.writeToFile();
             output_counter++;
         }
-        periodic_condition.bounding_.exec();
+        periodic_condition_x.bounding_.exec();
+        periodic_condition_z.bounding_.exec();
         fluid.updateCellLinkedListWithParticleSort(100);
-        periodic_condition.update_cell_linked_list_.exec();
+        periodic_condition_x.update_cell_linked_list_.exec();
+        periodic_condition_z.update_cell_linked_list_.exec();
         fluid_walls_complex.updateConfiguration();
-        fluid_no_slip.updateConfiguration();
+        fluid_all_walls.updateConfiguration();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
