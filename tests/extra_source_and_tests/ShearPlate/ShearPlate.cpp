@@ -106,8 +106,29 @@ class InitialVelocity
     BaseParticles *fluid_particles_;
 };
 
+void output_setup()
+{
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+    std::cout << "XXXXXXXXX Shear Plate Case XXXXXXXXX" << std::endl;
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+
+    std::cout << "     particle_spacing= " << particle_spacing << std::endl;
+    std::cout << "     end_time= " << end_time << std::endl;
+    std::cout << "     K= " << K << std::endl;
+    std::cout << "     n= " << n << std::endl;
+    std::cout << "     tau_y= " << tau_y << std::endl;
+    std::cout << "     min_shear_rate= " << min_shear_rate << std::endl;
+    std::cout << "     max_shear_rate= " << max_shear_rate << std::endl;
+    std::cout << "     rho= " << rho << std::endl;
+    std::cout << "     u_lid= " << u_lid << std::endl;
+    std::cout << "     SOS= " << SOS << std::endl;
+
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+}
+
 int main(int ac, char *av[])
 {
+    output_setup();
     //	Build up an SPHSystem
     BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2, -boundary_width), Vecd(width + boundary_width * 2, height + boundary_width * 2, length + boundary_width * 3));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);

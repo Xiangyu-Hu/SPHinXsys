@@ -10,13 +10,8 @@ using namespace SPH;
 // setup properties
 Real particle_spacing = 0.005;
 Real gravity_g = 0.0;
-Real end_time = 30.0;
+Real end_time = 50.0;
 int nmbr_of_outputs = 100;
-
-// material properties
-Real rho = 1000.0;       // reference density
-Real u_lid = 1.0;        // lid velocity
-Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
 Real K = 1;     // consistency index
@@ -25,6 +20,11 @@ Real tau_y = 0; // yield stress
 
 Real min_shear_rate = 1e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+3; // cutoff high shear rate
+
+// material properties
+Real rho = 1000.0;                            // reference density
+Real u_lid = 1.0;                             // lid velocity
+Real SOS = 10.0 * SMAX(u_lid, std::sqrt(12)); // numerical speed of sound
 
 // geometry data
 Real height = 1;
@@ -99,8 +99,29 @@ class BoundaryVelocity
     BaseParticles *fluid_particles_;
 };
 
+void output_setup()
+{
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+    std::cout << "XXXXXX Lid Driven Cavity Case XXXXXX" << std::endl;
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+
+    std::cout << "     particle_spacing= " << particle_spacing << std::endl;
+    std::cout << "     end_time= " << end_time << std::endl;
+    std::cout << "     K= " << K << std::endl;
+    std::cout << "     n= " << n << std::endl;
+    std::cout << "     tau_y= " << tau_y << std::endl;
+    std::cout << "     min_shear_rate= " << min_shear_rate << std::endl;
+    std::cout << "     max_shear_rate= " << max_shear_rate << std::endl;
+    std::cout << "     rho= " << rho << std::endl;
+    std::cout << "     u_lid= " << u_lid << std::endl;
+    std::cout << "     SOS= " << SOS << std::endl;
+
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+}
+
 int main(int ac, char *av[])
 {
+    output_setup();
     //	Build up an SPHSystem
     BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2, -boundary_width), Vecd(width + boundary_width * 2, height + boundary_width * 2, length + boundary_width * 3));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
