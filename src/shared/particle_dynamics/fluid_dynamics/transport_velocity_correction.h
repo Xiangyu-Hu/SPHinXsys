@@ -74,9 +74,10 @@ class TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    const Real correction_scaling_;
+    const Real h_ref_, correction_scaling_;
     StdLargeVec<Vecd> &pos_;
     ResolutionType h_ratio_;
+    StdLargeVec<Real> correction_faction_;
 };
 template <class ParticleScope>
 using TransportVelocityCorrectionInner =

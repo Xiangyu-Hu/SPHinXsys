@@ -19,8 +19,13 @@ template <class ResolutionType, typename... CommonControlTypes>
 TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
     : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(inner_relation),
-      correction_scaling_(coefficient * pow(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-      pos_(this->particles_->pos_), h_ratio_(this->particles_) {}
+      h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      correction_scaling_(coefficient * h_ref_ * h_ref_),
+      pos_(this->particles_->pos_), h_ratio_(this->particles_)
+      {
+        this->particles_->registerVariable(correction_faction_, "CorrectionFaction");
+        this->particles_->template addVariableToWrite<Real>("CorrectionFaction");
+      }
 //=================================================================================================//
 template <class ResolutionType, typename... CommonControlTypes>
 void TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
@@ -48,7 +53,10 @@ void TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>::
     if (this->checkWithinScope(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        pos_[index_i] += correction_scaling_ * this->transport_acc_[index_i] * inv_h_ratio * inv_h_ratio;
+        Real error_scale = this->transport_acc_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        correction_faction_[index_i] = SMIN(1.0e2 * error_scale, Real(1));
+        pos_[index_i] += correction_scaling_ * correction_faction_[index_i] *
+        this->transport_acc_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
 //=================================================================================================//
