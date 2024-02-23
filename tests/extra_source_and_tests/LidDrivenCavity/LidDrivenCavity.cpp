@@ -8,9 +8,9 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.005;
+Real particle_spacing = 0.01;
 Real gravity_g = 0.0;
-Real end_time = 50.0;
+Real end_time = 30.0;
 int nmbr_of_outputs = 100;
 
 // non-Newtonian properties
@@ -99,6 +99,27 @@ class BoundaryVelocity
     BaseParticles *fluid_particles_;
 };
 
+class ChangingBoundaryVelocity : public fluid_dynamics::FluidInitialCondition
+{
+  public:
+    ChangingBoundaryVelocity(SPHBody &sph_body) : fluid_dynamics::FluidInitialCondition(sph_body),
+                                                  fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())){};
+    void update(size_t index_i, Real dt)
+    {
+        if (vel_[index_i][0] < 1)
+        {
+            vel_[index_i][0] += u_lid / 1000;
+        }
+        else
+        {
+            vel_[index_i][0] = u_lid;
+        }
+    }
+
+  protected:
+    BaseParticles *fluid_particles_;
+};
+
 void output_setup()
 {
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
@@ -151,7 +172,8 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation
     Gravity gravity(Vec3d(0.0, 0.0, gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
-    SimpleDynamics<BoundaryVelocity> boundary_velocity(lid_boundary);
+    // SimpleDynamics<BoundaryVelocity> boundary_velocity(lid_boundary);
+    SimpleDynamics<ChangingBoundaryVelocity> boundary_velocity(lid_boundary);
     PeriodicConditionUsingCellLinkedList periodic_condition_z(fluid, fluid.getBodyShapeBounds(), zAxis);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_all_walls);
@@ -177,7 +199,7 @@ int main(int ac, char *av[])
     periodic_condition_z.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     constant_gravity.exec();
-    boundary_velocity.exec();
+    // boundary_velocity.exec();
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
@@ -199,6 +221,7 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
+        boundary_velocity.exec();
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
         Dt = SMIN(Dt_visc, Dt_adv);

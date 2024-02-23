@@ -10,29 +10,31 @@ using namespace SPH;
 // setup data
 Real particle_spacing = 0.001;
 Real gravity_g = 9.81;
-Real end_time = 0.5;
+Real end_time = 3;
+bool relaxation = false;
 
 // material properties
 Real rho = 1000.0; // reference density
-Real omega = 7 * 3.14 * 2;
+Real RPS = 5;      // revolutions per second
+Real omega = RPS * 3.14 * 2;
 Real U_ref = 0.0735 * 0.5 * omega;
-Real SOS = 10.0 * U_ref; /**< Reference sound speed. */
+Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.287)); // numerical speed of sound (0.287 is the fluid column height)
 
 // non-Newtonian properties
-Real K = 4.58;     // consistency index
-Real n = 0.46;     // power index
-Real tau_y = 18.9; // yield stress
+Real K = 119.4e-3; // consistency index
+Real n = 0.68;     // power index
+Real tau_y = 0;    // yield stress
 
-Real min_shear_rate = 1e-3; // cutoff low shear rate
+Real min_shear_rate = 5e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
 // std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
-std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
+std::string full_path_to_shaft = "./input/impeller_286_new.stl";
 
-std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
+std::string full_path_to_housing = "./input/tank_286_new.stl";
 
-std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
+std::string full_path_to_fluid = "./input/fluid_286_new.stl";
 
 std::string full_path_to_refinement = "./input/Refinement.stl";
 
@@ -88,13 +90,34 @@ class Refinement : public ComplexShape
     }
 };
 
+void output_setup()
+{
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+    std::cout << "XXXXXX Lid Driven Cavity Case XXXXXX" << std::endl;
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+
+    std::cout << "     particle_spacing= " << particle_spacing << std::endl;
+    std::cout << "     end_time= " << end_time << std::endl;
+    std::cout << "     K= " << K << std::endl;
+    std::cout << "     n= " << n << std::endl;
+    std::cout << "     tau_y= " << tau_y << std::endl;
+    std::cout << "     min_shear_rate= " << min_shear_rate << std::endl;
+    std::cout << "     max_shear_rate= " << max_shear_rate << std::endl;
+    std::cout << "     rho= " << rho << std::endl;
+    std::cout << "     u_ref= " << U_ref << std::endl;
+    std::cout << "     SOS= " << SOS << std::endl;
+
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+}
+
 int main(int ac, char *av[])
 {
+    output_setup();
     //	Build up an SPHSystem
-    BoundingBox system_domain_bounds(Vecd(-0.085, -0.085, -0.01), Vecd(0.085, 0.085, 0.22));
+    BoundingBox system_domain_bounds(Vecd(-0.16, -0.16, -0.001), Vecd(0.16, 0.16, 0.32));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(relaxation);
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
@@ -129,7 +152,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_wall_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_inner, fluid_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(fluid_inner, fluid_wall_contact);
 
     InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_wall_contact);
@@ -148,10 +171,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation.
         //----------------------------------------------------------------------
-        // SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_housing_particles(mixer_housing);
         SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_shaft_particles(mixer_shaft);
         SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_fluid_particles(fluid);
-        // relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_housing(housing_inner);
         relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_shaft(shaft_inner);
         relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex_fluid(ConstructorArgs(fluid_inner, "OuterBoundary"), fluid_shaft_contact);
 
@@ -237,9 +258,9 @@ int main(int ac, char *av[])
         TimeInterval tt;
         TickCount t2 = TickCount::now();
         tt = t2 - t1;
-        Dt = get_fluid_advection_time_step_size.exec();
+        Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
-        Dt = SMIN(Dt_visc, Dt);
+        Dt = SMIN(Dt_visc, Dt_adv);
 
         update_density_by_summation.exec(Dt);
 
