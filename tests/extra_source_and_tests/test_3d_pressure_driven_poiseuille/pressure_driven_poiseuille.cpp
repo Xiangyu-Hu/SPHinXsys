@@ -64,7 +64,7 @@ Real left_pressure = 5.0;
 Real right_pressure = 0.0;
 Real delta_p = left_pressure - right_pressure;
 Real mu_f = 3.5e-3;
-Real U_f = delta_p * radius * radius / (8 * (full_length - 2 * buffer_half_width) * mu_f);
+Real U_f = delta_p * radius * radius / (8 * full_length * mu_f);
 Real U_max = 2.5 * U_f; // analytical maximum velocity will be 2*U_f, using 2.5 for safty here
 Real c_f = 10 * U_max;
 Real rho0_f = 1050;
@@ -108,8 +108,8 @@ class InflowPressure : public fluid_dynamics::FlowPressureBuffer
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-Vec3d domain_lower_bound(-full_length, -2 * radius, -2 * radius);
-Vec3d domain_upper_bound(2 * full_length, 2 * radius, 2 * radius);
+Vec3d domain_lower_bound(-wall_thickness, -radius - wall_thickness, -radius - wall_thickness);
+Vec3d domain_upper_bound(full_length + wall_thickness, radius + wall_thickness, radius + wall_thickness);
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	Geomtrey
@@ -171,7 +171,8 @@ StdVec<Vec3d> generate_observation_location_radial()
  */
 int main(int ac, char *av[])
 {
-    std::cout << "U_f" << U_f << std::endl;
+    std::cout << "U_f = " << U_f << std::endl;
+    std::cout << "Reynolds number = " << diameter * 2 * U_f * rho0_f / mu_f << std::endl;
     /**
      * @brief Build up -- a SPHSystem --
      */
