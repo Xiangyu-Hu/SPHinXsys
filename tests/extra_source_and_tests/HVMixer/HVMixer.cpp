@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.001;
+Real particle_spacing = 0.002;
 Real gravity_g = 9.81;
 Real end_time = 3;
 bool relaxation = false;
@@ -30,7 +30,7 @@ Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
 // std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
-std::string full_path_to_shaft = "./input/impeller_286_new.stl";
+std::string full_path_to_shaft = "./input/impeller_286_new_enlarged.stl";
 
 std::string full_path_to_housing = "./input/tank_286_new.stl";
 
@@ -93,7 +93,7 @@ class Refinement : public ComplexShape
 void output_setup()
 {
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-    std::cout << "XXXXXX Lid Driven Cavity Case XXXXXX" << std::endl;
+    std::cout << "XXXXXXXXXXXX Mixer Case XXXXXXXXXXXX" << std::endl;
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
 
     std::cout << "     particle_spacing= " << particle_spacing << std::endl;
