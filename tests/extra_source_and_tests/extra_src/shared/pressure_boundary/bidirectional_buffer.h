@@ -91,16 +91,19 @@ class BidirectionalBuffer
     class Injection : public BaseDynamics<void>, public LocalDynamics, public GeneralDataDelegateSimple 
     {
       public:
+        bool &prescribe_pressure_; 
+
         Injection(ConcurrentIndexVector &buffer_particle_list, RealBody &real_body, SharedPtr<AlignedBoxShape> shape_ptr,
-                  size_t body_buffer_width, int axis_direction, BidirectionalBuffer& buffer) : 
-            BaseDynamics<void>(real_body), LocalDynamics(real_body),GeneralDataDelegateSimple(real_body),
+                  size_t body_buffer_width, int axis_direction, BidirectionalBuffer& buffer, bool prescribe_pressure) : 
+            BaseDynamics<void>(real_body), LocalDynamics(real_body), GeneralDataDelegateSimple(real_body), 
+            prescribe_pressure_(buffer.prescribe_pressure), 
             buffer_particle_list_(buffer_particle_list), aligned_box_(*shape_ptr.get()),
             fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), 
             pos_n_(particles_->pos_), rho_n_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
             axis_(axis_direction), body_buffer_width_(body_buffer_width),                                                                                                          
             previous_surface_indicator_(*particles_->getVariableByName<int>("PreviousSurfaceIndicator")),                                                                                                                 
             buffer_particle_indicator_(*particles_->getVariableByName<int>("BufferParticleIndicator")),
-            buffer_(buffer)           
+            buffer_(buffer)          
         {
             size_t total_body_buffer_particles = 1000.0 * body_buffer_width_;
             particles_->addBufferParticles(total_body_buffer_particles);
@@ -138,10 +141,13 @@ class BidirectionalBuffer
     };
 
   public:
+    bool prescribe_pressure;
+
     BidirectionalBuffer(RealBody &real_body, SharedPtr<AlignedBoxShape> shape_ptr,
-                        size_t body_buffer_width, int axis_direction) : 
+                        size_t body_buffer_width, int axis_direction, bool prescribe_pressure = true) : 
+        prescribe_pressure(prescribe_pressure),
         tag_buffer_particles(this->buffer_particle_list_, real_body, shape_ptr),                                                                                                                     
-        injection(this->buffer_particle_list_, real_body, shape_ptr, body_buffer_width, axis_direction, *this)
+        injection(this->buffer_particle_list_, real_body, shape_ptr, body_buffer_width, axis_direction, *this, prescribe_pressure)
     {
         buffer_particle_list_.clear();
     };
