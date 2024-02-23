@@ -65,9 +65,9 @@ Real right_pressure = 0.0;
 Real delta_p = left_pressure - right_pressure;
 Real mu_f = 3.5e-3;
 Real U_f = delta_p * radius * radius / (8 * (full_length - 2 * buffer_half_width) * mu_f);
-Real U_max = 2.5 * U_f;
+Real U_max = 2.5 * U_f; // analytical maximum velocity will be 2*U_f, using 2.5 for safty here
 Real c_f = 10 * U_max;
-Real rho0_f = 1060;
+Real rho0_f = 1050;
 int simtk_resolution = 20;
 
 class BidirectionalBufferCondition : public fluid_dynamics::BidirectionalBuffer
@@ -136,24 +136,8 @@ class WallBlock : public ComplexShape
                                             full_length * 0.5 + wall_thickness, simtk_resolution, Vec3d(full_length * 0.5, 0, 0));
     }
 };
-class AxialWaterObserverParticleGenerator : public ParticleGeneratorObserver
-{
-  public:
-    explicit AxialWaterObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
-    {
-        size_t number_of_oberver = 50;
-        double dx = full_length / number_of_oberver;
-        Vec3d pos = inlet_center;
-        while (pos[axial_direction] < full_length)
-        {
-            Vec3d pos_ = pos;
 
-            positions_.push_back(pos_);
-            pos[axial_direction] += dx;
-        }
-    }
-};
-StdVec<Vec3d> generate_observation_location()
+StdVec<Vec3d> generate_observation_location_axial()
 {
     StdVec<Vec3d> pos_;
     size_t number_of_oberver = 50;
@@ -167,13 +151,27 @@ StdVec<Vec3d> generate_observation_location()
     }
     return pos_;
 };
+
+StdVec<Vec3d> generate_observation_location_radial()
+{
+    StdVec<Vec3d> pos_;
+    size_t number_of_oberver = 25;
+    double x = full_length * 0.5;
+    double dz = radius * 2 / number_of_oberver;
+    Vec3d pos = Vec3d(x, 0, -radius);
+    while (pos[2] <= radius)
+    {
+        pos_.push_back(pos);
+        pos[2] += dz;
+    }
+    return pos_;
+};
 /**
  * @brief 	Main program starts here.
  */
 int main(int ac, char *av[])
 {
     std::cout << "U_f" << U_f << std::endl;
-    std::cout << "U_max" << U_max << std::endl;
     /**
      * @brief Build up -- a SPHSystem --
      */
@@ -201,13 +199,24 @@ int main(int ac, char *av[])
         ? wall_boundary.generateParticles<ParticleGeneratorReload>(wall_boundary.getName())
         : wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody velocity_observer(sph_system, "VelocityObserver");
-    StdVec<Vec3d> observer_location = generate_observation_location();
-    velocity_observer.generateParticles<ParticleGeneratorObserver>(observer_location);
+    ObserverBody velocity_observer_axial(sph_system, "VelocityObserverAxial");
+    StdVec<Vec3d> observer_location_axial = generate_observation_location_axial();
+    velocity_observer_axial.generateParticles<ParticleGeneratorObserver>(observer_location_axial);
+
+    ObserverBody velocity_observer_radial(sph_system, "VelocityObserverRadial");
+    StdVec<Vec3d> observer_location_radial = generate_observation_location_radial();
+    velocity_observer_radial.generateParticles<ParticleGeneratorObserver>(observer_location_radial);
     /** topology */
     InnerRelation water_block_inner(water_block);
     ContactRelation water_block_contact(water_block, {&wall_boundary});
-    ContactRelation velocity_observer_contact(velocity_observer, {&water_block});
+    ContactRelation velocity_observer_axial_contact(velocity_observer_axial, {&water_block});
+    ContactRelation velocity_observer_radial_contact(velocity_observer_radial, {&water_block});
+
+    ObservedQuantityRecording<Vecd> write_fluid_velocity_axial("Velocity", velocity_observer_axial_contact);
+    ObservedQuantityRecording<Vecd> write_fluid_velocity_radial("Velocity", velocity_observer_radial_contact);
+    ObservedQuantityRecording<Real> write_fluid_pressure_axial("Pressure", velocity_observer_axial_contact);
+    ObservedQuantityRecording<Real> write_fluid_pressure_radial("Pressure", velocity_observer_radial_contact);
+
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	check whether run particle relaxation for body fitted particle distribution.
@@ -270,15 +279,16 @@ int main(int ac, char *av[])
         water_block, makeShared<AlignedBoxShape>(left_bc_transform, buffer_half_size), 10, xAxis, left_pressure);
     BidirectionalBufferCondition right_emitter_inflow_injection(
         water_block, makeShared<AlignedBoxShape>(right_bc_transform, buffer_half_size), 10, xAxis, right_pressure);
+    /** density correction in pressure-driven flow */
+    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
+    /** zeroth order consistency */
+    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
     /** pressure boundary condition. */
     BodyRegionByCell left_pressure_region(water_block, makeShared<AlignedBoxShape>(left_bc_transform, buffer_half_size));
     SimpleDynamics<InflowPressure> left_pressure_condition(left_pressure_region, inlet_normal, left_pressure, "left pressure region");
     BodyRegionByCell right_pressure_region(water_block, makeShared<AlignedBoxShape>(right_bc_transform, buffer_half_size));
     SimpleDynamics<InflowPressure> right_pressure_condition(right_pressure_region, inlet_normal, right_pressure, "right pressure region");
-    /** density correction in pressure-driven flow */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
-    /** zeroth order consistency */
-    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
+
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
     /** Time step size with considering sound wave speed. */
@@ -293,20 +303,20 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
 
-    /**
-     * @brief Output.
-     */
-    /** Output the body states. */
-
     /** output parameters */
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("BufferParticleIndicator");
     water_block.addBodyStateForRecording<Vec3d>("KernelSummation");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_centerline_velocity("Velocity", velocity_observer_contact);
+    velocity_observer_axial.addBodyStateForRecording<double>("Pressure");
+    velocity_observer_radial.addBodyStateForRecording<double>("Pressure");
+    BodyStatesRecordingToVtp body_states_recording(sph_system.sph_bodies_);
+    /**
+     * @brief Output.
+     */
+    /** Output the body states. */
+
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -322,7 +332,6 @@ int main(int ac, char *av[])
      */
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 5.0;     /**< End time. */
     Real Output_Time = 0.01; /**< Time stamps for output of body states. */
     Real dt = 0.0;           /**< Default acoustic time step sizes. */
@@ -336,7 +345,6 @@ int main(int ac, char *av[])
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile();
-    write_centerline_velocity.writeToFile(number_of_iterations);
     /**
      * @brief 	Main loop starts here.
      */
@@ -375,12 +383,14 @@ int main(int ac, char *av[])
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    write_centerline_velocity.writeToFile(number_of_iterations);
-                }
+                velocity_observer_axial_contact.updateConfiguration();
+                velocity_observer_radial_contact.updateConfiguration();
+                write_fluid_velocity_axial.writeToFile();
+                write_fluid_velocity_radial.writeToFile();
+                write_fluid_pressure_axial.writeToFile();
+                write_fluid_pressure_radial.writeToFile();
+
                 body_states_recording.writeToFile();
-                velocity_observer_contact.updateConfiguration();
             }
             number_of_iterations++;
 
