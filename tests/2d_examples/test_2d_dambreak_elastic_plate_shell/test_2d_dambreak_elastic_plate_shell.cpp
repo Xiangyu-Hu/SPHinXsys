@@ -216,7 +216,7 @@ int main(int ac, char *av[])
         plate_rotation_damping(0.2, plate_inner, "AngularVelocity", physical_viscosity);
     // FSI
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_plate(plate_water_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_on_plate(plate_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_plate(plate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(plate);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

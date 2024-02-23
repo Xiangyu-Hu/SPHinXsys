@@ -250,7 +250,7 @@ int main(int ac, char *av[])
     };
     /** FSI */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_container(container_water_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> pressure_force_on_container(container_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(fluid_density_relaxation)>> pressure_force_on_container(container_water_contact);
     /** constraint and damping */
     BoundaryGeometry container_boundary_geometry(container, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> container_constrain(container_boundary_geometry);

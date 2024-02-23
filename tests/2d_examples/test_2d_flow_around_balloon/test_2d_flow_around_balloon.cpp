@@ -266,7 +266,7 @@ int main(int ac, char *av[])
     /** Algorithm for fluid dynamics. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeStream>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_wall_contact, water_shell_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<fluid_dynamics::FreeStream>, Contact<>, Contact<>>> update_fluid_density_by_summation(water_inner, water_wall_contact, water_shell_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(water_inner, water_wall_contact, water_shell_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>> fluid_density_relaxation(water_inner, water_wall_contact, water_shell_contact);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(water_inner, water_wall_contact, water_shell_contact);
@@ -314,7 +314,7 @@ int main(int ac, char *av[])
     };
     /** FSI */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_shell(shell_water_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_on_shell(shell_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(fluid_density_relaxation)>> pressure_force_on_shell(shell_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell);
     /** constraint and damping */
     BoundaryGeometry shell_boundary_geometry(shell, "BoundaryGeometry");

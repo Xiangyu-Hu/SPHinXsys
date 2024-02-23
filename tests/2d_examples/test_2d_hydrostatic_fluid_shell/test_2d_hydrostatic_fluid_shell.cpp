@@ -245,7 +245,7 @@ int main(int ac, char *av[])
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

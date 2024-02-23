@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     /** Algorithm for fluid dynamics. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(fluid_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(fluid_block);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeStream>, Contact<>, Contact<>>> update_fluid_density_by_summation(fluid_inner, fluid_wall_contact, fluid_shell_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<fluid_dynamics::FreeStream>, Contact<>, Contact<>>> update_fluid_density_by_summation(fluid_inner, fluid_wall_contact, fluid_shell_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> fluid_pressure_relaxation(fluid_inner, fluid_wall_contact, fluid_shell_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, NoRiemannSolver>> fluid_density_relaxation(fluid_inner, fluid_wall_contact, fluid_shell_contact);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(fluid_inner, fluid_wall_contact, fluid_shell_contact);

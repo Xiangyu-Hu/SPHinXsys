@@ -262,7 +262,7 @@ int main(int ac, char *av[])
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------
     /** Compute the force exerted on elastic wedge due to fluid pressure. */
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_wedge(wedge_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_wedge(wedge_water_contact);
     auto update_average_velocity = [&]()
     {
         auto avg_vel = *wedge.getBaseParticles().getVariableByName<Vecd>("AverageVelocity");
