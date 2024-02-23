@@ -29,7 +29,7 @@
 #define EULERIAN_FLUID_INTEGRATION_H
 
 #include "fluid_integration.hpp"
-#include "eulerian_riemann_solver.h"
+#include "riemann_solver.h"
 
 namespace SPH
 {
@@ -67,7 +67,7 @@ class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, AcousticRiemannSolver>;
 
 using BaseEulerianIntegrationWithWall = InteractionWithWall<EulerianIntegration>;
 template <class RiemannSolverType>
@@ -86,7 +86,7 @@ class EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, Contact<Wall>>, EulerianAcousticRiemannSolver>;
+    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, Contact<Wall>>, AcousticRiemannSolver>;
 
 template <typename... InteractionTypes>
 class EulerianIntegration2ndHalf;
@@ -96,6 +96,8 @@ class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
     : public EulerianIntegration<FluidDataInner>
 {
   public:
+    typedef RiemannSolverType RiemannSolver;
+
     explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
     explicit EulerianIntegration2ndHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
@@ -107,7 +109,7 @@ class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration2ndHalfWithWall
@@ -129,7 +131,7 @@ class EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfWithWallRiemann =
-    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, Contact<Wall>>, EulerianAcousticRiemannSolver>;
+    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, Contact<Wall>>, AcousticRiemannSolver>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_FLUID_INTEGRATION_H
