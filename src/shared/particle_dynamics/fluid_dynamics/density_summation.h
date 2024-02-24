@@ -173,6 +173,8 @@ class DensitySummation<Inner<NearSurfaceType, SummationType...>>
     StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
 };
+using DensitySummationInnerNotNearSurface = DensitySummation<Inner<NotNearSurface>>;
+using DensitySummationInnerFreeStream = DensitySummation<Inner<FreeStream>>;
 
 template <class InnerInteractionType, class... ContactInteractionTypes>
 using BaseDensitySummationComplex = ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionTypes...>>;
