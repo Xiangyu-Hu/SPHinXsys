@@ -76,6 +76,35 @@ class NotIndicatedParticles
     };
 };
 //----------------------------------------------------------------------
+// Particle limiter functors
+//----------------------------------------------------------------------
+class NoLimiter
+{
+  public:
+    NoLimiter(BaseParticles *base_particles){};
+    Real operator()(size_t index_i)
+    {
+        return 1.0;
+    };
+};
+
+class ZerothInconsistencyLimiter
+{
+    Real h_ref_;
+    StdLargeVec<Vecd> &inconsistency0_;
+
+  public:
+    ZerothInconsistencyLimiter(BaseParticles *base_particles)
+        : h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
+          inconsistency0_(*base_particles->getVariableByName<Vecd>("ZerothInconsistency")){};
+    virtual ~ZerothInconsistencyLimiter(){};
+    Real operator()(size_t index_i)
+    {
+        Real error_scale = inconsistency0_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        return SMIN(1.0e2 * error_scale, Real(1));
+    };
+};
+//----------------------------------------------------------------------
 // Particle average functors
 //----------------------------------------------------------------------
 template <typename T>
