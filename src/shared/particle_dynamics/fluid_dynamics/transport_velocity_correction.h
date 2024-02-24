@@ -78,7 +78,6 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
     StdLargeVec<Vecd> &pos_;
     ResolutionType h_ratio_;
     LimiterType limiter_;
-    StdLargeVec<Real> correction_faction_;
 };
 template <class LimiterType, class ParticleScope>
 using TransportVelocityCorrectionInner =
@@ -125,7 +124,7 @@ using BaseMultiPhaseTransportVelocityCorrectionComplex =
 
 template <class ParticleScope>
 using MultiPhaseTransportVelocityCorrectionComplex =
-    BaseMultiPhaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
+    BaseMultiPhaseTransportVelocityCorrectionComplex<SingleResolution, NoKernelCorrection, ParticleScope>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
