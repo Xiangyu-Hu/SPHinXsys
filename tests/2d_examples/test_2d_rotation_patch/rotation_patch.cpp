@@ -20,7 +20,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;       /**< Reference density of fluid. */
 Real U_max = 1.0;        /**< Characteristic velocity. */
-Real c_f = 40.0 * U_max; /**< Reference sound speed. */
+Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 
 Vec2d DamP_lb(-LL / 2, -LH / 2); /**< Left bottom. */
 Vec2d DamP_lt(-LL / 2, LH / 2);  /**< Left top. */
@@ -180,7 +180,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 8.0;
-    Real output_interval = 0.01;
+    Real output_interval = 0.04;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
