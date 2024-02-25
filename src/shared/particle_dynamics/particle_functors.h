@@ -101,7 +101,7 @@ class ZerothInconsistencyLimiter
     Real operator()(size_t index_i)
     {
         Real error_scale = inconsistency0_[index_i].squaredNorm() * h_ref_ * h_ref_;
-        return SMIN(1.0e2 * error_scale, Real(1));
+        return SMIN(Real(100) * error_scale, Real(1));
     };
 };
 //----------------------------------------------------------------------
