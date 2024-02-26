@@ -22,7 +22,7 @@ using namespace SPH;
 Real scale = 0.001;
 Real diameter = 6.35 * scale;
 Real radius = diameter * 0.5;
-Real full_length = 7.5 * diameter;
+Real full_length = 15 * diameter;
 size_t number_of_particles = 10;
 Real resolution_ref = diameter / number_of_particles;
 Real wall_thickness = resolution_ref * 4;
@@ -60,14 +60,14 @@ Real compute_pressure(double p)
 //	Materials\ Physics properties
 //----------------------------------------------------------------------
 Gravity gravity(Vec3d(0.0, 0.0, 0.0));
-Real left_pressure = 5.0;
-Real right_pressure = 0.0;
+Real left_pressure = 10.0;
+Real right_pressure = 5.0;
 Real delta_p = left_pressure - right_pressure;
 Real mu_f = 3.5e-3;
 Real U_f = delta_p * radius * radius / (8 * full_length * mu_f);
-Real U_max = 2.5 * U_f; // analytical maximum velocity will be 2*U_f, using 2.5 for safty here
-Real c_f = 10 * U_max;
-Real rho0_f = 1050;
+Real U_max_sys = 3.0 * U_f; // analytical maximum velocity will be 2*U_f, using 2.5 for safty here
+Real c_f = 15 * U_max_sys;
+Real rho0_f = 1060;
 int simtk_resolution = 20;
 
 class BidirectionalBufferCondition : public fluid_dynamics::BidirectionalBuffer
@@ -155,7 +155,7 @@ StdVec<Vec3d> generate_observation_location_axial()
 StdVec<Vec3d> generate_observation_location_radial()
 {
     StdVec<Vec3d> pos_;
-    size_t number_of_oberver = 25;
+    size_t number_of_oberver = 50;
     double x = full_length * 0.5;
     double dz = radius * 2 / number_of_oberver;
     Vec3d pos = Vec3d(x, 0, -radius);
@@ -193,7 +193,7 @@ int main(int ac, char *av[])
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(sph_system, makeShared<WallBlock>("Wall"));
-    wall_boundary.defineAdaptationRatios(1.3, 1.0);
+    // wall_boundary.defineAdaptationRatios(1.3, 1.0);
     wall_boundary.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (sph_system.ReloadParticles())
@@ -291,7 +291,7 @@ int main(int ac, char *av[])
     SimpleDynamics<InflowPressure> right_pressure_condition(right_pressure_region, inlet_normal, right_pressure, "right pressure region");
 
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max_sys);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** momentum equation. */
@@ -367,7 +367,6 @@ int main(int ac, char *av[])
             while (relaxation_time < Dt)
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
-                dt = SMIN(dt, Dt - relaxation_time);
                 pressure_relaxation.exec(dt);
                 kernel_summation.exec();
                 left_pressure_condition.exec(dt);
@@ -401,8 +400,7 @@ int main(int ac, char *av[])
             right_emitter_inflow_injection.injection.exec();
             left_disposer_outflow_deletion.exec();
             right_disposer_outflow_deletion.exec();
-            // water_block.updateCellLinkedListWithParticleSort(100);
-            water_block.updateCellLinkedList();
+            water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();
