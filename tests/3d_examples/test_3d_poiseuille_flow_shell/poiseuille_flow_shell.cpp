@@ -259,10 +259,6 @@ int main()
      */
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
-    shell_boundary.addBodyStateForRecording<double>("Mass");
-    shell_boundary.addBodyStateForRecording<double>("Density");
-    shell_boundary.addBodyStateForRecording<double>("VolumetricMeasure");
-    shell_boundary.addBodyStateForRecording<double>("Thickness");
     shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     /** Output the body states. */
