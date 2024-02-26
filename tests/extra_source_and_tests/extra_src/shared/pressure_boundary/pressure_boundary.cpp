@@ -12,7 +12,7 @@ FlowPressureBuffer::FlowPressureBuffer(BodyPartByCell &body_part, Vecd normal_ve
 //=================================================================================================//
 void FlowPressureBuffer::update(size_t index_i, Real dt)
 {
-    vel_[index_i] += 2.0*kernel_sum_[index_i] *  getTargetPressure(dt) / rho_[index_i] * dt;
+    vel_[index_i] += 2.0 * kernel_sum_[index_i] * getTargetPressure(index_i, dt) / rho_[index_i] * dt;
 
     vel_[index_i] = vel_[index_i].dot(direction_) * direction_;
 }
