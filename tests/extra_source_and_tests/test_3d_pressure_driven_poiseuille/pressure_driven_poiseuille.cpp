@@ -23,7 +23,7 @@ Real scale = 0.001;
 Real diameter = 6.35 * scale;
 Real radius = diameter * 0.5;
 Real full_length = 15 * diameter;
-size_t number_of_particles = 10;
+size_t number_of_particles = 20;
 Real resolution_ref = diameter / number_of_particles;
 Real wall_thickness = resolution_ref * 4;
 auto inlet_normal = Vec3d::UnitX();
@@ -44,7 +44,8 @@ auto left_disposer_transform = Transform(Rotation3d(M_PI, Vec3d::UnitY()), left_
 
 auto right_bc_translation = outlet_center - inlet_normal * buffer_half_width;
 Rotation3d right_bc_rotation = Rotation3d(M_PI, Vec3d::UnitY());
-auto right_bc_transform = Transform(right_bc_rotation, right_bc_translation);
+auto right_bc_emitter_transform = Transform(right_bc_rotation, right_bc_translation);
+auto right_bc_pressure_transform = Transform(right_bc_rotation, right_bc_translation);
 
 auto right_disposer_translation = outlet_center - inlet_normal * buffer_half_width;
 auto right_disposer_transform = Transform(right_disposer_translation);
@@ -68,7 +69,7 @@ Real U_f = delta_p * radius * radius / (8 * full_length * mu_f);
 Real U_max_sys = 3.0 * U_f; // analytical maximum velocity will be 2*U_f, using 2.5 for safty here
 Real c_f = 15 * U_max_sys;
 Real rho0_f = 1060;
-int simtk_resolution = 20;
+int simtk_resolution = 10;
 
 class BidirectionalBufferCondition : public fluid_dynamics::BidirectionalBuffer
 {
@@ -98,7 +99,7 @@ class InflowPressure : public fluid_dynamics::FlowPressureBuffer
     {
     }
 
-    Real getTargetPressure(Real dt) override
+    Real getTargetPressure(size_t index_i, Real dt) override
     {
         return compute_pressure(inlet_pressure_);
     }
@@ -178,9 +179,8 @@ int main(int ac, char *av[])
      */
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setGenerateRegressionData(false);
-    sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
-
+    sph_system.setRunParticleRelaxation(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     /**
      * @brief Material property, particles and body creation of fluid.
@@ -189,6 +189,7 @@ int main(int ac, char *av[])
     water_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
+    std::cout << "water body done \n";
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
@@ -199,7 +200,7 @@ int main(int ac, char *av[])
     (sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<ParticleGeneratorReload>(wall_boundary.getName())
         : wall_boundary.generateParticles<ParticleGeneratorLattice>();
-
+    std::cout << "wall body done \n";
     ObserverBody velocity_observer_axial(sph_system, "VelocityObserverAxial");
     StdVec<Vec3d> observer_location_axial = generate_observation_location_axial();
     velocity_observer_axial.generateParticles<ParticleGeneratorObserver>(observer_location_axial);
@@ -279,7 +280,7 @@ int main(int ac, char *av[])
     BidirectionalBufferCondition left_emitter_inflow_injection(
         water_block, makeShared<AlignedBoxShape>(left_bc_transform, buffer_half_size), 10, xAxis, left_pressure);
     BidirectionalBufferCondition right_emitter_inflow_injection(
-        water_block, makeShared<AlignedBoxShape>(right_bc_transform, buffer_half_size), 10, xAxis, right_pressure);
+        water_block, makeShared<AlignedBoxShape>(right_bc_emitter_transform, buffer_half_size), 10, xAxis, right_pressure);
     /** density correction in pressure-driven flow */
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
     /** zeroth order consistency */
@@ -287,7 +288,7 @@ int main(int ac, char *av[])
     /** pressure boundary condition. */
     BodyRegionByCell left_pressure_region(water_block, makeShared<AlignedBoxShape>(left_bc_transform, buffer_half_size));
     SimpleDynamics<InflowPressure> left_pressure_condition(left_pressure_region, inlet_normal, left_pressure, "left pressure region");
-    BodyRegionByCell right_pressure_region(water_block, makeShared<AlignedBoxShape>(right_bc_transform, buffer_half_size));
+    BodyRegionByCell right_pressure_region(water_block, makeShared<AlignedBoxShape>(right_bc_pressure_transform, buffer_half_size));
     SimpleDynamics<InflowPressure> right_pressure_condition(right_pressure_region, inlet_normal, right_pressure, "right pressure region");
 
     /** Time step size without considering sound wave speed. */
