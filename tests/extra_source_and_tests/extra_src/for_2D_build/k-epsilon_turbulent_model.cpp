@@ -9,33 +9,44 @@ namespace fluid_dynamics
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 		: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
 		C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), 
-		start_time_laminar_(50.0), y_star_threshold_(11.225){}
+		start_time_laminar_(0.0), y_star_threshold_(11.225){}
 //=================================================================================================//
 	Real WallFunction:: get_dimensionless_velocity(Real y_star)
 	{
-		Real dimensionless_velocity = log_law_wall_functon(y_star);
+		Real dimensionless_velocity = 0.0;
 		if (y_star < y_star_threshold_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+		{
 			dimensionless_velocity = laminar_law_wall_functon(y_star);
+		}
+		else
+		{
+			dimensionless_velocity = log_law_wall_functon(y_star);
+		}
 		if (std::isnan(dimensionless_velocity) || std::isinf(dimensionless_velocity))
 		{
 			std::cout << "u_star=" << dimensionless_velocity << std::endl;
 			std::cout << "y_star=" << y_star << std::endl;
 			system("pause");
 		}
+		//if (dimensionless_velocity<0.0)
+		//{
+		//	std::cout << "dimensionless_velocity<0.0" << dimensionless_velocity << std::endl;
+		//	system("pause");
+		//}
+
 		return dimensionless_velocity;
 	}
 	//=================================================================================================//
 	Real WallFunction:: get_near_wall_velocity_gradient_magnitude(Real y_star, Real vel_fric_mag, Real denominator_log_law, Real dynamic_viscosity)
 	{
 		Real vel_grad_mag = log_law_velocity_gradient(vel_fric_mag, denominator_log_law);
-		//if (y_star < y_star_threshold_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
-			//vel_grad_mag = laminar_law_velocity_gradient(vel_fric_mag, dynamic_viscosity);
 		return vel_grad_mag;
 	}
 	//=================================================================================================//
 	Real WallFunction::log_law_wall_functon(Real y_star)
 	{
-		Real u_star = log(turbu_const_E * y_star ) / Karman;
+		//** u_star should larger than 0 *
+		Real u_star = abs(log(turbu_const_E * y_star ) / Karman);
 		return u_star;
 	}
 	//=================================================================================================//
@@ -55,7 +66,15 @@ namespace fluid_dynamics
 		return vel_fric_mag * vel_fric_mag / dynamic_viscosity;
 	}
 //=================================================================================================//
-    void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
+	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
+		: GetVelocityGradient<Base, FluidDataInner>(inner_relation),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
+	{
+		this->particles_->registerSortableVariable<Matd>("VelocityGradient");
+		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
+	}
+	//=================================================================================================//
+	void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
     {
 		velocity_gradient_[index_i] = Matd::Zero();
 		//** The near wall velo grad is updated in wall function part *
@@ -75,9 +94,38 @@ namespace fluid_dynamics
 		}
     }
 	//=================================================================================================//
+	GetVelocityGradient<Contact<>>::GetVelocityGradient(BaseContactRelation& contact_relation)
+		: GetVelocityGradient<Base, FSIContactData>(contact_relation),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
+	{
+		this->particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
+		this->particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
+		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+		{
+			wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
+		}
+	}
+	//=================================================================================================//
 	void GetVelocityGradient<Contact<>>::interaction(size_t index_i, Real dt)
 	{
+		//** The near wall velo grad is updated in wall function part *
+		if (is_near_wall_P1_[index_i] != 1)
+		{
+			Vecd vel_i = vel_[index_i];
+			for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Vecd>& vel_ave_k = *(wall_vel_ave_[k]);
+				Neighborhood& contact_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
+					velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+				}
+			}
+
+		}
 	}
 //=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
@@ -628,8 +676,8 @@ namespace fluid_dynamics
 				}
 			}
 		} 
-
-		if (is_near_contact > 0)
+		//** This is a temporary treatment, particles in inlet region is not corrected by wall function *
+		if (is_near_contact > 0 && pos_[index_i][0] > 0.0) 
 		{
 			is_near_wall_P2_[index_i] = 10; //** Particles that have contact are defined as in region P2 *  					
 			//** Get the tangential unit vector *
@@ -654,6 +702,12 @@ namespace fluid_dynamics
 			e_nearest_tau_[index_i] = e_i_nearest_tau;
 			distance_to_dummy_interface_[index_i] = r_dummy_normal;
 			distance_to_dummy_interface_levelset_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+
+			if (distance_to_dummy_interface_levelset_[index_i] != static_cast<Real>(distance_to_dummy_interface_levelset_[index_i]))
+			{
+				std::cout << "bbb" << std::endl;
+				system("pause");
+			}
 		}
 	}
 	//=================================================================================================//
@@ -760,19 +814,33 @@ namespace fluid_dynamics
 			//velo_fric = sqrt(abs(Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
 				//log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * y_p_[index_i] * rho_i / mu_)));
 
+			if (wall_Y_star_[index_i] != static_cast<Real>(wall_Y_star_[index_i]))
+			{
+				std::cout << "aaa" << std::endl;
+				system("pause");
+			}
+				
+
 			Real u_star = get_dimensionless_velocity(wall_Y_star_[index_i]);
-			velo_fric_mag = sqrt(pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * velo_tan/ u_star);
+			velo_fric_mag = sqrt(pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * velo_tan / u_star);
 
 			if (velo_fric_mag != static_cast<Real>(velo_fric_mag))
 			{
 				std::cout << "friction velocity is not a real, please check" << std::endl;
-				std::cout << "velo_fric=" << velo_fric_mag << "velo_tan=" << velo_tan << std::endl;
+				std::cout << "velo_fric=" << velo_fric_mag << std::endl << "velo_tan=" << velo_tan << std::endl;
 				std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
 				std::cout << "sum=" << (Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
 					log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_)) << std::endl;
 				std::cout << "numerator=" << Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) << std::endl;
 				std::cout << "denominator=" << log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_) << std::endl;
+				Real temp = pow(C_mu, 0.25)* pow(turbu_k_[index_i], 0.5)* velo_tan / u_star;
 
+				std::cout << "temp =" <<temp<< std::endl;
+
+				std::cout << "pow(turbu_k_[index_i], 0.5) =" << pow(turbu_k_[index_i], 0.5) << std::endl;
+				std::cout << "velo_tan / u_star =" << velo_tan / u_star << std::endl;
+				std::cout << "velo_tan =" << velo_tan  << std::endl;
+				std::cout << " u_star =" << u_star << std::endl;
 				system("pause");
 			}
 

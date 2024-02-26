@@ -47,8 +47,7 @@ namespace fluid_dynamics
 		turbu_k_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergyPrior"))),
 		turbu_epsilon_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipation"))),
 		turbu_epsilon_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipationPrior"))),
-		turbu_mu_(*(this->particles_->template registerSharedVariable<Real>("TurbulentViscosity")))
-	{}
+		turbu_mu_(*(this->particles_->template registerSharedVariable<Real>("TurbulentViscosity"))){}
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
@@ -66,17 +65,9 @@ namespace fluid_dynamics
 		GetVelocityGradient(BaseRelationType& base_relation) 
 		:LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
 		vel_(this->particles_->vel_), pos_(this->particles_->pos_),
-		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1"))
-	{
-		this->particles_->registerVariable(velocity_gradient_, "VelocityGradient");
-		this->particles_->registerSortableVariable<Matd>("VelocityGradient");
-		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
-
-		//for test
-		this->particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
-		this->particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
-		this->particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
-	}
+		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1")),
+		velocity_gradient_(*(this->particles_->template registerSharedVariable<Matd>("VelocityGradient"))),
+		velocity_gradient_wall(*(this->particles_->template registerSharedVariable<Matd>("Velocity_Gradient_Wall"))){}
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>

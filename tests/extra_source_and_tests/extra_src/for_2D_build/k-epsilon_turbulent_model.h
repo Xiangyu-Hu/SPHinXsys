@@ -99,22 +99,27 @@ namespace fluid_dynamics
 	class GetVelocityGradient<Inner<>> : public GetVelocityGradient<Base, FluidDataInner>
 	{
 	public:
-		explicit GetVelocityGradient(BaseInnerRelation& inner_relation)
-			: GetVelocityGradient<Base, FluidDataInner>(inner_relation) {};
+		explicit GetVelocityGradient(BaseInnerRelation& inner_relation);
+			//: GetVelocityGradient<Base, FluidDataInner>(inner_relation) {};
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Matd>& velocity_gradient_;
 	};
 	using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
 	
 	//** Wall part *
 	template <>
-	class GetVelocityGradient<Contact<>> : public GetVelocityGradient<Base, FluidContactData>
+	class GetVelocityGradient<Contact<>> : public GetVelocityGradient<Base, FSIContactData>
 	{
 	public:
-		explicit GetVelocityGradient(BaseContactRelation& contact_relation)
-			: GetVelocityGradient<Base, FluidContactData>(contact_relation) {};
+		explicit GetVelocityGradient(BaseContactRelation& contact_relation);
+			//: GetVelocityGradient<Base, FluidContactData>(contact_relation) {};
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Matd>& velocity_gradient_;
+		StdVec<StdLargeVec<Vecd>*> wall_vel_ave_;
 	};
 	
 	//** Interface part *
@@ -175,6 +180,10 @@ namespace fluid_dynamics
 		//** for test */
 		StdLargeVec<Real>  k_diffusion_, vel_x_;
 	};
+
+
+
+
 //=================================================================================================//
 	/**
 	 * @class E_TurtbulentModelInner

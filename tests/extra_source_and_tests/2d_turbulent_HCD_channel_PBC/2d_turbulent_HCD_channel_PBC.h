@@ -51,12 +51,21 @@ StdVec<Real> initial_turbu_values = { 0.01 ,0.1 ,0.001 };
 //Real mu_f = 0.0001;
 //Real gravity_g = 0.00872269;
 
-Real U_max = 1.0;
+//** Compare with FVM3 *
+//Real U_max = 1.0;
+//Real U_f = 1.0; //*Characteristic velo is regarded as average velo here
+//Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
+//Real rho0_f = 1.0;                                            /**< Density. */
+//Real mu_f = 0.0001;
+//Real gravity_g = 0.01079379;
+
+//** Compare with FVM4 *
+Real U_max = 1.1;
 Real U_f = 1.0; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 Real rho0_f = 1.0;                                            /**< Density. */
-Real mu_f = 0.0001;
-Real gravity_g = 0.01079379;
+Real mu_f = 0.0005;
+Real gravity_g = 0.01806807;
 
 Real Re = U_f * DH * rho0_f / mu_f;
 
