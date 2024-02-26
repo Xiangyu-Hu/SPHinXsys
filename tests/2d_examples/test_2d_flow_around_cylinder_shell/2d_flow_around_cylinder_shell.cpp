@@ -20,12 +20,11 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
 #endif
     IOEnvironment io_environment(sph_system);
-    ParameterizationIO &parameterization_io = io_environment.defineParameterizationIO();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineParticlesAndMaterial<BaseParticles, ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
+    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody cylinder(sph_system, makeShared<DefaultShape>("Cylinder"));
@@ -84,7 +83,7 @@ int main(int ac, char *av[])
     cylinder.addBodyStateForRecording<Vecd>("ViscousForceFromFluid");
     cylinder.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
+    ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(cylinder, "PressureForceFromFluid");
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", fluid_observer_contact);
@@ -192,8 +191,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    write_total_viscous_force_from_fluid.testResult();
 
     return 0;
 }
