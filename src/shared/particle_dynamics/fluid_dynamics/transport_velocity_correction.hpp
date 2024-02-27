@@ -7,13 +7,17 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class DataDelegationType, class KernelCorrectionType, class ParticleScope>
+template <class DataDelegationType, class KernelCorrectionType, class ParticleScopeType>
 template <class BaseRelationType>
-TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>::
+TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScopeType>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      inconsistency0_(*this->particles_->template registerSharedVariable<Vecd>("ZerothInconsistency")),
-      kernel_correction_(this->particles_), checkWithinScope(this->particles_) {}
+      zeroth_consistency_(*this->particles_->template registerSharedVariable<Vecd>("ZerothConsistency")),
+      kernel_correction_(this->particles_), checkWithinScope(this->particles_)
+{
+    static_assert(std::is_base_of<ParticleScope, ParticleScopeType>::value,
+                  "ParticleScope is not the base of ParticleScopeType!");
+}
 //=================================================================================================//
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
 TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
@@ -21,7 +25,11 @@ TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTyp
     : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
-      pos_(this->particles_->pos_), h_ratio_(this->particles_), limiter_(this->particles_) {}
+      pos_(this->particles_->pos_), h_ratio_(this->particles_), limiter_(this->particles_)
+{
+    static_assert(std::is_base_of<Limiter, LimiterType>::value,
+                  "Limiter is not the base of LimiterType!");
+}
 //=================================================================================================//
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
 void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
@@ -38,7 +46,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
             inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
                              inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         }
-        this->inconsistency0_[index_i] = inconsistency;
+        this->zeroth_consistency_[index_i] = inconsistency;
     }
 }
 //=================================================================================================//
@@ -49,7 +57,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
     if (this->checkWithinScope(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        pos_[index_i] += correction_scaling_ * limiter_(index_i) * this->inconsistency0_[index_i] *
+        pos_[index_i] += correction_scaling_ * limiter_(index_i) * this->zeroth_consistency_[index_i] *
                          inv_h_ratio * inv_h_ratio;
     }
 }
@@ -76,7 +84,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
                                  contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
-        this->inconsistency0_[index_i] += inconsistency;
+        this->zeroth_consistency_[index_i] += inconsistency;
     }
 }
 //=================================================================================================//
@@ -111,7 +119,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
                                  contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
-        this->inconsistency0_[index_i] += inconsistency;
+        this->zeroth_consistency_[index_i] += inconsistency;
     }
 }
 //=================================================================================================//
