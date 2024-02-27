@@ -80,7 +80,6 @@ class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Ba
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    UniquePtrKeeper<Kernel> kernel_keeper_;
     StdLargeVec<Real> &mass_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
     StdVec<Real> offset_W_ij_;
@@ -110,21 +109,6 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, ContactDynami
     /** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};
     const StdVec<Real> three_gaussian_weights_ = {0.5555555555555556, 0.8888888888888889, 0.5555555555555556};
-};
-/**
- * @class ShellSelfContactDensityUsingDummyParticles
- * @brief Computing the contact density due to shell contact using dummy particle.
- */
-class ShellSelfContactDensityUsingDummyParticles : public RepulsionDensitySummation<Base, SolidDataInner>
-{
-  public:
-    explicit ShellSelfContactDensityUsingDummyParticles(ShellSelfContactRelation &self_contact_relation);
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    UniquePtrKeeper<Kernel> kernel_keeper_;
-    StdLargeVec<Real> &mass_;
-    Real offset_W_ij_;
 };
 } // namespace solid_dynamics
 } // namespace SPH

@@ -259,43 +259,6 @@ class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
 };
 
 /**
- * @class NeighborBuilderSurfaceContactToShell
- * @brief A solid contact neighbor builder functor between solid and a shell
- */
-class NeighborBuilderSurfaceContactToShell : public NeighborBuilderContactToShell
-{
-  public:
-    NeighborBuilderSurfaceContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
-    inline void operator()(Neighborhood &neighborhood,
-                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
-    {
-        update_neighbors(neighborhood, pos_i, index_i, list_data_j, particle_distance_ave_);
-    }
-
-  private:
-    UniquePtrKeeper<Kernel> kernel_keeper_;
-    Real particle_distance_ave_;
-};
-
-/**
- * @class NeighborBuilderShellSelfContact
- * @brief A self-contact neighbor builder functor of shell.
- */
-class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
-{
-  public:
-    explicit NeighborBuilderShellSelfContact(SPHBody &body);
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
-
-  private:
-    StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
-    StdLargeVec<Vecd> &pos0_;
-    UniquePtrKeeper<Kernel> kernel_keeper_;
-};
-
-/**
  * @class ShellNeighborBuilderInnerWithContactKernel
  * @brief A inner neighbor builder functor with reduced kernel.
  * The smoothing length is equal to that of the contact body

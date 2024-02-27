@@ -81,21 +81,6 @@ void TreeInnerRelation::updateConfiguration()
     generative_tree_.buildParticleConfiguration(inner_configuration_);
 }
 //=================================================================================================//
-ShellSelfContactRelation::
-    ShellSelfContactRelation(RealBody &real_body)
-    : BaseInnerRelation(real_body),
-      get_shell_self_contact_neighbor_(real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
-//=================================================================================================//
-void ShellSelfContactRelation::updateConfiguration()
-{
-    resetNeighborhoodCurrentSize();
-
-    cell_linked_list_.searchNeighborsByParticles(
-        sph_body_, inner_configuration_,
-        get_single_search_depth_, get_shell_self_contact_neighbor_);
-}
-//=================================================================================================//
 ShellInnerRelationWithContactKernel::ShellInnerRelationWithContactKernel(RealBody &real_body, RealBody &contact_body)
     : BaseInnerRelation(real_body),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),

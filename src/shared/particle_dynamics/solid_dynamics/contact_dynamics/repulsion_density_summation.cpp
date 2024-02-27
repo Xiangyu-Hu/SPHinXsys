@@ -46,9 +46,7 @@ RepulsionDensitySummation<Contact<>>::
     {
         Real dp_2 = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
         Real distance = 0.5 * dp_1 + 0.5 * dp_2;
-        Real source_smoothing_length = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        Real target_smoothing_length = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength();
-        offset_W_ij_[k] = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length))->W(distance, ZeroVecd);
+        offset_W_ij_[k] = solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(distance, ZeroVecd);
     }
 }
 //=================================================================================================//
@@ -121,27 +119,6 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
         contact_density_i += heuristic_limiter * sigma * calibration_factor_[k];
     }
     repulsion_density_[index_i] = contact_density_i;
-}
-//=================================================================================================//
-ShellSelfContactDensityUsingDummyParticles::ShellSelfContactDensityUsingDummyParticles(ShellSelfContactRelation &self_contact_relation)
-    : RepulsionDensitySummation<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionDensity"),
-      mass_(particles_->mass_)
-{
-    Real smoothing_length = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-    Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
-    offset_W_ij_ = kernel_keeper_.createPtr<KernelWendlandC2>(smoothing_length)->W(dp_1, ZeroVecd);
-}
-//=================================================================================================//
-void ShellSelfContactDensityUsingDummyParticles::interaction(size_t index_i, Real dt)
-{
-    Real sigma = 0.0;
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, Real(0));
-        sigma += corrected_W_ij * mass_[inner_neighborhood.j_[n]];
-    }
-    repulsion_density_[index_i] = sigma;
 }
 //=================================================================================================//
 } // namespace solid_dynamics
