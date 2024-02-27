@@ -12,6 +12,7 @@ Real particle_spacing = 0.002;
 Real gravity_g = 9.81;
 Real end_time = 3;
 bool relaxation = false;
+bool linearized_iteration = true;
 
 // material properties
 Real rho = 1000.0; // reference density
@@ -260,13 +261,30 @@ int main(int ac, char *av[])
         tt = t2 - t1;
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
-        Dt = SMIN(Dt_visc, Dt_adv);
+        
+        if (linearized_iteration == true && Dt_visc < Dt_adv)
+        {
+            Real viscous_time = 0.0;
+            vel_grad_calculation.exec();
+            shear_rate_calculation.exec();
 
-        update_density_by_summation.exec(Dt);
-
-        vel_grad_calculation.exec(Dt);
-        shear_rate_calculation.exec(Dt);
-        viscous_acceleration.exec(Dt);
+            if ( viscous_time < Dt_adv)
+            {
+                viscous_acceleration.exec(Dt_visc);
+                if(viscous_time + Dt_visc > Dt_adv)
+                {
+                    Dt_visc = Dt_adv - viscous_time;
+                }
+            }
+        }
+        else
+        {
+            Dt = SMIN(Dt_visc, Dt_adv);
+            update_density_by_summation.exec(Dt);
+            vel_grad_calculation.exec(Dt);
+            shear_rate_calculation.exec(Dt);
+            viscous_acceleration.exec(Dt);
+        }
 
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
