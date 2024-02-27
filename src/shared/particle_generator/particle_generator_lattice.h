@@ -49,7 +49,7 @@ class GeneratingMethod<Lattice>
   protected:
     Real lattice_spacing_;      /**< Initial particle spacing. */
     BoundingBox domain_bounds_; /**< Domain bounds. */
-    Shape &body_shape_;         /**< Geometry shape for body. */
+    Shape &initial_shape_;         /**< Geometry shape for body. */
 };
 
 template <>

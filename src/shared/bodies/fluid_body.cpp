@@ -7,7 +7,7 @@
 namespace SPH
 {
 //=================================================================================================//
-FluidBody::FluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr)
-    : RealBody(system, shape_ptr) {}
+FluidBody::FluidBody(SPHSystem &system, SharedPtr<Shape> initial_shape_ptr)
+    : RealBody(system, initial_shape_ptr) {}
 //=================================================================================================//
 } // namespace SPH

@@ -76,7 +76,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Fluid force on structure. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_on_solid(structure_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_solid(structure_contact);
     /*-------------------------------------------------------------------------------*/
     /*--------------------------FREE SURFACE IDENTIFICATION--------------------------*/
     /*-------------------------------------------------------------------------------*/

@@ -78,18 +78,20 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 };
 
 /**
- * @class BasePressureForceFromFluid
+ * @class PressureForceFromFluid
  * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
  * The pressure force is added on the viscous force of the latter is computed.
  * This class is for FSI applications to achieve smaller solid dynamics
  * time step size compared to the fluid dynamics
  */
-template <class RiemannSolverType>
-class BasePressureForceFromFluid : public BaseForceFromFluid
+template <class FluidIntegration2ndHalfType>
+class PressureForceFromFluid : public BaseForceFromFluid
 {
+    using RiemannSolverType = typename FluidIntegration2ndHalfType::RiemannSolver;
+
   public:
-    explicit BasePressureForceFromFluid(BaseContactRelation &contact_relation);
-    virtual ~BasePressureForceFromFluid(){};
+    explicit PressureForceFromFluid(BaseContactRelation &contact_relation);
+    virtual ~PressureForceFromFluid(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -98,8 +100,6 @@ class BasePressureForceFromFluid : public BaseForceFromFluid
     StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_force_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
 };
-using PressureForceFromFluid = BasePressureForceFromFluid<NoRiemannSolver>;
-using PressureForceFromFluidRiemann = BasePressureForceFromFluid<AcousticRiemannSolver>;
 
 /**
  * @class InitializeDisplacement

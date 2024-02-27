@@ -327,7 +327,7 @@ int main(int ac, char *av[])
      * Fluid structure interaction model.
      */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_force_on_fish_body(fish_body_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_fish_body(fish_body_contact);
     /**
      * Solid dynamics.
      */

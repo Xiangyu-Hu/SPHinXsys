@@ -9,13 +9,17 @@ namespace fluid_dynamics
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
       FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
+      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+      mass_(particles_->mass_), vel_(particles_->vel_),
+      force_(particles_->force_), force_prior_(particles_->force_prior_),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
-    return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
+    Real acceleration_scale = 4.0 * smoothing_length_min_ *
+                              (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+    return SMAX(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
 }
 //=================================================================================================//
 Real AcousticTimeStepSize::outputResult(Real reduced_value)

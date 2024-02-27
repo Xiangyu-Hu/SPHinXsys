@@ -62,10 +62,6 @@ class DensitySummation<Inner<Base>> : public DensitySummation<Base, FluidDataInn
     explicit DensitySummation(BaseInnerRelation &inner_relation)
         : DensitySummation<Base, FluidDataInner>(inner_relation){};
     virtual ~DensitySummation(){};
-
-  protected:
-    void assignDensity(size_t index_i) { rho_[index_i] = rho_sum_[index_i]; };
-    void reinitializeDensity(size_t index_i) { rho_[index_i] = SMAX(rho_sum_[index_i], rho0_); };
 };
 
 template <>
@@ -76,7 +72,7 @@ class DensitySummation<Inner<>> : public DensitySummation<Inner<Base>>
         : DensitySummation<Inner<Base>>(inner_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
+    void update(size_t index_i, Real dt = 0.0);
 };
 using DensitySummationInner = DensitySummation<Inner<>>;
 
@@ -87,7 +83,7 @@ class DensitySummation<Inner<Adaptive>> : public DensitySummation<Inner<Base>>
     explicit DensitySummation(BaseInnerRelation &inner_relation);
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
+    void update(size_t index_i, Real dt = 0.0);
 
   protected:
     SPHAdaptation &sph_adaptation_;
@@ -136,18 +132,35 @@ class DensitySummation<Inner<FreeSurface, SummationType...>> : public DensitySum
 {
   public:
     template <typename... Args>
-    explicit DensitySummation(Args &&...args)
-        : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...){};
+    explicit DensitySummation(Args &&...args);
     virtual ~DensitySummation(){};
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        DensitySummation<Inner<SummationType...>>::reinitializeDensity(index_i);
-    };
+    void update(size_t index_i, Real dt = 0.0);
 };
 using DensitySummationFreeSurfaceInner = DensitySummation<Inner<FreeSurface>>;
 
-template <typename... SummationType>
-class DensitySummation<Inner<FreeStream, SummationType...>> : public DensitySummation<Inner<SummationType...>>
+struct FreeStream
+{
+    Real operator()(Real rho_sum, Real rho0, Real rho)
+    {
+        if (rho_sum < rho)
+        {
+            return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
+        }
+        return rho_sum;
+    };
+};
+
+struct NotNearSurface
+{
+    Real operator()(Real rho_sum, Real rho0, Real rho)
+    {
+        return rho;
+    };
+};
+
+template <typename NearSurfaceType, typename... SummationType>
+class DensitySummation<Inner<NearSurfaceType, SummationType...>>
+    : public DensitySummation<Inner<SummationType...>>
 {
   public:
     template <typename... Args>
@@ -156,9 +169,12 @@ class DensitySummation<Inner<FreeStream, SummationType...>> : public DensitySumm
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    NearSurfaceType near_surface_rho_;
     StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
 };
+using DensitySummationInnerNotNearSurface = DensitySummation<Inner<NotNearSurface>>;
+using DensitySummationInnerFreeStream = DensitySummation<Inner<FreeStream>>;
 
 template <class InnerInteractionType, class... ContactInteractionTypes>
 using BaseDensitySummationComplex = ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionTypes...>>;
@@ -169,6 +185,7 @@ using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<Inner<Fre
 using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<Inner<FreeSurface, Adaptive>, Contact<Adaptive>>;
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<Inner<FreeStream>, Contact<>>;
 using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<FreeStream, Adaptive>, Contact<Adaptive>>;
+using DensitySummationNotNearSurfaceComplex = BaseDensitySummationComplex<Inner<NotNearSurface>, Contact<>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H

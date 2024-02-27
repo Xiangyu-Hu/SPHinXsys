@@ -142,7 +142,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<KernelCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(insert_body_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> pressure_force_from_fluid(insert_body_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(insert_body_contact);
     /** Compute the average velocity of the insert body. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
     //----------------------------------------------------------------------
