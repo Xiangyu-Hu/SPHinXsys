@@ -184,12 +184,14 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_all_walls);
 
-    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<ZerothInconsistencyLimiter>> transport_velocity_correction(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
+
+    SimpleDynamics<NormalDirectionFromBodyShape> no_slip_normal_direction(no_slip_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> lid_normal_direction(lid_boundary);
 
     //	Define the methods for I/O operations, observations
     fluid.addBodyStateForRecording<Real>("Pressure");
@@ -200,7 +202,8 @@ int main(int ac, char *av[])
     periodic_condition_z.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     constant_gravity.exec();
-    // boundary_velocity.exec();
+    lid_normal_direction.exec();
+    no_slip_normal_direction.exec();
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
@@ -259,7 +262,6 @@ int main(int ac, char *av[])
         fluid.updateCellLinkedListWithParticleSort(100);
         periodic_condition_z.update_cell_linked_list_.exec();
         fluid_walls_complex.updateConfiguration();
-        fluid_all_walls.updateConfiguration();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
