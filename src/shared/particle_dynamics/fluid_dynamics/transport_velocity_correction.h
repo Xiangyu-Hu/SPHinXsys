@@ -115,6 +115,10 @@ using TransportVelocityCorrectionComplex =
     BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
 
 template <class ParticleScope>
+using TransportVelocityLimitedCorrectionComplex =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, ParticleScope>;
+
+template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
     BaseTransportVelocityCorrectionComplex<AdaptiveResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
 

@@ -182,7 +182,7 @@ int main(int ac, char *av[])
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
     // impose transport velocity
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>>
         transport_velocity_correction(fluid_block_inner, fluid_block_contact);
     // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
@@ -212,9 +212,9 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 10;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 20.0;
+    Real end_time = 40.0;
     // time step size for ouput file
-    Real output_interval = end_time / 20.0;
+    Real output_interval = end_time / 40.0;
     Real dt = 0.0; // default acoustic time step sizes
     // statistics for computing time
     TickCount t1 = TickCount::now();
