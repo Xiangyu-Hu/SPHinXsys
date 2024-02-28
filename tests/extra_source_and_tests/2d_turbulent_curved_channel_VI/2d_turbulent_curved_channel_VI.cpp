@@ -1,4 +1,4 @@
-#include "2d_turbulent_HCD_channel_VI.h"
+#include "2d_turbulent_curved_channel_VI.h"
 using namespace SPH;            
 
 
@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
    
     
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -128,7 +128,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     SimpleDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block, offset_dist_ref);
 
-    //SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound);
+    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
     BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
 
     /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
     SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer, characteristic_length, 0.8);
@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 400.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -206,7 +206,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            apply_gravity_force.exec();
+            //apply_gravity_force.exec();
 
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
@@ -259,7 +259,7 @@ int main(int ac, char *av[])
                 GlobalStaticVariables::physical_time_ += dt;
                 inner_itr++;
                 //std::cout << "num_output_file=" << num_output_file << std::endl;
-                //if (GlobalStaticVariables::physical_time_ >9.3)
+                //if (GlobalStaticVariables::physical_time_ >30.0)
                 //{
                     //body_states_recording.writeToFile();
                 //}

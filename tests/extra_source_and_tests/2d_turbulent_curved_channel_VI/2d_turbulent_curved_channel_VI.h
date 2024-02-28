@@ -26,19 +26,19 @@ Real c_f = 10.0 * U_f;*/
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 
-//** Geometry parameters for HCD channel *
-Real DH = 2.0;  
+//** Geometry parameters for curved channel *
+Real DH = 2.0;
 Real resolution_ref = DH / 40;
 Real BW = resolution_ref * 4;
-Real extend_in = 2.0;
-Real extend_out = 4.0;
-Real DL1 = 1.0 + extend_in;
-Real DL2 = 1.5;
-Real DL3 = 1.0;
-Real DL4 = 1.5;
-Real DL5 = 1.0 + extend_out;
-Real DL = DL1 + DL2 + DL3 + DL4 + DL5;
-Real DH1 = DL2 / sqrt(3.0);
+Real extend_in = 0.0 ;
+Real extend_out = 0.0 ;
+Real DL1 = 4.0 + extend_in;
+Real DL2 = 4.0 + extend_out;
+Real R1 = 2.0;
+Real R2 = R1 + DH;
+Real DL_domain = DL1+R1+DH;
+Real DH_domain = DH+R1+DL2;
+Vec2d circle_center(DL1, R2);
 
 //** Geometry parameters for straight channel SPH_4 *
 //Real DH = 2.0;                         /**< Channel height. */
@@ -55,8 +55,11 @@ Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
-Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+
+//** Y disposer *
+Vec2d disposer_halfsize = Vec2d(0.75 * DH, 0.5 * BW);
+Vec2d disposer_translation = Vec2d(DL_domain + 0.25 * DH, DH_domain ) - disposer_halfsize;
+
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
 //----------------------------------------------------------------------
@@ -68,7 +71,7 @@ StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };
 //----------------------------------------------------------------------
 //	Domain bounds of the system. 
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL_domain + 2.0 * BW, DH_domain + 2.0 * BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid and flow parameters.
 //----------------------------------------------------------------------
@@ -83,7 +86,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2
 
 //**  *
 Real U_inlet = 1.0;
-Real U_max = 3.0 * U_inlet;
+Real U_max = 1.5 * U_inlet;
 Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 Real rho0_f = 1.0;                                            /**< Density. */
@@ -101,14 +104,14 @@ Real Re_calculated = U_f * DH * rho0_f / mu_f;
 //----------------------------------------------------------------------
 // Observation.
 //----------------------------------------------------------------------
-Real x_observe = 0.90 * DL;
-Real x_observe_start = 0.90 * DL;
-Real observe_spacing_x = 0.02 * DL;
-int num_observer_points_x = 1;
-int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
-StdVec<Real> monitoring_bound = { 109 ,111 };
-Real observe_spacing = DH / num_observer_points;
-StdVec<Vecd> observation_locations;
+//Real x_observe = 0.90 * DL;
+//Real x_observe_start = 0.90 * DL;
+//Real observe_spacing_x = 0.02 * DL;
+//int num_observer_points_x = 1;
+//int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
+//StdVec<Real> monitoring_bound = { 109 ,111 };
+//Real observe_spacing = DH / num_observer_points;
+//StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------
@@ -118,14 +121,8 @@ std::vector<Vecd> createWaterBlockShape()
     std::vector<Vecd> water_block_shape;
     water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge, DH));
-    water_block_shape.push_back(Vecd(DL, DH));
-    water_block_shape.push_back(Vecd(DL, 0.0));
-
-    water_block_shape.push_back(Vecd(DL - DL5, 0.0+ offset_distance));
-    water_block_shape.push_back(Vecd(DL1 + DL2 + DL3, DH1+ offset_distance));
-    water_block_shape.push_back(Vecd(DL1 + DL2, DH1+ offset_distance));
-    water_block_shape.push_back(Vecd(DL1, 0.0+ offset_distance));
-
+    water_block_shape.push_back(Vecd(DL1, DH));
+    water_block_shape.push_back(Vecd(DL1, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge,  0.0));
 
     return water_block_shape;
@@ -149,27 +146,59 @@ public:
     explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
-        std::vector<Vecd> outer_wall_shape;
-        outer_wall_shape.push_back(Vecd(-DL_sponge -BW, -BW));
-        outer_wall_shape.push_back(Vecd(-DL_sponge -BW, DH + BW));
-        outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
-        outer_wall_shape.push_back(Vecd(DL + BW, -BW));
-        outer_wall_shape.push_back(Vecd(-DL_sponge -BW, -BW));
-        std::vector<Vecd> inner_wall_shape;
-        inner_wall_shape.push_back(Vecd(-DL_sponge -2.0 * BW, 0.0));
-        inner_wall_shape.push_back(Vecd(-DL_sponge -2.0 * BW, DH));
-        inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, DH));
-        inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
+        multi_polygon_.addACircle(circle_center, R2+BW, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(circle_center, R2, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(circle_center, R1 , 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(circle_center, R1-BW, 100, ShapeBooleanOps::sub);
+        std::vector<Vecd> sub_circle;
+        Vec2d temp =  Vec2d::Zero();
+        temp = circle_center + Vec2d(-(R2 + BW), -(R2 + BW));
+        sub_circle.push_back(temp);
+        temp = circle_center + Vec2d(-(R2 + BW), (R2 + BW));
+        sub_circle.push_back(temp);
+        temp = circle_center + Vec2d((R2 + BW), (R2 + BW));
+        sub_circle.push_back(temp);
+        temp = circle_center + Vec2d((R2 + BW), 0.0);
+        sub_circle.push_back(temp);
+        temp = circle_center + Vec2d(0.0, 0.0);
+        sub_circle.push_back(temp);
+        temp = circle_center + Vec2d(0.0, -(R2 + BW));
+        sub_circle.push_back(temp);
+        temp = circle_center + Vec2d(-(R2 + BW), -(R2 + BW));
+        sub_circle.push_back(temp);
+        multi_polygon_.addAPolygon(sub_circle, ShapeBooleanOps::sub);
 
-        inner_wall_shape.push_back(Vecd(DL - DL5, 0.0));
-        inner_wall_shape.push_back(Vecd(DL1 + DL2 + DL3, DH1));
-        inner_wall_shape.push_back(Vecd(DL1 + DL2, DH1));
-        inner_wall_shape.push_back(Vecd(DL1, 0.0));
+        std::vector<Vecd> outer_wall_shape1;
+        outer_wall_shape1.push_back(Vecd(-DL_sponge - BW, -BW));
+        outer_wall_shape1.push_back(Vecd(-DL_sponge - BW, DH + BW));
+        outer_wall_shape1.push_back(Vecd(DL1 , DH + BW));
+        outer_wall_shape1.push_back(Vecd(DL1 , -BW));
+        outer_wall_shape1.push_back(Vecd(-DL_sponge - BW, -BW));
+        multi_polygon_.addAPolygon(outer_wall_shape1, ShapeBooleanOps::add);
 
-        inner_wall_shape.push_back(Vecd(-DL_sponge -2.0 * BW, 0.0));
+        std::vector<Vecd> inner_wall_shape1;
+        inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0 ));
+        inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, DH ));
+        inner_wall_shape1.push_back(Vecd(DL1, DH ));
+        inner_wall_shape1.push_back(Vecd(DL1, 0.0));
+        inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0 ));
+        multi_polygon_.addAPolygon(inner_wall_shape1, ShapeBooleanOps::sub);
+        
+        std::vector<Vecd> outer_wall_shape2;
+        outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1));
+        outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1 + DL2 + BW ));
+        outer_wall_shape2.push_back(Vecd(DL1 + R1+ DH + BW , DH + R1 + DL2 + BW ));
+        outer_wall_shape2.push_back(Vecd(DL1 + R1+ DH + BW , DH + R1 ));
+        outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1));
+        multi_polygon_.addAPolygon(outer_wall_shape2, ShapeBooleanOps::add);
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        std::vector<Vecd> inner_wall_shape2;
+        inner_wall_shape2.push_back(Vecd(DL1 + R1      , DH + R1));
+        inner_wall_shape2.push_back(Vecd(DL1 + R1      , DH + R1 + DL2+ 2.0 * BW));
+        inner_wall_shape2.push_back(Vecd(DL1 + R1 + DH , DH + R1 + DL2 + +2.0 * BW));
+        inner_wall_shape2.push_back(Vecd(DL1 + R1 + DH , DH + R1));
+        inner_wall_shape2.push_back(Vecd(DL1 + R1      , DH + R1));
+        multi_polygon_.addAPolygon(inner_wall_shape2, ShapeBooleanOps::sub);
     }
 };
 
@@ -184,7 +213,7 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType& boundary_condition)
-        : u_ref_(U_inlet), t_ref_(2.0),
+        : u_ref_(U_inlet), t_ref_(30.0),
         aligned_box_(boundary_condition.getAlignedBox()),
         halfsize_(aligned_box_.HalfSize()) {}
 
