@@ -77,12 +77,11 @@ class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiema
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
+    StdLargeVec<Matd> &vel_grad_, &tau_, &dtau_dt_;
     Real mu_p_, lambda_;
 };
 
@@ -93,14 +92,9 @@ template <>
 class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfContactWallRiemann
 {
   public:
-    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
+    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
+        : Integration2ndHalfContactWallRiemann(wall_contact_relation){};
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
-    Real mu_p_, lambda_;
 };
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;

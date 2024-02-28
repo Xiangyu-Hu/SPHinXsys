@@ -171,6 +171,7 @@ int main(int ac, char *av[])
     // pressure relaxation using verlet time stepping
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientComplex> update_velocity_gradient(fluid_block_inner, fluid_block_contact);
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     // define external force
@@ -242,6 +243,7 @@ int main(int ac, char *av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 implicit_viscous_damping.exec(dt);
                 pressure_relaxation.exec(dt);
+                update_velocity_gradient.exec();
                 density_relaxation.exec(dt);
 
                 relaxation_time += dt;
