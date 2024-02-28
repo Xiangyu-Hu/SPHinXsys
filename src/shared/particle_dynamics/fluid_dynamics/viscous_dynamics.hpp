@@ -16,6 +16,15 @@ ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 template <class ViscosityType>
+ViscousForce<Inner<>, ViscosityType>::ViscousForce(BaseInnerRelation &inner_relation)
+    : ViscousForce<FluidDataInner>(inner_relation),
+      ForcePrior(&base_particles_, "ViscousForce"), mu_(&base_particles_)
+{
+    static_assert(std::is_base_of<ParticleAverage, ViscosityType>::value,
+                  "ParticleAverage is not the base of ViscosityType!");
+}
+//=================================================================================================//
+template <class ViscosityType>
 void ViscousForce<Inner<>, ViscosityType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();

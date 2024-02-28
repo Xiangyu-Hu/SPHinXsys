@@ -34,12 +34,15 @@
 namespace SPH
 {
 //----------------------------------------------------------------------
-// Particle group scope functors
+// Particle scope functors
 //----------------------------------------------------------------------
-class AllParticles
+class ParticleScope // base class to indicate the concept of particle scope
+{
+};
+class AllParticles : public ParticleScope
 {
   public:
-    explicit AllParticles(BaseParticles *base_particles){};
+    explicit AllParticles(BaseParticles *base_particles) : ParticleScope(){};
     bool operator()(size_t index_i)
     {
         return true;
@@ -47,13 +50,14 @@ class AllParticles
 };
 
 template <int INDICATOR>
-class IndicatedParticles
+class IndicatedParticles : public ParticleScope
 {
     StdLargeVec<int> &indicator_;
 
   public:
     explicit IndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+        : ParticleScope(),
+          indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] == INDICATOR;
@@ -63,13 +67,14 @@ class IndicatedParticles
 using BulkParticles = IndicatedParticles<0>;
 
 template <int INDICATOR>
-class NotIndicatedParticles
+class NotIndicatedParticles : public ParticleScope
 {
     StdLargeVec<int> &indicator_;
 
   public:
     explicit NotIndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+        : ParticleScope(),
+          indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] != INDICATOR;
@@ -78,43 +83,51 @@ class NotIndicatedParticles
 //----------------------------------------------------------------------
 // Particle limiter functors
 //----------------------------------------------------------------------
-class NoLimiter
+class Limiter // base class to indicate the concept of limiter
+{
+};
+class NoLimiter : public Limiter
 {
   public:
-    NoLimiter(BaseParticles *base_particles){};
+    NoLimiter(BaseParticles *base_particles) : Limiter(){};
     Real operator()(size_t index_i)
     {
         return 1.0;
     };
 };
 
-class ZerothInconsistencyLimiter
+class ZerothConsistencyLimiter : public Limiter
 {
     Real h_ref_;
-    StdLargeVec<Vecd> &inconsistency0_;
+    StdLargeVec<Vecd> &consistency_;
 
   public:
-    ZerothInconsistencyLimiter(BaseParticles *base_particles)
-        : h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          inconsistency0_(*base_particles->getVariableByName<Vecd>("ZerothInconsistency")){};
-    virtual ~ZerothInconsistencyLimiter(){};
+    ZerothConsistencyLimiter(BaseParticles *base_particles)
+        : Limiter(),
+          h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
+          consistency_(*base_particles->getVariableByName<Vecd>("ZerothConsistency")){};
+    virtual ~ZerothConsistencyLimiter(){};
     Real operator()(size_t index_i)
     {
-        Real error_scale = inconsistency0_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        Real error_scale = consistency_[index_i].squaredNorm() * h_ref_ * h_ref_;
         return SMIN(Real(100) * error_scale, Real(1));
     };
 };
 //----------------------------------------------------------------------
 // Particle average functors
 //----------------------------------------------------------------------
+class ParticleAverage // base class to indicate the concept of particle average
+{
+};
+
 template <typename T>
-class PairAverageFixed
+class PairAverageFixed : public ParticleAverage
 {
     const T average_;
 
   public:
     PairAverageFixed(const T &c1, const T &c2)
-        : average_(0.5 * (c1 + c2)){};
+        : ParticleAverage(), average_(0.5 * (c1 + c2)){};
     explicit PairAverageFixed(const T &c)
         : PairAverageFixed(c, c){};
     T operator()(size_t index_i, size_t index_j)
@@ -123,10 +136,10 @@ class PairAverageFixed
     };
 };
 
-class GeomAverage
+class GeomAverage : public ParticleAverage
 {
   public:
-    GeomAverage(){};
+    GeomAverage() : ParticleAverage(){};
 
   protected:
     Real inverse(const Real &x) { return 1.0 / x; };
@@ -152,13 +165,13 @@ class PairGeomAverageFixed : public GeomAverage
 };
 
 template <typename T>
-class PairAverageVariable
+class PairAverageVariable : public ParticleAverage
 {
     StdLargeVec<T> &v1_, &v2_;
 
   public:
     PairAverageVariable(StdLargeVec<T> &v1, StdLargeVec<T> &v2)
-        : v1_(v1), v2_(v2){};
+        : ParticleAverage(), v1_(v1), v2_(v2){};
     explicit PairAverageVariable(StdLargeVec<T> &v)
         : PairAverageVariable(v, v){};
     T operator()(size_t index_i, size_t index_j)
@@ -184,23 +197,27 @@ class PairGeomAverageVariable : public GeomAverage
     };
 };
 //----------------------------------------------------------------------
-// Particle kernel functors
+// Particle kernel correction functors
 //----------------------------------------------------------------------
-class NoKernelCorrection
+class KernelCorrection // base class to indicate the concept of kernel correction
+{
+};
+class NoKernelCorrection : public KernelCorrection
 {
   public:
-    NoKernelCorrection(BaseParticles *particles){};
+    NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
     Real operator()(size_t index_i)
     {
         return 1.0;
     };
 };
 
-class KernelCorrection
+class FirstConsistencyCorrection : public KernelCorrection
 {
   public:
-    KernelCorrection(BaseParticles *particles)
-        : B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+    FirstConsistencyCorrection(BaseParticles *particles)
+        : KernelCorrection(),
+          B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
 
     Matd operator()(size_t index_i)
     {

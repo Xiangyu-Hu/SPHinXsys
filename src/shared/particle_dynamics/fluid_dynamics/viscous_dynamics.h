@@ -73,10 +73,7 @@ class ViscousForce<Inner<>, ViscosityType>
     : public ViscousForce<FluidDataInner>, public ForcePrior
 {
   public:
-    explicit ViscousForce(BaseInnerRelation &inner_relation)
-        : ViscousForce<FluidDataInner>(inner_relation),
-          ForcePrior(&base_particles_, "ViscousForce"),
-          mu_(&base_particles_){};
+    explicit ViscousForce(BaseInnerRelation &inner_relation);
     virtual ~ViscousForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 

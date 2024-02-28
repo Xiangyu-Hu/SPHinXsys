@@ -24,6 +24,8 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     : BaseIntegration<FluidDataInner>(inner_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_)
 {
+    static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
+                  "KernelCorrection is not the base of KernelCorrectionType!");
     //----------------------------------------------------------------------
     //		register sortable particle data
     //----------------------------------------------------------------------
