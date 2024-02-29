@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.001;
+Real particle_spacing = 0.0005;
 Real gravity_g = 0;
 Real end_time = 0.5;
 bool relaxation = false;
@@ -122,15 +122,15 @@ int main(int ac, char *av[])
     barrel.generateParticles<ParticleGeneratorLattice>();
     barrel.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-    SolidBody left_screw(sph_system, makeShared<Left_Screw>("Left_Screw"));
-    left_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
-    left_screw.generateParticles<ParticleGeneratorLattice>();
-    left_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
-
     SolidBody right_screw(sph_system, makeShared<Right_Screw>("Right_Screw"));
     right_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
     right_screw.generateParticles<ParticleGeneratorLattice>();
     right_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
+
+    SolidBody left_screw(sph_system, makeShared<Left_Screw>("Left_Screw"));
+    left_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
+    left_screw.generateParticles<ParticleGeneratorLattice>();
+    left_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
