@@ -22,9 +22,9 @@ Real min_shear_rate = 1e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+3; // cutoff high shear rate
 
 // material properties
-Real rho = 1000.0;                            // reference density
-Real u_lid = 1.0;                             // lid velocity
-Real SOS = 10.0 * SMAX(u_lid, std::sqrt(12)); // numerical speed of sound
+Real rho = 1000.0;       // reference density
+Real u_lid = 1.0;        // lid velocity
+Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // geometry data
 Real height = 1;
