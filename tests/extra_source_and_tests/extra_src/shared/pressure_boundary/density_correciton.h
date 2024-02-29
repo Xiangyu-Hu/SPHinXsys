@@ -75,8 +75,8 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
           buffer_particle_indicator_(*particles_->getVariableByName<int>("BufferParticleIndicator")){};
     virtual ~DensitySummationPressure(){};
     void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0) 
-    { 
+    void update(size_t index_i, Real dt = 0.0)
+    {
         if (buffer_particle_indicator_[index_i] == 0)
             assignDensity(index_i);
     };
@@ -84,7 +84,6 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
   protected:
     StdLargeVec<int> &buffer_particle_indicator_;
 };
-
 
 template <>
 class DensitySummationPressure<Contact<Base>> : public DensitySummationPressure<Base, FluidContactData>
