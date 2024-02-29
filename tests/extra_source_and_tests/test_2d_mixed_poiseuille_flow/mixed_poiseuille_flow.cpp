@@ -24,7 +24,7 @@ using namespace SPH;
  */
 Real DL = 0.004;                 /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 50.0; /**< Initial reference particle spacing. */
+Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 /** Domain bounds of the system. */
@@ -48,93 +48,21 @@ Vec2d right_bidirectional_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * D
 Vec2d normal = Vec2d(1.0, 0.0);
 
 /**
- * @brief 	Bidirectional buffer definition.
- */
-MultiPolygon createLeftBufferShape()
-{
-    std::vector<Vecd> left_buffer_shape;
-    left_buffer_shape.push_back(Vecd(0.0, 0.0));
-    left_buffer_shape.push_back(Vecd(0.0, DH));
-    left_buffer_shape.push_back(Vecd(5.0 * resolution_ref, DH));
-    left_buffer_shape.push_back(Vecd(5.0 * resolution_ref, 0.0));
-    left_buffer_shape.push_back(Vecd(0.0, 0.0));
-
-    MultiPolygon left_multi_polygon;
-    left_multi_polygon.addAPolygon(left_buffer_shape, ShapeBooleanOps::add);
-    return left_multi_polygon;
-}
-
-MultiPolygon createRightBufferShape()
-{
-    std::vector<Vecd> right_buffer_shape;
-    right_buffer_shape.push_back(Vecd(DL - 5.0 * resolution_ref, 0.0));
-    right_buffer_shape.push_back(Vecd(DL - 5.0 * resolution_ref, DH));
-    right_buffer_shape.push_back(Vecd(DL, DH));
-    right_buffer_shape.push_back(Vecd(DL, 0.0));
-    right_buffer_shape.push_back(Vecd(DL - 5.0 * resolution_ref, 0.0));
-
-    MultiPolygon right_multi_polygon;
-    right_multi_polygon.addAPolygon(right_buffer_shape, ShapeBooleanOps::add);
-    return right_multi_polygon;
-}
-
-class LeftBidirectionalBufferCondition : public fluid_dynamics::BidirectionalBuffer
-{
-  public:
-    LeftBidirectionalBufferCondition(RealBody &real_body, SharedPtr<AlignedBoxShape> shape_ptr,
-                                     size_t body_buffer_width, int axis_direction, bool prescribe_pressure)
-        : fluid_dynamics::BidirectionalBuffer(real_body, shape_ptr,
-                                              body_buffer_width, axis_direction, prescribe_pressure) {}
-    Real getTargetPressure(Real dt) override
-    {
-        /*here, because the bool prescribe_pressure is false, the pressure value
-        could be prescribed as any value*/
-        return 0.0;
-    }
-};
-
-class RightBidirectionalBufferCondition : public fluid_dynamics::BidirectionalBuffer
-{
-  public:
-    RightBidirectionalBufferCondition(RealBody &real_body, SharedPtr<AlignedBoxShape> shape_ptr,
-                                     size_t body_buffer_width, int axis_direction)
-        : fluid_dynamics::BidirectionalBuffer(real_body, shape_ptr,
-                                              body_buffer_width, axis_direction) {}
-    Real getTargetPressure(Real dt) override
-    {
-        Real pressure = Outlet_pressure;
-        return pressure;
-    }
-};
-/**
  * @brief 	Pressure boundary definition.
  */
-class LeftInflowPressure : public fluid_dynamics::FlowPressureBuffer
+struct RightInflowPressure
 {
-  public:
-    LeftInflowPressure(BodyPartByCell &constrained_region, Vecd normal_vector)
-        : fluid_dynamics::FlowPressureBuffer(constrained_region, normal_vector) {}
-    Real getTargetPressure(size_t index_i, Real dt) override
-    {
-        Real pressure = p_[index_i];
-        return pressure;
-    }
-    void setupDynamics(Real dt = 0.0) override {}
-};
+    template <class BoundaryConditionType>
+    RightInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-class RightInflowPressure : public fluid_dynamics::FlowPressureBuffer
-{
-  public:
-    RightInflowPressure(BodyPartByCell &constrained_region, Vecd normal_vector)
-        : fluid_dynamics::FlowPressureBuffer(constrained_region, normal_vector) {}
-    Real getTargetPressure(size_t index_i, Real dt) override
+    Real operator()(Real &p_)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;
         return pressure;
     }
-    void setupDynamics(Real dt = 0.0) override {}
 };
+
 /**
  * @brief 	inflow velocity definition.
  */
@@ -151,10 +79,9 @@ struct InflowVelocity
         Vecd target_velocity = Vecd::Zero();
         Real run_time = GlobalStaticVariables::physical_time_;
         
-        u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1]+0.5*DH) * (position[1]+0.5*DH - DH) / (2.0 * mu_f * DL) 
-             +(4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) / (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * 
-            exp(-(Pi * Pi * mu_f * run_time) / (DH * DH));
-
+        u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (position[1] + 0.5 * DH - DH) 
+            / (2.0 * mu_f * DL) + (4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) / 
+            (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * run_time) / (DH * DH));
 
         target_velocity[0] = u_ave;
         target_velocity[1] = 0.0;
@@ -162,6 +89,8 @@ struct InflowVelocity
         return target_velocity;
     }
 };
+
+
 /**
  * @brief 	Fluid body definition.
  */
@@ -188,17 +117,17 @@ class WallBoundary : public MultiPolygonShape
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         std::vector<Vecd> outer_wall_shape;
-        outer_wall_shape.push_back(Vecd(-BW, -BW));
-        outer_wall_shape.push_back(Vecd(-BW, DH + BW));
-        outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
-        outer_wall_shape.push_back(Vecd(DL + BW, -BW));
-        outer_wall_shape.push_back(Vecd(-BW, -BW));
+        outer_wall_shape.push_back(Vecd(0.0, -BW));
+        outer_wall_shape.push_back(Vecd(0.0, DH + BW));
+        outer_wall_shape.push_back(Vecd(DL, DH + BW));
+        outer_wall_shape.push_back(Vecd(DL, -BW));
+        outer_wall_shape.push_back(Vecd(0.0, -BW));
         std::vector<Vecd> inner_wall_shape;
-        inner_wall_shape.push_back(Vecd(-2.0*BW, 0.0));
-        inner_wall_shape.push_back(Vecd(-2.0*BW, DH));
-        inner_wall_shape.push_back(Vecd(DL + 2.0*BW, DH));
-        inner_wall_shape.push_back(Vecd(DL + 2.0*BW, 0.0));
-        inner_wall_shape.push_back(Vecd(-2.0*BW, 0.0));
+        inner_wall_shape.push_back(Vecd(-BW, 0.0));
+        inner_wall_shape.push_back(Vecd(-BW, DH));
+        inner_wall_shape.push_back(Vecd(DL + BW, DH));
+        inner_wall_shape.push_back(Vecd(DL + BW, 0.0));
+        inner_wall_shape.push_back(Vecd(-BW, 0.0));
 
         multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -251,13 +180,12 @@ int main(int ac, char *av[])
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
         boundary_indicator(water_block_inner, water_block_contact);
     /** bidrectional buffer */
-    LeftBidirectionalBufferCondition left_emitter_inflow_injection(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_bidirectional_translation)), 
-            bidirectional_buffer_halfsize), 10, xAxis, false);
-    RightBidirectionalBufferCondition right_emitter_inflow_injection(
-        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), 
-            bidirectional_buffer_halfsize), 10, xAxis);
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> outflow_velocity_condition(left_disposer);
+    BodyAlignedBoxByCell left_emitter(
+        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, xAxis, 10);
+    BodyAlignedBoxByCell right_emitter(
+        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, xAxis, 10);
     /** output parameters */
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("Indicator");
@@ -276,10 +204,8 @@ int main(int ac, char *av[])
     /** mass equation. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact); 
     /** pressure boundary condition. */ 
-    BodyRegionByCell left_pressure_region(water_block, makeShared<MultiPolygonShape>(createLeftBufferShape()));
-    SimpleDynamics<LeftInflowPressure> left_pressure_condition(left_pressure_region, normal);
-    BodyRegionByCell right_pressure_region(water_block, makeShared<MultiPolygonShape>(createRightBufferShape()));
-    SimpleDynamics<RightInflowPressure> right_pressure_condition(right_pressure_region, normal);   
+    SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter); 
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_disposer);
     /** Computing viscous acceleration. */
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
@@ -346,9 +272,8 @@ int main(int ac, char *av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 pressure_relaxation.exec(dt);
                 kernel_summation.exec();
-                left_pressure_condition.exec(dt);
-                right_pressure_condition.exec(dt); 
-                outflow_velocity_condition.exec();
+                right_inflow_pressure_condition.exec(dt); 
+                inflow_velocity_condition.exec();
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
