@@ -131,8 +131,7 @@ class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
   protected:
     StdLargeVec<Matd> &vel_grad_;
     GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
-    StdLargeVec<Real> mu_srd_;
-    StdLargeVec<Real> scalar_shear_rate_;
+    StdLargeVec<Real> &mu_srd_;
 };
 
 } // namespace fluid_dynamics

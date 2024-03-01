@@ -95,7 +95,7 @@ SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusion
       FluidDataSimple(sph_body),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       rho_(this->particles_->rho_),
-      mu_srd_(*this->particles_->getVariableByName<Real>("SRDViscosity")),
+      mu_srd_(*this->particles_->getVariableByName<Real>("VariableViscosity")),
       diffusionCFL(diffusionCFL) {}
 //=================================================================================================//
 Real SRDViscousTimeStepSize::outputResult(Real reduced_value)
@@ -113,12 +113,10 @@ Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
 ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
       vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),
-      generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial()))
+      generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial())),
+      mu_srd_(*particles_->registerSharedVariable<Real>("VariableViscosity"))
 {
-    particles_->registerVariable(mu_srd_, "SRDViscosity");
-    particles_->addVariableToWrite<Real>("SRDViscosity");
-    particles_->registerVariable(scalar_shear_rate_, "ScalarShearRate");
-    particles_->addVariableToWrite<Real>("ScalarShearRate");
+    particles_->addVariableToWrite<Real>("VariableViscosity");
 }
 //=================================================================================================//
 void ShearRateDependentViscosity::update(size_t index_i, Real dt)

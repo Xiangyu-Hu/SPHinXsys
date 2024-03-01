@@ -145,7 +145,7 @@ class GeneralizedNewtonianFluid : public WeaklyCompressibleFluid
 
     virtual ~GeneralizedNewtonianFluid(){};
 
-    virtual Real getViscosity(Real capped_shear_rate) = 0;
+    virtual Real getViscosity(Real shear_rate) = 0;
 
     Real getMinShearRate() { return min_shear_rate_; };
     Real getMaxShearRate() { return max_shear_rate_; };
@@ -176,7 +176,7 @@ class HerschelBulkleyFluid : public GeneralizedNewtonianFluid
     Real getPowerIndex() { return power_index_; };
     Real getYieldStress() { return yield_stress_; };
 
-    Real getViscosity(Real capped_shear_rate) override;
+    Real getViscosity(Real shear_rate) override;
     virtual HerschelBulkleyFluid *ThisObjectPtr() override { return this; };
 };
 
@@ -208,7 +208,7 @@ class CarreauFluid : public GeneralizedNewtonianFluid
     Real getMu0() { return mu0_; };
     Real getPowerIndex() { return power_index_; };
 
-    Real getViscosity(Real capped_shear_rate) override;
+    Real getViscosity(Real shear_rate) override;
     virtual CarreauFluid *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
