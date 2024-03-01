@@ -217,7 +217,7 @@ class FirstConsistencyCorrection : public KernelCorrection
   public:
     FirstConsistencyCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+          B_(*particles->getVariableByName<Matd>("FirstConsistencyMatrix")){};
 
     Matd operator()(size_t index_i)
     {

@@ -24,7 +24,7 @@
  * @file non_newtonian_dynamics.h
  * @brief Here, we define the time integration algorithm classes for non-newtonian fluids.
  * @details We consider here weakly compressible fluids.
- * @author	Xiangyu Hu
+ * @author	Theodor Hennings and Xiangyu Hu
  */
 
 #ifndef NON_NEWTONIAN_DYNAMICS_H
@@ -99,6 +99,22 @@ class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfCont
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
+
+class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
+{
+  public:
+    explicit ShearRateDependentViscosity(SPHBody &sph_body);
+    virtual ~ShearRateDependentViscosity(){};
+
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &vel_grad_;
+    GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
+    StdLargeVec<Real> mu_srd_;
+    StdLargeVec<Real> scalar_shear_rate_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // NON_NEWTONIAN_DYNAMICS_H

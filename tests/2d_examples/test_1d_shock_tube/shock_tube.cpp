@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
+    InteractionWithUpdate<FirstConsistencyMatrixInner> kernel_correction_matrix(wave_body_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(wave_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.

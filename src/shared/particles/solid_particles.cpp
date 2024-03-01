@@ -20,7 +20,7 @@ void SolidParticles::initializeOtherVariables()
     registerVariable(n_, "NormalDirection");
     registerVariable(n0_, "InitialNormalDirection", [&](size_t i) -> Vecd
                      { return n_[i]; });
-    registerVariable(B_, "KernelCorrectionMatrix", [&](size_t i) -> Matd
+    registerVariable(B_, "FirstConsistencyMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
 }
 //=============================================================================================//
@@ -278,7 +278,7 @@ void ShellParticles::initializeOtherVariables()
                      [&](size_t i) -> Vecd
                      { return n_[i]; });
     registerVariable(transformation_matrix_, "TransformationMatrix");
-    registerVariable(B_, "KernelCorrectionMatrix", [&](size_t i) -> Matd
+    registerVariable(B_, "FirstConsistencyMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
     registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
                      { return Matd::Identity(); });

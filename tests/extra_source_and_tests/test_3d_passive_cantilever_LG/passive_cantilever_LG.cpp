@@ -92,7 +92,7 @@ int main(int ac, char *av[])
      */
     SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner>
+    InteractionWithUpdate<FirstConsistencyMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
@@ -165,7 +165,6 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_displacement.testResult();
-
 
     return 0;
 }

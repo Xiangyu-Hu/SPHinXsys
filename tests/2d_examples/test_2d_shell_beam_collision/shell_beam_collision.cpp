@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Define external force.*/
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
+    InteractionWithUpdate<FirstConsistencyMatrixInner> beam_corrected_configuration(beam_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
     /** stress relaxation for the walls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);

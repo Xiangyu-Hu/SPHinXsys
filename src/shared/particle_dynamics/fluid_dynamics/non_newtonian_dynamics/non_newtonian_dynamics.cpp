@@ -90,5 +90,23 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::update(size_t index_i, Real dt)
     tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
+ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
+    : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+      vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+      generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial()))
+{
+    particles_->registerVariable(mu_srd_, "SRDViscosity");
+    particles_->addVariableToWrite<Real>("SRDViscosity");
+    particles_->registerVariable(scalar_shear_rate_, "ScalarShearRate");
+    particles_->addVariableToWrite<Real>("ScalarShearRate");
+}
+//=================================================================================================//
+void ShearRateDependentViscosity::update(size_t index_i, Real dt)
+{
+    Matd D = 0.5 * (vel_grad_[index_i] + vel_grad_[index_i].transpose());
+    Real shear_rate = (Real)std::sqrt(2.0 * (D * D).trace());
+    mu_srd_[index_i] = generalized_newtonian_fluid_.getViscosity(shear_rate);
+}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
