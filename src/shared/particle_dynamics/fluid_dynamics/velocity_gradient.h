@@ -78,7 +78,8 @@ class VelocityGradient<Contact<Wall>> : public InteractionWithWall<VelocityGradi
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-using VelocityGradientComplex = ComplexInteraction<VelocityGradient<Inner<NoKernelCorrection>, Contact<Wall>>>;
+template <class KernelCorrectionType>
+using VelocityGradientWithWall = ComplexInteraction<VelocityGradient<Inner<KernelCorrectionType>, Contact<Wall>>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH

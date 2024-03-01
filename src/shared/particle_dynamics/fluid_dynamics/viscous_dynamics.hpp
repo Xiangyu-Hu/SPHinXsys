@@ -66,9 +66,6 @@ void ViscousForce<Inner<AngularConservative>, ViscosityType>::interaction(size_t
 template <typename ViscosityType>
 void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Real dt)
 {
-    Real rho_i = rho_[index_i];
-    const Vecd &vel_i = vel_[index_i];
-
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
@@ -79,21 +76,18 @@ void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Rea
             size_t index_j = contact_neighborhood.j_[n];
             Real r_ij = contact_neighborhood.r_ij_[n];
 
-            Vecd vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
+            Vecd vel_derivative = 2.0 * (vel_[index_i] - vel_ave_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
             force += 2.0 * mu_(index_i, index_i) * mass_[index_i] *
                      vel_derivative * contact_neighborhood.dW_ijV_j_[n];
         }
     }
 
-    viscous_force_[index_i] += force / rho_i;
+    viscous_force_[index_i] += force / rho_[index_i];
 }
 //=================================================================================================//
 template <typename ViscosityType>
 void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interaction(size_t index_i, Real dt)
 {
-    Real rho_i = rho_[index_i];
-    const Vecd &vel_i = vel_[index_i];
-
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
@@ -113,7 +107,7 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interactio
         }
     }
 
-    viscous_force_[index_i] += force / rho_i;
+    viscous_force_[index_i] += force / rho_[index_i];
 }
 //=================================================================================================//
 template <typename ViscosityType>

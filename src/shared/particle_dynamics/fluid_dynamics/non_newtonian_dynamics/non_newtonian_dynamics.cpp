@@ -90,6 +90,26 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::update(size_t index_i, Real dt)
     tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
+SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL)
+    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+      FluidDataSimple(sph_body),
+      smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      rho_(this->particles_->rho_),
+      mu_srd_(*this->particles_->getVariableByName<Real>("SRDViscosity")),
+      diffusionCFL(diffusionCFL) {}
+//=================================================================================================//
+Real SRDViscousTimeStepSize::outputResult(Real reduced_value)
+{
+    max_viscosity = TinyReal;
+    return this->diffusionCFL * smoothing_length_ * smoothing_length_ / (reduced_value + TinyReal);
+}
+//=================================================================================================//
+Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
+{
+    max_viscosity = SMAX(mu_srd_[index_i] / rho_[index_i], max_viscosity);
+    return max_viscosity;
+}
+//=================================================================================================//
 ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
       vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),

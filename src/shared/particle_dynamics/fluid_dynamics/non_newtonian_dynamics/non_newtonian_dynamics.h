@@ -100,6 +100,26 @@ class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfCont
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
 
+/**
+ * @class SRDViscousTimeStepSize
+ * @brief Computing the viscous time step size using the SRD viscosity
+ */
+class SRDViscousTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+{
+  public:
+    explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
+    virtual ~SRDViscousTimeStepSize(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Real smoothing_length_;
+    StdLargeVec<Real> &rho_;
+    StdLargeVec<Real> &mu_srd_;
+    Real diffusionCFL;
+    Real max_viscosity = 1e-12;
+};
+
 class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
 {
   public:
