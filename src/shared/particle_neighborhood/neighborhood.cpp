@@ -253,11 +253,8 @@ NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHB
     : BaseNeighborBuilderContactShell(contact_body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
-    Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
-    kernel_ = source_smoothing_length >= target_smoothing_length
-                  ? body.sph_adaptation_->getKernel()
-                  : kernel_keeper_.createPtr<KernelWendlandC2>(target_smoothing_length);
+    // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
+    kernel_ = body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
 void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
@@ -325,11 +322,8 @@ NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, 
     : BaseNeighborBuilderContactShell(body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
-    Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
-    kernel_ = source_smoothing_length >= target_smoothing_length
-                  ? kernel_keeper_.createPtr<KernelWendlandC2>(source_smoothing_length)
-                  : contact_body.sph_adaptation_->getKernel();
+    // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
+    kernel_ = contact_body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
 void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
