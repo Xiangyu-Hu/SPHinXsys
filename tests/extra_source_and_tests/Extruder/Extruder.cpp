@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.0005;
+Real particle_spacing = 0.001;
 Real gravity_g = 0;
 Real end_time = 0.5;
 bool relaxation = false;
@@ -38,6 +38,10 @@ std::string full_path_to_right_screw = "./input/right_screw.stl";
 std::string full_path_to_fluid = "./input/fluid.stl";
 
 std::string full_path_to_barrel = "./input/barrel.stl";
+
+std::string full_path_to_cutout = "./input/cutout.stl";
+
+std::string full_path_to_marble = "./input/marble.stl";
 
 Vecd translation(0.0, 0.0, 0.0);
 Real length_scale = 1.0;

@@ -168,7 +168,7 @@ void GeneralizedNewtonianViscousForce<Inner<>>::interaction(size_t index_i, Real
 
         Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
         Real avg_visc = 2.0 * (mu_srd_[index_i] * mu_srd_[index_j]) / (mu_srd_[index_i] + mu_srd_[index_j]);
-        Real eta_ij = 2 * (dim + 2) * avg_visc * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+        Real eta_ij = 2.0 * (dim + 2.0) * avg_visc * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
         force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] * e_ij;
     }
     viscous_force_[index_i] = force / rho_[index_i];
@@ -257,7 +257,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            velocity_gradient += -(vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
+            velocity_gradient += -2.0*(vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
         }
     }
     combined_velocity_gradient_[index_i] += velocity_gradient;
@@ -284,7 +284,7 @@ void ShearRateDependentViscosity::interaction(size_t index_i, Real dt)
     Matd D_ij = 0.5 * (combined_velocity_gradient_[index_i] + combined_velocity_gradient_[index_i].transpose());
     D_ij = D_ij.cwiseProduct(D_ij);
     Real second_invariant = D_ij.sum();
-    second_invariant = (Real)std::sqrt(2 * second_invariant);
+    second_invariant = (Real)std::sqrt(2.0 * second_invariant);
 
     Real capped_shear_rate = std::max(second_invariant, min_shear_rate);
     capped_shear_rate = std::min(capped_shear_rate, max_shear_rate);
