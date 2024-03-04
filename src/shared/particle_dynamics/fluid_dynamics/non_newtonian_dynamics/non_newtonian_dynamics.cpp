@@ -122,6 +122,7 @@ ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
 void ShearRateDependentViscosity::update(size_t index_i, Real dt)
 {
     Matd D = 0.5 * (vel_grad_[index_i] + vel_grad_[index_i].transpose());
+    D -= D.trace() / Real(Dimensions) * Matd::Identity();
     Real shear_rate = (Real)std::sqrt(2.0 * (D * D).trace());
     mu_srd_[index_i] = generalized_newtonian_fluid_.getViscosity(shear_rate);
 }
