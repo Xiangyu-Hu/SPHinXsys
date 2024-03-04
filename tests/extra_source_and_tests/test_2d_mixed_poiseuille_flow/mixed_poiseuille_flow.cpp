@@ -50,6 +50,17 @@ Vec2d normal = Vec2d(1.0, 0.0);
 /**
  * @brief 	Pressure boundary definition.
  */
+struct LeftInflowPressure
+{
+    template <class BoundaryConditionType>
+    LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
+
+    Real operator()(Real &p_)
+    {
+        return p_;
+    }
+};
+
 struct RightInflowPressure
 {
     template <class BoundaryConditionType>
@@ -204,6 +215,7 @@ int main(int ac, char *av[])
     /** mass equation. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact); 
     /** pressure boundary condition. */ 
+    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter); 
     SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter); 
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_disposer);
     /** Computing viscous acceleration. */
@@ -272,6 +284,7 @@ int main(int ac, char *av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 pressure_relaxation.exec(dt);
                 kernel_summation.exec();
+                left_inflow_pressure_condition.exec(dt); 
                 right_inflow_pressure_condition.exec(dt); 
                 inflow_velocity_condition.exec();
                 density_relaxation.exec(dt);

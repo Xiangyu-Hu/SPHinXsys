@@ -52,14 +52,11 @@ class PressureCondition : public BaseFlowBoundaryCondition
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        if (aligned_box_.checkInBounds(0, pos_[index_i]))
-        {
             vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure(p_[index_i]) / rho_[index_i] * dt;
 
             Vecd frame_velocity = Vecd::Zero();
             frame_velocity[0] = transform_.xformBaseVecToFrame(vel_[index_i])[0];
             vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
-        }
     };
 
   protected:
