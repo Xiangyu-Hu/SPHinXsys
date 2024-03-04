@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.01;
+Real particle_spacing = 0.025;
 Real gravity_g = 0.0;
 Real end_time = 10.0;
 int nmbr_of_outputs = 100;
@@ -171,7 +171,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_all_walls);
 
-    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -220,7 +220,7 @@ int main(int ac, char *av[])
         shear_rate_calculation.exec(Dt);
         viscous_acceleration.exec(Dt);
 
-        // transport_velocity_correction.exec(Dt);
+        transport_velocity_correction.exec(Dt);
 
         Real relaxation_time = 0.0;
         while (relaxation_time < Dt)
@@ -249,7 +249,6 @@ int main(int ac, char *av[])
         periodic_condition_x.update_cell_linked_list_.exec();
         periodic_condition_z.update_cell_linked_list_.exec();
         fluid_walls_complex.updateConfiguration();
-        fluid_all_walls.updateConfiguration();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
