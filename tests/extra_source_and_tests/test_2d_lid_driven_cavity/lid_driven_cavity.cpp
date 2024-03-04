@@ -186,6 +186,7 @@ int main(int ac, char *av[])
     SimpleDynamics<BoundaryVelocity> lid_velocity(lid_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(no_slip_boundary);
     ObservingAQuantity<Real> observing_viscosity(fluid_observer_contact, "VariableViscosity");
+    SimpleDynamics<ParticleSnapshotAverage<Real>> average_viscosity(observer_body, "VariableViscosity");
 
     //	Define the methods for I/O operations, observations
     fluid.addBodyStateForRecording<Real>("Pressure");
@@ -242,6 +243,9 @@ int main(int ac, char *av[])
             GlobalStaticVariables::physical_time_ += dt;
         }
 
+        fluid.updateCellLinkedListWithParticleSort(100);
+        fluid_walls_complex.updateConfiguration();
+
         if (iteration % 100 == 0 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100
@@ -249,19 +253,23 @@ int main(int ac, char *av[])
                       << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc
                       << " | dt_aco: " << Dt_aco << "\n"
                       << std::flush;
+            
+            if(output_counter > number_of_outputs * 9 / 10)
+            {
+                fluid_observer_contact.updateConfiguration();
+                observing_viscosity.exec();  
+                average_viscosity.exec();               
+            }
         }
 
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
             compute_vorticity.exec();
             write_fluid_states.writeToFile();
-            fluid_observer_contact.updateConfiguration();
-            observing_viscosity.exec();
             write_observation_states.writeToFile();
             output_counter++;
         }
-        fluid.updateCellLinkedListWithParticleSort(100);
-        fluid_walls_complex.updateConfiguration();
+
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
