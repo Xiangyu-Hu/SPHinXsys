@@ -10,7 +10,7 @@ using namespace SPH;
 // setup properties
 Real particle_spacing = 0.01;
 Real end_time = 50.0;
-int nmbr_of_outputs = 500;
+int number_of_outputs = 500;
 
 // non-Newtonian properties
 Real K = 1;     // consistency index
@@ -122,6 +122,24 @@ void output_setup()
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
 }
 
+class MyLimiter : public Limiter
+{
+    Real h_ref_;
+    StdLargeVec<Vecd> &consistency_;
+
+  public:
+    MyLimiter(BaseParticles *base_particles)
+        : Limiter(),
+          h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
+          consistency_(*base_particles->getVariableByName<Vecd>("ZerothConsistency")){};
+    virtual ~MyLimiter(){};
+    Real operator()(size_t index_i)
+    {
+        Real error_scale = consistency_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        return SMIN(100.0 * SMAX(error_scale, 0.0), 1.0);
+    };
+};
+
 int main(int ac, char *av[])
 {
     output_setup();
@@ -177,7 +195,7 @@ int main(int ac, char *av[])
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
-    Real output_interval = end_time / nmbr_of_outputs;
+    Real output_interval = end_time / number_of_outputs;
     Real dt = 0;
     Real Dt = 0;
     Real Dt_visc = 0;
