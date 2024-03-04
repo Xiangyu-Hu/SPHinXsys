@@ -157,9 +157,13 @@ int main(int ac, char *av[])
     no_slip_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     no_slip_boundary.generateParticles<ParticleGeneratorLattice>();
 
+    ObserverBody observer_body(sph_system, makeShared<FluidFilling>("ObserverBody"));
+    observer_body.generateParticles<ParticleGeneratorLattice>();
+
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
     ContactRelation fluid_all_walls(fluid, {&no_slip_boundary});
+    ContactRelation fluid_observer_contact(observer_body, {&fluid});
     ComplexRelation fluid_walls_complex(fluid_inner, fluid_all_walls);
 
     //	Define the numerical methods used in the simulation
@@ -181,11 +185,14 @@ int main(int ac, char *av[])
     BodyRegionByParticle lid_boundary(no_slip_boundary, makeShared<Lid_Boundary>("LidWall"));
     SimpleDynamics<BoundaryVelocity> lid_velocity(lid_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(no_slip_boundary);
+    ObservingAQuantity<Real> observing_viscosity(fluid_observer_contact, "VariableViscosity");
 
     //	Define the methods for I/O operations, observations
     fluid.addBodyStateForRecording<Real>("Pressure");
     no_slip_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
+    observer_body.addBodyStateForRecording<Real>("VariableViscosity");
+    BodyStatesRecordingToVtp write_observation_states(observer_body);
 
     //	Prepare the simulation
     sph_system.initializeSystemCellLinkedLists();
@@ -248,6 +255,9 @@ int main(int ac, char *av[])
         {
             compute_vorticity.exec();
             write_fluid_states.writeToFile();
+            fluid_observer_contact.updateConfiguration();
+            observing_viscosity.exec();
+            write_observation_states.writeToFile();
             output_counter++;
         }
         fluid.updateCellLinkedListWithParticleSort(100);

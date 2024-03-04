@@ -110,7 +110,7 @@ class ZerothConsistencyLimiter : public Limiter
     Real operator()(size_t index_i)
     {
         Real error_scale = consistency_[index_i].squaredNorm() * h_ref_ * h_ref_;
-        return SMIN(100.0 * SMAX((error_scale - 0.01), 0.0), 1.0);
+        return SMIN(100.0 * error_scale, 1.0);
     };
 };
 //----------------------------------------------------------------------
