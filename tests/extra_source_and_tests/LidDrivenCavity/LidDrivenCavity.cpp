@@ -195,6 +195,8 @@ int main(int ac, char *av[])
 
     //	Define the methods for I/O operations, observations
     fluid.addBodyStateForRecording<Real>("Pressure");
+    fluid.addBodyStateForRecording<Real>("Density");
+    fluid.addBodyStateForRecording<Real>("Mass");
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
 
     //	Prepare the simulation
