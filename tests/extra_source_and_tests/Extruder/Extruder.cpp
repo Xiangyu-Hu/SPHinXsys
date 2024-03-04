@@ -8,11 +8,11 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.001;
+Real particle_spacing = 0.0015;
 Real gravity_g = 0;
 Real end_time = 0.5;
-bool relaxation = false;
-bool linearized_iteration = true;
+bool relaxation = true;
+bool linearized_iteration = false;
 
 // material properties
 Real rho = 1000.0; // reference density
@@ -112,8 +112,9 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem
     BoundingBox system_domain_bounds(Vecd(-0.036, -0.036, -0.003), Vecd(0.036, 0.085, 0.062));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     sph_system.setRunParticleRelaxation(relaxation);
+    sph_system.setReloadParticles(true);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
@@ -127,13 +128,19 @@ int main(int ac, char *av[])
     barrel.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody right_screw(sph_system, makeShared<Right_Screw>("Right_Screw"));
+    right_screw.defineAdaptationRatios(1.15, 2.0);
     right_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
-    right_screw.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? right_screw.generateParticles<ParticleGeneratorReload>(right_screw.getName())
+        : right_screw.generateParticles<ParticleGeneratorLattice>();
     right_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody left_screw(sph_system, makeShared<Left_Screw>("Left_Screw"));
+    left_screw.defineAdaptationRatios(1.15, 2.0);
     left_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
-    left_screw.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? left_screw.generateParticles<ParticleGeneratorReload>(left_screw.getName())
+        : left_screw.generateParticles<ParticleGeneratorLattice>();
     left_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     //	Define body relation map
@@ -260,7 +267,7 @@ int main(int ac, char *av[])
         }
         else
         {
-            Dt = SMIN(Dt_visc, Dt_adv);
+            Dt = SMIN(Dt_visc, Dt_adv) * 0.1;
             update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);

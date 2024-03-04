@@ -179,17 +179,14 @@ GeneralizedNewtonianViscousForce<Contact<Wall>>::GeneralizedNewtonianViscousForc
       ForcePrior(&base_particles_, "ViscousForce"),
       mu_srd_(*particles_->getVariableByName<Real>("SRDViscosity"))
 {
-    for (size_t k = 0; k != contact_particles_.size(); ++k)
-    {
-        contact_vel_.push_back(&(contact_particles_[k]->vel_));
-    }
 }
 
 void GeneralizedNewtonianViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
     //* Force Calculation *//
     Vecd force = Vecd::Zero();
-    Vecd vel_derivative = Vecd::Zero();
+    Real dim = 3.0;
+    // Vecd vel_derivative = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_k = *(wall_vel_ave_[k]);
@@ -197,10 +194,15 @@ void GeneralizedNewtonianViscousForce<Contact<Wall>>::interaction(size_t index_i
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
-            vel_derivative = 2.0 * (vel_[index_i] - vel_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
-            force += 2.0 * mu_srd_[index_i] * mass_[index_i] * vel_derivative * wall_neighborhood.dW_ijV_j_[n];
+            // vel_derivative = 2.0 * (vel_[index_i] - vel_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
+            // force += 2.0 * mu_srd_[index_i] * mass_[index_i] * vel_derivative * wall_neighborhood.dW_ijV_j_[n];
+
+            Real v_r_ij = (vel_[index_i] - vel_k[index_j]).dot(r_ij * e_ij);
+            Real eta_ij = 2.0 * (dim + 2.0) * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+            force += eta_ij * mass_[index_i] * wall_neighborhood.dW_ijV_j_[n] * e_ij;
         }
     }
     viscous_force_[index_i] += force / rho_[index_i];
@@ -257,7 +259,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            velocity_gradient += -2.0*(vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
+            velocity_gradient += -2.0 * (vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
         }
     }
     combined_velocity_gradient_[index_i] += velocity_gradient;
