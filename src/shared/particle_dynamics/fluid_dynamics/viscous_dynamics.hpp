@@ -55,8 +55,8 @@ void ViscousForce<Inner<AngularConservative>, ViscosityType>::interaction(size_t
 
         /** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
          * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
-        Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
-        Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_j) * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+        Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(e_ij);
+        Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_j) * v_r_ij / (r_ij + 0.01 * smoothing_length_);
         force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] * e_ij;
     }
 
@@ -101,8 +101,8 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interactio
 
             /** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
              * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
-            Real v_r_ij = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(r_ij * e_ij);
-            Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_i) * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+            Real v_r_ij = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(e_ij);
+            Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_i) * v_r_ij / (r_ij + 0.01 * smoothing_length_);
             force += eta_ij * mass_[index_i] * contact_neighborhood.dW_ijV_j_[n] * e_ij;
         }
     }
