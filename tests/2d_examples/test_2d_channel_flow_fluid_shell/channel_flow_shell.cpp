@@ -10,76 +10,60 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 10.0;                            /**< Channel length. */
-Real DH = 2.0;                             /**< Channel height. */
-Real resolution_ref = 0.05;                /**< Global reference resolution. */
-Real DL_sponge = resolution_ref * 20.0;    /**< Sponge region to impose inflow condition. */
-Real BW = resolution_ref * 4.0;            /**< Boundary width, determined by specific layer of boundary particles. */
-Real wall_thickness = 10 * resolution_ref; /*<Thickness of wall boundary, same as global resolution>*/
-
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -wall_thickness), Vec2d(DL + BW, DH + wall_thickness));
+const Real DL = 10.0; /**< Channel length. */
+const Real DH = 2.0;  /**< Channel height. */
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                  /**< Density. */
-Real U_f = 1.0;                     /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;              /**< Speed of sound. */
-Real Re = 100.0;                    /**< Reynolds number. */
-Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
-//----------------------------------------------------------------------
-//	define geometry of SPH bodies
-//----------------------------------------------------------------------
-/** create a water block shape */
-std::vector<Vecd> createWaterBlockShape()
-{
-    // geometry
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge, DH));
-    water_block_shape.push_back(Vecd(DL, DH));
-    water_block_shape.push_back(Vecd(DL, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
-
-    return water_block_shape;
-}
-Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
+const Real rho0_f = 1.0;                  /**< Density. */
+const Real U_f = 1.0;                     /**< Characteristic velocity. */
+const Real c_f = 10.0 * U_f;              /**< Speed of sound. */
+const Real Re = 100.0;                    /**< Reynolds number. */
+const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Define case dependent geometries
 //----------------------------------------------------------------------
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
     }
 };
+
 /** Particle generator and constraint boundary for shell baffle. */
-int particle_number_mid_surface = int((DL + DL_sponge + 2 * BW) / resolution_ref);
 class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
 {
+    Real DL_sponge_;
+    Real BW_;
+    Real resolution_ref_;
+    Real wall_thickness_;
+
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
+        : ParticleGeneratorSurface(sph_body),
+          DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref), resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
     void initializeGeometricVariables() override
     {
+        auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / resolution_ref_);
         for (int i = 0; i < particle_number_mid_surface; i++)
         {
-            Real x = -DL_sponge - BW + (Real(i) + 0.5) * resolution_ref;
+            Real x = -DL_sponge_ - BW_ + (Real(i) + 0.5) * resolution_ref_;
             // upper wall
-            Real y1 = DH + 0.5 * resolution_ref;
-            initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref);
+            Real y1 = DH + 0.5 * resolution_ref_;
+            initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
             Vec2d normal_direction_1 = Vec2d(0, 1.0);
-            initializeSurfaceProperties(normal_direction_1, wall_thickness);
+            initializeSurfaceProperties(normal_direction_1, wall_thickness_);
             // lower wall
-            Real y2 = -0.5 * resolution_ref; // lower wall
-            initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref);
+            Real y2 = -0.5 * resolution_ref_; // lower wall
+            initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
             Vec2d normal_direction_2 = Vec2d(0, -1.0);
-            initializeSurfaceProperties(normal_direction_2, wall_thickness);
+            initializeSurfaceProperties(normal_direction_2, wall_thickness_);
         }
     }
 };
+
 //----------------------------------------------------------------------
 //	Inflow velocity
 //----------------------------------------------------------------------
@@ -107,11 +91,12 @@ struct InflowVelocity
         return target_velocity;
     }
 };
+
 /** fluid observer particle generator */
 class FluidAxialObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit FluidAxialObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit FluidAxialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref) : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 51;
@@ -129,7 +114,7 @@ class FluidAxialObserverParticleGenerator : public ParticleGeneratorObserver
 class FluidRadialObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit FluidRadialObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit FluidRadialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref) : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 21;
@@ -145,30 +130,52 @@ class FluidRadialObserverParticleGenerator : public ParticleGeneratorObserver
     }
 };
 
-int main(int ac, char *av[])
+void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 {
+    Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
+    Real BW = resolution_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
+
+    /** Domain bounds of the system. */
+    BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -wall_thickness), Vec2d(DL + BW, DH + wall_thickness));
+    //----------------------------------------------------------------------
+    //	define geometry of SPH bodies
+    //----------------------------------------------------------------------
+    /** create a water block shape */
+    auto createWaterBlockShape = [&]()
+    {
+        // geometry
+        std::vector<Vecd> water_block_shape;
+        water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
+        water_block_shape.push_back(Vecd(-DL_sponge, DH));
+        water_block_shape.push_back(Vecd(DL, DH));
+        water_block_shape.push_back(Vecd(DL, 0.0));
+        water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
+
+        return water_block_shape;
+    };
+    Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+    Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0); // dummy material parameters
-    wall_boundary.generateParticles<WallBoundaryParticleGenerator>();
+    wall_boundary.generateParticles<WallBoundaryParticleGenerator>(resolution_ref, wall_thickness);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    fluid_axial_observer.generateParticles<FluidAxialObserverParticleGenerator>();
+    fluid_axial_observer.generateParticles<FluidAxialObserverParticleGenerator>(resolution_ref);
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    fluid_radial_observer.generateParticles<FluidRadialObserverParticleGenerator>();
+    fluid_radial_observer.generateParticles<FluidRadialObserverParticleGenerator>(resolution_ref);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -337,6 +344,20 @@ int main(int ac, char *av[])
                     fluid_radial_observer.getBaseParticles().vel_[i][1],
                     U_f * 5e-2);
     }
+}
 
-    return 0;
+TEST(channel_flow_shell, thickness_10x)
+{ // for CI
+    const Real resolution_ref = 0.05;
+    const Real wall_thickness = 10 * resolution_ref;
+    channel_flow_shell(resolution_ref, wall_thickness);
+}
+
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
+int main(int ac, char *av[])
+{
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }

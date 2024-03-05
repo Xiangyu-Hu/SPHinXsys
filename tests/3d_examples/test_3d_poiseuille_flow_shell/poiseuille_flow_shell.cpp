@@ -9,6 +9,25 @@
 #include <gtest/gtest.h>
 using namespace SPH;
 
+/**
+ * @brief Basic geometry parameters and numerical setup.
+ */
+const Real scale = 0.001;
+const Real diameter = 6.35 * scale;
+const Real fluid_radius = 0.5 * diameter;
+const Real full_length = 10 * fluid_radius;
+
+/**
+ * @brief Material properties of the fluid.
+ */
+const Real rho0_f = 1050.0; /**< Reference density of fluid. */
+const Real mu_f = 3.6e-3;   /**< Viscosity. */
+const Real Re = 100;
+/**< Characteristic velocity. Average velocity */
+const Real U_f = Re * mu_f / rho0_f / diameter;
+const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
+const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
+
 class ObersverAxial : public ParticleGeneratorObserver
 {
   public:
@@ -49,96 +68,43 @@ class ObserverRadial : public ParticleGeneratorObserver
 };
 
 /**
- * @brief Basic geometry parameters and numerical setup.
- */
-const Real scale = 0.001;
-const Real diameter = 6.35 * scale;
-const Real fluid_radius = 0.5 * diameter;
-const Real full_length = 10 * fluid_radius;
-const int number_of_particles = 10;
-const Real resolution_ref = diameter / number_of_particles;
-const Real resolution_shell = 0.5 * resolution_ref;
-const Real inflow_length = resolution_ref * 10.0; // Inflow region
-const Real wall_thickness = resolution_ref * 4.0;
-const Real shell_thickness = 0.5 * resolution_shell;
-const int simtk_resolution = 20;
-const Vec3d translation_fluid(0., full_length * 0.5, 0.);
-/**
- * @brief Geometry parameters for shell.
- */
-const Real radius_mid_surface = fluid_radius + resolution_shell * 0.5;
-const int particle_number_mid_surface =
-    int(2.0 * radius_mid_surface * Pi / resolution_shell);
-const int particle_number_height =
-    int((full_length + 2.0 * wall_thickness) / resolution_shell);
-
-/**
- * @brief Geometry parameters for boundary condition.
- */
-const Vec3d emitter_halfsize(fluid_radius, resolution_ref * 2, fluid_radius);
-const Vec3d emitter_translation(0., resolution_ref * 2, 0.);
-const Vec3d emitter_buffer_halfsize(fluid_radius, inflow_length * 0.5, fluid_radius);
-const Vec3d emitter_buffer_translation(0., inflow_length * 0.5, 0.);
-const Vec3d disposer_halfsize(fluid_radius * 1.1, resolution_ref * 2, fluid_radius * 1.1);
-const Vec3d disposer_translation(0., full_length - disposer_halfsize[1], 0.);
-
-/** Domain bounds of the system. */
-const BoundingBox system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter) -
-                                           Vec3d(shell_thickness, wall_thickness,
-                                                 shell_thickness),
-                                       Vec3d(0.5 * diameter, full_length, 0.5 * diameter) +
-                                           Vec3d(shell_thickness, wall_thickness,
-                                                 shell_thickness));
-/**
- * @brief Material properties of the fluid.
- */
-const Real rho0_f = 1050.0; /**< Reference density of fluid. */
-const Real mu_f = 3.6e-3;   /**< Viscosity. */
-const Real Re = 100;
-/**< Characteristic velocity. Average velocity */
-const Real U_f = Re * mu_f / rho0_f / diameter;
-const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
-const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
-/**
- * @brief Define water shape
- */
-class WaterBlock : public ComplexShape
-{
-  public:
-    explicit WaterBlock(const std::string &shape_name)
-        : ComplexShape(shape_name)
-    {
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
-                                       full_length * 0.5, simtk_resolution,
-                                       translation_fluid);
-    }
-};
-/**
  * @brief Define wall shape
  */
 class ShellBoundary : public ParticleGeneratorSurface
 {
+    Real resolution_shell_;
+    Real wall_thickness_;
+    Real shell_thickness_;
+
   public:
-    explicit ShellBoundary(SPHBody &sph_body)
-        : ParticleGeneratorSurface(sph_body){};
+    explicit ShellBoundary(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
+        : ParticleGeneratorSurface(sph_body),
+          resolution_shell_(resolution_shell),
+          wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
     void initializeGeometricVariables() override
     {
+        const Real radius_mid_surface = fluid_radius + resolution_shell_ * 0.5;
+        const auto particle_number_mid_surface =
+            int(2.0 * radius_mid_surface * Pi / resolution_shell_);
+        const auto particle_number_height =
+            int((full_length + 2.0 * wall_thickness_) / resolution_shell_);
         for (int i = 0; i < particle_number_mid_surface; i++)
         {
             for (int j = 0; j < particle_number_height; j++)
             {
                 Real theta = (i + 0.5) * 2 * Pi / (Real)particle_number_mid_surface;
                 Real x = radius_mid_surface * cos(theta);
-                Real y = -wall_thickness + (full_length + 2 * wall_thickness) * j / (Real)particle_number_height + 0.5 * resolution_shell;
+                Real y = -wall_thickness_ + (full_length + 2 * wall_thickness_) * j / (Real)particle_number_height + 0.5 * resolution_shell_;
                 Real z = radius_mid_surface * sin(theta);
                 initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
-                                                       resolution_shell * resolution_shell);
+                                                       resolution_shell_ * resolution_shell_);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                initializeSurfaceProperties(n_0, shell_thickness);
+                initializeSurfaceProperties(n_0, shell_thickness_);
             }
         }
     }
 };
+
 /**
  * @brief Inflow velocity
  */
@@ -165,11 +131,42 @@ struct InflowVelocity
     }
 };
 
-/**
- * @brief 	Main program starts here.
- */
-int main()
+void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, const Real shell_thickness)
 {
+    const int number_of_particles = 10;
+    const Real inflow_length = resolution_ref * 10.0; // Inflow region
+    const Real wall_thickness = resolution_ref * 4.0;
+    const int simtk_resolution = 20;
+    const Vec3d translation_fluid(0., full_length * 0.5, 0.);
+    /**
+     * @brief Geometry parameters for shell.
+     */
+
+    /**
+     * @brief Geometry parameters for boundary condition.
+     */
+    const Vec3d emitter_halfsize(fluid_radius, resolution_ref * 2, fluid_radius);
+    const Vec3d emitter_translation(0., resolution_ref * 2, 0.);
+    const Vec3d emitter_buffer_halfsize(fluid_radius, inflow_length * 0.5, fluid_radius);
+    const Vec3d emitter_buffer_translation(0., inflow_length * 0.5, 0.);
+    const Vec3d disposer_halfsize(fluid_radius * 1.1, resolution_ref * 2, fluid_radius * 1.1);
+    const Vec3d disposer_translation(0., full_length - disposer_halfsize[1], 0.);
+
+    /** Domain bounds of the system. */
+    const BoundingBox system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter) -
+                                               Vec3d(shell_thickness, wall_thickness,
+                                                     shell_thickness),
+                                           Vec3d(0.5 * diameter, full_length, 0.5 * diameter) +
+                                               Vec3d(shell_thickness, wall_thickness,
+                                                     shell_thickness));
+    /**
+     * @brief Define water shape
+     */
+    auto water_block_shape = makeShared<ComplexShape>("WaterBody");
+    water_block_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
+                                                      full_length * 0.5, simtk_resolution,
+                                                      translation_fluid);
+
     /**
      * @brief Build up -- a SPHSystem --
      */
@@ -180,7 +177,7 @@ int main()
     /**
      * @brief Material property, particles and body creation of fluid.
      */
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(system, water_block_shape);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     /**
@@ -189,7 +186,7 @@ int main()
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1, 1e3, 0.45);
-    shell_boundary.generateParticles<ShellBoundary>();
+    shell_boundary.generateParticles<ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(shell_boundary);
@@ -412,6 +409,22 @@ int main()
                     observer_radial.getBaseParticles().vel_[i][1],
                     U_max * 10e-2); // it's below 5% but 10% for CI
     }
+}
 
-    return 0;
+TEST(poiseuille_flow, 10_particles)
+{ // for CI
+    const int number_of_particles = 10;
+    const Real resolution_ref = diameter / number_of_particles;
+    const Real resolution_shell = 0.5 * resolution_ref;
+    const Real shell_thickness = 0.5 * resolution_shell;
+    poiseuille_flow(resolution_ref, resolution_shell, shell_thickness);
+}
+
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
+int main(int ac, char *av[])
+{
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
