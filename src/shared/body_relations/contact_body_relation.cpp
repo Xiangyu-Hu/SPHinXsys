@@ -133,6 +133,11 @@ ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector
                                                const StdVec<bool> &normal_corrections)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
 {
+    if (contact_bodies.size() != normal_corrections.size())
+    {
+        throw std::runtime_error("ContactRelationToShell: sizes of normal_corrections and contact_bodies are different!");
+    }
+
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_shell_contact_neighbors_.push_back(
@@ -156,6 +161,11 @@ ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVe
                                                    const StdVec<bool> &normal_corrections)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
 {
+    if (contact_bodies.size() != normal_corrections.size())
+    {
+        throw std::runtime_error("ContactRelationFromShell: sizes of normal_corrections and contact_bodies are different!");
+    }
+
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_contact_neighbors_.push_back(

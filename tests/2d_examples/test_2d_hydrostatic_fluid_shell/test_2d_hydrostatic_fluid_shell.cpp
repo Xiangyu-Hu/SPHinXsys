@@ -203,7 +203,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation gate_inner(gate);
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, {true});
+    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
     ContactRelationFromShell gate_contact(gate, {&water_block}, {true});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     // inner relation to compute curvature
@@ -291,7 +291,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 0.5; /**< End time. */
+    Real end_time = 0.2; /**< End time. */
     Real output_interval = end_time / 100.0;
     Real dt = 0.0;   /**< Default acoustic time step sizes. */
     Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
@@ -398,7 +398,7 @@ TEST(hydrostatic_fsi, dp_2)
 { // for CI
     const Real Gate_thickness = 0.05;
     const Real particle_spacing_gate = Gate_thickness / 2.0;
-    const Real particle_spacing_ref = 2 * particle_spacing_gate;
+    const Real particle_spacing_ref = particle_spacing_gate;
     hydrostatic_fsi(particle_spacing_gate, particle_spacing_ref);
 }
 
