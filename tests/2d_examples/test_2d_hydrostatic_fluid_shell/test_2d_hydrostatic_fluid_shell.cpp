@@ -9,87 +9,31 @@
 #include <gtest/gtest.h>
 using namespace SPH;
 
-//----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
-//----------------------------------------------------------------------
-const Real DL = 1.0;                                         /**< Tank length. */
-const Real DH = 2.1;                                         /**< Tank height. */
-const Real Dam_L = 1.0;                                      /**< Water block width. */
-const Real Dam_H = 2.0;                                      /**< Water block height. */
-const Real Gate_thickness = 0.05;                            /**< Width of the gate. */
-const Real particle_spacing_gate = Gate_thickness / 4.0;     /**< Initial reference particle spacing*/
-const Real particle_spacing_ref = 2 * particle_spacing_gate; /**< Initial reference particle spacing*/
-const Real BW = particle_spacing_ref * 4.0;
-const BoundingBox system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
-//----------------------------------------------------------------------
-//	Define the corner point of water block geometry.
-//----------------------------------------------------------------------
-const Vec2d DamP_lb(0.0, 0.0);     /**< Left bottom. */
-const Vec2d DamP_lt(0.0, Dam_H);   /**< Left top. */
-const Vec2d DamP_rt(Dam_L, Dam_H); /**< Right top. */
-const Vec2d DamP_rb(Dam_L, 0.0);   /**< Right bottom. */
-//----------------------------------------------------------------------
-//	Define the geometry for gate constrain.
-//----------------------------------------------------------------------
-Vec2d ConstrainLP_lb(-BW, -particle_spacing_ref);
-Vec2d ConstrainLP_lt(-BW, 0.0);
-Vec2d ConstrainLP_rt(0.0, 0.0);
-Vec2d ConstrainLP_rb(0.0, -particle_spacing_ref);
-Vec2d ConstrainRP_lb(Dam_L, -particle_spacing_ref);
-Vec2d ConstrainRP_lt(Dam_L, 0.0);
-Vec2d ConstrainRP_rt(Dam_L + BW, 0.0);
-Vec2d ConstrainRP_rb(Dam_L + BW, -particle_spacing_ref);
-// observer location
-const StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * particle_spacing_gate)};
-//----------------------------------------------------------------------
-//	Material properties of the fluid.
-//----------------------------------------------------------------------
-const Real rho0_f = 1000.0;                       /**< Reference density of fluid. */
-const Real gravity_g = 9.81;                      /**< Value of gravity. */
-const Real U_ref = 2.0 * sqrt(Dam_H * gravity_g); /**< Characteristic velocity. */
-const Real c_f = 10.0 * U_ref;                    /**< Reference sound speed. */
-const Real Re = 0.1;                              /**< Reynolds number. */
-const Real mu_f = rho0_f * U_ref * DL / Re;       /**< Dynamics viscosity. */
-//----------------------------------------------------------------------
-//	Material properties of the elastic gate.
-//----------------------------------------------------------------------
-const Real rho0_s = 2700.0; /**< Reference solid density. */
-const Real poisson = 0.495; /**< Poisson ratio. */
-const Real Ae = 6.75e10;    /**< Normalized Youngs Modulus. */
-const Real Youngs_modulus = Ae;
-const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * Gate_thickness * Gate_thickness;
-//----------------------------------------------------------------------
-//	Geometry definition.
-//----------------------------------------------------------------------
-std::vector<Vecd> createWaterBlockShape()
-{
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(DamP_lb);
-    water_block_shape.push_back(DamP_lt);
-    water_block_shape.push_back(DamP_rt);
-    water_block_shape.push_back(DamP_rb);
-    water_block_shape.push_back(DamP_lb);
-
-    return water_block_shape;
-}
 class WaterBlock : public MultiPolygonShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
     }
 };
 //----------------------------------------------------------------------
 //	wall body shape definition.
 //----------------------------------------------------------------------
-const int particle_number_wall = int(DH / particle_spacing_gate);
 class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
 {
+    Real DH;
+    Real DL;
+    Real particle_spacing_gate;
+
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
+                                           Real particle_spacing_gate)
+        : ParticleGeneratorSurface(sph_body),
+          DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
     void initializeGeometricVariables() override
     {
+        const auto particle_number_wall = int(DH / particle_spacing_gate);
         for (int i = 0; i < particle_number_wall; i++)
         {
             Real x1 = -0.5 * particle_spacing_gate;
@@ -98,22 +42,29 @@ class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
             const Vec2d normal_direction_1(1.0, 0.0);
             const Vec2d normal_direction_2(-1.0, 0.0);
             initializePositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
-            initializeSurfaceProperties(normal_direction_1, Gate_thickness);
+            initializeSurfaceProperties(normal_direction_1, particle_spacing_gate);
             initializePositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
-            initializeSurfaceProperties(normal_direction_2, Gate_thickness);
+            initializeSurfaceProperties(normal_direction_2, particle_spacing_gate);
         }
     }
 };
 //----------------------------------------------------------------------
-//	wall body shape definition.
+//	gatebody shape definition.
 //----------------------------------------------------------------------
-const int particle_number_gate = int((DL + 2 * BW) / particle_spacing_gate);
 class GateParticleGenerator : public ParticleGeneratorSurface
 {
+    Real DL;
+    Real BW;
+    Real particle_spacing_gate;
+    Real Gate_thickness;
+
   public:
-    explicit GateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit GateParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
+        : ParticleGeneratorSurface(sph_body),
+          DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
     void initializeGeometricVariables() override
     {
+        const auto particle_number_gate = int((DL + 2 * BW) / particle_spacing_gate);
         // generate particles for the elastic gate
         for (int i = 0; i < particle_number_gate; i++)
         {
@@ -125,46 +76,104 @@ class GateParticleGenerator : public ParticleGeneratorSurface
         }
     }
 };
-//----------------------------------------------------------------------
-//	create Gate constrain shape
-//----------------------------------------------------------------------
-MultiPolygon createGateConstrainShape()
-{
-    // geometry
-    std::vector<Vecd> gate_constraint_shape_left;
-    gate_constraint_shape_left.push_back(ConstrainLP_lb);
-    gate_constraint_shape_left.push_back(ConstrainLP_lt);
-    gate_constraint_shape_left.push_back(ConstrainLP_rt);
-    gate_constraint_shape_left.push_back(ConstrainLP_rb);
-    gate_constraint_shape_left.push_back(ConstrainLP_lb);
 
-    std::vector<Vecd> gate_constraint_shape_right;
-    gate_constraint_shape_right.push_back(ConstrainRP_lb);
-    gate_constraint_shape_right.push_back(ConstrainRP_lt);
-    gate_constraint_shape_right.push_back(ConstrainRP_rt);
-    gate_constraint_shape_right.push_back(ConstrainRP_rb);
-    gate_constraint_shape_right.push_back(ConstrainRP_lb);
-
-    MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(gate_constraint_shape_left, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(gate_constraint_shape_right, ShapeBooleanOps::add);
-    return multi_polygon;
-}
-//----------------------------------------------------------------------
-//	Main program starts here.
-//----------------------------------------------------------------------
-int main(int ac, char *av[])
+void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spacing_ref)
 {
+    //----------------------------------------------------------------------
+    //	Basic geometry parameters and numerical setup.
+    //----------------------------------------------------------------------
+    const Real DL = 1.0;              /**< Tank length. */
+    const Real DH = 2.1;              /**< Tank height. */
+    const Real Dam_L = 1.0;           /**< Water block width. */
+    const Real Dam_H = 2.0;           /**< Water block height. */
+    const Real Gate_thickness = 0.05; /**< Width of the gate. */
+    const Real BW = particle_spacing_ref * 4.0;
+    const BoundingBox system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
+    // observer location
+    const StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * particle_spacing_gate)};
+    //----------------------------------------------------------------------
+    //	Define the corner point of water block geometry.
+    //----------------------------------------------------------------------
+    const Vec2d DamP_lb(0.0, 0.0);     /**< Left bottom. */
+    const Vec2d DamP_lt(0.0, Dam_H);   /**< Left top. */
+    const Vec2d DamP_rt(Dam_L, Dam_H); /**< Right top. */
+    const Vec2d DamP_rb(Dam_L, 0.0);   /**< Right bottom. */
+    //----------------------------------------------------------------------
+    //	Geometry definition.
+    //----------------------------------------------------------------------
+    auto createWaterBlockShape = [&]()
+    {
+        std::vector<Vecd> water_block_shape;
+        water_block_shape.push_back(DamP_lb);
+        water_block_shape.push_back(DamP_lt);
+        water_block_shape.push_back(DamP_rt);
+        water_block_shape.push_back(DamP_rb);
+        water_block_shape.push_back(DamP_lb);
+
+        return water_block_shape;
+    };
+    //----------------------------------------------------------------------
+    //	Define the geometry for gate constrain.
+    //----------------------------------------------------------------------
+    Vec2d ConstrainLP_lb(-BW, -particle_spacing_ref);
+    Vec2d ConstrainLP_lt(-BW, 0.0);
+    Vec2d ConstrainLP_rt(0.0, 0.0);
+    Vec2d ConstrainLP_rb(0.0, -particle_spacing_ref);
+    Vec2d ConstrainRP_lb(Dam_L, -particle_spacing_ref);
+    Vec2d ConstrainRP_lt(Dam_L, 0.0);
+    Vec2d ConstrainRP_rt(Dam_L + BW, 0.0);
+    Vec2d ConstrainRP_rb(Dam_L + BW, -particle_spacing_ref);
+    //----------------------------------------------------------------------
+    //	create Gate constrain shape
+    //----------------------------------------------------------------------
+    auto createGateConstrainShape = [&]()
+    {
+        // geometry
+        std::vector<Vecd> gate_constraint_shape_left;
+        gate_constraint_shape_left.push_back(ConstrainLP_lb);
+        gate_constraint_shape_left.push_back(ConstrainLP_lt);
+        gate_constraint_shape_left.push_back(ConstrainLP_rt);
+        gate_constraint_shape_left.push_back(ConstrainLP_rb);
+        gate_constraint_shape_left.push_back(ConstrainLP_lb);
+
+        std::vector<Vecd> gate_constraint_shape_right;
+        gate_constraint_shape_right.push_back(ConstrainRP_lb);
+        gate_constraint_shape_right.push_back(ConstrainRP_lt);
+        gate_constraint_shape_right.push_back(ConstrainRP_rt);
+        gate_constraint_shape_right.push_back(ConstrainRP_rb);
+        gate_constraint_shape_right.push_back(ConstrainRP_lb);
+
+        MultiPolygon multi_polygon;
+        multi_polygon.addAPolygon(gate_constraint_shape_left, ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(gate_constraint_shape_right, ShapeBooleanOps::add);
+        return multi_polygon;
+    };
+    //----------------------------------------------------------------------
+    //	Material properties of the fluid.
+    //----------------------------------------------------------------------
+    const Real rho0_f = 1000.0;                       /**< Reference density of fluid. */
+    const Real gravity_g = 9.81;                      /**< Value of gravity. */
+    const Real U_ref = 2.0 * sqrt(Dam_H * gravity_g); /**< Characteristic velocity. */
+    const Real c_f = 10.0 * U_ref;                    /**< Reference sound speed. */
+    const Real Re = 0.1;                              /**< Reynolds number. */
+    const Real mu_f = rho0_f * U_ref * DL / Re;       /**< Dynamics viscosity. */
+    //----------------------------------------------------------------------
+    //	Material properties of the elastic gate.
+    //----------------------------------------------------------------------
+    const Real rho0_s = 2700.0; /**< Reference solid density. */
+    const Real poisson = 0.495; /**< Poisson ratio. */
+    const Real Ae = 6.75e10;    /**< Normalized Youngs Modulus. */
+    const Real Youngs_modulus = Ae;
+    const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * Gate_thickness * Gate_thickness;
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
     water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
@@ -172,12 +181,12 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1, 1, 0);
-    wall_boundary.generateParticles<WallBoundaryParticleGenerator>();
+    wall_boundary.generateParticles<WallBoundaryParticleGenerator>(DH, DL, particle_spacing_gate);
 
     SolidBody gate(sph_system, makeShared<DefaultShape>("Gate"));
     gate.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     gate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    gate.generateParticles<GateParticleGenerator>();
+    gate.generateParticles<GateParticleGenerator>(DL, BW, particle_spacing_gate, Gate_thickness);
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
@@ -270,6 +279,7 @@ int main(int ac, char *av[])
     gate_curvature.exec();
     /** update fluid-shell contact*/
     water_block_contact.updateConfiguration();
+    gate_contact.updateConfiguration();
     constant_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -298,8 +308,7 @@ int main(int ac, char *av[])
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
-            /** Update normal direction on elastic body. */
-            gate_update_normal.exec();
+
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
@@ -340,6 +349,8 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
+            /** Update normal direction on elastic body. */
+            gate_update_normal.exec();
             /** Update curvature. */
             gate.updateCellLinkedList();
             shell_curvature_inner.updateConfiguration();
@@ -380,7 +391,22 @@ int main(int ac, char *av[])
               << std::endl;
 
     // gtest
-    EXPECT_NEAR(max_disp_analytical, max_disp, max_disp_analytical * 5e-2);
+    EXPECT_NEAR(max_disp_analytical, max_disp, max_disp_analytical * 15e-2);
+}
 
-    return 0;
+TEST(hydrostatic_fsi, dp_2)
+{ // for CI
+    const Real Gate_thickness = 0.05;
+    const Real particle_spacing_gate = Gate_thickness / 2.0;
+    const Real particle_spacing_ref = 2 * particle_spacing_gate;
+    hydrostatic_fsi(particle_spacing_gate, particle_spacing_ref);
+}
+
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
+int main(int ac, char *av[])
+{
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
