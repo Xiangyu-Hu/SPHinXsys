@@ -52,7 +52,7 @@ template <typename TargetPressure>
 class BidirectionalBuffer
 {
   protected:
-    TargetPressure target_pressure;
+    TargetPressure target_pressure_;
 
     class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
     {
@@ -117,7 +117,7 @@ class BidirectionalBuffer
                 mutex_switch_to_real_.unlock();
                 pos_n_[index_i] = aligned_box_.getUpperPeriodic(axis_, pos_n_[index_i]);
                 Real sound_speed = fluid_.getSoundSpeed(rho_n_[index_i]);
-                p_[index_i] = buffer_.target_pressure(p_[index_i]); 
+                p_[index_i] = buffer_.target_pressure_(p_[index_i]); 
                 rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                 previous_surface_indicator_[index_i] = 1;
             }
@@ -139,7 +139,7 @@ class BidirectionalBuffer
 
   public:
     BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, int axis_direction,
-                        size_t body_buffer_width) : target_pressure(*this),                                                                                                  
+                        size_t body_buffer_width) : target_pressure_(*this),                                                                                                  
         tag_buffer_particles(aligned_box_part, axis_direction),                                                                                                        
         injection(aligned_box_part, axis_direction, body_buffer_width, *this){};
     virtual ~BidirectionalBuffer(){};
