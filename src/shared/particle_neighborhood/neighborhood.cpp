@@ -253,7 +253,7 @@ NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHB
     : BaseNeighborBuilderContactShell(contact_body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
+    // Here we use the kernel of fluid, shell particle spacing must not be larger than fluid particle spacing
     kernel_ = body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
@@ -322,7 +322,7 @@ NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, 
     : BaseNeighborBuilderContactShell(body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    // Here we use the kernel of fluid, shell resolution must not be larger than fluid resolution
+    // Here we use the kernel of fluid, shell particle spacing must not be larger than fluid particle spacing
     kernel_ = contact_body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//

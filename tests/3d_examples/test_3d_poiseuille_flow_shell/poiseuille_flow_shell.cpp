@@ -192,6 +192,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     InnerRelation shell_boundary_inner(shell_boundary);
     ShellInnerRelationWithContactKernel wall_curvature_inner(shell_boundary, water_block);
     // contact
+    // shell normal should point from fluid to shell
+    // normal corrector set to false if shell normal is already pointing from fluid to shell
     ContactRelationToShell water_block_contact(water_block, {&shell_boundary}, {false});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations

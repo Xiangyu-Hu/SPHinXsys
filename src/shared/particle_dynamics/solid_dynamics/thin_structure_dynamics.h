@@ -199,7 +199,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 {
   public:
     explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                            int number_of_gaussian_points = 3, bool hourglass_control = false, double hourglass_control_factor = 0.002);
+                                            int number_of_gaussian_points = 3, bool hourglass_control = false, Real hourglass_control_factor = 0.002);
     virtual ~ShellStressRelaxationFirstHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
 
@@ -378,7 +378,7 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
  * @class ShellCurvature
  * @brief  Update shell curvature during deformation
  */
-class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
+class ShellCurvature : public LocalDynamics, public ShellDataInner
 {
   public:
     explicit ShellCurvature(BaseInnerRelation &inner_relation);
@@ -404,7 +404,7 @@ class ShellCurvature : public LocalDynamics, public thin_structure_dynamics::She
  * @class AverageShellCurvature
  * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
  */
-class AverageShellCurvature : public LocalDynamics, public thin_structure_dynamics::ShellDataInner
+class AverageShellCurvature : public LocalDynamics, public ShellDataInner
 {
   public:
     explicit AverageShellCurvature(BaseInnerRelation &inner_relation);

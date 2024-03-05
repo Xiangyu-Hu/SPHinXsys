@@ -78,7 +78,7 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                   int number_of_gaussian_points, bool hourglass_control, double hourglass_control_factor)
+                                   int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
       global_stress_(particles_->global_stress_),
@@ -297,7 +297,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
@@ -342,7 +342,7 @@ void ShellCurvature::update(size_t index_i, Real)
 }
 //=================================================================================================//
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), thin_structure_dynamics::ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       n_(particles_->n_),
       k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
       k2_ave_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};

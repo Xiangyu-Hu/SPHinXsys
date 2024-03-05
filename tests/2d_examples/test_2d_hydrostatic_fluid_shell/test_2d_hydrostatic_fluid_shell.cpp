@@ -203,6 +203,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation gate_inner(gate);
+    // shell normal should point from fluid to shell
+    // normal corrector set to true if shell normal is currently pointing from shell to fluid
     ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
     ContactRelationFromShell gate_contact(gate, {&water_block}, {true});
     ContactRelation gate_observer_contact(gate_observer, {&gate});

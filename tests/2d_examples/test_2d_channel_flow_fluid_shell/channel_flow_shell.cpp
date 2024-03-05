@@ -184,6 +184,8 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(wall_boundary);
     ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, water_block);
+    // shell normal should point from fluid to shell
+    // normal corrector set to false if shell normal is already pointing from fluid to shell
     ContactRelationToShell water_block_contact(water_block, {&wall_boundary}, {false});
     ContactRelation fluid_axial_observer_contact(fluid_axial_observer, {&water_block});
     ContactRelation fluid_radial_observer_contact(fluid_radial_observer, {&water_block});

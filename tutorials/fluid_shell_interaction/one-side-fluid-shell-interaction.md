@@ -44,17 +44,25 @@ Here the dummy pressure $p_w$ depends on r_ij and e_ij, but it's difficult to fi
 
 ## `Integration2ndHalfWithWall`
 In the 2nd part of integration (density relaxation), the density change is calculated as:
-$$\frac{d \rho}{dt} = 2 \rho_i \cdot [(\mathbf{v}_i - \mathbf{v}_w) \cdot \mathbf{e_{ij}}]  \cdot \overline{dW_{ij}V_j}$$
-By assuming that $[(\mathbf{v}_i - \mathbf{v}_w) \cdot \mathbf{e_{ij}}]$ is constant for each ghost particle, we have:
-$$\frac{d \rho}{dt} = 2 \rho_i \cdot [(\mathbf{v}_i - \mathbf{v}_w) \cdot \mathbf{e_{ij}}]  \cdot \sum_n({dW_{ij}V_j})^n$$
+
+$$\frac{d \rho}{dt} = 2 \rho_i \cdot [(\mathbf{v_i} - \mathbf{v_w}) \cdot \mathbf{e_{ij}}] \cdot \overline{dW_{ij}V_j}$$
+
+By assuming that $[(\mathbf{v_i} - \mathbf{v_w}) \cdot \mathbf{e_{ij}}]$ is constant for each ghost particle, we have:
+
+$$\frac{d \rho}{dt} = 2 \rho_i \cdot [(\mathbf{v_i} - \mathbf{v_w}) \cdot \mathbf{e_{ij}}]  \cdot \sum_n({dW_{ij}V_j})^n$$
+
 Thus the equivalent term can be written as:
+
 $$\overline{dW_{ij}V_j}=\sum_{n=0}^N dW_{ij}^n A_j^n dp_s$$
+
 Substituting this part back to the equation of $\overline{dW_{ij}V_j} \cdot \overline{\mathbf{e_{ij}}}$, we have:
 $$\overline{\mathbf{e_{ij}}}=\frac{\sum_{n=0}^N dW_{ij}^n A_j^n\mathbf{e_{ij}^n}}{\sum_{n=0}^N dW_{ij}^n A_j^n}$$
 
 ## `ViscousForceWithWall`
 The viscous force from a wall particle j reads:
-$$\mathbf{f} = 2\mu V_i \cdot \frac{2(\mathbf{v}_i - \mathbf{v}_j)}{r_{ij}} \cdot \overline{dW_{ij}V_j}$$
+
+$$\mathbf{f} = 2\mu V_i \cdot \frac{2(\mathbf{v_i} - \mathbf{v_j})}{r_{ij}} \cdot \overline{dW_{ij}V_j}$$
+
 Here the derivative term is related to $r_{ij}$, but if the distance is modified according to the equivalence of viscous force, the estimation of dummy wall pressure seems to become worse. Therefore, the contribution of ghost particles to the distance $r_{ij}$ is not considered.
 
 ## Equivalent terms
@@ -151,7 +159,7 @@ One problem with using curvature to modify the volume is that the ghost particle
 
 Note that the normal vector of the upper and lower layers is nearly in the opposite direction. Since the curvature is related to the gradient of normal, we propose to use a modified curvature, which is recomputed every advective time step. The normal gradient is calculated as:
 
-$$\nabla{\mathbf{n}_i}=-\sum_j{(\mathbf{n}_i-\mathbf{n}_j) \times \nabla W_{ij}V_j}$$
+$$\nabla{\mathbf{n_i}}=-\sum_j{(\mathbf{n_i}-\mathbf{n_j}) \times \nabla W_{ij}V_j}$$
 
 The main difference between the average curvature formulation and the curvature discussed in the previous section is summarised below:
 
@@ -170,7 +178,7 @@ For a shell particle i and its neighbouring fluid particle j, a ghost particle i
 
 ## Viscous force
 The viscous force of fluid particle j on shell particle i is formulated as:
-$$\mathbf{f}_i = 2\mu V_i \cdot \frac{2(\mathbf{v}_i - \mathbf{v}_j)}{r_{ij}} \cdot \overline{dW_{ij}V_j}$$
+$$\mathbf{f_i} = 2\mu V_i \cdot \frac{2(\mathbf{v_i} - \mathbf{v_j})}{r_{ij}} \cdot \overline{dW_{ij}V_j}$$
 
 Here V_i is the area of shell particle i.
 
