@@ -52,11 +52,11 @@ Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t
     Real sin_rotation_1 = sin(rotation[1]);
     Real cos_rotation_1 = cos(rotation[1]);
 
-    Real rotation_0_a = -(dpseudo_n_d2t[2] * cos_rotation_1 + dpseudo_n_d2t[0] * sin_rotation_1 +
+    /* Real rotation_0_a = -(dpseudo_n_d2t[2] * cos_rotation_1 + dpseudo_n_d2t[0] * sin_rotation_1 +
                           angular_vel[1] * angular_vel[1] * cos_rotation_0 + angular_vel[0] * angular_vel[0] * cos_rotation_0);
     Real rotation_0_b = sin_rotation_0 * angular_vel[0] * angular_vel[0] - dpseudo_n_d2t[1];
-    //Real angle_vel_dt_0 = sin_rotation_0 * rotation_0_a + cos_rotation_0 * rotation_0_b;
-
+    Real angle_vel_dt_0 = sin_rotation_0 * rotation_0_a + cos_rotation_0 * rotation_0_b;
+    */
     Real rotation_1_a = dpseudo_n_d2t[0] * cos_rotation_1 - dpseudo_n_d2t[2] * sin_rotation_1 +
                         2.0 * angular_vel[1] * angular_vel[0] * sin_rotation_0;
     Real rotation_1_b1 = dpseudo_n_d2t[0] * cos_rotation_0 +
@@ -81,13 +81,13 @@ Vec3d getRotationFromPseudoNormalForFiniteDeformation_b(const Vec3d &dpseudo_b_n
     Real cos_rotation_b_0 = cos(rotation_b[0]);
     Real sin_rotation_b_2 = sin(rotation_b[2]);
     Real cos_rotation_b_2 = cos(rotation_b[2]);
-
+    /*
     Real rotation_b_0_a = (dpseudo_b_n_d2t[0] * sin_rotation_b_2 - dpseudo_b_n_d2t[1] * cos_rotation_b_2 - cos_rotation_b_0 * angular_b_vel[2] * angular_b_vel[2] - cos_rotation_b_0 * angular_b_vel[0] * angular_b_vel[0]);
 
     Real rotation_b_0_b = dpseudo_b_n_d2t[2] + sin_rotation_b_0 * angular_b_vel[0] * angular_b_vel[0];
 
-    //Real angle_b_vel_dt_0 = sin_rotation_b_0 * rotation_b_0_a + cos_rotation_b_0 * rotation_b_0_b;
-
+    Real angle_b_vel_dt_0 = sin_rotation_b_0 * rotation_b_0_a + cos_rotation_b_0 * rotation_b_0_b;
+    */
     Real rotation_b_c = (-dpseudo_b_n_d2t[0] * cos_rotation_b_2 - dpseudo_b_n_d2t[1] * sin_rotation_b_2 + 2 * angular_b_vel[2] * angular_b_vel[0] * sin_rotation_b_0);
 
     Real rotation_b_c1 = -dpseudo_b_n_d2t[0] * cos_rotation_b_0 +
