@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_boundary.h
- * @brief 	Here, we define the boundary condition classes for fluid dynamics.
+ * @file 	pressure_boundary.h
+ * @brief 	Here, we define the pressure boundary condition class for fluid dynamics.
  * @details The boundary conditions very often based on different types of buffers.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author  Shuoguo Zhang and Xiangyu Hu
  */
 
-#ifndef Pressure_BOUNDARY_H
-#define Pressure_BOUNDARY_H
+#ifndef PRESSURE_BOUNDARY_H
+#define PRESSURE_BOUNDARY_H
 
 #include "fluid_boundary.h"
 
@@ -36,23 +36,34 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class BaseFlowBoundaryCondition
- * @brief Base class for all boundary conditions.
- */
-class FlowPressureBuffer : public BaseFlowBoundaryCondition
+template <typename TargetPressure>
+class PressureCondition : public BaseFlowBoundaryCondition
 {
   public:
-    FlowPressureBuffer(BodyPartByCell &body_part, Vecd normal_vector);
-    virtual ~FlowPressureBuffer(){};
-    void update(size_t index_i, Real dt = 0.0);
+    /** default parameter indicates prescribe pressure */
+    explicit PressureCondition(BodyAlignedBoxByCell &aligned_box_part)
+        : BaseFlowBoundaryCondition(aligned_box_part),
+          aligned_box_(aligned_box_part.aligned_box_),
+          transform_(aligned_box_.getTransform()), 
+          target_pressure_(*this),
+          kernel_sum_(*particles_->getVariableByName<Vecd>("KernelSummation")){};
+    virtual ~PressureCondition(){};
+    AlignedBoxShape &getAlignedBox() { return aligned_box_; };
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+            vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i]) / rho_[index_i] * dt;
+
+            Vecd frame_velocity = Vecd::Zero();
+            frame_velocity[0] = transform_.xformBaseVecToFrame(vel_[index_i])[0];
+            vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
+    };
 
   protected:
-    StdLargeVec<Vecd> &kernel_sum_;   
-    Vecd direction_;
-    /** Profile to be defined in applications,
-     * argument parameters and return value are in frame (local) coordinate */
-    virtual Real getTargetPressure(Real dt) = 0;
+    AlignedBoxShape &aligned_box_;
+    Transform &transform_;
+    TargetPressure target_pressure_;
+    StdLargeVec<Vecd> &kernel_sum_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

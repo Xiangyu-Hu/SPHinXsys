@@ -21,10 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_surface_inner.h
- * @brief 	Here, we define the algorithm classes for fluid surfaces.
- * @details Fluid indicators are mainly used here to classify different region in a fluid.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	density_correction.h
+ * @brief 	Here, we define the algorithm of density correction for pressure boundary condition.
+ * @author	Shuoguo Zhang and Xiangyu Hu
  */
 
 #ifndef DENSITY_CORRECTION_H
@@ -63,7 +62,6 @@ class DensitySummationPressure<Inner<Base>> : public DensitySummationPressure<Ba
 
   protected:
     void assignDensity(size_t index_i) { rho_[index_i] = rho_sum_[index_i]; };
-    void reinitializeDensity(size_t index_i) { rho_[index_i] = SMAX(rho_sum_[index_i], rho0_); };
 };
 
 template <>
@@ -84,7 +82,6 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
   protected:
     StdLargeVec<int> &buffer_particle_indicator_;
 };
-
 
 template <>
 class DensitySummationPressure<Contact<Base>> : public DensitySummationPressure<Base, FluidContactData>
