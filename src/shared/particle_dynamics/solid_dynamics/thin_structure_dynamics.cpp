@@ -78,7 +78,7 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                   int number_of_gaussian_points, bool hourglass_control)
+                                   int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
       global_stress_(particles_->global_stress_),
@@ -92,6 +92,7 @@ ShellStressRelaxationFirstHalf::
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
+      hourglass_control_factor_(hourglass_control_factor),
       hourglass_control_(hourglass_control),
       number_of_gaussian_points_(number_of_gaussian_points)
 {
@@ -110,8 +111,6 @@ ShellStressRelaxationFirstHalf::
         gaussian_point_ = three_gaussian_points_;
         gaussian_weight_ = three_gaussian_weights_;
     }
-    /** Define the factor of hourglass control algorithm. */
-    hourglass_control_factor_ = 0.002;
 }
 //=================================================================================================//
 void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
@@ -295,6 +294,72 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
         Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
         force_prior_[index_i] += force;
     }
+}
+//=================================================================================================//
+ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+      n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
+      n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
+      k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
+      k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature"))
+{
+    particles_->registerVariable(dn_0_, "InitialNormalGradient");
+};
+//=================================================================================================//
+void ShellCurvature::compute_initial_curvature()
+{
+    particle_for(
+        par,
+        particles_->total_real_particles_,
+        [this](size_t index_i)
+        {
+            Matd dn_0_i = Matd::Zero();
+            // transform initial local B_ to global B_
+            const Matd B_global_i = transformation_matrix_[index_i].transpose() * B_[index_i] * transformation_matrix_[index_i];
+            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                const size_t index_j = inner_neighborhood.j_[n];
+                const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                dn_0_i -= (n0_[index_i] - n0_[index_j]) * gradW_ijV_j.transpose();
+            }
+            dn_0_[index_i] = dn_0_i * B_global_i;
+            auto [k1, k2] = get_principle_curvatures(dn_0_[index_i]);
+            k1_[index_i] = k1;
+            k2_[index_i] = k2;
+        });
+}
+//=================================================================================================//
+void ShellCurvature::update(size_t index_i, Real)
+{
+    Matd dn_0_i = dn_0_[index_i] + transformation_matrix_[index_i].transpose() *
+                                       F_bending_[index_i] * transformation_matrix_[index_i];
+    Matd inverse_F = F_[index_i].inverse();
+    Matd dn_i = dn_0_i * transformation_matrix_[index_i].transpose() * inverse_F * transformation_matrix_[index_i];
+    auto [k1, k2] = get_principle_curvatures(dn_i);
+    k1_[index_i] = k1;
+    k2_[index_i] = k2;
+}
+//=================================================================================================//
+AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+      n_(particles_->n_),
+      k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
+      k2_ave_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};
+//=================================================================================================//
+void AverageShellCurvature::update(size_t index_i, Real)
+{
+    Matd dn_i = Matd::Zero();
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        const size_t index_j = inner_neighborhood.j_[n];
+        const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        dn_i -= (n_[index_i] - n_[index_j]) * gradW_ijV_j.transpose();
+    }
+    auto [k1, k2] = get_principle_curvatures(dn_i);
+    k1_ave_[index_i] = k1;
+    k2_ave_[index_i] = k2;
 }
 //=================================================================================================//
 } // namespace thin_structure_dynamics

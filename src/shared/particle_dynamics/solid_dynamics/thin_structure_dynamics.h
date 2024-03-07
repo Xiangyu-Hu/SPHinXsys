@@ -199,7 +199,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 {
   public:
     explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                            int number_of_gaussian_points = 3, bool hourglass_control = false);
+                                            int number_of_gaussian_points = 3, bool hourglass_control = false, Real hourglass_control_factor = 0.002);
     virtual ~ShellStressRelaxationFirstHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
 
@@ -227,7 +227,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                                       transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
                 Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
                 force += mass_[index_i] * hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
-                                inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
+                         inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
 
                 Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
                 Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
@@ -372,6 +372,48 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
 
     virtual void setupDynamics(Real dt = 0.0) override;
     void update(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
+ */
+class ShellCurvature : public LocalDynamics, public ShellDataInner
+{
+  public:
+    explicit ShellCurvature(BaseInnerRelation &inner_relation);
+
+    void update(size_t index_i, Real);
+    void compute_initial_curvature();
+
+  private:
+    StdLargeVec<Vecd> &n0_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Matd> &F_;
+    StdLargeVec<Matd> &F_bending_;
+
+    StdLargeVec<Real> &k1_; // first principle curvature
+    StdLargeVec<Real> &k2_; // second principle curvature
+
+    StdLargeVec<Matd> dn_0_;
+};
+
+/**
+ * @class AverageShellCurvature
+ * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
+ */
+class AverageShellCurvature : public LocalDynamics, public ShellDataInner
+{
+  public:
+    explicit AverageShellCurvature(BaseInnerRelation &inner_relation);
+    void update(size_t index_i, Real);
+
+  private:
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Real> &k1_ave_; // first principle curvature
+    StdLargeVec<Real> &k2_ave_; // second principle curvature
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH

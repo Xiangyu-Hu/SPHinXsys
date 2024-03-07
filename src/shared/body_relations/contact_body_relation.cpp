@@ -1,6 +1,8 @@
 #include "contact_body_relation.h"
+#include "all_particles.h"
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
+#include <numeric>
 
 namespace SPH
 {
@@ -124,6 +126,62 @@ void AdaptiveContactRelation::updateConfiguration()
                 sph_body_, contact_configuration_[k],
                 *get_multi_level_search_range_[k][l], *get_contact_neighbors_adaptive_[k][l]);
         }
+    }
+}
+//=================================================================================================//
+ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies,
+                                               const StdVec<bool> &normal_corrections)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    if (contact_bodies.size() != normal_corrections.size())
+    {
+        throw std::runtime_error("ContactRelationToShell: sizes of normal_corrections and contact_bodies are different!");
+    }
+
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_shell_contact_neighbors_.push_back(
+            neighbor_builder_contact_to_shell_ptrs_keeper_.createPtr<NeighborBuilderContactToShell>(
+                sph_body_, *contact_bodies_[k], normal_corrections[k]));
+    }
+}
+//=================================================================================================//
+void ContactRelationToShell::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
+ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies,
+                                                   const StdVec<bool> &normal_corrections)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    if (contact_bodies.size() != normal_corrections.size())
+    {
+        throw std::runtime_error("ContactRelationFromShell: sizes of normal_corrections and contact_bodies are different!");
+    }
+
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_contact_neighbors_.push_back(
+            neighbor_builder_contact_from_shell_ptrs_keeper_.createPtr<NeighborBuilderContactFromShell>(
+                sph_body_, *contact_bodies_[k], normal_corrections[k]));
+    }
+}
+//=================================================================================================//
+void ContactRelationFromShell::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
 }
 //=================================================================================================//
