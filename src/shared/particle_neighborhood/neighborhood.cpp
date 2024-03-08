@@ -257,6 +257,7 @@ NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHB
     Real shell_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
     if (fluid_reference_spacing < shell_reference_spacing)
         throw std::runtime_error("NeighborBuilderContactToShell: fluid spacing should be larger or equal than shell spacing...");
+    kernel_ = body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
 void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
@@ -328,6 +329,7 @@ NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, 
     Real fluid_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
     if (fluid_reference_spacing < shell_reference_spacing)
         throw std::runtime_error("NeighborBuilderContactFromShell: fluid spacing should be larger or equal than shell spacing...");
+    kernel_ = contact_body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
 void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
