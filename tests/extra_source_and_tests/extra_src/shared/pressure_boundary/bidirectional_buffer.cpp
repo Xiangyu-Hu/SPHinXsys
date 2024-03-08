@@ -22,6 +22,11 @@ void BidirectionalBuffer::Injection<execution::ParallelPolicy>::update(size_t in
         }
         buffer_particle_indicator_[sorted_index_i] = 0;
         particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
+        // {
+        //     // update sorted id
+        //     size_t last_unsorted_index = particles_->unsorted_id_[particles_->total_real_particles_];
+        //     particles_->sorted_id_[last_unsorted_index] = particles_->total_real_particles_;
+        // }
         particles_->total_real_particles_ += 1;
         mutex_switch_to_real_.unlock();
         pos_n_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_n_[sorted_index_i]);
