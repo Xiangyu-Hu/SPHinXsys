@@ -413,7 +413,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     }
 }
 
-TEST(poiseuille_flow, 10_fluid_particles_20_shell_particles)
+TEST(poiseuille_flow, 10_particles)
 { // for CI
     const int number_of_particles = 10;
     const Real resolution_ref = diameter / number_of_particles;
@@ -422,11 +422,11 @@ TEST(poiseuille_flow, 10_fluid_particles_20_shell_particles)
     poiseuille_flow(resolution_ref, resolution_shell, shell_thickness);
 }
 
-TEST(DISABLED_poiseuille_flow, 20_fluid_particles_10_shell_particles)
+TEST(DISABLED_poiseuille_flow, 20_particles)
 { // for CI
     const int number_of_particles = 20;
     const Real resolution_ref = diameter / number_of_particles;
-    const Real resolution_shell = 2 * resolution_ref;
+    const Real resolution_shell = 0.5 * resolution_ref;
     const Real shell_thickness = 0.5 * resolution_shell;
     poiseuille_flow(resolution_ref, resolution_shell, shell_thickness);
 }

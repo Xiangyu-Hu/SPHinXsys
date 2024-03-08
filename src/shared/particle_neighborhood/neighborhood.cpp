@@ -253,9 +253,10 @@ NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHB
     : BaseNeighborBuilderContactShell(contact_body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    Real fluid_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
-    Real shell_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
-    kernel_ = (fluid_smoothing_length >= shell_smoothing_length ? body.sph_adaptation_->getKernel() : kernel_keeper_.createPtr<KernelWendlandC2>(shell_smoothing_length));
+    Real fluid_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
+    Real shell_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
+    if (fluid_reference_spacing < shell_reference_spacing)
+        throw std::runtime_error("NeighborBuilderContactToShell: fluid spacing should be larger or equal than shell spacing...");
 }
 //=================================================================================================//
 void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
@@ -323,9 +324,10 @@ NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, 
     : BaseNeighborBuilderContactShell(body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    Real shell_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
-    Real fluid_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
-    kernel_ = (fluid_smoothing_length >= shell_smoothing_length ? contact_body.sph_adaptation_->getKernel() : kernel_keeper_.createPtr<KernelWendlandC2>(shell_smoothing_length));
+    Real shell_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
+    Real fluid_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
+    if (fluid_reference_spacing < shell_reference_spacing)
+        throw std::runtime_error("NeighborBuilderContactFromShell: fluid spacing should be larger or equal than shell spacing...");
 }
 //=================================================================================================//
 void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
