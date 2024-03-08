@@ -218,9 +218,22 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
-        transport_velocity_correction(water_block_inner, water_block_contact); /**
-                                                                                * @brief Output.
-                                                                                */
+        transport_velocity_correction(water_block_inner, water_block_contact);
+
+    // check particle id
+    auto check_id = [&]()
+    {
+        for (size_t index_i = 0; index_i < water_block.getBaseParticles().total_real_particles_; index_i++)
+        {
+            size_t unsorted_id_i = water_block.getBaseParticles().unsorted_id_[index_i];
+            size_t sorted_id_i = water_block.getBaseParticles().sorted_id_[unsorted_id_i];
+            if (index_i != sorted_id_i)
+                throw std::runtime_error("index_i not equal to sorted_id_i!");
+        }
+    };
+    /**
+     * @brief Output.
+     */
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system.sph_bodies_);
     /**
@@ -302,6 +315,8 @@ int main(int ac, char *av[])
             boundary_indicator.exec();
             left_emitter_inflow_injection.tag_buffer_particles.exec();
             right_emitter_inflow_injection.tag_buffer_particles.exec();
+
+            check_id();
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
