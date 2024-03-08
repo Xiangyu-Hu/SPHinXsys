@@ -6,7 +6,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 RepulsionDensitySummation<Inner<>>::
-    RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
+    RepulsionDensitySummation(BaseInnerRelation &self_contact_relation)
     : RepulsionDensitySummation<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionDensity"),
       mass_(particles_->mass_)
 {
@@ -46,7 +46,10 @@ RepulsionDensitySummation<Contact<>>::
     {
         Real dp_2 = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
         Real distance = 0.5 * dp_1 + 0.5 * dp_2;
-        offset_W_ij_[k] = solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(distance, ZeroVecd);
+        // TODO: check if the contact body is a shell, only create kernel if it's shell
+        Real source_smoothing_length = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real target_smoothing_length = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength();
+        offset_W_ij_[k] = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length))->W(distance, ZeroVecd);
     }
 }
 //=================================================================================================//
@@ -119,6 +122,14 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
         contact_density_i += heuristic_limiter * sigma * calibration_factor_[k];
     }
     repulsion_density_[index_i] = contact_density_i;
+}
+//=================================================================================================//
+ShellSelfContactDensityUsingDummyParticles::ShellSelfContactDensityUsingDummyParticles(ShellSelfContactRelation &self_contact_relation)
+    : RepulsionDensitySummation<Inner<>>(self_contact_relation)
+{
+    Real smoothing_length = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
+    offset_W_ij_ = kernel_keeper_.createPtr<KernelWendlandC2>(smoothing_length)->W(dp_1, ZeroVecd);
 }
 //=================================================================================================//
 } // namespace solid_dynamics
