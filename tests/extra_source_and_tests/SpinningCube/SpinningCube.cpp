@@ -8,9 +8,9 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.1;
+Real particle_spacing = 0.025;
 Real gravity_g = 0.0;
-Real end_time = 1.0;
+Real end_time = 5.0;
 int nmbr_of_outputs = 100;
 
 // material properties
@@ -19,7 +19,7 @@ Real u_lid = 1.0;        // lid velocity
 Real SOS = 10.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
-Real K = 1;     // consistency index
+Real K = 1;    // consistency index
 Real n = 1;     // power index
 Real tau_y = 0; // yield stress
 
@@ -55,7 +55,10 @@ class InitialVelocity
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        Matd rotation << 0, -1, 0, 1, 0, 0, 0, 0, 0;
+        Matd rotation;
+        rotation << 0, -1, 0,
+            1, 0, 0,
+            0, 0, 1;
         vel_[index_i] = rotation * pos_[index_i];
     }
 

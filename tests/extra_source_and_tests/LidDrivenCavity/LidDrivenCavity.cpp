@@ -14,7 +14,7 @@ Real end_time = 50.0;
 int nmbr_of_outputs = 100;
 
 // non-Newtonian properties
-Real K = 10;    // consistency index
+Real K = 1;    // consistency index
 Real n = 0.5;   // power index
 Real tau_y = 0; // yield stress
 
