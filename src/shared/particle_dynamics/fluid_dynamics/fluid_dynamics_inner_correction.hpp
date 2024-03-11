@@ -34,8 +34,8 @@ void BaseIntegration1stHalfCorrect<RiemannSolverType>::interaction(size_t index_
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration -= (p_B_[index_i] + p_B_[index_j]) * dW_ijV_j * e_ij;
-        rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - this->p_[index_j]) * dW_ijV_j;
+        acceleration -= (p_B_[index_i] + p_B_[index_j]) * dW_ijV_j * this->Vol_[index_j] * e_ij;
+        rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - this->p_[index_j]) * dW_ijV_j * this->Vol_[index_j];
     }
     this->acc_[index_i] += acceleration / this->rho_[index_i];
     this->drho_dt_[index_i] = rho_dissipation * this->rho_[index_i];
@@ -64,8 +64,8 @@ void BaseIntegration1stHalfConsistency<RiemannSolverType>::interaction(size_t in
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration -= (this->p_[index_i] * this->B_[index_j] + this->p_[index_j] * this->B_[index_i]) * dW_ijV_j * e_ij;
-        rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - this->p_[index_j]) * dW_ijV_j;
+        acceleration -= (this->p_[index_i] * this->B_[index_j] + this->p_[index_j] * this->B_[index_i]) * dW_ijV_j * this->Vol_[index_j] * e_ij;
+        rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - this->p_[index_j]) * dW_ijV_j * this->Vol_[index_j];
     }
     this->acc_[index_i] += acceleration / this->rho_[index_i];
     this->drho_dt_[index_i] = rho_dissipation * this->rho_[index_i];

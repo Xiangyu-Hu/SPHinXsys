@@ -8,7 +8,8 @@ KernelCorrectionMatrixInner::
     KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
-      alpha_(alpha), B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
+      alpha_(alpha), B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")),
+      Vol_(this->particles_->Vol_) {}
 //=================================================================================================//
 void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
 {
@@ -17,7 +18,9 @@ void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        size_t index_j = inner_neighborhood.j_[n];
+
+        Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
         local_configuration -= r_ji * gradW_ij.transpose();
     }
@@ -75,10 +78,12 @@ void KernelCorrectionMatrixComplex::interaction(size_t index_i, Real dt)
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Real>& vol_k = *(this->contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            Vecd gradW_ij = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            size_t index_j = contact_neighborhood.j_[n];
+            Vecd gradW_ij = contact_neighborhood.dW_ijV_j_[n] * vol_k[index_j] * contact_neighborhood.e_ij_[n];
             Vecd r_ji = contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
             local_configuration -= r_ji * gradW_ij.transpose();
         }

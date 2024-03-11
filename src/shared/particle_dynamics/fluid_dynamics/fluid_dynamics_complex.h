@@ -63,7 +63,7 @@ class InteractionWithWall : public BaseIntegrationType, public FluidWallData
 
   protected:
     StdVec<Real> wall_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> wall_mass_;
+    StdVec<StdLargeVec<Real> *> wall_mass_, wall_vol_;
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
     StdVec<StdLargeVec<Matd> *> wall_B_;
 };

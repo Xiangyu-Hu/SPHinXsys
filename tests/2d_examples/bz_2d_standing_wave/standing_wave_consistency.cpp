@@ -13,7 +13,7 @@ Real DL = 2.0;                        /**< Tank length. */
 Real DH = 2.0;                        /**< Tank height. */
 Real LL = 2.0;                        /**< Liquid column length. */
 Real LH = 1.0;                        /**< Liquid column height. */
-Real particle_spacing_ref = 0.01;   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.02;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -191,8 +191,8 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     /** time-space method to detect surface particles. */
     //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectWithWall> fluid_pressure_relaxation(water_block_complex);
-    //Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation(water_block_complex);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectWithWall> fluid_pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyWithWall> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.5);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_wall(wall_boundary_complex);
@@ -239,7 +239,7 @@ int main(int ac, char* av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 0.5;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 25.0;
+    Real end_time = 10.0;
     Real output_interval = 0.05;
     //----------------------------------------------------------------------
     //	Statistics for CPU time

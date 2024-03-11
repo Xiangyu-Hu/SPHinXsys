@@ -135,7 +135,7 @@ void Oldroyd_BIntegration2ndHalf::
 //=================================================================================================//
 template <class RiemannSolverType>
 BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_)
+    : BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_), Vol_(particles_->Vol_)
 {
     /**
      *	register sortable particle data
@@ -177,7 +177,7 @@ Vecd BaseIntegration1stHalf<RiemannSolverType>::computeNonConservativeAccelerati
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration += (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
+        acceleration += (p_[index_i] - p_[index_j]) * dW_ijV_j * Vol_[index_j] * e_ij;
     }
     return acceleration / rho_[index_i];
 }
@@ -195,8 +195,8 @@ void BaseIntegration1stHalf<RiemannSolverType>::
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration -= (p_[index_i] + p_[index_j]) * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
+        acceleration -= (p_[index_i] + p_[index_j]) * dW_ijV_j * Vol_[index_j] * e_ij;
+        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j * Vol_[index_j];
     }
     acc_[index_i] += acceleration / rho_[index_i];
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
@@ -234,8 +234,8 @@ void BaseIntegration2ndHalf<RiemannSolverType>::
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+        density_change_rate += u_jump * dW_ijV_j * Vol_[index_j];
+        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * Vol_[index_j] * e_ij;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     acc_[index_i] = p_dissipation / rho_[index_i];

@@ -262,6 +262,7 @@ class BaseIntegration1stHalf : public BaseIntegration
 
   protected:
     virtual Vecd computeNonConservativeAcceleration(size_t index_i);
+    StdLargeVec<Real>& Vol_;
 };
 using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
 /** define the mostly used pressure relaxation scheme using Riemann solver */

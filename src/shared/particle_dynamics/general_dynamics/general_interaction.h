@@ -43,6 +43,7 @@ class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDele
   protected:
     Real alpha_;
     StdLargeVec<Matd> &B_;
+    StdLargeVec<Real>& Vol_;
 
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
