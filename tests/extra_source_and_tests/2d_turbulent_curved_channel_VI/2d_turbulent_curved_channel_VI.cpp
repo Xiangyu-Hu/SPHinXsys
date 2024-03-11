@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
    
     
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -128,7 +128,15 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     SimpleDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block, offset_dist_ref);
 
-    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound);
+    //** Build observers in front of the cylinder, 30 cells, 31 bounds *
+    for (int i = 0; i < num_observer_points + 1; i++)
+    {
+        monitor_bound_x.push_back(x_start + i * observe_x_spacing);
+    }
+    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData_Y,SequencedPolicy> get_time_average_cross_section_data_y
+    (water_block_inner, num_observer_points, observe_x_ratio, cell_bound_y, monitor_bound_x, monitor_bound_x_b);
+
+
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
@@ -151,7 +159,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce,SequencedPolicy> apply_gravity_force(water_block, time_dependent_acceleration);
 
     BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 300, 0);
     BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
@@ -173,6 +181,7 @@ int main(int ac, char *av[])
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    get_time_average_cross_section_data_y.output_monitor_x_coordinate();
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -189,7 +198,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 400.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -243,7 +252,7 @@ int main(int ac, char *av[])
 
                 density_relaxation.exec(dt);
                 
-                if (GlobalStaticVariables::physical_time_ > 30.0)
+                if (GlobalStaticVariables::physical_time_ > 50.0)
                 {
                     update_near_wall_status.exec();
                     get_velocity_gradient.exec(dt);
@@ -281,11 +290,10 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
 
-            if (GlobalStaticVariables::physical_time_ > end_time * 0.6) 
+            if (GlobalStaticVariables::physical_time_ > end_time * 0.1) 
             {
-                //get_time_average_cross_section_data.exec();
-                //get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
-
+                get_time_average_cross_section_data_y.exec();
+                get_time_average_cross_section_data_y.output_time_history_data(end_time * 0.75);
             }
             //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
                 //body_states_recording.writeToFile();
@@ -302,7 +310,8 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
 
-    //get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
-    //std::cout << "The time-average data is output " << std::endl;
+    get_time_average_cross_section_data_y.get_time_average_data(end_time * 0.75);
+    std::cout << "The time-average data is output " << std::endl;
+
     return 0;
 }

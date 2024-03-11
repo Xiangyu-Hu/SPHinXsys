@@ -34,7 +34,7 @@ Real extend_in = 0.0 ;
 Real extend_out = 0.0 ;
 Real DL1 = 4.0 + extend_in;
 Real DL2 = 4.0 + extend_out;
-Real R1 = 2.0;
+Real R1 = 18.0;
 Real R2 = R1 + DH;
 Real DL_domain = DL1+R1+DH;
 Real DH_domain = DH+R1+DL2;
@@ -104,14 +104,19 @@ Real Re_calculated = U_f * DH * rho0_f / mu_f;
 //----------------------------------------------------------------------
 // Observation.
 //----------------------------------------------------------------------
-//Real x_observe = 0.90 * DL;
-//Real x_observe_start = 0.90 * DL;
-//Real observe_spacing_x = 0.02 * DL;
-//int num_observer_points_x = 1;
-//int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
-//StdVec<Real> monitoring_bound = { 109 ,111 };
-//Real observe_spacing = DH / num_observer_points;
-//StdVec<Vecd> observation_locations;
+/**Cell method to monitor Center Line data*/
+/**Input mannually*/
+Real observe_x_ratio = 1.0;
+Real observe_x_spacing = resolution_ref * observe_x_ratio;
+Real x_start = DL1 + R1;
+int num_observer_points = DH / resolution_ref;
+Real height_cell = resolution_ref * 1.5;
+Real cell_bound_y_down = DH + R1;
+
+Real cell_bound_y_up = cell_bound_y_down + height_cell;
+StdVec<Real> cell_bound_y = { cell_bound_y_down, cell_bound_y_up };
+StdVec<Real> monitor_bound_x, monitor_bound_x_b;
+Real observe_spacing = DH / num_observer_points;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------

@@ -1066,7 +1066,7 @@ namespace fluid_dynamics
 		}
 	}
 	//=================================================================================================//
-	GetTimeAverageCenterLineData::GetTimeAverageCenterLineData(BaseInnerRelation& inner_relation,
+	GetTimeAverageCrossSectionData_Y::GetTimeAverageCrossSectionData_Y(BaseInnerRelation& inner_relation,
 		int num_observer_points, Real observe_x_ratio, const StdVec<Real>& bound_y, const StdVec<Real>& bound_x_f, const StdVec<Real>& bound_x_b)
 		: BaseGetTimeAverageData(inner_relation, num_observer_points), observe_x_ratio_(observe_x_ratio),
 		bound_x_f_(bound_x_f), bound_x_b_(bound_x_b), bound_y_(bound_y)
@@ -1074,7 +1074,7 @@ namespace fluid_dynamics
 		observe_x_spacing_ = particle_spacing_min_ * observe_x_ratio_;
 	}
 	//=================================================================================================//
-	void GetTimeAverageCenterLineData::update(size_t index_i, Real dt)
+	void GetTimeAverageCrossSectionData_Y::update(size_t index_i, Real dt)
 	{
 		//** Get data *
 		if (pos_[index_i][1] > bound_y_[0] && pos_[index_i][1] <= bound_y_[1])
@@ -1111,17 +1111,24 @@ namespace fluid_dynamics
 		}
 	}
 	//=================================================================================================//
-	void GetTimeAverageCenterLineData::output_monitor_x_coordinate()
+	void GetTimeAverageCrossSectionData_Y::output_monitor_x_coordinate()
 	{
 		StdVec<Real> monitor_cellcenter_x;
-		for (int i = 0; i < bound_x_f_.size() - 1; i++)
+		if (bound_x_f_.size() != 0)
 		{
-			monitor_cellcenter_x.push_back((bound_x_f_[i] + bound_x_f_[i + 1]) / 2.0);
+			for (int i = 0; i < bound_x_f_.size() - 1; i++)
+			{
+				monitor_cellcenter_x.push_back((bound_x_f_[i] + bound_x_f_[i + 1]) / 2.0);
+			}
 		}
-		for (int i = 0; i < bound_x_b_.size() - 1; i++)
+		if (bound_x_b_.size() != 0)
 		{
-			monitor_cellcenter_x.push_back((bound_x_b_[i] + bound_x_b_[i + 1]) / 2.0);
+			for (int i = 0; i < bound_x_b_.size() - 1; i++)
+			{
+				monitor_cellcenter_x.push_back((bound_x_b_[i] + bound_x_b_[i + 1]) / 2.0);
+			}
 		}
+		
 
 		file_path_output_ = "../bin/output/monitor_cell_center_x.dat";
 		std::ofstream out_file(file_path_output_.c_str(), std::ios::app);

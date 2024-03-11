@@ -481,15 +481,15 @@ namespace fluid_dynamics
 		StdVec<Real> monitor_cellcenter_y;
 	};
 	/** Note this is a temporary treatment *
-	* @class GetTimeAverageCenterLineData
-	* @brief  GetTimeAverageCenterLineData
+	* @class GetTimeAverageCrossSectionData_Y
+	* @brief  GetTimeAverageCrossSectionData_Y
 	*/
-	class GetTimeAverageCenterLineData : public BaseGetTimeAverageData
+	class GetTimeAverageCrossSectionData_Y : public BaseGetTimeAverageData
 	{
 	public:
-		explicit GetTimeAverageCenterLineData(BaseInnerRelation& inner_relation, int num_observer_points, Real observe_x_ratio,
+		explicit GetTimeAverageCrossSectionData_Y(BaseInnerRelation& inner_relation, int num_observer_points, Real observe_x_ratio,
 			const StdVec<Real>& bound_y, const StdVec<Real>& bound_x_f, const StdVec<Real>& bound_x_b);
-		virtual ~GetTimeAverageCenterLineData() {};
+		virtual ~GetTimeAverageCrossSectionData_Y() {};
 
 		void update(size_t index_i, Real dt = 0.0);
 		void output_monitor_x_coordinate();
