@@ -44,17 +44,19 @@ namespace fluid_dynamics
 		virtual ~BaseTurbuClosureCoeff() {};
 
 	protected:
-		Real Karman;
-		Real turbu_const_E;
-		Real C_mu;
-		Real TurbulentIntensity;
+		Real Karman_;
+		Real turbu_const_E_;
+		Real C_mu_, C_mu_25_, C_mu_75_;
+		Real turbulent_intensity_;
+
 		//** Closure coefficients for K *
-		Real sigma_k;
+		Real sigma_k_;
 
 		//** Closure coefficients for Epsilon *
-		Real C_l, C_2;
-		Real sigma_E;
-		
+		Real C_l_, C_2_;
+		Real sigma_E_;
+		Real mixing_length_for_epsilon_inlet_;
+
 		//** Start time for laminar law *
 		Real start_time_laminar_;
 		Real y_star_threshold_;

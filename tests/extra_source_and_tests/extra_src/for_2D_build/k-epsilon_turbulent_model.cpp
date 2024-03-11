@@ -7,9 +7,14 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
-		: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
-		C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), 
-		start_time_laminar_(0.0), y_star_threshold_(11.225){}
+		: C_mu_(0.09), C_l_(1.44), C_2_(1.92), sigma_k_(1.0), sigma_E_(1.3),
+		Karman_(0.41), turbu_const_E_(9.8), 
+		turbulent_intensity_(5.0e-2), mixing_length_for_epsilon_inlet_(0.07),
+		start_time_laminar_(0.0), y_star_threshold_(11.225)
+	{
+		C_mu_25_ = pow(C_mu_, 0.25);
+		C_mu_75_ = pow(C_mu_, 0.75);
+	}
 //=================================================================================================//
 	Real WallFunction:: get_dimensionless_velocity(Real y_star)
 	{
@@ -46,7 +51,7 @@ namespace fluid_dynamics
 	Real WallFunction::log_law_wall_functon(Real y_star)
 	{
 		//** u_star should larger than 0 *
-		Real u_star = abs(log(turbu_const_E * y_star ) / Karman);
+		Real u_star = abs(log(turbu_const_E_ * y_star ) / Karman_);
 		return u_star;
 	}
 	//=================================================================================================//
@@ -184,7 +189,7 @@ namespace fluid_dynamics
 		Real turbu_mu_i = turbu_mu_[index_i];
 		Real turbu_k_i = turbu_k_[index_i];
 
-		Real mu_eff_i = turbu_mu_[index_i] / sigma_k + mu_;
+		Real mu_eff_i = turbu_mu_[index_i] / sigma_k_ + mu_;
 
 		dk_dt_[index_i] = 0.0;;
 		Real k_derivative(0.0);
@@ -198,7 +203,7 @@ namespace fluid_dynamics
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real mu_eff_j = turbu_mu_[index_j] / sigma_k + mu_;
+			Real mu_eff_j = turbu_mu_[index_j] / sigma_k_ + mu_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 			k_lap += 2.0 * mu_harmo * k_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
@@ -276,7 +281,7 @@ namespace fluid_dynamics
 		Real turbu_k_i = turbu_k_[index_i];
 		Real turbu_epsilon_i = turbu_epsilon_[index_i];
 
-		Real mu_eff_i = turbu_mu_[index_i] / sigma_E + mu_;
+		Real mu_eff_i = turbu_mu_[index_i] / sigma_E_ + mu_;
 
 		dE_dt_[index_i] = 0.0;
 		Real epsilon_production(0.0);
@@ -287,18 +292,18 @@ namespace fluid_dynamics
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real mu_eff_j = turbu_mu_[index_j] / sigma_E + mu_;
+			Real mu_eff_j = turbu_mu_[index_j] / sigma_E_ + mu_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			epsilon_derivative = (turbu_epsilon_i - turbu_epsilon_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 			epsilon_lap += 2.0 * mu_harmo * epsilon_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 		}
 
-		//epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
-		//epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
+		//epsilon_production = C_l_ * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
+		//epsilon_dissipation = C_2_ * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
 		
 		//** Linearize the source term *
-		epsilon_production = C_l * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
-		epsilon_dissipation = (C_2 * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
+		epsilon_production = C_l_ * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
+		epsilon_dissipation = (C_2_ * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
 		
 		dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 
@@ -465,7 +470,7 @@ namespace fluid_dynamics
 				Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 				
 				Real u_star = get_dimensionless_velocity(y_star);
-				Real fric_vel_mag = sqrt(pow(C_mu, 0.25) * pow(turbu_k_i, 0.5) * vel_i_tau_mag / u_star);
+				Real fric_vel_mag = sqrt(C_mu_25_ * pow(turbu_k_i, 0.5) * vel_i_tau_mag / u_star);
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *
 				WSS_j_tn(0, 0) = 0.0;
@@ -497,7 +502,7 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 	{
-		turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
+		turbu_mu_[index_i] = rho_[index_i] * C_mu_ * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
 	}
 //=================================================================================================//
 	TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL)
@@ -536,7 +541,7 @@ namespace fluid_dynamics
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
 	{
-		TurbulentLength_ = 0.07 * CharacteristicLength_ / pow(C_mu, 0.75);
+		TurbulentLength_ = mixing_length_for_epsilon_inlet_ * CharacteristicLength_ / C_mu_75_;
 	}
 	//=================================================================================================//
 	void InflowTurbulentCondition::update(size_t index_i, Real dt)
@@ -550,7 +555,7 @@ namespace fluid_dynamics
 	Real InflowTurbulentCondition::getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k)
 	{
 		Real u = velocity[0];
-		Real temp_in_turbu_k = 1.5 * pow((TurbulentIntensity * u), 2);
+		Real temp_in_turbu_k = 1.5 * pow((turbulent_intensity_ * u), 2);
 		Real turbu_k_original = turbu_k;
 		if (position[0] < 0.0)
 		{
@@ -561,7 +566,7 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	Real InflowTurbulentCondition::getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E)
 	{
-		//Real temp_in_turbu_E = C_mu * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
+		//Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
 		Real temp_in_turbu_E = pow(turbu_k, 1.5) / TurbulentLength_;
 		Real turbu_E_original = turbu_E;
 		if (position[0] < 0.0)
@@ -802,7 +807,7 @@ namespace fluid_dynamics
 			y_p_[index_i] = r_dummy_normal + offset_dist_;
 			
 			//** Calcualte Y_star, note the current code is based on Y_star *
-			wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / molecular_viscosity_;
+			wall_Y_star_[index_i] = y_p_[index_i] * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * rho_i / molecular_viscosity_;
 			
 			//** Calculate friction velocity, including P2 region. *  
 			Real velo_fric_mag = 0.0;
@@ -811,8 +816,8 @@ namespace fluid_dynamics
 			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
 			velo_tan_[index_i] = velo_tan;
 
-			//velo_fric = sqrt(abs(Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
-				//log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * y_p_[index_i] * rho_i / mu_)));
+			//velo_fric = sqrt(abs(Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) /
+				//log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_[index_i] * rho_i / mu_)));
 
 			if (wall_Y_star_[index_i] != static_cast<Real>(wall_Y_star_[index_i]))
 			{
@@ -822,18 +827,18 @@ namespace fluid_dynamics
 				
 
 			Real u_star = get_dimensionless_velocity(wall_Y_star_[index_i]);
-			velo_fric_mag = sqrt(pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * velo_tan / u_star);
+			velo_fric_mag = sqrt(C_mu_25_ * pow(turbu_k_[index_i], 0.5) * velo_tan / u_star);
 
 			if (velo_fric_mag != static_cast<Real>(velo_fric_mag))
 			{
 				std::cout << "friction velocity is not a real, please check" << std::endl;
 				std::cout << "velo_fric=" << velo_fric_mag << std::endl << "velo_tan=" << velo_tan << std::endl;
 				std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
-				std::cout << "sum=" << (Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
-					log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_)) << std::endl;
-				std::cout << "numerator=" << Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) << std::endl;
-				std::cout << "denominator=" << log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_) << std::endl;
-				Real temp = pow(C_mu, 0.25)* pow(turbu_k_[index_i], 0.5)* velo_tan / u_star;
+				std::cout << "sum=" << (Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) /
+					log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_)) << std::endl;
+				std::cout << "numerator=" << Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) << std::endl;
+				std::cout << "denominator=" << log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_) << std::endl;
+				Real temp = C_mu_25_* pow(turbu_k_[index_i], 0.5)* velo_tan / u_star;
 
 				std::cout << "temp =" <<temp<< std::endl;
 
@@ -857,10 +862,10 @@ namespace fluid_dynamics
 			Matd Q = Matd::Zero();
 			if (is_near_wall_P1_[index_i] == 1)
 			{
-				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
+				turbu_epsilon_[index_i] = C_mu_75_ * pow(turbu_k_[index_i], 1.5) / (Karman_ * y_p_[index_i]);
 				
-				Real denominator_log_law = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
-				//Real denominator_log_law = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * 0.5 * 0.05; //** 0.50 is particle spacing *
+				Real denominator_log_law = C_mu_25_ * pow(turbu_k_[index_i], 0.5) * Karman_ * y_p_[index_i];
+				//Real denominator_log_law = C_mu_25_ * pow(turbu_k_[index_i], 0.5) * Karman_ * 0.5 * 0.05; //** 0.50 is particle spacing *
 
 				//Real dudn = velo_fric_mag * velo_fric_mag * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator_log_law;
 				Real dudn_mag = get_near_wall_velocity_gradient_magnitude(wall_Y_star_[index_i], velo_fric_mag, denominator_log_law, molecular_viscosity_ / rho_i);
