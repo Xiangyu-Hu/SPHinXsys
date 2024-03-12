@@ -10,16 +10,16 @@ using namespace SPH;
 // setup properties
 Real particle_spacing = 0.025;
 Real gravity_g = 0.0;
-Real end_time = 5.0;
+Real end_time = 1.0;
 int nmbr_of_outputs = 100;
 
 // material properties
 Real rho = 1.0;          // reference density
-Real u_lid = 1.0;        // lid velocity
-Real SOS = 10.0 * u_lid; // numerical speed of sound
+Real omega = 0.5;        // lid velocity
+Real SOS = 10.0 * omega; // numerical speed of sound
 
 // non-Newtonian properties
-Real K = 1;    // consistency index
+Real K = 1;     // consistency index
 Real n = 1;     // power index
 Real tau_y = 0; // yield stress
 
@@ -58,8 +58,8 @@ class InitialVelocity
         Matd rotation;
         rotation << 0, -1, 0,
             1, 0, 0,
-            0, 0, 1;
-        vel_[index_i] = rotation * pos_[index_i];
+            0, 0, 0;
+        vel_[index_i] = omega * rotation * pos_[index_i];
     }
 
   protected:
@@ -112,9 +112,9 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForce<Inner<>>> viscous_acceleration(fluid_inner);
 
-    // InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner);
+    // InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<ZerothInconsistencyLimiter, BulkParticles>> transport_velocity_correction(fluid_inner);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, 10.0 * omega);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 

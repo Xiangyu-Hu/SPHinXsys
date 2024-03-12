@@ -118,7 +118,6 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_wall_contact);
 
-    //!
     InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(water_block_inner, water_wall_contact);
