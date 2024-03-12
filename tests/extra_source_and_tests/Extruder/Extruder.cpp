@@ -8,11 +8,11 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.0015;
+Real particle_spacing = 0.0005;
 Real gravity_g = 0;
 Real end_time = 0.5;
 bool relaxation = true;
-bool linearized_iteration = false;
+bool linearized_iteration = true;
 
 // material properties
 Real rho = 1000.0; // reference density
@@ -31,17 +31,13 @@ Real max_shear_rate = 1e+3; // cutoff high shear rate
 
 // mesh geometry data
 // std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
-std::string full_path_to_left_screw = "./input/left_screw.stl";
+std::string full_path_to_left_screw = "./input/left_screw2.stl";
 
-std::string full_path_to_right_screw = "./input/right_screw.stl";
+std::string full_path_to_right_screw = "./input/right_screw2.stl";
 
-std::string full_path_to_fluid = "./input/fluid.stl";
+std::string full_path_to_fluid = "./input/fluid2.stl";
 
-std::string full_path_to_barrel = "./input/barrel_thick.stl";
-
-std::string full_path_to_cutout = "./input/cutout.stl";
-
-std::string full_path_to_marble = "./input/marble.stl";
+std::string full_path_to_barrel = "./input/barrel2.stl";
 
 Vecd translation(0.0, 0.0, 0.0);
 Real length_scale = 1.0;
@@ -110,38 +106,42 @@ int main(int ac, char *av[])
 {
     output_setup();
     //	Build up an SPHSystem
-    BoundingBox system_domain_bounds(Vecd(-0.036, -0.036, -0.003), Vecd(0.036, 0.085, 0.062));
+    BoundingBox system_domain_bounds(Vecd(-0.036, -0.046, -0.011), Vecd(0.036, 0.093, 0.072));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.setRunParticleRelaxation(relaxation);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //	Creating bodies with corresponding materials and particles
+    std::cout << "fluid" << std::endl;
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
     fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     fluid.generateParticles<ParticleGeneratorLattice>();
 
+    std::cout << "barrel" << std::endl;
     SolidBody barrel(sph_system, makeShared<Barrel>("Barrel"));
     barrel.defineParticlesAndMaterial<SolidParticles, Solid>();
     barrel.generateParticles<ParticleGeneratorLattice>();
     barrel.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-    SolidBody right_screw(sph_system, makeShared<Right_Screw>("Right_Screw"));
-    right_screw.defineAdaptationRatios(1.15, 2.0);
-    right_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
-    sph_system.ReloadParticles()
-        ? right_screw.generateParticles<ParticleGeneratorReload>(right_screw.getName())
-        : right_screw.generateParticles<ParticleGeneratorLattice>();
-    right_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
-
+    std::cout << "left screw" << std::endl;
     SolidBody left_screw(sph_system, makeShared<Left_Screw>("Left_Screw"));
-    left_screw.defineAdaptationRatios(1.15, 2.0);
+    // left_screw.defineAdaptationRatios(1.15, 2.0);
     left_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
         ? left_screw.generateParticles<ParticleGeneratorReload>(left_screw.getName())
         : left_screw.generateParticles<ParticleGeneratorLattice>();
     left_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
+
+    std::cout << "right screw" << std::endl;
+    SolidBody right_screw(sph_system, makeShared<Right_Screw>("Right_Screw"));
+    // right_screw.defineAdaptationRatios(1.15, 2.0);
+    right_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
+    sph_system.ReloadParticles()
+        ? right_screw.generateParticles<ParticleGeneratorReload>(right_screw.getName())
+        : right_screw.generateParticles<ParticleGeneratorLattice>();
+    right_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
@@ -168,6 +168,8 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
+
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
@@ -180,6 +182,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
     fluid.addBodyStateForRecording<Real>("Pressure");
     fluid.addBodyStateForRecording<Real>("Density");
+    fluid.addBodyStateForRecording<Real>("Mass");
 
     //----------------------------------------------------------------------
     //	Building Simbody.
@@ -272,6 +275,7 @@ int main(int ac, char *av[])
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);
+            transport_velocity_correction.exec(Dt);
         }
 
         Real relaxation_time = 0.0;
@@ -303,9 +307,9 @@ int main(int ac, char *av[])
         fluid.updateCellLinkedListWithParticleSort(100);
         periodic_condition_z.update_cell_linked_list_.exec();
         fluid_wall_complex.updateConfiguration();
-        left_screw_fluid_contact.updateConfiguration();
-        right_screw_fluid_contact.updateConfiguration();
-        barrel_fluid_contact.updateConfiguration();
+        // left_screw_fluid_contact.updateConfiguration();
+        // right_screw_fluid_contact.updateConfiguration();
+        // barrel_fluid_contact.updateConfiguration();
         left_screw.updateCellLinkedList();
         right_screw.updateCellLinkedList();
     }

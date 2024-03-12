@@ -14,12 +14,12 @@ Real end_time = 18;
 int nmbr_of_outputs = 100;
 
 // material properties
-Real rho = 1.0;          // reference density
-Real omega = -1.0;       // lid velocity
+Real rho = 1.0;                          // reference density
+Real omega = -1.0;                       // lid velocity
 Real SOS = 10.0 * (Real)std::abs(omega); // numerical speed of sound
 
 // non-Newtonian properties
-Real K = 100;   // consistency index
+Real K = 10;    // consistency index
 Real n = 1;     // power index
 Real tau_y = 0; // yield stress
 
