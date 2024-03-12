@@ -34,6 +34,13 @@ UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
       ElasticSolidDataSimple(sph_body),
       n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
 //=================================================================================================//
+void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
+{
+    // Nanson's relation is used to update the normal direction
+    Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
+    n_[index_i] = current_normal / current_normal.norm();
+}
+//=================================================================================================//
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
