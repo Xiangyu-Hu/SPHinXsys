@@ -8,18 +8,18 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.025;
+Real particle_spacing = 0.1;
 Real gravity_g = 0.0;
-Real end_time = 1.0;
+Real end_time = 18;
 int nmbr_of_outputs = 100;
 
 // material properties
 Real rho = 1.0;          // reference density
-Real omega = 0.5;        // lid velocity
-Real SOS = 10.0 * omega; // numerical speed of sound
+Real omega = -1.0;       // lid velocity
+Real SOS = 10.0 * (Real)std::abs(omega); // numerical speed of sound
 
 // non-Newtonian properties
-Real K = 1;     // consistency index
+Real K = 100;   // consistency index
 Real n = 1;     // power index
 Real tau_y = 0; // yield stress
 
@@ -56,8 +56,8 @@ class InitialVelocity
     {
         /** initial velocity profile */
         Matd rotation;
-        rotation << 0, -1, 0,
-            1, 0, 0,
+        rotation << 0, 1, 0,
+            -1, 0, 0,
             0, 0, 0;
         vel_[index_i] = omega * rotation * pos_[index_i];
     }
@@ -121,6 +121,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     fluid.addBodyStateForRecording<Real>("Pressure");
     fluid.addBodyStateForRecording<Real>("Density");
+    fluid.addBodyStateForRecording<Real>("Mass");
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
 
     //	Prepare the simulation
@@ -182,6 +183,7 @@ int main(int ac, char *av[])
             output_counter++;
         }
         fluid.updateCellLinkedListWithParticleSort(100);
+        fluid_inner.updateConfiguration();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
