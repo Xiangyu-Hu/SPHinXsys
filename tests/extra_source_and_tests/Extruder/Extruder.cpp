@@ -37,7 +37,7 @@ std::string full_path_to_right_screw = "./input/right_screw.stl";
 
 std::string full_path_to_fluid = "./input/fluid.stl";
 
-std::string full_path_to_barrel = "./input/barrel.stl";
+std::string full_path_to_barrel = "./input/barrel_thick.stl";
 
 std::string full_path_to_cutout = "./input/cutout.stl";
 
