@@ -10,7 +10,7 @@ using namespace SPH;
 // setup properties
 Real particle_spacing = 0.1;
 Real gravity_g = 0.0;
-Real end_time = 18;
+Real end_time = 13.2;
 int nmbr_of_outputs = 100;
 
 // material properties
