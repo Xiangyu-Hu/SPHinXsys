@@ -28,7 +28,7 @@ Real c_f = 10.0 * U_f;*/
 
 //** Geometry parameters for curved channel *
 Real DH = 2.0;
-Real resolution_ref = DH / 40;
+Real resolution_ref = DH / 20;
 Real BW = resolution_ref * 4;
 Real extend_in = 0.0 ;
 Real extend_out = 0.0 ;
