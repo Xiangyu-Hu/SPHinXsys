@@ -256,21 +256,24 @@ int main(int ac, char *av[])
         if (linearized_iteration == true && Dt_visc < Dt_adv)
         {
             Real viscous_time = 0.0;
+            update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
-            if (viscous_time < Dt_adv)
+            while (viscous_time < Dt_adv)
             {
                 viscous_acceleration.exec(Dt_visc);
+                viscous_time += Dt_visc;
                 if (viscous_time + Dt_visc > Dt_adv)
                 {
                     Dt_visc = Dt_adv - viscous_time;
                 }
             }
+            transport_velocity_correction.exec(Dt);
         }
         else
         {
-            Dt = SMIN(Dt_visc, Dt_adv) * 0.1;
+            Dt = SMIN(Dt_visc, Dt_adv);
             update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
