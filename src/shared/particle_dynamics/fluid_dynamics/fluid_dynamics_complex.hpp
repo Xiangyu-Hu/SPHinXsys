@@ -105,7 +105,6 @@ InteractionWithWall<BaseIntegrationType>::
         wall_acc_ave_.push_back(FluidWallData::contact_particles_[k]->AverageAcceleration());
         wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
         wall_B_.push_back(&(FluidWallData::contact_particles_[k]->B_));
-        wall_vol_.push_back(&(FluidWallData::contact_particles_[k]->Vol_));
     }
 }
 //=================================================================================================//
@@ -180,7 +179,6 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
     Real rho_dissipation(0);
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& wall_vol_k = *(this->wall_vol_[k]);
         StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -192,8 +190,8 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
 
             Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration -= (this->p_[index_i] + p_in_wall) * dW_ijV_j * wall_vol_k[index_j] * e_ij;
-            rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j * wall_vol_k[index_j];
+            acceleration -= (this->p_[index_i] + p_in_wall) * dW_ijV_j * e_ij;
+            rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
     this->acc_[index_i] += acceleration / this->rho_[index_i];
@@ -228,7 +226,6 @@ void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
         Real particle_spacing_ratio2 = 1.0 / (this->sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
         particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
-        StdLargeVec<Real>& wall_vol_k = *(this->wall_vol_[k]);
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -247,7 +244,7 @@ void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
             Real penalty = penalty_strength_ * beta * fabs(projection * penalty_pressure);
 
             // penalty force induced acceleration
-            acceleration -= 2.0 * penalty * n_j * dW_ijV_j * wall_vol_k[index_j] / rho_i;
+            acceleration -= 2.0 * penalty * n_j * dW_ijV_j / rho_i;
         }
     }
     this->acc_[index_i] += acceleration;
@@ -272,7 +269,6 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &wall_vol_k = *(this->wall_vol_[k]);
         StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
         Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
@@ -283,9 +279,9 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
             Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
-            density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j * wall_vol_k[index_j];
+            density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
             Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
-            p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * wall_vol_k[index_j] * n_k[index_j];
+            p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }
     }
     this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];

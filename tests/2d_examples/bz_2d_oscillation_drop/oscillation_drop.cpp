@@ -15,7 +15,7 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real particle_spacing_ref = 1.0 / 200; 		/**< Initial reference particle spacing.*/
+Real particle_spacing_ref = 1.0 / 100; 		/**< Initial reference particle spacing.*/
 Real BW = particle_spacing_ref * 4; 	/**< Extending width for BCs. */
 /**
  * @brief Material properties of the fluid.
@@ -240,7 +240,7 @@ int main(int ac, char* av[])
 			/** outer loop for dual-time criteria time-stepping. */
 			time_instance = TickCount::now();
 			fluid_step_initialization.exec();
-			Real advection_dt = 0.3 * fluid_advection_time_step.exec();
+			Real advection_dt = fluid_advection_time_step.exec();
 			fluid_density_by_summation.exec();
 			corrected_configuration_fluid.exec();
 			interval_computing_time_step += TickCount::now() - time_instance;

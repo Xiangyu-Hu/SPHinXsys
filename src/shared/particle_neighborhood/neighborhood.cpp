@@ -27,7 +27,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
 {
     neighborhood.j_.push_back(index_j);
     neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
-    neighborhood.dW_ijV_j_.push_back(kernel_->dW(distance, displacement));
+    neighborhood.dW_ijV_j_.push_back(kernel_->dW(distance, displacement) * Vol_j);
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
     neighborhood.allocated_size_++;
@@ -39,7 +39,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
     neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
-    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(distance, displacement);
+    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(distance, displacement) * Vol_j;
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
@@ -51,7 +51,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
     neighborhood.j_.push_back(index_j);
     Real weight = distance < kernel_->CutOffRadius(i_h_ratio) ? kernel_->W(i_h_ratio, distance, displacement) : 0.0;
     neighborhood.W_ij_.push_back(weight);
-    neighborhood.dW_ijV_j_.push_back(kernel_->dW(h_ratio_min, distance, displacement));
+    neighborhood.dW_ijV_j_.push_back(kernel_->dW(h_ratio_min, distance, displacement) * Vol_j);
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(displacement / (distance + TinyReal));
     neighborhood.allocated_size_++;
