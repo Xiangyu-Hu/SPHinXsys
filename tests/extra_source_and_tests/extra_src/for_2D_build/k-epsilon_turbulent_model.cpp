@@ -420,7 +420,8 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation& wall_contact_relation)
-		: BaseTurbuViscousForceWithWall(wall_contact_relation)
+		: BaseTurbuViscousForceWithWall(wall_contact_relation),
+		wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->registerSortableVariable<Vecd>("ViscousAccWall");
@@ -430,6 +431,7 @@ namespace fluid_dynamics
 	void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 	{
 		Real turbu_k_i = this->turbu_k_[index_i];
+		Real turbu_k_i_50 = pow(turbu_k_i, 0.5);
 		Real rho_i = this->rho_[index_i];
 		const Vecd& vel_i = this->vel_[index_i];
 		Real y_p = this->y_p_[index_i];
@@ -469,12 +471,18 @@ namespace fluid_dynamics
 				//** Calculate the local friction velocity *
 				Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 				
-				Real u_star = get_dimensionless_velocity(y_star);
-				Real fric_vel_mag = sqrt(C_mu_25_ * pow(turbu_k_i, 0.5) * vel_i_tau_mag / u_star);
+				//** The y* of each wall particle j needs to be speparately calcualted  *
+				Real y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
+				Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_50 * y_p_j / molecular_viscosity_;
+				Real u_star_j = get_dimensionless_velocity(y_star_j);
+
+				Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_50 * vel_i_tau_mag / u_star_j);
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *
+				Real WSS_tn_mag_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
+				
 				WSS_j_tn(0, 0) = 0.0;
-				WSS_j_tn(0, 1) = rho_i * fric_vel_mag * fric_vel_mag * boost::qvm::sign(vel_i.dot(e_j_tau));
+				WSS_j_tn(0, 1) = WSS_tn_mag_j;
 				WSS_j_tn(1, 0) = 0.0;
 				WSS_j_tn(1, 1) = 0.0;
 				
@@ -581,7 +589,8 @@ namespace fluid_dynamics
 			BaseContactRelation& contact_relation, NearShapeSurface& near_surface)
 		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
 		pos_(particles_->pos_),level_set_shape_(&near_surface.getLevelSetShape()), dimension_(Vecd(0).size()),
-		particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
+		fluid_particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
+		wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
@@ -660,7 +669,7 @@ namespace fluid_dynamics
 				Vecd& n_k_j = n_k[index_j];
 
 				//** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *  
-				r_dummy_normal_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
+				r_dummy_normal_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
 
 				/** Get the minimum distance, the distance to wall should not be negative*/
 				if (r_ij < r_min && r_dummy_normal_j > 0.0 + TinyReal)
@@ -723,10 +732,10 @@ namespace fluid_dynamics
 		{
 			Real distance = distance_to_dummy_interface_[index_i]; //** Choose one kind of the distance to classify *
 			//** Classify the wall-nearest paritcles *
-			if (distance < 1.0 * particle_spacing_)
+			if (distance < 1.0 * fluid_particle_spacing_)
 				is_near_wall_P1_[index_i] = 1;
 			//** Check the distance. *  
-			if (distance < 0.05 * particle_spacing_)
+			if (distance < 0.05 * fluid_particle_spacing_)
 			{
 				std::cout << "There is a particle too close to wall" << std::endl;
 				std::cout << "index_i=" << index_i << std::endl;

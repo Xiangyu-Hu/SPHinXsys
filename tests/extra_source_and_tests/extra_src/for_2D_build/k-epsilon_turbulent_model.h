@@ -307,6 +307,8 @@ namespace fluid_dynamics
 		explicit TurbuViscousForce(BaseContactRelation& wall_contact_relation);
 		virtual ~TurbuViscousForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+	protected:
+		Real wall_particle_spacing_;
 	};
 
 	//** Interface part *
@@ -398,7 +400,7 @@ namespace fluid_dynamics
 		LevelSetShape* level_set_shape_;
 		StdLargeVec<Vecd> & pos_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
-		Real particle_spacing_;
+		Real fluid_particle_spacing_, wall_particle_spacing_;
 		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 		int dimension_;
 	};
