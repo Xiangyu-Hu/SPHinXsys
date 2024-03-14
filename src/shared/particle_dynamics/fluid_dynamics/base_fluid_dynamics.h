@@ -39,8 +39,8 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction types specifically for fluid dynamics
 //----------------------------------------------------------------------
-class FreeSurface; /**< A interaction considering the effect of free surface */
-class FreeStream; /**< A interaction considering the effect of free stream */
+class FreeSurface;         /**< A interaction considering the effect of free surface */
+class FreeStream;          /**< A interaction considering the effect of free stream */
 class AngularConservative; /**< A interaction considering the conservation of angular momentum */
 
 namespace fluid_dynamics
@@ -68,13 +68,20 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
             wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
             wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
+            wall_phi_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("SignedDistance"));
         }
     };
     virtual ~InteractionWithWall(){};
 
   protected:
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_;
+    StdVec<StdLargeVec<Real> *> wall_mass_, wall_phi_;
+
+    Real ReflectiveFactor(Vecd distance_to_fluid, Vecd distance_from_surface)
+    {
+        Vecd distance_diff = distance_to_fluid + distance_from_surface;
+        return SMIN(2.0, 1.0 + distance_diff.dot(distance_from_surface) / distance_diff.squaredNorm());
+    };
 };
 
 } // namespace fluid_dynamics
