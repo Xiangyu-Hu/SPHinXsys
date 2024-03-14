@@ -32,7 +32,19 @@ ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_bo
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       ElasticSolidDataSimple(sph_body),
-      n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
+      n_(particles_->n_), n0_(particles_->n0_), 
+      phi_(*particles_->getVariableByName<Real>("SignedDistance")),
+      phi0_(*particles_->getVariableByName<Real>("InitialSignedDistance")),
+      F_(particles_->F_) {}
+//=================================================================================================//
+void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
+{
+    // Nanson's relation is used to update the normal direction
+    Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
+    Real inverse_norm = 1.0 / current_normal.norm();
+    n_[index_i] = current_normal * inverse_norm;
+    phi_[index_i] = phi0_[index_i] * inverse_norm;
+}
 //=================================================================================================//
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)

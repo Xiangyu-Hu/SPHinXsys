@@ -21,10 +21,10 @@
      *                                                                           *
      * ------------------------------------------------------------------------- */
     /**
-     * @file 	viscous_dynamics.h
-     * @brief Here, we define the algorithm classes for computing viscous forces in fluids.
-     * @details TBD.
-     * @author	Xiangyu Hu
+     * @file 	kernel_summation.h
+     * @brief   Here, according to the zeroth order consistency, we calculate the 
+                kernel summation for imposing the pressure boundary condition.
+     * @author	Shuoguo Zhang and Xiangyu Hu
      */
 
 #ifndef KERNEL_SUMMATION_H

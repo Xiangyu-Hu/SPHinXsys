@@ -1,7 +1,7 @@
 /**
- * @file 	pulsatile_poiseuille_flow.cpp
- * @brief 	2D pulsatile poiseuille flow example
- * @details This is the one of the basic test cases for pressure boundary condition and bidirectional buffer.
+ * @file 	mixed_poiseuille_flow.cpp
+ * @brief 	2D mixed poiseuille flow example
+ * @details This is the one of the basic test cases for mixed pressure/velocity in-/outlet boundary conditions.
  * @author 	Shuoguo Zhang and Xiangyu Hu
  */
 /**
@@ -32,11 +32,11 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL+BW, DH + BW));
 /**
  * @brief Material properties of the fluid.
  */
-Real Inlet_pressure = 0.1;
-Real Outlet_pressure = 0.0;
+Real Inlet_pressure = 0.2;
+Real Outlet_pressure = 0.1;
 Real rho0_f = 1000.0;                  
 Real Re = 50.0;
-Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL)); 
+Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
 Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);         
 Real c_f = 10.0 * U_f;              
 /**
@@ -53,15 +53,11 @@ Vec2d normal = Vec2d(1.0, 0.0);
 struct LeftInflowPressure
 {
     template <class BoundaryConditionType>
-    LeftInflowPressure(BoundaryConditionType &boundary_condition){}
+    LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
 
     Real operator()(Real &p_)
     {
-        /*pulsatile pressure*/
-        Real pressure = Inlet_pressure * cos(GlobalStaticVariables::physical_time_);
-        /*constant pressure*/
-//        Real pressure = Inlet_pressure;
-        return pressure;
+        return p_;
     }
 };
 
@@ -77,6 +73,35 @@ struct RightInflowPressure
         return pressure;
     }
 };
+
+/**
+ * @brief 	inflow velocity definition.
+ */
+struct InflowVelocity
+{
+    Real u_ave;
+
+    template <class BoundaryConditionType>
+    InflowVelocity(BoundaryConditionType &boundary_condition)
+        : u_ave(0.0) {}
+
+    Vecd operator()(Vecd &position, Vecd &velocity)
+    {
+        Vecd target_velocity = Vecd::Zero();
+        Real run_time = GlobalStaticVariables::physical_time_;
+        
+        u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (position[1] + 0.5 * DH - DH) 
+            / (2.0 * mu_f * DL) + (4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) / 
+            (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * run_time) / (DH * DH));
+
+        target_velocity[0] = u_ave;
+        target_velocity[1] = 0.0;
+
+        return target_velocity;
+    }
+};
+
+
 /**
  * @brief 	Fluid body definition.
  */
@@ -168,11 +193,10 @@ int main(int ac, char *av[])
     /** bidrectional buffer */
     BodyAlignedBoxByCell left_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_emitter_inflow_injection(left_emitter, xAxis, 10);
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, xAxis, 10);
     BodyAlignedBoxByCell right_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, xAxis, 10);
-    
     /** output parameters */
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("Indicator");
@@ -191,8 +215,9 @@ int main(int ac, char *av[])
     /** mass equation. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact); 
     /** pressure boundary condition. */ 
-    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> letf_inflow_pressure_condition(left_emitter);
-    SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
+    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter); 
+    SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter); 
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_disposer);
     /** Computing viscous acceleration. */
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
@@ -259,8 +284,9 @@ int main(int ac, char *av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 pressure_relaxation.exec(dt);
                 kernel_summation.exec();
-                letf_inflow_pressure_condition.exec(dt);
-                right_inflow_pressure_condition.exec(dt);            
+                left_inflow_pressure_condition.exec(dt); 
+                right_inflow_pressure_condition.exec(dt); 
+                inflow_velocity_condition.exec();
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
@@ -274,7 +300,9 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                {
                     write_centerline_velocity.writeToFile(number_of_iterations);
+                }
             }
             number_of_iterations++;
 
