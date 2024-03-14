@@ -61,7 +61,7 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Real> &rho_, &mass_, &vol_, &p_, &drho_dt_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
 };
 

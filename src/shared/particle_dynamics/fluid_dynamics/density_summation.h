@@ -51,7 +51,7 @@ class DensitySummation<Base, DataDelegationType>
     virtual ~DensitySummation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &rho_sum_;
+    StdLargeVec<Real> &rho_, &mass_, &rho_sum_, &vol_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
