@@ -72,8 +72,7 @@ template <>
 class VelocityGradient<Contact<Wall>> : public InteractionWithWall<VelocityGradient>
 {
   public:
-    explicit VelocityGradient(BaseContactRelation &wall_contact_relation)
-        : InteractionWithWall<VelocityGradient>(wall_contact_relation){};
+    explicit VelocityGradient(BaseContactRelation &wall_contact_relation);
     virtual ~VelocityGradient(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };

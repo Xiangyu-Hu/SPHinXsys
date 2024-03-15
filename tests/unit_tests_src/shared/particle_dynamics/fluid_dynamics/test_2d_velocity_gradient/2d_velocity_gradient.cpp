@@ -40,9 +40,9 @@ class WallBoundary : public ComplexShape
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd scaled_container_outer(0.5 * width + boundary_width, 0.5 * height + boundary_width);
-        Vecd scaled_container(0.5 * width + boundary_width, 0.5 * height);
+        Vecd scaled_container(0.5 * width + 2.0 * boundary_width, 0.5 * height);
         Transform translate_to_origin_outer(Vec2d(-boundary_width, -boundary_width) + scaled_container_outer);
-        Transform translate_to_origin_inner(scaled_container);
+        Transform translate_to_origin_inner(Vec2d(-boundary_width, 0.0) + scaled_container);
 
         add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin_outer), scaled_container_outer);
         subtract<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin_inner), scaled_container);
@@ -71,7 +71,7 @@ class CouetteFlowInitialCondition
     void update(size_t index_i, Real dt)
     {
         Vecd velocity = ZeroData<Vecd>::value;
-        velocity[0] = pos_[index_i][0] / height;
+        velocity[0] = pos_[index_i][1] / height;
         vel_[index_i] = velocity;
     }
 };
@@ -131,7 +131,7 @@ int main(int ac, char *av[])
     SimpleDynamics<CouetteFlowInitialCondition> initial_condition(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
-    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>, SequencedPolicy> vel_grad_calculation(water_block_inner, water_wall_contact);
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryVelocity> upper_wall_velocity(upper_wall);
     //----------------------------------------------------------------------
@@ -148,6 +148,7 @@ int main(int ac, char *av[])
     periodic_condition.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     initial_condition.exec();
+    upper_wall_velocity.exec();
     wall_boundary_normal_direction.exec();
     vel_grad_calculation.exec();
 
