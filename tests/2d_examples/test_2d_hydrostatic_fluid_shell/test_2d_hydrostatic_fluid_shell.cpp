@@ -404,11 +404,11 @@ TEST(hydrostatic_fsi, dp_2)
     hydrostatic_fsi(particle_spacing_gate, particle_spacing_ref);
 }
 
-TEST(DISABLED_hydrostatic_fsi, dp_s_2_dp_f_1)
+TEST(DISABLED_hydrostatic_fsi, dp_4)
 { // for CI
     const Real Gate_thickness = 0.05;
-    const Real particle_spacing_gate = Gate_thickness / 2.0;
-    const Real particle_spacing_ref = 0.5 * particle_spacing_gate;
+    const Real particle_spacing_gate = Gate_thickness / 4.0;
+    const Real particle_spacing_ref = particle_spacing_gate;
     hydrostatic_fsi(particle_spacing_gate, particle_spacing_ref);
 }
 //----------------------------------------------------------------------
