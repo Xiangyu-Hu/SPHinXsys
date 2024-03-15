@@ -10,7 +10,7 @@ using namespace SPH;
 // setup data
 Real particle_spacing = 0.0005;
 Real gravity_g = 0;
-Real end_time = 0.5;
+Real end_time = 1;
 bool relaxation = true;
 bool linearized_iteration = true;
 
@@ -18,7 +18,7 @@ bool linearized_iteration = true;
 Real rho = 1000.0; // reference density
 Real RPS = 1;      // revolutions per second
 Real omega = RPS * 3.14 * 2;
-Real U_ref = 0.03 * 0.5 * omega;
+Real U_ref = 0.03 * omega;
 Real SOS = 10.0 * U_ref; // numerical speed of sound (0.287 is the fluid column height)
 
 // non-Newtonian properties
@@ -207,8 +207,8 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Free mobBody_right(matter.updGround(), offsetTransform, info_right, SimTK::Transform());
 
     SimTK::State state = MBsystem.realizeTopology();
-    mobBody_left.setOneU(state, 2, omega);
-    mobBody_right.setOneU(state, 2, omega);
+    mobBody_left.setOneU(state, 2, -omega);
+    mobBody_right.setOneU(state, 2, -omega);
 
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);

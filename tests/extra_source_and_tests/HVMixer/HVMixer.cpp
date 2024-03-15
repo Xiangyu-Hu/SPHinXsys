@@ -15,11 +15,11 @@ bool relaxation = false;
 bool linearized_iteration = true;
 
 // material properties
-Real rho = 1000.0; // reference density
-Real RPS = 5;      // revolutions per second
-Real omega = RPS * 3.14 * 2;
-Real U_ref = 0.0735 * 0.5 * omega;
-Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.287)); // numerical speed of sound (0.287 is the fluid column height)
+Real rho = 1000.0;                                              // reference density
+Real RPS = 5;                                                   // revolutions per second
+Real omega = RPS * 3.14 * 2;                                    // angular velocity
+Real U_ref = 0.0735 * 0.5 * omega;                              // tip velocity (diameter * 0.5 * angular velocity)
+Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound (0.287 is the fluid column height)
 
 // non-Newtonian properties
 Real K = 4.58;  // consistency index
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     mixer_housing.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody mixer_shaft(sph_system, makeShared<Mixer_Shaft>("Mixer_Shaft"));
-    mixer_shaft.defineAdaptationRatios(1.15,2.0);
+    mixer_shaft.defineAdaptationRatios(1.15, 2.0);
     mixer_shaft.defineBodyLevelSetShape();
     mixer_shaft.defineParticlesAndMaterial<SolidParticles, Solid>();
     mixer_shaft.generateParticles<ParticleGeneratorLattice>();
@@ -265,7 +265,7 @@ int main(int ac, char *av[])
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
 
-        if (linearized_iteration == true && Dt_visc < Dt_adv)
+        if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
             update_density_by_summation.exec(Dt);
