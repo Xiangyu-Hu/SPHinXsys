@@ -131,6 +131,7 @@ int main(int ac, char *av[])
     SimpleDynamics<CouetteFlowInitialCondition> initial_condition(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+    InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>, SequencedPolicy> vel_grad_calculation(water_block_inner, water_wall_contact);
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryVelocity> upper_wall_velocity(upper_wall);
@@ -150,6 +151,7 @@ int main(int ac, char *av[])
     initial_condition.exec();
     upper_wall_velocity.exec();
     wall_boundary_normal_direction.exec();
+    distance_to_wall.exec();
     vel_grad_calculation.exec();
 
     body_states_recording.writeToFile(0);
