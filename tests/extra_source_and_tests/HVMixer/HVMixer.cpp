@@ -8,9 +8,9 @@
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.002;
+Real particle_spacing = 0.001;
 Real gravity_g = 9.81;
-Real end_time = 3;
+Real end_time = 0.5;
 bool relaxation = false;
 bool linearized_iteration = true;
 
@@ -22,20 +22,20 @@ Real U_ref = 0.0735 * 0.5 * omega;
 Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.287)); // numerical speed of sound (0.287 is the fluid column height)
 
 // non-Newtonian properties
-Real K = 119.4e-3; // consistency index
-Real n = 0.68;     // power index
-Real tau_y = 0;    // yield stress
+Real K = 4.58;  // consistency index
+Real n = 0.46;  // power index
+Real tau_y = 0; // yield stress
 
 Real min_shear_rate = 5e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
 // std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
-std::string full_path_to_shaft = "./input/impeller_286_new_enlarged.stl";
+std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
 
-std::string full_path_to_housing = "./input/tank_286_new.stl";
+std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
 
-std::string full_path_to_fluid = "./input/fluid_286_new.stl";
+std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
 
 std::string full_path_to_refinement = "./input/Refinement.stl";
 
@@ -132,6 +132,7 @@ int main(int ac, char *av[])
     mixer_housing.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody mixer_shaft(sph_system, makeShared<Mixer_Shaft>("Mixer_Shaft"));
+    mixer_shaft.defineAdaptationRatios(1.15,2.0);
     mixer_shaft.defineBodyLevelSetShape();
     mixer_shaft.defineParticlesAndMaterial<SolidParticles, Solid>();
     mixer_shaft.generateParticles<ParticleGeneratorLattice>();
@@ -159,6 +160,8 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_wall_contact);
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
+
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -261,21 +264,24 @@ int main(int ac, char *av[])
         tt = t2 - t1;
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
-        
+
         if (linearized_iteration == true && Dt_visc < Dt_adv)
         {
             Real viscous_time = 0.0;
+            update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
-            if ( viscous_time < Dt_adv)
+            while (viscous_time < Dt_adv)
             {
                 viscous_acceleration.exec(Dt_visc);
-                if(viscous_time + Dt_visc > Dt_adv)
+                viscous_time += Dt_visc;
+                if (viscous_time + Dt_visc > Dt_adv)
                 {
                     Dt_visc = Dt_adv - viscous_time;
                 }
             }
+            transport_velocity_correction.exec(Dt);
         }
         else
         {
@@ -284,6 +290,7 @@ int main(int ac, char *av[])
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);
+            transport_velocity_correction.exec(Dt);
         }
 
         Real relaxation_time = 0.0;

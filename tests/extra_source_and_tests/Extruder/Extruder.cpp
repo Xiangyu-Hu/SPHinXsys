@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vecd(-0.036, -0.046, -0.011), Vecd(0.036, 0.093, 0.072));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.setRunParticleRelaxation(relaxation);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //	Creating bodies with corresponding materials and particles
@@ -117,12 +117,16 @@ int main(int ac, char *av[])
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
     fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
-    fluid.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? fluid.generateParticles<ParticleGeneratorReload>(fluid.getName())
+        : fluid.generateParticles<ParticleGeneratorLattice>();
 
     std::cout << "barrel" << std::endl;
     SolidBody barrel(sph_system, makeShared<Barrel>("Barrel"));
     barrel.defineParticlesAndMaterial<SolidParticles, Solid>();
-    barrel.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? barrel.generateParticles<ParticleGeneratorReload>(barrel.getName())
+        : barrel.generateParticles<ParticleGeneratorLattice>();
     barrel.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     std::cout << "left screw" << std::endl;
@@ -253,7 +257,7 @@ int main(int ac, char *av[])
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
 
-        if (linearized_iteration == true && Dt_visc < Dt_adv)
+        if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
             update_density_by_summation.exec(Dt);
