@@ -11,7 +11,7 @@ using namespace SPH;
 Real particle_spacing = 0.001;
 Real gravity_g = 9.81;
 Real end_time = 0.5;
-bool relaxation = false;
+bool relaxation = true;
 bool linearized_iteration = true;
 
 // material properties
@@ -119,23 +119,30 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     sph_system.setRunParticleRelaxation(relaxation);
+    sph_system.setReloadParticles(true);
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
     fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
-    fluid.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? fluid.generateParticles<ParticleGeneratorReload>(fluid.getName())
+        : fluid.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody mixer_housing(sph_system, makeShared<Mixer_Housing>("Mixer_Housing"));
     mixer_housing.defineParticlesAndMaterial<SolidParticles, Solid>();
-    mixer_housing.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? mixer_housing.generateParticles<ParticleGeneratorReload>(mixer_housing.getName())
+        : mixer_housing.generateParticles<ParticleGeneratorLattice>();
     mixer_housing.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody mixer_shaft(sph_system, makeShared<Mixer_Shaft>("Mixer_Shaft"));
     mixer_shaft.defineAdaptationRatios(1.15, 2.0);
     mixer_shaft.defineBodyLevelSetShape();
     mixer_shaft.defineParticlesAndMaterial<SolidParticles, Solid>();
-    mixer_shaft.generateParticles<ParticleGeneratorLattice>();
+    sph_system.ReloadParticles()
+        ? mixer_shaft.generateParticles<ParticleGeneratorReload>(mixer_shaft.getName())
+        : mixer_shaft.generateParticles<ParticleGeneratorLattice>();
     mixer_shaft.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     //	Define body relation map
