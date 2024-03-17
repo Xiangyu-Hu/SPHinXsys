@@ -406,12 +406,13 @@ namespace fluid_dynamics
 	};
 //=================================================================================================//
 	class StandardWallFunctionCorrection : 
-		public LocalDynamics, public FluidDataSimple, public WallFunction
+		public LocalDynamics, public FSIContactData, public WallFunction
 	{
 	public:
-		StandardWallFunctionCorrection(SPHBody& sph_body, Real offset_dist);
+		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
+			BaseContactRelation& contact_relation, Real offset_dist);
 		virtual ~StandardWallFunctionCorrection() {};
-		void update(size_t index_i, Real dt = 0.0);
+		inline void interaction(size_t index_i, Real dt = 0.0);
 
 	protected:
 		Real offset_dist_;
@@ -436,6 +437,9 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& k_production_;
 		StdLargeVec<Vecd>& e_nearest_tau_;
 		StdLargeVec<Vecd>& e_nearest_normal_;
+		StdVec<StdLargeVec<Real>*> contact_Vol_;
+		StdVec < StdLargeVec<Vecd>*>  contact_n_;
+		Real wall_particle_spacing_;
 	};
 //=================================================================================================//
 //*********************TESTING MODULES*********************

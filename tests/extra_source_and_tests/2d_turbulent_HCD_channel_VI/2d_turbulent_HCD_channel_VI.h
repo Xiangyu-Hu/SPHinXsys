@@ -83,7 +83,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2
 
 //**  *
 Real U_inlet = 1.0;
-Real U_max = 3.0 * U_inlet;
+Real U_max = 1.5 * U_inlet;
 Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 Real rho0_f = 1.0;                                            /**< Density. */
