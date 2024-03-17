@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.005;
+Real particle_spacing = 0.01;
 Real end_time = 50.0;
 int number_of_outputs = 500;
 
