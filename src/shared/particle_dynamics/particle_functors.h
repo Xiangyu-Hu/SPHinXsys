@@ -265,11 +265,13 @@ struct ReduceSum
 
 struct ReduceMax
 {
+    static constexpr Real reference_ = MinReal;
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
 
 struct ReduceMin
 {
+    static constexpr Real reference_ = MaxReal;
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
 

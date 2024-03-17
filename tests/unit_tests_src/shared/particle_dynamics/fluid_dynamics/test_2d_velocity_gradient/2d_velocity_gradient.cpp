@@ -3,8 +3,9 @@
  * @brief 	test the approximation of velocity gradient.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;   // Namespace cite here.
+#include "sphinxsys.h"
+#include <gtest/gtest.h>
+using namespace SPH;
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -19,6 +20,20 @@ Real width = 1.0;
 Real height = 0.5;
 Real particle_spacing = 0.01;
 Real boundary_width = particle_spacing * 4; // boundary width
+//----------------------------------------------------------------------
+//	Google test item.
+//----------------------------------------------------------------------
+Real min_computed(0.0);
+Real max_computed(0.0);
+Real reference = 2.0;
+TEST(VelocityGradient, MaxErrorNorm)
+{
+    Real max_error = ABS(min_computed - reference) / reference;
+    max_error = SMAX(max_error, ABS(max_computed - reference) / reference);
+    EXPECT_LT(max_error, 0.05);
+    std::cout << "Reference VelocityGradientNorm: " << reference << " and "
+              << "MaxErrorNorm: " << max_error << std::endl;
+}
 //----------------------------------------------------------------------
 //	Complex shapes for wall boundary
 //----------------------------------------------------------------------
@@ -132,9 +147,13 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>, SequencedPolicy> vel_grad_calculation(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<FirstConsistencyMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<FirstConsistencyCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryVelocity> upper_wall_velocity(upper_wall);
+    ReduceDynamics<VariableNorm<Matd, ReduceMax>> maximum_velocity_gradient_norm(water_block, "VelocityGradient");
+    ReduceDynamics<VariableNorm<Matd, ReduceMin>> minimum_velocity_gradient_norm(water_block, "VelocityGradient");
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -152,8 +171,12 @@ int main(int ac, char *av[])
     upper_wall_velocity.exec();
     wall_boundary_normal_direction.exec();
     distance_to_wall.exec();
+    corrected_configuration_fluid.exec();
     vel_grad_calculation.exec();
 
     body_states_recording.writeToFile(0);
-    return 0;
+    max_computed = maximum_velocity_gradient_norm.exec(),
+    min_computed = minimum_velocity_gradient_norm.exec(),
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }

@@ -130,14 +130,13 @@ template <typename ViscosityType>
 class ViscousForce<Contact<Wall, AngularConservative>, ViscosityType> : public BaseViscousForceWithWall
 {
   public:
-    explicit ViscousForce(BaseContactRelation &wall_contact_relation)
-        : BaseViscousForceWithWall(wall_contact_relation),
-          mu_(&base_particles_){};
+    explicit ViscousForce(BaseContactRelation &wall_contact_relation);
     virtual ~ViscousForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     ViscosityType mu_;
+    StdLargeVec<Vecd> &distance_from_wall_;
 };
 
 template <typename ViscosityType>

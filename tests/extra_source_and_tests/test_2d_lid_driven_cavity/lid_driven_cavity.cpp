@@ -8,7 +8,7 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.01;
+Real particle_spacing = 0.005;
 Real end_time = 50.0;
 int number_of_outputs = 500;
 
@@ -173,6 +173,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<NoRiemannSolver>> density_relaxation(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_inner, fluid_all_walls);
 
+    InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<FirstConsistencyCorrection>> vel_grad_calculation(fluid_inner, fluid_all_walls);
     SimpleDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_dependent_viscosity(fluid);
     InteractionWithUpdate<fluid_dynamics::NonNewtonianViscousForceWithWall<AngularConservative>> viscous_acceleration(fluid_inner, fluid_all_walls);
@@ -227,6 +228,7 @@ int main(int ac, char *av[])
 
         update_density_by_summation.exec();
         corrected_configuration_fluid.exec();
+        distance_to_wall.exec();
         vel_grad_calculation.exec();
         shear_dependent_viscosity.exec();
         viscous_acceleration.exec();
