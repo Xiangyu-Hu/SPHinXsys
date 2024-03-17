@@ -5,7 +5,7 @@
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
 #include "mesh_iterators.hpp"
-
+/* TWO DIMENSIONAL */
 namespace SPH
 {
 //=================================================================================================//
@@ -397,7 +397,7 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 //{
 //    Real phi = probeSignedDistance(position);
 //    Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-//    Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
+//    Real threshold = cutoff_radius + data_spacing_; 
 //
 //    Real integral(0);
 //    if (fabs(phi) < threshold)
@@ -422,47 +422,6 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 //    }
 //    return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_;
 //};
-//=============================================================================================//
-Real LevelSet::computeKernelIntegral(const Vecd& position)
-{
-	Real phi = probeSignedDistance(position);
-	Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-	Real threshold = cutoff_radius + data_spacing_;
-
-	Real integral(0);
-	if (fabs(phi) < threshold)
-	{
-		Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-        mesh_for_each2d<-3, 4>(
-            [&](int i, int j)
-            {
-                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
-                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-                Real fine_mesh_size = data_spacing_ / 2.0;
-                if (phi_neighbor > -data_spacing_)
-                {
-                    Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-                    mesh_for_each2d<0, 2>(
-                        [&](int m, int n)
-                        {
-                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 0.5 * pow(-1, n) * fine_mesh_size};
-                            Vecd integral_position = cell_central_position + position_shift;
-                            Vecd phi_gradient = probeLevelSetGradient(integral_position);
-                            Real phi_particle = probeSignedDistance(integral_position);
-                            Vecd displacement = position - integral_position;
-                            Real distance = displacement.norm();
-                            if (distance < cutoff_radius)
-                            {
-                                integral += kernel_.W(global_h_ratio_, distance, displacement) *
-                                            CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) *
-                                            fine_mesh_size * fine_mesh_size;
-                            }
-                        });
-                }
-            });
-	}
-	return phi > threshold ? 1.0 : integral;
-}
 //=============================================================================================//
 //Vecd LevelSet::computeKernelGradientIntegral(const Vecd& position)
 //{
@@ -495,48 +454,6 @@ Real LevelSet::computeKernelIntegral(const Vecd& position)
 //
 //    return integral * data_spacing_ * data_spacing_;
 //};
-//=============================================================================================//
-Vecd LevelSet::computeKernelGradientIntegral(const Vecd& position)
-{
-	Real phi = probeSignedDistance(position);
-	Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-	Real threshold = cutoff_radius + data_spacing_;
-
-	Vecd integral = Vecd::Zero();
-	if (fabs(phi) < threshold)
-	{
-		Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-        mesh_for_each2d<-3, 4>(
-            [&](int i, int j)
-            {
-                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
-                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-                Real fine_mesh_size = data_spacing_ / 2.0;
-                if (phi_neighbor > -data_spacing_)
-                {
-                    Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index); 
-                    mesh_for_each2d<0, 2>(
-                        [&](int m, int n)
-                        {
-                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 0.5 * pow(-1, n) * fine_mesh_size};
-                            Vecd integral_position = cell_central_position + position_shift;
-                            Vecd phi_gradient = probeLevelSetGradient(integral_position);
-                            Real phi_particle = probeSignedDistance(integral_position);
-                            Vecd displacement = position - integral_position;
-                            Real distance = displacement.norm();
-                            if (distance < cutoff_radius)
-                            {
-                                integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-                                            CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) *
-                                            fine_mesh_size * fine_mesh_size *
-                                            displacement / (distance + TinyReal);
-                            }
-                        });
-                }
-            });
-	}
-	return integral;
-}
 //=============================================================================================//
 //Matd LevelSet::computeKernelSecondGradientIntegral(const Vecd& position)
 //{
@@ -571,48 +488,6 @@ Vecd LevelSet::computeKernelGradientIntegral(const Vecd& position)
 //    return integral * data_spacing_ * data_spacing_;
 //};
 //=============================================================================================//
-Matd LevelSet::computeKernelSecondGradientIntegral(const Vecd& position)
-{
-	Real phi = probeSignedDistance(position);
-	Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-	Real threshold = cutoff_radius + data_spacing_;
-
-	Matd integral = Matd::Zero();
-	if (fabs(phi) < threshold)
-	{
-		Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-        mesh_for_each2d<-3, 4>(
-            [&](int i, int j)
-            {
-                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
-                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-                Real fine_mesh_size = data_spacing_ / 2.0;
-                if (phi_neighbor > -data_spacing_)
-                {
-                    Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-                    mesh_for_each2d<0, 2>(
-                        [&](int m, int n)
-                        {
-                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 0.5 * pow(-1, n) * fine_mesh_size};
-                            Vecd integral_position = cell_central_position + position_shift;
-                            Vecd phi_gradient = probeLevelSetGradient(integral_position);
-                            Real phi_particle = probeSignedDistance(integral_position);
-                            Vecd displacement = position - integral_position;
-                            Real distance = displacement.norm();
-                            if (distance < cutoff_radius)
-                            {
-                                integral += kernel_.d2W(global_h_ratio_, distance, displacement) *
-                                            CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) *
-                                            fine_mesh_size * fine_mesh_size *
-                                            displacement * displacement.transpose() / (distance * distance + TinyReal);
-                            }
-                        });
-                }
-            });
-	}
-	return integral;
-}
-//=============================================================================================//
 //Matd LevelSet::computeDisplacementKernelGradientIntegral(const Vecd& position)
 //{
 //    Real phi = probeSignedDistance(position);
@@ -646,6 +521,135 @@ Matd LevelSet::computeKernelSecondGradientIntegral(const Vecd& position)
 //    return integral * data_spacing_ * data_spacing_;
 //};
 //=============================================================================================//
+Real LevelSet::computeKernelIntegral(const Vecd& position)
+{
+	Real phi = probeSignedDistance(position);
+	Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+	Real threshold = cutoff_radius + data_spacing_;
+
+	Real integral(0);
+	if (fabs(phi) < threshold)
+	{
+		Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+        mesh_for_each2d<-3, 4>(
+            [&](int i, int j)
+            {
+                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
+                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+                Real fine_mesh_size = data_spacing_ / 2.0;
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+                    mesh_for_each2d<1, 3>(
+                        [&](int m, int n)
+                        {
+                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 
+                                                   0.5 * pow(-1, n) * fine_mesh_size};
+                            Vecd integral_position = cell_central_position + position_shift;
+                            Vecd phi_gradient = probeLevelSetGradient(integral_position);
+                            Real phi_particle = probeSignedDistance(integral_position);
+                            Vecd displacement = position - integral_position;
+                            Real distance = displacement.norm();
+                            if (distance < cutoff_radius)
+                            {
+                                integral += kernel_.W(global_h_ratio_, distance, displacement) *
+                                    CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) * 
+                                    fine_mesh_size * fine_mesh_size;
+                            }
+                        });
+                }
+            });
+	}
+	return phi > threshold ? 1.0 : integral;
+}
+//=============================================================================================//
+Vecd LevelSet::computeKernelGradientIntegral(const Vecd& position)
+{
+	Real phi = probeSignedDistance(position);
+	Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+	Real threshold = cutoff_radius + data_spacing_;
+
+	Vecd integral = Vecd::Zero();
+	if (fabs(phi) < threshold)
+	{
+		Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+        mesh_for_each2d<-3, 4>(
+            [&](int i, int j)
+            {
+                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
+                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+                Real fine_mesh_size = data_spacing_ / 2.0;
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index); 
+                    mesh_for_each2d<1, 3>(
+                        [&](int m, int n)
+                        {
+                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 
+                                                   0.5 * pow(-1, n) * fine_mesh_size};
+                            Vecd integral_position = cell_central_position + position_shift;
+                            Vecd phi_gradient = probeLevelSetGradient(integral_position);
+                            Real phi_particle = probeSignedDistance(integral_position);
+                            Vecd displacement = position - integral_position;
+                            Real distance = displacement.norm();
+                            if (distance < cutoff_radius)
+                            {
+                                integral += kernel_.dW(global_h_ratio_, distance, displacement) * 
+                                    CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) * 
+                                    fine_mesh_size * fine_mesh_size * displacement / (distance + TinyReal);
+                            }
+                        });
+                }
+            });
+	}
+	return integral;
+}
+
+//=============================================================================================//
+Matd LevelSet::computeKernelSecondGradientIntegral(const Vecd& position)
+{
+	Real phi = probeSignedDistance(position);
+	Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+	Real threshold = cutoff_radius + data_spacing_;
+
+	Matd integral = Matd::Zero();
+	if (fabs(phi) < threshold)
+	{
+		Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+        mesh_for_each2d<-3, 4>(
+            [&](int i, int j)
+            {
+                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
+                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+                Real fine_mesh_size = data_spacing_ / 2.0;
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+                    mesh_for_each2d<1, 3>(
+                        [&](int m, int n)
+                        {
+                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 
+                                                   0.5 * pow(-1, n) * fine_mesh_size};
+                            Vecd integral_position = cell_central_position + position_shift;
+                            Vecd phi_gradient = probeLevelSetGradient(integral_position);
+                            Real phi_particle = probeSignedDistance(integral_position);
+                            Vecd displacement = position - integral_position;
+                            Real distance = displacement.norm();
+                            if (distance < cutoff_radius)
+                            {
+                                integral += kernel_.d2W(global_h_ratio_, distance, displacement) * 
+                                    CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) * 
+                                    fine_mesh_size * fine_mesh_size * 
+                                    displacement * displacement.transpose() / 
+                                    (distance * distance + TinyReal);
+                            }
+                        });
+                }
+            });
+	}
+	return integral;
+}
+//=============================================================================================//
 Matd LevelSet::computeDisplacementKernelGradientIntegral(const Vecd& position)
 {
 	Real phi = probeSignedDistance(position);
@@ -665,10 +669,11 @@ Matd LevelSet::computeDisplacementKernelGradientIntegral(const Vecd& position)
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd cell_central_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-                    mesh_for_each2d<0, 2>(
-                        [&](int m, int n)
+                    mesh_for_each2d<1, 3>(
+                        [&](int m, int n)  
                         {
-                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 0.5 * pow(-1, n) * fine_mesh_size};
+                            Vecd position_shift = {0.5 * pow(-1, m) * fine_mesh_size, 
+                                                   0.5 * pow(-1, n) * fine_mesh_size};
                             Vecd integral_position = cell_central_position + position_shift;
                             Vecd phi_gradient = probeLevelSetGradient(integral_position);
                             Real phi_particle = probeSignedDistance(integral_position);
@@ -676,10 +681,10 @@ Matd LevelSet::computeDisplacementKernelGradientIntegral(const Vecd& position)
                             Real distance = displacement.norm();
                             if (distance < cutoff_radius)
                             {
-                                integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-                                            CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) *
-                                            fine_mesh_size * fine_mesh_size *
-                                            displacement * displacement.transpose() / (distance + TinyReal);
+                                integral += kernel_.dW(global_h_ratio_, distance, displacement) * 
+                                    CutCellVolumeFraction(phi_particle, phi_gradient, fine_mesh_size) * 
+                                    fine_mesh_size * fine_mesh_size * displacement * 
+                                    displacement.transpose() / (distance + TinyReal);
                             }
                         });
                 }

@@ -52,7 +52,7 @@ void RelaxationStepInner<RelaxationType>::exec(Real dt)
     relaxation_acceleration_inner_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
-    surface_bounding_.exec();
+    //surface_bounding_.exec();
 }
 //=================================================================================================//
 template <class RelaxationType>
@@ -108,7 +108,7 @@ void RelaxationStepComplex<RelaxationType>::exec(Real dt)
     relaxation_acceleration_complex_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
-    //surface_bounding_.exec();
+    surface_bounding_.exec();
 }
 //=================================================================================================//
 template <class RelaxationType>
@@ -195,10 +195,17 @@ computeErrorAndParameters(size_t index_i, Real dt)
     Real overlap = this->level_set_shape_->computeKernelIntegral(this->pos_[index_i], 
                    this->sph_adaptation_->SmoothingLengthRatio(index_i));
 
-    error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
+    /*error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
         this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
             this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
     error_and_parameters.a_ -= this->relaxation_type.getBackgroundForce(this->B_[index_i], this->B_[index_i]) *
+        this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
+            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);*/
+
+    error_and_parameters.error_ += this->relaxation_type.getBackgroundForce(this->B_[index_i], Matd::Identity()) *
+        this->level_set_shape_->computeKernelGradientIntegral(this->pos_[index_i],
+            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+    error_and_parameters.a_ -= this->relaxation_type.getBackgroundForce(this->B_[index_i], Matd::Identity()) *
         this->level_set_shape_->computeKernelSecondGradientIntegral(this->pos_[index_i],
             this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
 
@@ -216,10 +223,13 @@ RelaxationStepInnerImplicit(BaseInnerRelation& inner_relation, bool level_set_co
 template <class RelaxationType>
 void RelaxationStepInnerImplicit<RelaxationType>::exec(Real dt)
 {
-    real_body_->updateCellLinkedList();
-    inner_relation_.updateConfiguration();
     time_step_size_ =  sqrt(get_time_step_.exec());
-    relaxation_evolution_inner_.exec(dt * time_step_size_);
+    relaxation_evolution_inner_.exec(time_step_size_);
+    /* For implicit scheme, the B relaxation should keep the same configuration
+       calculation for both B calculating and updating positions. */
+    real_body_->updateCellLinkedList(); 
+    inner_relation_.updateConfiguration();
+    //surface_bounding_.exec(); //no surface_bounding for implicit scheme.
 }
 //=================================================================================================//
 template <class RelaxationType>
@@ -281,17 +291,6 @@ computeErrorAndParameters(size_t index_i, Real dt)
             error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_k[index_j]) *
                                            contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
             error_and_parameters.a_ -= parameter_b;
-
-            /* With the wall*/
-           /* size_t index_j = contact_neighborhood.j_[n];
-            Matd parameter_b = relaxation_type.getBackgroundForce(B_[index_i], B_[index_i]) *
-                contact_neighborhood.e_ij_[n] * contact_neighborhood.e_ij_[n].transpose() *
-                kernel_->d2W(contact_neighborhood.r_ij_[n], contact_neighborhood.e_ij_[n]) *
-                Vol_k[index_j] * dt * dt;
-
-            error_and_parameters.error_ += relaxation_type.getBackgroundForce(B_[index_i], B_[index_i]) *
-                contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] * dt * dt;
-            error_and_parameters.a_ -= parameter_b;*/
         }
     }
 
@@ -371,7 +370,7 @@ void RelaxationStepComplexImplicit<RelaxationType>::exec(Real dt)
     real_body_->updateCellLinkedList();
     complex_relation_.updateConfiguration();
 }
-//=================================================================================================//
+  //=================================================================================================//
 } // namespace relax_dynamics
   //=================================================================================================//
 

@@ -10,10 +10,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;					  /**< box length. */
-Real DH = 1.0;					  /**< box height. */
+Real DL = 1.0;					   /**< box length. */
+Real DH = 1.0;					   /**< box height. */
 Real resolution_ref = 1.0 / 200.0; /**< Global reference resolution. */
-Real BW = resolution_ref * 6;	 /**< Extending width for BCs. */
+Real BW = resolution_ref * 6;	   /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -176,8 +176,10 @@ int main(int ac, char *av[])
 	//	Particle and body creation of fluid observers.
 	//----------------------------------------------------------------------
 	ObserverBody horizontal_observer(sph_system, "HorizontalVelocity");
+	horizontal_observer.defineAdaptationRatios(1.3, 1.0);
 	horizontal_observer.generateParticles<VelocityXObserverParticleGenerator>();
 	ObserverBody vertical_observer(sph_system, "VerticalVelocity");
+	vertical_observer.defineAdaptationRatios(1.3, 1.0);
 	vertical_observer.generateParticles<VelocityYObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
