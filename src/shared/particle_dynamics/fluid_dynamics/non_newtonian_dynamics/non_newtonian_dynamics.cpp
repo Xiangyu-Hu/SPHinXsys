@@ -221,7 +221,7 @@ VelocityGradient<Inner<>>::VelocityGradient(BaseInnerRelation &inner_relation)
     : VelocityGradient<FluidDataInner>(inner_relation),
       combined_velocity_gradient_(*this->particles_->template registerSharedVariable<Matd>("CombinedVelocityGradient"))
 {
-    this->particles_->template addVariableToWrite<Matd>("CombinedVelocityGradient");
+    //this->particles_->template addVariableToWrite<Matd>("CombinedVelocityGradient");
 }
 
 void VelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)

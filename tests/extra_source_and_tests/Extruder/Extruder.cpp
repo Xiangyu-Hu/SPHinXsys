@@ -207,8 +207,8 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Free mobBody_right(matter.updGround(), offsetTransform, info_right, SimTK::Transform());
 
     SimTK::State state = MBsystem.realizeTopology();
-    mobBody_left.setOneU(state, 2, -omega);
-    mobBody_right.setOneU(state, 2, -omega);
+    mobBody_left.setOneU(state, 2, omega);
+    mobBody_right.setOneU(state, 2, omega);
 
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);
