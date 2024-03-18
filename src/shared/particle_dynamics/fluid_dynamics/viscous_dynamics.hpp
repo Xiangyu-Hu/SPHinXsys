@@ -90,7 +90,7 @@ ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::
     ViscousForce(BaseContactRelation &wall_contact_relation)
     : BaseViscousForceWithWall(wall_contact_relation),
       mu_(&base_particles_),
-      distance_from_wall_(*this->particles_->registerSharedVariable<Vecd>("DistanceFromWall")){};
+      distance_from_wall_(*this->particles_->template registerSharedVariable<Vecd>("DistanceFromWall")){};
 //=================================================================================================//
 template <typename ViscosityType>
 void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interaction(size_t index_i, Real dt)
