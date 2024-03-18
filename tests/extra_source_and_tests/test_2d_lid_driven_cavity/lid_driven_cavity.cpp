@@ -122,24 +122,6 @@ void output_setup()
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
 }
 
-class MyLimiter : public Limiter
-{
-    Real h_ref_;
-    StdLargeVec<Vecd> &consistency_;
-
-  public:
-    MyLimiter(BaseParticles *base_particles)
-        : Limiter(),
-          h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          consistency_(*base_particles->getVariableByName<Vecd>("ZerothConsistency")){};
-    virtual ~MyLimiter(){};
-    Real operator()(size_t index_i)
-    {
-        Real error_scale = consistency_[index_i].squaredNorm() * h_ref_ * h_ref_;
-        return SMIN(100.0 * SMAX(error_scale, 0.0), 1.0);
-    };
-};
-
 int main(int ac, char *av[])
 {
     output_setup();
