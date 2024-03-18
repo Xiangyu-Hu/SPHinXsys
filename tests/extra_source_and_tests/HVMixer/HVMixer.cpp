@@ -36,6 +36,7 @@ std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
 std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
 
 std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
+// std::string full_path_to_fluid = "./input/Fluid_Full_Height_Enlarged_Blade.stl";
 
 std::string full_path_to_refinement = "./input/Refinement.stl";
 
@@ -168,7 +169,8 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
-    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -201,7 +203,7 @@ int main(int ac, char *av[])
         //	From here iteration for particle relaxation begins.
         //----------------------------------------------------------------------
         int ite = 0;
-        int relax_step = 10;
+        int relax_step = 50;
         while (ite < relax_step)
         {
             // relaxation_step_inner_housing.exec();
@@ -275,7 +277,8 @@ int main(int ac, char *av[])
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
-            update_density_by_summation.exec(Dt);
+            free_surface_indicator.exec();
+            update_density_by_summation.exec();
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
@@ -293,6 +296,7 @@ int main(int ac, char *av[])
         else
         {
             Dt = SMIN(Dt_visc, Dt_adv);
+            free_surface_indicator.exec(Dt);
             update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
