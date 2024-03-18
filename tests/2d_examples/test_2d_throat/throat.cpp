@@ -160,6 +160,9 @@ int main(int ac, char *av[])
     //-------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
     // evaluation of density by summation approach
@@ -174,10 +177,6 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>> update_velocity_gradient(fluid_block_inner, fluid_block_contact);
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    // define external force
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    Gravity gravity(Vecd(gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
     // computing viscous effect implicitly and with update velocity directly other than viscous force
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
