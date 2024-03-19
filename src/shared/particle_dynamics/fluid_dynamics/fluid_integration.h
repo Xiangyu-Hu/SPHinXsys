@@ -135,6 +135,7 @@ class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
     StdVec<KernelCorrectionType> contact_corrections_;
     StdVec<RiemannSolverType> riemann_solvers_;
     StdVec<StdLargeVec<Real> *> contact_p_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -167,7 +168,7 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    StdLargeVec<Real> &mass_, & Vol_;
 };
 using Integration2ndHalfInnerRiemann = Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
 using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSolver>;
@@ -197,7 +198,7 @@ class Integration2ndHalf<Contact<>, RiemannSolverType>
 
   protected:
     StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<StdLargeVec<Real> *> contact_p_;
+    StdVec<StdLargeVec<Real> *> contact_p_, contact_Vol_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 

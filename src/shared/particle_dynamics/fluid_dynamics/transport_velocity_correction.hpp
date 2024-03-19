@@ -106,6 +106,7 @@ TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes.
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         contact_kernel_corrections_.push_back(KernelCorrectionType(this->contact_particles_[k]));
+        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -118,7 +119,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real>& wall_Vol_k = *(this->wall_Vol_[k]);
+            StdLargeVec<Real>& Vol_k = *(this->contact_Vol_[k]);
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             KernelCorrectionType &kernel_correction_k = this->contact_kernel_corrections_[k];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -126,7 +127,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
                 size_t index_j = contact_neighborhood.j_[n];
                 // acceleration for transport velocity
                 inconsistency -= (this->kernel_correction_(index_i) + kernel_correction_k(index_j)) *
-                                 contact_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
+                                 contact_neighborhood.dW_ijV_j_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
         this->zeroth_consistency_[index_i] += inconsistency;

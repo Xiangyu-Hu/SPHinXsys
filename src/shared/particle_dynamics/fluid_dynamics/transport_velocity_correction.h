@@ -108,6 +108,7 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 
   protected:
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
