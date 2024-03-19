@@ -68,7 +68,7 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * this->Vol_[index_j];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
         force -= mass_[index_i] * (p_[index_i] * correction_(index_i) + p_[index_j] * correction_(index_j)) * dW_ijV_j * e_ij;
@@ -93,12 +93,13 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
     {
         StdLargeVec<Vecd>& force_ave_k = *(wall_force_ave_[k]);
         StdLargeVec<Real>& wall_mass_k = *(wall_mass_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood& wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd& e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
             Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
@@ -132,12 +133,13 @@ void Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrec
         particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        StdLargeVec<Vecd>& wall_Vol_k = *(this->wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j];
             Real r_ij = wall_neighborhood.r_ij_[n];
             Vecd &n_j = n_k[index_j];
 
@@ -179,6 +181,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(this->wall_Vol_[k]);
         KernelCorrectionType &correction_k = contact_corrections_[k];
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -186,7 +189,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
-            Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j];
 
             force -= this->mass_[index_i] * riemann_solver_k.AverageP(this->p_[index_i] * correction_k(index_i), p_k[index_j] * correction_(index_j)) *
                      2.0 * e_ij * dW_ijV_j;
@@ -225,7 +228,7 @@ void Integration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i,
     {
         size_t index_j = inner_neighborhood.j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * this->Vol_[index_j];
 
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
         density_change_rate += u_jump * dW_ijV_j;
@@ -250,12 +253,13 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j];
 
             Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
             density_change_rate += (vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
@@ -288,13 +292,14 @@ void Integration2ndHalf<Contact<>, RiemannSolverType>::interaction(size_t index_
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(this->wall_Vol_[k]);
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
-            Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j];
 
             Vecd vel_ave = riemann_solver_k.AverageV(this->vel_[index_i], vel_k[index_j]);
             density_change_rate += 2.0 * (this->vel_[index_i] - vel_ave).dot(e_ij) * dW_ijV_j;

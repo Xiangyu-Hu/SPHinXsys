@@ -75,6 +75,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
 
   protected:
     const Real h_ref_, correction_scaling_;
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd> &pos_;
     ResolutionType h_ratio_;
     LimiterType limiter_;
@@ -91,6 +92,9 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdVec<StdLargeVec<Real>*> wall_Vol_;
 };
 
 template <class KernelCorrectionType, typename... CommonControlTypes>

@@ -69,13 +69,14 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
             wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
             wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
+            wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
         }
     };
     virtual ~InteractionWithWall(){};
 
   protected:
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_;
+    StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
 };
 
 } // namespace fluid_dynamics

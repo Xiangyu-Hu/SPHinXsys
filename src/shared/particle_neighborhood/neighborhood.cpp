@@ -27,7 +27,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
 {
     neighborhood.j_.push_back(index_j);
     neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
-    neighborhood.dW_ijV_j_.push_back(kernel_->dW(distance, displacement) * Vol_j);
+    neighborhood.dW_ijV_j_.push_back(kernel_->dW(distance, displacement));
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
     neighborhood.allocated_size_++;
@@ -39,7 +39,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
     neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
-    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(distance, displacement) * Vol_j;
+    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
@@ -51,7 +51,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
     neighborhood.j_.push_back(index_j);
     Real weight = distance < kernel_->CutOffRadius(i_h_ratio) ? kernel_->W(i_h_ratio, distance, displacement) : 0.0;
     neighborhood.W_ij_.push_back(weight);
-    neighborhood.dW_ijV_j_.push_back(kernel_->dW(h_ratio_min, distance, displacement) * Vol_j);
+    neighborhood.dW_ijV_j_.push_back(kernel_->dW(h_ratio_min, distance, displacement));
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(displacement / (distance + TinyReal));
     neighborhood.allocated_size_++;
@@ -66,7 +66,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     neighborhood.W_ij_[current_size] = distance < kernel_->CutOffRadius(i_h_ratio)
                                            ? kernel_->W(i_h_ratio, distance, displacement)
                                            : 0.0;
-    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(h_ratio_min, distance, displacement) * Vol_j;
+    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(h_ratio_min, distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 }
@@ -271,8 +271,8 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
 
     if (distance < radius)
     {
-        Real W_ijV_j_ttl = kernel_->W(distance, displacement) * Vol_j;
-        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
+        Real W_ijV_j_ttl = kernel_->W(distance, displacement);
+        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
         // correct normal direction pointing from fluid to shell
@@ -295,7 +295,7 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
             const Real factor_2 = 1 + counter * k2_j * particle_distance_;
             if (factor_1 <= 0 || factor_2 <= 0)
                 break;
-            const Real Vol_j_dummy = Vol_j * factor_1 * factor_2;
+            const Real Vol_j_dummy = factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
             W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
@@ -308,7 +308,7 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
             distance_dummy = displacement_dummy.norm();
         }
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
-        Real W_ij_corrected = W_ijV_j_ttl / Vol_j * particle_distance_ / thickness_[index_j]; // from surface area to volume
+        Real W_ij_corrected = W_ijV_j_ttl * particle_distance_ / thickness_[index_j]; // from surface area to volume
         Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;                          // from surface area to volume
 
         // create new neighborhood
@@ -343,7 +343,7 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
     {
         // W_ij is not used in force from fluid classes, no need to modify
         const Real W_ij = kernel_->W(distance, displacement);
-        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
+        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
         // correct normal direction, pointing from fluid to shell
@@ -368,7 +368,7 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
                 break;
             const Real Vol_i_factor = factor_1 * factor_2;
 
-            Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j * Vol_i_factor;
+            Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_i_factor;
             Vecd e_ij = displacement_dummy / distance_dummy;
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
