@@ -37,12 +37,12 @@ UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
+      Vol_(particles_->Vol_), pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      rho_(particles_->rho_), mass_(particles_->mass_),
+      rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_), force_(particles_->force_),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 //=================================================================================================//

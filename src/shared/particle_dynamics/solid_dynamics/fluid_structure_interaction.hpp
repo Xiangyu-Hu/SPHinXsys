@@ -32,6 +32,7 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
         StdLargeVec<Real> &mass_k = *(contact_mass_[k]);
         StdLargeVec<Real> &p_k = *(contact_p_[k]);
@@ -49,7 +50,7 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
             Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
             force -= (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] + (p_in_wall + p_k[index_j]) * e_ij) *
-                     Vol_[index_i] * contact_neighborhood.dW_ijV_j_[n];
+                     Vol_[index_i] * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
     force_from_fluid_[index_i] = force;

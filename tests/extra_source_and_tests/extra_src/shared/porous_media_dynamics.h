@@ -141,7 +141,7 @@ namespace multi_species_continuum
 				{
 					size_t index_j = inner_neighborhood.j_[n];
 					Real r_ij = inner_neighborhood.r_ij_[n];
-					Vecd gradw_ijV_j_ = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+					Vecd gradw_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
 			
 					Real dim_r_ij_1 = Dimensions / r_ij;
 					Vecd pos_jump = pos_[index_i] - pos_[index_j];
@@ -156,7 +156,7 @@ namespace multi_species_continuum
 					total_momentum_increment += (Stress_[index_i] + Stress_[index_j]
 												+ numerical_dissipation_factor_  * numerical_stress_ij * weight 
 												- outer_fluid_velocity_relative_fluid_flux_[index_i] - outer_fluid_velocity_relative_fluid_flux_[index_j])
-												* gradw_ijV_j_ ; 
+												* gradw_ijV_j ; 
 				}
 
 				dtotal_momentum_dt_[index_i] = total_momentum_increment;
@@ -187,10 +187,10 @@ namespace multi_species_continuum
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = inner_neighborhood.j_[n];
-					Vecd gradw_ijV_j_ = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+					Vecd gradw_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
 
 					deformation_gradient_change_rate -=
-						(vel_[index_i] - vel_[index_j]) * gradw_ijV_j_.transpose();
+						(vel_[index_i] - vel_[index_j]) * gradw_ijV_j.transpose();
 				}
 				dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];
 			};
@@ -242,15 +242,15 @@ namespace multi_species_continuum
 				{
 					size_t index_j = inner_neighborhood.j_[n];
 					Real r_ij = inner_neighborhood.r_ij_[n];
-					Real dw_ijV_j_ = inner_neighborhood.dW_ijV_j_[n] ;
+					Real dw_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
 
 					Vecd e_ij = inner_neighborhood.e_ij_[n];
 					fluid_saturation_gradient -=  (fluid_saturation_[index_i] - fluid_saturation_[index_j])
-													* e_ij* dw_ijV_j_;
+													* e_ij* dw_ijV_j;
 							
 					
 					relative_fluid_flux_divergence +=  1.0 / 2.0 * (fluid_saturation_[index_i] * fluid_saturation_[index_i] - fluid_saturation_[index_j] * fluid_saturation_[index_j]) 
-															/ (r_ij + TinyReal) *  dw_ijV_j_;
+															/ (r_ij + TinyReal) *  dw_ijV_j;
 													
 				}
 				//then we update relative velocity based on the updated fluid density

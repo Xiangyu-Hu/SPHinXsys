@@ -29,7 +29,7 @@ DampingBySplittingInner<VariableType>::computeErrorAndParameters(size_t index_i,
         size_t index_j = inner_neighborhood.j_[n];
         // linear projection
         VariableType variable_derivative = (variable_i - variable_[index_j]);
-        Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
+        Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         error_and_parameters.error_ -= variable_derivative * parameter_b;
         error_and_parameters.a_ += parameter_b;
@@ -54,7 +54,7 @@ void DampingBySplittingInner<VariableType>::
     {
         size_t index_j = inner_neighborhood.j_[n];
 
-        Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
+        Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         // predicted quantity at particle j
         VariableType variable_j = variable_[index_j] - parameter_k * parameter_b;
@@ -108,7 +108,7 @@ DampingBySplittingComplex<VariableType>::computeErrorAndParameters(size_t index_
 
             // linear projection
             VariableType variable_derivative = (variable_i - variable_k[index_j]);
-            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             error_and_parameters.error_ -= variable_derivative * parameter_b;
             error_and_parameters.a_ += parameter_b;
@@ -132,6 +132,7 @@ void DampingBySplittingComplex<VariableType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
         StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -139,7 +140,7 @@ void DampingBySplittingComplex<VariableType>::
             size_t index_j = contact_neighborhood.j_[n];
 
             // linear projection
-            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             // predicted quantity at particle j
             VariableType variable_j = this->variable_k[index_j] - parameter_k * parameter_b;
@@ -181,6 +182,7 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
+        StdLargeVec<VariableType> &Vol_k = *(this->wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -188,7 +190,7 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
 
             // linear projection
             VariableType variable_derivative = (variable_i - variable_k[index_j]);
-            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             error_and_parameters.error_ -= variable_derivative * parameter_b;
             error_and_parameters.a_ += parameter_b;
@@ -225,7 +227,7 @@ void DampingPairwiseInner<VariableType>::
         Real mass_j = mass_[index_j];
 
         VariableType variable_derivative = (variable_i - variable_[index_j]);
-        parameter_b[n] = eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
+        parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
         variable_[index_i] += increment * mass_j;
@@ -278,6 +280,7 @@ void DampingPairwiseComplex<VariableType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
         StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         // forward sweep
@@ -287,7 +290,7 @@ void DampingPairwiseComplex<VariableType>::
             Real mass_j = mass_k[index_j];
 
             VariableType variable_derivative = (variable_i - variable_k[index_j]);
-            parameter_b[n] = this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+            parameter_b[n] = this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
             this->variable_[index_i] += increment * mass_j;
@@ -340,13 +343,14 @@ void DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
+        StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
         // forward sweep
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
 
-            parameter_b[n] = this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+            parameter_b[n] = this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             // only update particle i
             this->variable_[index_i] += parameter_b[n] * (variable_i - variable_k[index_j]) / (mass_i - 2.0 * parameter_b[n]);
@@ -391,13 +395,14 @@ void DampingPairwiseFromWall<VariableType>::
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<VariableType> &variable_k = *(wall_variable_[k]);
+        StdLargeVec<Real&Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         // forward sweep
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
 
-            parameter_b[n] = eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+            parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             // only update particle i
             variable_[index_i] += parameter_b[n] * (variable_i - variable_k[index_j]) / (mass_i - 2.0 * parameter_b[n]);

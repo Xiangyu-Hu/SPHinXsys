@@ -72,7 +72,7 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t& index_j = inner_neighborhood.j_[n];
-			Real& dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
+			Real& dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
 			Real& r_ij_ = inner_neighborhood.r_ij_[n];
 
 			//this->eta_regularization_[index_i] = initial_eta_ * abs(this->variation_local_[index_i] + TinyReal) / averaged_variation_;
@@ -80,7 +80,7 @@ namespace SPH
 			this->eta_regularization_[index_i] = initial_eta_; //uniform coefficient.
 
 			VariableType variable_derivative = (variable_i - this->variable_[index_j]);
-			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j_ * Vol_i * dt / r_ij_;
+			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j * Vol_i * dt / r_ij_;
 
 			error_and_parameters.error_ -= variable_derivative * parameter_b;
 			error_and_parameters.a_ += parameter_b;
@@ -105,10 +105,10 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real& dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
-			Real& r_ij_ = inner_neighborhood.r_ij_[n];
+			Real& dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+			Real& r_ij = inner_neighborhood.r_ij_[n];
 
-			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j_ * Vol_i * dt / r_ij_;
+			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j * Vol_i * dt / r_ij;
 
 			//predicted quantity at particle j
 			VariableType variable_j = this->variable_[index_j] - parameter_k * parameter_b;
@@ -146,11 +146,11 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real &dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
-			Real &r_ij_ = inner_neighborhood.r_ij_[n];
+			Real &dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+			Real &r_ij = inner_neighborhood.r_ij_[n];
 
 			VariableType variable_derivative = (variable_i - this->variable_[index_j]);
-			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j_ * Vol_i * dt / r_ij_;
+			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j * Vol_i * dt / r_ij;
 		                  	   
 			error_and_parameters.error_ -= variable_derivative * parameter_b;
 			error_and_parameters.a_ += parameter_b;

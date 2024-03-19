@@ -54,7 +54,7 @@ class Neighborhood
 
     StdLargeVec<size_t> j_;      /**< index of the neighbor particle. */
     StdLargeVec<Real> W_ij_;     /**< kernel value or particle volume contribution */
-    StdLargeVec<Real> dW_ijV_j_; /**< derivative of kernel function or inter-particle surface contribution */
+    StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
     StdLargeVec<Real> r_ij_;     /**< distance between j and i. */
     StdLargeVec<Vecd> e_ij_;     /**< unit vector pointing from j to i or inter-particle surface direction */
 
@@ -216,10 +216,10 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         size_t index_j, const Real &W_ij,
-                        const Real &dW_ijV_j, const Vecd &e_ij);
+                        const Real &dW_ij, const Vecd &e_ij);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
                             size_t index_j, const Real &W_ij,
-                            const Real &dW_ijV_j, const Vecd &e_ij);
+                            const Real &dW_ij, const Vecd &e_ij);
 };
 
 /**

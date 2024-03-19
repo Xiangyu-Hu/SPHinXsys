@@ -49,7 +49,7 @@ Vecd PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::computeNonConservati
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
         force += mass_[index_i] * (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
@@ -69,8 +69,8 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n]  * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
@@ -102,16 +102,17 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     {
         StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
         StdLargeVec<Real> &wall_mass_k = *(wall_mass_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Real r_ij = wall_neighborhood.r_ij_[n];
             Real face_wall_external_acceleration = (force_prior_i / mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
             Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            force += 2 * mass_[index_i] * stress_tensor_i * wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
+            force += 2 * mass_[index_i] * stress_tensor_i * dW_ijV_j * wall_neighborhood.e_ij_[n];
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
@@ -149,7 +150,7 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t i
     {
         size_t index_j = inner_neighborhood.j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
         density_change_rate += u_jump * dW_ijV_j;
         p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
@@ -201,12 +202,13 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+        StdLargeVec<Real>& wall_Vol_k[index_j] = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
             density_change_rate += (vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
             Real u_jump = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);

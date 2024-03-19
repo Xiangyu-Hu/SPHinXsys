@@ -24,7 +24,7 @@ void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
     {
         size_t index_j = inner_neighborhood.j_[n];
         Real r_ij = inner_neighborhood.r_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
         Real eta_ij = 2 * (0.7 * (Real)Dimensions + 2.1) * (vel_[index_i] - vel_[index_j]).dot(e_ij) / (r_ij + TinyReal);
         acceleration += eta_ij * dW_ijV_j * e_ij;
@@ -55,10 +55,10 @@ void ShearStressRelaxation::interaction(size_t index_i, Real dt)
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_i];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
         Vecd v_ij = vel_[index_i] - vel_[index_j];
-        velocity_gradient -= v_ij * (B_[index_i] * e_ij * dW_ijV_j_).transpose();
+        velocity_gradient -= v_ij * (B_[index_i] * e_ij * dW_ijV_j).transpose();
     }
     velocity_gradient_[index_i] = velocity_gradient;
     /*calculate strain*/
@@ -95,7 +95,7 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
     {
         size_t index_j = inner_neighborhood.j_[n];
         Real r_ij = inner_neighborhood.r_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Real y_ij = pos_[index_i](1, 0) - pos_[index_j](1, 0);
         diffusion_stress_ = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
         diffusion_stress_(0, 0) -= (1 - sin(fai_)) * density * gravity * y_ij;

@@ -21,7 +21,8 @@ void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        residue -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        size_t index_j = contact_neighborhood.j_[n];
+        residue -= 2.0 * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
     }
     residue_[index_i] = residue;
 };
@@ -38,10 +39,12 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
     Vecd residue = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            residue -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            size_t index_j = contact_neighborhood.j_[n];
+            residue -= 2.0 * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
         }
     }
     residue_[index_i] += residue;

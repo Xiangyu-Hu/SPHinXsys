@@ -72,7 +72,8 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 
   protected:
     StdLargeVec<Vecd> &vel_ave_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdVec<StdLargeVec<Vecd>*> contact_vel_;
     StdVec<Real> mu_;
     StdVec<Real> smoothing_length_;
 };

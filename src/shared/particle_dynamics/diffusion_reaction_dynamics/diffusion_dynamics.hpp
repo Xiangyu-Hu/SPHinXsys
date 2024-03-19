@@ -84,7 +84,7 @@ void DiffusionRelaxation<Inner<ParticlesType, KernelGradientType>>::
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
             Real r_ij_ = inner_neighborhood.r_ij_[n];
             Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
@@ -149,6 +149,7 @@ DiffusionRelaxation<Dirichlet<CommonControlTypes...>>::
             size_t contact_species_index_k_m = all_species_map_k[contact_species_names_k_m];
             StdVec<StdLargeVec<Real>> &all_contact_species_k = this->contact_particles_[k]->all_species_;
             contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
+            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_));
         }
     }
 }
@@ -174,16 +175,16 @@ void DiffusionRelaxation<Dirichlet<CommonControlTypes...>>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdVec<StdLargeVec<Real> *> &gradient_species_k = this->contact_gradient_species_[k];
-
+        StdLargeVec<Real>& wall_Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Real r_ij_ = contact_neighborhood.r_ij_[n];
-            Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j, e_ij);
             Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
             getDiffusionChangeRateDirichlet(index_i, index_j, e_ij, area_ij, gradient_species_k);
         }
@@ -202,6 +203,7 @@ DiffusionRelaxation<Neumann<CommonControlTypes...>>::
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
+            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_));
             contact_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
         }
     }
@@ -226,15 +228,15 @@ void DiffusionRelaxation<Neumann<CommonControlTypes...>>::
     {
         StdLargeVec<Real> &heat_flux_k = *(contact_heat_flux_[k]);
         StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-
+        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j, e_ij);
             Vecd n_ij = n_[index_i] - n_k[index_j];
             Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
             getDiffusionChangeRateNeumann(index_i, index_j, area_ij_Neumann, heat_flux_k);
@@ -256,6 +258,7 @@ DiffusionRelaxation<Robin<CommonControlTypes...>>::
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
+            contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
             contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
             contact_T_infinity_[m] = this->contact_particles_[k]->template registerSingleVariable<Real>("T_infinity");
         }
@@ -281,7 +284,7 @@ void DiffusionRelaxation<Robin<CommonControlTypes...>>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-
+        StdLargeVec<Vecd>& Vol_k = *(contact_n_[k]);
         StdLargeVec<Real> &convection_k = *(contact_convection_[k]);
         Real &T_infinity_k = *(contact_T_infinity_[k]);
 
@@ -289,10 +292,10 @@ void DiffusionRelaxation<Robin<CommonControlTypes...>>::
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j, e_ij);
             Vecd n_ij = n_[index_i] - n_k[index_j];
             Real area_ij_Robin = grad_ijV_j.dot(n_ij);
             getDiffusionChangeRateRobin(index_i, index_j, area_ij_Robin, convection_k, T_infinity_k);

@@ -151,7 +151,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
             Vecd e_ij = inner_neighborhood.e_ij_[n];
             if (index_i == 67)
             {

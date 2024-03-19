@@ -45,7 +45,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
             size_t index_j = inner_neighborhood.j_[n];
             // acceleration for transport velocity
             inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
-                             inner_neighborhood.dW_ijV_j_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
+                             inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
         this->zeroth_consistency_[index_i] = inconsistency;
     }
@@ -89,7 +89,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 // acceleration for transport velocity
-                inconsistency -= 2.0 * this->kernel_correction_(index_i) * contact_neighborhood.dW_ijV_j_[n] * 
+                inconsistency -= 2.0 * this->kernel_correction_(index_i) * contact_neighborhood.dW_ij_[n] * 
                                        wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
@@ -127,7 +127,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
                 size_t index_j = contact_neighborhood.j_[n];
                 // acceleration for transport velocity
                 inconsistency -= (this->kernel_correction_(index_i) + kernel_correction_k(index_j)) *
-                                 contact_neighborhood.dW_ijV_j_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
+                                 contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
         this->zeroth_consistency_[index_i] += inconsistency;

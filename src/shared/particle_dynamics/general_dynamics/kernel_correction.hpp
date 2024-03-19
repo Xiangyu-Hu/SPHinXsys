@@ -10,6 +10,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 KernelCorrectionMatrix<DataDelegationType>::KernelCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+      Vol_(*this->particles_->Vol_),
       B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>
@@ -30,7 +31,7 @@ void KernelGradientCorrection<DataDelegationType>::
 
         Vecd corrected_direction = average_correction_matrix(index_i, index_j) * neighborhood.e_ij_[n];
         Real direction_norm = corrected_direction.norm();
-        neighborhood.dW_ijV_j_[n] *= direction_norm;
+        neighborhood.dW_ij_[n] *= direction_norm;
         neighborhood.e_ij_[n] = corrected_direction / (direction_norm + Eps);
         neighborhood.r_ij_[n] = displacement.dot(neighborhood.e_ij_[n]);
     }

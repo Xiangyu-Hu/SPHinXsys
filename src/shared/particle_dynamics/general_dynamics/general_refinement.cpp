@@ -99,7 +99,7 @@ Vecd ComputeDensityErrorInner::computeKernelGradient(size_t index_rho)
     Vecd grad_kernel = Vecd::Zero();
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        grad_kernel += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] *
+        grad_kernel += inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n] *
                        particles_->mass_[inner_neighborhood.j_[n]] / rho0_ /
                        particles_->Vol_[inner_neighborhood.j_[n]];
     }
@@ -228,12 +228,15 @@ void ComputeDensityErrorInner::initializeDensityError()
 Vecd ComputeDensityErrorWithWall::computeKernelGradient(size_t index_rho)
 {
     Vecd grad_kernel = ComputeDensityErrorInner::computeKernelGradient(index_rho);
+
     Neighborhood &contact_neighborhood = inner_configuration_[index_rho];
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
+        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            grad_kernel += contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            size_t index_j = contact_neighborhood.j_[n];
+            grad_kernel += contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
         }
     }
     return grad_kernel;

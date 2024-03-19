@@ -69,6 +69,8 @@ class NablaWV<Contact<>>
         : NablaWV<GeneralDataDelegateContact>(contact_relation){};
     virtual ~NablaWV(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 

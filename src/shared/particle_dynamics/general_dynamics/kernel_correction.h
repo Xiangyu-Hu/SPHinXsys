@@ -48,6 +48,7 @@ class KernelCorrectionMatrix<DataDelegationType>
     virtual ~KernelCorrectionMatrix(){};
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
 };
 

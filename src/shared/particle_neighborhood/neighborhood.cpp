@@ -17,7 +17,7 @@ void Neighborhood::removeANeighbor(size_t neighbor_n)
     current_size_--;
     j_[neighbor_n] = j_[current_size_];
     W_ij_[neighbor_n] = W_ij_[current_size_];
-    dW_ijV_j_[neighbor_n] = dW_ijV_j_[current_size_];
+    dW_ij_[neighbor_n] = dW_ij_[current_size_];
     r_ij_[neighbor_n] = r_ij_[current_size_];
     e_ij_[neighbor_n] = e_ij_[current_size_];
 }
@@ -27,7 +27,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
 {
     neighborhood.j_.push_back(index_j);
     neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
-    neighborhood.dW_ijV_j_.push_back(kernel_->dW(distance, displacement));
+    neighborhood.dW_ij_.push_back(kernel_->dW(distance, displacement));
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
     neighborhood.allocated_size_++;
@@ -39,7 +39,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
     neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
-    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(distance, displacement);
+    neighborhood.dW_ij_[current_size] = kernel_->dW(distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
@@ -51,7 +51,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
     neighborhood.j_.push_back(index_j);
     Real weight = distance < kernel_->CutOffRadius(i_h_ratio) ? kernel_->W(i_h_ratio, distance, displacement) : 0.0;
     neighborhood.W_ij_.push_back(weight);
-    neighborhood.dW_ijV_j_.push_back(kernel_->dW(h_ratio_min, distance, displacement));
+    neighborhood.dW_ij_.push_back(kernel_->dW(h_ratio_min, distance, displacement));
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(displacement / (distance + TinyReal));
     neighborhood.allocated_size_++;
@@ -66,7 +66,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     neighborhood.W_ij_[current_size] = distance < kernel_->CutOffRadius(i_h_ratio)
                                            ? kernel_->W(i_h_ratio, distance, displacement)
                                            : 0.0;
-    neighborhood.dW_ijV_j_[current_size] = kernel_->dW(h_ratio_min, distance, displacement);
+    neighborhood.dW_ij_[current_size] = kernel_->dW(h_ratio_min, distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 }
@@ -228,23 +228,23 @@ BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                     size_t index_j, const Real &W_ij, const Real &dW_ijV_j, const Vecd &e_ij)
+                                                     size_t index_j, const Real &W_ij, const Real &dW_ij, const Vecd &e_ij)
 {
     neighborhood.j_.push_back(index_j);
     neighborhood.W_ij_.push_back(W_ij);
-    neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
+    neighborhood.dW_ij_.push_back(dW_ij);
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(e_ij);
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                         size_t index_j, const Real &W_ij, const Real &dW_ijV_j, const Vecd &e_ij)
+                                                         size_t index_j, const Real &W_ij, const Real &dW_ij, const Vecd &e_ij)
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
     neighborhood.W_ij_[current_size] = W_ij;
-    neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
+    neighborhood.dW_ij_[current_size] = dW_ij;
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = e_ij;
 }

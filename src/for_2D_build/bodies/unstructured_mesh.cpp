@@ -492,7 +492,7 @@ void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &dist
     neighborhood.j_.push_back(j_index);
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(interface_normal_direction);
-    neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
+    neighborhood.dW_ij_.push_back(dW_ij);
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
@@ -501,7 +501,7 @@ void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = j_index;
-    neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
+    neighborhood.dW_ij_[current_size] = dW_ij;
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = interface_normal_direction;
 }

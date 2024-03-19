@@ -37,7 +37,7 @@ void ViscousForce<Inner<>, ViscosityType>::interaction(size_t index_i, Real dt)
 
         // viscous force
         vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-        force += 2.0 * mass_[index_i] * mu_(index_i, index_j) * vel_derivative * inner_neighborhood.dW_ijV_j_[n] * this->Vol_[index_j];
+        force += 2.0 * mass_[index_i] * mu_(index_i, index_j) * vel_derivative * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
     }
 
     viscous_force_[index_i] = force / rho_[index_i];
@@ -58,7 +58,7 @@ void ViscousForce<AngularConservative<Inner<>>, ViscosityType>::interaction(size
          * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
         Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
         Real eta_ij = 8.0 * mu_(index_i, index_j) * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
-        force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] * this->Vol_[index_j] * e_ij;
+        force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * e_ij;
     }
 
     viscous_force_[index_i] = force / rho_[index_i];
@@ -83,7 +83,7 @@ void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Rea
 
             Vecd vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
             force += 2.0 * mu_(index_i, index_j) * mass_[index_i] *
-                     vel_derivative * contact_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j] / rho_i;
+                     vel_derivative * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j] / rho_i;
         }
     }
 
@@ -118,7 +118,7 @@ void ViscousForce<Contact<>, ViscosityType>::interaction(size_t index_i, Real dt
             Vecd vel_derivative = (vel_[index_i] - vel_k[index_j]) /
                                   (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
             force += 2.0 * mass_[index_i] * contact_mu_k(index_i, index_j) *
-                     vel_derivative * contact_neighborhood.dW_ijV_j_[n] * wall_Vol_k[index_j];
+                     vel_derivative * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
         }
     }
     viscous_force_[index_i] += force / rho_[index_i];

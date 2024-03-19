@@ -14,7 +14,7 @@ void FreeSurfaceIndication<Inner<>>::interaction(size_t index_i, Real dt)
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
+        pos_div -= inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.r_ij_[n];
     }
     pos_div_[index_i] = pos_div;
 }
@@ -88,10 +88,12 @@ void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
     Real pos_div = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+            size_t index_j = contact_neighborhood.j_[n];
+            pos_div -= contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.r_ij_[n];
         }
     }
     pos_div_[index_i] += pos_div;
@@ -103,6 +105,7 @@ FreeSurfaceIndication<Contact<NonWetting>>::FreeSurfaceIndication(BaseContactRel
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_phi_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Phi"));
+        contact_Vol_.push_back(this->contact_particles_[k]->Vol_);
     }
 }
 //=================================================================================================//
@@ -112,11 +115,12 @@ void FreeSurfaceIndication<Contact<NonWetting>>::interaction(size_t index_i, Rea
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &wetting_k = *(contact_phi_[k]);
+        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            pos_div -= wetting_k[index_j] * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+            pos_div -= wetting_k[index_j] * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.r_ij_[n];
         }
     }
     pos_div_[index_i] += pos_div;

@@ -37,7 +37,7 @@ void SurfaceTensionStress::interaction(size_t index_i, Real dt)
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             weighted_color_gradient -= contact_fraction_k *
-                                       contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                                       contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
         }
         color_gradient_[index_i] = weighted_color_gradient;
         Real norm = weighted_color_gradient.norm();
@@ -58,7 +58,7 @@ void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        summation += mass_[index_i] * inner_neighborhood.dW_ijV_j_[n] *
+        summation += mass_[index_i] * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * 
                      (surface_tension_stress_[index_i] + surface_tension_stress_[index_j]) *
                      inner_neighborhood.e_ij_[n];
     }
@@ -86,6 +86,7 @@ void SurfaceStressForce<Contact<>>::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Real contact_fraction_k = contact_fraction_[k];
+        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
         StdLargeVec<Vecd> &contact_color_gradient_k = *(contact_color_gradient_[k]);
         StdLargeVec<Matd> &contact_surface_tension_stress_k = *(contact_surface_tension_stress_[k]);
         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -95,7 +96,7 @@ void SurfaceStressForce<Contact<>>::interaction(size_t index_i, Real dt)
             Real r_ij = contact_neighborhood.r_ij_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
             Real mismatch = 1.0 - 0.5 * (color_gradient_[index_i] + contact_color_gradient_k[index_j]).dot(e_ij) * r_ij;
-            summation += mass_[index_i] * contact_neighborhood.dW_ijV_j_[n] *
+            summation += mass_[index_i] * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * 
                          (-0.1 * mismatch * Matd::Identity() +
                           (Real(1) - contact_fraction_k) * surface_tension_stress_[index_i] +
                           contact_surface_tension_stress_k[index_j] * contact_fraction_k) *

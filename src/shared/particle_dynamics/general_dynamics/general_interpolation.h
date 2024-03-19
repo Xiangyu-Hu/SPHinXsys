@@ -161,7 +161,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
                 size_t index_j = contact_neighborhood.j_[n];
                 Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
                 Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
-                Vecd gradW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                Vecd gradW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
 
                 weight_correction += weight_j * r_ji;
                 local_configuration += r_ji * gradW_ijV_j.transpose();
@@ -180,7 +180,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 contact_neighborhood.W_ij_[n] -= normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]) *
-                                                 contact_neighborhood.dW_ijV_j_[n] / Vol_k[index_j];
+                                                 contact_neighborhood.dW_ij_[n];
             }
         }
     };
