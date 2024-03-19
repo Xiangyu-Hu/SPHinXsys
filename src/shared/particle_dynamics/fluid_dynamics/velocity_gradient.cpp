@@ -46,6 +46,7 @@ DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
 void DistanceFromWall::interaction(size_t index_i, Real dt)
 {
     Vecd distance = MaxReal * Vecd::Ones();
+    Vecd normal = MaxReal * Vecd::Ones();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
@@ -57,10 +58,14 @@ void DistanceFromWall::interaction(size_t index_i, Real dt)
             const Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
             Vecd temp = contact_neighborhood.r_ij_[n] * e_ij + phi_k[index_j] * n_k[index_j];
-            distance = temp.squaredNorm() < distance.squaredNorm() ? temp : distance;
+            if (temp.squaredNorm() < distance.squaredNorm())
+            {
+                distance = temp;       // more reliable distance
+                normal = n_k[index_j]; // more reliable normal
+            }
         }
     }
-    distance_from_wall_[index_i] = distance;
+    distance_from_wall_[index_i] = distance.dot(normal) * normal;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
