@@ -18,7 +18,7 @@ void DensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 void DensitySummation<Inner<>>::update(size_t index_i, Real dt)
 {
     rho_[index_i] = rho_sum_[index_i];
-    vol_[index_i] = mass_[index_i] / rho_[index_i];
+    Vol_[index_i] = mass_[index_i] / rho_[index_i];
 }
 //=================================================================================================//
 DensitySummation<Inner<Adaptive>>::DensitySummation(BaseInnerRelation &inner_relation)
@@ -30,7 +30,7 @@ DensitySummation<Inner<Adaptive>>::DensitySummation(BaseInnerRelation &inner_rel
 void DensitySummation<Inner<Adaptive>>::update(size_t index_i, Real dt)
 {
     rho_[index_i] = rho_sum_[index_i];
-    vol_[index_i] = mass_[index_i] / rho_[index_i];
+    Vol_[index_i] = mass_[index_i] / rho_[index_i];
 }
 //=================================================================================================//
 void DensitySummation<Inner<Adaptive>>::interaction(size_t index_i, Real dt)

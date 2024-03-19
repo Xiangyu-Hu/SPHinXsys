@@ -12,7 +12,7 @@ template <class BaseRelationType>
 BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
-      rho_(this->particles_->rho_), mass_(this->particles_->mass_), vol_(this->particles_->vol_),
+      rho_(this->particles_->rho_), mass_(this->particles_->mass_), Vol_(this->particles_->Vol_),
       p_(*this->particles_->template getVariableByName<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
       pos_(this->particles_->pos_), vel_(this->particles_->vel_),
@@ -71,11 +71,11 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        force -= mass_[index_i] * (p_[index_i] * correction_(index_j) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
+        force -= mass_[index_i] * (p_[index_i] * correction_(index_i) + p_[index_j] * correction_(index_j)) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
-    force_[index_i] += force * vol_[index_i] / mass_[index_i];
-    drho_dt_[index_i] = rho_dissipation * mass_[index_i] / vol_[index_i];
+    force_[index_i] += force * Vol_[index_i] / mass_[index_i];
+    drho_dt_[index_i] = rho_dissipation * mass_[index_i] / Vol_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -102,13 +102,13 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
             Real r_ij = wall_neighborhood.r_ij_[n];
 
             Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
-            Real p_in_wall = p_[index_i] + mass_[index_i] / vol_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+            Real p_in_wall = p_[index_i] + mass_[index_i] / Vol_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             force -= mass_[index_i] * (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
-    force_[index_i] += force_ * vol_[index_i] / mass_[index_i];
-    drho_dt_[index_i] += rho_dissipation * mass_[index_i] / vol_[index_i];
+    force_[index_i] += force * Vol_[index_i] / mass_[index_i];
+    drho_dt_[index_i] += rho_dissipation * mass_[index_i] / Vol_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -149,7 +149,7 @@ void Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrec
             Real penalty = penalty_strength_ * beta * fabs(projection * penalty_pressure);
 
             // penalty force induced acceleration
-            force -= 2.0 * this->vol_[index_i] * penalty * n_j * dW_ijV_j;
+            force -= 2.0 * this->Vol_[index_i] * penalty * n_j * dW_ijV_j;
         }
     }
     this->force_[index_i] += force;
@@ -193,8 +193,8 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
             rho_dissipation += riemann_solver_k.DissipativeUJump(this->p_[index_i] - p_k[index_j]) * dW_ijV_j;
         }
     }
-    this->force_[index_i] += force * this->vol_[index_i] / this->mass_[index_i];
-    this->drho_dt_[index_i] += rho_dissipation * this->mass_[index_i] / this->vol_[index_i];
+    this->force_[index_i] += force * this->Vol_[index_i] / this->mass_[index_i];
+    this->drho_dt_[index_i] += rho_dissipation * this->mass_[index_i] / this->Vol_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -231,8 +231,8 @@ void Integration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i,
         density_change_rate += u_jump * dW_ijV_j;
         p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
     }
-    drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->vol_[index_i];
-    force_[index_i] = p_dissipation * this->vol_[index_i] / this->mass_[index_i];
+    drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->Vol_[index_i];
+    force_[index_i] = p_dissipation * this->Vol_[index_i] / this->mass_[index_i];
 };
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -263,8 +263,8 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
             p_dissipation += mass_[index_i] * riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }
     }
-    drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->vol_[index_i];
-    force_[index_i] += p_dissipation * this->vol_[index_i] / this->mass_[index_i];
+    drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->Vol_[index_i];
+    force_[index_i] += p_dissipation * this->Vol_[index_i] / this->mass_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -302,8 +302,8 @@ void Integration2ndHalf<Contact<>, RiemannSolverType>::interaction(size_t index_
             p_dissipation += this->mass_[index_i] * riemann_solver_k.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
         }
     }
-    this->drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->vol_[index_i];
-    this->force_[index_i] += p_dissipation * this->vol_[index_i] / this->mass_[index_i];
+    this->drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->Vol_[index_i];
+    this->force_[index_i] += p_dissipation * this->Vol_[index_i] / this->mass_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

@@ -170,7 +170,7 @@ int main(int ac, char *av[])
             /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
-            update_density_by_summation.exec();
+            
             viscous_force.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -194,6 +194,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 write_water_kinetic_energy.writeToFile(number_of_iterations);
             }
+            update_density_by_summation.exec();
             number_of_iterations++;
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
