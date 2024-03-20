@@ -35,8 +35,8 @@ std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
 
 std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
 
-std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
-// std::string full_path_to_fluid = "./input/Fluid_Full_Height_Enlarged_Blade.stl";
+// std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
+std::string full_path_to_fluid = "./input/Fluid_Full_Height_Enlarged_Blade.stl";
 
 std::string full_path_to_refinement = "./input/Refinement.stl";
 
@@ -120,7 +120,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     sph_system.setRunParticleRelaxation(relaxation);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
