@@ -10,7 +10,7 @@ using namespace SPH;
 // setup properties
 Real particle_spacing = 0.01;
 Real gravity_g = 0.0;
-Real end_time = 25.0;
+Real end_time = 30.0;
 int nmbr_of_outputs = 100;
 
 // non-Newtonian properties

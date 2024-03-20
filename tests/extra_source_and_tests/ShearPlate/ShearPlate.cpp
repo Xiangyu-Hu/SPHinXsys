@@ -8,16 +8,16 @@
 using namespace SPH;
 
 // setup properties
-Real particle_spacing = 0.05;
+Real particle_spacing = 0.0125;
 Real gravity_g = 0.0;
 Real end_time = 1.0;
 int nmbr_of_outputs = 100;
 bool linearized_iteration = true;
 
 // material properties
-Real rho = 1.0;          // reference density
-Real u_lid = 1.0;        // lid velocity
-Real SOS = 10.0 * u_lid; // numerical speed of sound
+Real rho = 1.0;         // reference density
+Real u_lid = 1.0;       // lid velocity
+Real SOS = 1.0 * u_lid; // numerical speed of sound
 
 // non-Newtonian properties
 Real K = 1;     // consistency index

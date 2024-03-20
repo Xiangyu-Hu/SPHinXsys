@@ -221,7 +221,7 @@ VelocityGradient<Inner<>>::VelocityGradient(BaseInnerRelation &inner_relation)
     : VelocityGradient<FluidDataInner>(inner_relation),
       combined_velocity_gradient_(*this->particles_->template registerSharedVariable<Matd>("CombinedVelocityGradient"))
 {
-    //this->particles_->template addVariableToWrite<Matd>("CombinedVelocityGradient");
+    // this->particles_->template addVariableToWrite<Matd>("CombinedVelocityGradient");
 }
 
 void VelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
@@ -259,7 +259,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-            velocity_gradient += -1.0 * (vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
+            velocity_gradient += -2.0 * (vel_[index_i] - vel_k[index_j]) * nablaW_ijV_j.transpose();
         }
     }
     combined_velocity_gradient_[index_i] += velocity_gradient;
