@@ -147,8 +147,8 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(water_wall_contact);
-    InteractionWithUpdate<FirstConsistencyMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<FirstConsistencyCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<LinearCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryVelocity> upper_wall_velocity(upper_wall);
     ReduceDynamics<VariableNorm<Matd, ReduceMax>> maximum_velocity_gradient_norm(water_block, "VelocityGradient");

@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void FirstConsistencyMatrix<Inner<>>::interaction(size_t index_i, Real dt)
+void LinearCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = Eps * Matd::Identity();
 
@@ -17,16 +17,16 @@ void FirstConsistencyMatrix<Inner<>>::interaction(size_t index_i, Real dt)
     B_[index_i] = local_configuration;
 }
 //=================================================================================================//
-void FirstConsistencyMatrix<Inner<>>::update(size_t index_i, Real dt)
+void LinearCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
     Matd inverse = B_[index_i].inverse();
     Real weight = alpha_ / (B_[index_i].determinant() + alpha_);
     B_[index_i] = weight * Matd::Identity() + (1.0 - weight) * inverse;
 }
 //=================================================================================================//
-FirstConsistencyMatrix<Contact<>>::
-    FirstConsistencyMatrix(BaseContactRelation &contact_relation)
-    : FirstConsistencyMatrix<GeneralDataDelegateContact>(contact_relation)
+LinearCorrectionMatrix<Contact<>>::
+    LinearCorrectionMatrix(BaseContactRelation &contact_relation)
+    : LinearCorrectionMatrix<GeneralDataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -35,7 +35,7 @@ FirstConsistencyMatrix<Contact<>>::
     }
 }
 //=================================================================================================//
-void FirstConsistencyMatrix<Contact<>>::interaction(size_t index_i, Real dt)
+void LinearCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -54,7 +54,7 @@ void FirstConsistencyMatrix<Contact<>>::interaction(size_t index_i, Real dt)
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
     : KernelGradientCorrection<GeneralDataDelegateInner>(inner_relation),
-      average_correction_matrix_(*particles_->getVariableByName<Matd>("FirstConsistencyMatrix")){};
+      average_correction_matrix_(*particles_->getVariableByName<Matd>("LinearCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -70,8 +70,8 @@ KernelGradientCorrection<Contact<>>::
     {
         contact_average_correction_matrix_.push_back(
             PairAverageVariable<Matd>(
-                *particles_->getVariableByName<Matd>("FirstConsistencyMatrix"),
-                *contact_particles_[k]->getVariableByName<Matd>("FirstConsistencyMatrix")));
+                *particles_->getVariableByName<Matd>("LinearCorrectionMatrix"),
+                *contact_particles_[k]->getVariableByName<Matd>("LinearCorrectionMatrix")));
     }
 }
 //=================================================================================================//

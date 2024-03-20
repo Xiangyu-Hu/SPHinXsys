@@ -36,46 +36,46 @@
 namespace SPH
 {
 template <typename... InteractionTypes>
-class FirstConsistencyMatrix;
+class LinearCorrectionMatrix;
 
 template <class DataDelegationType>
-class FirstConsistencyMatrix<DataDelegationType>
+class LinearCorrectionMatrix<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit FirstConsistencyMatrix(BaseRelationType &base_relation);
-    virtual ~FirstConsistencyMatrix(){};
+    explicit LinearCorrectionMatrix(BaseRelationType &base_relation);
+    virtual ~LinearCorrectionMatrix(){};
 
   protected:
     StdLargeVec<Matd> &B_;
 };
 
 template <>
-class FirstConsistencyMatrix<Inner<>>
-    : public FirstConsistencyMatrix<GeneralDataDelegateInner>
+class LinearCorrectionMatrix<Inner<>>
+    : public LinearCorrectionMatrix<GeneralDataDelegateInner>
 {
     Real alpha_;
 
   public:
-    explicit FirstConsistencyMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
-        : FirstConsistencyMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
+    explicit LinearCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
+        : LinearCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit FirstConsistencyMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : FirstConsistencyMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~FirstConsistencyMatrix(){};
+    explicit LinearCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+        : LinearCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~LinearCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using FirstConsistencyMatrixInner = FirstConsistencyMatrix<Inner<>>;
+using LinearCorrectionMatrixInner = LinearCorrectionMatrix<Inner<>>;
 
 template <>
-class FirstConsistencyMatrix<Contact<>>
-    : public FirstConsistencyMatrix<GeneralDataDelegateContact>
+class LinearCorrectionMatrix<Contact<>>
+    : public LinearCorrectionMatrix<GeneralDataDelegateContact>
 {
   public:
-    explicit FirstConsistencyMatrix(BaseContactRelation &contact_relation);
-    virtual ~FirstConsistencyMatrix(){};
+    explicit LinearCorrectionMatrix(BaseContactRelation &contact_relation);
+    virtual ~LinearCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -83,7 +83,7 @@ class FirstConsistencyMatrix<Contact<>>
     StdVec<StdLargeVec<Real> *> contact_mass_;
 };
 
-using FirstConsistencyMatrixComplex = ComplexInteraction<FirstConsistencyMatrix<Inner<>, Contact<>>>;
+using LinearCorrectionMatrixComplex = ComplexInteraction<LinearCorrectionMatrix<Inner<>, Contact<>>>;
 
 template <typename... InteractionTypes>
 class KernelGradientCorrection;

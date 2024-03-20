@@ -138,7 +138,7 @@ int main(int ac, char *av[])
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
-    InteractionWithUpdate<FirstConsistencyMatrixInner> correction_matrix(beam_body_inner);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);

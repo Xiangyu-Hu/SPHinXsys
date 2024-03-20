@@ -103,7 +103,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<FirstConsistencyMatrixInner> corrected_configuration(column_inner);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> corrected_configuration(column_inner);
     /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(column_inner);

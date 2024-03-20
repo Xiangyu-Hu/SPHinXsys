@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     /** Corrected configuration. */
-    InteractionWithUpdate<FirstConsistencyMatrixInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
     /** active and passive stress relaxation. */

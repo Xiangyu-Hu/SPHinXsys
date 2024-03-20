@@ -55,7 +55,7 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
     virtual ~TransportVelocityCorrection(){};
 
   protected:
-    StdLargeVec<Vecd> &zeroth_consistency_;
+    StdLargeVec<Vecd> &zero_gradient_;
     KernelCorrectionType kernel_correction_;
     ParticleScope checkWithinScope;
 };
@@ -116,7 +116,7 @@ using TransportVelocityCorrectionComplex =
 
 template <class ParticleScope>
 using TransportVelocityLimitedCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothConsistencyLimiter, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SingleResolution, ZeroGradientLimiter, NoKernelCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =

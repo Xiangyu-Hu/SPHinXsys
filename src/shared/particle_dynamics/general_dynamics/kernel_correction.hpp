@@ -8,9 +8,9 @@ namespace SPH
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-FirstConsistencyMatrix<DataDelegationType>::FirstConsistencyMatrix(BaseRelationType &base_relation)
+LinearCorrectionMatrix<DataDelegationType>::LinearCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      B_(*this->particles_->template registerSharedVariable<Matd>("FirstConsistencyMatrix")) {}
+      B_(*this->particles_->template registerSharedVariable<Matd>("LinearCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>

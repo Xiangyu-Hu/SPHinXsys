@@ -105,7 +105,7 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
     /** Kernel correction. */
-    InteractionWithUpdate<FirstConsistencyMatrixInner> free_cube_corrected_configuration(free_cube_inner);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     /** Time step size. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     /** stress relaxation for the solid body. */

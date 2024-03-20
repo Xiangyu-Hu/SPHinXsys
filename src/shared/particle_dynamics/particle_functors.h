@@ -96,20 +96,20 @@ class NoLimiter : public Limiter
     };
 };
 
-class ZerothConsistencyLimiter : public Limiter
+class ZeroGradientLimiter : public Limiter
 {
     Real h_ref_;
-    StdLargeVec<Vecd> &consistency_;
+    StdLargeVec<Vecd> &zero_gradient_;
 
   public:
-    ZerothConsistencyLimiter(BaseParticles *base_particles)
+    ZeroGradientLimiter(BaseParticles *base_particles)
         : Limiter(),
           h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          consistency_(*base_particles->getVariableByName<Vecd>("ZerothConsistency")){};
-    virtual ~ZerothConsistencyLimiter(){};
+          zero_gradient_(*base_particles->getVariableByName<Vecd>("ZeroGradient")){};
+    virtual ~ZeroGradientLimiter(){};
     Real operator()(size_t index_i)
     {
-        Real error_scale = consistency_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        Real error_scale = zero_gradient_[index_i].squaredNorm() * h_ref_ * h_ref_;
         return SMIN(100.0 * error_scale, 1.0);
     };
 };
@@ -212,12 +212,12 @@ class NoKernelCorrection : public KernelCorrection
     };
 };
 
-class FirstConsistencyCorrection : public KernelCorrection
+class LinearCorrection : public KernelCorrection
 {
   public:
-    FirstConsistencyCorrection(BaseParticles *particles)
+    LinearCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableByName<Matd>("FirstConsistencyMatrix")){};
+          B_(*particles->getVariableByName<Matd>("LinearCorrectionMatrix")){};
 
     Matd operator()(size_t index_i)
     {

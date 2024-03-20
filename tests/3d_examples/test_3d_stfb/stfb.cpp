@@ -60,7 +60,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
     /** corrected strong configuration. */
-    InteractionWithUpdate<FirstConsistencyMatrixInner> str_corrected_conf(structure_inner);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> str_corrected_conf(structure_inner);
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of density by summation approach. */

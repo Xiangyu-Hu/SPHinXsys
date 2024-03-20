@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<InitialVelocity> initial_condition(water_block);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationInner> free_surface_indicator(water_body_inner);
-    InteractionWithUpdate<FirstConsistencyMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionInnerRiemann> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> fluid_density_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInnerFreeStream> update_density_by_summation(water_body_inner);
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     /** We can output a method-specific particle data for debug */
     water_block.addBodyStateForRecording<Real>("DensitySummation");
     water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Matd>("FirstConsistencyMatrix");
+    water_block.addBodyStateForRecording<Matd>("LinearCorrectionMatrix");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

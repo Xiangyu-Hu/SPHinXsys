@@ -158,8 +158,8 @@ int main(int ac, char *av[])
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** corrected strong configuration. */
-    InteractionWithUpdate<FirstConsistencyMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
-    InteractionWithUpdate<FirstConsistencyMatrixInner> structure_corrected_configuration(structure_inner);
+    InteractionWithUpdate<LinearCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
+    InteractionWithUpdate<LinearCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
     /** pressure relaxation using Verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
