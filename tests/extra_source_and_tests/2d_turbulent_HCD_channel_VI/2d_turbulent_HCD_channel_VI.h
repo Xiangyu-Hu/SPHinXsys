@@ -62,6 +62,7 @@ Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 //----------------------------------------------------------------------
 Real y_p_theo = 0.0;
 Real offset_dist_ref = 0.0;
+Real y_p_constant = 0.5 * resolution_ref + offset_dist_ref;
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };
@@ -83,7 +84,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2
 
 //**  *
 Real U_inlet = 1.0;
-Real U_max = 1.5 * U_inlet;
+Real U_max = 3.0 * U_inlet;
 Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 Real rho0_f = 1.0;                                            /**< Density. */

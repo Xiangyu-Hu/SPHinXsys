@@ -68,8 +68,11 @@ int main(int ac, char *av[])
         ReloadParticleIO write_particle_reload_files( wall_boundary);
         ReloadParticleIO write_particle_reload_files_water(water_block);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
-        relax_dynamics::RelaxationStepInner relaxation_step_inner_water(water_block_inner);
+        
+        //relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
+        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
+
+        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_water(water_block_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -126,7 +129,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
-    InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, offset_dist_ref);
+    InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
     //** Build observers in front of the cylinder, 30 cells, 31 bounds *
     for (int i = 0; i < num_observer_points + 1; i++)
@@ -209,6 +212,7 @@ int main(int ac, char *av[])
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
+    Real start_time_turbulence = 70.0;
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -223,9 +227,12 @@ int main(int ac, char *av[])
             inlet_outlet_surface_particle_indicator.exec();
 
             update_density_by_summation.exec();
-
-            update_eddy_viscosity.exec();
-
+            
+            if (GlobalStaticVariables::physical_time_ > start_time_turbulence)
+            {
+                update_eddy_viscosity.exec();
+            }
+            
             //viscous_force.exec();
             turbulent_viscous_force.exec();
 
@@ -242,17 +249,22 @@ int main(int ac, char *av[])
 
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 
-                turbulent_kinetic_energy_force.exec();
-
+                if (GlobalStaticVariables::physical_time_ > start_time_turbulence)
+                {
+                    turbulent_kinetic_energy_force.exec();
+                }
                 pressure_relaxation.exec(dt);
                 
                 emitter_buffer_inflow_condition.exec();
-
-                impose_turbulent_inflow_condition.exec();
-
+                
+                if (GlobalStaticVariables::physical_time_ > start_time_turbulence)
+                {
+                    impose_turbulent_inflow_condition.exec();
+                }
+                
                 density_relaxation.exec(dt);
                 
-                if (GlobalStaticVariables::physical_time_ > 50.0)
+                if (GlobalStaticVariables::physical_time_ > start_time_turbulence)
                 {
                     update_near_wall_status.exec();
                     get_velocity_gradient.exec(dt);

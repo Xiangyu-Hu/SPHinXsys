@@ -65,6 +65,7 @@ Vec2d disposer_translation = Vec2d(DL_domain + 0.25 * DH, DH_domain ) - disposer
 //----------------------------------------------------------------------
 Real y_p_theo = 0.0;
 Real offset_dist_ref = 0.0;
+Real y_p_constant = 0.5 * resolution_ref + offset_dist_ref;
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };

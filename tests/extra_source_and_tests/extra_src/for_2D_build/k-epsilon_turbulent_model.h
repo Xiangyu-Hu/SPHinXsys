@@ -266,12 +266,13 @@ namespace fluid_dynamics
 	class TurbuViscousForce;
 
 	template <class DataDelegationType>
-	class TurbuViscousForce<DataDelegationType>: public ViscousForce<DataDelegationType>, public WallFunction
+	class TurbuViscousForce<DataDelegationType>: public ViscousForce<DataDelegationType>
 	{
 	public:
 		template <class BaseRelationType>
 		explicit TurbuViscousForce(BaseRelationType& base_relation);
 		virtual ~TurbuViscousForce() {};
+		
 	protected:
 		StdLargeVec<Real>& turbu_k_;
 		StdLargeVec<Real>& turbu_mu_;
@@ -281,7 +282,6 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& y_p_;
 		Real molecular_viscosity_;
 		StdLargeVec<int>& is_near_wall_P2_;
-
 		//** For test *
 		//StdLargeVec<Matd> visc_direction_matrix_;
 		StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
@@ -301,7 +301,7 @@ namespace fluid_dynamics
 	//** Wall part *
 	using BaseTurbuViscousForceWithWall = InteractionWithWall<TurbuViscousForce>;
 	template <>
-	class TurbuViscousForce<Contact<Wall>> : public BaseTurbuViscousForceWithWall
+	class TurbuViscousForce<Contact<Wall>> : public BaseTurbuViscousForceWithWall, public WallFunction
 	{
 	public:
 		explicit TurbuViscousForce(BaseContactRelation& wall_contact_relation);
@@ -410,12 +410,12 @@ namespace fluid_dynamics
 	{
 	public:
 		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
-			BaseContactRelation& contact_relation, Real offset_dist);
+			BaseContactRelation& contact_relation,Real y_p_constant);
 		virtual ~StandardWallFunctionCorrection() {};
 		inline void interaction(size_t index_i, Real dt = 0.0);
 
 	protected:
-		Real offset_dist_;
+		//Real offset_dist_;
 		StdLargeVec<Real> y_p_;
 		StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
 		StdLargeVec<Real> velo_tan_;
@@ -439,7 +439,6 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd>& e_nearest_normal_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec < StdLargeVec<Vecd>*>  contact_n_;
-		Real wall_particle_spacing_;
 	};
 //=================================================================================================//
 //*********************TESTING MODULES*********************

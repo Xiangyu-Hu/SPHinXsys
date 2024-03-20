@@ -43,15 +43,19 @@ Real resolution_ref = 0.1;              /**< Initial reference particle spacing.
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;
 
-//** Unique parameters for turbulence *
+//----------------------------------------------------------------------
+//	Unique parameters for turbulence. 
+//----------------------------------------------------------------------
 Real y_p_theo = 0.0;
 Real offset_dist_ref = 0.0;
+Real y_p_constant = 0.5 * resolution_ref + offset_dist_ref;
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
-
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };
+//----------------------------------------------------------------------
+//	Domain bounds of the system. 
+//----------------------------------------------------------------------
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------

@@ -72,7 +72,7 @@ namespace fluid_dynamics
 	template <class DataDelegationType>
 	template <class BaseRelationType>
 	TurbuViscousForce<DataDelegationType>::TurbuViscousForce(BaseRelationType& base_relation)
-		: ViscousForce<DataDelegationType>(base_relation),
+		: ViscousForce<DataDelegationType>(base_relation), 
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*this->particles_->template getVariableByName<Real>("TurbulentViscosity")),
 		wall_Y_plus_(*this->particles_->template getVariableByName<Real>("WallYplus")),

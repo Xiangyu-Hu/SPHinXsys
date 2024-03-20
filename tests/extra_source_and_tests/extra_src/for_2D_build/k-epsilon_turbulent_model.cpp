@@ -384,7 +384,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation& inner_relation)
-		: TurbuViscousForce<FluidDataInner>(inner_relation),
+		: TurbuViscousForce<FluidDataInner>(inner_relation), 
 		ForcePrior(&base_particles_, "ViscousForce")
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
@@ -430,19 +430,18 @@ namespace fluid_dynamics
 //=================================================================================================//
 	void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 	{
-		Real turbu_k_i = this->turbu_k_[index_i];
-		Real turbu_k_i_50 = pow(turbu_k_i, 0.5);
-		Real rho_i = this->rho_[index_i];
-		const Vecd& vel_i = this->vel_[index_i];
-		Real y_p = this->y_p_[index_i];
-		Real y_star = this->wall_Y_star_[index_i];
-		int is_near_wall_P2 = this->is_near_wall_P2_[index_i];
-		
 		this->visc_acc_wall_[index_i] = Vecd::Zero();
-		
+		int is_near_wall_P2 = this->is_near_wall_P2_[index_i];		
 		//** Wall viscous force only affects P2 region fluid particles *
 		if (this->is_near_wall_P2_[index_i] != 10)
 			return;
+		
+		Real turbu_k_i = this->turbu_k_[index_i];
+		Real turbu_k_i_05 = pow(turbu_k_i, 0.5);
+		Real rho_i = this->rho_[index_i];
+		const Vecd& vel_i = this->vel_[index_i];
+
+		Real y_p_constant_i = this->y_p_[index_i];
 
 		Vecd force = Vecd::Zero();		
 		Vecd e_j_n = Vecd::Zero();
@@ -471,12 +470,26 @@ namespace fluid_dynamics
 				//** Calculate the local friction velocity *
 				Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 				
-				//** The y* of each wall particle j needs to be speparately calcualted  *
-				Real y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
-				Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_50 * y_p_j / molecular_viscosity_;
+
+				//** y_p_ calculated  *
+				//Real y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
+				//Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
+				//if (y_p_j < 0.05 * wall_particle_spacing_)
+				//{
+				//	std::cout << "y_p_j < 0.05 * wall_particle_spacing_" << std::endl;
+				//	std::cout << "index_i=" << index_i << std::endl;
+				//	std::cout << "index_j=" << index_j << std::endl;
+				//	std::cout << "y_p_j=" << y_p_j << std::endl;
+				//	system("pause");
+				//}
+				
+				//** y_p_ constant  *
+				Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_constant_i / molecular_viscosity_;
+				
+				
 				Real u_star_j = get_dimensionless_velocity(y_star_j);
 
-				Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_50 * vel_i_tau_mag / u_star_j);
+				Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *
 				Real WSS_tn_mag_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
@@ -748,9 +761,9 @@ namespace fluid_dynamics
 //=================================================================================================//
 	StandardWallFunctionCorrection::
 		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
-			BaseContactRelation& contact_relation, Real offset_dist)
+			BaseContactRelation& contact_relation, Real y_p_constant)
 		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
-		offset_dist_(offset_dist),vel_(particles_->vel_), rho_(particles_->rho_),
+		vel_(particles_->vel_), rho_(particles_->rho_), 
 		molecular_viscosity_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
@@ -764,17 +777,20 @@ namespace fluid_dynamics
 		distance_to_dummy_interface_levelset_(*particles_->getVariableByName<Real>("DistanceToDummyInterfaceLS")),
 		index_nearest(*particles_->getVariableByName<int>("NearestIndex")),
 		e_nearest_tau_(*particles_->getVariableByName<Vecd>("WallNearestTangentialUnitVector")),
-		e_nearest_normal_(*particles_->getVariableByName<Vecd>("WallNearestNormalUnitVector")),
-		wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
+		e_nearest_normal_(*particles_->getVariableByName<Vecd>("WallNearestNormalUnitVector"))
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
 			contact_n_.push_back(&(contact_particles_[k]->n_));
 			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 		}
+
 		particles_->registerVariable(y_p_, "Y_P");
 		particles_->registerSortableVariable<Real>("Y_P");
 		particles_->addVariableToWrite<Real>("Y_P");
+
+		//** Fixed y_p_ as a constant distance *
+		std::fill(y_p_.begin(), y_p_.end(), y_p_constant);
 
 		particles_->registerVariable(wall_Y_plus_, "WallYplus");
 		particles_->registerSortableVariable<Real>("WallYplus");
@@ -796,37 +812,37 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
 	{
-		y_p_[index_i] = 0.0;
 		velo_tan_[index_i] = 0.0;
 		velo_friction_[index_i] = Vecd::Zero();
 		wall_Y_plus_[index_i] = 0.0;
 		wall_Y_star_[index_i] = 0.0;
 
+		//y_p_[index_i]= distance_to_dummy_interface_levelset_[index_i];
+
 		if (is_near_wall_P2_[index_i] == 10)
 		{
+			Real y_p_constant_i = y_p_[index_i];
+
 			Real turbu_k_i_05 = pow(turbu_k_[index_i], 0.5);
 			Real turbu_k_i_15 = pow(turbu_k_[index_i], 1.5);
 
 			//** Choose one kind of the distance to calculate the wall-nearest values *
 			//Real r_dummy_normal = distance_to_dummy_interface_up_average_[index_i];
 			//Real r_dummy_normal = distance_to_dummy_interface_[index_i];
-			Real r_dummy_normal = distance_to_dummy_interface_levelset_[index_i];
+			//Real r_dummy_normal = distance_to_dummy_interface_levelset_[index_i];
 
-			if (r_dummy_normal <= TinyReal)
-			{
-				std::cout << "r_dummy_normal <= TinyReal" << std::endl;
-				system("pause");
-			}
+			//if (r_dummy_normal <= TinyReal)
+			//{
+				//std::cout << "r_dummy_normal <= TinyReal" << std::endl;
+				//system("pause");
+			//}
 			Vecd e_i_nearest_tau = e_nearest_tau_[index_i];
 			Vecd e_i_nearest_n = e_nearest_normal_[index_i];
 			const Vecd& vel_i = vel_[index_i];
 			Real rho_i = rho_[index_i];
-
-			//** Key statement for Offset Model *
-			y_p_[index_i] = r_dummy_normal + offset_dist_;
 			
 			//** Calcualte Y_star, note the current code is based on Y_star *
-			wall_Y_star_[index_i] = y_p_[index_i] * C_mu_25_ * turbu_k_i_05 * rho_i / molecular_viscosity_;
+			wall_Y_star_[index_i] = y_p_constant_i * C_mu_25_ * turbu_k_i_05 * rho_i / molecular_viscosity_;
 			
 			//** Calculate friction velocity, including P2 region. *  
 			Real velo_fric_mag = 0.0;
@@ -834,9 +850,6 @@ namespace fluid_dynamics
 
 			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
 			velo_tan_[index_i] = velo_tan;
-
-			//velo_fric = sqrt(abs(Karman_ * velo_tan * C_mu_25_ * turbu_k_i_05 /
-				//log(turbu_const_E_ * C_mu_25_ * turbu_k_i_05 * y_p_[index_i] * rho_i / mu_)));
 
 			if (wall_Y_star_[index_i] != static_cast<Real>(wall_Y_star_[index_i]))
 			{
@@ -854,9 +867,9 @@ namespace fluid_dynamics
 				std::cout << "velo_fric=" << velo_fric_mag << std::endl << "velo_tan=" << velo_tan << std::endl;
 				std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
 				std::cout << "sum=" << (Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) /
-					log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_)) << std::endl;
+					log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_constant_i * rho_i / molecular_viscosity_)) << std::endl;
 				std::cout << "numerator=" << Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) << std::endl;
-				std::cout << "denominator=" << log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * r_dummy_normal * rho_i / molecular_viscosity_) << std::endl;
+				std::cout << "denominator=" << log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_constant_i * rho_i / molecular_viscosity_) << std::endl;
 				Real temp = C_mu_25_* pow(turbu_k_[index_i], 0.5)* velo_tan / u_star;
 
 				std::cout << "temp =" <<temp<< std::endl;
@@ -874,7 +887,7 @@ namespace fluid_dynamics
 				velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
 
 			//** Calcualte Y_plus  *
-			wall_Y_plus_[index_i] = y_p_[index_i] * velo_fric_mag * rho_i / molecular_viscosity_;
+			wall_Y_plus_[index_i] = y_p_constant_i * velo_fric_mag * rho_i / molecular_viscosity_;
 			
 			// ** Correct the near wall values, only for P1 region *
 
@@ -900,43 +913,41 @@ namespace fluid_dynamics
 						Real dudn_p_j = 0.0;
 						Real G_k_p_j = 0.0;
 						
-						Real y_p_j = 0.0;
+						//Real y_p_j = 0.0;
 						Vecd e_j_tau = Vecd::Zero();
 
 						size_t index_j = contact_neighborhood.j_[n];
-						Real r_ij = contact_neighborhood.r_ij_[n];
-						Vecd& e_ij = contact_neighborhood.e_ij_[n];
+						//Real r_ij = contact_neighborhood.r_ij_[n];
+						//Vecd& e_ij = contact_neighborhood.e_ij_[n];
 						Vecd e_j_n  = n_k[index_j];
 						
 						//** Get tangential unit vector, temporarily only suitable for 2D*
 						e_j_tau[0] = e_j_n[1];
 						e_j_tau[1] = e_j_n[0] * (-1.0);
 
-
-
-						y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
+						//y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
+						//y_p_j = get_distance_from_P_to_wall(fluid_particle_spacing_, offset_dist_);
 						
-
 						//** Check the distance. *  
-						if (y_p_j < 0.05 * wall_particle_spacing_)
-						{
-							std::cout << "when correct epsilon_p, Gk_p, There is a particle too close to wall" << std::endl;
-							std::cout << "index_i=" << index_i << std::endl;
-							std::cout << "index_j=" << index_j << std::endl;
-							std::cout << "distance=" << y_p_j << std::endl;
-							system("pause");
-						}
+						//if (y_p_j < 0.05 * wall_particle_spacing_)
+						//{
+						//	std::cout << "when correct epsilon_p, Gk_p, There is a particle too close to wall" << std::endl;
+						//	std::cout << "index_i=" << index_i << std::endl;
+						//	std::cout << "index_j=" << index_j << std::endl;
+						//	std::cout << "distance=" << y_p_j << std::endl;
+						//	system("pause");
+						//}
 
 						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 						total_weight += weight_j;
 						
-						epsilon_p_j =  C_mu_75_ * turbu_k_i_15 / (Karman_ * y_p_j);
+						epsilon_p_j =  C_mu_75_ * turbu_k_i_15 / (Karman_ * y_p_constant_i);
 						epsilon_p_weighted_sum += weight_j * epsilon_p_j;
 
-						Real denominator_log_law_j = C_mu_25_ * turbu_k_i_05 * Karman_ * y_p_j;
+						Real denominator_log_law_j = C_mu_25_ * turbu_k_i_05 * Karman_ * y_p_constant_i;
 
 						Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
-						Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
+						Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_constant_i / molecular_viscosity_;
 						Real u_star_j = get_dimensionless_velocity(y_star_j);
 						Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
 
@@ -950,12 +961,6 @@ namespace fluid_dynamics
 				}
 				turbu_epsilon_[index_i] = epsilon_p_weighted_sum / total_weight;
 				
-				//Real denominator_log_law = C_mu_25_ * turbu_k_i_05 * Karman_ * y_p_[index_i];
-				//Real denominator_log_law = C_mu_25_ * turbu_k_i_05 * Karman_ * 0.5 * 0.05; //** 0.50 is particle spacing *
-
-				//Real dudn = velo_fric_mag * velo_fric_mag * boost::qvm::sign(vel_i.dot(e_i_nearest_tau)) / denominator_log_law;
-				//Real dudn_mag = get_near_wall_velocity_gradient_magnitude(wall_Y_star_[index_i], velo_fric_mag, denominator_log_law, molecular_viscosity_ / rho_i);
-				//Real dudn = dudn_mag * boost::qvm::sign(vel_i.dot(e_i_nearest_tau));
 				vel_grad_i_tn(0, 0) = 0.0;
 				vel_grad_i_tn(0, 1) = dudn_p_weighted_sum / total_weight;
 				vel_grad_i_tn(1, 0) = 0.0;

@@ -122,16 +122,16 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     //InteractionDynamics<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
-
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
-    InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_inner, water_wall_contact, offset_dist_ref);
+    InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> 
+        standard_wall_function_correction(water_block_inner, water_wall_contact,y_p_constant);
 
     //SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
-    InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall, SequencedPolicy> turbulent_viscous_force(water_block_inner, water_wall_contact);
     //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     
     /** Impose transport velocity. */
@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -200,7 +200,7 @@ int main(int ac, char *av[])
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
-    Real start_time_turbulence = 00.0;
+    Real start_time_turbulence = 0.0;
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -261,10 +261,10 @@ int main(int ac, char *av[])
                 GlobalStaticVariables::physical_time_ += dt;
                 inner_itr++;
                 //std::cout << "num_output_file=" << num_output_file << std::endl;
-                if (GlobalStaticVariables::physical_time_ > start_time_turbulence)
-                {
-                    body_states_recording.writeToFile();
-                }
+                //if (GlobalStaticVariables::physical_time_ > start_time_turbulence)
+                //{
+                    //body_states_recording.writeToFile();
+                //}
                 num_output_file++;
             }
             if (number_of_iterations % screen_output_interval == 0)
@@ -277,7 +277,7 @@ int main(int ac, char *av[])
 
             /** inflow injection*/
             emitter_inflow_injection.exec();
-            disposer_outflow_deletion.exec();
+            disposer_outflow_deletion.exec();  
 
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedListWithParticleSort(100);
