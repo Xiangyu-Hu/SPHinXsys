@@ -16,6 +16,20 @@ namespace fluid_dynamics
 		C_mu_75_ = pow(C_mu_, 0.75);
 	}
 //=================================================================================================//
+	Real WallFunction::get_distance_from_P_to_wall(Real y_p_constant)
+	{
+		//** Check the distance. *  
+		//if (y_p_constant < 0.05 * dp_wall)
+		//{
+		//	std::cout << "y_p_j < 0.05 * wall_particle_spacing_" << std::endl;
+		//	system("pause");
+		//}
+		//y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
+		
+		//** Use the constant y_p strategy. *  
+		return y_p_constant;
+	}
+	//=================================================================================================//
 	Real WallFunction:: get_dimensionless_velocity(Real y_star)
 	{
 		Real dimensionless_velocity = 0.0;
@@ -470,25 +484,9 @@ namespace fluid_dynamics
 				//** Calculate the local friction velocity *
 				Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 				
-
-				//** y_p_ calculated  *
-				//Real y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
-				//Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
-				//if (y_p_j < 0.05 * wall_particle_spacing_)
-				//{
-				//	std::cout << "y_p_j < 0.05 * wall_particle_spacing_" << std::endl;
-				//	std::cout << "index_i=" << index_i << std::endl;
-				//	std::cout << "index_j=" << index_j << std::endl;
-				//	std::cout << "y_p_j=" << y_p_j << std::endl;
-				//	system("pause");
-				//}
-				
-				//** y_p_ constant  *
-				Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_constant_i / molecular_viscosity_;
-				
-				
+				Real y_p_j = get_distance_from_P_to_wall(y_p_constant_i);
+				Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
 				Real u_star_j = get_dimensionless_velocity(y_star_j);
-
 				Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
 
 				//** Construct local wall shear stress, if this is on each wall particle j   *
@@ -817,6 +815,7 @@ namespace fluid_dynamics
 		wall_Y_plus_[index_i] = 0.0;
 		wall_Y_star_[index_i] = 0.0;
 
+		//** If use level-set to get distance from P to wall, activate this *
 		//y_p_[index_i]= distance_to_dummy_interface_levelset_[index_i];
 
 		if (is_near_wall_P2_[index_i] == 10)
@@ -913,7 +912,8 @@ namespace fluid_dynamics
 						Real dudn_p_j = 0.0;
 						Real G_k_p_j = 0.0;
 						
-						//Real y_p_j = 0.0;
+						Real y_p_j = 0.0;
+
 						Vecd e_j_tau = Vecd::Zero();
 
 						size_t index_j = contact_neighborhood.j_[n];
@@ -925,29 +925,20 @@ namespace fluid_dynamics
 						e_j_tau[0] = e_j_n[1];
 						e_j_tau[1] = e_j_n[0] * (-1.0);
 
-						//y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
-						//y_p_j = get_distance_from_P_to_wall(fluid_particle_spacing_, offset_dist_);
-						
-						//** Check the distance. *  
-						//if (y_p_j < 0.05 * wall_particle_spacing_)
-						//{
-						//	std::cout << "when correct epsilon_p, Gk_p, There is a particle too close to wall" << std::endl;
-						//	std::cout << "index_i=" << index_i << std::endl;
-						//	std::cout << "index_j=" << index_j << std::endl;
-						//	std::cout << "distance=" << y_p_j << std::endl;
-						//	system("pause");
-						//}
+						y_p_j = get_distance_from_P_to_wall(y_p_constant_i);
 
 						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 						total_weight += weight_j;
 						
-						epsilon_p_j =  C_mu_75_ * turbu_k_i_15 / (Karman_ * y_p_constant_i);
+						epsilon_p_j =  C_mu_75_ * turbu_k_i_15 / (Karman_ * y_p_j);
+
+
 						epsilon_p_weighted_sum += weight_j * epsilon_p_j;
 
-						Real denominator_log_law_j = C_mu_25_ * turbu_k_i_05 * Karman_ * y_p_constant_i;
+						Real denominator_log_law_j = C_mu_25_ * turbu_k_i_05 * Karman_ * y_p_j;
 
 						Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
-						Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_constant_i / molecular_viscosity_;
+						Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
 						Real u_star_j = get_dimensionless_velocity(y_star_j);
 						Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
 
