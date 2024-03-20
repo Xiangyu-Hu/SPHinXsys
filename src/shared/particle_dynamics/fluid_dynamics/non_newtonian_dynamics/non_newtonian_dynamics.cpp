@@ -201,7 +201,7 @@ void GeneralizedNewtonianViscousForce<Contact<Wall>>::interaction(size_t index_i
             // force += 2.0 * mu_srd_[index_i] * mass_[index_i] * vel_derivative * wall_neighborhood.dW_ijV_j_[n];
 
             Real v_r_ij = (vel_[index_i] - vel_k[index_j]).dot(r_ij * e_ij);
-            Real eta_ij = 2.0 * (dim + 2.0) * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+            Real eta_ij = 2.0 * (dim + 2.0) * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_) * 2.0;
             force += eta_ij * mass_[index_i] * wall_neighborhood.dW_ijV_j_[n] * e_ij;
         }
     }
