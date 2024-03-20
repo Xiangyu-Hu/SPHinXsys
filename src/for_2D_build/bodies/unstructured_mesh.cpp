@@ -487,7 +487,7 @@ void BaseInnerRelationInFVM::resizeConfiguration()
 }
 //=================================================================================================//
 void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance,
-                                          Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                                          Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
 {
     neighborhood.j_.push_back(j_index);
     neighborhood.r_ij_.push_back(distance);
@@ -497,7 +497,7 @@ void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &dist
 }
 //=================================================================================================//
 void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &distance,
-                                              Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                                              Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = j_index;

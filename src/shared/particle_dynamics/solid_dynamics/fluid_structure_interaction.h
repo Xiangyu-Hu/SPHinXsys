@@ -97,7 +97,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
 
   protected:
     StdLargeVec<Vecd> &vel_ave_, &force_ave_, &n_;
-    StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_mass_, contact_p_;
+    StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_mass_, contact_p_, contact_Vol_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_force_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
 };

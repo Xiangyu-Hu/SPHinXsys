@@ -273,7 +273,6 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
     int number_of_gaussian_points_;
 
-    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &global_b_stress_, &global_b_moment_;
     StdLargeVec<Vecd> &global_b_shear_stress_;
     StdLargeVec<Vecd> &b_n_;

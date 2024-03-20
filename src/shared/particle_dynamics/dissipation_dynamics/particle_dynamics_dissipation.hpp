@@ -108,7 +108,7 @@ DampingBySplittingComplex<VariableType>::computeErrorAndParameters(size_t index_
 
             // linear projection
             VariableType variable_derivative = (variable_i - variable_k[index_j]);
-            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
+            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * this->Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             error_and_parameters.error_ -= variable_derivative * parameter_b;
             error_and_parameters.a_ += parameter_b;
@@ -190,7 +190,7 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
 
             // linear projection
             VariableType variable_derivative = (variable_i - variable_k[index_j]);
-            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
+            Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * this->Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             error_and_parameters.error_ -= variable_derivative * parameter_b;
             error_and_parameters.a_ += parameter_b;
@@ -290,7 +290,7 @@ void DampingPairwiseComplex<VariableType>::
             Real mass_j = mass_k[index_j];
 
             VariableType variable_derivative = (variable_i - variable_k[index_j]);
-            parameter_b[n] = this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+            parameter_b[n] = this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
             VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
             this->variable_[index_i] += increment * mass_j;
@@ -395,7 +395,7 @@ void DampingPairwiseFromWall<VariableType>::
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<VariableType> &variable_k = *(wall_variable_[k]);
-        StdLargeVec<Real&Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         // forward sweep
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

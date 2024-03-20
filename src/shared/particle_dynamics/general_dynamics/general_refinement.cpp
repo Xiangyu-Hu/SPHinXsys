@@ -99,6 +99,7 @@ Vecd ComputeDensityErrorInner::computeKernelGradient(size_t index_rho)
     Vecd grad_kernel = Vecd::Zero();
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
+        size_t index_j = inner_neighborhood.j_[n];
         grad_kernel += inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n] *
                        particles_->mass_[inner_neighborhood.j_[n]] / rho0_ /
                        particles_->Vol_[inner_neighborhood.j_[n]];

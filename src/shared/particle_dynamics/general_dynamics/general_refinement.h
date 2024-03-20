@@ -46,7 +46,7 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
     ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
           particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
-          rho0_(sph_body_.base_material_->ReferenceDensity()),
+          rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
           inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
           h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
     {
@@ -59,6 +59,7 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
                                      const StdVec<size_t> &new_indices, Real min_distance, Real max_distance);
     virtual void initializeDensityError();
 
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Real> density_error_;
     StdLargeVec<bool> tag_split_;
 

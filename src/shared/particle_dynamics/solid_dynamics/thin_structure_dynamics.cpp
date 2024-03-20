@@ -57,7 +57,8 @@ ShellCorrectConfiguration::
 ShellDeformationGradientTensor::
     ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
+      pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), 
+      n0_(particles_->n0_), Vol_(particles_->Vol_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
@@ -297,7 +298,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation), Vol_(particles_->Vol_)
+    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation), Vol_(particles_->Vol_),
       n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),

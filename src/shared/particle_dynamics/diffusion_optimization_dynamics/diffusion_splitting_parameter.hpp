@@ -25,9 +25,9 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<ParticlesType, Var
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        size_t &index_j = inner_neighborhood.j_[n];
-        Real &dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
-        Real &r_ij = inner_neighborhood.r_ij_[n];
+        size_t index_j = inner_neighborhood.j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+        Real r_ij = inner_neighborhood.r_ij_[n];
 
         VariableType variable_derivative = variable_i + this->variable_[index_j];
         Real phi_ij = this->species_modified_[index_i] - this->species_recovery_[index_j];
@@ -58,9 +58,9 @@ void ParameterSplittingByPDEInner<ParticlesType, VariableType>::
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        size_t &index_j = inner_neighborhood.j_[n];
-        Real &dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
-        Real &r_ij = inner_neighborhood.r_ij_[n];
+        size_t index_j = inner_neighborhood.j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+        Real r_ij = inner_neighborhood.r_ij_[n];
 
         Real phi_ij = this->species_modified_[index_i] - this->species_recovery_[index_j];
         Real parameter_b = phi_ij * dW_ijV_j * dt / r_ij;
@@ -139,6 +139,7 @@ ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, Variabl
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
+        boundary_Vol_.push_back(&this->contact_particles_[k]->Vol_);
         boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
         boundary_species_.push_back(&(this->contact_particles_[k]->all_species_));
         boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");

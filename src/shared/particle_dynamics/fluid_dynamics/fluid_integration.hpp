@@ -133,7 +133,7 @@ void Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrec
         particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        StdLargeVec<Vecd>& wall_Vol_k = *(this->wall_Vol_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(this->wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {

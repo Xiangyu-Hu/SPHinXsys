@@ -71,9 +71,9 @@ namespace SPH
 		Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
-			size_t& index_j = inner_neighborhood.j_[n];
-			Real& dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
-			Real& r_ij_ = inner_neighborhood.r_ij_[n];
+			size_t index_j = inner_neighborhood.j_[n];
+			Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+			Real r_ij_ = inner_neighborhood.r_ij_[n];
 
 			//this->eta_regularization_[index_i] = initial_eta_ * abs(this->variation_local_[index_i] + TinyReal) / averaged_variation_;
 			//this->eta_regularization_[index_i] = initial_eta_ * abs(this->variation_local_[index_i] + TinyReal) / abs(maximum_variation_);
@@ -105,8 +105,8 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real& dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
-			Real& r_ij = inner_neighborhood.r_ij_[n];
+			Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+			Real r_ij = inner_neighborhood.r_ij_[n];
 
 			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j * Vol_i * dt / r_ij;
 
@@ -146,8 +146,8 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real &dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
-			Real &r_ij = inner_neighborhood.r_ij_[n];
+			Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+			Real r_ij = inner_neighborhood.r_ij_[n];
 
 			VariableType variable_derivative = (variable_i - this->variable_[index_j]);
 			Real parameter_b = 2.0 * this->eta_regularization_[index_i] * dW_ijV_j * Vol_i * dt / r_ij;

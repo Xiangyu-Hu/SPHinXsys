@@ -202,7 +202,7 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-        StdLargeVec<Real>& wall_Vol_k[index_j] = *(wall_Vol_[k]);
+        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {

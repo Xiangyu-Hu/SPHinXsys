@@ -10,7 +10,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 KernelCorrectionMatrix<DataDelegationType>::KernelCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      Vol_(*this->particles_->Vol_),
+      Vol_(this->particles_->Vol_),
       B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>

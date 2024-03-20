@@ -168,6 +168,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInn
     };
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
     StdLargeVec<Matd> &B_, &F_, &F_bending_;
     StdLargeVec<Matd> &transformation_matrix_;
@@ -389,7 +390,7 @@ class ShellCurvature : public LocalDynamics, public ShellDataInner
     void compute_initial_curvature();
 
   private:
-    StdLargeVec<Vecd>& Vol_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &n0_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Matd> &transformation_matrix_;
@@ -414,7 +415,7 @@ class AverageShellCurvature : public LocalDynamics, public ShellDataInner
     void update(size_t index_i, Real);
 
   private:
-    StdLargeVec<Vecd> &Vol_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &n_;
     StdLargeVec<Real> &k1_ave_; // first principle curvature
     StdLargeVec<Real> &k2_ave_; // second principle curvature

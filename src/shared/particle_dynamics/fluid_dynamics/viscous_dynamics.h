@@ -144,6 +144,7 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<AngularVecd> vorticity_;
 };
