@@ -174,7 +174,7 @@ int main(int ac, char *av[])
     // pressure relaxation using verlet time stepping
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
+    InteractionDynamics<fluid_dynamics::DistanceFromWall, SequencedPolicy> distance_to_wall(fluid_block_contact);
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>> update_velocity_gradient(fluid_block_inner, fluid_block_contact);
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
@@ -205,6 +205,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     // prepare quantities will be used once only
     wall_boundary_normal_direction.exec();
+    distance_to_wall.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

@@ -91,6 +91,7 @@ class DistanceFromWall : public LocalDynamics, public FSIContactData
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    Real spacing_ref_;
     StdLargeVec<Vecd> &distance_from_wall_;
     StdVec<StdLargeVec<Vecd> *> wall_n_;
     StdVec<StdLargeVec<Real> *> wall_phi_;
