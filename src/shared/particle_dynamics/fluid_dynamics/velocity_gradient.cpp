@@ -34,10 +34,9 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
     : LocalDynamics(wall_contact_relation.getSPHBody()), FSIContactData(wall_contact_relation),
-      distance_from_wall_(*particles_->registerSharedVariable<Vecd>("DistanceFromWall")),
-      spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing())
+      spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing()),
+      distance_from_wall_(*particles_->registerSharedVariable<Vecd>("DistanceFromWall"))
 {
-        particles_->addVariableToWrite<Vecd>("DistanceFromWall");
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         wall_n_.push_back(&(contact_particles_[k]->n_));
@@ -49,10 +48,6 @@ void DistanceFromWall::interaction(size_t index_i, Real dt)
 {
     Vecd distance = 100.0 * spacing_ref_ * Vecd::Ones();
     Vecd normal = Vecd::Ones();
-    if (index_i == 3174)
-    {
-        Real a = 0.0;
-    }
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
@@ -61,10 +56,6 @@ void DistanceFromWall::interaction(size_t index_i, Real dt)
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            if (index_j == 690)
-            {
-                Real a = 0.0;
-            }
             const Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
             Vecd temp = contact_neighborhood.r_ij_[n] * e_ij + phi_k[index_j] * n_k[index_j];
