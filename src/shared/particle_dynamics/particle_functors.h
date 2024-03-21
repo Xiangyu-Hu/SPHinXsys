@@ -99,17 +99,17 @@ class NoLimiter : public Limiter
 class ZeroGradientLimiter : public Limiter
 {
     Real h_ref_;
-    StdLargeVec<Vecd> &zero_gradient_;
+    StdLargeVec<Vecd> &zero_gradient_residue_;
 
   public:
     ZeroGradientLimiter(BaseParticles *base_particles)
         : Limiter(),
           h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          zero_gradient_(*base_particles->getVariableByName<Vecd>("ZeroGradient")){};
+          zero_gradient_residue_(*base_particles->getVariableByName<Vecd>("ZeroGradientResidue")){};
     virtual ~ZeroGradientLimiter(){};
     Real operator()(size_t index_i)
     {
-        Real error_scale = zero_gradient_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        Real error_scale = zero_gradient_residue_[index_i].squaredNorm() * h_ref_ * h_ref_;
         return SMIN(100.0 * error_scale, 1.0);
     };
 };
