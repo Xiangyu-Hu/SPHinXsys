@@ -40,7 +40,7 @@ ShearStressRelaxation ::
       velocity_gradient_(particles_->velocity_gradient_), strain_tensor_(particles_->strain_tensor_),
       strain_tensor_rate_(particles_->strain_tensor_rate_), von_mises_stress_(particles_->von_mises_stress_),
       von_mises_strain_(particles_->von_mises_strain_), Vol_(particles_->Vol_),
-      B_(*particles_->getVariableByName<Matd>("LinearCorrectionMatrix")) {}
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")) {}
 //====================================================================================//
 void ShearStressRelaxation::initialization(size_t index_i, Real dt)
 {

@@ -36,46 +36,46 @@
 namespace SPH
 {
 template <typename... InteractionTypes>
-class LinearCorrectionMatrix;
+class LinearGradientCorrectionMatrix;
 
 template <class DataDelegationType>
-class LinearCorrectionMatrix<DataDelegationType>
+class LinearGradientCorrectionMatrix<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit LinearCorrectionMatrix(BaseRelationType &base_relation);
-    virtual ~LinearCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(BaseRelationType &base_relation);
+    virtual ~LinearGradientCorrectionMatrix(){};
 
   protected:
     StdLargeVec<Matd> &B_;
 };
 
 template <>
-class LinearCorrectionMatrix<Inner<>>
-    : public LinearCorrectionMatrix<GeneralDataDelegateInner>
+class LinearGradientCorrectionMatrix<Inner<>>
+    : public LinearGradientCorrectionMatrix<GeneralDataDelegateInner>
 {
     Real alpha_;
 
   public:
-    explicit LinearCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
-        : LinearCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
+    explicit LinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
+        : LinearGradientCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit LinearCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : LinearCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~LinearCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+        : LinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~LinearGradientCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using LinearCorrectionMatrixInner = LinearCorrectionMatrix<Inner<>>;
+using LinearGradientCorrectionMatrixInner = LinearGradientCorrectionMatrix<Inner<>>;
 
 template <>
-class LinearCorrectionMatrix<Contact<>>
-    : public LinearCorrectionMatrix<GeneralDataDelegateContact>
+class LinearGradientCorrectionMatrix<Contact<>>
+    : public LinearGradientCorrectionMatrix<GeneralDataDelegateContact>
 {
   public:
-    explicit LinearCorrectionMatrix(BaseContactRelation &contact_relation);
-    virtual ~LinearCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(BaseContactRelation &contact_relation);
+    virtual ~LinearGradientCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -83,7 +83,7 @@ class LinearCorrectionMatrix<Contact<>>
     StdVec<StdLargeVec<Real> *> contact_mass_;
 };
 
-using LinearCorrectionMatrixComplex = ComplexInteraction<LinearCorrectionMatrix<Inner<>, Contact<>>>;
+using LinearGradientCorrectionMatrixComplex = ComplexInteraction<LinearGradientCorrectionMatrix<Inner<>, Contact<>>>;
 
 template <typename... InteractionTypes>
 class KernelGradientCorrection;

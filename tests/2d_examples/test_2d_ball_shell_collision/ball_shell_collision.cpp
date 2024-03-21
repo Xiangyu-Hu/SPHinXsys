@@ -164,7 +164,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity constant_gravity(gravity);
     SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
-    InteractionWithUpdate<LinearCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);

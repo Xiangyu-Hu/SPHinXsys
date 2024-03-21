@@ -212,12 +212,12 @@ class NoKernelCorrection : public KernelCorrection
     };
 };
 
-class LinearCorrection : public KernelCorrection
+class LinearGradientCorrection : public KernelCorrection
 {
   public:
-    LinearCorrection(BaseParticles *particles)
+    LinearGradientCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableByName<Matd>("LinearCorrectionMatrix")){};
+          B_(*particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
 
     Matd operator()(size_t index_i)
     {

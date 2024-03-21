@@ -91,7 +91,7 @@ class SolidBodyForSimulation
     InnerRelation inner_body_relation_;
 
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
-    InteractionWithUpdate<LinearCorrectionMatrixInner> correct_configuration_;
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
@@ -108,7 +108,7 @@ class SolidBodyForSimulation
     InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
     SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
-    InteractionWithUpdate<LinearCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };

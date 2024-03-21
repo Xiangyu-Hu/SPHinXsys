@@ -58,7 +58,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
     /** corrected strong configuration. */
-    InteractionWithUpdate<LinearCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of density by summation approach. */
