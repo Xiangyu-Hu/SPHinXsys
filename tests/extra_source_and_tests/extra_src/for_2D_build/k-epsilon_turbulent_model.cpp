@@ -10,7 +10,7 @@ namespace fluid_dynamics
 		: C_mu_(0.09), C_l_(1.44), C_2_(1.92), sigma_k_(1.0), sigma_E_(1.3),
 		Karman_(0.41), turbu_const_E_(9.8), 
 		turbulent_intensity_(5.0e-2), mixing_length_for_epsilon_inlet_(0.07),
-		start_time_laminar_(0.0), y_star_threshold_(11.225)
+		start_time_laminar_(0.0), y_star_threshold_laminar_(11.225)
 	{
 		C_mu_25_ = pow(C_mu_, 0.25);
 		C_mu_75_ = pow(C_mu_, 0.75);
@@ -33,7 +33,7 @@ namespace fluid_dynamics
 	Real WallFunction:: get_dimensionless_velocity(Real y_star)
 	{
 		Real dimensionless_velocity = 0.0;
-		if (y_star < y_star_threshold_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+		if (y_star < y_star_threshold_laminar_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
 		{
 			dimensionless_velocity = laminar_law_wall_functon(y_star);
 		}
@@ -741,19 +741,21 @@ namespace fluid_dynamics
 		is_near_wall_P1_[index_i] = 0;
 		if (is_near_wall_P2_[index_i] == 10)
 		{
-			Real distance = distance_to_dummy_interface_[index_i]; //** Choose one kind of the distance to classify *
+			//** Choose one kind of the distance to classify *
+			Real distance = distance_to_dummy_interface_levelset_[index_i];
+			//Real distance = distance_to_dummy_interface_[index_i];
+			 
 			//** Classify the wall-nearest paritcles *
 			if (distance < 1.0 * fluid_particle_spacing_)
 				is_near_wall_P1_[index_i] = 1;
-			//** Check the distance. *  
-			if (distance < 0.05 * fluid_particle_spacing_)
-			{
-				std::cout << "There is a particle too close to wall" << std::endl;
-				std::cout << "index_i=" << index_i << std::endl;
-				std::cout << "distance=" << distance << std::endl;
-				std::cout << "is_near_wall_P2_[index_i]=" << is_near_wall_P2_[index_i] << std::endl;
-				system("pause");
-			}
+			//** Check the distance. Useless because with contant_y_p this may not make big difference *  
+			//if (distance < 0.05 * fluid_particle_spacing_)
+			//{
+			//	std::cout << "There is a particle too close to wall" << std::endl;
+			//	std::cout << "index_i=" << index_i << std::endl;
+			//	std::cout << "distance=" << distance << std::endl;
+			//	system("pause");
+			//}
 		}
 	}
 //=================================================================================================//
@@ -839,9 +841,10 @@ namespace fluid_dynamics
 			Vecd e_i_nearest_n = e_nearest_normal_[index_i];
 			const Vecd& vel_i = vel_[index_i];
 			Real rho_i = rho_[index_i];
-			
+			Real nu_i = molecular_viscosity_ / rho_i;
+
 			//** Calcualte Y_star, note the current code is based on Y_star *
-			wall_Y_star_[index_i] = y_p_constant_i * C_mu_25_ * turbu_k_i_05 * rho_i / molecular_viscosity_;
+			wall_Y_star_[index_i] = y_p_constant_i * C_mu_25_ * turbu_k_i_05  / nu_i;
 			
 			//** Calculate friction velocity, including P2 region. *  
 			Real velo_fric_mag = 0.0;
@@ -886,7 +889,7 @@ namespace fluid_dynamics
 				velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
 
 			//** Calcualte Y_plus  *
-			wall_Y_plus_[index_i] = y_p_constant_i * velo_fric_mag * rho_i / molecular_viscosity_;
+			wall_Y_plus_[index_i] = y_p_constant_i * velo_fric_mag  / nu_i;
 			
 			// ** Correct the near wall values, only for P1 region *
 
@@ -929,24 +932,30 @@ namespace fluid_dynamics
 
 						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 						total_weight += weight_j;
-						
-						epsilon_p_j =  C_mu_75_ * turbu_k_i_15 / (Karman_ * y_p_j);
-
-
-						epsilon_p_weighted_sum += weight_j * epsilon_p_j;
 
 						Real denominator_log_law_j = C_mu_25_ * turbu_k_i_05 * Karman_ * y_p_j;
 
 						Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
-						Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
+						Real y_star_j =  C_mu_25_ * turbu_k_i_05 * y_p_j / nu_i;
 						Real u_star_j = get_dimensionless_velocity(y_star_j);
 						Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
 
-						Real dudn_p_mag_j = get_near_wall_velocity_gradient_magnitude(y_star_j, fric_vel_mag_j, denominator_log_law_j, molecular_viscosity_ / rho_i);
+						Real dudn_p_mag_j = get_near_wall_velocity_gradient_magnitude(y_star_j, fric_vel_mag_j, denominator_log_law_j, nu_i);
 						dudn_p_j =  dudn_p_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
 						dudn_p_weighted_sum += weight_j * dudn_p_j;
 
-						G_k_p_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * dudn_p_mag_j;
+						if (y_star_j < y_star_threshold_laminar_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
+						{
+							epsilon_p_j = 2.0 * turbu_k_[index_i] * nu_i / (y_p_j * y_p_j);
+							G_k_p_j = 0.0;
+						}
+						else
+						{
+							epsilon_p_j = C_mu_75_ * turbu_k_i_15 / (Karman_ * y_p_j);
+							G_k_p_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * dudn_p_mag_j;
+						}
+						
+						epsilon_p_weighted_sum += weight_j * epsilon_p_j;
 						G_k_p_weighted_sum += weight_j * G_k_p_j;
 					}
 				}

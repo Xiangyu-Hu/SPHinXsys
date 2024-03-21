@@ -59,7 +59,7 @@ namespace fluid_dynamics
 
 		//** Start time for laminar law *
 		Real start_time_laminar_;
-		Real y_star_threshold_;
+		Real y_star_threshold_laminar_;
 	};
 //=================================================================================================//
 	class WallFunction : public BaseTurbuClosureCoeff
