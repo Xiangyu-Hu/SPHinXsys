@@ -194,15 +194,15 @@ void GeneralizedNewtonianViscousForce<Contact<Wall>>::interaction(size_t index_i
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            //Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
-            // vel_derivative = 2.0 * (vel_[index_i] - vel_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
-            // force += 2.0 * mu_srd_[index_i] * mass_[index_i] * vel_derivative * wall_neighborhood.dW_ijV_j_[n];
+            vel_derivative = 2.0 * (vel_[index_i] - vel_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
+            force += 2.0 * mu_srd_[index_i] * mass_[index_i] * vel_derivative * wall_neighborhood.dW_ijV_j_[n];
 
-            Real v_r_ij = (vel_[index_i] - vel_k[index_j]).dot(r_ij * e_ij);
-            Real eta_ij = 2.0 * (dim + 2.0) * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_) * 2.0;
-            force += eta_ij * mass_[index_i] * wall_neighborhood.dW_ijV_j_[n] * e_ij;
+            // Real v_r_ij = (vel_[index_i] - vel_k[index_j]).dot(r_ij * e_ij);
+            // Real eta_ij = 2.0 * (dim + 2.0) * mu_srd_[index_i] * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_) * 2.0;
+            // force += eta_ij * mass_[index_i] * wall_neighborhood.dW_ijV_j_[n] * e_ij;
         }
     }
     viscous_force_[index_i] += force / rho_[index_i];
