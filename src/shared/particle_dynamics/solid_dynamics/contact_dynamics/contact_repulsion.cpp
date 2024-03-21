@@ -70,7 +70,14 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
 RepulsionForce<Contact<Wall>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
     : RepulsionForce<Base, ContactWithWallData>(solid_body_contact_relation, "RepulsionForce"),
       ForcePrior(&base_particles_, "RepulsionForce"), solid_(particles_->solid_),
-      repulsion_density_(*particles_->getVariableByName<Real>("RepulsionDensity")) {}
+      repulsion_density_(*particles_->getVariableByName<Real>("RepulsionDensity")) 
+{
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Real>& Vol_k = *(this->contact_Vol_[k]);
+        contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+    }
+}
 //=================================================================================================//
 void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {

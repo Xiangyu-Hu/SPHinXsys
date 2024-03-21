@@ -128,7 +128,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
                 Vecd e_ij = inner_neighborhood.e_ij_[2];
                 FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
                 FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, e_ij);
-                force -= 2.0 * (-e_ij) * interface_state.p_ * Vol_i * inner_neighborhood.dW_ij_[2] * Vol_[2];
+                force -= 2.0 * (-e_ij) * interface_state.p_ * Vol_i * inner_neighborhood.dW_ij_[2] * Vol_[index_j];
                 force_from_fluid_[index_i] = force;
             }
         }

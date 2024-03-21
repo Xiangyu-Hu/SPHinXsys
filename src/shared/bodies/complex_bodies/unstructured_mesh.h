@@ -92,8 +92,8 @@ class NeighborBuilderInFVM
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
-    void createRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const;
-    void initializeRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ijV_j,
+    void createRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const;
+    void initializeRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ij,
                             Vecd &interface_normal_direction, size_t j_index) const;
 
   public:
@@ -110,11 +110,11 @@ class NeighborBuilderInnerInFVM : public NeighborBuilderInFVM
   public:
     explicit NeighborBuilderInnerInFVM(SPHBody *body) : NeighborBuilderInFVM(){};
     void operator()(Neighborhood &neighborhood, Real &distance,
-                    Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                    Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
         neighborhood.current_size_ >= neighborhood.allocated_size_
-            ? createRelation(neighborhood, distance, dW_ijV_j, interface_normal_direction, j_index)
-            : initializeRelation(neighborhood, distance, dW_ijV_j, interface_normal_direction, j_index);
+            ? createRelation(neighborhood, distance, dW_ij, interface_normal_direction, j_index)
+            : initializeRelation(neighborhood, distance, dW_ij, interface_normal_direction, j_index);
         neighborhood.current_size_++;
     };
 };
