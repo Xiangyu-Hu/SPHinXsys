@@ -185,8 +185,8 @@ void GeneralizedNewtonianViscousForce<Contact<Wall>>::interaction(size_t index_i
 {
     //* Force Calculation *//
     Vecd force = Vecd::Zero();
-    Real dim = 3.0;
-    // Vecd vel_derivative = Vecd::Zero();
+    //Real dim = 3.0;
+    Vecd vel_derivative = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_k = *(wall_vel_ave_[k]);
