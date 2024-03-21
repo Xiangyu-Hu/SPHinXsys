@@ -14,7 +14,7 @@ Real end_time = 30.0;
 int nmbr_of_outputs = 100;
 
 // non-Newtonian properties
-Real K = 1;     // consistency index
+Real K = 10;    // consistency index
 Real n = 0.5;   // power index
 Real tau_y = 0; // yield stress
 
@@ -22,8 +22,8 @@ Real min_shear_rate = 1e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+3; // cutoff high shear rate
 
 // material properties
-Real rho = 1000.0;       // reference density
-Real u_lid = 1.0;        // lid velocity
+Real rho = 1000.0;      // reference density
+Real u_lid = 1.0;       // lid velocity
 Real SOS = 1.0 * u_lid; // numerical speed of sound
 
 // geometry data
