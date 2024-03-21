@@ -557,8 +557,8 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                     {
                         r_ij = node1_to_center_direction.dot(normal_vector) * 2.0;
                     }
-                    Real dW_ijV_j = -interface_area_size  / (2.0 * Vol_i);
-                    get_neighbor_relation(neighborhood, r_ij, dW_ijV_j, normal_vector, index_j);
+                    Real dW_ij = -interface_area_size  / (2.0 * Vol_i * Vol_n[index_j]);
+                    get_neighbor_relation(neighborhood, r_ij, dW_ij, normal_vector, index_j);
                 }
             }
         },
