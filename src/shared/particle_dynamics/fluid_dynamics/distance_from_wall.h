@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,26 +21,38 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_fluid_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          fluid dynamics used in SPHinXsys.
- * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
- *          then algorithm interacting with wall is defined, further algorithms
- *          for multiphase flow interaction built upon these basic algorithms.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file distance_from_wall.h
+ * @brief To evaluate the distance from the fluid particle to wall surface.
+ * @details The vector is pointing from the wall surface point to the particle.
+ * Note that if the fluid particle is too close to the wall surface 
+ * (less then 1/4 of particle spacing), its position will be corrected to 
+ * half of the particle spacing.
+ * @author Xiangyu Hu
  */
 
-#pragma once
+#ifndef DISTANCE_FROM_WALL_H
+#define DISTANCE_FROM_WALL_H
 
-#include "all_eulerian_fluid_dynamics.h"
-#include "all_fluid_boundaries.h"
-#include "density_summation.hpp"
-#include "distance_from_wall.h"
-#include "fluid_integration.hpp"
-#include "fluid_time_step.h"
-#include "non_newtonian_dynamics.h"
-#include "shape_confinement.h"
-#include "surface_tension.hpp"
-#include "transport_velocity_correction.hpp"
-#include "viscous_dynamics.hpp"
-#include "velocity_gradient.hpp"
+#include "base_fluid_dynamics.h"
+
+namespace SPH
+{
+namespace fluid_dynamics
+{
+class DistanceFromWall : public LocalDynamics, public FSIContactData
+{
+  public:
+    explicit DistanceFromWall(BaseContactRelation &wall_contact_relation);
+    virtual ~DistanceFromWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real spacing_ref_, distance_default_, distance_min_;
+    StdLargeVec<Vecd> &pos_, &distance_from_wall_;
+    StdVec<StdLargeVec<Vecd> *> wall_pos_, wall_n_;
+    StdVec<StdLargeVec<Real> *> wall_phi_;
+};
+
+} // namespace fluid_dynamics
+} // namespace SPH
+#endif // DISTANCE_FROM_WALL_H
