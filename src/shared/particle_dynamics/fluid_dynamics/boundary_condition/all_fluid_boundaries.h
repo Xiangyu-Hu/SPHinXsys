@@ -32,5 +32,6 @@
 
 #pragma once
 
+#include "distance_from_wall.h"
 #include "fluid_boundary.h"
 #include "non_reflective_boundary.h"
