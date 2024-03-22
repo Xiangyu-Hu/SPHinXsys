@@ -24,7 +24,7 @@ Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical spe
 // non-Newtonian properties
 Real K = 4.58;  // consistency index
 Real n = 0.46;  // power index
-Real tau_y = 0; // yield stress
+Real tau_y = 18.9; // yield stress
 
 Real min_shear_rate = 5e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+5; // cutoff high shear rate
@@ -273,12 +273,12 @@ int main(int ac, char *av[])
         tt = t2 - t1;
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
+        update_density_by_summation.exec();
 
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
             free_surface_indicator.exec();
-            update_density_by_summation.exec();
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
@@ -297,7 +297,6 @@ int main(int ac, char *av[])
         {
             Dt = SMIN(Dt_visc, Dt_adv);
             free_surface_indicator.exec(Dt);
-            update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);

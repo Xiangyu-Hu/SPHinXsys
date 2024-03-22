@@ -256,11 +256,11 @@ int main(int ac, char *av[])
         tt = t2 - t1;
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
+        update_density_by_summation.exec(Dt);
 
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
-            update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
@@ -278,7 +278,6 @@ int main(int ac, char *av[])
         else
         {
             Dt = SMIN(Dt_visc, Dt_adv);
-            update_density_by_summation.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);
