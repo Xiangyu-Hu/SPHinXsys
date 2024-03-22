@@ -188,7 +188,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
             Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
-            force -= this->mass_[index_i] * riemann_solver_k.AverageP(this->p_[index_i] * correction_k(index_i), p_k[index_j] * correction_(index_j)) *
+            force -= this->mass_[index_i] * riemann_solver_k.AverageP(this->p_[index_i] * correction_(index_i), p_k[index_j] * correction_k(index_j)) *
                      2.0 * e_ij * dW_ijV_j;
             rho_dissipation += riemann_solver_k.DissipativeUJump(this->p_[index_i] - p_k[index_j]) * dW_ijV_j;
         }

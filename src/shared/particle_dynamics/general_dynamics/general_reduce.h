@@ -35,19 +35,19 @@
 namespace SPH
 {
 /**
- * @class MaximumNorm
+ * @class VariableNorm
  * @brief  obtained the maximum norm of a variable
  */
-template <typename DataType>
-class MaximumNorm : public LocalDynamicsReduce<Real, ReduceMax>,
-                    public GeneralDataDelegateSimple
+template <typename DataType, typename NormType>
+class VariableNorm : public LocalDynamicsReduce<Real, NormType>,
+                     public GeneralDataDelegateSimple
 {
   public:
-    MaximumNorm(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+    VariableNorm(SPHBody &sph_body, const std::string &variable_name)
+        : LocalDynamicsReduce<Real, NormType>(sph_body, NormType::reference_),
           GeneralDataDelegateSimple(sph_body),
           variable_(*particles_->getVariableByName<DataType>(variable_name)){};
-    virtual ~MaximumNorm(){};
+    virtual ~VariableNorm(){};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
     Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
 

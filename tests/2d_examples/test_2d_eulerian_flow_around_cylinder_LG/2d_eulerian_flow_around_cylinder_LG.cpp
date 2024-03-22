@@ -172,7 +172,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_matrix(water_block_inner, water_block_contact);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);

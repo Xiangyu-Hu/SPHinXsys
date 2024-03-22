@@ -47,6 +47,7 @@ class NormalDirectionFromBodyShape : public LocalDynamics, public GeneralDataDel
   protected:
     Shape &initial_shape_;
     StdLargeVec<Vecd> &pos_, &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
 };
 
 /**
@@ -65,6 +66,7 @@ class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public GeneralDat
     Shape *shape_;
     const Real switch_sign_;
     StdLargeVec<Vecd> &pos_, &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
 };
 } // namespace SPH
 #endif // GENERAL_GEOMETRIC_H

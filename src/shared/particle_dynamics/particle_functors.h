@@ -96,21 +96,21 @@ class NoLimiter : public Limiter
     };
 };
 
-class ZerothConsistencyLimiter : public Limiter
+class ZeroGradientLimiter : public Limiter
 {
     Real h_ref_;
-    StdLargeVec<Vecd> &consistency_;
+    StdLargeVec<Vecd> &zero_gradient_residue_;
 
   public:
-    ZerothConsistencyLimiter(BaseParticles *base_particles)
+    ZeroGradientLimiter(BaseParticles *base_particles)
         : Limiter(),
           h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          consistency_(*base_particles->getVariableByName<Vecd>("ZerothConsistency")){};
-    virtual ~ZerothConsistencyLimiter(){};
+          zero_gradient_residue_(*base_particles->getVariableByName<Vecd>("ZeroGradientResidue")){};
+    virtual ~ZeroGradientLimiter(){};
     Real operator()(size_t index_i)
     {
-        Real error_scale = consistency_[index_i].squaredNorm() * h_ref_ * h_ref_;
-        return SMIN(Real(100) * error_scale, Real(1));
+        Real error_scale = zero_gradient_residue_[index_i].squaredNorm() * h_ref_ * h_ref_;
+        return SMIN(100.0 * error_scale, 1.0);
     };
 };
 //----------------------------------------------------------------------
@@ -212,12 +212,12 @@ class NoKernelCorrection : public KernelCorrection
     };
 };
 
-class FirstConsistencyCorrection : public KernelCorrection
+class LinearGradientCorrection : public KernelCorrection
 {
   public:
-    FirstConsistencyCorrection(BaseParticles *particles)
+    LinearGradientCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+          B_(*particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
 
     Matd operator()(size_t index_i)
     {
@@ -265,11 +265,13 @@ struct ReduceSum
 
 struct ReduceMax
 {
+    static constexpr Real reference_ = MinReal;
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
 
 struct ReduceMin
 {
+    static constexpr Real reference_ = MaxReal;
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
 

@@ -37,5 +37,29 @@ void ParticleSmoothing<VariableType>::update(size_t index_i, Real dt)
     smoothed_[index_i] = temp_[index_i];
 }
 //=================================================================================================//
+template <typename VariableType>
+ParticleSnapshotAverage<VariableType>::
+    ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name)
+    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+      target_variable_(*particles_->template getVariableByName<VariableType>(variable_name))
+{
+    std::string averaged_variable_name = "Averaged" + variable_name;
+    particles_->registerVariable(averaged_variable_, averaged_variable_name);
+    particles_->addVariableToWrite<VariableType>(averaged_variable_name);
+}
+//=================================================================================================//
+template <typename VariableType>
+void ParticleSnapshotAverage<VariableType>::setupDynamics(Real dt) 
+{
+    number_of_snapshot_ ++;
+}
+//=================================================================================================//
+template <typename VariableType>
+void ParticleSnapshotAverage<VariableType>::update(size_t index_i, Real dt) 
+{
+    averaged_variable_[index_i] += (target_variable_[index_i] - averaged_variable_[index_i]) 
+    / Real(number_of_snapshot_);
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // PARTICLE_SMOOTHING_HPP

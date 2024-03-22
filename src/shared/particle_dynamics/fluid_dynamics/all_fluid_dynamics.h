@@ -42,3 +42,4 @@
 #include "surface_tension.hpp"
 #include "transport_velocity_correction.hpp"
 #include "viscous_dynamics.hpp"
+#include "velocity_gradient.hpp"
