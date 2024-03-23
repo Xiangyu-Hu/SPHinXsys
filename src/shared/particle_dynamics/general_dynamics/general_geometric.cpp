@@ -43,5 +43,29 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
     phi_[index_i] = signed_distance;
     phi0_[index_i] = signed_distance;
 }
+//=============================================================================================//
+NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+      initial_shape_(*sph_body_.initial_shape_), pos_(particles_->pos_),
+      n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
+      n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
+      phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
+      phi0_(*particles_->registerSharedVariable<Real>("InitialSignedDistance")) {}
+//=================================================================================================//
+void NormalDirectionFromParticles::interaction(size_t index_i, Real dt)
+{
+    Vecd normal_direction = ZeroData<Vecd>::value;
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        normal_direction += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+    }
+    normal_direction = normal_direction / (normal_direction.norm() + TinyReal);
+    n_[index_i] = normal_direction;
+    n0_[index_i] = normal_direction;
+    Real signed_distance = initial_shape_.findSignedDistance(pos_[index_i]);
+    phi_[index_i] = signed_distance;
+    phi0_[index_i] = signed_distance;
+}
 //=================================================================================================//
 } // namespace SPH

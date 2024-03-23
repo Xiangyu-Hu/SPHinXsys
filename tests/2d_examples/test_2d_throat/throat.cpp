@@ -150,6 +150,7 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_block_inner(fluid_block);
+    InnerRelation wall_boundary_inner(wall_boundary);
     ContactRelation fluid_block_contact(fluid_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&fluid_block});
     //----------------------------------------------------------------------
@@ -162,7 +163,7 @@ int main(int ac, char *av[])
     //-------------------------------------------------------------------
     Gravity gravity(Vecd(gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
     // evaluation of density by summation approach
