@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,65 +21,61 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    general_geometric.h
- * @brief   This is the particle dynamics applicable for all type bodies
- * @author	Xiangyu Hu
+ * @file near_wall_boundary.h
+ * @brief To evaluate the distance from the fluid particle to wall surface.
+ * @details The vector is pointing from the wall surface point to the particle.
+ * Note that if the fluid particle is too close to the wall surface
+ * (less then 1/4 of particle spacing), its position will be corrected to
+ * half of the particle spacing.
+ * @author Xiangyu Hu
  */
 
-#ifndef GENERAL_GEOMETRIC_H
-#define GENERAL_GEOMETRIC_H
+#ifndef NEAR_WALL_BOUNDARY_H
+#define NEAR_WALL_BOUNDARY_H
 
-#include "base_general_dynamics.h"
+#include "base_fluid_dynamics.h"
 
 namespace SPH
 {
-/**
- * @class NormalDirectionFromBodyShape
- * @brief normal direction at particles
- */
-class NormalDirectionFromBodyShape : public LocalDynamics, public GeneralDataDelegateSimple
+namespace fluid_dynamics
+{
+class NearWallDistance : public LocalDynamics, public FSIContactData
 {
   public:
-    explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
-    virtual ~NormalDirectionFromBodyShape(){};
-    void update(size_t index_i, Real dt = 0.0);
+    explicit NearWallDistance(BaseContactRelation &wall_contact_relation);
+    virtual ~NearWallDistance(){};
 
   protected:
-    Shape &initial_shape_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
+    Real spacing_ref_, distance_default_;
+    StdLargeVec<Vecd> &pos_;
+    StdVec<StdLargeVec<Vecd> *> wall_pos_, wall_n_;
+    StdVec<StdLargeVec<Real> *> wall_phi_;
+
+    void evaluateDistanceAndNormal(size_t index_i, Vecd &distance, Vecd &normal);
 };
 
-/**
- * @class NormalDirectionFromSubShapeAndOp
- * @brief normal direction at particles
- */
-class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public GeneralDataDelegateSimple
+class DistanceFromWall : public NearWallDistance
 {
   public:
-    explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
-    virtual ~NormalDirectionFromSubShapeAndOp(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    SubShapeAndOp *shape_and_op_;
-    Shape *shape_;
-    const Real switch_sign_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
-};
-
-class NormalDirectionFromParticles : public LocalDynamics, public GeneralDataDelegateInner
-{
-  public:
-    explicit NormalDirectionFromParticles(BaseInnerRelation &inner_relation);
-    virtual ~NormalDirectionFromParticles(){};
+    explicit DistanceFromWall(BaseContactRelation &wall_contact_relation);
+    virtual ~DistanceFromWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Shape &initial_shape_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
+    StdLargeVec<Vecd> &distance_from_wall_;
 };
+
+class BoundingFromWall : public NearWallDistance
+{
+  public:
+    explicit BoundingFromWall(BaseContactRelation &wall_contact_relation);
+    virtual ~BoundingFromWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real distance_min_;
+};
+
+} // namespace fluid_dynamics
 } // namespace SPH
-#endif // GENERAL_GEOMETRIC_H
+#endif // NEAR_WALL_BOUNDARY_H

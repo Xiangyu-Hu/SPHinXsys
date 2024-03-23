@@ -112,50 +112,6 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrectionType>::
-    Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength)
-    : Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
-      penalty_strength_(penalty_strength) {}
-//=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType>
-void Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
-{
-    Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
-
-    Real rho_i = this->rho_[index_i];
-    Real penalty_pressure = this->p_[index_i];
-    Vecd force = Vecd::Zero();
-    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-    {
-        Real particle_spacing_j1 = 1.0 / this->contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
-        Real particle_spacing_ratio2 = 1.0 / (this->sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
-        particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
-
-        StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        Neighborhood &wall_neighborhood = (*this->contact_configuration_[k])[index_i];
-        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = wall_neighborhood.j_[n];
-            Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-            Real r_ij = wall_neighborhood.r_ij_[n];
-            Vecd &n_j = n_k[index_j];
-
-            /** penalty method to prevent particle running into boundary */
-            Real projection = e_ij.dot(n_j);
-            Real delta = 2.0 * projection * r_ij * particle_spacing_j1;
-            Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
-            // penalty must be positive so that the penalty force is pointed to fluid inner domain
-            Real penalty = penalty_strength_ * beta * fabs(projection * penalty_pressure);
-
-            // penalty force induced acceleration
-            force -= 2.0 * this->mass_[index_i] * penalty * n_j * dW_ijV_j / rho_i;
-        }
-    }
-    this->force_[index_i] += force;
-}
-//=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &contact_relation)
     : BaseIntegration<FluidContactData>(contact_relation),
