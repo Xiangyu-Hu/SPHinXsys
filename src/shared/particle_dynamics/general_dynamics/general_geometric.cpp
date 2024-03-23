@@ -58,7 +58,7 @@ void NormalDirectionFromParticles::interaction(size_t index_i, Real dt)
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        normal_direction += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        normal_direction -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
     }
     normal_direction = normal_direction / (normal_direction.norm() + TinyReal);
     n_[index_i] = normal_direction;

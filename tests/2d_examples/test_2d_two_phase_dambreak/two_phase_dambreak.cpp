@@ -63,7 +63,7 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
     SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
-    InteractionDynamics<fluid_dynamics::DistanceFromWall> air_distance_to_wall(air_wall_contact);
+    InteractionDynamics<fluid_dynamics::BoundingFromWall> air_near_wall_bounding(air_wall_contact);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
         update_water_density_by_summation(water_inner, water_wall_contact);
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
             update_water_density_by_summation.exec();
             update_air_density_by_summation.exec();
             air_transport_correction.exec();
-            air_distance_to_wall.exec();
+            air_near_wall_bounding.exec();
 
             interval_computing_time_step += TickCount::now() - time_instance;
 

@@ -21,17 +21,17 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file distance_from_wall.h
+ * @file near_wall_boundary.h
  * @brief To evaluate the distance from the fluid particle to wall surface.
  * @details The vector is pointing from the wall surface point to the particle.
- * Note that if the fluid particle is too close to the wall surface 
- * (less then 1/4 of particle spacing), its position will be corrected to 
+ * Note that if the fluid particle is too close to the wall surface
+ * (less then 1/4 of particle spacing), its position will be corrected to
  * half of the particle spacing.
  * @author Xiangyu Hu
  */
 
-#ifndef DISTANCE_FROM_WALL_H
-#define DISTANCE_FROM_WALL_H
+#ifndef NEAR_WALL_BOUNDARY_H
+#define NEAR_WALL_BOUNDARY_H
 
 #include "base_fluid_dynamics.h"
 
@@ -39,7 +39,22 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class DistanceFromWall : public LocalDynamics, public FSIContactData
+class NearWallDistance : public LocalDynamics, public FSIContactData
+{
+  public:
+    explicit NearWallDistance(BaseContactRelation &wall_contact_relation);
+    virtual ~NearWallDistance(){};
+
+  protected:
+    Real spacing_ref_, distance_default_;
+    StdLargeVec<Vecd> &pos_;
+    StdVec<StdLargeVec<Vecd> *> wall_pos_, wall_n_;
+    StdVec<StdLargeVec<Real> *> wall_phi_;
+
+    void evaluateDistanceAndNormal(size_t index_i, Vecd &distance, Vecd &normal);
+};
+
+class DistanceFromWall : public NearWallDistance
 {
   public:
     explicit DistanceFromWall(BaseContactRelation &wall_contact_relation);
@@ -47,12 +62,20 @@ class DistanceFromWall : public LocalDynamics, public FSIContactData
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real spacing_ref_, distance_default_, distance_min_;
-    StdLargeVec<Vecd> &pos_, &distance_from_wall_;
-    StdVec<StdLargeVec<Vecd> *> wall_pos_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_phi_;
+    StdLargeVec<Vecd> &distance_from_wall_;
+};
+
+class BoundingFromWall : public NearWallDistance
+{
+  public:
+    explicit BoundingFromWall(BaseContactRelation &wall_contact_relation);
+    virtual ~BoundingFromWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real distance_min_;
 };
 
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // DISTANCE_FROM_WALL_H
+#endif // NEAR_WALL_BOUNDARY_H

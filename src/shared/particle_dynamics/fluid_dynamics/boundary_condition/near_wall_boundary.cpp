@@ -1,16 +1,14 @@
-#include "distance_from_wall.h"
+#include "near_wall_boundary.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
 //=================================================================================================//
-DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
+NearWallDistance::NearWallDistance(BaseContactRelation &wall_contact_relation)
     : LocalDynamics(wall_contact_relation.getSPHBody()), FSIContactData(wall_contact_relation),
       spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing()),
-      distance_default_(100.0 * spacing_ref_), distance_min_(0.25 * spacing_ref_),
-      pos_(particles_->pos_),
-      distance_from_wall_(*particles_->registerSharedVariable<Vecd>("DistanceFromWall"))
+      distance_default_(100.0 * spacing_ref_), pos_(particles_->pos_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -20,10 +18,8 @@ DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
     }
 }
 //=================================================================================================//
-void DistanceFromWall::interaction(size_t index_i, Real dt)
+void NearWallDistance::evaluateDistanceAndNormal(size_t index_i, Vecd &distance, Vecd &normal)
 {
-    Vecd distance = distance_default_ * Vecd::Ones();
-    Vecd normal = Vecd::Ones();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &pos_k = *(wall_pos_[k]);
@@ -41,18 +37,37 @@ void DistanceFromWall::interaction(size_t index_i, Real dt)
             }
         }
     }
-
-    //prediction with regularization
+}
+//=================================================================================================//
+DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
+    : NearWallDistance(wall_contact_relation),
+      distance_from_wall_(*particles_->registerSharedVariable<Vecd>("DistanceFromWall")) {}
+//=================================================================================================//
+void DistanceFromWall::interaction(size_t index_i, Real dt)
+{
+    Vecd distance = distance_default_ * Vecd::Ones();
+    Vecd normal = Vecd::Ones();
+    NearWallDistance::evaluateDistanceAndNormal(index_i, distance, normal);
+    // prediction with regularization
     Vecd normal_distance = distance.dot(normal) * normal;
     Real limiter = SMIN(3.0 * (distance - normal_distance).norm() / spacing_ref_, 1.0);
     distance_from_wall_[index_i] = (1.0 - limiter) * normal_distance + limiter * distance;
-
-    //bounding if the particle is too close to the wall
-    if (distance_from_wall_[index_i].dot(normal) < distance_min_)
+}
+//=================================================================================================//
+BoundingFromWall::BoundingFromWall(BaseContactRelation &wall_contact_relation)
+    : NearWallDistance(wall_contact_relation),
+      distance_min_(0.25 * spacing_ref_) {}
+//=================================================================================================//
+void BoundingFromWall::interaction(size_t index_i, Real dt)
+{
+    Vecd distance = distance_default_ * Vecd::Ones();
+    Vecd normal = Vecd::Ones();
+    NearWallDistance::evaluateDistanceAndNormal(index_i, distance, normal);
+    // bounding if the particle cross the wall
+    Real projection = distance.dot(normal);
+    if (projection < distance_min_)
     {
-        pos_[index_i] -= distance_from_wall_[index_i]; // first moved to surface
-        distance_from_wall_[index_i] = 0.5 * spacing_ref_ * normal;
-        pos_[index_i] += distance_from_wall_[index_i]; // final bounded position
+        pos_[index_i] += 0.5 * spacing_ref_ * normal - distance; // flip near wall distance
     }
 }
 //=================================================================================================//
