@@ -218,6 +218,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
     fluid.addBodyStateForRecording<Real>("Pressure");
     fluid.addBodyStateForRecording<Real>("Density");
+    fluid.addBodyStateForRecording<Real>("Mass");
 
     //----------------------------------------------------------------------
     //	Building Simbody.

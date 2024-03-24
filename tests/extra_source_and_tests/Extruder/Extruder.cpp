@@ -172,7 +172,10 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
-    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
+
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
@@ -261,6 +264,7 @@ int main(int ac, char *av[])
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
+            free_surface_indicator.exec();
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
@@ -278,6 +282,7 @@ int main(int ac, char *av[])
         else
         {
             Dt = SMIN(Dt_visc, Dt_adv);
+            free_surface_indicator.exec();
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);
