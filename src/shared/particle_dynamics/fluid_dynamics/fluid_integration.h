@@ -106,22 +106,6 @@ class Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrectionType>
-    : public Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
-{
-  public:
-    explicit Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
-    template <typename BodyRelationType, typename FirstArg>
-    explicit Integration1stHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : Integration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~Integration1stHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real penalty_strength_;
-};
-
-template <class RiemannSolverType, class KernelCorrectionType>
 class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
     : public BaseIntegration<FluidContactData>
 {
@@ -146,8 +130,6 @@ using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<A
 
 using MultiPhaseIntegration1stHalfWithWallRiemann =
     ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>;
-using ExtendedMultiPhaseIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall, Extended>>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <typename... InteractionTypes>
 class Integration2ndHalf;
