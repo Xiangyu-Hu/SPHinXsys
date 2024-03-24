@@ -24,13 +24,13 @@ BoundingBox system_domain_bounds(Vec3d(-0.3 / 0.769846, 0.0, 0.0), Vec3d(0.46984
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                                        /**< Density. */
-Real U_f = 1.0;                                          /**< freestream velocity. */
-Real P_ref = 101325;                                     /*operating pressure fluent [Pa]*/
+Real rho0_f = 1.0;                                                   /**< Density. */
+Real U_f = 1.0;                                                     /**< freestream velocity. */
+Real P_ref = 101325;                                                /*operating pressure fluent [Pa]*/
 Real gamma = 1.4;
-//Real c_f = 10.0 * U_f;
-Real c_f = sqrt(P_ref * gamma / (117.6655 * rho0_f)) * U_f;                           /**< Speed of sound. */
-Real mu_f = 0.0;                                          /**< Dynamics viscosity. */
+Real c_f = 10.0 * U_f;
+//Real c_f = sqrt(P_ref * gamma / (117.6655 * rho0_f)) * U_f;                 /**< Speed of sound. */
+Real mu_f = 0.0;                                                            /**< Dynamics viscosity. */
 
 //----------------------------------------------------------------------
 //	Set the file path to the data file.

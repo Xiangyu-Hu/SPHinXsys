@@ -416,7 +416,6 @@ namespace SPH
             Vecd area_vector = interface_area_vector1.cross(interface_area_vector2);
             Real triangle_area = 0.5 * area_vector.norm();
             Real distance = sqrt(triangle_area);
-            Real interface_area_size = interface_area_vector1.norm();
             all_data_of_distance_between_nodes.push_back(distance);
         }
     }

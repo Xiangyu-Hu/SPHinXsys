@@ -113,21 +113,6 @@ namespace SPH
                 if (text_line.find(")") != string::npos)
                     continue;
             }
-            ofstream outfile("output.txt");
-            if (!outfile) 
-            {
-                cerr << "Error: Unable to open file output.txt" << endl;
-            }
-
-            for (size_t i = 0; i < mesh_topology_.size(); ++i) {
-                for (size_t j = 0; j < mesh_topology_[i].size(); ++j) {
-                    for (size_t k = 0; k < mesh_topology_[i][j].size(); ++k) {
-                        outfile << mesh_topology_[i][j][k] << " ";
-                    }
-                    outfile << endl;
-                }
-                outfile << endl;
-            }
             mesh_topology_.erase(mesh_topology_.begin());
         }
         else /*This section is for mesh files created from fluent*/
