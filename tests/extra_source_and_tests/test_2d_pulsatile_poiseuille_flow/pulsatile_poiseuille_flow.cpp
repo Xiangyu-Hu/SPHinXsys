@@ -170,10 +170,10 @@ int main(int ac, char *av[])
     /** bidirectional buffer */
     BodyAlignedBoxByCell left_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
+    fluid_dynamics::BidirectionalBuffer<LeftInflowPressure, SequencedPolicy> left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
     BodyAlignedBoxByCell right_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis);
+    fluid_dynamics::BidirectionalBuffer<RightInflowPressure, SequencedPolicy> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis);
 
     /** output parameters */
     water_block.addBodyStateForRecording<Real>("Pressure");
@@ -224,9 +224,9 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 10.0;    /**< End time. */
-    Real Output_Time = 0.01; /**< Time stamps for output of body states. */
-    Real dt = 0.0;           /**< Default acoustic time step sizes. */
+    Real end_time = 10.0;   /**< End time. */
+    Real Output_Time = 0.1; /**< Time stamps for output of body states. */
+    Real dt = 0.0;          /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
@@ -286,7 +286,7 @@ int main(int ac, char *av[])
             right_emitter_inflow_injection.injection.exec();
             left_disposer_outflow_deletion.exec();
             right_disposer_outflow_deletion.exec();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();

@@ -48,7 +48,7 @@ struct NonPrescribedPressure
     }
 };
 
-template <typename TargetPressure>
+template <typename TargetPressure, class ExecutionPolicy = ParallelPolicy>
 class BidirectionalBuffer
 {
   protected:
@@ -68,8 +68,7 @@ class BidirectionalBuffer
 
         virtual void update(size_t index_i, Real dt = 0.0)
         {
-            if (aligned_box_.checkInBounds(axis_, pos_[index_i]))
-                buffer_particle_indicator_[index_i] = 1;
+            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(axis_, pos_[index_i]) ? 1 : 0;
         };
 
       protected:
@@ -106,7 +105,6 @@ class BidirectionalBuffer
                 particles_->copyFromAnotherParticle(particles_->total_real_particles_, index_i);
                 /** Realize the buffer particle by increasing the number of real particle in the body.  */
                 particles_->total_real_particles_ += 1;
-                buffer_particle_indicator_[index_i] = 0; // injected particle transformed as ordinary
                 mutex_switch_to_real_.unlock();
 
                 /** Periodic bounding. */
@@ -138,8 +136,8 @@ class BidirectionalBuffer
           injection(aligned_box_part, particle_buffer, axis, target_pressure_){};
     virtual ~BidirectionalBuffer(){};
 
-    SimpleDynamics<TagBufferParticles> tag_buffer_particles;
-    SimpleDynamics<Injection> injection;
+    SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;
+    SimpleDynamics<Injection, ExecutionPolicy> injection;
 };
 
 using NonPrescribedPressureBidirectionalBuffer = BidirectionalBuffer<NonPrescribedPressure>;
