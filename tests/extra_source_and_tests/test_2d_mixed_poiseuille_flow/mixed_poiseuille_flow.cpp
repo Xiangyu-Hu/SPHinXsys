@@ -90,8 +90,9 @@ struct InflowVelocity
         Vecd target_velocity = Vecd::Zero();
         Real run_time = GlobalStaticVariables::physical_time_;
 
-        u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (position[1] + 0.5 * DH - DH) / (2.0 * mu_f * DL) + (4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) /
-                                                                                                                                            (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * run_time) / (DH * DH));
+        u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (position[1] + 0.5 * DH - DH) / (2.0 * mu_f * DL) +
+                (4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) /
+                    (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * run_time) / (DH * DH));
 
         target_velocity[0] = u_ave;
         target_velocity[1] = 0.0;
@@ -246,9 +247,9 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 10.0;    /**< End time. */
-    Real Output_Time = 0.01; /**< Time stamps for output of body states. */
-    Real dt = 0.0;           /**< Default acoustic time step sizes. */
+    Real end_time = 10.0;   /**< End time. */
+    Real Output_Time = 0.1; /**< Time stamps for output of body states. */
+    Real dt = 0.0;          /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
