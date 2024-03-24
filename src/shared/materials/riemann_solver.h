@@ -30,10 +30,23 @@
 #define RIEMANN_SOLVER_H
 
 #include "base_data_package.h"
+#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
-class Fluid;
+struct FluidStateIn
+{
+    Vecd &vel_;
+    Real &rho_, &p_;
+    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p){};
+};
+
+struct FluidStateOut
+{
+    Vecd vel_;
+    Real rho_, p_;
+    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p){};
+};
 
 /**
  * @struct NoRiemannSolver
@@ -58,6 +71,7 @@ class NoRiemannSolver
     };
 
     Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
+    FluidStateOut InterfaceState(const FluidStateIn &state_i, const FluidStateIn &state_j, const Vecd &e_ij);
 
   protected:
     Real rho0_i_, rho0_j_;
@@ -77,6 +91,7 @@ class AcousticRiemannSolver : public NoRiemannSolver
           limiter_coeff_(limiter_coeff){};
     Real DissipativePJump(const Real &u_jump);
     Real DissipativeUJump(const Real &p_jump);
+    FluidStateOut InterfaceState(const FluidStateIn &state_i, const FluidStateIn &state_j, const Vecd &e_ij);
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;

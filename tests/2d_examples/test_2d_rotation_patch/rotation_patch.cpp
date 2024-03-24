@@ -18,9 +18,9 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;          /**< Reference density of fluid. */
-Real U_max = 1.0;           /**< Characteristic velocity. */
-Real c_f = 5.0 * sqrt(2.0); /**< Reference sound speed. */
+Real rho0_f = 1.0;       /**< Reference density of fluid. */
+Real U_max = 1.0;        /**< Characteristic velocity. */
+Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 
 Vec2d DamP_lb(-LL / 2, -LH / 2); /**< Left bottom. */
 Vec2d DamP_lt(-LL / 2, LH / 2);  /**< Left top. */
@@ -137,16 +137,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<InitialVelocity> initial_condition(water_block);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationInner> free_surface_indicator(water_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<BulkParticles>> transport_velocity_correction(water_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionInnerRiemann> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> fluid_density_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationInnerFreeStream> update_density_by_summation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<NoLimiter, BulkParticles>> transport_velocity_correction(water_body_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     /** We can output a method-specific particle data for debug */
-    water_block.addBodyStateForRecording<Real>("Pressure");
+    water_block.addBodyStateForRecording<Real>("DensitySummation");
     water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
+    water_block.addBodyStateForRecording<Matd>("LinearGradientCorrectionMatrix");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -179,7 +180,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 8.0;
-    Real output_interval = 0.01;
+    Real output_interval = 0.04;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -204,30 +205,35 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
+            Real Dt = fluid_advection_time_step.exec();
             free_surface_indicator.exec();
             corrected_configuration_fluid.exec();
+            update_density_by_summation.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
+            size_t inner_ite_dt = 0;
             Real relaxation_time = 0.0;
-            Real acoustic_dt = 0.0;
-
-            /** inner loop for dual-time criteria time-stepping.  */
-            acoustic_dt = fluid_acoustic_time_step.exec();
-            fluid_pressure_relaxation_correct.exec(acoustic_dt);
-            fluid_density_relaxation.exec(acoustic_dt);
-            relaxation_time += acoustic_dt;
-            integration_time += acoustic_dt;
-            GlobalStaticVariables::physical_time_ += acoustic_dt;
-
+            while (relaxation_time < Dt)
+            {
+                /** inner loop for dual-time criteria time-stepping.  */
+                Real acoustic_dt = fluid_acoustic_time_step.exec();
+                fluid_pressure_relaxation_correct.exec(acoustic_dt);
+                fluid_density_relaxation.exec(acoustic_dt);
+                relaxation_time += acoustic_dt;
+                integration_time += acoustic_dt;
+                inner_ite_dt++;
+                GlobalStaticVariables::physical_time_ += acoustic_dt;
+            }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
             /** screen output, write body reduced values and restart files  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_ << "	acoustic_dt = " << acoustic_dt << "\n";
+                          << GlobalStaticVariables::physical_time_
+                          << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
 
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);

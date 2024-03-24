@@ -298,7 +298,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration.*/
-    InteractionWithUpdate<KernelCorrectionMatrixInner>
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner>
         fish_body_corrected_configuration(fish_body_inner);
     /**
      * Common particle dynamics.
@@ -327,7 +327,7 @@ int main(int ac, char *av[])
      * Fluid structure interaction model.
      */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_force_on_fish_body(fish_body_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_fish_body(fish_body_contact);
     /**
      * Solid dynamics.
      */

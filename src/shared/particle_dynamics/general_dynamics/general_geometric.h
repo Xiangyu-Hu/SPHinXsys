@@ -47,6 +47,7 @@ class NormalDirectionFromBodyShape : public LocalDynamics, public GeneralDataDel
   protected:
     Shape &initial_shape_;
     StdLargeVec<Vecd> &pos_, &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
 };
 
 /**
@@ -65,6 +66,20 @@ class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public GeneralDat
     Shape *shape_;
     const Real switch_sign_;
     StdLargeVec<Vecd> &pos_, &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
+};
+
+class NormalDirectionFromParticles : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    explicit NormalDirectionFromParticles(BaseInnerRelation &inner_relation);
+    virtual ~NormalDirectionFromParticles(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Shape &initial_shape_;
+    StdLargeVec<Vecd> &pos_, &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
 };
 } // namespace SPH
 #endif // GENERAL_GEOMETRIC_H
