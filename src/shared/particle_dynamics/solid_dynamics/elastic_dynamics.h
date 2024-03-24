@@ -71,6 +71,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
 {
   protected:
     StdLargeVec<Vecd> &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
     StdLargeVec<Matd> &F_;
 
   public:

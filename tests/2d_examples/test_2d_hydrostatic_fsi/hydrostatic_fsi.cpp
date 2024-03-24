@@ -253,7 +253,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
     /** Stress relaxation stepping for the elastic gate. */
@@ -267,7 +267,7 @@ int main(int ac, char *av[])
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid> fluid_pressure_force_on_gate(gate_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

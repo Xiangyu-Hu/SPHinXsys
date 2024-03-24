@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(ball, gravity);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);

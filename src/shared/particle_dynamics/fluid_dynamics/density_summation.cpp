@@ -15,11 +15,21 @@ void DensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
     rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 }
 //=================================================================================================//
+void DensitySummation<Inner<>>::update(size_t index_i, Real dt)
+{
+    rho_[index_i] = rho_sum_[index_i];
+}
+//=================================================================================================//
 DensitySummation<Inner<Adaptive>>::DensitySummation(BaseInnerRelation &inner_relation)
     : DensitySummation<Inner<Base>>(inner_relation),
       sph_adaptation_(*sph_body_.sph_adaptation_),
       kernel_(*sph_adaptation_.getKernel()),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
+//=================================================================================================//
+void DensitySummation<Inner<Adaptive>>::update(size_t index_i, Real dt)
+{
+    rho_[index_i] = rho_sum_[index_i];
+}
 //=================================================================================================//
 void DensitySummation<Inner<Adaptive>>::interaction(size_t index_i, Real dt)
 {

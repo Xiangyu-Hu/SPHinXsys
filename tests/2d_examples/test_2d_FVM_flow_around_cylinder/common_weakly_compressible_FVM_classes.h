@@ -89,16 +89,18 @@ class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
 };
 
 /**
- * @class BasePressureForceFromFluidInFVM
+ * @class PressureForceFromFluidInFVM
  * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers in FVM.
  * The pressure force is added on the viscous force of the latter is computed.
  * time step size compared to the fluid dynamics
  */
-template <class RiemannSolverType>
-class BasePressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
+template <class EulerianIntegration2ndHalfType>
+class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
 {
+    using RiemannSolverType = typename EulerianIntegration2ndHalfType::RiemannSolver;
+
   public:
-    explicit BasePressureForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    explicit PressureForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
         : BaseForceFromFluidInFVM(inner_relation), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), vel_(particles_->vel_),
           p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_),
           each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
@@ -110,7 +112,7 @@ class BasePressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
     StdLargeVec<Real> &p_, &rho_;
     RiemannSolverType riemann_solver_;
     vector<vector<size_t>> each_boundary_type_contact_real_index_;
-    virtual ~BasePressureForceFromFluidInFVM(){};
+    virtual ~PressureForceFromFluidInFVM(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -120,20 +122,18 @@ class BasePressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
             if (index_i == each_boundary_type_contact_real_index_[3][real_particle_num])
             {
                 Real Vol_i = Vol_[index_i];
-                FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
+                FluidStateIn state_i(rho_[index_i], vel_[index_i], p_[index_i]);
                 const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
                 size_t index_j = inner_neighborhood.j_[2];
                 Vecd e_ij = inner_neighborhood.e_ij_[2];
-                FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-                FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-                Real p_star = interface_state.p_;
-                force -= 2.0 * (-e_ij) * p_star * Vol_i * inner_neighborhood.dW_ijV_j_[2];
+                FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
+                FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, e_ij);
+                force -= 2.0 * (-e_ij) * interface_state.p_ * Vol_i * inner_neighborhood.dW_ijV_j_[2];
                 force_from_fluid_[index_i] = force;
             }
         }
     };
 };
-using PressureForceFromFluidRiemannInFVM = BasePressureForceFromFluidInFVM<EulerianAcousticRiemannSolver>;
 
 } // namespace fluid_dynamics
 } // namespace SPH

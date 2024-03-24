@@ -180,8 +180,8 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
     SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     /** stress relaxation for the balls. */

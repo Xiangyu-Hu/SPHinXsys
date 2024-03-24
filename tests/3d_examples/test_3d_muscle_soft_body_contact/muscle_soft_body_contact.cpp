@@ -86,8 +86,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(-100.0, 0.0, 0.0));
     SimpleDynamics<GravityForce> plate_initialize_constant_gravity(moving_plate, gravity);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);

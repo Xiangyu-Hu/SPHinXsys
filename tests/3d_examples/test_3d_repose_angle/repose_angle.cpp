@@ -78,6 +78,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.setRunParticleRelaxation(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -85,7 +87,9 @@ int main(int ac, char *av[])
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
     soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
-    soil_block.generateParticles<Lattice>();
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? soil_block.generateParticles<Reload>(soil_block.getName())
+        : soil_block.generateParticles<Lattice>();
     soil_block.addBodyStateForRecording<Real>("Pressure");
     soil_block.addBodyStateForRecording<Real>("Density");
     soil_block.addBodyStateForRecording<Real>("VerticalStress");
@@ -111,6 +115,46 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    //----------------------------------------------------------------------
+    //	Run particle relaxation for body-fitted distribution if chosen.
+    //----------------------------------------------------------------------
+    if (sph_system.RunParticleRelaxation())
+    {
+        //----------------------------------------------------------------------
+        //	Define the methods for particle relaxation.
+        //----------------------------------------------------------------------
+        using namespace relax_dynamics;
+        SimpleDynamics<RandomizeParticlePosition> random_column_particles(soil_block);
+        RelaxationStepInner relaxation_step_inner(soil_block_inner);
+        //----------------------------------------------------------------------
+        //	Output for particle relaxation.
+        //----------------------------------------------------------------------
+        BodyStatesRecordingToVtp write_column_to_vtp(soil_block);
+        ReloadParticleIO write_particle_reload_files(soil_block);
+        //----------------------------------------------------------------------
+        //	Particle relaxation starts here.
+        //----------------------------------------------------------------------
+        random_column_particles.exec(0.25);
+        relaxation_step_inner.SurfaceBounding().exec();
+        body_states_recording.writeToFile(0.0);
+        //----------------------------------------------------------------------
+        //	From here iteration for particle relaxation begins.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            relaxation_step_inner.exec();
+            ite_p += 1;
+            if (ite_p % 100 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
+                write_column_to_vtp.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process of cylinder body finish !" << std::endl;
+        write_particle_reload_files.writeToFile(0.0);
+        return 0;
+    }
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.

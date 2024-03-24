@@ -128,7 +128,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     // corrected strong configuration
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
@@ -223,7 +223,6 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }

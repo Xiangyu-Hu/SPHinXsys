@@ -146,8 +146,8 @@ class NeighborBuilderContact : public NeighborBuilder
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContact(){};
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+    virtual void operator()(Neighborhood &neighborhood,
+                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 };
 
 /**
@@ -197,5 +197,80 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
     Real relative_h_ref_;
 };
 
+/**
+ * @class BaseNeighborBuilderShell
+ * @brief A base neighbor builder functor for contact relation to shell.
+ */
+class BaseNeighborBuilderContactShell : public NeighborBuilder
+{
+  public:
+    explicit BaseNeighborBuilderContactShell(SPHBody &shell_body);
+
+  protected:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+    StdLargeVec<Vecd> &n_; // normal direction of contact body
+    StdLargeVec<Real> &thickness_;
+    StdLargeVec<Real> &k1_ave_; // 1st principle curvature of contact body
+    StdLargeVec<Real> &k2_ave_; // 2nd principle curvature of contact body
+    Real particle_distance_;    // reference spacing of contact body
+
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+                        size_t index_j, const Real &W_ij,
+                        const Real &dW_ijV_j, const Vecd &e_ij);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+                            size_t index_j, const Real &W_ij,
+                            const Real &dW_ijV_j, const Vecd &e_ij);
+};
+
+/**
+ * @class NeighborBuilderContactToShell
+ * @brief A contact neighbor builder functor for contact relation from fluid to shell.
+ */
+class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    inline void operator()(Neighborhood &neighborhood,
+                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+    {
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius());
+    }
+
+  private:
+    Real direction_corrector_;
+
+  protected:
+    void update_neighbors(Neighborhood &neighborhood,
+                          const Vecd &pos_i, size_t index_i, const ListData &list_data_j, Real radius);
+};
+
+/**
+ * @class NeighborBuilderContactFromShell
+ * @brief A contact neighbor builder functor for contact relation from shell to fluid.
+ */
+class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+  private:
+    Real direction_corrector_;
+};
+
+/**
+ * @class ShellNeighborBuilderInnerWithContactKernel
+ * @brief A inner neighbor builder functor with reduced kernel.
+ * The smoothing length is equal to that of the contact body
+ */
+class ShellNeighborBuilderInnerWithContactKernel : public NeighborBuilderInner
+{
+  public:
+    explicit ShellNeighborBuilderInnerWithContactKernel(SPHBody &body, SPHBody &contact_body);
+
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+};
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

@@ -8,9 +8,9 @@ namespace SPH
 namespace solid_dynamics
 {
 //=================================================================================================//
-template <class RiemannSolverType>
-BasePressureForceFromFluid<RiemannSolverType>::
-    BasePressureForceFromFluid(BaseContactRelation &contact_relation)
+template <class FluidIntegration2ndHalfType>
+PressureForceFromFluid<FluidIntegration2ndHalfType>::
+    PressureForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
       vel_ave_(*particles_->AverageVelocity()),
       force_ave_(*particles_->AverageForce()), n_(particles_->n_)
@@ -26,8 +26,8 @@ BasePressureForceFromFluid<RiemannSolverType>::
     }
 }
 //=================================================================================================//
-template <class RiemannSolverType>
-void BasePressureForceFromFluid<RiemannSolverType>::interaction(size_t index_i, Real dt)
+template <class FluidIntegration2ndHalfType>
+void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)

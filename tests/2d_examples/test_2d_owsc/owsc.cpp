@@ -58,7 +58,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of density by summation approach. */
@@ -77,7 +77,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on flap. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(flap_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_from_fluid(flap_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(flap_contact);
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);

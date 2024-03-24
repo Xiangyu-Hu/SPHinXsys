@@ -8,9 +8,9 @@ namespace SPH
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-KernelCorrectionMatrix<DataDelegationType>::KernelCorrectionMatrix(BaseRelationType &base_relation)
+LinearGradientCorrectionMatrix<DataDelegationType>::LinearGradientCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
+      B_(*this->particles_->template registerSharedVariable<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>

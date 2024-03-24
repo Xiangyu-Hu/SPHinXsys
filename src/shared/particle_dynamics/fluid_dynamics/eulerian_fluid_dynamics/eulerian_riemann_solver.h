@@ -31,61 +31,24 @@
 
 #include "base_data_package.h"
 #include "compressible_fluid.h"
-#include "weakly_compressible_fluid.h"
-
+#include "riemann_solver.h"
 namespace SPH
 {
-/**
- * @struct FluidState
- * @brief  Struct for stored states of Riemann solver in weakly-compressible flow.
- */
-struct FluidState
-{
-    Vecd &vel_;
-    Real &rho_, &p_;
-    FluidState(Real &rho, Vecd &vel, Real &p)
-        : vel_(vel), rho_(rho), p_(p){};
-};
-
-struct FluidStarState
-{
-    Vecd vel_;
-    Real p_;
-    FluidStarState(Vecd vel, Real p)
-        : vel_(vel), p_(p){};
-};
-
-/**
- * @struct EulerianAcousticRiemannSolver
- * @brief  Acoustic RiemannSolver for Eulerian weakly-compressible flow.
- */
-class EulerianAcousticRiemannSolver
-{
-    Fluid &fluid_i_, &fluid_j_;
-    Real limiter_parameter_;
-
-  public:
-    EulerianAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j, Real limiter_parameter = 15.0)
-        : fluid_i_(fluid_i), fluid_j_(fluid_j), limiter_parameter_(limiter_parameter){};
-    FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
-};
-
 /**
  * @struct CompressibleFluidState
  * @brief  Struct for stored states of Riemann solver in compressible flow.
  */
-struct CompressibleFluidState : FluidState
+struct CompressibleFluidState : FluidStateIn
 {
     Real &E_;
     CompressibleFluidState(Real &rho, Vecd &vel, Real &p, Real &E)
-        : FluidState(rho, vel, p), E_(E){};
+        : FluidStateIn(rho, vel, p), E_(E){};
 };
-struct CompressibleFluidStarState : FluidStarState
+struct CompressibleFluidStarState : FluidStateOut
 {
-    Real rho_;
     Real E_;
     CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
-        : FluidStarState(vel, p), rho_(rho), E_(E){};
+        : FluidStateOut(rho, vel, p), E_(E){};
 };
 
 /**

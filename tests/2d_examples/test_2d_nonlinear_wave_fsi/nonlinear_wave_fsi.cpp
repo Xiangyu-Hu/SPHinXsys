@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
     /** pressure relaxation using Verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Fluid force on structure. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> fluid_force_on_structure(structure_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);

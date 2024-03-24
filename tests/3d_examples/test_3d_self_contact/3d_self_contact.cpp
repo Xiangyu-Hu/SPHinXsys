@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     Gravity gravity(Vec3d(0.0, -1.0, 0.0));
     SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(coil_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
     // Time step size
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
     // stress relaxation.

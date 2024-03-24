@@ -60,7 +60,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> str_corrected_conf(structure_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> str_corrected_conf(structure_inner);
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of density by summation approach. */
@@ -76,7 +76,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Fluid force on structure. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluidRiemann> pressure_force_on_solid(structure_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_solid(structure_contact);
     /*-------------------------------------------------------------------------------*/
     /*--------------------------FREE SURFACE IDENTIFICATION--------------------------*/
     /*-------------------------------------------------------------------------------*/
