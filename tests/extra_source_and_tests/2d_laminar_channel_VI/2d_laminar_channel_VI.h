@@ -39,7 +39,7 @@ Real c_f = 10.0 * U_f;*/
 //** Geometry parameters for straight channel SPH_4 *
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 15.0;                         /**< Channel length. */
-Real resolution_ref = 0.05;              /**< Initial reference particle spacing. */
+Real resolution_ref = 0.1;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;
 
