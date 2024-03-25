@@ -32,7 +32,6 @@
 
 #include "base_particle_generator.h"
 #include "unstructured_mesh.h"
-#include "unstructured_mesh_3d.h"
 
 namespace SPH
 {
@@ -41,7 +40,6 @@ class GeneratingMethod<UnstructuredMesh>
 {
   public:
     explicit GeneratingMethod(ANSYSMesh &ansys_mesh);
-    explicit GeneratingMethod(ANSYSMesh_3d& ansys_mesh);
     virtual ~GeneratingMethod(){};
 
   protected:
@@ -55,7 +53,6 @@ class ParticleGenerator<UnstructuredMesh>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
-    explicit ParticleGenerator(SPHBody& sph_body, ANSYSMesh_3d& ansys_mesh);
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 };

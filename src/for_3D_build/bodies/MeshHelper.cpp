@@ -110,7 +110,7 @@ namespace SPH
     }
 
     void MeshFileHelpers::dataStruct(vector<vector<vector<size_t>>>& mesh_topology_, vector<vector<size_t>>& elements_nodes_connection_,
-                                    size_t number_of_elements, size_t mesh_type, size_t dimension, StdLargeVec<Vec3d>& elements_neighbors_connection_)
+                                    size_t number_of_elements, size_t mesh_type, size_t dimension, StdLargeVec<Vecd>& elements_neighbors_connection_)
     {
 
         mesh_topology_.resize(number_of_elements + 1);
@@ -387,7 +387,7 @@ namespace SPH
         Vecd node2_coordinate = Vecd(node_coordinates_[nodes[1]][0], node_coordinates_[nodes[1]][1], node_coordinates_[nodes[1]][2]);
         Vecd node3_coordinate = Vecd(node_coordinates_[nodes[2]][0], node_coordinates_[nodes[2]][1], node_coordinates_[nodes[2]][2]);
         Vecd node4_coordinate = Vecd(node_coordinates_[nodes[3]][0], node_coordinates_[nodes[3]][1], node_coordinates_[nodes[3]][2]);
-        Mat3d M;
+        Matd M;
         M << node2_coordinate - node1_coordinate, node3_coordinate - node1_coordinate, node4_coordinate - node1_coordinate;
         Real determinant = abs(M.determinant());
         Real element_volume = (static_cast<double>(1) / 6) * determinant;
@@ -577,10 +577,7 @@ namespace SPH
                 {
                     if (text_line.find("(", 0) == string::npos && text_line.find("))", 0) == string::npos && text_line.find(" ", 0) != string::npos)
                     {
-                        if (node_index == 2019)
-                        {
-                            Real a = 1;
-                        }
+ 
                         Real Coords[3] = { 0.0, 0.0, 0.0 };
                         if (dimension == 3)
                         {

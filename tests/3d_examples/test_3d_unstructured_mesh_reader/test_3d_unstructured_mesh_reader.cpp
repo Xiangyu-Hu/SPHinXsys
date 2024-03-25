@@ -26,7 +26,7 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
-    wave_block.generateParticles<ParticleGeneratorUnstructuredMesh>(read_mesh_data);
+    wave_block.generateParticles<ParticleGeneratorUnstructuredMesh_3d>(read_mesh_data);
     GhostCreationFromMesh_3d ghost_creation(wave_block, read_mesh_data);
 
     // Visualization in FVM with date in cell.

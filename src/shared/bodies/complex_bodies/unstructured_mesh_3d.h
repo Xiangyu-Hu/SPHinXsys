@@ -53,7 +53,7 @@ class ANSYSMesh_3d
     StdLargeVec<Vecd> elements_centroids_;
     StdLargeVec<Real> elements_volumes_;
     vector<vector<size_t>> elements_nodes_connection_;
-    StdLargeVec<Vec3d> elements_neighbors_connection_;
+    StdLargeVec<Vecd> elements_neighbors_connection_;
     vector<vector<vector<size_t>>> mesh_topology_;
     double min_distance_between_nodes_;
 
@@ -62,6 +62,28 @@ class ANSYSMesh_3d
     void getMinimumDistanceBetweenNodes();
     
 };
+class UnstructuredMesh_3d;
+template <> // Base class for generating particles from mesh centroids
+class GeneratingMethod<UnstructuredMesh_3d>
+{
+  public:
+    GeneratingMethod(ANSYSMesh_3d& ansys_mesh);
+    virtual ~GeneratingMethod(){};
+
+  protected:
+    StdLargeVec<Vecd> &elements_centroids_;
+    StdLargeVec<Real> &elements_volumes_;
+};
+template <>
+class ParticleGenerator<UnstructuredMesh_3d>
+    : public ParticleGenerator<Base>, public GeneratingMethod<UnstructuredMesh_3d>
+{
+  public:
+    ParticleGenerator(SPHBody& sph_body, ANSYSMesh_3d& ansys_mesh);
+    virtual ~ParticleGenerator(){};
+    virtual void initializeGeometricVariables() override;
+};
+using ParticleGeneratorUnstructuredMesh_3d = ParticleGenerator<UnstructuredMesh_3d>;
 
 
 class BaseInnerRelationInFVM_3d : public BaseInnerRelation

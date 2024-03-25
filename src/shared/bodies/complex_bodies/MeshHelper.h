@@ -51,7 +51,7 @@ namespace SPH
                                     size_t& dimension, vector<vector<Real>>& point_coordinates);
         static void numberofElements(ifstream& mesh_file, size_t& number_of_elements, string& text_line);
         static void dataStruct(vector<vector<vector<size_t>>>& mesh_topology_, vector<vector<size_t>>& elements_nodes_connection_, 
-                                size_t number_of_elements, size_t mesh_type, size_t dimension, StdLargeVec<Vec3d>& elements_neighbors_connection_);
+                                size_t number_of_elements, size_t mesh_type, size_t dimension, StdLargeVec<Vecd>& elements_neighbors_connection_);
         static size_t findBoundaryType(string& text_line, size_t boundary_type);
         static Vecd nodeIndex(string& text_line);
         static Vec2d cellIndex(string& text_line);

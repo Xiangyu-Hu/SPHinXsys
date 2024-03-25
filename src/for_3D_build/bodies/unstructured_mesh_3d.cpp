@@ -230,8 +230,23 @@ namespace SPH
                 cout << "The array of all distance between nodes is empty " << endl;
             }
         }
-
-    //=================================================================================================//
+        //=================================================================================================//
+        
+        GeneratingMethod<UnstructuredMesh_3d>::GeneratingMethod(ANSYSMesh_3d& ansys_mesh_3d)
+            : elements_centroids_(ansys_mesh_3d.elements_centroids_), // Assume ANSYSMesh_3d has a similar interface
+            elements_volumes_(ansys_mesh_3d.elements_volumes_) {}
+        //=================================================================================================//
+        ParticleGenerator<UnstructuredMesh_3d>::ParticleGenerator(SPHBody& sph_body, ANSYSMesh_3d& ansys_mesh_3d)
+            : ParticleGenerator<Base>(sph_body), GeneratingMethod<UnstructuredMesh_3d>(ansys_mesh_3d) {}
+        //=================================================================================================//
+        void ParticleGenerator<UnstructuredMesh_3d>::initializeGeometricVariables()
+        {
+            for (size_t i = 0; i != elements_centroids_.size(); ++i)
+            {
+                initializePositionAndVolumetricMeasure(elements_centroids_[i], elements_volumes_[i]);
+            }
+        }
+        //=================================================================================================//
     
         BaseInnerRelationInFVM_3d::BaseInnerRelationInFVM_3d(RealBody &real_body, ANSYSMesh_3d& ansys_mesh)
         : BaseInnerRelation(real_body), real_body_(&real_body), node_coordinates_(ansys_mesh.node_coordinates_),

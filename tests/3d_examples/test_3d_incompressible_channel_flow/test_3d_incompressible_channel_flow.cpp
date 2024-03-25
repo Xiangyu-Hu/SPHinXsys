@@ -25,7 +25,7 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     FluidBody air_block(sph_system, makeShared<WaveBody>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    air_block.generateParticles<ParticleGeneratorUnstructuredMesh>(read_mesh_data);
+    air_block.generateParticles<ParticleGeneratorUnstructuredMesh_3d>(read_mesh_data);
     air_block.addBodyStateForRecording<Real>("Density");
     air_block.addBodyStateForRecording<Real>("Pressure");
     SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
@@ -59,7 +59,7 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    Real end_time = 50;
+    Real end_time = 30;
     Real output_interval = 2; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
