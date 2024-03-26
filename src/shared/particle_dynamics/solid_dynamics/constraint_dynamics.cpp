@@ -8,7 +8,7 @@ namespace solid_dynamics
 //=================================================================================================//
 SpringConstrain::SpringConstrain(BodyPartByParticle &body_part, Real stiffness)
     : BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>(body_part),
-      mass_(particles_->mass_), stiffness_(stiffness * Vecd::Ones()) {}
+      stiffness_(stiffness * Vecd::Ones()) {}
 //=================================================================================================//
 Vecd SpringConstrain::getAcceleration(Vecd &disp, Real mass)
 {

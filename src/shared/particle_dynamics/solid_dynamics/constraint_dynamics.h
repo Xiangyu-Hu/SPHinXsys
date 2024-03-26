@@ -108,7 +108,6 @@ class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle, SolidDat
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
     Vecd stiffness_;
     virtual Vecd getAcceleration(Vecd &disp, Real mass);
 };

@@ -26,7 +26,8 @@
  * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_OBSERVATION_H
+#define IO_OBSERVATION_H
 
 #include "io_base.h"
 
@@ -144,3 +145,4 @@ class ReducedQuantityRecording : public BaseIO
     };
 };
 } // namespace SPH
+#endif // IO_OBSERVATION_H

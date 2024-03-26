@@ -48,23 +48,22 @@ namespace multi_species_continuum
 	{
     public:
 		/*< material parameter */ 
-		Real fulid_initial_density_;
+		Real fluid_initial_density_;
 		Real diffusivity_constant_;
 		Real water_pressure_constant_;
 
-		Real getFulidInitialDensity() { return fulid_initial_density_; };
+		Real getFluidInitialDensity() { return fluid_initial_density_; };
 		Real getDiffusivityConstant() { return diffusivity_constant_; };
 		Real getWaterPressureConstant() { return water_pressure_constant_; };
 
     /** Constructor */
 		explicit PorousMediaSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real diffusivity_constant,
-			Real fulid_initial_density, Real water_pressure_constant)
-			: LinearElasticSolid(rho0, youngs_modulus, poisson_ratio) 
+			Real fluid_initial_density, Real water_pressure_constant)
+			: LinearElasticSolid(rho0, youngs_modulus, poisson_ratio),
+						 diffusivity_constant_(diffusivity_constant),  
+						 fluid_initial_density_(fluid_initial_density), 
+						 water_pressure_constant_(water_pressure_constant)
 		{
-			diffusivity_constant_ = diffusivity_constant; 
-			fulid_initial_density_ = fulid_initial_density;
-			water_pressure_constant_ = water_pressure_constant;
-
 			material_type_name_ = "PorousMediaSolid";
 		};
 

@@ -57,16 +57,16 @@ class GetSaturationTimeStepSize
     Real smoothing_length_;
 
   public:
-    explicit GetSaturationTimeStepSize(SPHBody &sph_body) : LocalDynamicsReduce<ReduceMin>(sph_body),
-                                                            PorousMediaSolidDataSimple(sph_body)
-    {
-        smoothing_length_ = sph_body.sph_adaptation_->ReferenceSmoothingLength();
-    };
+    explicit GetSaturationTimeStepSize(SPHBody &sph_body)
+        : LocalDynamicsReduce<ReduceMin>(sph_body),
+          PorousMediaSolidDataSimple(sph_body),
+          smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()){};
     virtual ~GetSaturationTimeStepSize(){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
     {
-        return 0.5 * smoothing_length_ * smoothing_length_ / particles_->porous_solid_.getDiffusivityConstant() / (Real)Dimensions;
+        return 0.5 * smoothing_length_ * smoothing_length_ /
+               particles_->porous_solid_.getDiffusivityConstant() / (Real)Dimensions;
     };
 };
 
@@ -195,10 +195,11 @@ class PorousMediaStressRelaxationSecondHalf
 class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<BodyPartByParticle>, public PorousMediaSolidDataSimple
 {
   public:
-    PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part) : BaseLocalDynamics<BodyPartByParticle>(body_part), PorousMediaSolidDataSimple(body_part.getSPHBody()),
-                                                                                   fluid_mass_(particles_->fluid_mass_), fluid_saturation_(particles_->fluid_saturation_),
-                                                                                   total_mass_(particles_->total_mass_), rho_n_(particles_->rho_),
-                                                                                   Vol_update_(particles_->Vol_update_), pos_(particles_->pos_){};
+    PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part)
+        : BaseLocalDynamics<BodyPartByParticle>(body_part), PorousMediaSolidDataSimple(body_part.getSPHBody()),
+          fluid_mass_(particles_->fluid_mass_), fluid_saturation_(particles_->fluid_saturation_),
+          total_mass_(particles_->total_mass_), rho_n_(particles_->rho_),
+          Vol_update_(particles_->Vol_update_), pos_(particles_->pos_){};
 
     virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
 
