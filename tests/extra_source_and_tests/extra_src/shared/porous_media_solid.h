@@ -39,37 +39,37 @@ namespace SPH
 {
 namespace multi_species_continuum
 {
-	/**
-	* @class PorousMediaSolid
-	* @brief Abstract class for a porous media solid
-	* Note that porous media can be plastic solid if necessary
-	*/
-	class PorousMediaSolid : public LinearElasticSolid
-	{
-    public:
-		/*< material parameter */ 
-		Real fluid_initial_density_;
-		Real diffusivity_constant_;
-		Real water_pressure_constant_;
+/**
+ * @class PorousMediaSolid
+ * @brief Abstract class for a porous media solid
+ * Note that porous media can be plastic solid if necessary
+ */
+class PorousMediaSolid : public LinearElasticSolid
+{
+  public:
+    /*< material parameter */
+    Real fluid_initial_density_;
+    Real diffusivity_constant_;
+    Real water_pressure_constant_;
 
-		Real getFluidInitialDensity() { return fluid_initial_density_; };
-		Real getDiffusivityConstant() { return diffusivity_constant_; };
-		Real getWaterPressureConstant() { return water_pressure_constant_; };
+    Real getFluidInitialDensity() { return fluid_initial_density_; };
+    Real getDiffusivityConstant() { return diffusivity_constant_; };
+    Real getWaterPressureConstant() { return water_pressure_constant_; };
 
     /** Constructor */
-		explicit PorousMediaSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real diffusivity_constant,
-			Real fluid_initial_density, Real water_pressure_constant)
-			: LinearElasticSolid(rho0, youngs_modulus, poisson_ratio),
-						 diffusivity_constant_(diffusivity_constant),  
-						 fluid_initial_density_(fluid_initial_density), 
-						 water_pressure_constant_(water_pressure_constant)
-		{
-			material_type_name_ = "PorousMediaSolid";
-		};
+    explicit PorousMediaSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real diffusivity_constant,
+                              Real fluid_initial_density, Real water_pressure_constant)
+        : LinearElasticSolid(rho0, youngs_modulus, poisson_ratio),
+          fluid_initial_density_(fluid_initial_density),
+          diffusivity_constant_(diffusivity_constant),
+          water_pressure_constant_(water_pressure_constant)
+    {
+        material_type_name_ = "PorousMediaSolid";
+    };
 
-		virtual ~PorousMediaSolid() {};
-  };
+    virtual ~PorousMediaSolid(){};
+};
 
-}
+} // namespace multi_species_continuum
 } // namespace SPH
 #endif // POROUS_SOLID_H
