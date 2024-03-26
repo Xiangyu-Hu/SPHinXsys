@@ -260,6 +260,7 @@ class AdaptiveResolution
 template <class ReturnType>
 struct ReduceSum
 {
+    static constexpr ReturnType reference_ = ZeroData<ReturnType>::value;
     ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
 };
 
@@ -277,16 +278,19 @@ struct ReduceMin
 
 struct ReduceOR
 {
+    static constexpr bool reference_ = false;
     bool operator()(bool x, bool y) const { return x || y; };
 };
 
 struct ReduceAND
 {
+    static constexpr bool reference_ = true;
     bool operator()(bool x, bool y) const { return x && y; };
 };
 
 struct ReduceLowerBound
 {
+    static constexpr Vecd reference_ = MaxReal * Vecd::Ones();
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
         Vecd lower_bound;
@@ -295,8 +299,10 @@ struct ReduceLowerBound
         return lower_bound;
     };
 };
+
 struct ReduceUpperBound
 {
+    static constexpr Vecd reference_ = MinReal * Vecd::Ones();
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
         Vecd upper_bound;

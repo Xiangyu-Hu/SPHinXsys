@@ -81,19 +81,18 @@ template <typename ReturnType, typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
+    BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           quantity_name_("ReducedQuantity"){};
     virtual ~BaseLocalDynamicsReduce(){};
 
     using ReduceReturnType = ReturnType;
-    ReturnType Reference() { return reference_; };
+    ReturnType Reference() { return operation_.reference_; };
     std::string QuantityName() { return quantity_name_; };
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
   protected:
-    ReturnType reference_;
     Operation operation_;
     std::string quantity_name_;
 };
