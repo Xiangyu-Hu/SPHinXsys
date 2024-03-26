@@ -67,7 +67,7 @@ class BarDynamicsInitialCondition : public LocalDynamics, public BarDataSimple
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
-class BarAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                                 public BarDataSimple
 {
   protected:
@@ -222,7 +222,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
             size_t index_j = inner_neighborhood.j_[n];
 
             force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) *
-                            inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                     inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
             pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) *
                                           inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
             pseudo_b_normal_acceleration += (global_b_moment_i + global_b_moment_[index_j]) *

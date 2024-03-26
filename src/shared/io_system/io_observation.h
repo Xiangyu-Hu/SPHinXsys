@@ -112,7 +112,7 @@ class ReducedQuantityRecording : public BaseIO
 
   public:
     /*< deduce variable type from reduce method. */
-    using VariableType = typename LocalReduceMethodType::ReduceReturnType;
+    using VariableType = typename LocalReduceMethodType::ReturnType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:

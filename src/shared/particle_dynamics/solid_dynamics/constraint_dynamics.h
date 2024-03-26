@@ -320,7 +320,7 @@ using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
  */
 template <class DynamicsIdentifier>
 class TotalForceForSimBody
-    : public BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
+    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
       public SolidDataSimple
 {
   protected:
@@ -336,8 +336,7 @@ class TotalForceForSimBody
                          SimTK::MultibodySystem &MBsystem,
                          SimTK::MobilizedBody &mobod,
                          SimTK::RungeKuttaMersonIntegrator &integ)
-        : BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(
-              identifier, SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0))),
+        : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
           SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
           force_(particles_->force_), force_prior_(particles_->force_prior_),
           pos_(particles_->pos_),

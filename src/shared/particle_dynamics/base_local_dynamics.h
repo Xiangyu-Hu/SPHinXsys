@@ -77,16 +77,16 @@ using LocalDynamics = BaseLocalDynamics<SPHBody>;
  * @class BaseLocalDynamicsReduce
  * @brief The base class for all local particle dynamics for reducing.
  */
-template <typename ReturnType, typename Operation, class DynamicsIdentifier>
+template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
+    explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           quantity_name_("ReducedQuantity"){};
     virtual ~BaseLocalDynamicsReduce(){};
 
-    using ReduceReturnType = ReturnType;
+    using ReturnType = decltype(Operation::reference_);
     ReturnType Reference() { return operation_.reference_; };
     std::string QuantityName() { return quantity_name_; };
     Operation &getOperation() { return operation_; };
@@ -96,8 +96,8 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
     Operation operation_;
     std::string quantity_name_;
 };
-template <typename ReturnType, typename Operation>
-using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
+template <typename Operation>
+using LocalDynamicsReduce = BaseLocalDynamicsReduce<Operation, SPHBody>;
 
 /**
  * @class Average
@@ -111,7 +111,7 @@ class Average : public ReduceSumType
     Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
     virtual ~Average(){};
-    using ReturnType = typename ReduceSumType::ReduceReturnType;
+    using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
     {

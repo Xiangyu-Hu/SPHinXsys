@@ -10,7 +10,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<Real, ReduceMin>(sph_body, MaxReal),
+    : LocalDynamicsReduce<ReduceMin>(sph_body),
       ElasticSolidDataSimple(sph_body), CFL_(CFL),
       vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
       mass_(particles_->mass_), smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
@@ -32,7 +32,7 @@ ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_bo
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       ElasticSolidDataSimple(sph_body),
-      n_(particles_->n_), n0_(particles_->n0_), 
+      n_(particles_->n_), n0_(particles_->n0_),
       phi_(*particles_->getVariableByName<Real>("SignedDistance")),
       phi0_(*particles_->getVariableByName<Real>("InitialSignedDistance")),
       F_(particles_->F_) {}
