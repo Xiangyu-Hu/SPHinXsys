@@ -85,11 +85,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    column.generateParticles<ParticleGeneratorLattice>();
+    column.generateParticles<Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
-    my_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    my_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

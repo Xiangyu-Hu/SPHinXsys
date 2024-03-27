@@ -65,7 +65,7 @@ int main(int ac, char *av[])
                                                      Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
     myocardium_muscle_body.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    myocardium_muscle_body.generateParticles<ParticleGeneratorLattice>();
+    myocardium_muscle_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

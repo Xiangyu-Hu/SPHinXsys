@@ -188,11 +188,11 @@ int main(int ac, char *av[])
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? beam_body.generateParticles<ParticleGeneratorReload>(beam_body.getName())
-        : beam_body.generateParticles<ParticleGeneratorLattice>();
+        ? beam_body.generateParticles<Reload>(beam_body.getName())
+        : beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

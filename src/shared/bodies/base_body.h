@@ -39,6 +39,7 @@
 #include "all_geometries.h"
 #include "base_data_package.h"
 #include "base_material.h"
+#include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "particle_sorting.h"
@@ -72,6 +73,8 @@ class SPHBody
     std::string body_name_;
     bool newly_updated_;            /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
+    bool is_bound_set_;             /**< whether the bounding box is set */
+    BoundingBox bound_;             /**< bounding box of the body */
 
   public:
     Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
@@ -89,18 +92,24 @@ class SPHBody
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
-    size_t &LoopRange() { return base_particles_->total_real_particles_; };
+    IndexRange LoopRange() { return IndexRange(0, base_particles_->total_real_particles_); };
     size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
     Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };
     bool checkNewlyUpdated() { return newly_updated_; };
-    BoundingBox getBodyShapeBounds();
+    void setSPHBodyBounds(const BoundingBox &bound);
+    BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
-    void allocateConfigurationMemoriesForBufferParticles();
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
+    template <class SelfDefinedType, typename... Args>
+    SelfDefinedType makeSelfDefined(Args &&...args)
+    {
+        return SelfDefinedType(*this, std::forward<Args>(args)...);
+    }
+
     virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
@@ -142,17 +151,31 @@ class SPHBody
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
         defineParticlesWithMaterial<ParticleType>(material);
     };
-
-    /** initialize particle data using a particle generator for geometric data.
-     * the local material parameters are also initialized. */
-    template <class ParticleGeneratorType, typename... Args>
-    void generateParticles(Args &&...args)
+    //----------------------------------------------------------------------
+    // Particle generating methods
+    // Initialize particle data using a particle generator for geometric data.
+    // The local material parameters are also initialized.
+    //----------------------------------------------------------------------
+    template <class ParticleGeneratorType> // for self-defined particle generator
+    void generateParticles(ParticleGeneratorType &particle_generator)
     {
-        ParticleGeneratorType particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
+    };
+    // Using predefined particle generator
+    template <class... Parameters, typename... Args>
+    void generateParticles(Args &&...args)
+    {
+        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
+        generateParticles(particle_generator);
+    };
+    // Buffer or ghost particles can be generated together with real particles
+    template <class... Parameters, class ReserveType, typename... Args>
+    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    {
+        generateParticles<ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
     template <typename DataType>

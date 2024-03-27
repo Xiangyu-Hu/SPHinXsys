@@ -108,7 +108,8 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
+    auto plate_particle_generator = plate_body.makeSelfDefined<PlateParticleGenerator>();
+    plate_body.generateParticles(plate_particle_generator);
     // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
@@ -118,7 +119,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    plate_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

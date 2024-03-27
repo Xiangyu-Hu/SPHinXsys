@@ -30,10 +30,10 @@
 #define ALL_SHARED_PARTICLES_H
 
 #include "base_particles.hpp"
+#include "continuum_particles.h"
 #include "diffusion_reaction_particles.h"
 #include "observer_particles.h"
 #include "solid_particles.h"
 #include "solid_particles_variable.h"
-#include "continuum_particles.h"
 
 #endif // ALL_SHARED_PARTICLES_H

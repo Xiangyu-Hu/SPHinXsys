@@ -16,7 +16,7 @@ using namespace SPH;
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 
-class ShellCircleParticleGenerator : public ParticleGeneratorSurface
+class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -25,7 +25,7 @@ class ShellCircleParticleGenerator : public ParticleGeneratorSurface
 
   public:
     explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : ParticleGeneratorSurface(sph_body),
+        : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
@@ -232,7 +232,8 @@ return_data bending_circular_plate(Real dp_ratio)
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-    shell_body.generateParticles<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
+    auto shell_particle_generator = shell_body.makeSelfDefined<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
+    shell_body.generateParticles(shell_particle_generator);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");

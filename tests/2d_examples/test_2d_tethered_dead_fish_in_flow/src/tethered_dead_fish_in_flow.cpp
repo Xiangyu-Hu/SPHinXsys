@@ -158,10 +158,10 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 /**
  * Observer particle generator.
  */
-class FishObserverParticleGenerator : public ParticleGeneratorObserver
+class FishObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         positions_.push_back(Vecd(cx + resolution_ref, cy));
         positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
@@ -212,13 +212,13 @@ int main(int ac, char *av[])
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for fish.
      */
@@ -228,13 +228,14 @@ int main(int ac, char *av[])
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<ParticleGeneratorReload>(fish_body.getName())
-        : fish_body.generateParticles<ParticleGeneratorLattice>();
+        ? fish_body.generateParticles<Reload>(fish_body.getName())
+        : fish_body.generateParticles<Lattice>();
     /**
      * @brief   Particle and body creation of fish observer.
      */
     ObserverBody fish_observer(system, "Observer");
-    fish_observer.generateParticles<FishObserverParticleGenerator>();
+    FishObserverParticleGenerator fish_observer_particle_generator(fish_observer);
+    fish_observer.generateParticles(fish_observer_particle_generator);
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation fish_body_inner(fish_body);
@@ -294,7 +295,8 @@ int main(int ac, char *av[])
      * @brief   Methods used for updating data structure.
      */
     /** Periodic BCs in x direction. */
-    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration.*/

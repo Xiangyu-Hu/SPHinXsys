@@ -28,7 +28,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
     defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
-    generateParticles<ParticleGeneratorLattice>();
+    generateParticles<Lattice>();
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -111,7 +111,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
     SolidBody model(system, triangle_mesh_shape);
     model.defineBodyLevelSetShape()->cleanLevelSet();
     model.defineParticlesAndMaterial<SolidParticles, Solid>();
-    model.generateParticles<ParticleGeneratorLattice>();
+    model.generateParticles<Lattice>();
 
     if (particle_relaxation)
     {

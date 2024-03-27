@@ -141,7 +141,7 @@ class ParticleRefinementWithPrescribedArea : public LocalDynamics, public Genera
 class ParticleSplitWithPrescribedArea : public ParticleRefinementWithPrescribedArea
 {
   public:
-    ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region, size_t body_buffer_width);
+    ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region);
     virtual ~ParticleSplitWithPrescribedArea(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -175,8 +175,8 @@ class ParticleSplitWithPrescribedArea : public ParticleRefinementWithPrescribedA
 class SplitWithMinimumDensityErrorInner : public ParticleSplitWithPrescribedArea
 {
   public:
-    SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, Shape &refinement_region, size_t body_buffer_width)
-        : ParticleSplitWithPrescribedArea(inner_relation.getSPHBody(), refinement_region, body_buffer_width),
+    SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, Shape &refinement_region)
+        : ParticleSplitWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
           compute_density_error(inner_relation)
     {
         particles_->registerVariable(total_split_error_, "SplitDensityError", Real(0));
@@ -200,8 +200,8 @@ class SplitWithMinimumDensityErrorWithWall : public SplitWithMinimumDensityError
 {
   public:
     SplitWithMinimumDensityErrorWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
-                                         Shape &refinement_region, size_t body_buffer_width)
-        : SplitWithMinimumDensityErrorInner(inner_relation, refinement_region, body_buffer_width),
+                                         Shape &refinement_region)
+        : SplitWithMinimumDensityErrorInner(inner_relation, refinement_region),
           compute_density_error(inner_relation, contact_relation){};
     virtual ~SplitWithMinimumDensityErrorWithWall(){};
 

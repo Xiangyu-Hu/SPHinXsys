@@ -29,9 +29,9 @@
 
 #pragma once
 
+#include "all_domain_bounding.h"
 #include "all_surface_indication.h"
 #include "base_general_dynamics.h"
-#include "domain_bounding.h"
 #include "force_prior.h"
 #include "general_constraint.h"
 #include "general_geometric.h"

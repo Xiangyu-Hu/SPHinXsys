@@ -29,17 +29,18 @@ int main(int ac, char *av[])
     column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? column.generateParticles<ParticleGeneratorReload>(column.getName())
-        : column.generateParticles<ParticleGeneratorLattice>();
+        ? column.generateParticles<Reload>(column.getName())
+        : column.generateParticles<Lattice>();
     column.addBodyStateForRecording<Vecd>("NormalDirection");
 
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall.generateParticles<ParticleGeneratorLattice>();
+    wall.generateParticles<Lattice>();
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
-    my_observer.generateParticles<ColumnObserverParticleGenerator>();
+    auto observer_particle_generator = my_observer.makeSelfDefined<ColumnObserverParticleGenerator>();
+    my_observer.generateParticles(observer_particle_generator);
 
     /**body relation topology */
     InnerRelation column_inner(column);

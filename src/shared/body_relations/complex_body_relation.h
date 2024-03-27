@@ -52,7 +52,6 @@ class ComplexRelation : public SPHRelation
     ComplexRelation(BaseInnerRelation &inner_relation, StdVec<BaseContactRelation *> contact_relations);
     virtual ~ComplexRelation(){};
 
-    virtual void resizeConfiguration() override;
     virtual void updateConfiguration() override;
 };
 } // namespace SPH

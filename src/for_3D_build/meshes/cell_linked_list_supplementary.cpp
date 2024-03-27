@@ -129,7 +129,7 @@ void CellLinkedList::
 }
 //=================================================================================================//
 void CellLinkedList::
-    tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis)
+    tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis)
 {
     int second_axis = NextAxis(axis);
     int third_axis = NextNextAxis(axis);
