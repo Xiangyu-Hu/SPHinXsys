@@ -164,10 +164,10 @@ struct InflowVelocity
     }
 };
 /** fluid observer particle generator */
-class FluidObserverParticleGenerator : public ParticleGeneratorObserver
+class ParticleGeneratorFluidObserver : public ParticleGenerator<Observer>
 {
   public:
-    explicit FluidObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit ParticleGeneratorFluidObserver(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 21;

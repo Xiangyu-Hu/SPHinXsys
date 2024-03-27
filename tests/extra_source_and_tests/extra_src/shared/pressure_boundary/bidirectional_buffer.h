@@ -48,7 +48,7 @@ struct NonPrescribedPressure
     }
 };
 
-template <typename TargetPressure>
+template <typename TargetPressure, class ExecutionPolicy = ParallelPolicy>
 class BidirectionalBuffer
 {
   protected:
@@ -59,7 +59,7 @@ class BidirectionalBuffer
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, int axis)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
-              pos_(particles_->pos_), aligned_box_(aligned_box_part.aligned_box_), axis_(axis), 
+              pos_(particles_->pos_), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
             particles_->registerSortableVariable<int>("BufferParticleIndicator");
@@ -67,9 +67,8 @@ class BidirectionalBuffer
         virtual ~TagBufferParticles(){};
 
         virtual void update(size_t index_i, Real dt = 0.0)
-        {           
-            if (aligned_box_.checkInBounds(axis_, pos_[index_i]))
-                buffer_particle_indicator_[index_i] = 1;
+        {
+            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(axis_, pos_[index_i]) ? 1 : 0;
         };
 
       protected:
@@ -82,20 +81,17 @@ class BidirectionalBuffer
     class Injection : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
     {
       public:
-        Injection(BodyAlignedBoxByCell &aligned_box_part, int axis_direction,
-                  size_t body_buffer_width, BidirectionalBuffer<TargetPressure>& buffer) : 
-            BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),                                                                                                                                                                                                                                   
-            aligned_box_(aligned_box_part.aligned_box_),                                                                                                                        
-            fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),                                                                                                                        
-            pos_n_(particles_->pos_), rho_n_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),                                                                                                                       
-            axis_(axis_direction), body_buffer_width_(body_buffer_width),                                                                                                                       
-            previous_surface_indicator_(*particles_->getVariableByName<int>("PreviousSurfaceIndicator")),                                                                                                                        
-            buffer_particle_indicator_(*particles_->getVariableByName<int>("BufferParticleIndicator")),                                                                                                                        
-            buffer_(buffer)
+        Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
+                  int axis, TargetPressure &target_pressure)
+            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
+              axis_(axis), particle_buffer_(particle_buffer), aligned_box_(aligned_box_part.aligned_box_),
+              fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+              pos_n_(particles_->pos_), rho_n_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+              previous_surface_indicator_(*particles_->getVariableByName<int>("PreviousSurfaceIndicator")),
+              buffer_particle_indicator_(*particles_->getVariableByName<int>("BufferParticleIndicator")),
+              target_pressure_(target_pressure)
         {
-            size_t total_body_buffer_particles = 1000.0 * body_buffer_width;
-            particles_->addBufferParticles(total_body_buffer_particles);
-            sph_body_.allocateConfigurationMemoriesForBufferParticles();
+            particle_buffer_.checkParticlesReserved();
         };
         virtual ~Injection(){};
 
@@ -104,20 +100,17 @@ class BidirectionalBuffer
             if (aligned_box_.checkUpperBound(axis_, pos_n_[index_i]) && buffer_particle_indicator_[index_i] == 1)
             {
                 mutex_switch_to_real_.lock();
-                if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
-                {
-                    std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
-                              << "Not enough body buffer particles! Exit the code."
-                              << "\n";
-                    exit(0);
-                }
-                buffer_particle_indicator_[index_i] = 0;
+                particle_buffer_.checkEnoughBuffer(*particles_);
+                /** Buffer Particle state copied from real particle. */
                 particles_->copyFromAnotherParticle(particles_->total_real_particles_, index_i);
+                /** Realize the buffer particle by increasing the number of real particle in the body.  */
                 particles_->total_real_particles_ += 1;
                 mutex_switch_to_real_.unlock();
+
+                /** Periodic bounding. */
                 pos_n_[index_i] = aligned_box_.getUpperPeriodic(axis_, pos_n_[index_i]);
                 Real sound_speed = fluid_.getSoundSpeed(rho_n_[index_i]);
-                p_[index_i] = buffer_.target_pressure_(p_[index_i]); 
+                p_[index_i] = target_pressure_(p_[index_i]);
                 rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                 previous_surface_indicator_[index_i] = 1;
             }
@@ -125,27 +118,26 @@ class BidirectionalBuffer
 
       protected:
         std::mutex mutex_switch_to_real_;
+        const int axis_;
+        ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
         StdLargeVec<Vecd> &pos_n_;
         StdLargeVec<Real> &rho_n_, &p_;
-        const int axis_;
-        size_t body_buffer_width_;
         StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;
 
       private:
-        BidirectionalBuffer<TargetPressure> &buffer_;
+        TargetPressure &target_pressure_;
     };
 
   public:
-    BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, int axis_direction,
-                        size_t body_buffer_width) : target_pressure_(*this),                                                                                                  
-        tag_buffer_particles(aligned_box_part, axis_direction),                                                                                                        
-        injection(aligned_box_part, axis_direction, body_buffer_width, *this){};
+    BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer, int axis)
+        : target_pressure_(*this), tag_buffer_particles(aligned_box_part, axis),
+          injection(aligned_box_part, particle_buffer, axis, target_pressure_){};
     virtual ~BidirectionalBuffer(){};
 
-    SimpleDynamics<TagBufferParticles> tag_buffer_particles;
-    SimpleDynamics<Injection> injection;
+    SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;
+    SimpleDynamics<Injection, ExecutionPolicy> injection;
 };
 
 using NonPrescribedPressureBidirectionalBuffer = BidirectionalBuffer<NonPrescribedPressure>;

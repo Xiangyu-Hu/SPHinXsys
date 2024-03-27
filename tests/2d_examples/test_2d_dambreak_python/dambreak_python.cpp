@@ -79,13 +79,13 @@ class PreSettingCase : public Parameter
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
         water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-        water_block.generateParticles<ParticleGeneratorLattice>();
+        water_block.generateParticles<Lattice>();
 
         wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-        wall_boundary.generateParticles<ParticleGeneratorLattice>();
+        wall_boundary.generateParticles<Lattice>();
         wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-        fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+        fluid_observer.generateParticles<Observer>(observation_location);
     }
 };
 //----------------------------------------------------------------------

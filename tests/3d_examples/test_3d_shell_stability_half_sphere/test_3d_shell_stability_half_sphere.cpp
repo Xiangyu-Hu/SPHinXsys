@@ -13,7 +13,7 @@
 
 using namespace SPH;
 
-class ShellSphereParticleGenerator : public ParticleGeneratorSurface
+class ShellSphereParticleGenerator : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -23,7 +23,7 @@ class ShellSphereParticleGenerator : public ParticleGeneratorSurface
   public:
     explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
                                           const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGeneratorSurface(sph_body),
+        : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -138,7 +138,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-    shell_body.generateParticles<ShellSphereParticleGenerator>(obj_vertices, center, particle_area, thickness);
+    auto shell_sphere_particle_generator = shell_body.makeSelfDefined<ShellSphereParticleGenerator>(obj_vertices, center, particle_area, thickness);
+    shell_body.generateParticles(shell_sphere_particle_generator);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");

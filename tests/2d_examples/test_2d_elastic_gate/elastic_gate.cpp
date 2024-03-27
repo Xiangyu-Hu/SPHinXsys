@@ -147,20 +147,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     SolidBody gate(sph_system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
     gate.defineAdaptationRatios(1.15, 2.0);
     gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    gate.generateParticles<ParticleGeneratorLattice>();
+    gate.generateParticles<Lattice>();
 
     ObserverBody gate_observer(sph_system, "Observer");
     gate_observer.defineAdaptationRatios(1.15, 2.0);
-    gate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    gate_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

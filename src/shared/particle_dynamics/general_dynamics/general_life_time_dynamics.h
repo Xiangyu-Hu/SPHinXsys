@@ -63,8 +63,14 @@ class BaseSplitDynamics : public BaseLifeTimeDynamics
     BaseSplitDynamics(SPHBody &sph_body, size_t body_buffer_width)
         : BaseLifeTimeDynamics(sph_body)
     {
-        particles_->addBufferParticles(body_buffer_width);
-        sph_body_.allocateConfigurationMemoriesForBufferParticles();
+        if (particles_->total_real_particles_ == particles_->real_particles_bound_)
+        {
+            std::cout << "EmitterInflowBoundaryCondition constructor: \n"
+                      << "No buffer particles have been generated! "
+                      << "Please check the particle generator."
+                      << "\n";
+            exit(1);
+        }
     };
     virtual ~BaseSplitDynamics(){};
 

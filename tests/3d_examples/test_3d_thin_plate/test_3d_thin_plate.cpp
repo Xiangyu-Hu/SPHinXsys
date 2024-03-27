@@ -49,10 +49,10 @@ TEST(Plate, MaxDisplacement)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGeneratorSurface
+class PlateParticleGenerator : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -136,12 +136,13 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
+    auto plate_particle_generator = plate_body.makeSelfDefined<PlateParticleGenerator>();
+    plate_body.generateParticles(plate_particle_generator);
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    plate_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

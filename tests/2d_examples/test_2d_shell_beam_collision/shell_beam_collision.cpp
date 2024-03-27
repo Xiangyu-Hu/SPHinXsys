@@ -96,12 +96,12 @@ int main(int ac, char *av[])
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        shell.generateParticles<ParticleGeneratorReload>(shell.getName());
+        shell.generateParticles<Reload>(shell.getName());
     }
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<ParticleGeneratorThickSurface>(thickness);
+        shell.generateParticles<ThickSurface, Lattice>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 
     SolidBody beam(sph_system, makeShared<Beam>("Beam"));
     beam.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam.generateParticles<ParticleGeneratorLattice>();
+    beam.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

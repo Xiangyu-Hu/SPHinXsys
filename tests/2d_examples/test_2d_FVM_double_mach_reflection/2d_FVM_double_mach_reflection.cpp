@@ -18,7 +18,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem sph_system(system_domain_bounds, ansys_mesh.MinMeshEdge());
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
@@ -26,12 +26,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
-    wave_block.generateParticles<ParticleGeneratorUnstructuredMesh>(ansys_mesh);
+    Ghost<ReserveSizeFactor> ghost_boundary(0.5);
+    wave_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, ansys_mesh);
     wave_block.addBodyStateForRecording<Real>("Density");
     wave_block.addBodyStateForRecording<Real>("Pressure");
     /** Initial condition and register variables*/
     SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
-    GhostCreationFromMesh ghost_creation(wave_block, ansys_mesh);
+    GhostCreationFromMesh ghost_creation(wave_block, ansys_mesh, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
@@ -41,10 +42,9 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Boundary conditions set up */
-    DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
-                                                       ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
+    DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, ansys_mesh.min_distance_between_nodes_, 0.2);
+    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, ansys_mesh.MinMeshEdge(), 0.2);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);

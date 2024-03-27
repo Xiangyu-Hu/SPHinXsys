@@ -382,21 +382,17 @@ MultiPolygon createWaveProbeShape12()
     multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
     return multi_polygon;
 }
-//------------------------------------------------------------------------------
-// Case-dependent observer particle generator
-//------------------------------------------------------------------------------
-class FlapObserverParticleGenerator : public ParticleGeneratorObserver
+
+StdVec<Vecd> creatObserverPositions()
 {
-  public:
-    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
-    {
-        /** the measuring particle with zero volume */
-        positions_.push_back(Vecd(7.862, 0.645));
-        positions_.push_back(Vecd(7.862, 0.741));
-        positions_.push_back(Vecd(7.862, 0.391));
-        positions_.push_back(Vecd(7.862, 0.574));
-        positions_.push_back(Vecd(7.862, 0.716));
-        positions_.push_back(Vecd(7.862, 0.452));
-    }
-};
+    StdVec<Vecd> observer_positions;
+    observer_positions.push_back(Vecd(7.862, 0.645));
+    observer_positions.push_back(Vecd(7.862, 0.741));
+    observer_positions.push_back(Vecd(7.862, 0.391));
+    observer_positions.push_back(Vecd(7.862, 0.574));
+    observer_positions.push_back(Vecd(7.862, 0.716));
+    observer_positions.push_back(Vecd(7.862, 0.452));
+    return observer_positions;
+}
+
 #endif // TEST_2D_OWSC_CASE_H

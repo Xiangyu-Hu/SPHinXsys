@@ -96,6 +96,7 @@ class SPHSystem
     void initializeSystemConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
+    Real ReferenceResolution(){return resolution_ref_;};
 
   protected:
     friend class IOEnvironment;

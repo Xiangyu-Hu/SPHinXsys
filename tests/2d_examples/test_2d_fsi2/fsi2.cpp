@@ -30,25 +30,26 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
     insert_body.defineAdaptationRatios(1.15, 2.0);
     insert_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     insert_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? insert_body.generateParticles<ParticleGeneratorReload>(insert_body.getName())
-        : insert_body.generateParticles<ParticleGeneratorLattice>();
+        ? insert_body.generateParticles<Reload>(insert_body.getName())
+        : insert_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
-    beam_observer.generateParticles<ParticleGeneratorObserver>(beam_observation_location);
+    beam_observer.generateParticles<Observer>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<FluidObserverParticleGenerator>();
+    auto fluid_observer_particle_generator = fluid_observer.makeSelfDefined<ParticleGeneratorFluidObserver>();
+    fluid_observer.generateParticles(fluid_observer_particle_generator);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -132,7 +133,8 @@ int main(int ac, char *av[])
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
-    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------

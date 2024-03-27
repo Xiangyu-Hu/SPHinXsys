@@ -103,7 +103,6 @@ class ParticleGenerator<Network> : public ParticleGenerator<Base>
 
     void growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction);
 };
-using ParticleGeneratorNetwork = ParticleGenerator<Network>;
 
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_NETWORK_H

@@ -305,11 +305,17 @@ bool ParticleRefinementWithPrescribedArea::
 }
 //=================================================================================================//
 ParticleSplitWithPrescribedArea::
-    ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region, size_t body_buffer_width)
+    ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region)
     : ParticleRefinementWithPrescribedArea(sph_body, refinement_region)
 {
-    particles_->addBufferParticles(body_buffer_width);
-    sph_body.allocateConfigurationMemoriesForBufferParticles();
+    if (particles_->total_real_particles_ == particles_->real_particles_bound_)
+    {
+        std::cout << "EmitterInflowBoundaryCondition constructor: \n"
+                  << "No buffer particles have been generated! "
+                  << "Please check the particle generator."
+                  << "\n";
+        exit(1);
+    }
 }
 //=================================================================================================//
 bool ParticleSplitWithPrescribedArea::splitCriteria(size_t index_i)
