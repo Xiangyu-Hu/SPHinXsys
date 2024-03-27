@@ -51,11 +51,10 @@ int main(int ac, char *av[])
     TreeBody tree_on_sphere(sph_system, makeShared<GeometricShapeBall>(Vec3d::Zero(), 1.0, "Sphere"));
     tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     tree_on_sphere.defineParticlesAndMaterial();
-    tree_on_sphere.generateParticles<ParticleGeneratorNetwork>(starting_point, second_point, iteration_levels, grad_factor);
+    tree_on_sphere.generateParticles<Network>(starting_point, second_point, iteration_levels, grad_factor);
     /** Write particle data. */
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     write_states.writeToFile(0);
-
 
     return 0;
 }

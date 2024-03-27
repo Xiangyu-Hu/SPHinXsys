@@ -1,6 +1,6 @@
 /**
- * @file 	poiseuille_flow.cpp
- * @brief 	3D poiseuille flow example
+ * @file 	poiseuille_flow_shell.cpp
+ * @brief 	3D poiseuille flow interaction with shell example
  * @details This is the one of the basic test cases for validating fluid-rigid shell interaction
  * @author  Weiyi Kong
  */
@@ -28,12 +28,12 @@ const Real U_f = Re * mu_f / rho0_f / diameter;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 
-class ObersverAxial : public ParticleGeneratorObserver
+class ObserverAxial : public ParticleGenerator<Observer>
 {
   public:
-    ObersverAxial(SPHBody &sph_body, double full_length,
+    ObserverAxial(SPHBody &sph_body, double full_length,
                   Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGeneratorObserver(sph_body)
+        : ParticleGenerator<Observer>(sph_body)
     {
         int ny = 51;
         for (int i = 0; i < ny; i++)
@@ -45,20 +45,20 @@ class ObersverAxial : public ParticleGeneratorObserver
     }
 };
 
-class ObserverRadial : public ParticleGeneratorObserver
+class ObserverRadial : public ParticleGenerator<Observer>
 {
   public:
     ObserverRadial(SPHBody &sph_body, double full_length, double diameter,
                    int number_of_particles,
                    Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGeneratorObserver(sph_body)
+        : ParticleGenerator<Observer>(sph_body)
     {
 
         int n = number_of_particles + 1;
         double y = full_length / 2.0;
-        for (int i = 0; i < n - 1;
-             i++) // we leave out the point clsoe to the boundary as the
-                  // interpolation there is incorrect
+        for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
+                                        // interpolation there is incorrect
+                                        // TODO: fix the interpolation
         {
             double z = diameter / 2.0 * i / double(n);
             positions_.emplace_back(Vec3d(0.0, y, z) + translation);
@@ -70,7 +70,7 @@ class ObserverRadial : public ParticleGeneratorObserver
 /**
  * @brief Define wall shape
  */
-class ShellBoundary : public ParticleGeneratorSurface
+class ShellBoundary : public ParticleGenerator<Surface>
 {
     Real resolution_shell_;
     Real wall_thickness_;
@@ -78,7 +78,7 @@ class ShellBoundary : public ParticleGeneratorSurface
 
   public:
     explicit ShellBoundary(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
-        : ParticleGeneratorSurface(sph_body),
+        : ParticleGenerator<Surface>(sph_body),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
     void initializeGeometricVariables() override
@@ -136,7 +136,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     const int number_of_particles = 10;
     const Real inflow_length = resolution_ref * 10.0; // Inflow region
     const Real wall_thickness = resolution_ref * 4.0;
-    const int simtk_resolution = 20;
+    const int SimTK_resolution = 20;
     const Vec3d translation_fluid(0., full_length * 0.5, 0.);
     /**
      * @brief Geometry parameters for shell.
@@ -164,7 +164,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
      */
     auto water_block_shape = makeShared<ComplexShape>("WaterBody");
     water_block_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
-                                                      full_length * 0.5, simtk_resolution,
+                                                      full_length * 0.5, SimTK_resolution,
                                                       translation_fluid);
 
     /**
@@ -179,14 +179,17 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
      */
     FluidBody water_block(system, water_block_shape);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
+
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1, 1e3, 0.45);
-    shell_boundary.generateParticles<ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
+    auto shell_boundary_particle_generator = shell_boundary.makeSelfDefined<ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
+    shell_boundary.generateParticles(shell_boundary_particle_generator);
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(shell_boundary);
@@ -231,24 +234,13 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     /**
      * @brief 	Boundary conditions. Inflow & Outflow in Y-direction
      */
-    BodyAlignedBoxByParticle emitter(
-        water_block,
-        makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_translation)),
-                                    emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, yAxis);
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_translation)), emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, yAxis);
     /** Emitter buffer inflow condition. */
-    BodyAlignedBoxByCell emitter_buffer(
-        water_block, makeShared<AlignedBoxShape>(
-                         Transform(Vec3d(emitter_buffer_translation)),
-                         emitter_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>>
-        emitter_buffer_inflow_condition(emitter_buffer);
-    BodyAlignedBoxByCell disposer(
-        water_block,
-        makeShared<AlignedBoxShape>(Transform(Vec3d(disposer_translation)),
-                                    disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion>
-        disposer_outflow_deletion(disposer, yAxis);
+    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
+    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(disposer_translation)), disposer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
     /** Wall boundary configuration correction*/
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     // Curvature calculation
@@ -266,10 +258,12 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
      * @brief OBSERVER.
      */
     ObserverBody observer_axial(system, "fluid_observer_axial");
-    observer_axial.generateParticles<ObersverAxial>(full_length);
+    auto observer_axial_particle_generator = observer_axial.makeSelfDefined<ObserverAxial>(full_length);
+    observer_axial.generateParticles(observer_axial_particle_generator);
     ObserverBody observer_radial(system, "fluid_observer_radial");
-    observer_radial.generateParticles<ObserverRadial>(full_length, diameter,
-                                                      number_of_particles);
+    auto observer_radial_particle_generator = observer_radial.makeSelfDefined<ObserverRadial>(full_length, diameter, number_of_particles);
+    observer_radial.generateParticles(observer_radial_particle_generator);
+
     ContactRelation observer_contact_axial(observer_axial, {&water_block});
     ContactRelation observer_contact_radial(observer_radial, {&water_block});
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial(

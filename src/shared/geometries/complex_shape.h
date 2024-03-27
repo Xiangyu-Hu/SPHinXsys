@@ -77,6 +77,7 @@ class AlignedBoxShape : public TransformShape<GeometricShapeBox>
         : TransformShape<GeometricShapeBox>(
               Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
               0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...){};
+    virtual ~AlignedBoxShape(){};
 
     Vecd HalfSize() { return halfsize_; }
     bool checkInBounds(int axis, const Vecd &probe_point);

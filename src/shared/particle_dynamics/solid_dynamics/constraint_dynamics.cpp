@@ -31,7 +31,7 @@ PositionSolidBody::
     : BaseMotionConstraint<SPHBody, SolidDataSimple>(sph_body),
       start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 {
-    BoundingBox bounds = sph_body.getBodyShapeBounds();
+    BoundingBox bounds = sph_body.getSPHBodyBounds();
     pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
     translation_ = pos_end_center_ - pos_0_center_;
 }
@@ -59,7 +59,7 @@ PositionScaleSolidBody::
     : BaseMotionConstraint<SPHBody, SolidDataSimple>(sph_body),
       start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 {
-    BoundingBox bounds = sph_body.getBodyShapeBounds();
+    BoundingBox bounds = sph_body.getSPHBodyBounds();
     pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
 }
 //=================================================================================================//

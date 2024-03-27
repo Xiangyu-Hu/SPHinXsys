@@ -52,7 +52,7 @@ int main(int ac, char *av[])
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
     airfoil.defineParticlesAndMaterial();
-    airfoil.generateParticles<ParticleGeneratorAdaptive>();
+    airfoil.generateParticles<Lattice, Adaptive>();
     airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	Define outputs functions.

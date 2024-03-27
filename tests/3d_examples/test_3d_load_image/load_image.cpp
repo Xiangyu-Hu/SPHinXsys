@@ -48,7 +48,7 @@ int main(int ac, char *av[])
     imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
     imported_model.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<ParticleGeneratorAdaptive>();
+    imported_model.generateParticles<Lattice, Adaptive>();
     imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.

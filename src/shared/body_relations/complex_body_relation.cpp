@@ -12,7 +12,6 @@ ComplexRelation::
       inner_relation_(inner_relation)
 {
     contact_relations_.push_back(&contact_relation);
-    resizeConfiguration();
 }
 //=================================================================================================//
 ComplexRelation::
@@ -31,14 +30,6 @@ ComplexRelation::
 
         contact_relations_.push_back(contact_relations[k]);
     }
-    resizeConfiguration();
-}
-//=================================================================================================//
-void ComplexRelation::resizeConfiguration()
-{
-    inner_relation_.resizeConfiguration();
-    for (size_t k = 0; k != contact_relations_.size(); ++k)
-        contact_relations_[k]->resizeConfiguration();
 }
 //=================================================================================================//
 void ComplexRelation::updateConfiguration()
