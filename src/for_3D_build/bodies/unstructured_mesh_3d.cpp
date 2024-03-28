@@ -15,7 +15,6 @@ namespace SPH
     void ANSYSMesh_3d::getDataFromMeshFile3d(const std::string &full_path)
     {
         Real ICEM = 0;
-        Real FLUENT = 0;
         ifstream mesh_file; /*!< \brief File object for the Ansys ASCII mesh file. */
         mesh_file.open(full_path);
         if (mesh_file.fail())
@@ -251,15 +250,15 @@ namespace SPH
         BaseInnerRelationInFVM_3d::BaseInnerRelationInFVM_3d(RealBody &real_body, ANSYSMesh_3d& ansys_mesh)
         : BaseInnerRelation(real_body), real_body_(&real_body), node_coordinates_(ansys_mesh.node_coordinates_),
         mesh_topology_(ansys_mesh.mesh_topology_)
-    {
-        subscribeToBody();
-        resizeConfiguration();
-    };
+        {
+            subscribeToBody();
+            inner_configuration_.resize(base_particles_.real_particles_bound_, Neighborhood());
+        };
     //=================================================================================================//
     void BaseInnerRelationInFVM_3d::resetNeighborhoodCurrentSize()
     {
         parallel_for(
-            IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
+            IndexRange(0, base_particles_.total_real_particles_),
             [&](const IndexRange &r)
             {
                 for (size_t num = r.begin(); num != r.end(); ++num)
@@ -268,12 +267,6 @@ namespace SPH
                 }
             },
             ap);
-    }
-    //=================================================================================================//
-    void BaseInnerRelationInFVM_3d::resizeConfiguration()
-    {
-        size_t updated_size = base_particles_.real_particles_bound_ + base_particles_.total_ghost_particles_;
-        inner_configuration_.resize(updated_size, Neighborhood());
     }
     //=================================================================================================//
     void NeighborBuilderInFVM_3d::createRelation(Neighborhood &neighborhood, Real &distance,
@@ -305,7 +298,7 @@ namespace SPH
                                                         ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
     {
         parallel_for(
-            IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
+            IndexRange(0, base_particles_.total_real_particles_),
             [&](const IndexRange &r)
             {
                 StdLargeVec<Vecd> &pos_n = source_particles.pos_;
@@ -332,8 +325,6 @@ namespace SPH
                         Vecd normal_vector = interface_area_vector1.cross(interface_area_vector2);
                         Real magnitude = normal_vector.norm();
                         Vecd normalized_normal_vector = normal_vector / magnitude;
-                        Vecd particle_position = pos_n[index_i];
-                        Vecd particle_position_j = pos_n[index_j];
                         Vecd node1_to_center_direction = particle_position - node1_position; 
                         if (node1_to_center_direction.dot(normalized_normal_vector) < 0)
                         {
@@ -362,32 +353,31 @@ namespace SPH
     void InnerRelationInFVM_3d::updateConfiguration()
     {
         resetNeighborhoodCurrentSize();
-        searchNeighborsByParticles(base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_,
+        searchNeighborsByParticles(base_particles_.total_real_particles_,
                                 base_particles_, inner_configuration_,
                                 get_particle_index_, get_inner_neighbor_);
     }
     //=================================================================================================//
-    GhostCreationFromMesh_3d::GhostCreationFromMesh_3d(RealBody& real_body, ANSYSMesh_3d& ansys_mesh)
+    GhostCreationFromMesh_3d::GhostCreationFromMesh_3d(RealBody& real_body, ANSYSMesh_3d& ansys_mesh, Ghost<ReserveSizeFactor>& ghost_boundary)
         : GeneralDataDelegateSimple(real_body),
+        ghost_boundary_(ghost_boundary),
         node_coordinates_(ansys_mesh.node_coordinates_),
         mesh_topology_(ansys_mesh.mesh_topology_),
         pos_(particles_->pos_), Vol_(particles_->Vol_),
-        total_ghost_particles_(particles_->total_ghost_particles_),
-        real_particles_bound_(particles_->real_particles_bound_)
+        ghost_bound_(ghost_boundary.GhostBound())
     {
+        ghost_boundary.checkParticlesReserved();
         each_boundary_type_with_all_ghosts_index_.resize(50);
         each_boundary_type_with_all_ghosts_eij_.resize(50);
         each_boundary_type_contact_real_index_.resize(50);
-        ghost_particles_.resize(1);
         addGhostParticleAndSetInConfiguration();
     }
     //=================================================================================================//
     void GhostCreationFromMesh_3d::addGhostParticleAndSetInConfiguration()
     {
-        for (size_t i = 0; i != ghost_particles_.size(); ++i)
-            ghost_particles_[i].clear();
+        ghost_bound_.second = ghost_bound_.first;
 
-        for (size_t index_i = 0; index_i != real_particles_bound_; ++index_i)
+        for (size_t index_i = 0; index_i != particles_->total_real_particles_; ++index_i)
         {
             for (size_t neighbor_index = 0; neighbor_index != mesh_topology_[index_i].size(); ++neighbor_index)
             {
@@ -395,7 +385,11 @@ namespace SPH
                 if (mesh_topology_[index_i][neighbor_index][1] != 2)
                 {
                     mutex_create_ghost_particle_.lock();
-                    size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
+                    size_t ghost_particle_index = ghost_bound_.second;
+                    ghost_bound_.second++;
+                    ghost_boundary_.checkWithinGhostSize(ghost_bound_);
+
+                    particles_->updateGhostParticle(ghost_particle_index, index_i);
                     size_t node1_index = mesh_topology_[index_i][neighbor_index][2];
                     size_t node2_index = mesh_topology_[index_i][neighbor_index][3];
                     size_t node3_index = mesh_topology_[index_i][neighbor_index][4];
@@ -405,7 +399,6 @@ namespace SPH
                     Vecd ghost_particle_position = (1.0 / 3.0) * (node1_position + node2_position + node3_position);
 
                     mesh_topology_[index_i][neighbor_index][0] = ghost_particle_index + 1;
-                    ghost_particles_[0].push_back(ghost_particle_index);
                     pos_[ghost_particle_index] = ghost_particle_position;
                     mutex_create_ghost_particle_.unlock();
 
@@ -501,17 +494,14 @@ namespace SPH
         }
     } 
     //=================================================================================================//
-    BoundaryConditionSetupInFVM_3d::BoundaryConditionSetupInFVM_3d(BaseInnerRelationInFVM_3d& inner_relation,
-        vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-        vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    BoundaryConditionSetupInFVM_3d::BoundaryConditionSetupInFVM_3d(BaseInnerRelationInFVM_3d& inner_relation, GhostCreationFromMesh_3d& ghost_creation) 
         : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
         p_(*particles_->getVariableByName<Real>("Pressure")),
         vel_(particles_->vel_), pos_(particles_->pos_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-        total_ghost_particles_(particles_->total_ghost_particles_),
-        real_particles_bound_(particles_->real_particles_bound_),
-        each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
-        each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),
-        each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index) {};
+        ghost_bound_(ghost_creation.ghost_bound_),
+        each_boundary_type_with_all_ghosts_index_(ghost_creation.each_boundary_type_with_all_ghosts_index_),
+        each_boundary_type_with_all_ghosts_eij_(ghost_creation.each_boundary_type_with_all_ghosts_eij_),
+        each_boundary_type_contact_real_index_(ghost_creation.each_boundary_type_contact_real_index_) {};
     //=================================================================================================//
     void BoundaryConditionSetupInFVM_3d::resetBoundaryConditions()
     {

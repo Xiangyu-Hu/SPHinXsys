@@ -93,12 +93,10 @@ class BaseInnerRelationInFVM_3d : public BaseInnerRelation
 
   public:
     RealBody *real_body_;
+    vector<vector<Real>>& node_coordinates_;
     vector<vector<vector<size_t>>> &mesh_topology_;
-    vector<vector<Real>> &node_coordinates_;
     explicit BaseInnerRelationInFVM_3d(RealBody &real_body, ANSYSMesh_3d &ansys_mesh);
     virtual ~BaseInnerRelationInFVM_3d(){};
-
-    virtual void resizeConfiguration() override;
 };
 
 /**
@@ -174,22 +172,23 @@ class InnerRelationInFVM_3d : public BaseInnerRelationInFVM_3d
 class GhostCreationFromMesh_3d : public GeneralDataDelegateSimple
 {
   public:
-      GhostCreationFromMesh_3d(RealBody &real_body, ANSYSMesh_3d &ansys_mesh);
+      GhostCreationFromMesh_3d(RealBody &real_body, ANSYSMesh_3d &ansys_mesh, Ghost<ReserveSizeFactor>& ghost_boundary);
       virtual ~GhostCreationFromMesh_3d(){};
-      vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
-      vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
-      vector<vector<size_t>> each_boundary_type_contact_real_index_;
 
       protected:
+      Ghost<ReserveSizeFactor>& ghost_boundary_;
       std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
-      vector<vector<Real>> &node_coordinates_;
-      vector<vector<vector<size_t>>> &mesh_topology_;
-      StdLargeVec<Vecd> &pos_;
-      StdVec<IndexVector> ghost_particles_;
-      StdLargeVec<Real> &Vol_;
-      size_t &total_ghost_particles_;
-      size_t &real_particles_bound_;
+      vector<vector<Real>>& node_coordinates_;
+      vector<vector<vector<size_t>>>& mesh_topology_;
+      StdLargeVec<Vecd>& pos_;
+      StdLargeVec<Real>& Vol_;
       void addGhostParticleAndSetInConfiguration();
+
+    public:
+    std::pair<size_t, size_t>& ghost_bound_;
+    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
+    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
+    vector<vector<size_t>> each_boundary_type_contact_real_index_;
 };
 
 class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
@@ -208,8 +207,7 @@ class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
 class BoundaryConditionSetupInFVM_3d : public fluid_dynamics::FluidDataInner
 {
   public:
-      BoundaryConditionSetupInFVM_3d(BaseInnerRelationInFVM_3d& inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                                vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index);
+      BoundaryConditionSetupInFVM_3d(BaseInnerRelationInFVM_3d& inner_relation, GhostCreationFromMesh_3d& ghost_creation);
     virtual ~BoundaryConditionSetupInFVM_3d(){};
 
     virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
@@ -225,13 +223,12 @@ class BoundaryConditionSetupInFVM_3d : public fluid_dynamics::FluidDataInner
     void resetBoundaryConditions();
 
   protected:
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> &vel_, &pos_, &mom_;
-    size_t &total_ghost_particles_;
-    size_t &real_particles_bound_;
-    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
-    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
+      StdLargeVec<Real>& rho_, & Vol_, & mass_, & p_;
+      StdLargeVec<Vecd>& vel_, & pos_, & mom_;
+      std::pair<size_t, size_t>& ghost_bound_;
+      vector<vector<size_t>>& each_boundary_type_with_all_ghosts_index_;
+      vector<vector<Vecd>>& each_boundary_type_with_all_ghosts_eij_;
+      vector<vector<size_t>>& each_boundary_type_contact_real_index_;
 };
 
 

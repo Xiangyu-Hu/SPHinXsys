@@ -27,9 +27,7 @@ BoundingBox system_domain_bounds(Vec3d(-0.3 / 0.769846, 0.0, 0.0), Vec3d(0.46984
 Real rho0_f = 1.0;                                                   /**< Density. */
 Real U_f = 1.0;                                                     /**< freestream velocity. */
 Real P_ref = 101325;                                                /*operating pressure fluent [Pa]*/
-Real gamma = 1.4;
 Real c_f = 10.0 * U_f;
-//Real c_f = sqrt(P_ref * gamma / (117.6655 * rho0_f)) * U_f;                 /**< Speed of sound. */
 Real mu_f = 0.0;                                                            /**< Dynamics viscosity. */
 
 //----------------------------------------------------------------------
@@ -85,10 +83,8 @@ protected:
 class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM_3d
 {
     public:
-        InvCFBoundaryConditionSetup(BaseInnerRelationInFVM_3d & inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-            vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
-            : BoundaryConditionSetupInFVM_3d(inner_relation, each_boundary_type_with_all_ghosts_index,
-                each_boundary_type_with_all_ghosts_eij_, each_boundary_type_contact_real_index),
+        InvCFBoundaryConditionSetup(BaseInnerRelationInFVM_3d & inner_relation, GhostCreationFromMesh_3d& ghost_creation)
+            : BoundaryConditionSetupInFVM_3d(inner_relation, ghost_creation),
             fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())) {};
         virtual ~InvCFBoundaryConditionSetup() {};
 

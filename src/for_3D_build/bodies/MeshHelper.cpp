@@ -514,7 +514,7 @@ namespace SPH
         out_file << "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\" RangeMin=\"10\" RangeMax=\"10\">\n";
         for (const auto& types : elements_nodes_connection_)
         {
-            for (const auto& vertex : types)
+            for (size_t i = 0; i < types.size(); ++i)
             {
                 out_file << type << " ";
             }

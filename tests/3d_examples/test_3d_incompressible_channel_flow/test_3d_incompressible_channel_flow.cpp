@@ -25,11 +25,12 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     FluidBody air_block(sph_system, makeShared<WaveBody>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    air_block.generateParticles<ParticleGeneratorUnstructuredMesh_3d>(read_mesh_data);
+    Ghost<ReserveSizeFactor> ghost_boundary(0.5);
+    air_block.generateParticlesWithReserve<UnstructuredMesh_3d>(ghost_boundary, read_mesh_data);
     air_block.addBodyStateForRecording<Real>("Density");
     air_block.addBodyStateForRecording<Real>("Pressure");
     SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
-    GhostCreationFromMesh_3d ghost_creation(air_block, read_mesh_data);
+    GhostCreationFromMesh_3d ghost_creation(air_block, read_mesh_data, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
@@ -43,8 +44,7 @@ int main(int ac, char* av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(air_block_inner, 500.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(air_block_inner, 8000.0);
     /** Boundary conditions set up */
-    InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
-        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
+    InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(air_block, read_mesh_data.min_distance_between_nodes_,0.6);
     //----------------------------------------------------------------------
