@@ -7,16 +7,17 @@
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
-// setup data
-Real particle_spacing = 0.001;
-Real gravity_g = 9.81;
-Real end_time = 0.5;
+// setup parameters
 bool relaxation = true;
 bool linearized_iteration = true;
+bool reload = false;
 
 // simulation setup
-Real omega = RPS * 3.14 * 2;                                    // angular velocity
+Real particle_spacing = 0.001;                                  // particle spacing (must be small enough so blades are resolved)
+Real gravity_g = 9.81;                                          // gravity
+Real end_time = 0.5;                                            // end time
 Real RPS = 5;                                                   // revolutions per second
+Real omega = RPS * 3.14 * 2;                                    // angular velocity
 Real U_ref = 0.0735 * 0.5 * omega;                              // tip velocity
 Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound
 
@@ -30,9 +31,9 @@ Real min_shear_rate = 5e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
-std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
-std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
-std::string full_path_to_fluid = "./input/Fluid_Full_Height_Enlarged_Blade.stl";
+std::string full_path_to_shaft = "./input/shaft.stl";
+std::string full_path_to_housing = "./input/housing.stl";
+std::string full_path_to_fluid = "./input/fluid.stl";
 
 Vecd translation(0.0, 0.0, 0.0);
 Vecd housing_translation(0.0, 0.0, 0.0);
@@ -95,7 +96,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     sph_system.setRunParticleRelaxation(relaxation);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(reload);
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
@@ -186,7 +187,7 @@ int main(int ac, char *av[])
             relaxation_step_complex_fluid.exec();
             ite += 1;
         }
-        std::cout << "The relaxation process of shaft & housing particles finished !" << std::endl;
+        std::cout << "Relaxation Complete" << std::endl;
     }
 
     //	Define the methods for I/O operations, observations
