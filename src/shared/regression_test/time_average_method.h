@@ -101,7 +101,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     void resultTest();              /** test the new result if it is converged within the range. */
 
     /* the interface for generating the priori converged result with time-averaged meanvalue and variance. */
-    void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, std::string filter = "false")
+    void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, const std::string &filter = "false")
     {
         this->writeXmlToXmlFile();  /* currently defined in in_output. */
         this->readXmlFromXmlFile(); /* currently defined in in_output. */
@@ -124,7 +124,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     };
 
     /** the interface for testing new result. */
-    void testResult(std::string filter = "false")
+    void testResult(const std::string &filter = "false")
     {
         this->writeXmlToXmlFile();  /* currently defined in in_output. */
         this->readXmlFromXmlFile(); /* currently defined in in_output. */

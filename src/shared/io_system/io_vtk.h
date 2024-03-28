@@ -21,12 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	vtk_io.h
- * @brief 	Classes for input and output with vtk (Paraview) files.
- * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ * @file 	io_vtk.h
+ * @brief Classes for input and output with vtk (Paraview) files.
+ * @author Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_VTK_H
+#define IO_VTK_H
 
 #include "io_base.h"
 
@@ -98,3 +99,4 @@ class WriteToVtpIfVelocityOutOfBound
     virtual ~WriteToVtpIfVelocityOutOfBound(){};
 };
 } // namespace SPH
+#endif // IO_VTK_H

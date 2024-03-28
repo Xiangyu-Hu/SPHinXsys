@@ -27,7 +27,8 @@
  * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef DYNAMIC_TIME_WARPING_H
+#define DYNAMIC_TIME_WARPING_H
 
 #include "time_average_method.hpp"
 
@@ -66,9 +67,10 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
 
   public:
     template <typename... Args>
-    explicit RegressionTestDynamicTimeWarping(Args &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...),
-                                                                           dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
-                                                                           dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
+    explicit RegressionTestDynamicTimeWarping(Args &&...args)
+        : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...),
+          dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
+          dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
     {
         dtw_distance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_dtwdistance.xml";
     };
@@ -82,7 +84,7 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     void resultTest();                             /** test the new result if it is converged within the range. */
 
     /** the interface for generating the priori converged result with DTW */
-    void generateDataBase(Real threshold_value, std::string filter = "false")
+    void generateDataBase(Real threshold_value, const std::string &filter = "false")
     {
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
@@ -108,7 +110,7 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     };
 
     /** the interface for generating the priori converged result with DTW. */
-    void testResult(std::string filter = "false")
+    void testResult(const std::string &filter = "false")
     {
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
@@ -133,3 +135,4 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     };
 };
 } // namespace SPH
+#endif // DYNAMIC_TIME_WARPING_H
