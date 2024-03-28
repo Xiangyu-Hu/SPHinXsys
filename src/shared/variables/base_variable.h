@@ -31,7 +31,6 @@
 #define BASE_VARIABLES_H
 
 #include "base_data_package.h"
-
 namespace SPH
 {
 class BaseVariable
@@ -46,26 +45,63 @@ class BaseVariable
 };
 
 template <typename DataType>
-class SingleVariable : public BaseVariable
+class Variable : public BaseVariable
 {
-  public:
-    SingleVariable(const std::string &name, DataType &value)
-        : BaseVariable(name), value_(value){};
-    virtual ~SingleVariable(){};
+    struct ConstantInitialization
+    {
+        explicit ConstantInitialization(DataType constant_value)
+            : constant_value_(constant_value){};
+        DataType operator()(size_t i) { return constant_value; };
+    };
 
-    DataType *ValueAddress() { return &value_; };
+  public:
+    explicit Variable(const std::string &name, size_t size = 1)
+        : BaseVariable(name), size_(size),
+          value_addrs_(std::malloc(size * std::sizeof(DataType))){};
+    virtual ~Variable(){std::free(value_addrs_)};
+
+    DataType *ValueAddress() { return value_addrs_; };
+
+    template <typename InitializationFunction>
+    void initializeVariable(const InitializationFunction &initialization)
+    {
+        for (size_t i = 0; i < size_; ++i)
+        {
+            value_addrs_[i] = initialization(i);
+        }
+    };
+
+    void initializeVariable(DataType constant_value)
+    {
+        initializeVariable(ConstantInitialization(constant_value));
+    };
 
   private:
-    DataType value_;
+    size_t size_;
+    DataType *value_addrs_;
 };
 
 template <typename DataType>
 class DiscreteVariable : public BaseVariable
 {
   public:
-    DiscreteVariable(const std::string &name, size_t index)
+    DiscreteVariable(const std::string &name, std::size_t size)
         : BaseVariable(name), index_in_container_(index){};
     virtual ~DiscreteVariable(){};
+
+    size_t IndexInContainer() const { return index_in_container_; };
+
+  private:
+    size_t index_in_container_;
+};
+
+template <typename DataType>
+class MeshVariable : public BaseVariable
+{
+  public:
+    MeshVariable(const std::string &name, size_t index)
+        : BaseVariable(name), index_in_container_(index){};
+    virtual ~MeshVariable(){};
 
     size_t IndexInContainer() const { return index_in_container_; };
 

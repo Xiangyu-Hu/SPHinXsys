@@ -17,13 +17,18 @@ namespace SPH
 template <typename DataType>
 DataType *BaseParticles::registerSingleVariable(const std::string &variable_name, DataType initial_value)
 {
-    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
+    Variable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
 
-    return variable != nullptr
-               ? variable->ValueAddress()
-               : addVariableToAssemble<DataType>(all_single_variables_,
-                                                 all_global_variable_ptrs_, variable_name, initial_value)
-                     ->ValueAddress();
+    if (variable != nullptr)
+    {
+        return variable->ValueAddress();
+    }
+    else
+    {
+        addVariableToAssemble<DataType>(all_single_variables_, all_global_variable_ptrs_, variable_name);
+        variable->initializeVariable(initial_value);
+        variable->ValueAddress();
+    }
 }
 //=================================================================================================//
 template <typename DataType>
