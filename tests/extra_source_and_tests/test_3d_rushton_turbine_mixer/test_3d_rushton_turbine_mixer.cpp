@@ -1,7 +1,7 @@
 /**
  * @file	HVMixer.cpp
- * @brief	Non-Newtonian Mixer
- * @details	This case is based on a Rushton turbine impeller in a cylindrical tank fitted with vertical baffles
+ * @brief	Non-Newtonian Rushton Turbine Mixer
+ * @details	This case is based on a Rushton turbine impeller in a cylindrical tank fitted with vertical baffles using the Herschel Bulkley model
  * @author	Theodor Hennings
  */
 #include "sphinxsys.h" // SPHinXsys Library.
@@ -14,42 +14,32 @@ Real end_time = 0.5;
 bool relaxation = true;
 bool linearized_iteration = true;
 
-// material properties
-Real rho = 1000.0;                                              // reference density
-Real RPS = 5;                                                   // revolutions per second
+// simulation setup
 Real omega = RPS * 3.14 * 2;                                    // angular velocity
-Real U_ref = 0.0735 * 0.5 * omega;                              // tip velocity (diameter * 0.5 * angular velocity)
-Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound (0.287 is the fluid column height)
+Real RPS = 5;                                                   // revolutions per second
+Real U_ref = 0.0735 * 0.5 * omega;                              // tip velocity
+Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound
 
-// non-Newtonian properties
-Real K = 4.58;  // consistency index
-Real n = 0.46;  // power index
+// material properties
+Real rho = 1000.0; // reference density
+Real K = 4.58;     // consistency index
+Real n = 0.46;     // power index
 Real tau_y = 18.9; // yield stress
 
 Real min_shear_rate = 5e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
-// std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
 std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
-
 std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
-
-// std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
 std::string full_path_to_fluid = "./input/Fluid_Full_Height_Enlarged_Blade.stl";
-
-std::string full_path_to_refinement = "./input/Refinement.stl";
 
 Vecd translation(0.0, 0.0, 0.0);
 Vecd housing_translation(0.0, 0.0, 0.0);
 Real length_scale = 1.0;
 
-Eigen::AngleAxis<Real> angle(omega / 1000, Eigen::Vector3d::UnitZ());
-Transform rotation_transform(angle);
-
 //----------------------------------------------------------------------
-//	Complex shape for wall boundary, note that no partial overlap is allowed
-//	for the shapes in a complex shape.
+//	Wall boundary geometry classes
 //----------------------------------------------------------------------
 class Mixer_Shaft : public ComplexShape
 {
@@ -64,15 +54,7 @@ class Mixer_Housing : public ComplexShape
   public:
     explicit Mixer_Housing(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        if (true)
-        {
-            add<TriangleMeshShapeSTL>(full_path_to_housing, housing_translation, length_scale);
-        }
-        else
-        {
-            add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * particle_spacing, full_path_to_housing, housing_translation, length_scale);
-            subtract<TriangleMeshShapeSTL>(full_path_to_housing, housing_translation, length_scale);
-        }
+        add<TriangleMeshShapeSTL>(full_path_to_housing, housing_translation, length_scale);
     }
 };
 class Fluid_Filling : public ComplexShape
@@ -83,15 +65,8 @@ class Fluid_Filling : public ComplexShape
         add<TriangleMeshShapeSTL>(full_path_to_fluid, translation, length_scale, "OuterBoundary");
     }
 };
-class Refinement : public ComplexShape
-{
-  public:
-    explicit Refinement(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<TriangleMeshShapeSTL>(full_path_to_refinement, translation, length_scale);
-    }
-};
 
+// Setup output helper function
 void output_setup()
 {
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
@@ -232,6 +207,7 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Free mobBody(matter.updGround(), SimTK::Transform(), info, SimTK::Transform());
 
     SimTK::State state = MBsystem.realizeTopology();
+    // Rigid Body Rotation
     mobBody.setOneU(state, 2, omega);
 
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
@@ -276,6 +252,7 @@ int main(int ac, char *av[])
         Dt_visc = get_viscous_time_step_size.exec();
         update_density_by_summation.exec();
 
+        // Viscous Integration
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
@@ -283,10 +260,12 @@ int main(int ac, char *av[])
             vel_grad_calculation.exec();
             shear_rate_calculation.exec();
 
+            // Viscous Substepping
             while (viscous_time < Dt_adv)
             {
                 viscous_acceleration.exec(Dt_visc);
                 viscous_time += Dt_visc;
+                // Last substep
                 if (viscous_time + Dt_visc > Dt_adv)
                 {
                     Dt_visc = Dt_adv - viscous_time;
@@ -330,9 +309,6 @@ int main(int ac, char *av[])
         }
         fluid.updateCellLinkedListWithParticleSort(100);
         fluid_wall_complex.updateConfiguration();
-        shaft_fluid_contact.updateConfiguration();
-        housing_fluid_contact.updateConfiguration();
-        mixer_shaft.updateCellLinkedList();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
