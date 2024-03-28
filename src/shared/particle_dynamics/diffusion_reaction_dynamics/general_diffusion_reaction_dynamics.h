@@ -113,7 +113,7 @@ class DiffusionBasedMapping
  */
 template <class DynamicsIdentifier, class ParticlesType>
 class SpeciesSummation
-    : public BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>,
+    : public BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>,
       public DiffusionReactionSimpleData<ParticlesType>
 {
   protected:
@@ -122,7 +122,7 @@ class SpeciesSummation
 
   public:
     SpeciesSummation(DynamicsIdentifier &identifier, const std::string &species_name)
-        : BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>(identifier, Real(0)),
+        : BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>(identifier),
           DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()),
           all_species_(this->particles_->all_species_),
           phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name])

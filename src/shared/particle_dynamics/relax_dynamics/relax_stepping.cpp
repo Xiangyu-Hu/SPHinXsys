@@ -48,7 +48,7 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+    : LocalDynamicsReduce<ReduceMax>(sph_body),
       RelaxDataDelegateSimple(sph_body),
       residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")),
       h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}

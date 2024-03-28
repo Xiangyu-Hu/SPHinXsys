@@ -91,7 +91,7 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+    : LocalDynamicsReduce<ReduceMax>(sph_body),
       FluidDataSimple(sph_body),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       rho_(this->particles_->rho_),

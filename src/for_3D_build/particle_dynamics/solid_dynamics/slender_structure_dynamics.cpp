@@ -13,7 +13,7 @@ BarDynamicsInitialCondition::BarDynamicsInitialCondition(SPHBody &sph_body)
       b_n0_(particles_->b_n0_), b_n_(particles_->b_n_), pseudo_b_n_(particles_->pseudo_b_n_) {}
 //=================================================================================================//
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<Real, ReduceMin>(sph_body, MaxReal),
+    : LocalDynamicsReduce<ReduceMin>(sph_body),
       BarDataSimple(sph_body), CFL_(CFL),
       vel_(particles_->vel_), force_(particles_->force_),
       angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),

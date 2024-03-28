@@ -26,7 +26,8 @@
  * @author	Chi Zhang, Shuoguo Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_SIMBODY_H
+#define IO_SIMBODY_H
 
 #include "io_base.h"
 
@@ -147,3 +148,4 @@ class WriteSimBodyVelocity : public WriteSimBodyStates<SimTK::MobilizedBody::Fre
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 } // namespace SPH
+#endif // IO_SIMBODY_H
