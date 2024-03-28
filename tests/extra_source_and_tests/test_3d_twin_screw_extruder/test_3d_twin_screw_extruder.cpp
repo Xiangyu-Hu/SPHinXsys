@@ -14,7 +14,7 @@ bool reload = false;
 
 
 // simulation setup
-Real particle_spacing = 0.0005; // particle spacing
+Real particle_spacing = 0.001; // particle spacing
 Real gravity_g = 0; //gravity
 Real end_time = 1; // end time
 Real RPS = 1;      // revolutions per second
