@@ -12,7 +12,7 @@ template <class BaseRelationType>
 ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       rho_(this->particles_->rho_), mass_(this->particles_->mass_), vel_(this->particles_->vel_),
-      viscous_force_(*this->particles_->template registerSharedVariable<Vecd>("ViscousForce")),
+      viscous_force_(*this->particles_->template registerDiscreteVariable<Vecd>("ViscousForce")),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 template <class ViscosityType>
@@ -90,7 +90,7 @@ ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::
     ViscousForce(BaseContactRelation &wall_contact_relation)
     : BaseViscousForceWithWall(wall_contact_relation),
       mu_(&base_particles_),
-      distance_from_wall_(*this->particles_->template registerSharedVariable<Vecd>("DistanceFromWall")){};
+      distance_from_wall_(*this->particles_->template registerDiscreteVariable<Vecd>("DistanceFromWall")){};
 //=================================================================================================//
 template <typename ViscosityType>
 void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interaction(size_t index_i, Real dt)

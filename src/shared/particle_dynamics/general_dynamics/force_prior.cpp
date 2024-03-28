@@ -5,8 +5,8 @@ namespace SPH
 //=================================================================================================//
 ForcePrior::ForcePrior(BaseParticles *base_particles, const std::string &force_name)
     : force_prior_(base_particles->force_prior_),
-      current_force_(*base_particles->registerSharedVariable<Vecd>(force_name)),
-      previous_force_(*base_particles->registerSharedVariable<Vecd>("Previous" + force_name))
+      current_force_(*base_particles->registerDiscreteVariable<Vecd>(force_name)),
+      previous_force_(*base_particles->registerDiscreteVariable<Vecd>("Previous" + force_name))
 {
     base_particles->addVariableToRestart<Vecd>("Previous" + force_name);
     base_particles->registerSortableVariable<Vecd>("Previous" + force_name);

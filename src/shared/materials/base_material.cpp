@@ -23,7 +23,7 @@ Fluid::Fluid(Real rho0, Real c0, Real mu)
 void Fluid::initializeLocalParameters(BaseParticles *base_particles)
 {
     BaseMaterial::initializeLocalParameters(base_particles);
-    base_particles->registerSharedVariable<Real>("Pressure", getPressure(rho0_));
+    base_particles->registerDiscreteVariable<Real>("Pressure", getPressure(rho0_));
 }
 //=================================================================================================//
 } // namespace SPH

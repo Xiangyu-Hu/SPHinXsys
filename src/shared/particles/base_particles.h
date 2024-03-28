@@ -92,15 +92,15 @@ class BaseParticles
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~BaseParticles(){};
 
-    StdLargeVec<Vecd> pos_;         /**< Position */
-    StdLargeVec<Vecd> vel_;         /**< Velocity */
-    StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
-    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
+    StdLargeVec<Vecd> *pos_;         /**< Position */
+    StdLargeVec<Vecd> *vel_;         /**< Velocity */
+    StdLargeVec<Vecd> *force_;       /**< Force induced by pressure- or stress */
+    StdLargeVec<Vecd> *force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
 
-    StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;      /**< Density */
-    StdLargeVec<Real> mass_;     /**< Mass*/
-    StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
+    StdLargeVec<Real> *Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> *rho_;      /**< Density */
+    StdLargeVec<Real> *mass_;     /**< Mass*/
+    StdLargeVec<int> *indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     //----------------------------------------------------------------------
@@ -125,23 +125,21 @@ class BaseParticles
     //		Parameterized management on generalized particle data
     //----------------------------------------------------------------------
     template <typename DataType>
-    void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
-                          DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType, class InitializationFunction>
-    void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
-                          const InitializationFunction &initialization);
-    template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariable(
-        const std::string &variable_name, const DataType &default_value = ZeroData<DataType>::value);
-    template <typename DataType>
-    StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
-    ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
-
-    template <typename DataType>
     DataType *registerSingleVariable(const std::string &variable_name,
                                      DataType initial_value = ZeroData<DataType>::value);
+
     template <typename DataType>
     DataType *getSingleVariableByName(const std::string &variable_name);
+
+    template <typename DataType, class InitializationFunction>
+    StdLargeVec<DataType> *registerDiscreteVariable(
+        const std::string &variable_name, const InitializationFunction &default_value = [](size_t index) -> DataType
+        { return ZeroData<DataType>::value; });
+
+    template <typename DataType>
+    StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
+
+    ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
     //----------------------------------------------------------------------
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -289,7 +287,7 @@ class BaseDerivedVariable
     virtual ~BaseDerivedVariable(){};
 
   protected:
-    StdLargeVec<DataType> derived_variable_;
+    StdLargeVec<DataType> *derived_variable_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H

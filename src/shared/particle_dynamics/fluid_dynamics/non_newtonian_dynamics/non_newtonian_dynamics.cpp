@@ -112,7 +112,7 @@ ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
       vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),
       generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial())),
-      mu_srd_(*particles_->registerSharedVariable<Real>("VariableViscosity"))
+      mu_srd_(*particles_->registerDiscreteVariable<Real>("VariableViscosity"))
 {
     particles_->addVariableToWrite<Real>("VariableViscosity");
 }

@@ -12,7 +12,7 @@ template <class BaseRelationType>
 VelocityGradient<DataDelegationType>::VelocityGradient(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       vel_(this->particles_->vel_),
-      vel_grad_(*this->particles_->template registerSharedVariable<Matd>("VelocityGradient")) {}
+      vel_grad_(*this->particles_->template registerDiscreteVariable<Matd>("VelocityGradient")) {}
 //=================================================================================================//
 template <class KernelCorrectionType>
 VelocityGradient<Inner<KernelCorrectionType>>::VelocityGradient(BaseInnerRelation &inner_relation)

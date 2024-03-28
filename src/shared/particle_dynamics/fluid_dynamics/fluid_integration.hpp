@@ -14,7 +14,7 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
       rho_(this->particles_->rho_), mass_(this->particles_->mass_),
       p_(*this->particles_->template getVariableByName<Real>("Pressure")),
-      drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
+      drho_dt_(*this->particles_->template registerDiscreteVariable<Real>("DensityChangeRate")),
       pos_(this->particles_->pos_), vel_(this->particles_->vel_),
       force_(this->particles_->force_), force_prior_(this->particles_->force_prior_) {}
 //=================================================================================================//

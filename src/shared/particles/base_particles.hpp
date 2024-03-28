@@ -15,42 +15,6 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
-                                     const std::string &variable_name, DataType initial_value)
-{
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
-
-    if (variable == nullptr)
-    {
-        variable_addrs.resize(particles_bound_, initial_value);
-
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
-        size_t new_variable_index = std::get<type_index>(all_particle_data_).size() - 1;
-
-        addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name, new_variable_index);
-    }
-    else
-    {
-        std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
-        std::cout << "\n Please check if " << variable_name << " is a sharable variable." << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-}
-//=================================================================================================//
-template <typename DataType, class InitializationFunction>
-void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
-                                     const std::string &variable_name, const InitializationFunction &initialization)
-{
-    registerVariable(variable_addrs, variable_name);
-    for (size_t i = 0; i != particles_bound_; ++i)
-    {
-        variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
-    }
-}
-//=================================================================================================//
-template <typename DataType>
 DataType *BaseParticles::registerSingleVariable(const std::string &variable_name, DataType initial_value)
 {
     SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
@@ -79,20 +43,27 @@ DataType *BaseParticles::getSingleVariableByName(const std::string &variable_nam
     return nullptr;
 }
 //=================================================================================================//
-template <typename DataType>
+template <typename DataType, class InitializationFunction>
 StdLargeVec<DataType> *BaseParticles::
-    registerSharedVariable(const std::string &variable_name, const DataType &default_value)
+    registerDiscreteVariable(const std::string &variable_name, const InitializationFunction &initialization)
 {
-
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
-
     constexpr int type_index = DataTypeIndex<DataType>::value;
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
     if (variable == nullptr)
     {
         UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
-        StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
-        registerVariable(*contained_data, variable_name, default_value);
-        return contained_data;
+
+        StdLargeVec<DataType> *variable_addrs = container.template createPtr<StdLargeVec<DataType>>();
+        variable_addrs.resize(particles_bound_);
+        std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
+        size_t new_variable_index = std::get<type_index>(all_particle_data_).size() - 1;
+        addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name, new_variable_index);
+
+        for (size_t i = 0; i != particles_bound_; ++i)
+        {
+            variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
+        }
+        return variable_addrs;
     }
     else
     {
@@ -113,8 +84,6 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
 
     std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    return nullptr;
-
     return nullptr;
 }
 //=================================================================================================//

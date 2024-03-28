@@ -300,8 +300,8 @@ ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
-      k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature"))
+      k1_(*particles_->registerDiscreteVariable<Real>("1stPrincipleCurvature")),
+      k2_(*particles_->registerDiscreteVariable<Real>("2ndPrincipleCurvature"))
 {
     particles_->registerVariable(dn_0_, "InitialNormalGradient");
 };
@@ -344,8 +344,8 @@ void ShellCurvature::update(size_t index_i, Real)
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       n_(particles_->n_),
-      k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
-      k2_ave_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};
+      k1_ave_(*particles_->registerDiscreteVariable<Real>("Average1stPrincipleCurvature")),
+      k2_ave_(*particles_->registerDiscreteVariable<Real>("Average2ndPrincipleCurvature")){};
 //=================================================================================================//
 void AverageShellCurvature::update(size_t index_i, Real)
 {

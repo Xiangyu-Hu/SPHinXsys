@@ -141,7 +141,7 @@ ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, Variabl
     {
         boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
         boundary_species_.push_back(&(this->contact_particles_[k]->all_species_));
-        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
+        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerDiscreteVariable<Real>("HeatFlux");
     }
 }
 //=================================================================================================//

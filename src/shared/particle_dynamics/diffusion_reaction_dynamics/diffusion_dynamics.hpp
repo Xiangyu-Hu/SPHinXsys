@@ -41,7 +41,7 @@ DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType
     {
         // Register specie change rate as shared variable
         std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
-        diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
+        diffusion_dt_[i] = this->particles_->template registerDiscreteVariable<Real>(diffusion_species_name + "ChangeRate");
     }
 }
 //=================================================================================================//
@@ -202,7 +202,7 @@ DiffusionRelaxation<Neumann<CommonControlTypes...>>::
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
-            contact_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
+            contact_heat_flux_[k] = this->contact_particles_[k]->template registerDiscreteVariable<Real>("HeatFlux");
         }
     }
 }
@@ -256,7 +256,7 @@ DiffusionRelaxation<Robin<CommonControlTypes...>>::
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
-            contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
+            contact_convection_[k] = this->contact_particles_[k]->template registerDiscreteVariable<Real>("Convection");
             contact_T_infinity_[m] = this->contact_particles_[k]->template registerSingleVariable<Real>("T_infinity");
         }
     }

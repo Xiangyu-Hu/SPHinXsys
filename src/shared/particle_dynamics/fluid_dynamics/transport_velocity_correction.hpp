@@ -12,7 +12,7 @@ template <class BaseRelationType>
 TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScopeType>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      zero_gradient_residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroGradientResidue")),
+      zero_gradient_residue_(*this->particles_->template registerDiscreteVariable<Vecd>("ZeroGradientResidue")),
       kernel_correction_(this->particles_), checkWithinScope(this->particles_)
 {
     static_assert(std::is_base_of<ParticleScope, ParticleScopeType>::value,

@@ -60,7 +60,7 @@ class BidirectionalBuffer
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, int axis)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
               pos_(particles_->pos_), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
-              buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
+              buffer_particle_indicator_(*particles_->registerDiscreteVariable<int>("BufferParticleIndicator"))
         {
             particles_->registerSortableVariable<int>("BufferParticleIndicator");
         };

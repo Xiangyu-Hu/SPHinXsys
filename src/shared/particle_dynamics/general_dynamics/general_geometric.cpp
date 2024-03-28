@@ -7,10 +7,10 @@ namespace SPH
 NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
       initial_shape_(*sph_body.initial_shape_), pos_(particles_->pos_),
-      n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
-      phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
-      phi0_(*particles_->registerSharedVariable<Real>("InitialSignedDistance")) {}
+      n_(*particles_->registerDiscreteVariable<Vecd>("NormalDirection")),
+      n0_(*particles_->registerDiscreteVariable<Vecd>("InitialNormalDirection")),
+      phi_(*particles_->registerDiscreteVariable<Real>("SignedDistance")),
+      phi0_(*particles_->registerDiscreteVariable<Real>("InitialSignedDistance")) {}
 //=============================================================================================//
 void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
 {
@@ -29,10 +29,10 @@ NormalDirectionFromSubShapeAndOp::
       shape_(shape_and_op_->first),
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
       pos_(particles_->pos_),
-      n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
-      phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
-      phi0_(*particles_->registerSharedVariable<Real>("InitialSignedDistance")) {}
+      n_(*particles_->registerDiscreteVariable<Vecd>("NormalDirection")),
+      n0_(*particles_->registerDiscreteVariable<Vecd>("InitialNormalDirection")),
+      phi_(*particles_->registerDiscreteVariable<Real>("SignedDistance")),
+      phi0_(*particles_->registerDiscreteVariable<Real>("InitialSignedDistance")) {}
 //=============================================================================================//
 void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
 {
@@ -47,10 +47,10 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
 NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
       initial_shape_(*sph_body_.initial_shape_), pos_(particles_->pos_),
-      n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
-      phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
-      phi0_(*particles_->registerSharedVariable<Real>("InitialSignedDistance")) {}
+      n_(*particles_->registerDiscreteVariable<Vecd>("NormalDirection")),
+      n0_(*particles_->registerDiscreteVariable<Vecd>("InitialNormalDirection")),
+      phi_(*particles_->registerDiscreteVariable<Real>("SignedDistance")),
+      phi0_(*particles_->registerDiscreteVariable<Real>("InitialSignedDistance")) {}
 //=================================================================================================//
 void NormalDirectionFromParticles::interaction(size_t index_i, Real dt)
 {

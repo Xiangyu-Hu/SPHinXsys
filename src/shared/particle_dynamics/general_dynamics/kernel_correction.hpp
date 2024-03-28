@@ -10,7 +10,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 LinearGradientCorrectionMatrix<DataDelegationType>::LinearGradientCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      B_(*this->particles_->template registerSharedVariable<Matd>("LinearGradientCorrectionMatrix")) {}
+      B_(*this->particles_->template registerDiscreteVariable<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>

@@ -85,7 +85,7 @@ TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, Varia
     {
         boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
         boundary_variable_.push_back(this->contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
-        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
+        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerDiscreteVariable<Real>("HeatFlux");
     }
 };
 //=================================================================================================//

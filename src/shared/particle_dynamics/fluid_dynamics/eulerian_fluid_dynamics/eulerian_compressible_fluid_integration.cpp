@@ -27,7 +27,7 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
       compressible_fluid_(CompressibleFluid(1.0, 1.4)),
       Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")),
       dE_dt_(*particles_->getVariableByName<Real>("TotalEnergyChangeRate")),
-      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
+      dmass_dt_(*this->particles_->template registerDiscreteVariable<Real>("MassChangeRate")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")){};

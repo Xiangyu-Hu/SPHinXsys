@@ -13,7 +13,7 @@ template <class BaseRelationType>
 RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
-      residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroOrderResidue")) {}
+      residue_(*this->particles_->template registerDiscreteVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
