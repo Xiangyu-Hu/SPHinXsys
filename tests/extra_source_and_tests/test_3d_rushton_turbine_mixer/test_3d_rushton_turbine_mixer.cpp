@@ -1,45 +1,47 @@
 /**
- * @file	Extruder.cpp
- * @brief	Co-Rotating Twin Screw Extruder
- * @details	This case is based on a Co-Rotating Twin Screw Extruder with periodic boundaries
+ * @file	HVMixer.cpp
+ * @brief	Non-Newtonian Mixer
+ * @details	This case is based on a Rushton turbine impeller in a cylindrical tank fitted with vertical baffles
  * @author	Theodor Hennings
  */
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
 // setup data
-Real particle_spacing = 0.0005;
-Real gravity_g = 0;
-Real end_time = 1;
+Real particle_spacing = 0.001;
+Real gravity_g = 9.81;
+Real end_time = 0.5;
 bool relaxation = true;
 bool linearized_iteration = true;
 
 // material properties
-Real rho = 1000.0; // reference density
-Real RPS = 1;      // revolutions per second
-Real omega = RPS * 3.14 * 2;
-Real U_ref = 0.03 * omega;
-Real SOS = 10.0 * U_ref; // numerical speed of sound (0.287 is the fluid column height)
+Real rho = 1000.0;                                              // reference density
+Real RPS = 5;                                                   // revolutions per second
+Real omega = RPS * 3.14 * 2;                                    // angular velocity
+Real U_ref = 0.0735 * 0.5 * omega;                              // tip velocity (diameter * 0.5 * angular velocity)
+Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound (0.287 is the fluid column height)
 
 // non-Newtonian properties
-Real K = 1;     // consistency index
-Real n = 1.25;  // power index
-Real tau_y = 0; // yield stress
+Real K = 4.58;  // consistency index
+Real n = 0.46;  // power index
+Real tau_y = 18.9; // yield stress
 
 Real min_shear_rate = 5e-2; // cutoff low shear rate
-Real max_shear_rate = 1e+3; // cutoff high shear rate
+Real max_shear_rate = 1e+5; // cutoff high shear rate
 
 // mesh geometry data
 // std::string full_path_to_shaft = "./input/Shaft_Fusion.stl";
-std::string full_path_to_left_screw = "./input/left_screw2.stl";
+std::string full_path_to_shaft = "./input/Shaft_Fusion_Large_Blade.stl";
 
-std::string full_path_to_right_screw = "./input/right_screw2.stl";
+std::string full_path_to_housing = "./input/Housing_Fusion_2.stl";
 
-std::string full_path_to_fluid = "./input/fluid2.stl";
+// std::string full_path_to_fluid = "./input/Fluid_Reduced_Height.stl";
+std::string full_path_to_fluid = "./input/Fluid_Full_Height_Enlarged_Blade.stl";
 
-std::string full_path_to_barrel = "./input/barrel2.stl";
+std::string full_path_to_refinement = "./input/Refinement.stl";
 
 Vecd translation(0.0, 0.0, 0.0);
+Vecd housing_translation(0.0, 0.0, 0.0);
 Real length_scale = 1.0;
 
 Eigen::AngleAxis<Real> angle(omega / 1000, Eigen::Vector3d::UnitZ());
@@ -49,20 +51,28 @@ Transform rotation_transform(angle);
 //	Complex shape for wall boundary, note that no partial overlap is allowed
 //	for the shapes in a complex shape.
 //----------------------------------------------------------------------
-class Left_Screw : public ComplexShape
+class Mixer_Shaft : public ComplexShape
 {
   public:
-    explicit Left_Screw(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit Mixer_Shaft(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_left_screw, translation, length_scale);
+        add<TriangleMeshShapeSTL>(full_path_to_shaft, translation, length_scale);
     }
 };
-class Right_Screw : public ComplexShape
+class Mixer_Housing : public ComplexShape
 {
   public:
-    explicit Right_Screw(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit Mixer_Housing(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_right_screw, translation, length_scale);
+        if (true)
+        {
+            add<TriangleMeshShapeSTL>(full_path_to_housing, housing_translation, length_scale);
+        }
+        else
+        {
+            add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * particle_spacing, full_path_to_housing, housing_translation, length_scale);
+            subtract<TriangleMeshShapeSTL>(full_path_to_housing, housing_translation, length_scale);
+        }
     }
 };
 class Fluid_Filling : public ComplexShape
@@ -73,19 +83,19 @@ class Fluid_Filling : public ComplexShape
         add<TriangleMeshShapeSTL>(full_path_to_fluid, translation, length_scale, "OuterBoundary");
     }
 };
-class Barrel : public ComplexShape
+class Refinement : public ComplexShape
 {
   public:
-    explicit Barrel(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit Refinement(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_barrel, translation, length_scale);
+        add<TriangleMeshShapeSTL>(full_path_to_refinement, translation, length_scale);
     }
 };
 
 void output_setup()
 {
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-    std::cout << "XXXXXXXXXXX Extruder Case XXXXXXXXXX" << std::endl;
+    std::cout << "XXXXXXXXXXXX Mixer Case XXXXXXXXXXXX" << std::endl;
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
 
     std::cout << "     particle_spacing= " << particle_spacing << std::endl;
@@ -106,14 +116,13 @@ int main(int ac, char *av[])
 {
     output_setup();
     //	Build up an SPHSystem
-    BoundingBox system_domain_bounds(Vecd(-0.036, -0.046, -0.011), Vecd(0.036, 0.093, 0.072));
+    BoundingBox system_domain_bounds(Vecd(-0.16, -0.16, -0.001), Vecd(0.16, 0.16, 0.32));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
-    sph_system.setRunParticleRelaxation(relaxation);
-    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.setRunParticleRelaxation(relaxation);
+    sph_system.setReloadParticles(false);
 
     //	Creating bodies with corresponding materials and particles
-    std::cout << "fluid" << std::endl;
     FluidBody fluid(sph_system, makeShared<Fluid_Filling>("Fluid"));
     fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
@@ -121,48 +130,36 @@ int main(int ac, char *av[])
         ? fluid.generateParticles<ParticleGeneratorReload>(fluid.getName())
         : fluid.generateParticles<ParticleGeneratorLattice>();
 
-    std::cout << "barrel" << std::endl;
-    SolidBody barrel(sph_system, makeShared<Barrel>("Barrel"));
-    barrel.defineParticlesAndMaterial<SolidParticles, Solid>();
+    SolidBody mixer_housing(sph_system, makeShared<Mixer_Housing>("Mixer_Housing"));
+    mixer_housing.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? barrel.generateParticles<ParticleGeneratorReload>(barrel.getName())
-        : barrel.generateParticles<ParticleGeneratorLattice>();
-    barrel.addBodyStateForRecording<Vec3d>("NormalDirection");
+        ? mixer_housing.generateParticles<ParticleGeneratorReload>(mixer_housing.getName())
+        : mixer_housing.generateParticles<ParticleGeneratorLattice>();
+    mixer_housing.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-    std::cout << "left screw" << std::endl;
-    SolidBody left_screw(sph_system, makeShared<Left_Screw>("Left_Screw"));
-    // left_screw.defineAdaptationRatios(1.15, 2.0);
-    left_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
+    SolidBody mixer_shaft(sph_system, makeShared<Mixer_Shaft>("Mixer_Shaft"));
+    mixer_shaft.defineAdaptationRatios(1.15, 2.0);
+    mixer_shaft.defineBodyLevelSetShape();
+    mixer_shaft.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? left_screw.generateParticles<ParticleGeneratorReload>(left_screw.getName())
-        : left_screw.generateParticles<ParticleGeneratorLattice>();
-    left_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
-
-    std::cout << "right screw" << std::endl;
-    SolidBody right_screw(sph_system, makeShared<Right_Screw>("Right_Screw"));
-    // right_screw.defineAdaptationRatios(1.15, 2.0);
-    right_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
-    sph_system.ReloadParticles()
-        ? right_screw.generateParticles<ParticleGeneratorReload>(right_screw.getName())
-        : right_screw.generateParticles<ParticleGeneratorLattice>();
-    right_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
+        ? mixer_shaft.generateParticles<ParticleGeneratorReload>(mixer_shaft.getName())
+        : mixer_shaft.generateParticles<ParticleGeneratorLattice>();
+    mixer_shaft.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
-    InnerRelation left_screw_inner(left_screw);
-    InnerRelation right_screw_inner(right_screw);
-    InnerRelation barrel_inner(barrel);
-    ContactRelation fluid_wall_contact(fluid, {&barrel, &left_screw, &right_screw});
-    ContactRelation left_screw_fluid_contact(left_screw, {&fluid});
-    ContactRelation right_screw_fluid_contact(right_screw, {&fluid});
-    ContactRelation barrel_fluid_contact(barrel, {&fluid});
+    InnerRelation shaft_inner(mixer_shaft);
+    InnerRelation housing_inner(mixer_housing);
+    ContactRelation fluid_wall_contact(fluid, {&mixer_housing, &mixer_shaft});
+    ContactRelation fluid_shaft_contact(fluid, {&mixer_shaft});
+    ContactRelation shaft_fluid_contact(mixer_shaft, {&fluid});
+    ContactRelation housing_fluid_contact(mixer_housing, {&fluid});
 
     ComplexRelation fluid_wall_complex(fluid_inner, fluid_wall_contact);
 
     //	Define the numerical methods used in the simulation
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
-    PeriodicConditionUsingCellLinkedList periodic_condition_z(fluid, fluid.getBodyShapeBounds(), zAxis);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(fluid_inner, fluid_wall_contact);
@@ -172,18 +169,50 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
     InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
-    //InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
-
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
-    SimpleDynamics<NormalDirectionFromBodyShape> left_screw_normal_direction(left_screw);
-    SimpleDynamics<NormalDirectionFromBodyShape> right_screw_normal_direction(right_screw);
-    SimpleDynamics<NormalDirectionFromBodyShape> barrel_normal_direction(barrel);
+    SimpleDynamics<NormalDirectionFromBodyShape> housing_normal_direction(mixer_housing);
+    SimpleDynamics<NormalDirectionFromBodyShape> shaft_normal_direction(mixer_shaft);
+
+    if (sph_system.RunParticleRelaxation())
+    {
+        //----------------------------------------------------------------------
+        //	Define the methods for particle relaxation.
+        //----------------------------------------------------------------------
+        SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_shaft_particles(mixer_shaft);
+        SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_fluid_particles(fluid);
+        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_shaft(shaft_inner);
+        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex_fluid(ConstructorArgs(fluid_inner, "OuterBoundary"), fluid_shaft_contact);
+
+        Real relax_time = 0.1;
+        random_input_shaft_particles.exec(relax_time);
+        // random_input_housing_particles.exec(relax_time);
+        random_input_fluid_particles.exec(relax_time);
+        relaxation_step_inner_shaft.SurfaceBounding().exec();
+        // relaxation_step_inner_housing.SurfaceBounding().exec();
+        relaxation_step_complex_fluid.SurfaceBounding().exec();
+        //? mixer_shaft.updateCellLinkedList();
+        //? mixer_housing.updateCellLinkedList();
+
+        //----------------------------------------------------------------------
+        //	From here iteration for particle relaxation begins.
+        //----------------------------------------------------------------------
+        int ite = 0;
+        int relax_step = 50;
+        while (ite < relax_step)
+        {
+            // relaxation_step_inner_housing.exec();
+            relaxation_step_inner_shaft.exec();
+            relaxation_step_complex_fluid.exec();
+            ite += 1;
+        }
+        std::cout << "The relaxation process of shaft & housing particles finished !" << std::endl;
+    }
 
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
@@ -197,21 +226,13 @@ int main(int ac, char *av[])
     SimTK::MultibodySystem MBsystem;
     SimTK::SimbodyMatterSubsystem matter(MBsystem);
     SimTK::GeneralForceSubsystem forces(MBsystem);
-    SolidBodyPartForSimbody left_screw_constraint_area(left_screw, makeShared<TriangleMeshShapeSTL>(full_path_to_left_screw, translation, length_scale));
-    SolidBodyPartForSimbody right_screw_constraint_area(right_screw, makeShared<TriangleMeshShapeSTL>(full_path_to_right_screw, translation, length_scale));
+    SolidBodyPartForSimbody shaft_constraint_area(mixer_shaft, makeShared<TriangleMeshShapeSTL>(full_path_to_shaft, translation, length_scale));
 
-    SimTK::Body::Rigid info_left(*left_screw_constraint_area.body_part_mass_properties_);
-    SimTK::Body::Rigid info_right(*right_screw_constraint_area.body_part_mass_properties_);
-
-    SimTK::Vec3 rightScrewOrigin(0, 0.05, 0);
-    SimTK::Transform offsetTransform(SimTK::Rotation(), rightScrewOrigin);
-
-    SimTK::MobilizedBody::Free mobBody_left(matter.updGround(), SimTK::Transform(), info_left, SimTK::Transform());
-    SimTK::MobilizedBody::Free mobBody_right(matter.updGround(), offsetTransform, info_right, SimTK::Transform());
+    SimTK::Body::Rigid info(*shaft_constraint_area.body_part_mass_properties_);
+    SimTK::MobilizedBody::Free mobBody(matter.updGround(), SimTK::Transform(), info, SimTK::Transform());
 
     SimTK::State state = MBsystem.realizeTopology();
-    mobBody_left.setOneU(state, 2, -omega);
-    mobBody_right.setOneU(state, 2, -omega);
+    mobBody.setOneU(state, 2, omega);
 
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);
@@ -219,25 +240,19 @@ int main(int ac, char *av[])
     integ.initialize(state);
 
     ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_tethered_spot_left(left_screw_constraint_area, MBsystem, mobBody_left, integ);
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_tethered_spot_right(right_screw_constraint_area, MBsystem, mobBody_right, integ);
-
+        force_on_tethered_spot(shaft_constraint_area, MBsystem, mobBody, integ);
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_rotation_left(left_screw_constraint_area, MBsystem, mobBody_left, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_rotation_right(right_screw_constraint_area, MBsystem, mobBody_right, integ);
+        constraint_rotation(shaft_constraint_area, MBsystem, mobBody, integ);
 
     //	Prepare the simulation
     sph_system.initializeSystemCellLinkedLists();
-    periodic_condition_z.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     constant_gravity.exec();
-    barrel_normal_direction.exec();
-    left_screw_normal_direction.exec();
-    right_screw_normal_direction.exec();
+    housing_normal_direction.exec();
+    shaft_normal_direction.exec();
 
     //	Setup for time-stepping control
+    // size_t number_of_iterations = sph_system.RestartStep();
     int nmbr_of_outputs = 100;
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
@@ -259,7 +274,7 @@ int main(int ac, char *av[])
         tt = t2 - t1;
         Dt_adv = get_fluid_advection_time_step_size.exec();
         Dt_visc = get_viscous_time_step_size.exec();
-        update_density_by_summation.exec(Dt);
+        update_density_by_summation.exec();
 
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
@@ -282,7 +297,7 @@ int main(int ac, char *av[])
         else
         {
             Dt = SMIN(Dt_visc, Dt_adv);
-            free_surface_indicator.exec();
+            free_surface_indicator.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_rate_calculation.exec(Dt);
             viscous_acceleration.exec(Dt);
@@ -300,13 +315,12 @@ int main(int ac, char *av[])
             GlobalStaticVariables::physical_time_ += dt;
 
             integ.stepBy(dt);
-            constraint_rotation_left.exec();
-            constraint_rotation_right.exec();
+            constraint_rotation.exec();
         }
 
         if (iteration < 100 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
         {
-            std::cout << std::fixed << std::setprecision(2) << std::scientific << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
+            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100 << " | physical time in s: " << GlobalStaticVariables::physical_time_ << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc << " | dt_aco: " << Dt_aco << "\r" << std::flush;
         }
 
         if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
@@ -314,15 +328,11 @@ int main(int ac, char *av[])
             write_fluid_states.writeToFile();
             output_counter++;
         }
-        periodic_condition_z.bounding_.exec();
         fluid.updateCellLinkedListWithParticleSort(100);
-        periodic_condition_z.update_cell_linked_list_.exec();
         fluid_wall_complex.updateConfiguration();
-        // left_screw_fluid_contact.updateConfiguration();
-        // right_screw_fluid_contact.updateConfiguration();
-        // barrel_fluid_contact.updateConfiguration();
-        left_screw.updateCellLinkedList();
-        right_screw.updateCellLinkedList();
+        shaft_fluid_contact.updateConfiguration();
+        housing_fluid_contact.updateConfiguration();
+        mixer_shaft.updateCellLinkedList();
     }
     TickCount t3 = TickCount::now();
     TimeInterval te;
