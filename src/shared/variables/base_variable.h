@@ -45,6 +45,9 @@ class BaseVariable
 };
 
 template <typename DataType>
+using AllocatedMemory = DataType *;
+
+template <typename DataType>
 class Variable : public BaseVariable
 {
     struct ConstantInitialization
@@ -79,6 +82,30 @@ class Variable : public BaseVariable
   private:
     size_t size_;
     DataType *value_addrs_;
+};
+
+template <typename DataType>
+Variable<DataType> *findVariableByName(DataContainerUniquePtrAssemble<Variable> &ptr_assemble, const std::string &name)
+{
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    auto &variables_ptrs = std::get<type_index>(ptr_assemble);
+    auto result = std::find_if(variables.begin(), variables.end(),
+                               [&](auto &variable) -> bool
+                               { return variable.get()->Name() == name; });
+
+    return result != variables.end() ? *result : nullptr;
+};
+
+template <typename DataType, typename... Args>
+Variable<DataType> *addVariableToAssemble(DataContainerAssemble<AllocatedMemory> &assemble,
+                                          DataContainerUniquePtrAssemble<Variable> &ptr_assemble, Args &&...args)
+{
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    auto &variable_ptrs = std::get<type_index>(ptr_assemble);
+    Variable<DataType> *new_variable =
+        variable_ptrs.template createPtr<VariableType<DataType>>(std::forward<Args>(args)...);
+    std::get<type_index>(assemble).push_back(new_variable->ValueAddress());
+    return new_variable;
 };
 
 template <typename DataType>
