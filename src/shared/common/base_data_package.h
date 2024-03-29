@@ -40,34 +40,38 @@ namespace SPH
 {
 constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
 constexpr int lastAxis = Dimensions - 1;
+/** Generalized data container keeper */
+template <typename ContainedDataType>
+using DataContainerKeeper = StdVec<ContainedDataType>;
+/** Generalized data address container keeper */
+template <typename ContainedDataType>
+using DataContainerAddressKeeper = StdVec<ContainedDataType *>;
+/** Generalized data container unique pointer keeper */
+template <typename ContainedDataType>
+using DataContainerUniquePtrKeeper = UniquePtrsKeeper<ContainedDataType>;
 
+template <template <typename> typename KeeperType, template <typename> typename ContainerType>
+using DataAssemble = std::tuple<KeeperType<ContainerType<Real>>,
+                                KeeperType<ContainerType<Vec2d>>,
+                                KeeperType<ContainerType<Vec3d>>,
+                                KeeperType<ContainerType<Mat2d>>,
+                                KeeperType<ContainerType<Mat3d>>,
+                                KeeperType<ContainerType<int>>>;
 /** Generalized data container assemble type */
-template <template <typename> typename DataContainerType>
-using DataContainerAssemble =
-    std::tuple<StdVec<DataContainerType<Real>>,
-               StdVec<DataContainerType<Vec2d>>,
-               StdVec<DataContainerType<Vec3d>>,
-               StdVec<DataContainerType<Mat2d>>,
-               StdVec<DataContainerType<Mat3d>>,
-               StdVec<DataContainerType<int>>>;
-/** Generalized data container address assemble type */
-template <template <typename> typename DataContainerType>
-using DataContainerAddressAssemble =
-    std::tuple<StdVec<DataContainerType<Real> *>,
-               StdVec<DataContainerType<Vec2d> *>,
-               StdVec<DataContainerType<Vec3d> *>,
-               StdVec<DataContainerType<Mat2d> *>,
-               StdVec<DataContainerType<Mat3d> *>,
-               StdVec<DataContainerType<int> *>>;
+template <template <typename> typename ContainerType>
+using DataContainerAssemble = DataAssemble<DataContainerKeeper, ContainerType>;
+/** Generalized data address container assemble type */
+template <template <typename> typename ContainerType>
+using DataContainerAddressAssemble = DataAssemble<DataContainerAddressKeeper, ContainerType>;
 /** Generalized data container unique pointer assemble type */
-template <template <typename> typename DataContainerType>
-using DataContainerUniquePtrAssemble =
-    std::tuple<UniquePtrsKeeper<DataContainerType<Real>>,
-               UniquePtrsKeeper<DataContainerType<Vec2d>>,
-               UniquePtrsKeeper<DataContainerType<Vec3d>>,
-               UniquePtrsKeeper<DataContainerType<Mat2d>>,
-               UniquePtrsKeeper<DataContainerType<Mat3d>>,
-               UniquePtrsKeeper<DataContainerType<int>>>;
+template <template <typename> typename ContainerType>
+using DataContainerUniquePtrAssemble = DataAssemble<DataContainerUniquePtrKeeper, ContainerType>;
+
+template <typename ContainedDataType>
+using DataContainerEmptyKeeper = ContainedDataType;
+
+template <template <typename> typename ContainerType>
+using DataContainerEmptyKeeperAssemble = DataAssemble<DataContainerEmptyKeeper, ContainerType>;
 
 /** a type irrelevant operation on the data assembles  */
 template <template <typename> typename OperationType>
