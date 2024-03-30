@@ -242,6 +242,13 @@ class BaseParticles
     DataAssembleOperation<resizeParticleData> resize_particle_data_;
     DataAssembleOperation<addParticleDataWithDefaultValue> add_particle_data_with_default_value_;
     DataAssembleOperation<copyParticleData> copy_particle_data_;
+
+    struct ResizeParticles
+    {
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size);
+    };
+    OperationOnDataAssemble<ParticleData, ResizeParticles> resize_particles_;
 };
 
 /**

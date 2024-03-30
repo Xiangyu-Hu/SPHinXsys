@@ -17,7 +17,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
       reload_xml_parser_("xml_particle_reload", "particles"),
-      resize_particle_data_(all_particle_data_)
+      resize_particle_data_(all_particle_data_),
+      resize_particles_(all_particle_data_)
 {
     //----------------------------------------------------------------------
     //		register geometric data only

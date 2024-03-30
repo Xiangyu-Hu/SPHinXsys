@@ -108,13 +108,14 @@ class DataAssembleOperation
 template <typename DataAssembleType, typename OperationType>
 class OperationOnDataAssemble
 {
-    DataAssembleType &data_assemble_;
     static constexpr std::size_t tuple_size_ = std::tuple_size_v<DataAssembleType>;
+    DataAssembleType &data_assemble_;
+    OperationType operation_;
 
     template <std::size_t... Is, typename... OperationArgs>
     void operationSequence(std::index_sequence<Is...>, OperationArgs &&...operation_args)
     {
-        (OperationType(std::get<Is>(data_assemble_), std::forward<OperationArgs>(operation_args)...), ...);
+        (operation_(std::get<Is>(data_assemble_), std::forward<OperationArgs>(operation_args)...), ...);
     }
 
   public:

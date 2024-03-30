@@ -235,6 +235,16 @@ operator()(ParticleData &particle_data, size_t index, size_t another_index) cons
             (*std::get<type_index>(particle_data)[i])[another_index];
 }
 //=================================================================================================//
+template <typename DataType>
+void BaseParticles::ResizeParticles::
+operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size)
+{
+    for (size_t i = 0; i != data_keeper.size(); ++i)
+    {
+        data_keeper[i]->resize(new_size, ZeroData<DataType>::value);
+    }
+}
+//=================================================================================================//
 template <typename StreamType>
 void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 {

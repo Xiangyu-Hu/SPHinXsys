@@ -35,7 +35,7 @@ void ParticleBuffer<Base>::allocateBufferParticles(BaseParticles &base_particles
     base_particles.increaseAllParticlesBounds(buffer_size);
     size_t new_bound = base_particles.real_particles_bound_;
 
-    base_particles.resize_particle_data_(new_bound);
+    base_particles.resize_particles_(new_bound);
     for (size_t i = old_bound; i != new_bound; ++i)
     {
         base_particles.unsorted_id_.push_back(i);
