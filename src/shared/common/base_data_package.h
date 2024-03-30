@@ -104,6 +104,29 @@ class DataAssembleOperation
         integer_operation(std::forward<OperationArgs>(operation_args)...);
     }
 };
+
+template <typename DataAssembleType, typename OperationType>
+class OperationOnDataAssemble
+{
+    DataAssembleType &data_assemble_;
+    static constexpr std::size_t tuple_size_ = std::tuple_size_v<DataAssembleType>;
+
+    template <std::size_t... Is, typename... OperationArgs>
+    void operationSequence(std::index_sequence<Is...>, OperationArgs &&...operation_args)
+    {
+        (OperationType(std::get<Is>(data_assemble_), std::forward<OperationArgs>(operation_args)...), ...);
+    }
+
+  public:
+    OperationOnDataAssemble(DataAssembleType &data_assemble)
+        : data_assemble_(data_assemble){};
+
+    template <typename... OperationArgs>
+    void operator()(OperationArgs &&...operation_args)
+    {
+        operationSequence(std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
+    }
+};
 } // namespace SPH
 
 #endif // BASE_DATA_PACKAGE_H
