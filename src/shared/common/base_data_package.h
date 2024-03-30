@@ -105,6 +105,7 @@ class DataAssembleOperation
     }
 };
 
+// Please refer: https://www.cppstories.com/2022/tuple-iteration-basics/ for the following code
 template <typename DataAssembleType, typename OperationType>
 class OperationOnDataAssemble
 {
@@ -119,8 +120,9 @@ class OperationOnDataAssemble
     }
 
   public:
-    OperationOnDataAssemble(DataAssembleType &data_assemble)
-        : data_assemble_(data_assemble){};
+    template <typename... Args>
+    OperationOnDataAssemble(DataAssembleType &data_assemble, Args &&...args)
+        : data_assemble_(data_assemble), operation_(std::forward<Args>(args)...){};
 
     template <typename... OperationArgs>
     void operator()(OperationArgs &&...operation_args)

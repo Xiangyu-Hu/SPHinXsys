@@ -202,46 +202,22 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
-BaseParticles::resizeParticleData<DataType>::resizeParticleData(ParticleData &all_particle_data)
-    : all_particle_data_(all_particle_data) {}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::resizeParticleData<DataType>::
-operator()(size_t new_size) const
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    for (size_t i = 0; i != std::get<type_index>(all_particle_data_).size(); ++i)
-        std::get<type_index>(all_particle_data_)[i]->resize(new_size, ZeroData<DataType>::value);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addParticleDataWithDefaultValue<DataType>::
-operator()(ParticleData &particle_data) const
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-
-    for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-        std::get<type_index>(particle_data)[i]->push_back(ZeroData<DataType>::value);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::copyParticleData<DataType>::
-operator()(ParticleData &particle_data, size_t index, size_t another_index) const
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-
-    for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-        (*std::get<type_index>(particle_data)[i])[index] =
-            (*std::get<type_index>(particle_data)[i])[another_index];
-}
-//=================================================================================================//
-template <typename DataType>
 void BaseParticles::ResizeParticles::
 operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size)
 {
     for (size_t i = 0; i != data_keeper.size(); ++i)
     {
         data_keeper[i]->resize(new_size, ZeroData<DataType>::value);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::CopyParticleData::
+operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index)
+{
+    for (size_t i = 0; i != data_keeper.size(); ++i)
+    {
+        (*data_keeper[i])[index] = (*data_keeper[i])[another_index];
     }
 }
 //=================================================================================================//
@@ -339,15 +315,17 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 //=================================================================================================//
 template <typename DataType>
 void WriteAParticleVariableToXml::
-operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data) const
 {
-    size_t index = 0;
-    for (auto child = xml_parser_.first_element_->FirstChildElement();
-         child;
-         child = child->NextSiblingElement())
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    for (size_t i = 0; i != variables.size(); ++i)
     {
-        xml_parser_.setAttributeToElement(child, variable_name, variable[index]);
-        index++;
+        size_t index = 0;
+        StdLargeVec<DataType> &variable_data = *(std::get<type_index>(all_particle_data)[variables[i]->IndexInContainer()]);
+        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser_.setAttributeToElement(child, variables[i]->Name(), variable_data[index]);
+        }
     }
 }
 //=================================================================================================//
