@@ -131,5 +131,4 @@ class OperationOnDataAssemble
     }
 };
 } // namespace SPH
-
 #endif // BASE_DATA_PACKAGE_H

@@ -221,6 +221,40 @@ operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_
     }
 }
 //=================================================================================================//
+template <typename DataType>
+void BaseParticles::WriteAParticleVariableToXml::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data)
+{
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        StdLargeVec<DataType> &variable_data = *(std::get<type_index>(all_particle_data)[variables[i]->IndexInContainer()]);
+        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser_.setAttributeToElement(child, variables[i]->Name(), variable_data[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::ReadAParticleVariableFromXml::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data)
+{
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        StdLargeVec<DataType> &variable_data = *(std::get<type_index>(all_particle_data)[variables[i]->IndexInContainer()]);
+        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser_.queryAttributeValue(child, variables[i]->Name(), variable_data[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
 template <typename StreamType>
 void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 {
@@ -310,37 +344,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
         }
         output_stream << std::endl;
         output_stream << "    </DataArray>\n";
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void WriteAParticleVariableToXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data) const
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    for (size_t i = 0; i != variables.size(); ++i)
-    {
-        size_t index = 0;
-        StdLargeVec<DataType> &variable_data = *(std::get<type_index>(all_particle_data)[variables[i]->IndexInContainer()]);
-        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
-        {
-            xml_parser_.setAttributeToElement(child, variables[i]->Name(), variable_data[index]);
-            index++;
-        }
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void ReadAParticleVariableFromXml::
-operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
-{
-    size_t index = 0;
-    for (auto child = xml_parser_.first_element_->FirstChildElement();
-         child;
-         child = child->NextSiblingElement())
-    {
-        xml_parser_.queryAttributeValue(child, variable_name, variable[index]);
-        index++;
     }
 }
 //=================================================================================================//

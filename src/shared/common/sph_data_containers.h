@@ -79,21 +79,5 @@ template <typename DataType>
 using MeshVariable = DiscreteVariable<DataType>;
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
-/** operation by looping or going through a particle variables */
-template <typename DataType>
-struct loopParticleVariables
-{
-    template <typename VariableOperation>
-    void operator()(ParticleData &particle_data,
-                    ParticleVariables &particle_variables, VariableOperation &variable_operation) const
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        for (DiscreteVariable<DataType> *variable : std::get<type_index>(particle_variables))
-        {
-            StdLargeVec<DataType> &variable_data = *(std::get<type_index>(particle_data)[variable->IndexInContainer()]);
-            variable_operation(variable->Name(), variable_data);
-        }
-    };
-};
 } // namespace SPH
 #endif // SPH_DATA_CONTAINERS_H

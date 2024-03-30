@@ -224,40 +224,34 @@ class BaseParticles
         void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index);
     };
 
+    struct WriteAParticleVariableToXml
+    {
+        XmlParser &xml_parser_;
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+    };
+
+    struct ReadAParticleVariableFromXml
+    {
+        XmlParser &xml_parser_;
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+    };
+
   public:
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------
     OperationOnDataAssemble<ParticleData, ResizeParticles> resize_particles_;
     OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
-};
 
-/**
- * @struct WriteAParticleVariableToXml
- * @brief Define a operator for writing particle variable to XML format.
- */
-struct WriteAParticleVariableToXml
-{
-    XmlParser &xml_parser_;
-    WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
-
-    template <typename DataType>
-    void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data) const;
-};
-
-/**
- * @struct ReadAParticleVariableFromXml
- * @brief Define a operator for reading particle variable to XML format.
- */
-struct ReadAParticleVariableFromXml
-{
-    XmlParser &xml_parser_;
-    size_t &total_real_particles_;
-    ReadAParticleVariableFromXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
-
-    template <typename DataType>
-    void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
+  protected:
+    OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
 };
 
 /**
