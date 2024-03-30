@@ -325,6 +325,7 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Pa
         for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
             xml_parser_.setAttributeToElement(child, variables[i]->Name(), variable_data[index]);
+            index++;
         }
     }
 }
