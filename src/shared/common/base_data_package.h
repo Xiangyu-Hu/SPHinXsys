@@ -67,12 +67,6 @@ using DataContainerAddressAssemble = DataAssemble<DataContainerAddressKeeper, Co
 template <template <typename> typename ContainerType>
 using DataContainerUniquePtrAssemble = DataAssemble<DataContainerUniquePtrKeeper, ContainerType>;
 
-template <typename ContainedDataType>
-using DataContainerEmptyKeeper = ContainedDataType;
-
-template <template <typename> typename ContainerType>
-using DataContainerEmptyKeeperAssemble = DataAssemble<DataContainerEmptyKeeper, ContainerType>;
-
 /** a type irrelevant operation on the data assembles  */
 template <template <typename> typename OperationType>
 class DataAssembleOperation
