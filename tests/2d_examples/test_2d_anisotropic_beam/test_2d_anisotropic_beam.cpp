@@ -130,7 +130,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
           GeneralDataDelegateInner(inner_relation),
           beta_(beta), alpha_(alpha),
           B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-          pos_(particles_->pos_)
+          Vol_(particles_->Vol_), pos_(particles_->pos_)
     {
         particles_->registerVariable(show_neighbor_, "ShowingNeighbor", Real(0.0));
     }

@@ -11,7 +11,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 VelocityGradient<DataDelegationType>::VelocityGradient(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      vel_(this->particles_->vel_),
+      vel_(this->particles_->vel_), Vol_(this->particles_->Vol_),
       vel_grad_(*this->particles_->template registerSharedVariable<Matd>("VelocityGradient")) {}
 //=================================================================================================//
 template <class KernelCorrectionType>
@@ -27,7 +27,7 @@ void VelocityGradient<Inner<KernelCorrectionType>>::interaction(size_t index_i, 
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         vel_grad -= (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
     }
 

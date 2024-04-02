@@ -49,6 +49,7 @@ class VelocityGradient<DataDelegationType>
     virtual ~VelocityGradient(){};
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<Matd> &vel_grad_;
 };

@@ -113,11 +113,6 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-    force_[index_i] += force / rho_[index_i];
-    drho_dt_[index_i] += rho_dissipation * rho_[index_i];
-}
-//=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &contact_relation)
     : BaseIntegration<FluidContactData>(contact_relation),
