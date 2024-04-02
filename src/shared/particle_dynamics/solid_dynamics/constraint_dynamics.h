@@ -108,7 +108,6 @@ class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle, SolidDat
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
     Vecd stiffness_;
     virtual Vecd getAcceleration(Vecd &disp, Real mass);
 };
@@ -320,7 +319,7 @@ using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
  */
 template <class DynamicsIdentifier>
 class TotalForceForSimBody
-    : public BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
+    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
       public SolidDataSimple
 {
   protected:
@@ -336,8 +335,7 @@ class TotalForceForSimBody
                          SimTK::MultibodySystem &MBsystem,
                          SimTK::MobilizedBody &mobod,
                          SimTK::RungeKuttaMersonIntegrator &integ)
-        : BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(
-              identifier, SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0))),
+        : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
           SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
           force_(particles_->force_), force_prior_(particles_->force_prior_),
           pos_(particles_->pos_),

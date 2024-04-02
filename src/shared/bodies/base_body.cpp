@@ -9,7 +9,7 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr, const std::string &body_name)
     : sph_system_(sph_system), body_name_(body_name), newly_updated_(true), base_particles_(nullptr),
-      initial_shape_(initial_shape_ptr_keeper_.assignPtr(initial_shape_ptr)),
+      is_bound_set_(false), initial_shape_(initial_shape_ptr_keeper_.assignPtr(initial_shape_ptr)),
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
       base_material_(nullptr)
 {
@@ -51,17 +51,15 @@ BaseMaterial &SPHBody::getBaseMaterial()
     return *base_material_;
 };
 //=================================================================================================//
-void SPHBody::allocateConfigurationMemoriesForBufferParticles()
+void SPHBody::setSPHBodyBounds(const BoundingBox &bound)
 {
-    for (size_t i = 0; i < body_relations_.size(); i++)
-    {
-        body_relations_[i]->resizeConfiguration();
-    }
+    bound_ = bound;
+    is_bound_set_ = true;
 }
 //=================================================================================================//
-BoundingBox SPHBody::getBodyShapeBounds()
+BoundingBox SPHBody::getSPHBodyBounds()
 {
-    return initial_shape_->getBounds();
+    return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
 void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
@@ -122,7 +120,6 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
 void RealBody::updateCellLinkedList()
 {
     getCellLinkedList().UpdateCellLists(*base_particles_);
-    base_particles_->total_ghost_particles_ = 0;
 }
 //=================================================================================================//
 void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)

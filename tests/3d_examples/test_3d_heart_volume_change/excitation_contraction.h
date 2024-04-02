@@ -246,10 +246,10 @@ class ApplyStimulusCurrentSII
 /**
  * define observer particle generator.
  */
-class HeartObserverParticleGenerator : public ParticleGeneratorObserver
+class HeartObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));

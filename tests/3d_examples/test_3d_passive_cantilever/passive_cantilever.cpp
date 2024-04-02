@@ -76,10 +76,10 @@ int main(int ac, char *av[])
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<
         ElasticSolidParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    cantilever_body.generateParticles<ParticleGeneratorLattice>();
+    cantilever_body.generateParticles<Lattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");
-    cantilever_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    cantilever_observer.generateParticles<Observer>(observation_location);
 
     /** topology */
     InnerRelation cantilever_body_inner(cantilever_body);
@@ -90,7 +90,7 @@ int main(int ac, char *av[])
      */
     SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner>
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
@@ -163,7 +163,6 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_displacement.testResult();
-
 
     return 0;
 }

@@ -32,9 +32,9 @@
 
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
+#include "base_general_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "base_general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 
@@ -71,6 +71,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
 {
   protected:
     StdLargeVec<Vecd> &n_, &n0_;
+    StdLargeVec<Real> &phi_, &phi0_;
     StdLargeVec<Matd> &F_;
 
   public:
@@ -85,7 +86,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                              public ElasticSolidDataSimple
 {
   protected:
@@ -197,10 +198,10 @@ class Integration1stHalf : public BaseIntegration1stHalf
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Matd numerical_stress_ij =
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
-            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_i] * 
-                            (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
-                             numerical_dissipation_factor_ * weight * numerical_stress_ij) *
-                            e_ij;
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+                     (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
+                      numerical_dissipation_factor_ * weight * numerical_stress_ij) *
+                     e_ij;
         }
 
         force_[index_i] = force;

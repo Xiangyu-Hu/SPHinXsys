@@ -2,7 +2,7 @@
  * @file 	oscillating_plate_UL.cpp
  * @brief 	This is the test case for the hourglass manuscript.
  * @details  We consider vibration deformation of a square plate under initial vertical velocity field.
- * @author 	Shuaihao Zhang, Dong Wu and Xiangyu Hu 
+ * @author 	Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
 #include "sphinxsys.h"
 using namespace SPH;
@@ -108,7 +108,8 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
+    auto plate_particle_generator = plate_body.makeSelfDefined<PlateParticleGenerator>();
+    plate_body.generateParticles(plate_particle_generator);
     // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
@@ -118,7 +119,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    plate_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -138,7 +139,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> plate_shear_acceleration(plate_body_inner);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(plate_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");

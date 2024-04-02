@@ -96,11 +96,11 @@ int main(int ac, char *av[])
     cream.defineParticlesAndMaterial<ElasticSolidParticles, ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
                                                                                  yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cream.generateParticles<ParticleGeneratorReload>(cream.getName())
-        : cream.generateParticles<ParticleGeneratorLattice>();
+        ? cream.generateParticles<Reload>(cream.getName())
+        : cream.generateParticles<Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
-    cream_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    cream_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);

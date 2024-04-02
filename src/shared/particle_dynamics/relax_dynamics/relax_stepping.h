@@ -114,7 +114,7 @@ protected:
  * @class RelaxationScaling
  * @brief Obtain the scale for a particle relaxation step
  */
-class RelaxationScaling : public LocalDynamicsReduce<Real, ReduceMax>,
+class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>,
                           public RelaxDataDelegateSimple
 {
   public:

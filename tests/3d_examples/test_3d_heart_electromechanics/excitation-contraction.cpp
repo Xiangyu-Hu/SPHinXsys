@@ -244,10 +244,10 @@ class ApplyStimulusCurrentSII
 /**
  * define observer particle generator.
  */
-class HeartObserverParticleGenerator : public ParticleGeneratorObserver
+class HeartObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
@@ -281,7 +281,7 @@ int main(int ac, char *av[])
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
         herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
-        herat_model.generateParticles<ParticleGeneratorLattice>();
+        herat_model.generateParticles<Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
         using namespace relax_dynamics;
@@ -357,24 +357,27 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : physiology_heart.generateParticles<ParticleGeneratorLattice>();
+        ? physiology_heart.generateParticles<Reload>("HeartModel")
+        : physiology_heart.generateParticles<Lattice>();
 
     /** create a SPH body, material and particles */
     SolidBody mechanics_heart(sph_system, makeShared<Heart>("MechanicalHeart"));
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
+        ? mechanics_heart.generateParticles<Reload>("HeartModel")
+        : mechanics_heart.generateParticles<Lattice>();
 
     //----------------------------------------------------------------------
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<HeartObserverParticleGenerator>();
+    auto voltage_observer_particle_generator = voltage_observer.makeSelfDefined<HeartObserverParticleGenerator>();
+    voltage_observer.generateParticles(voltage_observer_particle_generator);
+
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
+    auto myocardium_observer_particle_generator = myocardium_observer.makeSelfDefined<HeartObserverParticleGenerator>();
+    myocardium_observer.generateParticles(myocardium_observer_particle_generator);
     //----------------------------------------------------------------------
     //	SPHBody relation (topology) section
     //----------------------------------------------------------------------
@@ -388,7 +391,7 @@ int main(int ac, char *av[])
     //	SPH Method section
     //----------------------------------------------------------------------
     // Corrected configuration.
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     // Time step size calculation.
     electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_heart);
     // Diffusion process for diffusion body.
@@ -400,7 +403,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
     // Active mechanics.
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
     InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
     /** Interpolate the active contract stress from electrophysiology body. */
     InteractionDynamics<InterpolatingAQuantity<Real>>

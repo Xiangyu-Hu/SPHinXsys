@@ -96,12 +96,12 @@ int main(int ac, char *av[])
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        shell.generateParticles<ParticleGeneratorReload>(shell.getName());
+        shell.generateParticles<Reload>(shell.getName());
     }
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<ParticleGeneratorThickSurface>(thickness);
+        shell.generateParticles<ThickSurface, Lattice>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 
     SolidBody beam(sph_system, makeShared<Beam>("Beam"));
     beam.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam.generateParticles<ParticleGeneratorLattice>();
+    beam.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Define external force.*/
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
     /** stress relaxation for the walls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);

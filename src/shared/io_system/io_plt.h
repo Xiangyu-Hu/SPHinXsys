@@ -26,7 +26,8 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_PLT_H
+#define IO_PLT_H
 
 #include "io_base.h"
 
@@ -80,3 +81,4 @@ class MeshRecordingToPlt : public BaseIO
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 } // namespace SPH
+#endif // IO_PLT_H

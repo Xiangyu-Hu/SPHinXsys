@@ -67,7 +67,7 @@ class BarDynamicsInitialCondition : public LocalDynamics, public BarDataSimple
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
-class BarAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                                 public BarDataSimple
 {
   protected:

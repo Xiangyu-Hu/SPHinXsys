@@ -28,7 +28,7 @@ void ParticleGenerator<Lattice>::initializeGeometricVariables()
         }
 }
 //=================================================================================================//
-void ParticleGenerator<Surface, Lattice, ReducedOrder>::initializeGeometricVariables()
+void ParticleGenerator<ThickSurface, Lattice>::initializeGeometricVariables()
 {
     // Calculate the total volume and
     // count the number of cells inside the body volume, where we might put particles.

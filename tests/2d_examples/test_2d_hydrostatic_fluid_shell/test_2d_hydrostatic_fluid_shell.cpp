@@ -20,7 +20,7 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	wall body shape definition.
 //----------------------------------------------------------------------
-class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
+class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
 {
     Real DH;
     Real DL;
@@ -29,7 +29,7 @@ class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
   public:
     explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
                                            Real particle_spacing_gate)
-        : ParticleGeneratorSurface(sph_body),
+        : ParticleGenerator<Surface>(sph_body),
           DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
     void initializeGeometricVariables() override
     {
@@ -49,9 +49,9 @@ class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
     }
 };
 //----------------------------------------------------------------------
-//	gatebody shape definition.
+//	gate body shape definition.
 //----------------------------------------------------------------------
-class GateParticleGenerator : public ParticleGeneratorSurface
+class GateParticleGenerator : public ParticleGenerator<Surface>
 {
     Real DL;
     Real BW;
@@ -60,7 +60,7 @@ class GateParticleGenerator : public ParticleGeneratorSurface
 
   public:
     explicit GateParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
-        : ParticleGeneratorSurface(sph_body),
+        : ParticleGenerator<Surface>(sph_body),
           DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
     void initializeGeometricVariables() override
     {
@@ -176,23 +176,25 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
     water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1, 1, 0);
-    wall_boundary.generateParticles<WallBoundaryParticleGenerator>(DH, DL, particle_spacing_gate);
+    auto wall_boundary_particle_generator = wall_boundary.makeSelfDefined<WallBoundaryParticleGenerator>(DH, DL, particle_spacing_gate);
+    wall_boundary.generateParticles(wall_boundary_particle_generator);
 
     SolidBody gate(sph_system, makeShared<DefaultShape>("Gate"));
     gate.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     gate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    gate.generateParticles<GateParticleGenerator>(DL, BW, particle_spacing_gate, Gate_thickness);
+    auto gate_particle_generator = gate.makeSelfDefined<GateParticleGenerator>(DL, BW, particle_spacing_gate, Gate_thickness);
+    gate.generateParticles(gate_particle_generator);
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
     gate_observer.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    gate_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -404,11 +406,11 @@ TEST(hydrostatic_fsi, dp_2)
     hydrostatic_fsi(particle_spacing_gate, particle_spacing_ref);
 }
 
-TEST(DISABLED_hydrostatic_fsi, dp_s_2_dp_f_1)
+TEST(DISABLED_hydrostatic_fsi, dp_4)
 { // for CI
     const Real Gate_thickness = 0.05;
-    const Real particle_spacing_gate = Gate_thickness / 2.0;
-    const Real particle_spacing_ref = 0.5 * particle_spacing_gate;
+    const Real particle_spacing_gate = Gate_thickness / 4.0;
+    const Real particle_spacing_ref = particle_spacing_gate;
     hydrostatic_fsi(particle_spacing_gate, particle_spacing_ref);
 }
 //----------------------------------------------------------------------

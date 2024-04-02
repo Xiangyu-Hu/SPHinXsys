@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     {
         SolidBody herat_model(sph_system, level_set_heart_model);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
-        herat_model.generateParticles<ParticleGeneratorLattice>();
+        herat_model.generateParticles<Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
         using namespace relax_dynamics;
@@ -131,16 +131,16 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : physiology_heart.generateParticles<ParticleGeneratorLattice>();
+        ? physiology_heart.generateParticles<Reload>("HeartModel")
+        : physiology_heart.generateParticles<Lattice>();
 
     /** create a SPH body, material and particles */
     SolidBody mechanics_heart(sph_system, level_set_heart_model, "MechanicalHeart");
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
+        ? mechanics_heart.generateParticles<Reload>("HeartModel")
+        : mechanics_heart.generateParticles<Lattice>();
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
     TreeBody pkj_body(sph_system, level_set_heart_model, "Purkinje");
@@ -148,15 +148,19 @@ int main(int ac, char *av[])
     pkj_body.defineParticlesAndMaterial<
         ElectroPhysiologyReducedParticles, MonoFieldElectroPhysiology>(
         pkj_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coeff * acceleration_factor, bias_coeff, fiber_direction);
-    pkj_body.generateParticles<NetworkGeneratorWithExtraCheck>(starting_point, second_point, 50, 1.0);
+    NetworkGeneratorWithExtraCheck network_particle_generator(pkj_body, starting_point, second_point, 50, 1.0);
+    pkj_body.generateParticles(network_particle_generator);
     TreeTerminates pkj_leaves(pkj_body);
     //----------------------------------------------------------------------
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<HeartObserverParticleGenerator>();
+    auto voltage_observer_particle_generator = voltage_observer.makeSelfDefined<HeartObserverParticleGenerator>();
+    voltage_observer.generateParticles(voltage_observer_particle_generator);
+
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
+    auto myocardium_observer_particle_generator = myocardium_observer.makeSelfDefined<HeartObserverParticleGenerator>();
+    myocardium_observer.generateParticles(myocardium_observer_particle_generator);
 
     /** topology */
     InnerRelation physiology_heart_inner(physiology_heart);
@@ -170,7 +174,7 @@ int main(int ac, char *av[])
     TreeInnerRelation pkj_inner(pkj_body);
 
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     /** Time step size calculation. */
     electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
     /** Diffusion process for diffusion body. */
@@ -193,7 +197,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
     /** Active mechanics. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_heart_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_contraction(mechanics_heart_inner);
     /** Observer Dynamics */
     InteractionDynamics<CorrectInterpolationKernelWeights>
         correct_kernel_weights_for_interpolation(mechanics_heart_contact);

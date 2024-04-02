@@ -12,7 +12,7 @@ template <class BaseRelationType>
 TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScopeType>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      zeroth_consistency_(*this->particles_->template registerSharedVariable<Vecd>("ZerothConsistency")),
+      zero_gradient_residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroGradientResidue")),
       kernel_correction_(this->particles_), checkWithinScope(this->particles_)
 {
     static_assert(std::is_base_of<ParticleScope, ParticleScopeType>::value,
@@ -47,7 +47,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
             inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
                              inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
-        this->zeroth_consistency_[index_i] = inconsistency;
+        this->zero_gradient_residue_[index_i] = inconsistency;
     }
 }
 //=================================================================================================//
@@ -58,7 +58,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
     if (this->checkWithinScope(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        pos_[index_i] += correction_scaling_ * limiter_(index_i) * this->zeroth_consistency_[index_i] *
+        pos_[index_i] += correction_scaling_ * limiter_(index_i) * this->zero_gradient_residue_[index_i] *
                          inv_h_ratio * inv_h_ratio;
     }
 }
@@ -93,7 +93,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
                                        wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
-        this->zeroth_consistency_[index_i] += inconsistency;
+        this->zero_gradient_residue_[index_i] += inconsistency;
     }
 }
 //=================================================================================================//
@@ -130,7 +130,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
                                  contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
-        this->zeroth_consistency_[index_i] += inconsistency;
+        this->zero_gradient_residue_[index_i] += inconsistency;
     }
 }
 //=================================================================================================//

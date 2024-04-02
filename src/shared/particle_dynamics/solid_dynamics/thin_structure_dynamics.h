@@ -83,7 +83,7 @@ class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
  * @class ShellAcousticTimeStepSize
  * @brief Computing the acoustic time step size for shell
  */
-class ShellAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                                   public ShellDataSimple
 {
   protected:

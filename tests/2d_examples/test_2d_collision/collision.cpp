@@ -92,24 +92,24 @@ int main(int ac, char *av[])
     free_ball.defineBodyLevelSetShape();
     free_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? free_ball.generateParticles<ParticleGeneratorReload>(free_ball.getName())
-        : free_ball.generateParticles<ParticleGeneratorLattice>();
+        ? free_ball.generateParticles<Reload>(free_ball.getName())
+        : free_ball.generateParticles<Lattice>();
 
     SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
     damping_ball.defineBodyLevelSetShape();
     damping_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? damping_ball.generateParticles<ParticleGeneratorReload>(damping_ball.getName())
-        : damping_ball.generateParticles<ParticleGeneratorLattice>();
+        ? damping_ball.generateParticles<Reload>(damping_ball.getName())
+        : damping_ball.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
-    free_ball_observer.generateParticles<ParticleGeneratorObserver>(observation_location_1);
+    free_ball_observer.generateParticles<Observer>(observation_location_1);
     ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
-    damping_ball_observer.generateParticles<ParticleGeneratorObserver>(observation_location_2);
+    damping_ball_observer.generateParticles<Observer>(observation_location_2);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -180,8 +180,8 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
     SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     /** stress relaxation for the balls. */

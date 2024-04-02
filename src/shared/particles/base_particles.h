@@ -65,9 +65,10 @@ class BaseDynamics;
  * 		  the first buffer particle and increase total_real_particles_ by one.
  * 		  The other is ghost particles whose states are updated according to
  * 		  boundary condition if their indices are included in the neighbor particle list.
- * 		  The ghost particles are saved behind the buffer particles.
- * 		  The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles.
- * 		  The global value of total_ghost_particles_ indicates the total number of ghost particles in use.
+ * 		  Ghost particles whose states are updated according to
+ *      boundary condition if their indices are included in the neighbor particle list.
+ *      The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
+ *      All particles are bounded by particle_bound_, which is the total number of particles in all types.
  * 		  It will be initialized to zero before a time step.
  * 		  In SPHinXsys, the discrete variables (state of each particle) registered in general particle data
  *      (ParticleData) belong to a hierarchy of two layers.
@@ -104,8 +105,8 @@ class BaseParticles
     // Global information for defining particle groups
     //----------------------------------------------------------------------
     size_t total_real_particles_;
-    size_t real_particles_bound_; /**< Maximum possible number of real particles. Also start index of ghost particles. */
-    size_t total_ghost_particles_;
+    size_t real_particles_bound_; /**< Maximum possible number of real particles. Also starting index for ghost particles. */
+    size_t particles_bound_;      /**< Total number of particles in all types. */
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
@@ -115,10 +116,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
-    void addBufferParticles(size_t buffer_size);
+    void initializeAllParticlesBounds();
+    void increaseAllParticlesBounds(size_t buffer_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
-    void updateFromAnotherParticle(size_t index, size_t another_index);
-    size_t insertAGhostParticle(size_t index);
+    void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
     //----------------------------------------------------------------------
     //		Parameterized management on generalized particle data
@@ -206,16 +207,19 @@ class BaseParticles
     ParticleVariables variables_to_reload_;
     StdVec<BaseDynamics<void> *> derived_variables_;
 
-    void addAParticleEntry(); /**< Add a particle entry to the particle array. */
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
     //----------------------------------------------------------------------
     //		Small structs for generalize particle operations
     //----------------------------------------------------------------------
     template <typename DataType>
-    struct resizeParticleData
+    class resizeParticleData
     {
-        void operator()(ParticleData &particle_data, size_t new_size) const;
+        ParticleData &all_particle_data_;
+
+      public:
+        resizeParticleData(ParticleData &all_particle_data);
+        void operator()(size_t new_size) const;
     };
 
     /** Add a particle data with default value. */
@@ -230,6 +234,8 @@ class BaseParticles
     {
         void operator()(ParticleData &particle_data, size_t index, size_t another_index) const;
     };
+
+  public:
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------

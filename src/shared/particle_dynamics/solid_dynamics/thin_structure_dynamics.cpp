@@ -23,7 +23,7 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<Real, ReduceMin>(sph_body, MaxReal),
+    : LocalDynamicsReduce<ReduceMin>(sph_body),
       ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), force_(particles_->force_),
       angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
       force_prior_(particles_->force_prior_),

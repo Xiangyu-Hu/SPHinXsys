@@ -24,7 +24,7 @@
  * @file non_newtonian_dynamics.h
  * @brief Here, we define the time integration algorithm classes for non-newtonian fluids.
  * @details We consider here weakly compressible fluids.
- * @author	Xiangyu Hu
+ * @author	Theodor Hennings and Xiangyu Hu
  */
 
 #ifndef NON_NEWTONIAN_DYNAMICS_H
@@ -77,12 +77,11 @@ class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiema
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
+    StdLargeVec<Matd> &vel_grad_, &tau_, &dtau_dt_;
     Real mu_p_, lambda_;
 };
 
@@ -93,18 +92,48 @@ template <>
 class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfContactWallRiemann
 {
   public:
-    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
+    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
+        : Integration2ndHalfContactWallRiemann(wall_contact_relation){};
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
-    Real mu_p_, lambda_;
 };
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
+
+/**
+ * @class SRDViscousTimeStepSize
+ * @brief Computing the viscous time step size using the SRD viscosity
+ */
+class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public FluidDataSimple
+{
+  public:
+    explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
+    virtual ~SRDViscousTimeStepSize(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Real smoothing_length_;
+    StdLargeVec<Real> &rho_;
+    StdLargeVec<Real> &mu_srd_;
+    Real diffusionCFL;
+    Real max_viscosity = 1e-12;
+};
+
+class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
+{
+  public:
+    explicit ShearRateDependentViscosity(SPHBody &sph_body);
+    virtual ~ShearRateDependentViscosity(){};
+
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &vel_grad_;
+    GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
+    StdLargeVec<Real> &mu_srd_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // NON_NEWTONIAN_DYNAMICS_H

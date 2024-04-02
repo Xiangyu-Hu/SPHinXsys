@@ -69,10 +69,10 @@ int main(int ac, char *av[])
     /** create a Cantilever body, corresponding material, particles and reaction model. */
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    cantilever_body.generateParticles<ParticleGeneratorLattice>();
+    cantilever_body.generateParticles<Lattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");
-    cantilever_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    cantilever_observer.generateParticles<Observer>(observation_location);
 
     /** topology */
     InnerRelation cantilever_body_inner(cantilever_body);
@@ -86,7 +86,7 @@ int main(int ac, char *av[])
      * This section define all numerical methods will be used in this case.
      */
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner>
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>

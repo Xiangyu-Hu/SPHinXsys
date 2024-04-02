@@ -8,7 +8,7 @@ ANSYSMesh::ANSYSMesh(const std::string &full_path)
 {
     getDataFromMeshFile(full_path);
     getElementCenterCoordinates();
-    gerMinimumDistanceBetweenNodes();
+    computeMinimumDistanceBetweenNodes();
 }
 //=================================================================================================//
 void ANSYSMesh::readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates)
@@ -429,7 +429,7 @@ void ANSYSMesh::getElementCenterCoordinates()
     elements_nodes_connection_.erase(elements_nodes_connection_.begin());
 }
 //=================================================================================================//
-void ANSYSMesh::gerMinimumDistanceBetweenNodes()
+void ANSYSMesh::computeMinimumDistanceBetweenNodes()
 {
     vector<Real> all_data_of_distance_between_nodes;
     all_data_of_distance_between_nodes.resize(0);
@@ -460,7 +460,7 @@ void ANSYSMesh::gerMinimumDistanceBetweenNodes()
 void BaseInnerRelationInFVM::resetNeighborhoodCurrentSize()
 {
     parallel_for(
-        IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
+        IndexRange(0, base_particles_.total_real_particles_),
         [&](const IndexRange &r)
         {
             for (size_t num = r.begin(); num != r.end(); ++num)
@@ -477,14 +477,8 @@ BaseInnerRelationInFVM::BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &a
       mesh_topology_(ansys_mesh.mesh_topology_)
 {
     subscribeToBody();
-    resizeConfiguration();
+    inner_configuration_.resize(base_particles_.real_particles_bound_, Neighborhood());
 };
-//=================================================================================================//
-void BaseInnerRelationInFVM::resizeConfiguration()
-{
-    size_t updated_size = base_particles_.real_particles_bound_ + base_particles_.total_ghost_particles_;
-    inner_configuration_.resize(updated_size, Neighborhood());
-}
 //=================================================================================================//
 void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance,
                                           Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
@@ -515,7 +509,7 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                                                     GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
 {
     parallel_for(
-        IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
+        IndexRange(0, base_particles_.total_real_particles_),
         [&](const IndexRange &r)
         {
             StdLargeVec<Vecd> &pos_n = source_particles.pos_;
@@ -568,32 +562,32 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
 void InnerRelationInFVM::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
-    searchNeighborsByParticles(base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_,
+    searchNeighborsByParticles(base_particles_.total_real_particles_,
                                base_particles_, inner_configuration_,
                                get_particle_index_, get_inner_neighbor_);
 }
 //=================================================================================================//
-GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh)
+GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
+                                             Ghost<ReserveSizeFactor> &ghost_boundary)
     : GeneralDataDelegateSimple(real_body),
+      ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh.node_coordinates_),
       mesh_topology_(ansys_mesh.mesh_topology_),
       pos_(particles_->pos_), Vol_(particles_->Vol_),
-      total_ghost_particles_(particles_->total_ghost_particles_),
-      real_particles_bound_(particles_->real_particles_bound_)
+      ghost_bound_(ghost_boundary.GhostBound())
 {
+    ghost_boundary.checkParticlesReserved();
     each_boundary_type_with_all_ghosts_index_.resize(50);
     each_boundary_type_with_all_ghosts_eij_.resize(50);
     each_boundary_type_contact_real_index_.resize(50);
-    ghost_particles_.resize(1);
     addGhostParticleAndSetInConfiguration();
 }
 //=================================================================================================//
 void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
 {
-    for (size_t i = 0; i != ghost_particles_.size(); ++i)
-        ghost_particles_[i].clear();
+    ghost_bound_.second = ghost_bound_.first;
 
-    for (size_t index_i = 0; index_i != real_particles_bound_; ++index_i)
+    for (size_t index_i = 0; index_i != particles_->total_real_particles_; ++index_i)
     {
         for (size_t neighbor_index = 0; neighbor_index != mesh_topology_[index_i].size(); ++neighbor_index)
         {
@@ -601,7 +595,11 @@ void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
             if (mesh_topology_[index_i][neighbor_index][1] != 2)
             {
                 mutex_create_ghost_particle_.lock();
-                size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
+                size_t ghost_particle_index = ghost_bound_.second;
+                ghost_bound_.second++;
+                ghost_boundary_.checkWithinGhostSize(ghost_bound_);
+
+                particles_->updateGhostParticle(ghost_particle_index, index_i);
                 size_t node1_index = mesh_topology_[index_i][neighbor_index][2];
                 size_t node2_index = mesh_topology_[index_i][neighbor_index][3];
                 Vecd node1_position = node_coordinates_[node1_index];
@@ -609,32 +607,24 @@ void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
                 Vecd ghost_particle_position = 0.5 * (node1_position + node2_position);
 
                 mesh_topology_[index_i][neighbor_index][0] = ghost_particle_index + 1;
-                ghost_particles_[0].push_back(ghost_particle_index);
                 pos_[ghost_particle_index] = ghost_particle_position;
                 mutex_create_ghost_particle_.unlock();
 
-                mesh_topology_.resize(ghost_particle_index);
                 std::vector<std::vector<size_t>> new_element;
-
                 // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
                 std::vector<size_t> sub_element1 = {index_i + 1, boundary_type, node1_index, node2_index};
                 new_element.push_back(sub_element1);
-
                 // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
                 std::vector<size_t> sub_element2 = {index_i + 1, boundary_type, node1_index, node2_index};
                 new_element.push_back(sub_element2);
-
                 // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
                 std::vector<size_t> sub_element3 = {index_i + 1, boundary_type, node1_index, node2_index};
                 new_element.push_back(sub_element3);
-
                 // Add the new element to mesh_topology_
                 mesh_topology_.push_back(new_element);
                 // mesh_topology_[ghost_particle_index][0][0].push_back(size_t(0);
-
                 // creating the boundary files with ghost particle index
                 each_boundary_type_with_all_ghosts_index_[boundary_type].push_back(ghost_particle_index);
-
                 // creating the boundary files with contact real particle index
                 each_boundary_type_contact_real_index_[boundary_type].push_back(index_i);
 
@@ -739,17 +729,17 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
     }
 }
 //=================================================================================================//
-BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation,
-                                                         vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                                                         vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
-    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
+BoundaryConditionSetupInFVM::
+    BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
+    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_),
+      Vol_(particles_->Vol_), mass_(particles_->mass_),
       p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(particles_->vel_), pos_(particles_->pos_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-      total_ghost_particles_(particles_->total_ghost_particles_),
-      real_particles_bound_(particles_->real_particles_bound_),
-      each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
-      each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),
-      each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+      vel_(particles_->vel_), pos_(particles_->pos_),
+      mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+      ghost_bound_(ghost_creation.ghost_bound_),
+      each_boundary_type_with_all_ghosts_index_(ghost_creation.each_boundary_type_with_all_ghosts_index_),
+      each_boundary_type_with_all_ghosts_eij_(ghost_creation.each_boundary_type_with_all_ghosts_eij_),
+      each_boundary_type_contact_real_index_(ghost_creation.each_boundary_type_contact_real_index_){};
 //=================================================================================================//
 void BoundaryConditionSetupInFVM::resetBoundaryConditions()
 {
@@ -766,7 +756,7 @@ void BoundaryConditionSetupInFVM::resetBoundaryConditions()
                 // Dispatch the appropriate boundary condition
                 switch (boundary_type)
                 {
-                case 3: // this refer to the different types of wall boundary condtions
+                case 3: // this refer to the different types of wall boundary conditions
                     applyNonSlipWallBoundary(ghost_index, index_i);
                     applyReflectiveWallBoundary(ghost_index, index_i, e_ij);
                     break;
