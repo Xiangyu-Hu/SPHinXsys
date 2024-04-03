@@ -83,7 +83,8 @@ int main(int ac, char *av[])
     water_block.generateParticles<Lattice>();
     water_block.addBodyStateForRecording<Real>("Density");
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape);
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
     //----------------------------------------------------------------------

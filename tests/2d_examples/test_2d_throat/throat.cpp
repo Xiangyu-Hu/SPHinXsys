@@ -135,7 +135,8 @@ int main(int ac, char *av[])
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<Lattice>(ghost_along_x);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape);
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
