@@ -74,7 +74,6 @@ RepulsionForce<Contact<Wall>>::RepulsionForce(SurfaceContactRelation &solid_body
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(this->contact_Vol_[k]);
         contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
     }
 }
