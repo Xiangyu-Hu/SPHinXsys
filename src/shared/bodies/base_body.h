@@ -63,7 +63,6 @@ class BodySurface;
 class SPHBody
 {
   private:
-    SharedPtrKeeper<Shape> initial_shape_ptr_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;

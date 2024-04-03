@@ -42,6 +42,8 @@ namespace SPH
 {
 class ObserverBody : public SPHBody
 {
+    SharedPtrKeeper<Shape> initial_shape_ptr_keeper_;
+
   public:
     ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr);
     ObserverBody(SPHSystem &sph_system, const std::string &name);
