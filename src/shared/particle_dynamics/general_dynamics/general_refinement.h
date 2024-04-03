@@ -46,9 +46,10 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
     ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
           particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
-          Vol_(particles_->Vol_), rho0_(sph_body_.base_material_->ReferenceDensity()),
+          rho0_(sph_body_.base_material_->ReferenceDensity()),
           inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
-          h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
+          h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
+          Vol_(particles_->Vol_)
     {
         density_error_.resize(particles_->real_particles_bound_);
         particles_->addVariableToWrite<Real>("Density");
@@ -59,7 +60,6 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
                                      const StdVec<size_t> &new_indices, Real min_distance, Real max_distance);
     virtual void initializeDensityError();
 
-    StdLargeVec<Real> &Vol_;
     StdLargeVec<Real> density_error_;
     StdLargeVec<bool> tag_split_;
 
@@ -67,6 +67,7 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
     ParticleSplitAndMerge &particle_adaptation_;
     Real rho0_, inv_sigma0_;
     StdLargeVec<Real> &h_ratio_;
+    StdLargeVec<Real> &Vol_;
     Vecd E_cof_ = Vecd::Zero();
     Real sigma_E_ = 0.0;
     Real E_cof_sigma_ = 0.0;
