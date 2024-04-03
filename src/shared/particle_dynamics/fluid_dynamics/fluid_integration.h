@@ -51,6 +51,21 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
     StdLargeVec<Vecd> &pos_, &vel_;
 };
 
+class ContinuumVolumeUpdate : public LocalDynamics, public FluidDataSimple
+{
+public:
+    explicit ContinuumVolumeUpdate(SPHBody& sph_body);
+    virtual ~ContinuumVolumeUpdate() {};
+
+    void update(size_t index_i, Real dt)
+    {
+        Vol_[index_i] = mass_[index_i] / rho_[index_i];
+    }
+
+protected:
+    StdLargeVec<Real> &Vol_, &mass_, &rho_;
+};
+
 template <class DataDelegationType>
 class BaseIntegration : public LocalDynamics, public DataDelegationType
 {
