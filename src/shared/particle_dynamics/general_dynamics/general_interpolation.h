@@ -180,7 +180,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 contact_neighborhood.W_ij_[n] -= normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]) *
-                                                 contact_neighborhood.dW_ij_[n];
+                                                 contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
             }
         }
     };

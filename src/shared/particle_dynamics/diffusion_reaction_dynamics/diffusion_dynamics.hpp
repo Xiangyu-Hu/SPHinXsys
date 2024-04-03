@@ -30,10 +30,10 @@ DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType
     : LocalDynamics(identifier.getSPHBody()),
       DataDelegationType<ParticlesType, ContactParticlesType...>(identifier),
       material_(this->particles_->diffusion_reaction_material_),
+      Vol_(this->particles_->Vol_),
       all_diffusions_(material_.AllDiffusions()),
       diffusion_species_(this->particles_->DiffusionSpecies()),
-      gradient_species_(this->particles_->GradientSpecies()), 
-      Vol_(this->particles_->Vol_)
+      gradient_species_(this->particles_->GradientSpecies())
 {
     diffusion_dt_.resize(all_diffusions_.size());
     StdVec<std::string> &all_species_names = this->particles_->AllSpeciesNames();

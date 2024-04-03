@@ -54,8 +54,8 @@ class RelaxationResidue<Base, DataDelegationType>
 
   protected:
     SPHAdaptation *sph_adaptation_;
-    StdLargeVec<Vecd> &residue_;
     StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &residue_;
 };
 
 template <>
