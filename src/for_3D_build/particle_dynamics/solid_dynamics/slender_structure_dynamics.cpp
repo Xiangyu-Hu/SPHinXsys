@@ -59,8 +59,8 @@ BarDeformationGradientTensor::
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      rho_(particles_->rho_), Vol_(particles_->Vol_),
-      thickness_(particles_->thickness_), mass_(particles_->mass_),
+      rho_(particles_->rho_), 
+      thickness_(particles_->thickness_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
       force_prior_(particles_->force_prior_),
@@ -83,12 +83,13 @@ BarStressRelaxationFirstHalf::
                                  int number_of_gaussian_points, bool hourglass_control)
     : BaseBarRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
+      Vol_(particles_->Vol_),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       numerical_damping_scaling_(particles_->numerical_damping_scaling_),
       global_shear_stress_(particles_->global_shear_stress_),
-      n_(particles_->n_), Vol_(particles_->Vol_),
+      n_(particles_->n_), 
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
