@@ -63,7 +63,7 @@ class BodySurface;
 class SPHBody
 {
   private:
-    SharedPtr<Shape> default_shape_ptr_;
+    SharedPtrKeeper<Shape> shape_ptr_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
@@ -75,7 +75,8 @@ class SPHBody
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBox bound_;             /**< bounding box of the body */
-    Shape &initial_shape_;          /**< initial volumetric geometry enclosing the body */
+    Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
+
   public:
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
@@ -84,12 +85,13 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, Shape &initial_shape, const std::string &body_name);
     SPHBody(SPHSystem &sph_system, Shape &initial_shape);
     SPHBody(SPHSystem &sph_system, const std::string &body_name);
+    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr);
     virtual ~SPHBody(){};
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
-    Shape &getInitialShape() { return initial_shape_; };
+    Shape &getInitialShape() { return *initial_shape_; };
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
@@ -118,6 +120,23 @@ class SPHBody
     {
         sph_adaptation_ = sph_adaptation_ptr_keeper_
                               .createPtr<AdaptationType>(*this, std::forward<Args>(args)...);
+    };
+
+    template <typename... Args>
+    LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
+    {
+        ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, initial_shape_);
+        return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<Args>(args)...);
+    };
+
+    template <typename... Args>
+    LevelSetShape *defineBodyLevelSetShape(Args &&...args)
+    {
+        LevelSetShape *level_set_shape =
+            shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
+
+        initial_shape_ = level_set_shape;
+        return level_set_shape;
     };
 
     /** partial construct particles with an already constructed material */
@@ -195,9 +214,6 @@ class SPHBody
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);
     virtual void readFromXmlForReloadParticle(std::string &filefullpath);
     virtual SPHBody *ThisObjectPtr() { return this; };
-
-  private:
-    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> default_shape_ptr);
 };
 
 /**
