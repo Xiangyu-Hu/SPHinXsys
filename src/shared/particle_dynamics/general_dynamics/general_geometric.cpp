@@ -6,7 +6,7 @@ namespace SPH
 //=============================================================================================//
 NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-      initial_shape_(*sph_body.initial_shape_), pos_(particles_->pos_),
+      initial_shape_(sph_body.getInitialShape()), pos_(particles_->pos_),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
@@ -25,7 +25,7 @@ void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
 NormalDirectionFromSubShapeAndOp::
     NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name)
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-      shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.initial_shape_)->getSubShapeAndOpByName(shape_name)),
+      shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.getInitialShape()).getSubShapeAndOpByName(shape_name)),
       shape_(shape_and_op_->first),
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
       pos_(particles_->pos_),
@@ -46,7 +46,7 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
 //=============================================================================================//
 NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
-      initial_shape_(*sph_body_.initial_shape_), pos_(particles_->pos_),
+      initial_shape_(sph_body_.getInitialShape()), pos_(particles_->pos_),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),

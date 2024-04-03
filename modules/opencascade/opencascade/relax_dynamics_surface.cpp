@@ -53,7 +53,7 @@ void RelaxationStepInnerSecondHalf::exec(Real dt)
 //=================================================================================================//
 SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body)
     : RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body),
-      surface_shape_(DynamicCast<SurfaceShape>(this, sph_body.initial_shape_)),
+      surface_shape_(DynamicCast<SurfaceShape>(this, sph_body.getInitialShape())),
       pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection")) {}
 
 //=================================================================================================//
