@@ -25,7 +25,7 @@ TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTyp
     : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
-      pos_(this->particles_->pos_), Vol_(this->particles_->Vol_),
+      Vol_(this->particles_->Vol_), pos_(this->particles_->pos_),
       h_ratio_(this->particles_), limiter_(this->particles_)
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
