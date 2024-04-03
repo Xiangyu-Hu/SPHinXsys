@@ -7,8 +7,8 @@ namespace SPH
 {
 //=================================================================================================//
 SolidBodyPartForSimbody::
-    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> initial_shape_ptr)
-    : BodyRegionByParticle(body, initial_shape_ptr),
+    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape)
+    : BodyRegionByParticle(body, body_part_shape),
       solid_body_density_(DynamicCast<Solid>(this, body.base_material_)->ReferenceDensity()),
       solid_particles_(DynamicCast<SolidParticles>(this, &body.getBaseParticles()))
 {

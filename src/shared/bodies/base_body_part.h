@@ -122,11 +122,8 @@ class BodyPartByCell : public BodyPart
  */
 class BodyRegionByParticle : public BodyPartByParticle
 {
-  private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
-
   public:
-    BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
+    BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
     virtual ~BodyRegionByParticle(){};
     Shape &getBodyPartShape() { return body_part_shape_; };
 
@@ -175,7 +172,7 @@ class BodyRegionByCell : public BodyPartByCell
     SharedPtrKeeper<Shape> shape_ptr_keeper_;
 
   public:
-    BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
+    BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);
     virtual ~BodyRegionByCell(){};
     Shape &getBodyPartShape() { return body_part_shape_; };
 

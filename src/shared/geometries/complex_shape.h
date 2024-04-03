@@ -47,7 +47,7 @@ class ComplexShape : public BinaryShapes
     virtual ~ComplexShape(){};
 
     template <typename... Args>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
+    LevelSetShape *defineComponentLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
         LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
