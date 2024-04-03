@@ -51,7 +51,7 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 ShellCorrectConfiguration::
     ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      B_(particles_->B_), Vol_(particles_->Vol_),
+      Vol_(particles_->Vol_), B_(particles_->B_),
       n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
 ShellDeformationGradientTensor::
@@ -64,8 +64,8 @@ ShellDeformationGradientTensor::
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      rho_(particles_->rho_), Vol_(particles_->Vol_),
-      thickness_(particles_->thickness_), mass_(particles_->mass_),
+      rho_(particles_->rho_), 
+      thickness_(particles_->thickness_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
       force_prior_(particles_->force_prior_),
