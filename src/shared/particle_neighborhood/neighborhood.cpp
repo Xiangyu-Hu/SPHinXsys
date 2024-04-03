@@ -269,8 +269,6 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
     const Vecd displacement = pos_i - pos_j;
     const Real distance = displacement.norm();
 
-    const Real Vol_j = std::get<2>(list_data_j);
-
     if (distance < radius)
     {
         Real W_ijV_j_ttl = kernel_->W(distance, displacement);
@@ -311,7 +309,7 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
         }
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
         Real W_ij_corrected = W_ijV_j_ttl * particle_distance_ / thickness_[index_j]; // from surface area to volume
-        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;                          // from surface area to volume
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;                  // from surface area to volume
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_
@@ -340,8 +338,6 @@ void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
     const Vecd pos_j = std::get<1>(list_data_j);
     const Vecd displacement = pos_i - pos_j;
     const Real distance = displacement.norm();
-
-    const Real Vol_j = std::get<2>(list_data_j);
 
     if (distance < kernel_->CutOffRadius())
     {
