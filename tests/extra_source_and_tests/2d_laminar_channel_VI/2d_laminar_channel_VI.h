@@ -39,7 +39,7 @@ Real c_f = 10.0 * U_f;*/
 //** Geometry parameters for straight channel SPH_4 *
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 15.0;                         /**< Channel length. */
-Real resolution_ref = 0.1;              /**< Initial reference particle spacing. */
+Real resolution_ref = 0.05;              /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;
 
@@ -73,7 +73,7 @@ StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };
 
 //** Laminar *
 Real U_inlet = 0.5;
-Real U_max = 1.0;
+Real U_max = 0.75;
 Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
 Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
 Real rho0_f = 1.0;                                            /**< Density. */
@@ -129,7 +129,39 @@ public:
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
     }
 };
+std::vector<Vecd> createEmitterDomainShape()
+{
+    std::vector<Vecd> emitter_block_shape;
+    emitter_block_shape.push_back(Vecd(-DL_sponge , 0.0));
+    emitter_block_shape.push_back(Vecd(-DL_sponge , DH));
+    emitter_block_shape.push_back(Vecd(-DL_sponge +  BW, DH));
+    emitter_block_shape.push_back(Vecd(-DL_sponge + BW, 0.0));
+    emitter_block_shape.push_back(Vecd(-DL_sponge, 0.0));
 
+    return emitter_block_shape;
+}
+MultiPolygon createBufferShape()
+{
+    std::vector<Vecd> buffer_shape;
+    buffer_shape.push_back(Vecd(-DL_sponge, 0.0));
+    buffer_shape.push_back(Vecd(-DL_sponge, DH));
+    buffer_shape.push_back(Vecd(-DL_sponge + BW, DH));
+    buffer_shape.push_back(Vecd(-DL_sponge + BW, 0.0));
+    buffer_shape.push_back(Vecd(-DL_sponge, 0.0));
+
+    MultiPolygon multi_polygon;
+    multi_polygon.addAPolygon(buffer_shape, ShapeBooleanOps::add);
+    return multi_polygon;
+}
+class EmitterBlock : public ComplexShape
+{
+public:
+    explicit EmitterBlock(const std::string& shape_name) : ComplexShape(shape_name)
+    {
+        MultiPolygon emitter_block(createEmitterDomainShape());
+        add<MultiPolygonShape>(emitter_block, "EmitterBlock");
+    }
+};
 /**
  * @brief 	Wall boundary body definition.
  */
