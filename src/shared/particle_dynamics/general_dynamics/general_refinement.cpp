@@ -443,7 +443,8 @@ ParticleMergeWithPrescribedArea::
     ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
     : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
       DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
-      all_particle_data_(particles_->getAllParticleData()), vel_n_(particles_->vel_)
+      all_particle_data_(particles_->getAllParticleData()), vel_n_(particles_->vel_),
+      merge_particle_value_(all_particle_data_)
 {
     particles_->registerVariable(total_merge_error_, "MergeDensityError", Real(0));
 }
@@ -531,7 +532,7 @@ void ParticleMergeWithPrescribedArea::
         merge_mass_.push_back(mass_[merge_indices[k]]);
         total_mass += mass_[merge_indices[k]];
     }
-    merge_particle_value_(all_particle_data_, merged_index, merge_indices, merge_mass_);
+    merge_particle_value_(merged_index, merge_indices, merge_mass_);
     mass_[merged_index] = total_mass;
     Vol_[merged_index] = mass_[merged_index] * inv_rho0_;
     Real particle_spacing = pow(Vol_[merged_index], 1.0 / (Real)Dimensions);

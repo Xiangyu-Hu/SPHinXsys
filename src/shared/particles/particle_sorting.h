@@ -198,17 +198,14 @@ namespace SPH
 {
 class BaseParticles;
 
-template <typename VariableType>
-struct swapParticleDataValue
+struct SwapParticleDataValue
 {
-    void operator()(ParticleData &particle_data, size_t index_a, size_t index_b) const
+    template <typename DataType>
+    void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index_a, size_t index_b) const
     {
-        constexpr int type_index = DataTypeIndex<VariableType>::value;
-
-        StdVec<StdLargeVec<VariableType> *> variables = std::get<type_index>(particle_data);
-        for (size_t i = 0; i != variables.size(); ++i)
+        for (size_t i = 0; i != data_keeper.size(); ++i)
         {
-            StdLargeVec<VariableType> &variable = *variables[i];
+            StdLargeVec<DataType> &variable = *data_keeper[i];
             std::swap(variable[index_a], variable[index_b]);
         }
     };
@@ -236,7 +233,7 @@ class SwapSortableParticleData
     StdLargeVec<size_t> &sequence_;
     StdLargeVec<size_t> &unsorted_id_;
     ParticleData &sortable_data_;
-    DataAssembleOperation<swapParticleDataValue> swap_particle_data_value_;
+    OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
   public:
     explicit SwapSortableParticleData(BaseParticles &base_particles);

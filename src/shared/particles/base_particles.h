@@ -212,66 +212,46 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Small structs for generalize particle operations
     //----------------------------------------------------------------------
-    template <typename DataType>
-    class resizeParticleData
+    struct ResizeParticles
     {
-        ParticleData &all_particle_data_;
-
-      public:
-        resizeParticleData(ParticleData &all_particle_data);
-        void operator()(size_t new_size) const;
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size);
     };
 
-    /** Add a particle data with default value. */
-    template <typename DataType>
-    struct addParticleDataWithDefaultValue
+    struct CopyParticleData
     {
-        void operator()(ParticleData &particle_data) const;
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index);
     };
 
-    template <typename DataType>
-    struct copyParticleData
+    struct WriteAParticleVariableToXml
     {
-        void operator()(ParticleData &particle_data, size_t index, size_t another_index) const;
+        XmlParser &xml_parser_;
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+    };
+
+    struct ReadAParticleVariableFromXml
+    {
+        XmlParser &xml_parser_;
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
     };
 
   public:
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------
-    DataAssembleOperation<resizeParticleData> resize_particle_data_;
-    DataAssembleOperation<addParticleDataWithDefaultValue> add_particle_data_with_default_value_;
-    DataAssembleOperation<copyParticleData> copy_particle_data_;
-};
+    OperationOnDataAssemble<ParticleData, ResizeParticles> resize_particles_;
+    OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
 
-/**
- * @struct WriteAParticleVariableToXml
- * @brief Define a operator for writing particle variable to XML format.
- */
-struct WriteAParticleVariableToXml
-{
-    XmlParser &xml_parser_;
-    size_t &total_real_particles_;
-    WriteAParticleVariableToXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
-
-    template <typename DataType>
-    void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
-};
-
-/**
- * @struct ReadAParticleVariableFromXml
- * @brief Define a operator for reading particle variable to XML format.
- */
-struct ReadAParticleVariableFromXml
-{
-    XmlParser &xml_parser_;
-    size_t &total_real_particles_;
-    ReadAParticleVariableFromXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
-
-    template <typename DataType>
-    void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
+  protected:
+    OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
 };
 
 /**
