@@ -114,7 +114,7 @@ class SPHBody
     void defineAdaptation(Args &&...args)
     {
         sph_adaptation_ = sph_adaptation_ptr_keeper_
-                              .createPtr<AdaptationType>(*this, std::forward<Args>(args)...);
+                              .createPtr<AdaptationType>(sph_system_.ReferenceResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
@@ -220,14 +220,6 @@ class RealBody : public SPHBody
 {
   private:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    /**
-     * @brief particle by cells lists is for parallel splitting algorithm.
-     * All particles in each cell are collected together.
-     * If two particles each belongs two different cell entries,
-     * they have no interaction because they are too far.
-     */
-    SplitCellLists split_cell_lists_;
-    bool use_split_cell_lists_;
     size_t iteration_count_;
     bool cell_linked_list_created_;
 
@@ -235,17 +227,12 @@ class RealBody : public SPHBody
     template <typename... Args>
     RealBody(Args &&...args)
         : SPHBody(std::forward<Args>(args)...),
-          use_split_cell_lists_(false), iteration_count_(1), cell_linked_list_created_(false)
+          iteration_count_(1), cell_linked_list_created_(false)
     {
         this->getSPHSystem().real_bodies_.push_back(this);
-        size_t number_of_split_cell_lists = pow(3, Dimensions);
-        split_cell_lists_.resize(number_of_split_cell_lists);
     };
     virtual ~RealBody(){};
     BaseCellLinkedList &getCellLinkedList();
-    void setUseSplitCellLists() { use_split_cell_lists_ = true; };
-    bool getUseSplitCellLists() { return use_split_cell_lists_; };
-    SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
     void updateCellLinkedList();
     void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
 };

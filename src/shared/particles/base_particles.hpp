@@ -114,8 +114,6 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
     std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     return nullptr;
-
-    return nullptr;
 }
 //=================================================================================================//
 template <typename DataType>
