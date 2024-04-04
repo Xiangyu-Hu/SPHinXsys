@@ -58,7 +58,7 @@ class LeafletParticleGenerator : public ParticleGenerator<Surface>
         : ParticleGenerator<Surface>(sph_body), sph_body_(sph_body){};
     virtual void initializeGeometricVariables() override
     {
-        SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.initial_shape_);
+        SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
 
         Standard_Real u1 = 0;
         Standard_Real v1 = DELTA1;
