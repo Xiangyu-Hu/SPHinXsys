@@ -54,6 +54,7 @@ class RelaxationResidue<Base, DataDelegationType>
 
   protected:
     SPHAdaptation *sph_adaptation_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &residue_;
 };
 
@@ -95,9 +96,18 @@ class RelaxationResidue<Contact<>>
 {
   public:
     explicit RelaxationResidue(BaseContactRelation &contact_relation)
-        : RelaxationResidue<Base, RelaxDataDelegateContact>(contact_relation){};
+        : RelaxationResidue<Base, RelaxDataDelegateContact>(contact_relation)
+    {
+        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+        {
+            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+        }
+    };
     virtual ~RelaxationResidue(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 /**

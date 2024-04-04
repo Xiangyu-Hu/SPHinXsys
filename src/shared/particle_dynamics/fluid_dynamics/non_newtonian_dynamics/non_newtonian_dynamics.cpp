@@ -31,7 +31,7 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
 
         // elastic force
         force += mass_[index_i] * (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
@@ -55,10 +55,12 @@ void Oldroyd_BIntegration1stHalf<Contact<Wall>>::interaction(size_t index_i, Rea
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
-            Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
+            size_t index_j = wall_neighborhood.j_[n];
+            Vecd nablaW_ijV_j = wall_neighborhood.dW_ij_[n] * Vol_k[index_j] * wall_neighborhood.e_ij_[n];
             /** stress boundary condition. */
             force += mass_[index_i] * 2.0 * tau_i * nablaW_ijV_j / rho_i;
         }
