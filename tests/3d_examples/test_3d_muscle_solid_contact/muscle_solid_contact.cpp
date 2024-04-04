@@ -95,8 +95,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
     /** Constrain the holder. */
-    BodyRegionByParticle holder(myocardium_body, makeShared<TransformShape<GeometricShapeBox>>(
-                                                     Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
+    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
+    BodyRegionByParticle holder(myocardium_body, holder_shape);
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
@@ -117,8 +117,8 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     SimTK::CableTrackerSubsystem cables(MBsystem);
     /** mass properties of the fixed spot. */
-    SolidBodyPartForSimbody plate_multibody(moving_plate, makeShared<TransformShape<GeometricShapeBox>>(
-                                                              Transform(translation_moving_plate), halfsize_moving_plate, "Plate"));
+    TransformShape<GeometricShapeBox> moving_plate_shape(Transform(translation_moving_plate), halfsize_moving_plate, "Plate");
+    SolidBodyPartForSimbody plate_multibody(moving_plate, moving_plate_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */

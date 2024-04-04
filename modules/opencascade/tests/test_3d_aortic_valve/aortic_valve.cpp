@@ -129,7 +129,7 @@ int main(int ac, char *av[])
     SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     leaflet.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-    auto leaflet_particle_generator = leaflet.makeSelfDefined<LeafletParticleGenerator>();
+    LeafletParticleGenerator leaflet_particle_generator(leaflet);
     leaflet.generateParticles(leaflet_particle_generator);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.

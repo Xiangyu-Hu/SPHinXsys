@@ -15,4 +15,7 @@ SolidBodyPartForSimbody::
     setMassProperties();
 }
 //=================================================================================================//
+SolidBodyPartForSimbody::SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr)
+    : SolidBodyPartForSimbody(body, *shape_ptr.get()) {}
+//=================================================================================================//
 } // namespace SPH

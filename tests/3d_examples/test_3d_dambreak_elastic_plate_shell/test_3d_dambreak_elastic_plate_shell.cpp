@@ -154,8 +154,7 @@ int main(int ac, char *av[])
     SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     plate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
-    auto plate_particle_generator = plate.makeSelfDefined<PlateParticleGenerator>();
-    plate.generateParticles(plate_particle_generator);
+    plate.generateParticles(PlateParticleGenerator(plate));
 
     ObserverBody disp_observer_1(sph_system, "Observer1");
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);

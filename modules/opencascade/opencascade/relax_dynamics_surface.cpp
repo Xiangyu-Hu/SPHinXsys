@@ -14,7 +14,7 @@ namespace relax_dynamics
 ShapeSurfaceBounding2::ShapeSurfaceBounding2(RealBody &real_body_)
     : LocalDynamics(real_body_), RelaxDataDelegateSimple(real_body_), pos_(particles_->pos_)
 {
-    shape_ = real_body_.initial_shape_;
+    shape_ = &real_body_.getInitialShape();
 }
 //=================================================================================================//
 void ShapeSurfaceBounding2::update(size_t index_i, Real dt)
@@ -53,7 +53,7 @@ void RelaxationStepInnerSecondHalf::exec(Real dt)
 //=================================================================================================//
 SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body)
     : RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body),
-      surface_shape_(DynamicCast<SurfaceShape>(this, sph_body.getInitialShape())),
+      surface_shape_(DynamicCast<SurfaceShape>(this, &sph_body.getInitialShape())),
       pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection")) {}
 
 //=================================================================================================//

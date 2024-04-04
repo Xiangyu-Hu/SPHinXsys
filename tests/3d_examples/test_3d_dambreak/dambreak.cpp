@@ -88,8 +88,7 @@ int main(int ac, char *av[])
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    auto fluid_observer_particle_generator = fluid_observer.makeSelfDefined<WaterObserverParticleGenerator>();
-    fluid_observer.generateParticles(fluid_observer_particle_generator);
+    fluid_observer.generateParticles(WaterObserverParticleGenerator(fluid_observer));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

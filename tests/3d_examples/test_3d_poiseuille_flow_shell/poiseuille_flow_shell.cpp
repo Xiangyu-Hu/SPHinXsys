@@ -28,11 +28,11 @@ const Real U_f = Re * mu_f / rho0_f / diameter;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 
-class ObserverAxial : public ParticleGenerator<Observer>
+class ObserverAxialGenerator : public ParticleGenerator<Observer>
 {
   public:
-    ObserverAxial(SPHBody &sph_body, double full_length,
-                  Vec3d translation = Vec3d(0.0, 0.0, 0.0))
+    ObserverAxialGenerator(SPHBody &sph_body, double full_length,
+                           Vec3d translation = Vec3d(0.0, 0.0, 0.0))
         : ParticleGenerator<Observer>(sph_body)
     {
         int ny = 51;
@@ -45,12 +45,12 @@ class ObserverAxial : public ParticleGenerator<Observer>
     }
 };
 
-class ObserverRadial : public ParticleGenerator<Observer>
+class ObserverRadialGenerator : public ParticleGenerator<Observer>
 {
   public:
-    ObserverRadial(SPHBody &sph_body, double full_length, double diameter,
-                   int number_of_particles,
-                   Vec3d translation = Vec3d(0.0, 0.0, 0.0))
+    ObserverRadialGenerator(SPHBody &sph_body, double full_length, double diameter,
+                            int number_of_particles,
+                            Vec3d translation = Vec3d(0.0, 0.0, 0.0))
         : ParticleGenerator<Observer>(sph_body)
     {
 
@@ -70,14 +70,14 @@ class ObserverRadial : public ParticleGenerator<Observer>
 /**
  * @brief Define wall shape
  */
-class ShellBoundary : public ParticleGenerator<Surface>
+class ShellBoundaryGenerator : public ParticleGenerator<Surface>
 {
     Real resolution_shell_;
     Real wall_thickness_;
     Real shell_thickness_;
 
   public:
-    explicit ShellBoundary(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
+    explicit ShellBoundaryGenerator(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
         : ParticleGenerator<Surface>(sph_body),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
@@ -188,7 +188,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1, 1e3, 0.45);
-    auto shell_boundary_particle_generator = shell_boundary.makeSelfDefined<ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
+    ShellBoundaryGenerator shell_boundary_particle_generator(shell_boundary, resolution_shell, wall_thickness, shell_thickness);
     shell_boundary.generateParticles(shell_boundary_particle_generator);
     /** topology */
     InnerRelation water_block_inner(water_block);
@@ -258,10 +258,10 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
      * @brief OBSERVER.
      */
     ObserverBody observer_axial(system, "fluid_observer_axial");
-    auto observer_axial_particle_generator = observer_axial.makeSelfDefined<ObserverAxial>(full_length);
+    ObserverAxialGenerator observer_axial_particle_generator(observer_axial, full_length);
     observer_axial.generateParticles(observer_axial_particle_generator);
     ObserverBody observer_radial(system, "fluid_observer_radial");
-    auto observer_radial_particle_generator = observer_radial.makeSelfDefined<ObserverRadial>(full_length, diameter, number_of_particles);
+    ObserverRadialGenerator observer_radial_particle_generator(observer_radial, full_length, diameter, number_of_particles);
     observer_radial.generateParticles(observer_radial_particle_generator);
 
     ContactRelation observer_contact_axial(observer_axial, {&water_block});

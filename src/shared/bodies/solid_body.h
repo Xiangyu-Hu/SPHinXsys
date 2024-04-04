@@ -73,6 +73,7 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
     SimTK::MassProperties *body_part_mass_properties_;
 
     SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
+    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
     virtual ~SolidBodyPartForSimbody(){};
 
   protected:

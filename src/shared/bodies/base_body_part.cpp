@@ -36,6 +36,13 @@ BodyRegionByParticle::
     tagParticles(tagging_particle_method);
 }
 //=================================================================================================//
+BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
+    : BodyRegionByParticle(sph_body, *shape_ptr.get())
+{
+    shape_ptr_keeper_.assignRef(shape_ptr);
+}
+//==
+//=================================================================================================//
 void BodyRegionByParticle::tagByContain(size_t particle_index)
 {
     if (body_part_shape_.checkContain(base_particles_.pos_[particle_index]))
@@ -84,6 +91,12 @@ BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
 {
     TaggingCellMethod tagging_cell_method = std::bind(&BodyRegionByCell::checkNotFar, this, _1, _2);
     tagCells(tagging_cell_method);
+}
+//=================================================================================================//
+BodyRegionByCell::BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr)
+    : BodyRegionByCell(real_body, *shape_ptr.get())
+{
+    shape_ptr_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)

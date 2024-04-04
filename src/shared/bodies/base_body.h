@@ -107,12 +107,6 @@ class SPHBody
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
-    template <class SelfDefinedType, typename... Args>
-    SelfDefinedType makeSelfDefined(Args &&...args)
-    {
-        return SelfDefinedType(*this, std::forward<Args>(args)...);
-    }
-
     virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
@@ -160,7 +154,7 @@ class SPHBody
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
     template <class ParticleGeneratorType> // for self-defined particle generator
-    void generateParticles(ParticleGeneratorType &particle_generator)
+    void generateParticles(ParticleGeneratorType &&particle_generator)
     {
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();

@@ -138,8 +138,7 @@ int main(int ac, char *av[])
     /** create a bar body. */
     SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
     bar_body.defineParticlesAndMaterial<BarParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    auto bar_particle_generator = bar_body.makeSelfDefined<BarParticleGenerator>();
-    bar_body.generateParticles(bar_particle_generator);
+    bar_body.generateParticles(BarParticleGenerator(bar_body));
 
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
