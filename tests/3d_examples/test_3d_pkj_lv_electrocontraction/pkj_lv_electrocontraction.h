@@ -248,10 +248,10 @@ class ApplyStimulusCurrentToMyocardium
     };
 };
 // Observer particle generator.
-class HeartObserverParticleGenerator : public ParticleGeneratorObserver
+class HeartObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
@@ -289,7 +289,7 @@ class ApplyStimulusCurrentToPKJ
 /**
  * Derived network particle generator.
  */
-class NetworkGeneratorWithExtraCheck : public ParticleGeneratorNetwork
+class NetworkGeneratorWithExtraCheck : public ParticleGenerator<Network>
 {
   protected:
     bool extraCheck(const Vecd &new_position) override
@@ -302,5 +302,5 @@ class NetworkGeneratorWithExtraCheck : public ParticleGeneratorNetwork
 
   public:
     NetworkGeneratorWithExtraCheck(SPHBody &sph_body, Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
-        : ParticleGeneratorNetwork(sph_body, starting_pnt, second_pnt, iterator, grad_factor){};
+        : ParticleGenerator<Network>(sph_body, starting_pnt, second_pnt, iterator, grad_factor){};
 };

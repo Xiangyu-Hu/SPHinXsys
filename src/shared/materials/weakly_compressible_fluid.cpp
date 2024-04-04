@@ -41,4 +41,19 @@ Real SymmetricTaitFluid::getSoundSpeed(Real p, Real rho)
                : sqrt((p0_ - Real(gamma_) * p) / rho);
 }
 //=================================================================================================//
+Real HerschelBulkleyFluid::getViscosity(Real shear_rate)
+{
+
+    Real effective_shear_rate = SMAX(SMIN(shear_rate, max_shear_rate_), min_shear_rate_);
+    return (yield_stress_ + consistency_index_ * (std::pow(effective_shear_rate, power_index_))) /
+           effective_shear_rate;
+}
+//=================================================================================================//
+Real CarreauFluid::getViscosity(Real shear_rate)
+{
+    Real effective_shear_rate = SMAX(SMIN(shear_rate, max_shear_rate_), min_shear_rate_);
+    return mu_infty_ + (mu0_ - mu_infty_) * std::pow(1.0 + std::pow(characteristic_time_ * effective_shear_rate, 2), 0.5 * (power_index_ - 1.0));
+}
+
+//=================================================================================================//
 } // namespace SPH

@@ -65,7 +65,7 @@ int main(int ac, char *av[])
                                                      Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
     myocardium_muscle_body.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    myocardium_muscle_body.generateParticles<ParticleGeneratorLattice>();
+    myocardium_muscle_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(myocardium_muscle_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_muscle_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_muscle_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(myocardium_muscle_body_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);
     BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
@@ -151,7 +151,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

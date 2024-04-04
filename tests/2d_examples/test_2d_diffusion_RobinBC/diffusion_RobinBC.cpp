@@ -23,20 +23,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
     diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.generateParticles<Lattice>();
 
     SolidBody wall_boundary_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
     wall_boundary_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary_Dirichlet.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary_Dirichlet.generateParticles<Lattice>();
 
     SolidBody wall_boundary_Robin(sph_system, makeShared<RobinWallBoundary>("RobinWallBoundary"));
     wall_boundary_Robin.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary_Robin.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary_Robin.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
+    auto my_particle_generator = temperature_observer.makeSelfDefined<ParticleGeneratorTemperatureObserver>();
+    temperature_observer.generateParticles(my_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -51,6 +51,21 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
     StdLargeVec<Vecd> &pos_, &vel_;
 };
 
+class ContinuumVolumeUpdate : public LocalDynamics, public FluidDataSimple
+{
+public:
+    explicit ContinuumVolumeUpdate(SPHBody& sph_body);
+    virtual ~ContinuumVolumeUpdate() {};
+
+    void update(size_t index_i, Real dt)
+    {
+        Vol_[index_i] = mass_[index_i] / rho_[index_i];
+    }
+
+protected:
+    StdLargeVec<Real> &Vol_, &mass_, &rho_;
+};
+
 template <class DataDelegationType>
 class BaseIntegration : public LocalDynamics, public DataDelegationType
 {
@@ -61,7 +76,7 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &mass_, &p_, &drho_dt_;
+    StdLargeVec<Real> &rho_, &mass_, &Vol_, &p_, &drho_dt_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
 };
 
@@ -85,7 +100,7 @@ class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
 };
 using Integration1stHalfInnerNoRiemann = Integration1stHalf<Inner<>, NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, NoKernelCorrection>;
-using Integration1stHalfCorrectionInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, FirstConsistencyCorrection>;
+using Integration1stHalfCorrectionInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, LinearGradientCorrection>;
 
 // The following is used to avoid the C3200 error triggered in Visual Studio.
 // Please refer: https://developercommunity.visualstudio.com/t/c-invalid-template-argument-for-template-parameter/831128
@@ -106,22 +121,6 @@ class Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
-class Integration1stHalf<Contact<Wall, Extended>, RiemannSolverType, KernelCorrectionType>
-    : public Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
-{
-  public:
-    explicit Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
-    template <typename BodyRelationType, typename FirstArg>
-    explicit Integration1stHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : Integration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~Integration1stHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real penalty_strength_;
-};
-
-template <class RiemannSolverType, class KernelCorrectionType>
 class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
     : public BaseIntegration<FluidContactData>
 {
@@ -135,6 +134,7 @@ class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
     StdVec<KernelCorrectionType> contact_corrections_;
     StdVec<RiemannSolverType> riemann_solvers_;
     StdVec<StdLargeVec<Real> *> contact_p_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -142,12 +142,10 @@ using Integration1stHalfWithWall = ComplexInteraction<Integration1stHalf<Inner<>
 
 using Integration1stHalfWithWallNoRiemann = Integration1stHalfWithWall<NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, NoKernelCorrection>;
-using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, FirstConsistencyCorrection>;
+using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>;
 
 using MultiPhaseIntegration1stHalfWithWallRiemann =
     ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>;
-using ExtendedMultiPhaseIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall, Extended>>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <typename... InteractionTypes>
 class Integration2ndHalf;
@@ -167,7 +165,7 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    StdLargeVec<Real> &mass_, & Vol_;
 };
 using Integration2ndHalfInnerRiemann = Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
 using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSolver>;
@@ -197,7 +195,7 @@ class Integration2ndHalf<Contact<>, RiemannSolverType>
 
   protected:
     StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<StdLargeVec<Real> *> contact_p_;
+    StdVec<StdLargeVec<Real> *> contact_p_, contact_Vol_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 

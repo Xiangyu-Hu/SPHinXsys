@@ -57,7 +57,7 @@ StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_parti
     StdLargeVec<Vecd> &pos = base_particles.pos_;
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
-    particle_for(execution::ParallelPolicy(), total_real_particles, [&](size_t i)
+    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
                  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
     return sequence;
 }
@@ -132,7 +132,7 @@ StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &
     StdLargeVec<Vecd> &pos = base_particles.pos_;
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
-    particle_for(execution::ParallelPolicy(), total_real_particles,
+    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
                  [&](size_t i)
                  {
 						 size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));

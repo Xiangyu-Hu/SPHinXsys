@@ -86,7 +86,7 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, ContactDynamicsDat
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
     StdVec<Solid *> contact_solids_;
-    StdVec<StdLargeVec<Real> *> contact_contact_density_;
+    StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 };
 using ContactForce = RepulsionForce<Contact<>>;
 
@@ -101,6 +101,7 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, ContactWithWal
   protected:
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 using ContactForceFromWall = RepulsionForce<Contact<Wall>>;
 
@@ -115,7 +116,7 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, ContactDynam
 
   protected:
     StdVec<Solid *> contact_solids_;
-    StdVec<StdLargeVec<Real> *> contact_contact_density_;
+    StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 };
 using ContactForceToWall = RepulsionForce<Wall, Contact<>>;
 

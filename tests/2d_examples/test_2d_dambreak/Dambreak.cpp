@@ -63,16 +63,16 @@ int main(int ac, char *av[])
         sph_system, makeShared<TransformShape<GeometricShapeBox>>(
                         Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

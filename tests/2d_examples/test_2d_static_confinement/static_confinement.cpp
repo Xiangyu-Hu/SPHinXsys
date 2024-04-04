@@ -111,10 +111,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

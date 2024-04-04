@@ -21,19 +21,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_a, c_f);
-    air_block.generateParticles<ParticleGeneratorLattice>();
+    air_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -63,6 +63,7 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
     SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
+    InteractionDynamics<fluid_dynamics::BoundingFromWall> air_near_wall_bounding(air_wall_contact);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
         update_water_density_by_summation(water_inner, water_wall_contact);
@@ -82,8 +83,8 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         water_density_relaxation(water_inner, water_air_contact, water_wall_contact);
     /** Extend Pressure relaxation is used for air. */
-    Dynamics1Level<fluid_dynamics::ExtendedMultiPhaseIntegration1stHalfWithWallRiemann>
-        air_pressure_relaxation(air_inner, air_water_contact, ConstructorArgs(air_wall_contact, 2.0));
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
+        air_pressure_relaxation(air_inner, air_water_contact, air_wall_contact);
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
     //----------------------------------------------------------------------
@@ -113,7 +114,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 20.0;
+    Real end_time = 10.0;
     Real output_interval = 0.1;
     Real dt = 0.0; /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
@@ -146,6 +147,7 @@ int main(int ac, char *av[])
             update_water_density_by_summation.exec();
             update_air_density_by_summation.exec();
             air_transport_correction.exec();
+            air_near_wall_bounding.exec();
 
             interval_computing_time_step += TickCount::now() - time_instance;
 

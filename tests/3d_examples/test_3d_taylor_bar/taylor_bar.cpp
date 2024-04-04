@@ -29,17 +29,18 @@ int main(int ac, char *av[])
     column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? column.generateParticles<ParticleGeneratorReload>(column.getName())
-        : column.generateParticles<ParticleGeneratorLattice>();
+        ? column.generateParticles<Reload>(column.getName())
+        : column.generateParticles<Lattice>();
     column.addBodyStateForRecording<Vecd>("NormalDirection");
 
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall.generateParticles<ParticleGeneratorLattice>();
+    wall.generateParticles<Lattice>();
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
-    my_observer.generateParticles<ColumnObserverParticleGenerator>();
+    auto observer_particle_generator = my_observer.makeSelfDefined<ColumnObserverParticleGenerator>();
+    my_observer.generateParticles(observer_particle_generator);
 
     /**body relation topology */
     InnerRelation column_inner(column);
@@ -92,7 +93,7 @@ int main(int ac, char *av[])
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.2);
     //----------------------------------------------------------------------
     //	Output

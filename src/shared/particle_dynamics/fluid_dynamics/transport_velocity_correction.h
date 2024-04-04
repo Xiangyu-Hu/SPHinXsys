@@ -45,8 +45,8 @@ namespace fluid_dynamics
 template <typename... T>
 class TransportVelocityCorrection;
 
-template <class DataDelegationType, class KernelCorrectionType, class ParticleScopeType>
-class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScopeType>
+template <class DataDelegationType, class KernelCorrectionType, class ParticleScope>
+class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>
     : public LocalDynamics, public DataDelegationType
 {
   public:
@@ -55,9 +55,9 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
     virtual ~TransportVelocityCorrection(){};
 
   protected:
-    StdLargeVec<Vecd> &zeroth_consistency_;
+    StdLargeVec<Vecd> &zero_gradient_residue_;
     KernelCorrectionType kernel_correction_;
-    ParticleScopeType checkWithinScope;
+    ParticleScope checkWithinScope;
 };
 
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
@@ -75,13 +75,14 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
 
   protected:
     const Real h_ref_, correction_scaling_;
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd> &pos_;
     ResolutionType h_ratio_;
     LimiterType limiter_;
 };
-template <class LimiterType, class ParticleScopeType>
+template <class LimiterType, class ParticleScope>
 using TransportVelocityCorrectionInner =
-    TransportVelocityCorrection<Inner<SingleResolution, LimiterType>, NoKernelCorrection, ParticleScopeType>;
+    TransportVelocityCorrection<Inner<SingleResolution, LimiterType>, NoKernelCorrection, ParticleScope>;
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
@@ -91,6 +92,9 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdVec<StdLargeVec<Real>*> wall_Vol_;
 };
 
 template <class KernelCorrectionType, typename... CommonControlTypes>
@@ -104,27 +108,32 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 
   protected:
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
 using BaseTransportVelocityCorrectionComplex =
     ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
 
-template <class ParticleScopeType>
+template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScopeType>;
+    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
 
-template <class ParticleScopeType>
+template <class ParticleScope>
+using TransportVelocityLimitedCorrectionComplex =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, ZeroGradientLimiter, NoKernelCorrection, ParticleScope>;
+
+template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
-    BaseTransportVelocityCorrectionComplex<AdaptiveResolution, NoLimiter, NoKernelCorrection, ParticleScopeType>;
+    BaseTransportVelocityCorrectionComplex<AdaptiveResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
 
 template <class ResolutionType, typename... CommonControlTypes>
 using BaseMultiPhaseTransportVelocityCorrectionComplex =
     ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType, NoLimiter>, Contact<>, Contact<Boundary>>, CommonControlTypes...>;
 
-template <class ParticleScopeType>
+template <class ParticleScope>
 using MultiPhaseTransportVelocityCorrectionComplex =
-    BaseMultiPhaseTransportVelocityCorrectionComplex<SingleResolution, NoKernelCorrection, ParticleScopeType>;
+    BaseMultiPhaseTransportVelocityCorrectionComplex<SingleResolution, NoKernelCorrection, ParticleScope>;
 
 } // namespace fluid_dynamics
 } // namespace SPH

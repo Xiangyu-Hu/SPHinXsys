@@ -107,11 +107,11 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     // corrected strong configuration
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
@@ -222,7 +222,6 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }

@@ -22,7 +22,7 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
 
     if (variable == nullptr)
     {
-        variable_addrs.resize(real_particles_bound_, initial_value);
+        variable_addrs.resize(particles_bound_, initial_value);
 
         constexpr int type_index = DataTypeIndex<DataType>::value;
         std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
@@ -44,7 +44,7 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
                                      const std::string &variable_name, const InitializationFunction &initialization)
 {
     registerVariable(variable_addrs, variable_name);
-    for (size_t i = 0; i != real_particles_bound_; ++i)
+    for (size_t i = 0; i != particles_bound_; ++i)
     {
         variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
     }
@@ -202,13 +202,16 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
+BaseParticles::resizeParticleData<DataType>::resizeParticleData(ParticleData &all_particle_data)
+    : all_particle_data_(all_particle_data) {}
+//=================================================================================================//
+template <typename DataType>
 void BaseParticles::resizeParticleData<DataType>::
-operator()(ParticleData &particle_data, size_t new_size) const
+operator()(size_t new_size) const
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
-
-    for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-        std::get<type_index>(particle_data)[i]->resize(new_size, ZeroData<DataType>::value);
+    for (size_t i = 0; i != std::get<type_index>(all_particle_data_).size(); ++i)
+        std::get<type_index>(all_particle_data_)[i]->resize(new_size, ZeroData<DataType>::value);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -329,12 +332,12 @@ void WriteAParticleVariableToXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
     size_t index = 0;
-    for( auto child = xml_parser_.first_element_->FirstChildElement();
-        child;
-        child = child->NextSiblingElement()  )
+    for (auto child = xml_parser_.first_element_->FirstChildElement();
+         child;
+         child = child->NextSiblingElement())
     {
-        xml_parser_.setAttributeToElement( child, variable_name, variable[index] );
-        index ++; 
+        xml_parser_.setAttributeToElement(child, variable_name, variable[index]);
+        index++;
     }
 }
 //=================================================================================================//
@@ -343,12 +346,12 @@ void ReadAParticleVariableFromXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
     size_t index = 0;
-    for( auto child = xml_parser_.first_element_->FirstChildElement();
-        child;
-        child = child->NextSiblingElement()  )
+    for (auto child = xml_parser_.first_element_->FirstChildElement();
+         child;
+         child = child->NextSiblingElement())
     {
-        xml_parser_.queryAttributeValue( child, variable_name, variable[index] );
-        index ++; 
+        xml_parser_.queryAttributeValue(child, variable_name, variable[index]);
+        index++;
     }
 }
 //=================================================================================================//

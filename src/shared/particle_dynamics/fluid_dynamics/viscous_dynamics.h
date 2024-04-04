@@ -50,6 +50,18 @@ class FixedViscosity : public PairGeomAverageFixed<Real>
     virtual ~FixedViscosity(){};
 };
 
+class VariableViscosity : public PairGeomAverageVariable<Real>
+{
+  public:
+    VariableViscosity(BaseParticles *particles1, BaseParticles *particles2)
+        : PairGeomAverageVariable<Real>(
+              *particles1->getVariableByName<Real>("VariableViscosity"),
+              *particles2->getVariableByName<Real>("VariableViscosity")){};
+    explicit VariableViscosity(BaseParticles *particles)
+        : VariableViscosity(particles, particles){};
+    virtual ~VariableViscosity(){};
+};
+
 template <typename... InteractionTypes>
 class ViscousForce;
 
@@ -63,7 +75,7 @@ class ViscousForce<DataDelegationType>
     virtual ~ViscousForce(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Real> &rho_, &mass_, &Vol_;
     StdLargeVec<Vecd> &vel_, &viscous_force_;
     Real smoothing_length_;
 };
@@ -83,7 +95,7 @@ class ViscousForce<Inner<>, ViscosityType>
 using ViscousForceInner = ViscousForce<Inner<>, FixedViscosity>;
 
 template <typename ViscosityType>
-class ViscousForce<AngularConservative<Inner<>>, ViscosityType>
+class ViscousForce<Inner<AngularConservative>, ViscosityType>
     : public ViscousForce<FluidDataInner>, public ForcePrior
 {
   public:
@@ -115,6 +127,19 @@ class ViscousForce<Contact<Wall>, ViscosityType> : public BaseViscousForceWithWa
 };
 
 template <typename ViscosityType>
+class ViscousForce<Contact<Wall, AngularConservative>, ViscosityType> : public BaseViscousForceWithWall
+{
+  public:
+    explicit ViscousForce(BaseContactRelation &wall_contact_relation);
+    virtual ~ViscousForce(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    ViscosityType mu_;
+    StdLargeVec<Vecd> &distance_from_wall_;
+};
+
+template <typename ViscosityType>
 class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<FluidContactData>
 {
   public:
@@ -125,10 +150,15 @@ class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<FluidContactD
   protected:
     StdVec<ViscosityType> contact_mu_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdVec<StdLargeVec<Real>*> wall_Vol_;
 };
 
 using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity>;
 using MultiPhaseViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<>, Contact<Wall>>, FixedViscosity>;
+
+template <typename... FormulationType>
+using NonNewtonianViscousForceWithWall =
+    ComplexInteraction<ViscousForce<Inner<FormulationType...>, Contact<Wall, FormulationType...>>, VariableViscosity>;
 
 /**
  * @class VorticityInner
@@ -143,6 +173,7 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<AngularVecd> vorticity_;
 };

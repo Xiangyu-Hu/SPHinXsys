@@ -67,7 +67,7 @@ class ComputeTotalErrorOrPositiveParameter
  */
 template <class DynamicsIdentifier, class ParticlesType>
 class ComputeMaximumError
-    : public BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>,
+    : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>,
       public DiffusionReactionSimpleData<ParticlesType>
 {
   protected:
@@ -75,7 +75,7 @@ class ComputeMaximumError
 
   public:
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>(identifier, Real(0)),
+        : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
           DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()),
           variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
 

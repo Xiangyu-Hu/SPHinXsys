@@ -46,7 +46,7 @@ void ParticleGenerator<Lattice, Adaptive>::
     }
 }
 //=================================================================================================//
-ParticleGenerator<Surface, Lattice, ReducedOrder>::ParticleGenerator(SPHBody &sph_body, Real thickness)
+ParticleGenerator<ThickSurface, Lattice>::ParticleGenerator(SPHBody &sph_body, Real thickness)
     : ParticleGenerator<Surface>(sph_body), GeneratingMethod<Lattice>(sph_body),
       total_volume_(0), thickness_(thickness),
       particle_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),

@@ -94,7 +94,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         void update(size_t index_i, Real dt = 0.0);
     };
 
-    class PredictionConvergenceCheck : public LocalDynamicsReduce<bool, ReduceAND>,
+    class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>,
                                        public RelaxDataDelegateSimple
     {
       protected:
@@ -123,7 +123,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         StdLargeVec<Vecd> &n_;
     };
 
-    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<bool, ReduceAND>,
+    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>,
                                     public RelaxDataDelegateSimple
     {
       protected:

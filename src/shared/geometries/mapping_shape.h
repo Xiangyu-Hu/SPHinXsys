@@ -87,7 +87,7 @@ class ExtrudeShape : public BaseShapeType
         Vecd displacement = original_closest_point - probe_point;
         if (BaseShapeType::checkContain(probe_point))
         {
-            return thickness_ > 0.0 ? true : displacement.squaredNorm() < thickness_sqr_;
+            return thickness_ > 0.0 ? true : displacement.squaredNorm() > thickness_sqr_;
         }
         else
         {
