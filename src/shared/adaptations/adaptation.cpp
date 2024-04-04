@@ -98,9 +98,9 @@ UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinem
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::
-    ParticleWithLocalRefinement(Real h_spacing_ratio, Real system_refinement_ratio,
+    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
                                 int local_refinement_level)
-    : SPHAdaptation(h_spacing_ratio, system_refinement_ratio)
+    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio)
 {
     local_refinement_level_ = local_refinement_level;
     spacing_min_ = MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_);
@@ -166,9 +166,9 @@ Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &po
     return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
 }
 //=================================================================================================//
-ParticleSplitAndMerge::ParticleSplitAndMerge(Real h_spacing_ratio, Real system_resolution_ratio,
+ParticleSplitAndMerge::ParticleSplitAndMerge(Real resolution_ref, Real h_spacing_ratio, Real system_resolution_ratio,
                                              int local_refinement_level)
-    : ParticleWithLocalRefinement(h_spacing_ratio, system_resolution_ratio,
+    : ParticleWithLocalRefinement(resolution_ref, h_spacing_ratio, system_resolution_ratio,
                                   local_refinement_level)
 {
     spacing_min_ = MostRefinedSpacingSplitting(spacing_ref_, local_refinement_level_);

@@ -21,6 +21,13 @@ SplitCellLists *BaseCellLinkedList::getSplitCellLists()
     return nullptr;
 }
 //=================================================================================================//
+void BaseCellLinkedList::setUseSplitCellLists()
+{
+    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    exit(1);
+};
+//=================================================================================================//
 void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 {
     for (size_t i = 0; i < split_cell_lists.size(); i++)

@@ -65,7 +65,7 @@ class BaseCellLinkedList : public BaseMeshField
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
     virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
     virtual SplitCellLists *getSplitCellLists();
-    virtual void setUseSplitCellLists(){};
+    virtual void setUseSplitCellLists();
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
     /** Insert a cell-linked_list entry of the index and particle position pair. */

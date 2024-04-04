@@ -30,8 +30,8 @@
 #define ADAPTATION_H
 
 #include "base_data_package.h"
-#include "sph_data_containers.h"
 #include "base_kernel.h"
+#include "sph_data_containers.h"
 
 namespace SPH
 {
@@ -106,7 +106,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
   public:
     StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
-    ParticleWithLocalRefinement(Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement(){};
 
     virtual size_t getCellLinkedListTotalLevel();
@@ -181,7 +181,7 @@ class ParticleRefinementWithinShape : public ParticleRefinementByShape
 class ParticleSplitAndMerge : public ParticleWithLocalRefinement
 {
   public:
-    ParticleSplitAndMerge(Real h_spacing_ratio_, Real system_resolution_ratio, int local_refinement_level);
+    ParticleSplitAndMerge(Real resolution_ref, Real h_spacing_ratio_, Real system_resolution_ratio, int local_refinement_level);
     virtual ~ParticleSplitAndMerge(){};
 
     virtual bool isSplitAllowed(Real current_volume);

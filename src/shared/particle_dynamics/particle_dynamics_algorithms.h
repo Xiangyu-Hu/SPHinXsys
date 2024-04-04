@@ -207,7 +207,7 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
     InteractionSplit(Args &&...args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
-          split_cell_lists_(real_body_.getCellLinkedList().getSplitCellLists())
+          split_cell_lists_(*real_body_.getCellLinkedList().getSplitCellLists())
     {
         real_body_.getCellLinkedList().setUseSplitCellLists();
         static_assert(!has_initialize<LocalDynamicsType>::value &&
