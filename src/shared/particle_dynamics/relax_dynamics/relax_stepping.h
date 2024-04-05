@@ -64,7 +64,7 @@ class RelaxationResidue<Inner<>>
 {
   public:
     explicit RelaxationResidue(BaseInnerRelation &inner_relation);
-    RelaxationResidue(BaseInnerRelation &inner_relation, std::string sub_shape_name);
+    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
     virtual ~RelaxationResidue(){};
     Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
