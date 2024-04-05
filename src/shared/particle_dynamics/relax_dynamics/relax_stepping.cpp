@@ -10,7 +10,7 @@ RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
       relax_shape_(*sph_body_.initial_shape_){};
 //=================================================================================================//
 RelaxationResidue<Inner<>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation, std::string sub_shape_name)
+    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
     : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
       relax_shape_(*DynamicCast<ComplexShape>(this, *sph_body_.initial_shape_)
                         .getSubShapeByName(sub_shape_name)) {}

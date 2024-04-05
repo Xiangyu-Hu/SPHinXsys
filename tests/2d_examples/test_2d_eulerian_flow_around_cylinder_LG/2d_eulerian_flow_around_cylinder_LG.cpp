@@ -138,7 +138,7 @@ int main(int ac, char *av[])
         ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, "OuterBoundary"), water_block_contact);
+            ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_block_contact);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
