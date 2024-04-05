@@ -12,12 +12,16 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 2.0;                         /**< Channel height. */
-Real DL = 15.0;                         /**< Channel length. */
-Real num_fluid_cross_section = 40.0;
+Real DH = 1.0;                         /**< Channel height. */
+Real num_fluid_cross_section = 60.0;
+
+Real DL_in = 2.0;
+Real DL_out = DL_in;
 Real amplitude = 0.1;
 Real wave_length = 1;
+Real DL_wave = 6.0 * wave_length;
 
+Real DL = DL_in + DL_wave + DL_out;                         /**< Channel length. */
 
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
@@ -26,7 +30,7 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
 
-Real y_p_constant = 0.05;
+Real y_p_constant = 0.025;
 Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
 Real offset_distance = y_p_constant - resolution_ref / 2.0; //** Basically offset distance is large than or equal to 0 *
 
@@ -36,7 +40,7 @@ Real half_channel_height = DH / 2.0;
 //----------------------------------------------------------------------
 //	Domain bounds of the system. 
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -amplitude - 2.0 * BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
 
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -75,6 +79,8 @@ StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------
+Real wavy_sampling_interval = 0.01;   //** Specify the wavy resolution here *
+int num_wavy_points = int(DL_wave / wavy_sampling_interval);
 std::vector<Vecd> createWaterBlockShape()
 {
     std::vector<Vecd> water_block_shape;
@@ -82,47 +88,74 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, DH));
     water_block_shape.push_back(Vecd(DL + offset_distance, DH));
     water_block_shape.push_back(Vecd(DL + offset_distance, 0.0));
+
+    //** Wavy segment *
+    water_block_shape.push_back(Vecd(DL + offset_distance - DL_out, 0.0)); //** start point *
+    Real start_x = DL + offset_distance - DL_out;
+    for (int k = 1; k <= num_wavy_points; ++k)
+    {
+        Real x_coordinate = start_x - k * wavy_sampling_interval; //** c-clockwise *
+        Real y_coordinate = -1.0 * amplitude * std::sin(2.0 * M_PI * x_coordinate);
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
+    water_block_shape.push_back(Vecd(DL_in, 0.0));//** end point *
+
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance,  0.0));
     return water_block_shape;
-    for (int k = 0; k <=0; ++k)
-    {
-       
-    }
 }
 class WaterBlock : public ComplexShape
 {
 public:
     explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        //MultiPolygon outer_boundary(createWaterBlockShape());
-        //add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
-        MultiPolygon fluid_domain(createWaterBlockShape());
-        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance, fluid_domain, "FluidDomain");
-
+        MultiPolygon computational_domain(createWaterBlockShape());
+        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance, computational_domain, "ComputationalDomain");
     }
 };
 
-std::vector<Vecd> createChannelWallShape() //outerwall
+std::vector<Vecd> createOuterWallShape() 
 {
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge, DH));
-    water_block_shape.push_back(Vecd(DL, DH));
-    water_block_shape.push_back(Vecd(DL, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
+    std::vector<Vecd> outer_wall_shape;
+    outer_wall_shape.push_back(Vecd(-DL_sponge - BW, 0.0));
+    outer_wall_shape.push_back(Vecd(-DL_sponge - BW, DH));
+    outer_wall_shape.push_back(Vecd(DL + BW, DH));
+    outer_wall_shape.push_back(Vecd(DL + BW, 0.0));
 
-    return water_block_shape;
+    //** Wavy segment *
+    outer_wall_shape.push_back(Vecd(DL + offset_distance - DL_out, 0.0)); //** start point *
+    Real start_x = DL + offset_distance - DL_out;
+    for (int k = 1; k <= num_wavy_points; ++k)
+    {
+        Real x_coordinate = start_x - k * wavy_sampling_interval; //** c-clockwise *
+        Real y_coordinate = -1.0 * amplitude * std::sin(2.0 * M_PI * x_coordinate);
+        outer_wall_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
+    outer_wall_shape.push_back(Vecd(DL_in, 0.0));//** end point *
+
+    outer_wall_shape.push_back(Vecd(-DL_sponge - BW, 0.0));
+    return outer_wall_shape;
 }
-std::vector<Vecd> createComputationalDomainShape()// inner wall
+std::vector<Vecd> createInnerWallShape()
 {
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, DH));
-    water_block_shape.push_back(Vecd(DL + 2.0 * BW, DH));
-    water_block_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
+    std::vector<Vecd> inner_wall_shape;
+    inner_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
+    inner_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, DH));
+    inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, DH));
+    inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
 
-    return water_block_shape;
+    //** Wavy segment *
+    inner_wall_shape.push_back(Vecd(DL + offset_distance - DL_out, 0.0)); //** start point *
+    Real start_x = DL + offset_distance - DL_out;
+    for (int k = 1; k <= num_wavy_points; ++k)
+    {
+        Real x_coordinate = start_x - k * wavy_sampling_interval; //** c-clockwise *
+        Real y_coordinate = -1.0 * amplitude * std::sin(2.0 * M_PI * x_coordinate);
+        inner_wall_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
+    inner_wall_shape.push_back(Vecd(DL_in, 0.0));//** end point *
+
+    inner_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
+    return inner_wall_shape;
 }
 
 /**
@@ -133,11 +166,11 @@ class WallBoundary : public ComplexShape
 public:
     explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        MultiPolygon outer_boundary(createChannelWallShape());
-        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance + BW, outer_boundary, "OuterBoundary");
+        MultiPolygon outer_dummy_boundary(createOuterWallShape());
+        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance + BW, outer_dummy_boundary, "OuterDummyBoundary");
 
-        MultiPolygon computational_domain(createComputationalDomainShape());
-        subtract<ExtrudeShape<MultiPolygonShape>>(-offset_distance, computational_domain, "ComputationalDomain");
+        MultiPolygon inner_dummy_boundary(createInnerWallShape());
+        subtract<ExtrudeShape<MultiPolygonShape>>(-offset_distance, inner_dummy_boundary, "InnerDummyBoundary");
     }
 };
 
