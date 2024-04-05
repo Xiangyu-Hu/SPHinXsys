@@ -176,9 +176,6 @@ void EulerianIntegration1stHalfConsistency<RiemannSolverType>::interaction(size_
         Matd rho_vel_sqr_ave = rho_ave * (rho_i * vel_i * vel_i.transpose() + rho_j * vel_j * vel_j.transpose()) / (rho_i + rho_j);
         Matd p_ave = (rho_i * p_i + rho_j * p_j) / (rho_i + rho_j) * Matd::Identity();
 
-        //Matd rho_vel_sqr_ave = rho_ave * (rho_i * vel_i * vel_i.transpose() * B_[index_j] + rho_j * vel_j * vel_j.transpose() * B_[index_i]) / (rho_i + rho_j);
-        //Matd p_ave = (rho_i * p_i * B_[index_j] + rho_j * p_j * B_[index_i]) / (rho_i + rho_j) * Matd::Identity();
-
         Matd rho_dissipation = rho_ave * (2 * (rho_i * vel_i + rho_j * vel_j) / (rho_i + rho_j) * riemann_solver_.DissipativeUJump(p_jump, u_jump) * (-e_ij).transpose() + 
                                          riemann_solver_.DissipativeUJump(p_jump, u_jump) * riemann_solver_.DissipativeUJump(p_jump, u_jump) * e_ij * e_ij.transpose());
         Matd p_dissipation = riemann_solver_.DissipativePJump(u_jump) * Matd::Identity();
@@ -227,9 +224,6 @@ void EulerianIntegration1stHalfWithWallConsistency<EulerianIntegration1stHalfTyp
             Matd rho_vel_sqr_ave = rho_ave * (rho_i * vel_i * vel_i.transpose() + rho_in_wall * vel_in_wall * vel_in_wall.transpose()) / (rho_i + rho_in_wall);
             Matd p_ave = (rho_i * p_i + rho_in_wall * p_in_wall) / (rho_i + rho_in_wall) * Matd::Identity();
 
-            //Matd rho_vel_sqr_ave = rho_ave * (rho_i * vel_i * vel_i.transpose() * B_k[index_j] + rho_in_wall * vel_in_wall * vel_in_wall.transpose() * this->B_[index_i]) / (rho_i + rho_in_wall);
-            //Matd p_ave = (rho_i * p_i * B_k[index_j] + rho_in_wall * p_in_wall * this->B_[index_i]) / (rho_i + rho_in_wall) * Matd::Identity();
-
             Matd rho_dissipation = rho_ave * (2 * (rho_i * vel_i + rho_in_wall * vel_in_wall) / (rho_i + rho_in_wall) * (this->riemann_solver_.DissipativeUJump(p_jump, u_jump)) * (-e_ij).transpose() +
                                               (this->riemann_solver_.DissipativeUJump(p_jump, u_jump)) * (this->riemann_solver_.DissipativeUJump(p_jump, u_jump)) * e_ij * e_ij.transpose());
             Matd p_dissipation = this->riemann_solver_.DissipativePJump(u_jump) * Matd::Identity();
@@ -269,7 +263,6 @@ void EulerianIntegration2ndHalfConsistency<RiemannSolverType>::interaction(size_
         Real rho_ave = 2 * rho_i * rho_j / (rho_i + rho_j);
 
         Vecd rho_vel_ave = 0.5 * (rho_i * vel_i + rho_j * vel_j);
-        //Vecd rho_vel_ave = 0.5 * (rho_i * this->B_[index_j] * vel_i + rho_j * this->B_[index_i] * vel_j);
 
         Vecd rho_dissipation = rho_ave * riemann_solver_.DissipativeUJump(p_jump, u_jump) * (-e_ij);
         density_change_rate -= 2 * (rho_vel_ave + rho_dissipation).dot(e_ij) * dW_ijV_j;
@@ -315,7 +308,6 @@ void EulerianIntegration2ndHalfWithWallConsistency<EulerianIntegration2ndHalfTyp
             Real rho_ave = 2 * rho_i * rho_in_wall / (rho_i + rho_in_wall);
 
             Vecd rho_vel_ave = 0.5 * (rho_i * vel_i + rho_in_wall * vel_in_wall);
-            //Vecd rho_vel_ave = 0.5 * (rho_i * B_k[index_j] * vel_i  + rho_in_wall * this->B_[index_i] * vel_in_wall);
 
             Vecd rho_dissipation = rho_ave * this->riemann_solver_.DissipativeUJump(p_jump, u_jump) * (-e_ij);
             density_change_rate -= 2 * (rho_vel_ave + rho_dissipation).dot(e_ij) * dW_ijV_j;

@@ -162,23 +162,6 @@ using ICEIntegration2ndHalfNoRiemannWithWall = ICEIntegration2ndHalfWithWall<ICE
 using ICEIntegration2ndHalfHLLERiemannWithWall = ICEIntegration2ndHalfWithWall<ICEIntegration2ndHalfHLLERiemann>;
 
 /**
-  * @class CheckTaylorGreenVortexFlow
-  * @brief Check the numerical result of taylor green vortex and gives the error.
-  */
-class CheckTaylorGreenVortexFlow : public LocalDynamics, public FluidDataInner
-{
-public:
-    explicit CheckTaylorGreenVortexFlow(BaseInnerRelation& inner_relation);
-    virtual ~CheckTaylorGreenVortexFlow() {};
-
-    void update(size_t index_i, Real dt = 0.0);
-
-protected:
-    StdLargeVec<Vecd>& pos_, & vel_;
-    StdLargeVec<Real> velocity_error_norm_;
-};
-
-/**
  * @class SmearedSurfaceIndication
  * @brief Indication of the particles which are within cut-off radius of surface particles.
  */

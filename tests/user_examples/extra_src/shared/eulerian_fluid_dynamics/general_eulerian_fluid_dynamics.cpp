@@ -57,20 +57,6 @@ DissipationState HLLERiemannSolver::getDissipationState(const FluidState &state_
     return DissipationState(momentum_dissipation, density_dissipation);
 };
 //=================================================================================================//
-CheckTaylorGreenVortexFlow::CheckTaylorGreenVortexFlow(BaseInnerRelation& inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-    pos_(particles_->pos_), vel_(particles_->vel_)
-{
-    particles_->registerVariable(velocity_error_norm_, "VELOCITYERRORNORM");
-    particles_->addVariableToWrite<Real>("VELOCITYERRORNORM");
-}
-//=================================================================================================//
-void CheckTaylorGreenVortexFlow::update(size_t index_i, Real dt)
-{
-    velocity_error_norm_[index_i] = (Vec2d((-exp(-8 * Pi * Pi * dt / 100) * cos(2 * Pi * pos_[index_i][0]) * sin(2 * Pi * pos_[index_i][1])),
-        (exp(-8 * Pi * Pi * dt / 100) * sin(2 * Pi * pos_[index_i][0]) * cos(2 * Pi * pos_[index_i][1]))) - vel_[index_i]).norm();
-}
-//=================================================================================================//
 SmearedSurfaceIndication::SmearedSurfaceIndication(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       indicator_(*particles_->getVariableByName<int>("Indicator")),

@@ -10,12 +10,12 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 50.0;                        /**< Channel length. */
-Real DH = 30.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 5.0;      /**< Initial reference particle spacing. */
+Real DL = 80.0;                        /**< Channel length. */
+Real DH = 80.0;                        /**< Channel height. */
+Real resolution_ref = 1.0 / 20.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
-Vec2d cylinder_center(15, DH / 2.0);  /**< Location of the cylinder center. */
+Vec2d cylinder_center(25, DH / 2.0);   /**< Location of the cylinder center. */
 Real cylinder_radius = 1.0;            /**< Radius of the cylinder. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -93,6 +93,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    water_block.defineAdaptationRatios(0.9, 1.0);
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -101,7 +102,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("Indicator");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-    cylinder.defineAdaptationRatios(1.15, 2.0);
+    cylinder.defineAdaptationRatios(0.8, 2.0);
     cylinder.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -129,44 +130,68 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-        ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
         InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_inner(cylinder_inner);
         InteractionWithUpdate<KernelCorrectionMatrixComplexWithLevelSet> kernel_correction_complex(water_block_complex, "OuterBoundary");
-        relax_dynamics::RelaxationStepInnerImplicit relaxation_step_inner(cylinder_inner, true);
+        relax_dynamics::RelaxationStepInnerImplicit<CorrectionMatrixRelaxation> relaxation_step_inner(cylinder_inner, true);
         relax_dynamics::RelaxationStepComplexImplicit<CorrectionMatrixRelaxation> relaxation_step_complex(water_block_complex, "OuterBoundary", true);
         SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_block_inner);
-        SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_cylinder_kietic_energy(cylinder_inner);
+        SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_cylinder_kinetic_energy(cylinder_inner);
         ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_block, "ParticleKineticEnergy");
         ReduceDynamics<Average<QuantitySummation<Real>>> calculate_cylinder_average_kinetic_energy(cylinder, "ParticleKineticEnergy");
         ReduceDynamics<QuantityMaximum<Real>> calculate_water_block_maximum_kinetic_energy(water_block, "ParticleKineticEnergy");
         ReduceDynamics<QuantityMaximum<Real>> calculate_cylinder_maximum_kinetic_energy(cylinder, "ParticleKineticEnergy");
+        cylinder.addBodyStateForRecording<Matd>("KernelCorrectionMatrix");
+        BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+        ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
         random_inserted_body_particles.exec(0.25);
         random_water_body_particles.exec(0.25);
+        sph_system.initializeSystemCellLinkedLists();
+        sph_system.initializeSystemConfigurations();
         relaxation_step_inner.SurfaceBounding().exec();
         relaxation_step_complex.SurfaceBounding().exec();
         write_real_body_states.writeToFile(0);
 
-        Real water_block_kinetic_energy = 100.0;
-        Real cylinder_kinetic_energy = 100.0;
+        Real water_block_average_energy = 100.0;
+        Real water_block_maximum_energy = 100.0;
+        Real cylinder_average_energy = 100.0;
+        Real cylinder_maximum_energy = 100.0;
+        Real last_water_block_maximum_energy = 100.0;
+        Real dt = 1;
 
         int ite_p = 0;
-        while (water_block_kinetic_energy > 0.05 || cylinder_kinetic_energy > 0.05)
+        while (water_block_average_energy > 0.01 || cylinder_average_energy > 0.01)
         {
             kernel_correction_inner.exec();
             relaxation_step_inner.exec();
             kernel_correction_complex.exec();
-            relaxation_step_complex.exec();
+            relaxation_step_complex.exec(dt);
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
-                update_cylinder_kietic_energy.exec();
-                water_block_kinetic_energy = calculate_water_block_maximum_kinetic_energy.exec();
-                cylinder_kinetic_energy = calculate_cylinder_maximum_kinetic_energy.exec();
+                update_water_block_kinetic_energy.exec();
+                update_cylinder_kinetic_energy.exec();
+                water_block_maximum_energy = calculate_water_block_maximum_kinetic_energy.exec();
+                water_block_average_energy = calculate_water_block_average_kinetic_energy.exec();
+                cylinder_maximum_energy = calculate_cylinder_maximum_kinetic_energy.exec();
+                cylinder_average_energy = calculate_cylinder_average_kinetic_energy.exec();
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+                std::cout << "WaterBody: " << " Maximum: " << water_block_maximum_energy << " Average: " << water_block_average_energy << std::endl;
+                std::cout << "Cylinder: " <<  " Maximum: " << cylinder_maximum_energy << " Average: " << cylinder_average_energy << std::endl;
+
+                if (water_block_maximum_energy > last_water_block_maximum_energy)
+                {
+                    dt = 1.0 * dt;
+                }
+                else if (water_block_maximum_energy < last_water_block_maximum_energy)
+                {
+                    dt = 1.0 * dt;
+                }
+                last_water_block_maximum_energy = water_block_maximum_energy;
+                std::cout << "dt ratio is " << dt << std::endl;
+
                 write_real_body_states.writeToFile(ite_p);
             }
         }
@@ -188,11 +213,10 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------    
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfNoRiemannWithWall> pressure_relaxation(water_block_complex_correction);
-    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfNoRiemannWithWall> density_relaxation(water_block_complex_correction);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration1stHalfHLLERiemannWithWall> pressure_relaxation(water_block_complex_correction);
+    InteractionWithUpdate<fluid_dynamics::ICEIntegration2ndHalfHLLERiemannWithWall> density_relaxation(water_block_complex_correction);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix_correction(water_block_complex_correction);
     InteractionWithUpdate<KernelCorrectionMatrixInnerWithLevelSet> kernel_correction_matrix_cylinder(cylinder_inner);
-
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);

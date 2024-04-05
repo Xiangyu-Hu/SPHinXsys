@@ -2,7 +2,7 @@
  * @file 	Lid_driven_cavity.cpp
  * @brief 	This is the one of the basic test cases for SPH Eulerian formulation.
  * @details 2D eulerian_Lid_driven_cavity example.
- * @author 	Zhentong Wang
+ * @author 	Zhentong Wang, Bo Zhang
  */
 #include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for fluid.
 #include "sphinxsys.h" //	SPHinXsys Library.
@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 1.0;					   /**< box length. */
 Real DH = 1.0;					   /**< box height. */
-Real resolution_ref = 1.0 / 200.0; /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 400.0; /**< Global reference resolution. */
 Real BW = resolution_ref * 6;	   /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -22,7 +22,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Real rho0_f = 1.0;					/**< Reference density of fluid. */
 Real U_f = 1.0;						/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;				/**< Reference sound speed. */
-Real Re = 1000.0;						/**< Reynolds number. */
+Real Re = 10000.0;						/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
@@ -158,7 +158,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_body.defineComponentLevelSetShape("InnerWaterBlock")->writeLevelSet(io_environment);
-	water_body.defineAdaptationRatios(0.8, 1.0);
+	water_body.defineAdaptationRatios(0.945, 1.0);
 	water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_body.generateParticles<ParticleGeneratorReload>(io_environment, water_body.getName())
@@ -168,7 +168,7 @@ int main(int ac, char *av[])
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-	water_body.defineAdaptationRatios(0.8, 1.0);
+	water_body.defineAdaptationRatios(0.945, 1.0);
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
@@ -209,7 +209,6 @@ int main(int ac, char *av[])
 
 		/* Relaxation method: including based on the 0th and 1st order consistency. */
 		InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_complex(water_block_complex);
-		//relax_dynamics::RelaxationStepComplexImplicit relaxation_step_complex(water_block_complex, "InnerWaterBlock");
 		relax_dynamics::RelaxationStepComplexImplicit<CorrectionMatrixRelaxation> relaxation_step_complex(water_block_complex, "InnerWaterBlock");
 		SimpleDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_water_block_kinetic_energy(water_body_inner);
 		ReduceDynamics<Average<QuantitySummation<Real>>> calculate_water_block_average_kinetic_energy(water_body, "ParticleKineticEnergy");
@@ -233,21 +232,19 @@ int main(int ac, char *av[])
 		TickCount t1 = TickCount::now();
 		int ite = 0; //iteration step for the total relaxation step.
 		GlobalStaticVariables::physical_time_ = ite;
-		while (water_block_maximum_energy > 1e-2)
+		while (water_block_average_energy > 1e-4)
 		{
 			kernel_correction_complex.exec();
 			relaxation_step_complex.exec(dt);
 
 			ite += 1;
-			if (ite % 500 == 0)
+			if (ite % 1000 == 0)
 			{
 				update_water_block_kinetic_energy.exec();
 				water_block_average_energy = calculate_water_block_average_kinetic_energy.exec();
 				water_block_maximum_energy = calculate_water_block_maximum_kinetic_energy.exec();
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
-				std::cout << "Body: "
-					      << " Maximum: " << water_block_maximum_energy
-					      << " Average: " << water_block_average_energy << std::endl;
+				std::cout << "Body: " << " Maximum: " << water_block_maximum_energy << " Average: " << water_block_average_energy << std::endl;
 
 				if (water_block_maximum_energy > last_water_block_maximum_energy)
 				{
@@ -263,10 +260,7 @@ int main(int ac, char *av[])
 			}
 		}
 
-		std::cout << "Residual: "
-			      << " maximum: " << calculate_water_block_maximum_kinetic_energy.exec()
-			      << " average: " << calculate_water_block_average_kinetic_energy.exec() << std::endl;
-
+		std::cout << "Residual: " << " maximum: " << calculate_water_block_maximum_kinetic_energy.exec() << " average: " << calculate_water_block_average_kinetic_energy.exec() << std::endl;
 		std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
 
 		ite++;
@@ -324,7 +318,7 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 30.0; /**< End time. */
+	Real End_Time = 200.0; /**< End time. */
 	Real D_Time = 1.0;	 /**< Time stamps for output of body states. */
 	/** statistics for computing CPU time. */
 	TickCount t1 = TickCount::now();

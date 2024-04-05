@@ -91,8 +91,8 @@ void ICEIntegration1stHalfWithWall<ICEIntegration1stHalfType>::interaction(size_
             Real s_l = wave_speeds[0];
             Real s_r = wave_speeds[1];
 
-            Matd flux_l = (this->p_[index_i] * Matd::Identity()) * this->B_[index_i];
-            Matd flux_r = (p_in_wall * Matd::Identity()) * Matd::Identity();
+            Matd flux_l = (this->p_[index_i] * Matd::Identity()) * Matd::Identity();
+            Matd flux_r = (p_in_wall * Matd::Identity()) * this->B_[index_i];
             
             if (s_l < 0 && s_r > 0)
             {
@@ -193,8 +193,8 @@ void ICEIntegration2ndHalfWithWall<ICEIntegration2ndHalfType>::interaction(size_
             Real s_l = wave_speeds[0];
             Real s_r = wave_speeds[1];
             
-            Vecd flux_l = this->rho_[index_i] * this->vel_[index_i] * e_ij.transpose() * this->B_[index_i] * e_ij;
-            Vecd flux_r = rho_in_wall * vel_in_wall * e_ij.transpose() * Matd::Identity() * e_ij;
+            Vecd flux_l = this->rho_[index_i] * this->vel_[index_i] * e_ij.transpose() * Matd::Identity() * e_ij;
+            Vecd flux_r = rho_in_wall * vel_in_wall * e_ij.transpose() * this->B_[index_i] * e_ij;
 
             if (s_l < 0 && s_r > 0)
             {

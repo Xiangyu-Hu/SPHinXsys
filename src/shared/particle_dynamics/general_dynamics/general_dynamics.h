@@ -303,6 +303,7 @@ class QuantityMaximum : public LocalDynamicsReduce<VariableType, ReduceMax>,
   protected:
     StdLargeVec<VariableType> &variable_;
 
+
   public:
     explicit QuantityMaximum(SPHBody &sph_body, const std::string &variable_name)
         : LocalDynamicsReduce<VariableType, ReduceMax>(sph_body, ZeroData<VariableType>::value),
