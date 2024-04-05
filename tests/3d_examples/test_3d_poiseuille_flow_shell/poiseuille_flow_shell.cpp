@@ -4,22 +4,19 @@
  * @details This is the one of the basic test cases for validating fluid-rigid shell interaction
  * @author  Weiyi Kong
  */
-
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
 using namespace SPH;
-
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 const Real scale = 0.001;
 const Real diameter = 6.35 * scale;
 const Real fluid_radius = 0.5 * diameter;
 const Real full_length = 10 * fluid_radius;
-
-/**
- * @brief Material properties of the fluid.
- */
+//----------------------------------------------------------------------
+//	Material parameters.
+//----------------------------------------------------------------------
 const Real rho0_f = 1050.0; /**< Reference density of fluid. */
 const Real mu_f = 3.6e-3;   /**< Viscosity. */
 const Real Re = 100;
@@ -27,7 +24,9 @@ const Real Re = 100;
 const Real U_f = Re * mu_f / rho0_f / diameter;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
-
+//----------------------------------------------------------------------
+//	User defined particle generators.
+//----------------------------------------------------------------------
 class ObserverAxialGenerator : public ParticleGenerator<Observer>
 {
   public:
@@ -67,9 +66,6 @@ class ObserverRadialGenerator : public ParticleGenerator<Observer>
     }
 };
 
-/**
- * @brief Define wall shape
- */
 class ShellBoundaryGenerator : public ParticleGenerator<Surface>
 {
     Real resolution_shell_;
@@ -105,9 +101,9 @@ class ShellBoundaryGenerator : public ParticleGenerator<Surface>
     }
 };
 
-/**
- * @brief Inflow velocity
- */
+//----------------------------------------------------------------------
+//	Inflow velocity
+//----------------------------------------------------------------------
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
@@ -131,20 +127,23 @@ struct InflowVelocity
     }
 };
 
+//----------------------------------------------------------------------
+//	Test case function
+//----------------------------------------------------------------------
 void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, const Real shell_thickness)
 {
+    //----------------------------------------------------------------------
+    //	Geometry parameters for shell.
+    //----------------------------------------------------------------------
     const int number_of_particles = 10;
     const Real inflow_length = resolution_ref * 10.0; // Inflow region
     const Real wall_thickness = resolution_ref * 4.0;
     const int SimTK_resolution = 20;
     const Vec3d translation_fluid(0., full_length * 0.5, 0.);
-    /**
-     * @brief Geometry parameters for shell.
-     */
 
-    /**
-     * @brief Geometry parameters for boundary condition.
-     */
+    //----------------------------------------------------------------------
+    //	Geometry parameters for boundary condition.
+    //----------------------------------------------------------------------
     const Vec3d emitter_halfsize(fluid_radius, resolution_ref * 2, fluid_radius);
     const Vec3d emitter_translation(0., resolution_ref * 2, 0.);
     const Vec3d emitter_buffer_halfsize(fluid_radius, inflow_length * 0.5, fluid_radius);
@@ -152,49 +151,52 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     const Vec3d disposer_halfsize(fluid_radius * 1.1, resolution_ref * 2, fluid_radius * 1.1);
     const Vec3d disposer_translation(0., full_length - disposer_halfsize[1], 0.);
 
-    /** Domain bounds of the system. */
+    //----------------------------------------------------------------------
+    //	Domain bounds of the system.
+    //----------------------------------------------------------------------
     const BoundingBox system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter) -
                                                Vec3d(shell_thickness, wall_thickness,
                                                      shell_thickness),
                                            Vec3d(0.5 * diameter, full_length, 0.5 * diameter) +
                                                Vec3d(shell_thickness, wall_thickness,
                                                      shell_thickness));
-    /**
-     * @brief Define water shape
-     */
+    //----------------------------------------------------------------------
+    //  Define water shape
+    //----------------------------------------------------------------------
     auto water_block_shape = makeShared<ComplexShape>("WaterBody");
     water_block_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
                                                       full_length * 0.5, SimTK_resolution,
                                                       translation_fluid);
 
-    /**
-     * @brief Build up -- a SPHSystem --
-     */
+    //----------------------------------------------------------------------
+    //  Build up -- a SPHSystem --
+    //----------------------------------------------------------------------
     SPHSystem system(system_domain_bounds, resolution_ref);
     IOEnvironment io_environment(system);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
-    /**
-     * @brief Material property, particles and body creation of fluid.
-     */
+
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     FluidBody water_block(system, water_block_shape);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
 
-    /**
-     * @brief 	Particle and body creation of wall boundary.
-     */
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1, 1e3, 0.45);
     ShellBoundaryGenerator shell_boundary_particle_generator(shell_boundary, resolution_shell, wall_thickness, shell_thickness);
     shell_boundary.generateParticles(shell_boundary_particle_generator);
-    /** topology */
+
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation shell_boundary_inner(shell_boundary);
     ShellInnerRelationWithContactKernel wall_curvature_inner(shell_boundary, water_block);
-    // contact
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
     ContactRelationToShell water_block_contact(water_block, {&shell_boundary}, {false});
@@ -203,9 +205,11 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
-    /**
-     * @brief 	Algorithms of fluid dynamics.
-     */
+
+    //----------------------------------------------------------------------
+    //	Define the numerical methods used in the simulation.
+    //	Note that there may be data dependence on the sequence of constructions.
+    //----------------------------------------------------------------------
     /** time-space method to detect surface particles. (Important for
      * DensitySummationFreeSurfaceComplex work correctly.)*/
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
@@ -231,12 +235,12 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
-    /**
-     * @brief 	Boundary conditions. Inflow & Outflow in Y-direction
-     */
+
+    //----------------------------------------------------------------------
+    //	Boundary conditions. Inflow & Outflow in Y-direction
+    //----------------------------------------------------------------------
     BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, yAxis);
-    /** Emitter buffer inflow condition. */
     BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(disposer_translation)), disposer_halfsize));
@@ -245,18 +249,16 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(wall_curvature_inner);
-    /**
-     * @brief Output.
-     */
+
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Pressure");
     shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
-    /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(system.real_bodies_);
-    /**
-     * @brief OBSERVER.
-     */
+
     ObserverBody observer_axial(system, "fluid_observer_axial");
     ObserverAxialGenerator observer_axial_particle_generator(observer_axial, full_length);
     observer_axial.generateParticles(observer_axial_particle_generator);
@@ -266,42 +268,46 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
 
     ContactRelation observer_contact_axial(observer_axial, {&water_block});
     ContactRelation observer_contact_radial(observer_radial, {&water_block});
-    ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial(
-        "Velocity", observer_contact_axial);
-    ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial(
-        "Velocity", observer_contact_radial);
-    /**
-     * @brief Setup geometry and initial conditions.
-     */
+    ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", observer_contact_axial);
+    ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial("Velocity", observer_contact_radial);
+
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
-
-    /** initial curvature*/
     wall_corrected_configuration.exec();
     shell_curvature.exec();
     water_block_complex.updateConfiguration();
 
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile(0);
-
-    /**
-     * @brief 	Basic parameters.
-     */
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 2.0;               /**< End time. */
     Real Output_Time = end_time / 100; /**< Time stamps for output of body states. */
     Real dt = 0.0;                     /**< Default acoustic time step sizes. */
-    /** statistics for computing CPU time. */
+
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;
     TimeInterval interval_computing_pressure_relaxation;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
-    /**
-     * @brief 	Main loop starts here.
-     */
+
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile(0);
+
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -340,13 +346,13 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
-            /** Update cell linked list and configuration. */
-            time_instance = TickCount::now();
 
+            time_instance = TickCount::now();
             /** Water block configuration and periodic condition. */
             emitter_inflow_injection.exec();
             disposer_outflow_deletion.exec();
 
+            /** Update cell linked list and configuration. */
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
@@ -378,9 +384,9 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
               << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    /**
-     * @brief 	Gtest strat from here.
-     */
+    //----------------------------------------------------------------------
+    //	Gtest starts from here.
+    //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
     std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
     {
@@ -390,7 +396,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
                                     (diameter * 0.5) / (diameter * 0.5)),
                      0.0);
     };
-    /* Compare all simulation to the anayltical solution. */
+    /* Compare all simulation to the analytical solution. */
     // Axial direction.
     for (size_t i = 0; i < observer_axial.getBaseParticles().pos_.size(); i++)
     {
@@ -424,7 +430,6 @@ TEST(DISABLED_poiseuille_flow, 20_particles)
     const Real shell_thickness = 0.5 * resolution_shell;
     poiseuille_flow(resolution_ref, resolution_shell, shell_thickness);
 }
-
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
