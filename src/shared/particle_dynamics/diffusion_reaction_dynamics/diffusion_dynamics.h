@@ -63,6 +63,8 @@ class DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticl
   protected:
     typedef typename ParticlesType::DiffusionReactionMaterial Material;
     Material &material_;
+
+    StdLargeVec<Real> &Vol_;
     StdVec<BaseDiffusion *> &all_diffusions_;
     StdVec<StdLargeVec<Real> *> &diffusion_species_;
     StdVec<StdLargeVec<Real> *> &gradient_species_;
@@ -168,6 +170,8 @@ template <typename... ContactParameters>
 class DiffusionRelaxation<Dirichlet<ContactParameters...>>
     : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
 {
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
+
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
     void getDiffusionChangeRateDirichlet(
@@ -188,7 +192,7 @@ class DiffusionRelaxation<Neumann<ContactParameters...>>
     : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
 {
     StdLargeVec<Vecd> &n_;
-    StdVec<StdLargeVec<Real> *> contact_heat_flux_;
+    StdVec<StdLargeVec<Real> *> contact_heat_flux_, contact_Vol_;
     StdVec<StdLargeVec<Vecd> *> contact_n_;
 
   protected:
@@ -212,6 +216,7 @@ class DiffusionRelaxation<Robin<ContactParameters...>>
     StdVec<StdLargeVec<Real> *> contact_convection_;
     StdVec<Real *> contact_T_infinity_;
     StdVec<StdLargeVec<Vecd> *> contact_n_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 
   protected:
     void getDiffusionChangeRateRobin(

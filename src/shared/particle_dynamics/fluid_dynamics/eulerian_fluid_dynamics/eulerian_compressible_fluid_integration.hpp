@@ -24,7 +24,7 @@ void EulerianCompressibleIntegration1stHalf<RiemannSolverType>::interaction(size
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
         Real energy_per_volume_j = E_[index_j] / Vol_[index_j];
@@ -61,7 +61,7 @@ void EulerianCompressibleIntegration2ndHalf<RiemannSolverType>::interaction(size
     {
         size_t index_j = inner_neighborhood.j_[n];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
 
         Real energy_per_volume_j = E_[index_j] / Vol_[index_j];
         CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], energy_per_volume_j);
