@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Vecd>("Position");
     water_block.addBodyStateForRecording<Real>("Pressure");
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
@@ -175,8 +175,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
-    TransformShape<GeometricShapeBox> wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
-    BodyRegionByParticle wave_maker(wall_boundary, wave_maker_shape);
+    TransformShape<GeometricShapeBox> transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
+    BodyRegionByParticle wave_maker(wall_boundary, transform_wave_maker_shape);
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
 
     //----------------------------------------------------------------------
