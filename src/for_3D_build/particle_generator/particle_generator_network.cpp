@@ -23,7 +23,7 @@ ParticleGenerator<Network>::
     Vecd end_direction = displacement / (displacement.norm() + TinyReal);
     /** Add initial particle to the first branch of the tree. */
     growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-    cell_linked_list_.InsertListDataEntry(0, pos_[0], segment_length_);
+    cell_linked_list_.InsertListDataEntry(0, pos_[0]);
 }
 //=================================================================================================//
 void ParticleGenerator<Network>::
@@ -157,7 +157,7 @@ bool ParticleGenerator<Network>::
 
         for (const size_t &particle_idx : new_branch->inner_particles_)
         {
-            cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx], segment_length_);
+            cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx]);
         }
     }
 

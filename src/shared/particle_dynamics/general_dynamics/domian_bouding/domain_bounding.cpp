@@ -27,8 +27,7 @@ void PeriodicConditionUsingCellLinkedList::
             Vecd translated_position = particle_position - periodic_translation_;
             /** insert ghost particle to cell linked list */
             mutex_cell_list_entry_.lock();
-            cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
-                                                  translated_position, std::get<2>(cell_list_data[num]));
+            cell_linked_list_.InsertListDataEntry(cell_list_data[num].first, translated_position);
             mutex_cell_list_entry_.unlock();
         }
     }
@@ -46,8 +45,7 @@ void PeriodicConditionUsingCellLinkedList::
             Vecd translated_position = particle_position + periodic_translation_;
             /** insert ghost particle to cell linked list */
             mutex_cell_list_entry_.lock();
-            cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
-                                                  translated_position, std::get<2>(cell_list_data[num]));
+            cell_linked_list_.InsertListDataEntry(cell_list_data[num].first, translated_position);
             mutex_cell_list_entry_.unlock();
         }
     }

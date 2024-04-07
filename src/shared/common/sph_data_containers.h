@@ -58,7 +58,7 @@ using ConcurrentIndexVector = ConcurrentVec<size_t>;
 using ParticlesBound = std::pair<size_t, size_t>;
 
 /** List data pair: first for indexes, second for particle position. */
-using ListData = std::tuple<size_t, Vecd, Real>;
+using ListData = std::pair<size_t, Vecd>;
 using ListDataVector = StdLargeVec<ListData>;
 using DataListsInCells = StdLargeVec<ListDataVector *>;
 using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
