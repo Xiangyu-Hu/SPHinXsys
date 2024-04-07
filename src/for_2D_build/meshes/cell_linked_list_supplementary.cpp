@@ -37,7 +37,6 @@ void CellLinkedList::clearCellLists()
 void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
     StdLargeVec<Vecd> &pos = base_particles.pos_;
-    StdLargeVec<Real> &Vol = base_particles.Vol_;
     mesh_parallel_for(
         MeshRange(Array2i::Zero(), all_cells_),
         [&](int i, int j)
@@ -47,7 +46,7 @@ void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
             for (size_t s = 0; s != cell_list.size(); ++s)
             {
                 size_t index = cell_list[s];
-                cell_data_lists_[i][j].emplace_back(std::make_tuple(index, pos[index], Vol[index]));
+                cell_data_lists_[i][j].emplace_back(std::make_pair(index, pos[index]));
             }
         });
 }
@@ -75,18 +74,17 @@ void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &par
     cell_index_lists_[cellpos[0]][cellpos[1]].emplace_back(particle_index);
 }
 //=================================================================================================//
-void CellLinkedList ::InsertListDataEntry(
-    size_t particle_index, const Vecd &particle_position, Real volumetric)
+void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
 {
     Array2i cellpos = CellIndexFromPosition(particle_position);
-    cell_data_lists_[cellpos[0]][cellpos[1]].emplace_back(
-        std::make_tuple(particle_index, particle_position, volumetric));
+    cell_data_lists_[cellpos[0]][cellpos[1]]
+        .emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
 ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 {
     Real min_distance_sqr = MaxReal;
-    ListData nearest_entry(MaxSize_t, MaxReal * Vecd::Ones(), MaxReal);
+    ListData nearest_entry(MaxSize_t, MaxReal * Vecd::Ones());
 
     Array2i cell = CellIndexFromPosition(position);
     mesh_for_each(

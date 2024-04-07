@@ -100,18 +100,16 @@ size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelCellLinkedList::
-    insertParticleIndex(size_t particle_index, const Vecd &particle_position)
+void MultilevelCellLinkedList::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::
-    InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
+void MultilevelCellLinkedList::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position, volumetric);
+    mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position);
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)

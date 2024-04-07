@@ -21,12 +21,11 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
     neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
     /** Build configuration. */
     const StdLargeVec<Vecd> &pos = base_particles_->pos_;
-    const StdLargeVec<Real> &Vol = base_particles_->Vol_;
     NeighborBuilderInner neighbor_relation_inner(*this);
     for (size_t n = 0; n != neighboring_ids.size(); ++n)
     {
         size_t index_j = neighboring_ids[n];
-        ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+        ListData list_data_j = std::make_pair(index_j, pos[index_j]);
         Neighborhood &neighborhood = particle_configuration[particle_id];
         neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
     }
@@ -93,7 +92,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
         for (size_t n = 0; n != neighboring_ids.size(); ++n)
         {
             size_t index_j = neighboring_ids[n];
-            ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+            ListData list_data_j = std::make_pair(index_j, pos[index_j]);
             Neighborhood &neighborhood = particle_configuration[particle_id];
             neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
         }
@@ -165,7 +164,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
                 for (size_t n = 0; n != neighboring_ids.size(); ++n)
                 {
                     size_t index_j = neighboring_ids[n];
-                    ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+                    ListData list_data_j = std::make_pair(index_j, pos[index_j]);
                     Neighborhood &neighborhood = particle_configuration[particle_id];
                     neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
                 }
@@ -203,7 +202,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
                 for (size_t n = 0; n != neighboring_ids.size(); ++n)
                 {
                     size_t index_j = neighboring_ids[n];
-                    ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+                    ListData list_data_j = std::make_pair(index_j, pos[index_j]);
                     Neighborhood &neighborhood = particle_configuration[particle_id];
                     neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
                 }
