@@ -71,7 +71,7 @@ typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<GlobalVariable> GlobalVariables;
+typedef DataContainerAddressAssemble<SingleVariable> SingleVariables;
 
 /** Generalized mesh data type */
 template <typename DataType>

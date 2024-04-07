@@ -32,6 +32,7 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
+#include "particle_functors.h"
 #include "sph_data_containers.h"
 
 namespace SPH
@@ -49,177 +50,7 @@ class Boundary;        /**< Interaction with boundary */
 class Wall;            /**< Interaction with wall boundary */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
-//----------------------------------------------------------------------
-// Particle group scope functors
-//----------------------------------------------------------------------
-class AllParticles
-{
-  public:
-    explicit AllParticles(BaseParticles *base_particles){};
-    bool operator()(size_t index_i)
-    {
-        return true;
-    };
-};
-
-template <int INDICATOR>
-class IndicatedParticles
-{
-    StdLargeVec<int> &indicator_;
-
-  public:
-    explicit IndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
-    bool operator()(size_t index_i)
-    {
-        return indicator_[index_i] == INDICATOR;
-    };
-};
-
-using BulkParticles = IndicatedParticles<0>;
-
-template <int INDICATOR>
-class NotIndicatedParticles
-{
-    StdLargeVec<int> &indicator_;
-
-  public:
-    explicit NotIndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
-    bool operator()(size_t index_i)
-    {
-        return indicator_[index_i] != INDICATOR;
-    };
-};
-
-template <typename DataType>
-class PairAverageInner
-{
-    StdLargeVec<DataType> &variable_;
-
-  public:
-    explicit PairAverageInner(StdLargeVec<DataType> &variable)
-        : variable_(variable){};
-    DataType operator()(size_t index_i, size_t index_j)
-    {
-        return 0.5 * (variable_[index_i] + variable_[index_j]);
-    };
-};
-
-template <typename DataType>
-class PairAverageContact
-{
-    StdLargeVec<DataType> &inner_variable_;
-    StdLargeVec<DataType> &contact_variable_;
-
-  public:
-    PairAverageContact(StdLargeVec<DataType> &inner_variable,
-                       StdLargeVec<DataType> &contact_variable)
-        : inner_variable_(inner_variable), contact_variable_(contact_variable){};
-    DataType operator()(size_t index_i, size_t index_j)
-    {
-        return 0.5 * (inner_variable_[index_i] + contact_variable_[index_j]);
-    };
-};
-
-class NoKernelCorrection
-{
-  public:
-    NoKernelCorrection(BaseParticles *particles){};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
-
-class KernelCorrection
-{
-  public:
-    KernelCorrection(BaseParticles *particles)
-        : B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
-
-    Matd operator()(size_t index_i)
-    {
-        return B_[index_i];
-    };
-
-  protected:
-    StdLargeVec<Matd> &B_;
-};
-
-class SingleResolution
-{
-  public:
-    SingleResolution(BaseParticles *particles){};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
-
-class AdaptiveResolution
-{
-  public:
-    AdaptiveResolution(BaseParticles *particles)
-        : h_ratio_(*particles->getVariableByName<Real>("SmoothingLengthRatio")){};
-
-    Real operator()(size_t index_i)
-    {
-        return h_ratio_[index_i];
-    };
-
-  protected:
-    StdLargeVec<Real> &h_ratio_;
-};
-//----------------------------------------------------------------------
-// Particle reduce functors
-//----------------------------------------------------------------------
-template <class ReturnType>
-struct ReduceSum
-{
-    ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
-};
-
-struct ReduceMax
-{
-    Real operator()(Real x, Real y) const { return SMAX(x, y); };
-};
-
-struct ReduceMin
-{
-    Real operator()(Real x, Real y) const { return SMIN(x, y); };
-};
-
-struct ReduceOR
-{
-    bool operator()(bool x, bool y) const { return x || y; };
-};
-
-struct ReduceAND
-{
-    bool operator()(bool x, bool y) const { return x && y; };
-};
-
-struct ReduceLowerBound
-{
-    Vecd operator()(const Vecd &x, const Vecd &y) const
-    {
-        Vecd lower_bound;
-        for (int i = 0; i < lower_bound.size(); ++i)
-            lower_bound[i] = SMIN(x[i], y[i]);
-        return lower_bound;
-    };
-};
-struct ReduceUpperBound
-{
-    Vecd operator()(const Vecd &x, const Vecd &y) const
-    {
-        Vecd upper_bound;
-        for (int i = 0; i < upper_bound.size(); ++i)
-            upper_bound[i] = SMAX(x[i], y[i]);
-        return upper_bound;
-    };
-};
+class Dynamic;         /**< A dynamic interaction */
 
 /**
  * @class BaseLocalDynamics
@@ -230,14 +61,15 @@ class BaseLocalDynamics
 {
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier), sph_body_(identifier.getSPHBody()){};
+        : identifier_(identifier){};
     virtual ~BaseLocalDynamics(){};
     SPHBody &getSPHBody() { return sph_body_; };
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
   protected:
     DynamicsIdentifier &identifier_;
-    SPHBody &sph_body_;
+    SPHBody &sph_body_ = identifier_.getSPHBody();
+    BaseParticles &base_particles_ = sph_body_.getBaseParticles();
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 

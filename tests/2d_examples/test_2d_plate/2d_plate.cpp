@@ -90,7 +90,7 @@ int main(int ac, char *av[])
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
-    plate_body.addBodyStateForRecording<Vecd>("PriorForce");
+    plate_body.addBodyStateForRecording<Vecd>("ForcePrior");
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);

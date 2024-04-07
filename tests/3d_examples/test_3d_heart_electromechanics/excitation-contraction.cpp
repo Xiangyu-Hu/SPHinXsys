@@ -91,8 +91,8 @@ class DiffusionBCs
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
-        Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd face_norm = displ / (displ.norm() + 1.0e-15);
 
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
@@ -142,8 +142,8 @@ class ComputeFiberAndSheetDirections
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from Levelset field. */
-        Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
-        Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd face_norm = displ / (displ.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)
         {
@@ -284,10 +284,9 @@ int main(int ac, char *av[])
         herat_model.generateParticles<ParticleGeneratorLattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
-        /** Random reset the relax solid particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
-        /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
+        RelaxationStepInner relaxation_step_inner(herat_model_inner);
         /** Time step for diffusion. */
         GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
         /** Diffusion process for diffusion body. */

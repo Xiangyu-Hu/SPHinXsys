@@ -32,6 +32,7 @@
 #define SURFACE_TENSION_H
 
 #include "base_fluid_dynamics.h"
+#include "force_prior.h"
 
 namespace SPH
 {
@@ -53,23 +54,33 @@ class SurfaceTensionStress : public LocalDynamics, public FluidContactData
 template <typename... T>
 class SurfaceStressForce;
 
+template <class DataDelegationType>
+class SurfaceStressForce<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class BaseRelationType>
+    explicit SurfaceStressForce(BaseRelationType &base_relation);
+    virtual ~SurfaceStressForce(){};
+
+  protected:
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Vecd> &color_gradient_, &surface_tension_force_;
+    StdLargeVec<Matd> &surface_tension_stress_;
+};
+
 template <>
-class SurfaceStressForce<Inner<>> : public LocalDynamics, public FluidDataInner
+class SurfaceStressForce<Inner<>>
+    : public SurfaceStressForce<FluidDataInner>, public ForcePrior
 {
   public:
     SurfaceStressForce(BaseInnerRelation &inner_relation);
     virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
 };
 
 template <>
-class SurfaceStressForce<Contact<>> : public LocalDynamics, public FluidContactData
+class SurfaceStressForce<Contact<>> : public SurfaceStressForce<FluidContactData>
 {
   public:
     explicit SurfaceStressForce(BaseContactRelation &contact_relation);
@@ -77,10 +88,6 @@ class SurfaceStressForce<Contact<>> : public LocalDynamics, public FluidContactD
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
     StdVec<StdLargeVec<Vecd> *> contact_color_gradient_;
     StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;

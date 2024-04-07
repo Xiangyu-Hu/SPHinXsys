@@ -59,10 +59,10 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     /** Initialize particle acceleration. */
-    SimpleDynamics<NormalDirectionFromShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
-    SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
+    SimpleDynamics<NormalDirectionFromSubShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
+    SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
         update_water_density_by_summation(water_inner, water_wall_contact);
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /** Output the mechanical energy of fluid body. */
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(water_block, gravity_ptr);
+        write_water_mechanical_energy(water_block, gravity);
     /** output the observed data from fluid body. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure("Pressure", fluid_observer_contact);
@@ -105,6 +105,8 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     inner_normal_direction.exec();
+    constant_gravity_to_water.exec();
+    constant_gravity_to_air.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -125,8 +127,6 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_water_mechanical_energy.writeToFile(number_of_iterations);
-    write_recorded_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -138,16 +138,13 @@ int main(int ac, char *av[])
         {
             /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
-            initialize_a_water_step.exec();
-            initialize_a_air_step.exec();
 
             Real Dt_f = get_water_advection_time_step_size.exec();
             Real Dt_a = get_air_advection_time_step_size.exec();
             Real Dt = SMIN(Dt_f, Dt_a);
 
             update_water_density_by_summation.exec();
-            //            update_air_density_by_summation.exec();
-
+            update_air_density_by_summation.exec();
             air_transport_correction.exec();
 
             interval_computing_time_step += TickCount::now() - time_instance;

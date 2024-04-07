@@ -6,8 +6,8 @@
 namespace SPH
 {
 //=================================================================================================//
-ObserverBody::ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-    : SPHBody(sph_system, shape_ptr)
+ObserverBody::ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr)
+    : SPHBody(sph_system, initial_shape_ptr)
 {
     defineParticlesAndMaterial();
     sph_system.observation_bodies_.push_back(this);

@@ -15,7 +15,7 @@ ParticleGenerator<Network>::
     : ParticleGenerator<Base>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      grad_factor_(grad_factor), sph_body_(sph_body), body_shape_(*sph_body.body_shape_),
+      grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(*sph_body.initial_shape_),
       cell_linked_list_(DynamicCast<RealBody>(this, sph_body).getCellLinkedList()),
       tree_(DynamicCast<TreeBody>(this, &sph_body))
 {
@@ -63,8 +63,8 @@ Vecd ParticleGenerator<Network>::createATentativeNewBranchPoint(Vecd init_point,
 {
     Vecd pnt_to_project = init_point + dir * segment_length_;
 
-    Real phi = body_shape_.findSignedDistance(pnt_to_project);
-    Vecd unit_normal = body_shape_.findNormalDirection(pnt_to_project);
+    Real phi = initial_shape_.findSignedDistance(pnt_to_project);
+    Vecd unit_normal = initial_shape_.findNormalDirection(pnt_to_project);
     unit_normal /= unit_normal.norm() + TinyReal;
     Vecd new_point = pnt_to_project - phi * unit_normal;
     return new_point;
@@ -109,7 +109,7 @@ bool ParticleGenerator<Network>::
     Vecd init_point = pos_[parent_elements.back()];
     Vecd init_direction = parent_branch->end_direction_;
 
-    Vecd surface_norm = body_shape_.findNormalDirection(init_point);
+    Vecd surface_norm = initial_shape_.findNormalDirection(init_point);
     surface_norm /= surface_norm.norm() + TinyReal;
     Vecd in_plane = -init_direction.cross(surface_norm);
 
@@ -129,7 +129,7 @@ bool ParticleGenerator<Network>::
 
         for (size_t i = 1; i < number_segments; i++)
         {
-            surface_norm = body_shape_.findNormalDirection(new_point);
+            surface_norm = initial_shape_.findNormalDirection(new_point);
             surface_norm /= surface_norm.norm() + TinyReal;
             /** Project grad to surface. */
             grad = getGradientFromNearestPoints(new_point, delta);

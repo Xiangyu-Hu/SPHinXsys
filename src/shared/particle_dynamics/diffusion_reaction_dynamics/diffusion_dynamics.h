@@ -272,8 +272,8 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
   protected:
     StdVec<StdLargeVec<Real>> diffusion_species_s_; /**< Intermediate state */
     SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-    Dynamics1Level<FirstStageType> rk2_1st_stage_;
-    Dynamics1Level<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+    Dynamics1Level<FirstStageType,SequencedPolicy> rk2_1st_stage_;
+    Dynamics1Level<SecondStageRK2<FirstStageType>, SequencedPolicy> rk2_2nd_stage_;
     StdVec<BaseDiffusion *> all_diffusions_;
 
   public:

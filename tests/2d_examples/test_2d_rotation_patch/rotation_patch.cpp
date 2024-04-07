@@ -113,10 +113,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-LL, -LL), Vec2d(LL + 10 * BW, LH + 10 * BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(false);
-    /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -145,7 +141,6 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<BulkParticles>> transport_velocity_correction(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionInnerRiemann> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> fluid_density_relaxation(water_body_inner);
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     /** We can output a method-specific particle data for debug */
@@ -158,10 +153,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_water_mechanical_energy(water_block);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", fluid_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_water_kinetic_energy(water_block);
+    ObservedQuantityRecording<Real> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -196,11 +190,9 @@ int main(int ac, char *av[])
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
     //----------------------------------------------------------------------
-    //	First output before the main loop.
+    //	First state recording before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_water_mechanical_energy.writeToFile(number_of_iterations);
-    write_recorded_water_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -212,7 +204,6 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            fluid_step_initialization.exec();
             free_surface_indicator.exec();
             corrected_configuration_fluid.exec();
             transport_velocity_correction.exec();
@@ -240,6 +231,9 @@ int main(int ac, char *av[])
 
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);
+
+                write_water_kinetic_energy.writeToFile(number_of_iterations);
+                write_recorded_water_pressure.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -251,8 +245,6 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         body_states_recording.writeToFile();
-        write_water_mechanical_energy.writeToFile(number_of_iterations);
-        write_recorded_water_pressure.writeToFile(number_of_iterations);
 
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
@@ -270,6 +262,15 @@ int main(int ac, char *av[])
               << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_water_kinetic_energy.generateDataBase(1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_water_kinetic_energy.testResult();
+    }
 
     return 0;
 };

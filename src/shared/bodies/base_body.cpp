@@ -7,17 +7,17 @@
 namespace SPH
 {
 //=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &body_name)
+SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr, const std::string &body_name)
     : sph_system_(sph_system), body_name_(body_name), newly_updated_(true), base_particles_(nullptr),
-      body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
+      initial_shape_(initial_shape_ptr_keeper_.assignPtr(initial_shape_ptr)),
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
       base_material_(nullptr)
 {
     sph_system_.sph_bodies_.push_back(this);
 }
 //=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-    : SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
+SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr)
+    : SPHBody(sph_system, initial_shape_ptr, initial_shape_ptr->getName()) {}
 //=================================================================================================//
 BoundingBox SPHBody::getSPHSystemBounds()
 {
@@ -61,7 +61,7 @@ void SPHBody::allocateConfigurationMemoriesForBufferParticles()
 //=================================================================================================//
 BoundingBox SPHBody::getBodyShapeBounds()
 {
-    return body_shape_->getBounds();
+    return initial_shape_->getBounds();
 }
 //=================================================================================================//
 void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)

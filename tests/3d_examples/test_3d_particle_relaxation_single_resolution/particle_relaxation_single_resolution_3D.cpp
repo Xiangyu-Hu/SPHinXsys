@@ -87,9 +87,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

@@ -1,5 +1,12 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
+**Notice on repository transfer to SPHinXsys team** 
+
+In order to promoting open-source democratization,
+this repository will be transferred to the SPHinXsys team 
+in the next few weeks.
+After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
+
 **Project Status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
@@ -40,6 +47,8 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_column_collapse/column_collapse.cpp">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/2d_column_collapse.gif" height="168px"></a>
 
 ## Fully compatible to classical FVM method
 
@@ -156,6 +165,9 @@ Volume 236, (2021) 109540
 
 15. Yaru Ren, Pengzhi Lin, Chi Zhang, Xiangyu Hu, "An efficient weighted correction method in Riemann SPH for the simulation of general free surface flows", Computer Methods in Applied Mechanics and Engineering, 417, 116460, 2023.  
 [![Correction Method](https://img.shields.io/badge/doi-10.1016%2Fj.cma.2023.116460-d45815.svg)](https://doi.org/10.1016/j.cma.2023.116460)
+
+16. Shuaihao Zhang, Chi Zhang, Xiangyu Hu, Sérgio D.N. Lourenço, "A Riemann-based SPH method for modelling large deformation of granular materials", Computers and Geotechnics, 167, 106052, 2024.  
+[![Riemann-Granular Flows](https://img.shields.io/badge/doi-10.1016%2Fj.compgeo.2023.106052-d45815.svg)](https://doi.org/10.1016/j.compgeo.2023.106052)
 
 ## Software Architecture
 

@@ -57,7 +57,7 @@ class CylinderParticleGenerator : public ParticleGeneratorSurface
     explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body), sph_body_(sph_body){};
     virtual void initializeGeometricVariables() override
     {
-        SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.body_shape_);
+        SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.initial_shape_);
 
         Standard_Real u1 = 0;
         Standard_Real v1 = DELTA1;
@@ -146,13 +146,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
-    /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
-    relax_dynamics::RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
+    using namespace relax_dynamics;
+    RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
+    RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
     BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
-    SimpleDynamics<relax_dynamics::ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
-    SimpleDynamics<relax_dynamics::SurfaceNormalDirection> surface_normal_direction(leaflet);
+    SimpleDynamics<ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
+    SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

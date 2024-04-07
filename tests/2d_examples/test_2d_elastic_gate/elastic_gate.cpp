@@ -186,10 +186,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
@@ -199,7 +200,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
-    InteractionDynamics<solid_dynamics::PressureForceFromFluidRiemann> fluid_pressure_force_on_gate(gate_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------
     //	Algorithms of Elastic dynamics.
@@ -229,6 +230,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     gate_normal_direction.exec();
     gate_corrected_configuration.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -254,8 +256,6 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Force Prior due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             /** Update normal direction at elastic body surface. */

@@ -20,7 +20,7 @@ void FlowVelocityBuffer::update(size_t index_i, Real dt)
 //=================================================================================================//
 DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
     : BaseFlowBoundaryCondition(body_part), strength_(5.0),
-      damping_zone_bounds_(body_part.body_part_shape_.getBounds()){};
+      damping_zone_bounds_(body_part.getBodyPartShape().getBounds()){};
 //=================================================================================================//
 void DampingBoundaryCondition::update(size_t index_i, Real dt)
 {

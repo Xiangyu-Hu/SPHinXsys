@@ -257,7 +257,7 @@ DiffusionRelaxation<Robin<CommonControlTypes...>>::
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
             contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
-            contact_T_infinity_[m] = this->contact_particles_[k]->template registerGlobalVariable<Real>("T_infinity");
+            contact_T_infinity_[m] = this->contact_particles_[k]->template registerSingleVariable<Real>("T_infinity");
         }
     }
 }

@@ -209,7 +209,8 @@ class StructuralSimulation
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
-    StdVec<SharedPtr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
+    StdVec<Gravity> gravity_list_;
+    StdVec<SharedPtr<SimpleDynamics<GravityForce>>> initialize_gravity_;
     StdVec<GravityPair> non_zero_gravity_;
     // for ExternalForceInBoundingBox
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ExternalForceInBoundingBox>>> force_bounding_box_;
@@ -282,7 +283,7 @@ class StructuralSimulation
     void executeInitialNormalDirection();
     void executeCorrectConfiguration();
     void executeUpdateElasticNormalDirection();
-    void executeInitializeATimeStep();
+    void executeInitializeGravity();
     void executeExternalForceInBoundingBox();
     void executeForceInBodyRegion();
     void executeSurfacePressure();

@@ -37,7 +37,7 @@ void BaseParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     registerVariable(vel_, "Velocity");
     registerVariable(force_, "Force");
-    registerVariable(force_prior_, "PriorForce");
+    registerVariable(force_prior_, "ForcePrior");
     registerVariable(rho_, "Density", base_material_.ReferenceDensity());
     registerVariable(mass_, "Mass",
                      [&](size_t i) -> Real
@@ -52,6 +52,7 @@ void BaseParticles::initializeOtherVariables()
      */
     addVariableToList<Vecd>(variables_to_restart_, "Position");
     addVariableToList<Vecd>(variables_to_restart_, "Velocity");
+    addVariableToList<Vecd>(variables_to_restart_, "ForcePrior");
     addVariableToList<Vecd>(variables_to_restart_, "Force");
     addVariableToList<Real>(variables_to_restart_, "VolumetricMeasure");
     //----------------------------------------------------------------------

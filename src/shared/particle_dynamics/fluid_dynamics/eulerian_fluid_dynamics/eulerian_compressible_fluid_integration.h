@@ -35,34 +35,12 @@
 #include "fluid_body.h"
 #include "fluid_integration.hpp"
 #include "fluid_time_step.h"
-#include "time_step_initialization.h"
 #include "viscous_dynamics.hpp"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class EulerianCompressibleTimeStepInitialization
- * @brief initialize a time step for a body.
- * including initialize particle acceleration
- * induced by viscous, gravity and other forces,
- * set the number of ghost particles into zero.
- */
-class EulerianCompressibleTimeStepInitialization : public TimeStepInitialization
-{
-  public:
-    EulerianCompressibleTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
-    virtual ~EulerianCompressibleTimeStepInitialization(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Vecd> &dmom_dt_prior_;
-    StdLargeVec<Real> &dE_dt_prior_;
-};
-
 /**
  * @class EulerianAcousticTimeStepSize
  * @brief Computing the acoustic time step size
@@ -83,20 +61,6 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
     CompressibleFluid compressible_fluid_;
 };
 
-/**
- * @class EulerianViscousForceInner
- * @brief  the viscosity force induced acceleration in Eulerian method
- */
-class EulerianCompressibleViscousForceInner : public ViscousForceInner
-{
-  public:
-    explicit EulerianCompressibleViscousForceInner(BaseInnerRelation &inner_relation);
-    virtual ~EulerianCompressibleViscousForceInner(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-    StdLargeVec<Real> &dE_dt_prior_;
-    StdLargeVec<Vecd> &dmom_dt_prior_;
-};
-
 class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
 {
   public:
@@ -105,8 +69,8 @@ class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
 
   protected:
     CompressibleFluid compressible_fluid_;
-    StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dE_dt_prior_, &dmass_dt_;
-    StdLargeVec<Vecd> &mom_, &dmom_dt_, &dmom_dt_prior_;
+    StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dmass_dt_;
+    StdLargeVec<Vecd> &mom_, &force_, &force_prior_;
 };
 
 template <class RiemannSolverType>

@@ -35,3 +35,4 @@
 #include "elastic_solid.h"
 #include "inelastic_solid.h"
 #include "weakly_compressible_fluid.h"
+#include "general_continuum.h"

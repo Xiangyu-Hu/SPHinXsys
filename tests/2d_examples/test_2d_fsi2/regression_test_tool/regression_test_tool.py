@@ -12,7 +12,7 @@ case name: test_2d_fsi2
 
 case_name = "test_2d_fsi2"
 body_name = "InsertedBody"
-parameter_name = "TotalViscousForceOnSolid"
+parameter_name = "TotalViscousForceFromFluid"
 body_name_1 = "BeamObserver"
 parameter_name_1 = "Position"
 
