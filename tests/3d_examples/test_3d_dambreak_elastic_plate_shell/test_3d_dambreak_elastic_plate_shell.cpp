@@ -141,7 +141,7 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
@@ -154,8 +154,7 @@ int main(int ac, char *av[])
     SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     plate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
-    auto plate_particle_generator = plate.makeSelfDefined<PlateParticleGenerator>();
-    plate.generateParticles(plate_particle_generator);
+    plate.generateParticles(PlateParticleGenerator(plate));
 
     ObserverBody disp_observer_1(sph_system, "Observer1");
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);

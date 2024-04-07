@@ -23,12 +23,12 @@ int main(int ac, char *av[])
     water_block.generateParticles<Lattice>();
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
-    SolidBody structure(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                        Transform(structure_translation), structure_halfsize, "Structure"));
+    TransformShape<GeometricShapeBox> structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
+    SolidBody structure(sph_system, structure_shape);
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
     structure.generateParticles<Lattice>();
 
@@ -89,8 +89,7 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    StructureSystemForSimbody structure_multibody(structure, makeShared<TransformShape<GeometricShapeBox>>(
-                                                                 Transform(structure_translation), structure_halfsize, "Structure"));
+    StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
@@ -151,8 +150,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
-                                                        Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
+    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>

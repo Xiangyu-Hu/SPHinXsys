@@ -165,7 +165,7 @@ int main(int ac, char *av[])
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 

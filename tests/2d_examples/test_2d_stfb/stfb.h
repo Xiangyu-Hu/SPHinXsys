@@ -66,8 +66,8 @@ Vec2d structure_translation = Vec2d(0.0, H);
 class StructureSystemForSimbody : public SolidBodyPartForSimbody
 {
   public:
-    StructureSystemForSimbody(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
-        : SolidBodyPartForSimbody(sph_body, shape_ptr)
+    StructureSystemForSimbody(SPHBody &sph_body, Shape &shape)
+        : SolidBodyPartForSimbody(sph_body, shape)
     {
         // Vec2d mass_center(G[0], G[1]);
         // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);

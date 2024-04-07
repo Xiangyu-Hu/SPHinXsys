@@ -22,7 +22,7 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
@@ -96,7 +96,8 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    StructureSystemForSimbody structure_multibody(structure, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_str), halfsize_structure));
+    TransformShape<GeometricShapeBox> fix_spot_shape(Transform(translation_str), halfsize_structure);
+    StructureSystemForSimbody structure_multibody(structure, fix_spot_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */

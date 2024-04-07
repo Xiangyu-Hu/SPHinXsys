@@ -37,6 +37,7 @@
 namespace SPH
 {
 class SPHBody;
+class SPHSystem;
 /**
  * @class LevelSetShape
  * @brief A shape using level set to define geometry

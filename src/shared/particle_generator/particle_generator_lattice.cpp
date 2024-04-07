@@ -11,7 +11,7 @@ namespace SPH
 GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
     : lattice_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),
       domain_bounds_(sph_body.getSPHSystemBounds()),
-      initial_shape_(*sph_body.initial_shape_)
+      initial_shape_(sph_body.getInitialShape())
 {
     if (!initial_shape_.isValid())
     {
@@ -32,7 +32,7 @@ ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body, Shape
 }
 //=================================================================================================//
 ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Lattice, Adaptive>(sph_body, *sph_body.initial_shape_) {}
+    : ParticleGenerator<Lattice, Adaptive>(sph_body, sph_body.getInitialShape()) {}
 //=================================================================================================//
 void ParticleGenerator<Lattice, Adaptive>::
     initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
