@@ -481,21 +481,21 @@ BaseInnerRelationInFVM::BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &a
 };
 //=================================================================================================//
 void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance,
-                                          Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                                          Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
 {
     neighborhood.j_.push_back(j_index);
     neighborhood.r_ij_.push_back(distance);
     neighborhood.e_ij_.push_back(interface_normal_direction);
-    neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
+    neighborhood.dW_ij_.push_back(dW_ij);
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
 void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &distance,
-                                              Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                                              Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = j_index;
-    neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
+    neighborhood.dW_ij_[current_size] = dW_ij;
     neighborhood.r_ij_[current_size] = distance;
     neighborhood.e_ij_[current_size] = interface_normal_direction;
 }
@@ -551,8 +551,8 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                     {
                         r_ij = node1_to_center_direction.dot(normal_vector) * 2.0;
                     }
-                    Real dW_ijV_j = -interface_area_size / (2.0 * Vol_i);
-                    get_neighbor_relation(neighborhood, r_ij, dW_ijV_j, normal_vector, index_j);
+                    Real dW_ij = -interface_area_size  / (2.0 * Vol_i * Vol_n[index_j]);
+                    get_neighbor_relation(neighborhood, r_ij, dW_ij, normal_vector, index_j);
                 }
             }
         },

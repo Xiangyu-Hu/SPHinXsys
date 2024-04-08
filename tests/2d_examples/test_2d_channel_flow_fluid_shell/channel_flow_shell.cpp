@@ -171,15 +171,15 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0); // dummy material parameters
-    auto wall_boundary_particle_generator = wall_boundary.makeSelfDefined<WallBoundaryParticleGenerator>(resolution_ref, wall_thickness);
+    WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, resolution_ref, wall_thickness);
     wall_boundary.generateParticles(wall_boundary_particle_generator);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    auto fluid_axial_observer_particle_generator = fluid_axial_observer.makeSelfDefined<FluidAxialObserverParticleGenerator>(resolution_ref);
+    FluidAxialObserverParticleGenerator fluid_axial_observer_particle_generator(fluid_axial_observer, resolution_ref);
     fluid_axial_observer.generateParticles(fluid_axial_observer_particle_generator);
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    auto fluid_radial_observer_particle_generator = fluid_radial_observer.makeSelfDefined<FluidRadialObserverParticleGenerator>(resolution_ref);
+    FluidRadialObserverParticleGenerator fluid_radial_observer_particle_generator(fluid_radial_observer, resolution_ref);
     fluid_radial_observer.generateParticles(fluid_radial_observer_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.

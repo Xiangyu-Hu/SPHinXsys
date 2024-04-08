@@ -128,7 +128,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
           GeneralDataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha),
+          beta_(beta), alpha_(alpha), Vol_(particles_->Vol_),
           B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
           pos_(particles_->pos_)
     {
@@ -140,6 +140,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
   protected:
     int beta_;
     Real alpha_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> show_neighbor_;
@@ -151,7 +152,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
             Vecd e_ij = inner_neighborhood.e_ij_[n];
             if (index_i == 67)
             {
@@ -191,8 +192,7 @@ int main(int ac, char *av[])
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    auto beam_particle_generator = beam_body.makeSelfDefined<ParticleGeneratorAnisotropic>();
-    beam_body.generateParticles(beam_particle_generator);
+    beam_body.generateParticles(ParticleGeneratorAnisotropic(beam_body));
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);

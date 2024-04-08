@@ -202,7 +202,7 @@ int main(int ac, char *av[])
     //	Observer body
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    auto my_particle_generator = temperature_observer.makeSelfDefined<ParticleGeneratorTemperatureObserver>();
+    ParticleGeneratorTemperatureObserver my_particle_generator(temperature_observer);
     temperature_observer.generateParticles(my_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.

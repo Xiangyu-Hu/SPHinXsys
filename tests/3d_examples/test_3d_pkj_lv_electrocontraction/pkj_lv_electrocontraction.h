@@ -123,7 +123,7 @@ class DiffusionBCs
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd displ = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displ / (displ.norm() + 1.0e-15);
 
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
@@ -175,7 +175,7 @@ class ComputeFiberAndSheetDirections
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from Levelset field. */
-        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd displ = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displ / (displ.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)

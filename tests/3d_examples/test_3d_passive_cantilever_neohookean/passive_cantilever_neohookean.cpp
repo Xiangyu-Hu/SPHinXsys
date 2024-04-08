@@ -99,8 +99,8 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf>
         stress_relaxation_second_half(cantilever_body_inner);
     /** Constrain the holder. */
-    BodyRegionByParticle holder(cantilever_body,
-                                makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder, "Holder"));
+    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);

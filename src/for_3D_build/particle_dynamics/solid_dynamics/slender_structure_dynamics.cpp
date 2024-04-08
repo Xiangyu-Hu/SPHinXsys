@@ -45,12 +45,13 @@ Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      B_(particles_->B_),
+      Vol_(particles_->Vol_), B_(particles_->B_),
       n0_(particles_->n0_), b_n0_(particles_->b_n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
 BarDeformationGradientTensor::
     BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
+      Vol_(particles_->Vol_),
       pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix_(particles_->transformation_matrix_),
@@ -58,8 +59,8 @@ BarDeformationGradientTensor::
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      rho_(particles_->rho_),
-      thickness_(particles_->thickness_), mass_(particles_->mass_),
+      rho_(particles_->rho_), 
+      thickness_(particles_->thickness_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
       force_prior_(particles_->force_prior_),
@@ -82,12 +83,13 @@ BarStressRelaxationFirstHalf::
                                  int number_of_gaussian_points, bool hourglass_control)
     : BaseBarRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
+      Vol_(particles_->Vol_),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       numerical_damping_scaling_(particles_->numerical_damping_scaling_),
       global_shear_stress_(particles_->global_shear_stress_),
-      n_(particles_->n_),
+      n_(particles_->n_), 
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),

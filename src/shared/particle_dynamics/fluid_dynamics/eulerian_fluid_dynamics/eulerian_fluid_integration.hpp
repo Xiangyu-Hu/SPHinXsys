@@ -32,7 +32,7 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t 
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
         FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
@@ -64,12 +64,13 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+        StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
             Vecd vel_in_wall = -state_i.vel_;
             Real p_in_wall = state_i.p_;
@@ -99,7 +100,7 @@ void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t 
     {
         size_t index_j = inner_neighborhood.j_[n];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
 
         FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
         FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, e_ij);
@@ -130,12 +131,13 @@ void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(s
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
-            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
             Vecd vel_in_wall = -state_i.vel_;
             Real p_in_wall = state_i.p_;

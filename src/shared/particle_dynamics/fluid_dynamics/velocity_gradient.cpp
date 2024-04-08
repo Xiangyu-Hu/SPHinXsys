@@ -16,6 +16,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
+        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -24,7 +25,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 
             Vecd distance_diff = distance_from_wall - contact_neighborhood.r_ij_[n] * e_ij;
             Real factor = 1.0 - distance_from_wall.dot(distance_diff) / distance_from_wall.squaredNorm();
-            Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * e_ij;
+            Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * e_ij;
             vel_grad -= factor * (vel_[index_i] - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
         }
     }

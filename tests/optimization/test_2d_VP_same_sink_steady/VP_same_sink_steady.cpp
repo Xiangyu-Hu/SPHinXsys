@@ -184,8 +184,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    auto observer_particle_generator = temperature_observer.makeSelfDefined<TemperatureObserverParticleGenerator>();
-    temperature_observer.generateParticles(observer_particle_generator);
+    temperature_observer.generateParticles(TemperatureObserverParticleGenerator(temperature_observer));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

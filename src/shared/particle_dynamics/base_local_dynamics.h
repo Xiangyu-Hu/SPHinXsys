@@ -123,6 +123,8 @@ class Average : public ReduceSumType
 /**
  * @class ConstructorArgs
  * @brief Class template argument deduction (CTAD) for constructor arguments.
+ * @details Note that the form "XXX" is not std::string type, so we need to use
+ * std::string("XXX") to convert it to std::string type.
  */
 template <typename BodyRelationType, typename... OtherArgs>
 struct ConstructorArgs
@@ -130,9 +132,8 @@ struct ConstructorArgs
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation),
-          others_(other_args...){};
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&...other_args)
+        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
 };
 
 /**

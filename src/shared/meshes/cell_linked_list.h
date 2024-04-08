@@ -38,8 +38,6 @@
 namespace SPH
 {
 
-class SPHSystem;
-class SPHBody;
 class BaseParticles;
 class Kernel;
 class SPHAdaptation;
@@ -52,7 +50,6 @@ class CellLinkedList;
 class BaseCellLinkedList : public BaseMeshField
 {
   protected:
-    RealBody &real_body_;
     Kernel &kernel_;
 
     /** clear split cell lists in this mesh*/
@@ -61,17 +58,18 @@ class BaseCellLinkedList : public BaseMeshField
     virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) = 0;
 
   public:
-    BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
+    BaseCellLinkedList(SPHAdaptation &sph_adaptation);
     virtual ~BaseCellLinkedList(){};
 
     /** access concrete cell linked list levels*/
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
-    /** update the cell lists */
     virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
+    virtual SplitCellLists *getSplitCellLists();
+    virtual void setUseSplitCellLists();
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
     /** Insert a cell-linked_list entry of the index and particle position pair. */
-    virtual void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) = 0;
+    virtual void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) = 0;
     /** find the nearest list data entry */
     virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
     /** computing the sequence which indicate the order of sorted particle data */
@@ -90,6 +88,14 @@ class BaseCellLinkedList : public BaseMeshField
 class CellLinkedList : public BaseCellLinkedList, public Mesh
 {
     StdVec<CellLinkedList *> single_cell_linked_list_level_;
+    /**
+     * @brief particle by cells lists is for parallel splitting algorithm.
+     * All particles in each cell are collected together.
+     * If two particles each belongs two different cell entries,
+     * they have no interaction because they are too far.
+     */
+    SplitCellLists split_cell_lists_;
+    bool use_split_cell_lists_;
 
   protected:
     /** using concurrent vectors due to writing conflicts when building the list */
@@ -102,14 +108,16 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
 
   public:
-    CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation);
+    CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, SPHAdaptation &sph_adaptation);
     virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
     void clearCellLists();
+    virtual SplitCellLists *getSplitCellLists() override { return &split_cell_lists_; };
+    virtual void setUseSplitCellLists() override { use_split_cell_lists_ = true; };
     void UpdateCellListData(BaseParticles &base_particles);
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-    void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
+    void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
     virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
@@ -139,13 +147,13 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
 
   public:
     MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-                             size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation);
+                             size_t total_levels, SPHAdaptation &sph_adaptation);
     virtual ~MultilevelCellLinkedList(){};
 
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-    void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
-    virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };
+    void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
+    virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
     virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override{};

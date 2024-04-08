@@ -15,6 +15,7 @@ PairwiseFrictionFromWall::
     {
         wall_vel_n_.push_back(&contact_particles_[k]->vel_);
         wall_n_.push_back(&contact_particles_[k]->n_);
+        wall_Vol_n_.push_back(&contact_particles_[k]->Vol_);
     }
 }
 //=================================================================================================//

@@ -51,20 +51,21 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 ShellCorrectConfiguration::
     ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      B_(particles_->B_),
+      Vol_(particles_->Vol_), B_(particles_->B_),
       n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
 ShellDeformationGradientTensor::
     ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
+      Vol_(particles_->Vol_), pos_(particles_->pos_), 
+      pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_), 
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix_(particles_->transformation_matrix_) {}
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      rho_(particles_->rho_),
-      thickness_(particles_->thickness_), mass_(particles_->mass_),
+      rho_(particles_->rho_), 
+      thickness_(particles_->thickness_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
       force_prior_(particles_->force_prior_),
@@ -297,7 +298,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation), Vol_(particles_->Vol_),
       n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
@@ -320,7 +321,7 @@ void ShellCurvature::compute_initial_curvature()
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
                 const size_t index_j = inner_neighborhood.j_[n];
-                const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                const Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
                 dn_0_i -= (n0_[index_i] - n0_[index_j]) * gradW_ijV_j.transpose();
             }
             dn_0_[index_i] = dn_0_i * B_global_i;
@@ -343,7 +344,7 @@ void ShellCurvature::update(size_t index_i, Real)
 //=================================================================================================//
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      n_(particles_->n_),
+      Vol_(particles_->Vol_), n_(particles_->n_),
       k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
       k2_ave_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};
 //=================================================================================================//
@@ -354,7 +355,7 @@ void AverageShellCurvature::update(size_t index_i, Real)
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         const size_t index_j = inner_neighborhood.j_[n];
-        const Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        const Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         dn_i -= (n_[index_i] - n_[index_j]) * gradW_ijV_j.transpose();
     }
     auto [k1, k2] = get_principle_curvatures(dn_i);

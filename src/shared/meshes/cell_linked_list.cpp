@@ -1,6 +1,5 @@
 #include "cell_linked_list.h"
 #include "adaptation.h"
-#include "base_body.h"
 #include "base_kernel.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
@@ -10,9 +9,24 @@ namespace SPH
 {
 //=================================================================================================//
 BaseCellLinkedList::
-    BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
+    BaseCellLinkedList(SPHAdaptation &sph_adaptation)
     : BaseMeshField("CellLinkedList"),
-      real_body_(real_body), kernel_(*sph_adaptation.getKernel()) {}
+      kernel_(*sph_adaptation.getKernel()) {}
+//=================================================================================================//
+SplitCellLists *BaseCellLinkedList::getSplitCellLists()
+{
+    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    exit(1);
+    return nullptr;
+}
+//=================================================================================================//
+void BaseCellLinkedList::setUseSplitCellLists()
+{
+    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    exit(1);
+};
 //=================================================================================================//
 void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 {
@@ -21,11 +35,14 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 }
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-                               RealBody &real_body, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
+                               SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
+      use_split_cell_lists_(false)
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
+    size_t number_of_split_cell_lists = pow(3, Dimensions);
+    split_cell_lists_.resize(number_of_split_cell_lists);
 }
 //=================================================================================================//
 void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
@@ -46,9 +63,9 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 
     UpdateCellListData(base_particles);
 
-    if (real_body_.getUseSplitCellLists())
+    if (use_split_cell_lists_)
     {
-        updateSplitCellLists(real_body_.getSplitCellLists());
+        updateSplitCellLists(split_cell_lists_);
     }
 }
 //=================================================================================================//
@@ -64,9 +81,9 @@ StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_parti
 //=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing,
-    size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+    size_t total_levels, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-          tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
+          tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
       h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
 }
@@ -83,18 +100,16 @@ size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelCellLinkedList::
-    insertParticleIndex(size_t particle_index, const Vecd &particle_position)
+void MultilevelCellLinkedList::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::
-    InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
+void MultilevelCellLinkedList::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position, volumetric);
+    mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position);
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
@@ -119,11 +134,6 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     for (size_t level = 0; level != total_levels_; ++level)
     {
         mesh_levels_[level]->UpdateCellListData(base_particles);
-    }
-
-    if (real_body_.getUseSplitCellLists())
-    {
-        updateSplitCellLists(real_body_.getSplitCellLists());
     }
 }
 //=================================================================================================//

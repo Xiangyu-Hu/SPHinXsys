@@ -135,6 +135,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
+    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
@@ -182,6 +183,7 @@ int main(int ac, char *av[])
         {
             Real relaxation_time = 0.0;
             Real advection_dt = fluid_advection_time_step.exec();
+            beam_volume_update.exec();
 
             while (relaxation_time < advection_dt)
             {

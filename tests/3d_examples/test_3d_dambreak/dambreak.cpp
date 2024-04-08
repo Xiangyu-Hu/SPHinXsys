@@ -77,18 +77,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock initial_water_block("WaterBody");
+    FluidBody water_block(sph_system, initial_water_block);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    auto fluid_observer_particle_generator = fluid_observer.makeSelfDefined<WaterObserverParticleGenerator>();
-    fluid_observer.generateParticles(fluid_observer_particle_generator);
+    fluid_observer.generateParticles(WaterObserverParticleGenerator(fluid_observer));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

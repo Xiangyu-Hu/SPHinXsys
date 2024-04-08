@@ -58,6 +58,9 @@ class NablaWV<Inner<>>
     explicit NablaWV(BaseInnerRelation &inner_relation);
     virtual ~NablaWV(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdLargeVec<Real>& Vol_;
 };
 
 template <>
@@ -66,9 +69,17 @@ class NablaWV<Contact<>>
 {
   public:
     explicit NablaWV(BaseContactRelation &contact_relation)
-        : NablaWV<GeneralDataDelegateContact>(contact_relation){};
+        : NablaWV<GeneralDataDelegateContact>(contact_relation)
+    {
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+        }
+    };
     virtual ~NablaWV(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 
