@@ -6,15 +6,15 @@
  */
 
 #include "sphinxsys.h"
-//#include "k-epsilon_turbulent_model.cpp"
+#include "k-epsilon_turbulent_model.cpp"
 using namespace SPH;
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
-Real DL = 15.0;                         /**< Channel length. */
-Real num_fluid_cross_section = 40.0;
+Real DL = 120.0;                         /**< Channel length. */
+Real num_fluid_cross_section = 30.0;
 
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
@@ -39,35 +39,45 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 //** Laminar *
-Real U_inlet = 0.5;
-Real U_max = 0.75;
-Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
-Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
+//Real U_inlet = 0.5;
+//Real U_max = 0.75;
+//Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
+//Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
+//Real rho0_f = 1.0;                                            /**< Density. */
+//Real mu_f = 0.01;
+
+//** Same parameter as SPH_4 *
+Real U_inlet = 1.0;
+Real U_f = U_inlet; //*Characteristic velocity
+Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
+Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0;                                            /**< Density. */
-Real mu_f = 0.01;
+Real Re = 40000.0;
+Real mu_f = rho0_f * U_f * DH / Re;
 
 Real Re_calculated = U_f * DH * rho0_f / mu_f; 
-//----------------------------------------------------------------------
-//	The emitter block. 
-//----------------------------------------------------------------------
+
 Real DH_C = DH - 2.0 * offset_distance;
-Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C);
-Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0, offset_distance);
-Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C);
-Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance);
+//----------------------------------------------------------------------
+//	The emitter block with offset model. 
+//----------------------------------------------------------------------
+Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
+Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0, offset_distance - BW);
+Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C + BW);
+Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 //----------------------------------------------------------------------
-// Observation.
+// Observation with offset model.
 //----------------------------------------------------------------------
 Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
-int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
+int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
 StdVec<Real> monitoring_bound = { 109 ,111 };
-Real observe_spacing = DH / num_observer_points;
+Real observe_spacing = DH_C / num_observer_points;
 StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
@@ -87,22 +97,19 @@ class WaterBlock : public ComplexShape
 public:
     explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        //MultiPolygon outer_boundary(createWaterBlockShape());
-        //add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
         MultiPolygon computational_domain(createWaterBlockShape());
         add<ExtrudeShape<MultiPolygonShape>>(-offset_distance, computational_domain, "ComputationalDomain");
-
     }
 };
 
 std::vector<Vecd> createOuterWallShape()
 {
     std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge, DH));
-    water_block_shape.push_back(Vecd(DL, DH));
-    water_block_shape.push_back(Vecd(DL, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
+    water_block_shape.push_back(Vecd(-DL_sponge - BW, 0.0));
+    water_block_shape.push_back(Vecd(-DL_sponge - BW, DH));
+    water_block_shape.push_back(Vecd(DL + BW, DH));
+    water_block_shape.push_back(Vecd(DL + BW, 0.0));
+    water_block_shape.push_back(Vecd(-DL_sponge - BW, 0.0));
 
     return water_block_shape;
 }
