@@ -72,7 +72,7 @@ class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public Ge
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           GeneralDataDelegateSimple(identifier.getSPHBody()),
           pos_(this->particles_->pos_),
-          pos0_(*this->particles_->registerSharedVariable<Vecd>(
+          pos0_(*this->particles_->template registerSharedVariable<Vecd>(
               "InitialPosition", [&](size_t index_i)
               { return pos_[index_i]; })),
           vel_(this->particles_->vel_){};
