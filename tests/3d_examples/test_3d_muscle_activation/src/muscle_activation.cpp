@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(muscle_body);
     BodyRegionByParticle holder(muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
-    SimpleDynamics<solid_dynamics::FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
+    SimpleDynamics<FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

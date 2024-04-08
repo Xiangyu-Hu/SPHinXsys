@@ -228,10 +228,10 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
     StdVec<SurfaceSpringTuple> surface_spring_tuple_;
     // for ConstrainSolidBody
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyConstraint>>> fixed_constraint_body_;
+    StdVec<SharedPtr<SimpleDynamics<FixBodyConstraint>>> fixed_constraint_body_;
     StdVec<int> body_indices_fixed_constraint_;
     // for ConstrainSolidBodyRegion
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_region_;
+    StdVec<SharedPtr<SimpleDynamics<FixBodyPartConstraint>>> fixed_constraint_region_;
     StdVec<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
     // for PositionSolidBody
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;

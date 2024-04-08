@@ -55,5 +55,76 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     LevelSetShape *level_set_shape_;
     Real constrained_distance_;
 };
+
+/**
+ * @class	MotionConstraint
+ * @brief	Base class for constraining with prescribed motion.
+ * 			Exact motion function will be defined in derive class.
+ * 			Note that, we do not impose acceleration, so that this constraint
+ * 			must be imposed after updating particle velocity by forces
+ * 			and before updating particle position.
+ */
+template <class DynamicsIdentifier>
+class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public GeneralDataDelegateSimple
+{
+  public:
+    explicit MotionConstraint(DynamicsIdentifier &identifier)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          GeneralDataDelegateSimple(identifier.getSPHBody()),
+          pos_(this->particles_->pos_),
+          pos0_(*this->particles_->registerSharedVariable<Vecd>(
+              "InitialPosition", [&](size_t index_i)
+              { return pos_[index_i]; })),
+          vel_(this->particles_->vel_){};
+
+    virtual ~MotionConstraint(){};
+
+  protected:
+    StdLargeVec<Vecd> &pos_, &pos0_, &vel_;
+};
+using BodyPartMotionConstraint = MotionConstraint<BodyPartByParticle>;
+
+/**@class FixConstraint
+ * @brief Constraint with zero velocity.
+ */
+template <class DynamicsIdentifier>
+class FixConstraint : public MotionConstraint<DynamicsIdentifier>
+{
+  public:
+    explicit FixConstraint(DynamicsIdentifier &identifier)
+        : MotionConstraint<DynamicsIdentifier>(identifier){};
+    virtual ~FixConstraint(){};
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        this->pos_[index_i] = this->pos0_[index_i];
+        this->vel_[index_i] = Vecd::Zero();
+    };
+};
+using FixBodyConstraint = FixConstraint<SPHBody>;
+using FixBodyPartConstraint = FixConstraint<BodyPartByParticle>;
+
+/**
+ * @class FixedInAxisDirection
+ * @brief Constrain the velocity of a solid body part.
+ */
+class FixedInAxisDirection : public MotionConstraint<BodyPartByParticle>
+{
+  public:
+    explicit FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero())
+        : MotionConstraint<BodyPartByParticle>(body_part), constrain_matrix_(Matd::Identity())
+    {
+        for (int k = 0; k != Dimensions; ++k)
+            constrain_matrix_(k, k) = constrained_axises[k];
+    };
+    virtual ~FixedInAxisDirection(){};
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        this->vel_[index_i] = constrain_matrix_ * this->vel_[index_i];
+    };
+
+  protected:
+    Matd constrain_matrix_;
+};
 } // namespace SPH
 #endif // GENERAL_CONSTRAINT_H

@@ -130,9 +130,8 @@ class BaseParticles
     template <typename DataType, class InitializationFunction>
     void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
                           const InitializationFunction &initialization);
-    template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariable(
-        const std::string &variable_name, const DataType &default_value = ZeroData<DataType>::value);
+    template <typename DataType, typename... Args>
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
     ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
