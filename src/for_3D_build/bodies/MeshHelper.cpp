@@ -42,7 +42,7 @@ namespace SPH
     }
 
     void MeshFileHelpers::nodeCoordinates(ifstream& mesh_file, size_t& node_index,
-                                          vector<vector<Real>>& node_coordinates_, string& text_line, size_t& dimension, vector<vector<Real>>& point_coordinates)
+                                     vector<vector<Real>>& node_coordinates_, string& text_line, size_t& dimension, vector<vector<Real>>& point_coordinates)
     {
         while (getline(mesh_file, text_line))
             {
@@ -433,7 +433,8 @@ namespace SPH
     }
 
 
-    void MeshFileHelpers::vtuFileNodeCoordinates(std::ofstream& out_file, vector<vector<Real>>& node_coordinates_, vector<vector<size_t>>& elements_nodes_connection_)
+    void MeshFileHelpers::vtuFileNodeCoordinates(std::ofstream& out_file, vector<vector<Real>>& node_coordinates_, 
+                                                vector<vector<size_t>>& elements_nodes_connection_, SPHBody& bounds_, Real& rangemax)
     {
         // Write point data
         out_file << "<Piece NumberOfPoints=\"" << node_coordinates_.size() << "\" NumberOfCells=\"" << elements_nodes_connection_.size() << "\">\n";
@@ -442,7 +443,11 @@ namespace SPH
         out_file << "<CellData>\n";
         out_file << "</CellData>\n";
         out_file << "<Points>\n";
-        out_file << "<DataArray type=\"Float64\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\" RangeMin=\"0\" RangeMax=\"4.124318125496386\">\n";
+        BoundingBox bounds = bounds_.getSPHSystemBounds();
+        Real first_max = bounds.first_.cwiseAbs().maxCoeff();
+        Real second_max = bounds.second_.cwiseAbs().maxCoeff();
+        rangemax = 1.03075 * (std::max(first_max, second_max));
+        out_file << "<DataArray type=\"Float64\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\" RangeMin=\"0\" RangeMax=\"" << rangemax << "\">\n";
 
         size_t total_nodes = node_coordinates_.size();
         for (size_t node = 0; node != total_nodes; ++node)
@@ -452,14 +457,14 @@ namespace SPH
     
     }
 
-    void MeshFileHelpers::vtuFileInformationKey(std::ofstream& out_file)
+    void MeshFileHelpers::vtuFileInformationKey(std::ofstream& out_file, Real& rangemax)
     {
         out_file << "<InformationKey name=\"L2_NORM_RANGE\" location=\"vtkDataArray\" length=\"2\">\n";
         out_file << "<Value index=\"0\">\n";
         out_file << "0\n";
         out_file << "</Value>\n";
         out_file << "<Value index=\"1\">\n";
-        out_file << "4.1243181255\n";
+        out_file << rangemax << " \n";
         out_file << "</Value>\n";
         out_file << "</InformationKey>\n";
         out_file << "<InformationKey name=\"L2_NORM_FINITE_RANGE\" location=\"vtkDataArray\" length=\"2\">\n";
@@ -467,7 +472,7 @@ namespace SPH
         out_file << "0\n";
         out_file << "</Value>\n";
         out_file << "<Value index=\"1\">\n";
-        out_file << "4.1243181255\n";
+        out_file << rangemax << " \n";
         out_file << "</Value>\n";
         out_file << "</InformationKey>\n";
         out_file << "</DataArray>\n";
@@ -475,11 +480,11 @@ namespace SPH
       
     }
 
-    void MeshFileHelpers::vtuFileCellConnectivity(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_)
+    void MeshFileHelpers::vtuFileCellConnectivity(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_, vector<vector<Real>>& node_coordinates_)
     {
         out_file << "<Cells>\n";
         // Write Cell data
-        out_file << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\" RangeMin=\"0\" RangeMax=\"11138\">\n";
+        out_file << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\" RangeMin=\"0\" RangeMax=\"" << node_coordinates_.size() - 1 << "\">\n";
 
         for (const auto& cell : elements_nodes_connection_)
         {
@@ -496,7 +501,7 @@ namespace SPH
 
     void MeshFileHelpers::vtuFileOffsets(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_)
     {
-        out_file << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\" RangeMin=\"4\" RangeMax=\"212604\">\n";
+        out_file << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\" RangeMin=\"4\" RangeMax=\"" << 4 * elements_nodes_connection_.size() << "\">\n";
 
         size_t offset = 0;
         for (const auto& face : elements_nodes_connection_)

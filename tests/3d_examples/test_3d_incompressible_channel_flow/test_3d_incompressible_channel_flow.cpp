@@ -16,14 +16,13 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
    //	Build up the environment of a SPHSystem.
    //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem sph_system(system_domain_bounds, read_mesh_data.MinMeshEdge());
     // Handle command line arguments and override the tags for particle relaxation and reload.
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody air_block(sph_system, makeShared<WaveBody>("AirBody"));
+    FluidBody air_block(sph_system, makeShared<AirBody>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     air_block.generateParticlesWithReserve<UnstructuredMesh_3d>(ghost_boundary, read_mesh_data);
@@ -46,7 +45,7 @@ int main(int ac, char* av[])
     /** Boundary conditions set up */
     InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(air_block, read_mesh_data.min_distance_between_nodes_,0.6);
+    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(air_block, read_mesh_data.MinMeshEdge(), 0.6);
     //----------------------------------------------------------------------
     // Visualization in FVM with date in cell.
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
@@ -92,13 +91,13 @@ int main(int ac, char* av[])
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
                     << GlobalStaticVariables::physical_time_
                     << "	dt = " << dt << "\n";
+                write_maximum_speed.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             //write_real_body_states.writeToFile();
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();
-        write_maximum_speed.writeToFile(number_of_iterations);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

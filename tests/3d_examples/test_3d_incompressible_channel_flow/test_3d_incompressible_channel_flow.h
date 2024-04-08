@@ -17,10 +17,8 @@ using namespace std;
 Real DL = 1;                                        /**< Computation domain length. */
 Real DH = 0.6494805454;                           /**< Computation domain height. */
 Real DW = 0.038968832;                          /**< Computation domain width. */
-Real particle_spacing_ref = 1.0 / 500.0;        /**< Initial reference particle spacing. */
-
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-0.3 / 0.769846, 0.0, 0.0), Vec3d(0.469846 / 0.769846, DH, DW));
+BoundingBox system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.03));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -34,15 +32,14 @@ Real mu_f = 0.0;                                                            /**<
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
 std::string mesh_fullpath = "./input/Channel_ICEM.msh";
-
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 
-class WaveBody : public ComplexShape
+class AirBody : public ComplexShape
 {
 public:
-    explicit WaveBody(const std::string& shape_name) : ComplexShape(shape_name)
+    explicit AirBody(const std::string& shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_wave(0.5 * DH, 0.5 * DL, 0.5 * DW);
         Transform translation_wave(halfsize_wave);
@@ -107,7 +104,7 @@ class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM_3d
             p_[ghost_index] = 100.0 / 117.6655;
             rho_[ghost_index] = rho_[index_i];
         }
-        void applysymmetry(size_t ghost_index, size_t index_i, Vecd e_ij) 
+        void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij)
         {
             vel_[ghost_index] = (vel_[index_i] - 2 * e_ij.dot(vel_[index_i]) * e_ij);
             rho_[ghost_index] = rho_[index_i];

@@ -68,9 +68,10 @@ namespace SPH
         static void minimumdistance(vector<Real>& all_data_of_distance_between_nodes, StdLargeVec<Real>& elements_volumes_, vector<vector<vector<size_t>>>& mesh_topology_,
                                     vector<vector<Real>>& node_coordinates_);
         static void vtuFileHeader(std::ofstream& out_file);
-        static void vtuFileNodeCoordinates(std::ofstream& out_file, vector<vector<Real>>& nodes_coordinates_, vector<vector<size_t>>& elements_nodes_connection_);
-        static void vtuFileInformationKey(std::ofstream& out_file);
-        static void vtuFileCellConnectivity(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_);
+        static void vtuFileNodeCoordinates(std::ofstream& out_file, vector<vector<Real>>& nodes_coordinates_, 
+                                            vector<vector<size_t>>& elements_nodes_connection_, SPHBody& bounds_,Real& rangemax);
+        static void vtuFileInformationKey(std::ofstream& out_file, Real& rangemax);
+        static void vtuFileCellConnectivity(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_, vector<vector<Real>>& node_coordinates_);
         static void vtuFileOffsets(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_);
         static void vtuFileTypeOfCell(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_);
 

@@ -21,11 +21,11 @@ BoundingBox system_domain_bounds(Vec3d(0.0, 0.0, 0.0), Vec3d(DL, DH, DW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_another = 8.0;                        /**< initial density of another. */
-Real u_another = 1.0;                           /**< initial velocity of another in X axis. */
-Real v_another = 0.0;                           /**< initial velocity of another in Y axis. */
-Real w_another = 0.0;                          /**< initial velocity of another in Z axis. */
-Real p_another = 140.2 / 1.2;                /**< initial pressure of another. */
+Real rho = 1.0;                        /**< initial density of another. */
+Real u = 1.0;                           /**< initial velocity of another in X axis. */
+Real v = 0.0;                           /**< initial velocity of another in Y axis. */
+Real w = 0.0;                          /**< initial velocity of another in Z axis. */
+Real p = 140.2 / 1.2;                /**< initial pressure of another. */
 Real heat_capacity_ratio = 1.4;              /**< heat capacity ratio. */
 
 //----------------------------------------------------------------------
@@ -34,10 +34,10 @@ Real heat_capacity_ratio = 1.4;              /**< heat capacity ratio. */
 std::string mesh_fullpath = "./input/3D_ICEM_MESH.msh";
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
-class WaveBody : public ComplexShape
+class AirBody : public ComplexShape
 {
 public:
-    explicit WaveBody(const std::string& shape_name) : ComplexShape(shape_name)
+    explicit AirBody(const std::string& shape_name) : ComplexShape(shape_name)
     {
         Vecd halfsize_wave(0.5 * DH, 0.5 * DL, 0.5 * DW);
         Transform translation_wave(halfsize_wave);

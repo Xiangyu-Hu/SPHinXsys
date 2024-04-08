@@ -90,10 +90,7 @@ namespace SPH
                                     if (cells[check_neighbor_cell2] != 0)
                                     {
                                         MeshFileHelpers::updateElementsNodesConnection(elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2);
-
-                                        /*--- build up all connection data with element and neighbor and nodes---*/
                                         MeshFileHelpers::updateCellLists(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2, boundary_type);
-
                                         MeshFileHelpers::updateBoundaryCellLists(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2, boundary_type);
                                     }
                                     if (cells[check_neighbor_cell2] == 0)
@@ -166,10 +163,10 @@ namespace SPH
                                     if (cells[check_neighbor_cell2] != 0)
                                     {
                                         MeshFileHelpers::updateElementsNodesConnection(elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2);
-
-                                        /*--- build up all connection data with element and neighbor and nodes---*/
-                                        MeshFileHelpers::updateCellLists(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2, boundary_type);
-                                        MeshFileHelpers::updateBoundaryCellListsFluent(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2, boundary_type);
+                                        MeshFileHelpers::updateCellLists(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, 
+                                                                        check_neighbor_cell2, boundary_type);
+                                        MeshFileHelpers::updateBoundaryCellListsFluent(mesh_topology_, elements_nodes_connection_, nodes, cells,
+                                                                        check_neighbor_cell1, check_neighbor_cell2, boundary_type);
                                     }
                                     if (cells[check_neighbor_cell2] == 0)
                                     {
@@ -270,21 +267,21 @@ namespace SPH
     }
     //=================================================================================================//
     void NeighborBuilderInFVM_3d::createRelation(Neighborhood &neighborhood, Real &distance,
-                                            Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                                            Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
         neighborhood.j_.push_back(j_index);
         neighborhood.r_ij_.push_back(distance);
         neighborhood.e_ij_.push_back(interface_normal_direction);
-        neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
+        neighborhood.dW_ij_.push_back(dW_ij);
         neighborhood.allocated_size_++;
     }
     //=================================================================================================//
     void NeighborBuilderInFVM_3d::initializeRelation(Neighborhood &neighborhood, Real &distance,
-                                                Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                                                Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
         size_t current_size = neighborhood.current_size_;
         neighborhood.j_[current_size] = j_index;
-        neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
+        neighborhood.dW_ij_[current_size] = dW_ij;
         neighborhood.r_ij_[current_size] = distance;
         neighborhood.e_ij_[current_size] = interface_normal_direction;
     }
@@ -342,8 +339,8 @@ namespace SPH
                         {
                             r_ij = node1_to_center_direction.dot(normalized_normal_vector) * 2.0;
                         }
-                        Real dW_ijV_j = (-0.5 * magnitude) / (2.0 * Vol_i);
-                        get_neighbor_relation(neighborhood, r_ij, dW_ijV_j, normalized_normal_vector, index_j);
+                        Real dW_ij = (-0.5 * magnitude) / (2.0 * Vol_i * Vol_n[index_j]);
+                        get_neighbor_relation(neighborhood, r_ij, dW_ij, normalized_normal_vector, index_j);
                     }
                 }
             },
@@ -453,7 +450,7 @@ namespace SPH
     //=================================================================================================//
     BodyStatesRecordingInMeshToVtu::BodyStatesRecordingInMeshToVtu(SPHBody& body, ANSYSMesh_3d& ansys_mesh)
         : BodyStatesRecording(body), node_coordinates_(ansys_mesh.node_coordinates_),
-        elements_nodes_connection_(ansys_mesh.elements_nodes_connection_) {};
+        elements_nodes_connection_(ansys_mesh.elements_nodes_connection_), bounds_(body) {};
     //=================================================================================================//
     void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string & sequence)
     {
@@ -463,18 +460,18 @@ namespace SPH
             {
                 std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtu";
                 if (fs::exists(filefullpath))
-                    {
-                        fs::remove(filefullpath);
-                    }
+                {
+                    fs::remove(filefullpath);
+                }
                     std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
 
                     MeshFileHelpers::vtuFileHeader(out_file);
+                    Real rangemax = 0.0;
+                    MeshFileHelpers::vtuFileNodeCoordinates(out_file, node_coordinates_, elements_nodes_connection_, bounds_, rangemax);
 
-                    MeshFileHelpers::vtuFileNodeCoordinates(out_file, node_coordinates_, elements_nodes_connection_);
+                    MeshFileHelpers::vtuFileInformationKey(out_file, rangemax);
 
-                    MeshFileHelpers::vtuFileInformationKey(out_file);
-
-                    MeshFileHelpers::vtuFileCellConnectivity(out_file, elements_nodes_connection_);
+                    MeshFileHelpers::vtuFileCellConnectivity(out_file, elements_nodes_connection_, node_coordinates_);
 
                     MeshFileHelpers::vtuFileOffsets(out_file, elements_nodes_connection_);
 
@@ -526,7 +523,7 @@ namespace SPH
                         applyPressureOutletBC(ghost_index, index_i);
                         break;
                     case 7:
-                        applysymmetry(ghost_index, index_i, e_ij);
+                        applySymmetryBoundary(ghost_index, index_i, e_ij);
                         break;
                     case 10:
                         applyGivenValueInletFlow(ghost_index);

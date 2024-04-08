@@ -55,6 +55,7 @@ class ANSYSMesh_3d
     vector<vector<size_t>> elements_nodes_connection_;
     StdLargeVec<Vecd> elements_neighbors_connection_;
     vector<vector<vector<size_t>>> mesh_topology_;
+    Real MinMeshEdge() { return min_distance_between_nodes_; }
     double min_distance_between_nodes_;
 
     void getDataFromMeshFile3d(const std::string &full_path);
@@ -110,8 +111,8 @@ class NeighborBuilderInFVM_3d
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
-    void createRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const;
-    void initializeRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ijV_j,
+    void createRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const;
+    void initializeRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ij,
                             Vecd &interface_normal_direction, size_t j_index) const;
 
   public:
@@ -201,6 +202,7 @@ class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
     virtual void writeWithFileName(const std::string &sequence) override;
     vector<vector<Real>> &node_coordinates_;
     vector<vector<size_t>> &elements_nodes_connection_;
+    SPHBody &bounds_;
 };
 
 
@@ -217,7 +219,7 @@ class BoundaryConditionSetupInFVM_3d : public fluid_dynamics::FluidDataInner
     virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
     virtual void applyFarFieldBoundary(size_t ghost_index){};
     virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i){};
-    virtual void applysymmetry(size_t ghost_index, size_t index_i, Vecd e_ij){};
+    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
     virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i) {};
     // Common functionality for resetting boundary conditions
     void resetBoundaryConditions();

@@ -24,8 +24,8 @@ int main(int ac, char* av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
-    wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
+    FluidBody wave_block(sph_system, makeShared<AirBody>("AirBody"));
+    wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     wave_block.generateParticlesWithReserve<UnstructuredMesh_3d>(ghost_boundary, read_mesh_data);
     GhostCreationFromMesh_3d ghost_creation(wave_block, read_mesh_data, ghost_boundary);
