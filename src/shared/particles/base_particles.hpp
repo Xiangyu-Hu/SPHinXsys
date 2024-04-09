@@ -79,9 +79,8 @@ DataType *BaseParticles::getSingleVariableByName(const std::string &variable_nam
     return nullptr;
 }
 //=================================================================================================//
-template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::
-    registerSharedVariable(const std::string &variable_name, const DataType &default_value)
+template <typename DataType, typename... Args>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&...args)
 {
 
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
@@ -91,7 +90,7 @@ StdLargeVec<DataType> *BaseParticles::
     {
         UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
-        registerVariable(*contained_data, variable_name, default_value);
+        registerVariable(*contained_data, variable_name, std::forward<Args>(args)...);
         return contained_data;
     }
     else

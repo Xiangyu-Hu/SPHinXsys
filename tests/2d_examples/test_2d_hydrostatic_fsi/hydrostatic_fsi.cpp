@@ -261,7 +261,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> gate_stress_relaxation_second_half(gate_inner);
     /**Constrain a solid body part.  */
     BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> gate_constraint(gate_constraint_part);
+    SimpleDynamics<FixBodyPartConstraint> gate_constraint(gate_constraint_part);
     /** Update the norm of elastic gate. */
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
     /** Compute the average velocity of gate. */

@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     /* create a brick to tag the region */
     Vecd half_size_1(0.03, 0.03, 0.02);
     BodyRegionByParticle holder(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_1, 1, Vecd(0.0, 0.0, -0.02)));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
 
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>

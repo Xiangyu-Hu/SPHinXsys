@@ -181,7 +181,7 @@ int main(int ac, char *av[])
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(muscle_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(muscle_base);
     //----------------------------------------------------------------------
     //	SPH Output section
     //----------------------------------------------------------------------

@@ -82,12 +82,12 @@ class Beam : public MultiPolygonShape
     }
 };
 
-class LeftStretchSolidBodyRegion : public solid_dynamics::MotionConstraint
+class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
 {
   public:
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part),
+        : BodyPartMotionConstraint(body_part),
           vel_(particles_->vel_), pos_(particles_->pos_){};
 
     virtual ~LeftStretchSolidBodyRegion(){};
@@ -101,12 +101,12 @@ class LeftStretchSolidBodyRegion : public solid_dynamics::MotionConstraint
     };
 };
 
-class RightStretchSolidBodyRegion : public solid_dynamics::MotionConstraint
+class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
 {
   public:
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part),
+        : BodyPartMotionConstraint(body_part),
           vel_(particles_->vel_), pos_(particles_->pos_){};
 
     virtual ~RightStretchSolidBodyRegion(){};
@@ -143,12 +143,12 @@ MultiPolygon createConstrainBeamShape()
     return multi_polygon;
 };
 
-class ConstrainXVelocity : public solid_dynamics::MotionConstraint
+class ConstrainXVelocity : public BodyPartMotionConstraint
 {
   public:
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part),
+        : BodyPartMotionConstraint(body_part),
           vel_(particles_->vel_), pos_(particles_->pos_){};
 
     virtual ~ConstrainXVelocity(){};

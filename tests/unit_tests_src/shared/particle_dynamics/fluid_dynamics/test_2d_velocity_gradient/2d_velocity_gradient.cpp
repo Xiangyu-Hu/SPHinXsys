@@ -91,11 +91,11 @@ class CouetteFlowInitialCondition
     }
 };
 
-class BoundaryVelocity : public solid_dynamics::MotionConstraint
+class BoundaryVelocity : public BodyPartMotionConstraint
 {
   public:
     explicit BoundaryVelocity(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part) {}
+        : BodyPartMotionConstraint(body_part) {}
 
     void update(size_t index_i, Real dt = 0.0)
     {

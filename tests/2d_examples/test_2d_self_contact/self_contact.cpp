@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> beam_self_contact_density(beam_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     //	outputs
     //-----------------------------------------------------------------------------
