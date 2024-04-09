@@ -22,7 +22,6 @@ namespace SPH
 
     void MeshFileHelpers::numberofNodes(ifstream& mesh_file, size_t& number_of_points, string& text_line)
     {
-
         while (getline(mesh_file, text_line))
             {
                 text_line.erase(0, 1);
