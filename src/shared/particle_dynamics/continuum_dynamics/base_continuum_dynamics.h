@@ -37,9 +37,9 @@ namespace continuum_dynamics
 {
 typedef DataDelegateContact<PlasticContinuumParticles, SolidParticles> FSIContactData;
 /**
-         * @class InteractionWithWall
-         * @brief Base class adding interaction with wall to general relaxation process
-         */
+ * @class InteractionWithWall
+ * @brief Base class adding interaction with wall to general relaxation process
+ */
 template <template <typename...> class BaseInteractionType>
 class InteractionWithWall : public BaseInteractionType<FSIContactData>
 {
@@ -49,8 +49,9 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
-            wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
+            Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
+            wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
+            wall_force_ave_.push_back(solid_material.AverageForce(this->contact_particles_[k]));
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
             wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
             wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));

@@ -54,6 +54,7 @@ class BaseForceFromFluid : public LocalDynamics, public FSIContactData, public F
     StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
 
   protected:
+      Solid &solid_;
     StdLargeVec<Real> &Vol_;
     StdVec<Fluid *> contact_fluids_;
     StdLargeVec<Vecd> &force_from_fluid_;

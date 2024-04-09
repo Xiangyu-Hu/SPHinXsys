@@ -58,10 +58,6 @@ class SolidParticles : public BaseParticles
     StdLargeVec<Matd> B_;    /**< configuration correction for linear reproducing */
     Solid &solid_;
 
-    /** Get wall average velocity when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
-    /** Get wall average acceleration when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageForce() { return &force_; };
     /** Initialized variables for solid particles. */
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */
@@ -129,11 +125,6 @@ class ElasticSolidParticles : public SolidParticles
 
     /** relevant stress measure */
     std::string stress_measure_;
-
-    /** Get wall average velocity when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageVelocity() override { return &vel_ave_; };
-    /** Get wall average acceleration when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageForce() override { return &force_ave_; };
 
     /** Initialize the variables for elastic particle. */
     virtual void initializeOtherVariables() override;

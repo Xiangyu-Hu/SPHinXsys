@@ -12,8 +12,8 @@ template <class FluidIntegration2ndHalfType>
 PressureForceFromFluid<FluidIntegration2ndHalfType>::
     PressureForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
-      vel_ave_(*particles_->AverageVelocity()),
-      force_ave_(*particles_->AverageForce()), n_(particles_->n_)
+      vel_ave_(*solid_.AverageVelocity(particles_)), force_ave_(*solid_.AverageForce(particles_)),
+      n_(particles_->n_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

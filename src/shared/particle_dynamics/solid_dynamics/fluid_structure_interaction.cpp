@@ -8,8 +8,8 @@ namespace solid_dynamics
 //=================================================================================================//
 BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
     : LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
-      ForcePrior(&base_particles_, force_name), Vol_(particles_->Vol_),
-      force_from_fluid_(*particles_->getVariableByName<Vecd>(force_name))
+      ForcePrior(&base_particles_, force_name), solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
+      Vol_(particles_->Vol_), force_from_fluid_(*particles_->getVariableByName<Vecd>(force_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -19,7 +19,7 @@ BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, co
 //=================================================================================================//
 ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid"),
-      vel_ave_(*particles_->AverageVelocity())
+      vel_ave_(*solid_.AverageVelocity(particles_))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
