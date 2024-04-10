@@ -34,42 +34,45 @@ class SolidBodyFromMesh : public ComplexShape
 //----------------------------------------------------------------------
 //	Main program begins here
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
-    imported_model.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    imported_model.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<ParticleGeneratorMultiResolution>();
+    imported_model.generateParticles<ParticleGeneratorAdaptive>();
     imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-    MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.getCellLinkedList());
+    BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     AdaptiveInnerRelation imported_model_inner(imported_model);
     // BaseInnerRelation* imported_model_inner(imported_model);
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    // relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
-    SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

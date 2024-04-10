@@ -2,7 +2,7 @@
  * @file 	ensemble_averaged_method.hpp
  * @brief 	Classes for the comparison between validated and tested results
                 with ensemble-averaged mean value and variance method.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -212,6 +212,12 @@ template <class ObserveMethodType>
 void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
 {
     this->snapshot_ = this->current_result_.size();
+    if (this->snapshot_ == 0)
+    {
+        std::cout << "\n Error: the current results for ensemble-average regression test is empty!" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
     this->observation_ = this->current_result_[0].size();
 
     if (this->number_of_run_ > 1)

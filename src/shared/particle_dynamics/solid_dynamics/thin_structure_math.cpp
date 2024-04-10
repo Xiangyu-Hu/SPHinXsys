@@ -63,7 +63,7 @@ Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector,
     return Vec3d(dpseudo_n_dt_0, dpseudo_n_dt_1, dpseudo_n_dt_2);
 }
 //=================================================================================================//
-Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
+Vec2d getRotationFromPseudoNormal(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
 {
     Real cos_rotation_0 = cos(rotation[0]);
     Real sin_rotation_0 = sin(rotation[0]);
@@ -73,7 +73,7 @@ Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t
     return Vec2d(angle_vel_dt_0, 0.0);
 }
 //=================================================================================================//
-Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
+Vec3d getRotationFromPseudoNormal(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 {
     Real sin_rotation_0 = sin(rotation[0]);
     Real cos_rotation_0 = cos(rotation[0]);
@@ -90,16 +90,6 @@ Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t
     Real angle_vel_dt_1 = rotation_1_a * rotation_1_a * (rotation_1_b1 * cos_rotation_1 + rotation_1_b2 * sin_rotation_1) / (rotation_1_b1 * rotation_1_b1 + rotation_1_b2 * rotation_1_b2 + Eps);
 
     return Vec3d(angle_vel_dt_0, angle_vel_dt_1, 0.0);
-}
-//=================================================================================================//
-Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
-{
-    return Vec2d(dpseudo_n_d2t[0], 0);
-}
-//=================================================================================================//
-Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
-{
-    return Vec3d(-dpseudo_n_d2t[1], dpseudo_n_d2t[0], 0.0);
 }
 //=================================================================================================//
 Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F)
@@ -173,23 +163,6 @@ Vecd getWENORightState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_
     return getWENOStateWithStencilPoints(v1, v2, v3, v4);
 }
 //=================================================================================================//
-Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix)
-{
-    Vec2d local_rotation_jump = Vec2d::Zero();
-    Vec2d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
-    local_rotation_jump[0] = local_pseuodo_n_jump[0];
-    return transformation_matrix.transpose() * local_rotation_jump;
-}
-//=================================================================================================//
-Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix)
-{
-    Vec3d local_rotation_jump = Vec3d::Zero();
-    Vec3d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
-    local_rotation_jump[0] = local_pseuodo_n_jump[0];
-    local_rotation_jump[1] = local_pseuodo_n_jump[1];
-    return transformation_matrix.transpose() * local_rotation_jump;
-}
-//=================================================================================================//
 Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_)
 {
     Mat2d corrected_almansi_strain = current_local_almansi_strain;
@@ -218,6 +191,23 @@ Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
     Mat3d correction_matrix = Mat3d::Zero();
     correction_matrix.block<2, 2>(0, 0) = local_deformation_part_one.block<2, 2>(0, 0).inverse();
     return correction_matrix;
+}
+//=================================================================================================//
+std::tuple<Real, Real> get_principle_curvatures(const Mat2d &dn)
+{
+    return {dn.trace(), 0};
+}
+//=================================================================================================//
+std::tuple<Real, Real> get_principle_curvatures(const Mat3d &dn)
+{
+    Real H = 0.5 * dn.trace();
+    Real K = dn(0, 0) * dn(1, 1) + dn(0, 0) * dn(2, 2) + dn(1, 1) * dn(2, 2) -
+             dn(0, 1) * dn(1, 0) - dn(0, 2) * dn(2, 0) - dn(1, 2) * dn(2, 1);
+    Real root = H * H - K;
+    if (root <= 0)
+        return {H, H};
+    Real sqrt_root = sqrt(root);
+    return {H + sqrt_root, H - sqrt_root};
 }
 //=================================================================================================//
 } // namespace thin_structure_dynamics

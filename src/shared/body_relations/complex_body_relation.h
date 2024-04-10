@@ -23,7 +23,7 @@
 /**
  * @file 	complex_body_relation.h
  * @brief 	The topological relations within one body and to other bodies.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef COMPLEX_BODY_RELATION_H
@@ -35,31 +35,21 @@ namespace SPH
 {
 /**
  * @class ComplexRelation
- * @brief The relation combined an inner and a contact body relation.
- * The interaction is in a inner-boundary-condition fashion. Here inner interaction is
- * different from contact interaction.
+ * @brief The relation combined an inner and one or several contact body relation.
+ * Note that this relation are not used for construct local dynamics,
+ * which are only done by using inner and contact relations.
+ * This is temporary class used for updating several configuration together,
+ * before the automation on updating is done.
  */
 class ComplexRelation : public SPHRelation
 {
-  private:
-    UniquePtrKeeper<BaseInnerRelation> base_inner_relation_ptr_keeper_;
-    UniquePtrKeeper<BaseContactRelation> base_contact_relation_ptr_keeper_;
-
   protected:
     BaseInnerRelation &inner_relation_;
-    BaseContactRelation &contact_relation_;
+    StdVec<BaseContactRelation *> contact_relations_;
 
   public:
-    BaseInnerRelation &getInnerRelation() { return inner_relation_; };
-    BaseContactRelation &getContactRelation() { return contact_relation_; };
-    RealBodyVector contact_bodies_;
-    ParticleConfiguration &inner_configuration_;
-    StdVec<ParticleConfiguration> &contact_configuration_;
-
     ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
-    ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies);
-    ComplexRelation(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies);
-    ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts);
+    ComplexRelation(BaseInnerRelation &inner_relation, StdVec<BaseContactRelation *> contact_relations);
     virtual ~ComplexRelation(){};
 
     virtual void resizeConfiguration() override;

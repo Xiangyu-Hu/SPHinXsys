@@ -27,7 +27,7 @@
  *			The memory is obtained as big chunks from an underlying allocator specified by the template argument.
  *			The latter must satisfy the subset of the allocator requirements from the [allocator.requirements] ISO C++ Standard section.
  *			A memory_pool meet the Memory Pool named requirement.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MY_MEMORY_POOL_H

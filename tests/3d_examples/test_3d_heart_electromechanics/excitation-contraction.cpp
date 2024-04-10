@@ -36,8 +36,8 @@ Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
 std::array<std::string, 1> species_name_list{"Phi"};
-Real diffusion_coff = 0.8;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 0.8;
+Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
 Real c_m = 1.0;
 Real k = 8.0;
@@ -72,20 +72,13 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
                                     {"Phi"}, SharedPtr<NoReaction>(),
                                     rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
 using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation method. */
-class DiffusionRelaxation
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<FiberDirectionDiffusionParticles>>
-{
-  public:
-    explicit DiffusionRelaxation(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~DiffusionRelaxation(){};
-};
+using FiberDirectionDiffusionRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<FiberDirectionDiffusionParticles, CorrectedKernelGradientInner>>>;
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
     : public DiffusionReactionSpeciesConstraint<BodyPartByParticle, FiberDirectionDiffusionParticles>
@@ -98,8 +91,8 @@ class DiffusionBCs
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
-        Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd face_norm = displ / (displ.norm() + 1.0e-15);
 
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
@@ -149,8 +142,8 @@ class ComputeFiberAndSheetDirections
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from Levelset field. */
-        Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
-        Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd face_norm = displ / (displ.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)
         {
@@ -251,10 +244,10 @@ class ApplyStimulusCurrentSII
 /**
  * define observer particle generator.
  */
-class HeartObserverParticleGenerator : public ObserverParticleGenerator
+class HeartObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
@@ -272,39 +265,38 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	SPHSystem section
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    system.setRunParticleRelaxation(true); // Tag for run particle relaxation for body-fitted distribution
-    system.setReloadParticles(true);       // Tag for computation with save particles distribution
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av); // handle command line arguments
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    if (system.RunParticleRelaxation())
+    if (sph_system.RunParticleRelaxation())
     {
-        SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
-        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
+        SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
+        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
         herat_model.generateParticles<ParticleGeneratorLattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
-        /** Random reset the relax solid particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
-        /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
+        RelaxationStepInner relaxation_step_inner(herat_model_inner);
         /** Time step for diffusion. */
         GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
         /** Diffusion process for diffusion body. */
-        DiffusionRelaxation diffusion_relaxation(herat_model_inner);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
         /** Compute the fiber and sheet after diffusion. */
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
+        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, herat_model);
+        ReloadParticleIO write_particle_reload_files(herat_model);
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -359,29 +351,29 @@ int main(int ac, char *av[])
     //	SPH simulation section
     //----------------------------------------------------------------------
     /** create a SPH body, material and particles */
-    SolidBody physiology_heart(system, makeShared<Heart>("PhysiologyHeart"));
+    SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     physiology_heart.defineParticlesAndMaterial<
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
-    (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
+        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
         : physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
     /** create a SPH body, material and particles */
-    SolidBody mechanics_heart(system, makeShared<Heart>("MechanicalHeart"));
+    SolidBody mechanics_heart(sph_system, makeShared<Heart>("MechanicalHeart"));
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
         : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
     //----------------------------------------------------------------------
     //	SPH Observation section
     //----------------------------------------------------------------------
-    ObserverBody voltage_observer(system, "VoltageObserver");
+    ObserverBody voltage_observer(sph_system, "VoltageObserver");
     voltage_observer.generateParticles<HeartObserverParticleGenerator>();
-    ObserverBody myocardium_observer(system, "MyocardiumObserver");
+    ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
     myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
     //----------------------------------------------------------------------
     //	SPHBody relation (topology) section
@@ -396,7 +388,7 @@ int main(int ac, char *av[])
     //	SPH Method section
     //----------------------------------------------------------------------
     // Corrected configuration.
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     // Time step size calculation.
     electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_heart);
     // Diffusion process for diffusion body.
@@ -408,7 +400,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
     // Active mechanics.
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_contraction(mechanics_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
     InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
     /** Interpolate the active contract stress from electrophysiology body. */
     InteractionDynamics<InterpolatingAQuantity<Real>>
@@ -429,16 +421,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	SPH Output section
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_voltage("Voltage", io_environment, voltage_observer_contact);
+        write_voltage("Voltage", voltage_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, myocardium_observer_contact);
+        write_displacement("Position", myocardium_observer_contact);
     //----------------------------------------------------------------------
     //	 Pre-simulation.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     correct_configuration_excitation.exec();
     correct_configuration_contraction.exec();
     correct_kernel_weights_for_interpolation.exec();

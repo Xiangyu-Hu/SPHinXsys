@@ -23,7 +23,7 @@
 /**
  * @file 	inner_body_relation.h
  * @brief 	The topological relations within the body.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef INNER_BODY_RELATION_H
@@ -101,6 +101,7 @@ class SelfSurfaceContactRelation : public BaseInnerRelation
     virtual void resetNeighborhoodCurrentSize() override;
 };
 
+class TreeBody;
 /**
  * @class TreeInnerRelation
  * @brief The relation within a reduced SPH body, viz. network
@@ -111,12 +112,27 @@ class TreeInnerRelation : public InnerRelation
     TreeBody &generative_tree_;
 
   public:
-    explicit TreeInnerRelation(RealBody &real_body)
-        : InnerRelation(real_body),
-          generative_tree_(DynamicCast<TreeBody>(this, real_body)){};
+    explicit TreeInnerRelation(RealBody &real_body);
     virtual ~TreeInnerRelation(){};
 
     virtual void updateConfiguration() override;
+};
+
+/**
+ * @class ShellInnerRelationWithContactKernel
+ * @brief Shell inner relation with the cut-off radius of the contact body
+ *  This class is used in fluid-shell interaction problems to compute shell curvature with the cut-off radius of fluid
+ */
+class ShellInnerRelationWithContactKernel : public BaseInnerRelation
+{
+  private:
+    CellLinkedList &cell_linked_list_;
+    SearchDepthContact get_contact_search_depth_;
+    ShellNeighborBuilderInnerWithContactKernel get_inner_neighbor_with_contact_kernel_;
+
+  public:
+    explicit ShellInnerRelationWithContactKernel(RealBody &real_body, RealBody &contact_body);
+    void updateConfiguration() override;
 };
 } // namespace SPH
 #endif // INNER_BODY_RELATION_H

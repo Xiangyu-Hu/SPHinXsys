@@ -23,37 +23,30 @@
 /**
  * @file 	riemann_solvers.h
  * @brief 	This is the collection of Riemann solvers.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef RIEMANN_SOLVER_H
 #define RIEMANN_SOLVER_H
 
 #include "base_data_package.h"
+#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
-/**
- * @struct FluidState
- * @brief  Struct for stored states of Riemann solver in weakly-compressible flow.
- */
-struct FluidState
+struct FluidStateIn
 {
     Vecd &vel_;
     Real &rho_, &p_;
-    FluidState(Real &rho, Vecd &vel, Real &p)
-        : vel_(vel), rho_(rho), p_(p){};
+    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p){};
 };
 
-struct FluidStarState
+struct FluidStateOut
 {
     Vecd vel_;
-    Real p_;
-    FluidStarState(Vecd vel, Real p)
-        : vel_(vel), p_(p){};
+    Real rho_, p_;
+    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p){};
 };
-
-class Fluid;
 
 /**
  * @struct NoRiemannSolver
@@ -70,8 +63,15 @@ class NoRiemannSolver
           inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
     Real DissipativePJump(const Real &u_jump) const { return 0.0; }
     Real DissipativeUJump(const Real &p_jump) const { return 0.0; }
-    Real AverageP(const Real &p_i, const Real &p_j);
+
+    template <typename T>
+    T AverageP(const T &p_i, const T &p_j)
+    {
+        return (p_i * rho0c0_j_ + p_j * rho0c0_i_) * inv_rho0c0_sum_;
+    };
+
     Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
+    FluidStateOut InterfaceState(const FluidStateIn &state_i, const FluidStateIn &state_j, const Vecd &e_ij);
 
   protected:
     Real rho0_i_, rho0_j_;
@@ -83,21 +83,24 @@ class AcousticRiemannSolver : public NoRiemannSolver
 {
   public:
     template <class FluidI, class FluidJ>
-    AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+    AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, const Real limiter_coeff = 3.0)
         : NoRiemannSolver(fluid_i, fluid_j),
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
-          inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
+          inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_),
+          limiter_coeff_(limiter_coeff){};
     Real DissipativePJump(const Real &u_jump) const {
-        return rho0c0_geo_ave_ * u_jump * SMIN(Real(3) * SMAX(u_jump * inv_c_ave_, Real(0)), Real(1));
+        return rho0c0_geo_ave_ * u_jump * SMIN(limiter_coeff_ * SMAX(u_jump * inv_c_ave_, Real(0)), Real(1));
     }
     Real DissipativeUJump(const Real &p_jump) const  {
         return p_jump * inv_rho0c0_ave_;
     }
+    FluidStateOut InterfaceState(const FluidStateIn &state_i, const FluidStateIn &state_j, const Vecd &e_ij);
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;
     Real inv_c_ave_;
+    Real limiter_coeff_;
 };
 
 class DissipativeRiemannSolver : public AcousticRiemannSolver

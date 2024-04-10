@@ -49,10 +49,10 @@ TEST(Plate, MaxDisplacement)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -117,7 +117,7 @@ class TimeDependentExternalForce : public Gravity
   public:
     explicit TimeDependentExternalForce(Vecd external_force)
         : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(Vecd &position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real current_time = GlobalStaticVariables::physical_time_;
         return current_time < time_to_full_external_force
@@ -131,17 +131,17 @@ class TimeDependentExternalForce : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 
     /** create a plate body. */
-    SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
+    SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
 
     /** Define Observer. */
-    ObserverBody plate_observer(system, "PlateObserver");
+    ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -150,9 +150,8 @@ int main(int ac, char *av[])
     InnerRelation plate_body_inner(plate_body);
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
-    /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body,
-                                                                     makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -179,13 +178,13 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
-    ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", plate_observer_contact);
 
     /** Apply initial condition. */
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
     /**
@@ -219,7 +218,7 @@ int main(int ac, char *av[])
                           << GlobalStaticVariables::physical_time_ << "	dt: "
                           << dt << "\n";
             }
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
             constrain_holder_x.exec(dt);
             constrain_holder_y.exec(dt);

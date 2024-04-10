@@ -23,7 +23,7 @@
 /**
  * @file 	xml_engine.h
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef XML_ENGINE_SIMBODY_H

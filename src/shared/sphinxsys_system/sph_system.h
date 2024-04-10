@@ -24,7 +24,7 @@
  * @file sph_system.h
  * @brief The SPH_System managing objects in the system level.
  * @details Note that the system operation prefer these are application independent.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SPH_SYSTEM_H
@@ -38,6 +38,7 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
+#include "io_environment.h"
 #include "sph_data_containers.h"
 #include "execution_policy.h"
 
@@ -52,7 +53,6 @@ namespace SPH
  * Pre-claimed classes.
  */
 class SPHBody;
-class IOEnvironment;
 class ComplexShape;
 
 /**
@@ -61,28 +61,36 @@ class ComplexShape;
  */
 class SPHSystem
 {
+    UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
+
   public:
+    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
+    Real resolution_ref_;                    /**< reference resolution of the SPH system */
+    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
+    SPHBodyVector sph_bodies_;               /**< All sph bodies. */
+    SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
+    SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
+    SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
+
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
               size_t number_of_threads = std::thread::hardware_concurrency());
     virtual ~SPHSystem(){};
 
+#ifdef BOOST_AVAILABLE
+    SPHSystem *handleCommandlineOptions(int ac, char *av[]);
+#endif
+    SPHSystem *setIOEnvironment(bool delete_output = true);
+    IOEnvironment &getIOEnvironment();
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
     bool ReloadParticles() { return reload_particles_; };
+    bool GenerateRegressionData() { return generate_regression_data_; };
+    void setGenerateRegressionData(bool generate_regression_data) { generate_regression_data_ = generate_regression_data; };
+    bool StateRecording() { return state_recording_; };
+    void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     size_t RestartStep() { return restart_step_; };
-    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
-    Real resolution_ref_;                    /**< reference resolution of the SPH system */
-    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
-
-    IOEnvironment *io_environment_; /**< io_environment setup */
-    bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
-
-    SPHBodyVector sph_bodies_;         /**< All sph bodies. */
-    SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
-    SPHBodyVector real_bodies_;        /**< The bodies with inner particle configuration. */
-    SolidBodyVector solid_bodies_;     /**< The bodies with inner particle configuration and acoustic time steps . */
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
     execution::ExecutionEvent initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy);
@@ -90,14 +98,15 @@ class SPHSystem
     void initializeSystemConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
-    /** Command line handle for Ctest. */
-#ifdef BOOST_AVAILABLE
-    void handleCommandlineOptions(int ac, char *av[]);
-#endif
+
   protected:
-    bool run_particle_relaxation_; /**< run particle relaxation for body fitted particle distribution */
-    bool reload_particles_;        /**< start the simulation with relaxed particles. */
-    size_t restart_step_;          /**< restart step */
+    friend class IOEnvironment;
+    IOEnvironment *io_environment_; /**< io environment */
+    bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
+    bool reload_particles_;         /**< start the simulation with relaxed particles. */
+    size_t restart_step_;           /**< restart step */
+    bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
+    bool state_recording_;          /**< Record state in output folder. */
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H

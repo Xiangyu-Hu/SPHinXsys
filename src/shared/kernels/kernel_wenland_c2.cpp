@@ -156,4 +156,26 @@ DeviceReal DeviceKernelWendlandC2::d2W_3D(const DeviceReal q) const
     return d2W_2D(q);
 }
 //=================================================================================================//
+DeviceVec2d DeviceKernelWendlandC2::e(const DeviceReal &distance, const DeviceVec2d &displacement) const
+{
+    return displacement / (distance + TinyReal);
+};
+//=================================================================================================//
+DeviceVec3d DeviceKernelWendlandC2::e(const DeviceReal &distance, const DeviceVec3d &displacement) const
+{
+    return displacement / (distance + TinyReal);
+};
+//=================================================================================================//
+bool DeviceKernelWendlandC2::checkIfWithinCutOffRadius(const DeviceVec2d &displacement) const
+{
+    const DeviceReal distance_metric = VecdSquareNorm(displacement);
+    return distance_metric < CutOffRadiusSqr();
+};
+//=================================================================================================//
+bool DeviceKernelWendlandC2::checkIfWithinCutOffRadius(const DeviceVec3d &displacement) const
+{
+    const DeviceReal distance_metric = VecdSquareNorm(displacement);
+    return distance_metric < CutOffRadiusSqr();
+};
+//=================================================================================================//
 } // namespace SPH

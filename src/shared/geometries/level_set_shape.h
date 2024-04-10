@@ -23,7 +23,7 @@
 /**
  * @file 	level_set_shape.h
  * @brief 	Here, we define geometry based on level set technique.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef LEVEL_SET_SHAPE_H
@@ -36,7 +36,6 @@
 
 namespace SPH
 {
-class IOEnvironment;
 class SPHBody;
 /**
  * @class LevelSetShape
@@ -65,7 +64,7 @@ class LevelSetShape : public Shape
     LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
     /** required to build level set from triangular mesh in stl file format. */
     LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
-    void writeLevelSet(IOEnvironment &io_environment);
+    void writeLevelSet(SPHSystem &sph_system);
 
   protected:
     BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */

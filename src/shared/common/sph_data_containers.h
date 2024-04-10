@@ -23,7 +23,7 @@
 /**
  * @file 	sph_data_containers.h
  * @brief 	Set up of basic data structure.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SPH_DATA_CONTAINERS_H
@@ -35,9 +35,11 @@
 
 namespace SPH
 {
-/**
- * @brief Pre-claimed classes.
- */
+class Base;             // Indicating base class
+class Adaptive;         // Indicating with adaptive resolution
+class ReducedOrder;     // Indicating with reduced order
+class Lattice;          // Indicating with lattice points
+class UnstructuredMesh; // Indicating with unstructured mesh
 class BaseMaterial;
 class SPHBody;
 class RealBody;
@@ -69,7 +71,7 @@ typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<GlobalVariable> GlobalVariables;
+typedef DataContainerAddressAssemble<SingleVariable> SingleVariables;
 /** Generalized particle device variable type*/
 typedef DataContainerAddressAssemble<DeviceVariable> DeviceVariables;
 

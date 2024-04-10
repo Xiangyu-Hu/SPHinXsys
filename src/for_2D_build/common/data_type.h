@@ -23,7 +23,7 @@
 /**
  * @file 	data_type.h
  * @brief 	This is the date type definition in 2D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef DATA_TYPE_2D_H
@@ -31,7 +31,6 @@
 
 #include "base_data_type.h"
 #include "scalar_functions.h"
-#include "vector_functions.h"
 
 namespace SPH
 {
@@ -44,6 +43,7 @@ using AlignedBox = AlignedBox2d;
 using AngularVecd = Real;
 using Rotation = Rotation2d;
 using BoundingBox = BaseBoundingBox<Vec2d>;
+using Transform = BaseTransform<Rotation2d, Vec2d>;
 
 template <class DataType, int array_size>
 using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;

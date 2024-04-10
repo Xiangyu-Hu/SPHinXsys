@@ -26,7 +26,7 @@
  * 			for building the particle configurations.
  * @details The cell linked list saves for each body a list of particles
  * 			located within the cell.
- * @author	Chi ZHang, Yongchuan and Xiangyu Hu
+ * @author	Chi Zhang, Yongchuan and Xiangyu Hu
  */
 
 #ifndef MESH_CELL_LINKED_LIST_H

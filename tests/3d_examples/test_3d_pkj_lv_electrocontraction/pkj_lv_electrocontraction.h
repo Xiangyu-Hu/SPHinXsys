@@ -64,8 +64,8 @@ Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
 Real acceleration_factor = 27.5; /** Acceleration factor for fast diffusion on purkinje network. */
-Real diffusion_coff = 0.8;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 0.8;
+Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
 std::array<std::string, 1> species_name_list{"Phi"};
 Real c_m = 1.0;
@@ -104,20 +104,13 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
               {"Phi"}, SharedPtr<NoReaction>(),
               rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
 using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation. */
-class DiffusionRelaxation
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<FiberDirectionDiffusionParticles>>
-{
-  public:
-    explicit DiffusionRelaxation(InnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~DiffusionRelaxation(){};
-};
+using FiberDirectionDiffusionRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<FiberDirectionDiffusionParticles, CorrectedKernelGradientInner>>>;
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
     : public DiffusionReactionSpeciesConstraint<BodyPartByParticle, FiberDirectionDiffusionParticles>
@@ -130,8 +123,8 @@ class DiffusionBCs
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
-        Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd face_norm = displ / (displ.norm() + 1.0e-15);
 
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
@@ -182,8 +175,8 @@ class ComputeFiberAndSheetDirections
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from Levelset field. */
-        Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
-        Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd face_norm = displ / (displ.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)
         {
@@ -255,10 +248,10 @@ class ApplyStimulusCurrentToMyocardium
     };
 };
 // Observer particle generator.
-class HeartObserverParticleGenerator : public ObserverParticleGenerator
+class HeartObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));

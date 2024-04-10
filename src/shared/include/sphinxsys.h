@@ -23,7 +23,7 @@
 /**
  * @file 	sphinxsys.h
  * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef SPHINXSYS_H
 #define SPHINXSYS_H

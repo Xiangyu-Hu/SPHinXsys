@@ -1,7 +1,7 @@
 /**
  * @file regression_test_base.hpp
  * @brief Base classes for comparisons between validated and tested results.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -28,8 +28,8 @@ void RegressionTestBase<ObserveMethodType>::writeToXml(ObservedQuantityRecording
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-template <typename ReduceType>
-void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<ReduceType> *reduce_method, size_t iteration)
+template <typename ReduceType, typename ExecutionPolicy>
+void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<ReduceType, ExecutionPolicy> *reduce_method, size_t iteration)
 {
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
@@ -59,8 +59,8 @@ void RegressionTestBase<ObserveMethodType>::readFromXml(ObservedQuantityRecordin
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-template <typename ReduceType>
-void RegressionTestBase<ObserveMethodType>::readFromXml(ReducedQuantityRecording<ReduceType> *reduce_method)
+template <typename ReduceType, typename ExecutionPolicy>
+void RegressionTestBase<ObserveMethodType>::readFromXml(ReducedQuantityRecording<ReduceType, ExecutionPolicy> *reduce_method)
 {
     observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
     size_t number_of_particle_ = 1;

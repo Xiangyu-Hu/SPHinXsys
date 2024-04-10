@@ -83,11 +83,14 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
-    cube_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    cube_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_cube_inner(free_cube);
     SurfaceContactRelation free_cube_contact(free_cube, {&wall_boundary});
@@ -99,9 +102,10 @@ int main(int ac, char *av[])
     Transform transform2d(Rotation2d(-0.5235));
     SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
-    SimpleDynamics<TimeStepInitialization> free_cube_initialize_timestep(free_cube, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
     /** Kernel correction. */
-    InteractionWithUpdate<CorrectedConfigurationInner> free_cube_corrected_configuration(free_cube_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     /** Time step size. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     /** stress relaxation for the solid body. */
@@ -109,7 +113,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
     /** Algorithms for solid-solid contact. */
     InteractionDynamics<solid_dynamics::ContactDensitySummation> free_cube_update_contact_density(free_cube_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     /** Damping*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
@@ -117,10 +121,10 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /** Observer and output. */
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_free_cube_displacement("Position", io_environment, cube_observer_contact);
+        write_free_cube_displacement("Position", cube_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -131,6 +135,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     free_cube_corrected_configuration.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Initial states output.
     //----------------------------------------------------------------------
@@ -161,7 +166,6 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                free_cube_initialize_timestep.exec();
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
@@ -195,7 +199,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         // The lift force at the cylinder is very small and not important in this case.
         write_free_cube_displacement.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});

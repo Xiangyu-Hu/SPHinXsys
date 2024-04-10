@@ -20,7 +20,7 @@ StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------
 //	Global parameters on the material properties
 //----------------------------------------------------------------------
-Real diffusion_coff = 1.0e-3;
+Real diffusion_coeff = 1.0e-3;
 Real rho0_f = 1.0;                  /**< Density. */
 Real U_f = 1.0;                     /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;              /**< Speed of sound. */
@@ -101,7 +101,7 @@ class ThermofluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid
     ThermofluidBodyMaterial()
         : DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, SharedPtr<NoReaction>(), rho0_f, c_f, mu_f)
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
 using DiffusionBaseParticles = DiffusionReactionParticles<BaseParticles, ThermofluidBodyMaterial>;
@@ -171,21 +171,11 @@ class ThermofluidBodyInitialCondition
         }
     };
 };
-
-using FluidDiffusionInner = DiffusionRelaxationInner<DiffusionBaseParticles>;
-using FluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionBaseParticles, DiffusionSolidParticles>;
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
 //----------------------------------------------------------------------
-class ThermalRelaxationComplex
-    : public DiffusionRelaxationRK2<
-          ComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>
-{
-  public:
-    explicit ThermalRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<ComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>(inner_relation, body_contact_relation_Dirichlet){};
-    virtual ~ThermalRelaxationComplex(){};
-};
+using ThermalRelaxationComplex = DiffusionBodyRelaxationComplex<
+    DiffusionBaseParticles, DiffusionSolidParticles, KernelGradientInner, KernelGradientContact, Dirichlet>;
 //----------------------------------------------------------------------
 //	Inflow velocity
 //----------------------------------------------------------------------
@@ -216,37 +206,44 @@ struct InflowVelocity
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    GlobalStaticVariables::physical_time_ = 0.0;
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
+    FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
     thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
     thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
+    SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
     thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
     thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody temperature_observer(system, "FluidObserver");
-    temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    ObserverBody temperature_observer(sph_system, "FluidObserver");
+    temperature_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_body_inner(thermofluid_body);
     InnerRelation solid_body_inner(thermosolid_body);
-    ContactRelation fluid_wall_contact_Dirichlet(thermofluid_body, {&thermosolid_body});
-    ComplexRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
+    ContactRelation fluid_body_contact(thermofluid_body, {&thermosolid_body});
     ContactRelation fluid_observer_contact(temperature_observer, {&thermofluid_body});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation fluid_body_complex(fluid_body_inner, fluid_body_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -255,10 +252,8 @@ int main()
     SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
     SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
-    /** Initialize particle acceleration. */
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(thermofluid_body);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_inner, fluid_body_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step(thermofluid_body, U_f);
     /** Time step size with considering sound wave speed. */
@@ -266,15 +261,15 @@ int main()
     /** Time step size calculation. */
     GetDiffusionTimeStepSize<DiffusionBaseParticles> get_thermal_time_step(thermofluid_body);
     /** Diffusion process between two diffusion bodies. */
-    ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_wall_contact_Dirichlet);
+    ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_body_contact);
     /** Pressure relaxation using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(fluid_body_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(fluid_body_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_body_inner, fluid_body_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_body_inner, fluid_body_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_body_inner, fluid_body_contact);
     /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_body_complex);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_body_inner, fluid_body_contact);
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
     /** Inflow boundary condition. */
@@ -284,21 +279,19 @@ int main()
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_fluid_phi("Phi", io_environment, fluid_observer_contact);
-    ObservedQuantityRecording<Vecd>
-        write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_fluid_phi("Phi", fluid_observer_contact);
+    ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemCellLinkedLists();
     /** periodic condition applied after the mesh cell linked list build up
      * but before the configuration build up. */
     periodic_condition.update_cell_linked_list_.exec();
     /** initialize configurations for all bodies. */
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemConfigurations();
     /** computing surface normal direction for the wall. */
     thermosolid_body_normal_direction.exec();
     thermosolid_condition.exec();
@@ -329,10 +322,9 @@ int main()
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             size_t inner_ite_dt = 0;
@@ -364,9 +356,6 @@ int main()
             thermofluid_body.updateCellLinkedListWithParticleSort(100);
             periodic_condition.update_cell_linked_list_.exec();
             fluid_body_complex.updateConfiguration();
-
-            fluid_body_inner.updateConfiguration();
-            fluid_wall_contact_Dirichlet.updateConfiguration();
         }
         TickCount t2 = TickCount::now();
         /** write run-time observation into file */
@@ -384,7 +373,14 @@ int main()
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_fluid_phi.testResult();
+    if (sph_system.GenerateRegressionData())
+    {
+        write_fluid_phi.generateDataBase(1.0e-3, 1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_fluid_phi.testResult();
+    }
 
     return 0;
 }

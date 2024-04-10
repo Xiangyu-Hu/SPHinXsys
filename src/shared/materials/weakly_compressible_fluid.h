@@ -25,7 +25,7 @@
  * @brief 	Describe the weakly compressible fluid which is used
  * 			model incompressible fluids. Here, we have included several equation of states.
  * 			Futhermore, A typical non-newtonian fluid model is included.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef WEAKLY_COMPRESSIBLE_FLUID_H
@@ -86,9 +86,9 @@ class WeaklyCompressibleFluidFreeSurface : public WeaklyCompressibleFluidType
     Real cutoff_pressure_, cutoff_density_;
 
   public:
-    template <typename... ConstructorArgs>
-    explicit WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure, ConstructorArgs &&...args)
-        : WeaklyCompressibleFluidType(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    explicit WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure, Args &&...args)
+        : WeaklyCompressibleFluidType(std::forward<Args>(args)...),
           cutoff_pressure_(cutoff_pressure),
           cutoff_density_(WeaklyCompressibleFluidType::DensityFromPressure(cutoff_pressure))
     {

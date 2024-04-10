@@ -23,13 +23,15 @@
 /**
  * @file 	all_particle_generator.h
  * @brief 	Head file for all particle generator.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_PARTICLE_GENERATORS_3D_H
 #define ALL_PARTICLE_GENERATORS_3D_H
 
+#include "line_particle_generator.h"
 #include "particle_generator_lattice.h"
+#include "particle_generator_mesh.h"
 #include "particle_generator_network.h"
 
 #endif // ALL_PARTICLE_GENERATORS_3D_H

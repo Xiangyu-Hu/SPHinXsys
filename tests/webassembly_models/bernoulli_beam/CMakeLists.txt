@@ -22,7 +22,7 @@ target_link_libraries(${PROJECT_NAME} structural_simulation_module)
 
 if(NOT EMSCRIPTEN)
 	add_test(NAME ${PROJECT_NAME} 
-			COMMAND ${PROJECT_NAME} --r=true
+			COMMAND ${PROJECT_NAME}
 			WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 endif()
 

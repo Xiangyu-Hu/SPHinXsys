@@ -48,7 +48,7 @@ class TimeDependentGravity : public Gravity
   public:
     explicit TimeDependentGravity(Vecd gravity_vector)
         : Gravity(gravity_vector) {}
-    virtual Vecd InducedAcceleration(Vecd &position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real current_time = GlobalStaticVariables::physical_time_;
         return current_time < time_to_full_gravity ? current_time * global_acceleration_ / time_to_full_gravity : global_acceleration_;
@@ -60,33 +60,33 @@ class TimeDependentGravity : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif /** output environment. */
 
     /** create a Cantilever body, corresponding material, particles and reaction model. */
-    SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
+    SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     cantilever_body.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody cantilever_observer(system, "CantileverObserver");
-    cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    ObserverBody cantilever_observer(sph_system, "CantileverObserver");
+    cantilever_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** topology */
     InnerRelation cantilever_body_inner(cantilever_body);
     ContactRelation cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
     //-------- common particle dynamics ----------------------------------------
-    SimpleDynamics<TimeStepInitialization>
-        initialize_time_step(cantilever_body, makeShared<TimeDependentGravity>(Vec3d(0.0, -gravity_g, 0.0)));
+    TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
+    SimpleDynamics<GravityForce> apply_time_dependent_gravity(cantilever_body, gravity);
 
     /**
      * This section define all numerical methods will be used in this case.
      */
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner>
+    InteractionWithUpdate<KernelCorrectionMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
@@ -105,17 +105,17 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, cantilever_observer_contact);
+        write_displacement("Position", cantilever_observer_contact);
     /**
      * From here the time stepping begins.
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
     write_states.writeToFile(0);
     write_displacement.writeToFile(0);
@@ -142,7 +142,7 @@ int main(int ac, char *av[])
                           << dt << "\n";
             }
 
-            initialize_time_step.exec(); // gravity force
+            apply_time_dependent_gravity.exec();
             stress_relaxation_first_half.exec(dt);
             constraint_holder.exec(dt);
             muscle_damping.exec(dt);
@@ -166,7 +166,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_displacement.generateDataBase(1.0e-2);
     }

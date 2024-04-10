@@ -3,8 +3,8 @@
  * @brief 	This is the head files used by diffusion_RobinBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef DIFFUSION_ROBINBC_H
-#define DIFFUSION_ROBINBC_H
+#ifndef DIFFUSION_ROBIN_BC_H
+#define DIFFUSION_ROBIN_BC_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -129,7 +129,8 @@ class DirichletWallBoundaryInitialCondition
     size_t phi_;
 
   public:
-    DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
+    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body)
+        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -158,9 +159,10 @@ class RobinWallBoundaryInitialCondition
     Real &T_infinity_;
 
   public:
-    RobinWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-                                                                   convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-                                                                   T_infinity_(*(this->particles_->template getGlobalVariableByName<Real>("T_infinity")))
+    explicit RobinWallBoundaryInitialCondition(SolidBody &diffusion_body)
+        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
+          convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
+          T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("T_infinity")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -177,30 +179,15 @@ class RobinWallBoundaryInitialCondition
     }
 };
 
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
-using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
-using SolidDiffusionRobin = DiffusionRelaxationRobin<DiffusionParticles, WallParticles>;
-//----------------------------------------------------------------------
-//	Specify diffusion relaxation method.
-//----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation,
-                                     BaseContactRelation &body_contact_relation_Dirichlet,
-                                     BaseContactRelation &body_contact_relation_Robin)
-        : DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>(
-              inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
+    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Dirichlet, Robin>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
+class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit TemperatureObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 5;
@@ -209,11 +196,10 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 
         for (size_t i = 0; i < number_of_observation_points; ++i)
         {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
-                                                    Real(number_of_observation_points - 1) +
-                                                start_of_measure);
+            Vec2d point_coordinate(
+                0.5 * L, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
             positions_.push_back(point_coordinate);
         }
     }
 };
-#endif // DIFFUSION_ROBINBC_H
+#endif // DIFFUSION_ROBIN_BC_H

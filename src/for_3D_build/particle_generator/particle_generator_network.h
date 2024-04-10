@@ -31,20 +31,20 @@
 #define PARTICLE_GENERATOR_NETWORK_H
 
 #include "base_particle_generator.h"
-#include "complex_body.h"
 #include "sph_data_containers.h"
+#include "tree_body.h"
 
 namespace SPH
 {
-/**
- * @class ParticleGeneratorNetwork
- * @brief Generate a tree-shape network for the conduction system of a heart with particles.
- */
-class ParticleGeneratorNetwork : public ParticleGenerator
+class Network;
+
+template <> // Generate a tree-shape network using particles
+class ParticleGenerator<Network> : public ParticleGenerator<Base>
 {
   public:
-    ParticleGeneratorNetwork(SPHBody &sph_body, const Vecd &starting_pnt, const Vecd &second_pnt, int iterator, Real grad_factor);
-    virtual ~ParticleGeneratorNetwork(){};
+    ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
+                      const Vecd &second_pnt, int iterator, Real grad_factor);
+    virtual ~ParticleGenerator(){};
 
     /** Created base particles based on edges in branch */
     virtual void initializeGeometricVariables() override;
@@ -62,7 +62,7 @@ class ParticleGeneratorNetwork : public ParticleGenerator
     std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; /**< angles with respect to the initial edge of the fascicles.*/
     Real fascicle_ratio_ = 15.0;                        /**< ratio of length  of the fascicles. Include one per fascicle to include.*/
     SPHBody &sph_body_;
-    Shape &body_shape_;
+    Shape &initial_shape_;
     BaseCellLinkedList &cell_linked_list_;
     TreeBody *tree_;
     /**
@@ -103,5 +103,7 @@ class ParticleGeneratorNetwork : public ParticleGenerator
 
     void growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction);
 };
+using ParticleGeneratorNetwork = ParticleGenerator<Network>;
+
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_NETWORK_H

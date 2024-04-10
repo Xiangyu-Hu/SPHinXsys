@@ -33,44 +33,38 @@ class Pipe : public MultiPolygonShape
 //--------------------------------------------------------------------------
 //	Main program starts here.
 //--------------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     /** Build up a SPHSystem. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     /** Creating body, materials and particles. */
-    SolidBody pipe_body(system, makeShared<Pipe>("PipeBody"));
+    SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
+    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     pipe_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-    pipe_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
+    pipe_body.generateParticles<ParticleGeneratorThickSurface>(thickness);
     pipe_body.addBodyStateForRecording<Vecd>("NormalDirection");
     /**
      * @brief define simple data file input and outputs functions.
      */
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, {pipe_body});
-    MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body.getCellLinkedList());
+    BodyStatesRecordingToVtp write_real_body_states({pipe_body});
+    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, pipe_body.getCellLinkedList());
 
-    /** Set body contact map
-     *  The contact map gives the data connections between the bodies
-     *  basically the the range of bodies to build neighbor particle lists
-     */
     InnerRelation pipe_body_inner(pipe_body);
-
-    /** Random reset the particle position. */
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_pipe_body_particles(pipe_body);
     /** A  Physics relaxation step. */
-    relax_dynamics::ShellRelaxationStepInner
-        relaxation_step_pipe_body_inner(pipe_body_inner, thickness, level_set_refinement_ratio);
-    relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
+    ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner);
+    ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
     pipe_body.addBodyStateForRecording<int>("UpdatedIndicator");
     /**
      * @brief 	Particle relaxation starts here.
      */
     random_pipe_body_particles.exec(0.25);
-    relaxation_step_pipe_body_inner.mid_surface_bounding_.exec();
+    relaxation_step_pipe_body_inner.MidSurfaceBounding().exec();
     write_real_body_states.writeToFile(0.0);
     pipe_body.updateCellLinkedList();
     write_mesh_cell_linked_list.writeToFile(0.0);

@@ -23,14 +23,13 @@
 /**
  * @file 	data_type.h
  * @brief 	This is the date type definition in 3D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef DATA_TYPE_3D_H
 #define DATA_TYPE_3D_H
 
 #include "base_data_type.h"
 #include "scalar_functions.h"
-#include "vector_functions.h"
 
 namespace SPH
 {
@@ -43,6 +42,7 @@ using AlignedBox = AlignedBox3d;
 using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
 using BoundingBox = BaseBoundingBox<Vec3d>;
+using Transform = BaseTransform<Rotation3d, Vec3d>;
 
 template <class DataType, int array_size>
 using PackageDataMatrix = std::array<std::array<std::array<DataType, array_size>, array_size>, array_size>;
@@ -61,6 +61,7 @@ const Matd reduced_unit_matrix{
 };
 /** initial local normal, only works for thin structure dynamics. */
 const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
+const Vecd local_pseudo_b_n_0 = Vecd(0.0, 1.0, 0.0);
 
 const Vecd ZeroVecd = Vec3d::Zero();
 } // namespace SPH

@@ -23,7 +23,7 @@
 /**
  * @file 	base_data_package.h
  * @brief 	Base data package for the library.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H
@@ -32,58 +32,17 @@
 #include "data_type.h"
 #include "large_data_containers.h"
 #include "ownership.h"
+#include "vector_functions.h"
 
 #define TBB_PARALLEL true
 
 namespace SPH
 {
-/**
- * @class Transform
- * @brief Wrapper for SimTK::Transform
- * Note that the rotation is around the frame (or local) origin.
- */
-class Transform
-{
-  private:
-    Matd rotation_, inv_rotation_;
-    Vecd translation_;
-
-  public:
-    explicit Transform(const Rotation &rotation, const Vecd &translation = Vecd::Zero())
-        : rotation_(rotation.toRotationMatrix()), inv_rotation_(rotation_.transpose()), translation_(translation){};
-    explicit Transform(const Vecd &translation)
-        : rotation_(Matd::Identity()), inv_rotation_(rotation_.transpose()), translation_(translation){};
-    Transform() : Transform(Vecd::Zero()){};
-
-    /** Forward rotation. */
-    Vecd xformFrameVecToBase(const Vecd &origin)
-    {
-        return rotation_ * origin;
-    };
-
-    /** Forward transformation. Note that the rotation operation is carried out first. */
-    Vecd shiftFrameStationToBase(const Vecd &origin)
-    {
-        return translation_ + xformFrameVecToBase(origin);
-    };
-
-    /** Inverse rotation. */
-    Vecd xformBaseVecToFrame(const Vecd &target)
-    {
-        return inv_rotation_ * target;
-    };
-
-    /** Inverse transformation. Note that the inverse translation operation is carried out first. */
-    Vecd shiftBaseStationToFrame(const Vecd &target)
-    {
-        return xformBaseVecToFrame(target - translation_);
-    };
-};
-
 constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
+constexpr int lastAxis = Dimensions - 1;
 
 /** Generalized data container assemble type */
-template <template <typename DataType> typename DataContainerType>
+template <template <typename> typename DataContainerType>
 using DataContainerAssemble =
     std::tuple<StdVec<DataContainerType<Real>>,
                StdVec<DataContainerType<Vec2d>>,
@@ -95,7 +54,7 @@ using DataContainerAssemble =
                StdVec<DataContainerType<DeviceVec2d>>,
                StdVec<DataContainerType<DeviceVec3d>>>;
 /** Generalized data container address assemble type */
-template <template <typename DataType> typename DataContainerType>
+template <template <typename> typename DataContainerType>
 using DataContainerAddressAssemble =
     std::tuple<StdVec<DataContainerType<Real> *>,
                StdVec<DataContainerType<Vec2d> *>,
@@ -107,7 +66,7 @@ using DataContainerAddressAssemble =
                StdVec<DataContainerType<DeviceVec2d> *>,
                StdVec<DataContainerType<DeviceVec3d> *>>;
 /** Generalized data container unique pointer assemble type */
-template <template <typename DataType> typename DataContainerType>
+template <template <typename> typename DataContainerType>
 using DataContainerUniquePtrAssemble =
     std::tuple<UniquePtrsKeeper<DataContainerType<Real>>,
                UniquePtrsKeeper<DataContainerType<Vec2d>>,
@@ -120,7 +79,7 @@ using DataContainerUniquePtrAssemble =
                UniquePtrsKeeper<DataContainerType<DeviceVec3d>>>;
 
 /** a type irrelevant operation on the data assembles  */
-template <template <typename VariableType> typename OperationType>
+template <template <typename> typename OperationType>
 struct DataAssembleOperation
 {
     OperationType<Real> scalar_operation;

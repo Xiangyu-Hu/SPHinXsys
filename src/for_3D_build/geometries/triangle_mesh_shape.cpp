@@ -18,6 +18,17 @@ SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::generateTriangleMesh(co
     return triangle_mesh;
 }
 //=================================================================================================//
+SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::getTriangleMesh()
+{
+    if (triangle_mesh_ == nullptr)
+    {
+        std::cout << "\n Error: TriangleMesh not setup yet! \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    return triangle_mesh_;
+}
+//=================================================================================================//
 bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 {
     SimTKVec2 uv_coordinate;
@@ -36,7 +47,7 @@ bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INC
     {
         Vec3d jittered = probe_point; // jittering
         for (int l = 0; l != probe_point.size(); ++l)
-            jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * (SqrtEps + distance_to_pnt * 0.1);
+            jittered[l] = probe_point[l] + rand_uniform(-0.5, 0.5) * (SqrtEps + distance_to_pnt * 0.1);
         Vec3d from_face_to_jittered = jittered - SimTKToEigen(closest_pnt);
         Vec3d direction_to_jittered = from_face_to_jittered / (from_face_to_jittered.norm() + TinyReal);
         cosine_angle = face_normal.dot(direction_to_jittered);
@@ -72,8 +83,8 @@ BoundingBox TriangleMeshShape::findBounds()
 {
     int number_of_vertices = triangle_mesh_->getNumVertices();
     // initial reference values
-    Vec3d lower_bound = SimTKToEigen(SimTKVec3(Infinity));
-    Vec3d upper_bound = SimTKToEigen(SimTKVec3(-Infinity));
+    Vec3d lower_bound = SimTKToEigen(SimTKVec3(MaxReal));
+    Vec3d upper_bound = SimTKToEigen(SimTKVec3(MinReal));
     for (int i = 0; i != number_of_vertices; ++i)
     {
         Vec3d vertex_position = SimTKToEigen(triangle_mesh_->getVertexPosition(i));

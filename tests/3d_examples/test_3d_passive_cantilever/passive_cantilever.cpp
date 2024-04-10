@@ -67,18 +67,19 @@ class CantileverInitialCondition
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
     /** create a Cantilever body, corresponding material, particles and reaction model. */
-    SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
+    SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<
         ElasticSolidParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     cantilever_body.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody cantilever_observer(system, "CantileverObserver");
-    cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    ObserverBody cantilever_observer(sph_system, "CantileverObserver");
+    cantilever_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** topology */
     InnerRelation cantilever_body_inner(cantilever_body);
@@ -89,7 +90,7 @@ int main()
      */
     SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner>
+    InteractionWithUpdate<KernelCorrectionMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
@@ -102,17 +103,17 @@ int main()
                                 makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder, "Holder"));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, cantilever_observer_contact);
+        write_displacement("Position", cantilever_observer_contact);
     /**
      * From here the time stepping begins.
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     /** apply initial condition */
     initialization.exec();
     corrected_configuration.exec();
@@ -162,6 +163,7 @@ int main()
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_displacement.testResult();
+
 
     return 0;
 }

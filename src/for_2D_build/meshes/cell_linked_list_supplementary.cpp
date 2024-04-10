@@ -85,8 +85,8 @@ void CellLinkedList ::InsertListDataEntry(
 //=================================================================================================//
 ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 {
-    Real min_distance_sqr = Infinity;
-    ListData nearest_entry(MaxSize_t, Infinity * Vecd::Ones(), Infinity);
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry(MaxSize_t, MaxReal * Vecd::Ones(), MaxReal);
 
     Array2i cell = CellIndexFromPosition(position);
     mesh_for_each(
@@ -134,7 +134,7 @@ void CellLinkedList::
 void CellLinkedList::
     tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis)
 {
-    int second_axis = SecondAxis(axis);
+    int second_axis = NextAxis(axis);
     Array2i body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first_);
     Array2i body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second_);
 

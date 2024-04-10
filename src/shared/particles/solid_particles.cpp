@@ -20,7 +20,7 @@ void SolidParticles::initializeOtherVariables()
     registerVariable(n_, "NormalDirection");
     registerVariable(n0_, "InitialNormalDirection", [&](size_t i) -> Vecd
                      { return n_[i]; });
-    registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd
+    registerVariable(B_, "KernelCorrectionMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
 }
 //=================================================================================================//
@@ -63,7 +63,7 @@ void ElasticSolidParticles::initializeOtherVariables()
      *	register FSI data
      */
     registerVariable(vel_ave_, "AverageVelocity");
-    registerVariable(acc_ave_, "AverageAcceleration");
+    registerVariable(force_ave_, "AverageForce");
     /**
      *	add restart output particle data
      */
@@ -249,14 +249,12 @@ StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
 //=================================================================================================//
 Real ElasticSolidParticles::getMaxDisplacement()
 {
-    Real displ_max = 0.0;
+    Real maximum = 0.0;
     for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
     {
-        Real displ = displacement(index_i).norm();
-        if (displ_max < displ)
-            displ_max = displ;
+        maximum = SMAX(maximum, displacement(index_i).norm());
     }
-    return displ_max;
+    return maximum;
 };
 //=================================================================================================//
 StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
@@ -301,7 +299,7 @@ void ShellParticles::initializeOtherVariables()
                      [&](size_t i) -> Vecd
                      { return n_[i]; });
     registerVariable(transformation_matrix_, "TransformationMatrix");
-    registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd
+    registerVariable(B_, "KernelCorrectionMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
     registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
@@ -320,14 +318,14 @@ void ShellParticles::initializeOtherVariables()
     registerVariable(global_stress_, "GlobalStress");
     registerVariable(global_moment_, "GlobalMoment");
     registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
-    registerVariable(numerical_damping_scaling_, "NemrticalDampingScaling_",
+    registerVariable(numerical_damping_scaling_, "NumericalDampingScaling",
                      [&](size_t i) -> Matd
                      { return Matd::Identity() * sph_body_.sph_adaptation_->ReferenceSmoothingLength(); });
     /**
      * for FSI
      */
     registerVariable(vel_ave_, "AverageVelocity");
-    registerVariable(acc_ave_, "AverageAcceleration");
+    registerVariable(force_ave_, "AverageForce");
     /**
      * for rotation.
      */
@@ -344,7 +342,7 @@ void ShellParticles::initializeOtherVariables()
     addDerivedVariableToWrite<VonMisesStrain>();
     addVariableToRestart<Matd>("DeformationGradient");
     addVariableToWrite<Vecd>("Rotation");
-    addDerivedVariableToWrite<MidSurfaceVonMisesStressofShells>();
+    addDerivedVariableToWrite<MidSurfaceVonMisesStress>();
     /**
      * initialize transformation matrix
      */
@@ -355,5 +353,5 @@ void ShellParticles::initializeOtherVariables()
             thickness_[i] < sph_body_.sph_adaptation_->ReferenceSmoothingLength() ? thickness_[i] : sph_body_.sph_adaptation_->ReferenceSmoothingLength();
     }
 }
-//=================================================================================================//
+
 } // namespace SPH

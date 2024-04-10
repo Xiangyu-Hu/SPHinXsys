@@ -1,7 +1,7 @@
 /**
  * @file 	base_particles.hpp
  * @brief 	This is the implementation of the template functions in base_particles.h
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLES_HPP
@@ -51,21 +51,21 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::registerGlobalVariable(const std::string &variable_name, DataType initial_value)
+DataType *BaseParticles::registerSingleVariable(const std::string &variable_name, DataType initial_value)
 {
-    GlobalVariable<DataType> *variable = findVariableByName<DataType>(all_global_variables_, variable_name);
+    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
 
     return variable != nullptr
                ? variable->ValueAddress()
-               : addVariableToAssemble<DataType>(all_global_variables_,
+               : addVariableToAssemble<DataType>(all_single_variables_,
                                                  all_global_variable_ptrs_, variable_name, initial_value)
                      ->ValueAddress();
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
+DataType *BaseParticles::getSingleVariableByName(const std::string &variable_name)
 {
-    GlobalVariable<DataType> *variable = findVariableByName<DataType>(all_global_variables_, variable_name);
+    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
 
     if (variable != nullptr)
     {
@@ -258,22 +258,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 {
     size_t total_real_particles = total_real_particles_;
 
-    // write current/final particle positions first
-    output_stream << "   <Points>\n";
-    output_stream << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-    output_stream << "    ";
-    for (size_t i = 0; i != total_real_particles; ++i)
-    {
-        Vec3d particle_position = upgradeToVec3d(pos_[i]);
-        output_stream << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
-    }
-    output_stream << std::endl;
-    output_stream << "    </DataArray>\n";
-    output_stream << "   </Points>\n";
-
-    // write header of particles data
-    output_stream << "   <PointData  Vectors=\"vector\">\n";
-
     // write sorted particles ID
     output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
     output_stream << "    ";
@@ -293,12 +277,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     }
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
-
-    // compute derived particle variables
-    for (auto &derived_variable : derived_variables_)
-    {
-        derived_variable->exec();
-    }
 
     // write integers
     constexpr int type_index_int = DataTypeIndex<int>::value;
@@ -375,11 +353,13 @@ template <typename DataType>
 void WriteAParticleVariableToXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
-    SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
-    for (size_t i = 0; i != total_real_particles_; ++i)
+    size_t index = 0;
+    for( auto child = xml_parser_.first_element_->FirstChildElement();
+        child;
+        child = child->NextSiblingElement()  )
     {
-        xml_engine_.setAttributeToElement(ele_ite, variable_name, variable[i]);
-        ele_ite++;
+        xml_parser_.setAttributeToElement( child, variable_name, variable[index] );
+        index ++; 
     }
 }
 //=================================================================================================//
@@ -387,11 +367,13 @@ template <typename DataType>
 void ReadAParticleVariableFromXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
-    SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
-    for (size_t i = 0; i != total_real_particles_; ++i)
+    size_t index = 0;
+    for( auto child = xml_parser_.first_element_->FirstChildElement();
+        child;
+        child = child->NextSiblingElement()  )
     {
-        xml_engine_.getRequiredAttributeValue(ele_ite, variable_name, variable[i]);
-        ele_ite++;
+        xml_parser_.queryAttributeValue( child, variable_name, variable[index] );
+        index ++; 
     }
 }
 //=================================================================================================//

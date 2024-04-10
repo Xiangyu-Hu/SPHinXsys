@@ -24,7 +24,7 @@
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
  * @details	There two main type of body parts. One is part by particle.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_PART_H
@@ -126,12 +126,12 @@ class BodyRegionByParticle : public BodyPartByParticle
     SharedPtrKeeper<Shape> shape_ptr_keeper_;
 
   public:
-    Shape &body_part_shape_;
-
     BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
     virtual ~BodyRegionByParticle(){};
+    Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
+    Shape &body_part_shape_;
     void tagByContain(size_t particle_index);
 };
 
@@ -175,18 +175,21 @@ class BodyRegionByCell : public BodyPartByCell
     SharedPtrKeeper<Shape> shape_ptr_keeper_;
 
   public:
-    Shape &body_part_shape_;
-
     BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
     virtual ~BodyRegionByCell(){};
+    Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
+    Shape &body_part_shape_;
     bool checkNotFar(Vecd cell_position, Real threshold);
 };
 
 /**
  * @class NearShapeSurface
  * @brief A body part with the cell lists near the surface of a prescribed shape.
+ * @ details The body part shape can be that of the body,
+ * or a sub shape of the body shape, or a shape independent of the body shape.
+ * Note that only cells near the surface of the body part shape are included.
  */
 class NearShapeSurface : public BodyPartByCell
 {
@@ -194,18 +197,15 @@ class NearShapeSurface : public BodyPartByCell
     UniquePtrKeeper<LevelSetShape> level_set_shape_keeper_;
 
   public:
-    LevelSetShape &level_set_shape_;
-
-    /** for the case that the body part shape is not that of the body */
     NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    /** for the case that the body part shape is the surface of the body shape */
+    NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     explicit NearShapeSurface(RealBody &real_body);
-    /** for the case that the body part shape is one part of the surface of the body shape */
-    NearShapeSurface(RealBody &real_body, const std::string &shape_name);
+    NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
     virtual ~NearShapeSurface(){};
+    LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
   private:
-    /** only cells near the surface of the body part shape are included */
+    LevelSetShape &level_set_shape_;
     bool checkNearSurface(Vecd cell_position, Real threshold);
 };
 

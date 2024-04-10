@@ -23,7 +23,7 @@
 /**
  * @file    solid_body.h
  * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SOLID_BODY_H
@@ -46,9 +46,9 @@ class SolidParticles;
 class SolidBody : public RealBody
 {
   public:
-    template <typename... ConstructorArgs>
-    SolidBody(ConstructorArgs &&...args)
-        : RealBody(std::forward<ConstructorArgs>(args)...)
+    template <typename... Args>
+    SolidBody(Args &&...args)
+        : RealBody(std::forward<Args>(args)...)
     {
         sph_system_.solid_bodies_.push_back(this);
         defineAdaptation<SPHAdaptation>(1.15);
@@ -72,7 +72,7 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
     Vecd initial_mass_center_;
     SimTK::MassProperties *body_part_mass_properties_;
 
-    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
+    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> initial_shape_ptr);
     virtual ~SolidBodyPartForSimbody(){};
 
   protected:

@@ -1,41 +1,37 @@
 /**
- * @file 	ball_shell_collision.cpp
- * @brief 	an elastic ball bouncing within a confined shell boundary
+ * @file ball_shell_collision.cpp
+ * @brief an elastic ball bouncing within a rigid shell boundary
  * @details This is a case to test elasticSolid -> shell impact/collision.
- * @author 	Massoud Rezavand, Virtonomy GmbH
+ * @author Massoud Rezavand and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real resolution_ref = 0.025; /**< reference resolution. */
-Real circle_radius = 2.0;
-Vec2d circle_center(2.0, 2.0);
-Real thickness = resolution_ref * 1.; /**< shell thickness. */
-Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
-BoundingBox system_domain_bounds(Vec2d(-thickness, -thickness), Vec2d(2.0 * circle_radius + thickness, 2.0 * circle_radius + thickness));
+Real resolution_ref = 0.025;
+Real shell_shape_radius = 2.0;
+Vec2d shell_shape_center(2.0, 2.0);
+Real thickness = resolution_ref * 1.;
 Vec2d ball_center(3.0, 1.5);
 Real ball_radius = 0.5;
-StdVec<Vecd> beam_observation_location = {ball_center};
-Real gravity_g = 1.0;
+Vec2d gravity(0.0, -1.0);
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 2.0e4;
 Real poisson = 0.45;
-Real physical_viscosity = 1.0e6;
 //----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries (ComplexShape).
+//	Case dependent geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
+class ShellShape : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit ShellShape(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<GeometricShapeBall>(circle_center, circle_radius + resolution_ref);
-        subtract<GeometricShapeBall>(circle_center, circle_radius);
+        add<GeometricShapeBall>(shell_shape_center, shell_shape_radius + thickness);
+        subtract<GeometricShapeBall>(shell_shape_center, shell_shape_radius);
     }
 };
 //----------------------------------------------------------------------
@@ -44,14 +40,17 @@ class WallBoundary : public ComplexShape
 int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
-    //	Build up the environment of a SPHSystem with global controls.
+    //	Build up the environment of a SPHSystem and IO environment.
     //----------------------------------------------------------------------
+    Vec2d domain_lower_bound(-thickness, -thickness);
+    Real domain_box_size = 2.0 * shell_shape_radius + thickness;
+    Vec2d domain_upper_bound(domain_box_size, domain_box_size);
+    BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
-    /** Tag for starting with relaxed body-fitted particles distribution */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
+
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -60,39 +59,35 @@ int main(int ac, char *av[])
     ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getName());
+        ball.generateParticles<ParticleGeneratorReload>(ball.getName());
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
         ball.generateParticles<ParticleGeneratorLattice>();
     }
 
-    // Note the wall boundary here has sharp corner, and is a numerical invalid elastic shell structure,
-    // and its dynamics is not able to be modeled by the shell dynamics in SPHinXsys in the current version.
-    // Here, we use it simply as a rigid shell.
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
+    SolidBody rigid_shell(sph_system, makeShared<ShellShape>("ShellShape"));
+    rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
+    rigid_shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
+        rigid_shell.generateParticles<ParticleGeneratorReload>(rigid_shell.getName());
     }
-    else
-    {
-        wall_boundary.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
-        wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
-    }
-
-    if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    else if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
         std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
         return 0;
     }
+    else
+    {
+        Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
+        rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
+        rigid_shell.generateParticles<ParticleGeneratorThickSurface>(thickness);
+    }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
+    ball_observer.generateParticles<ParticleGeneratorObserver>(StdVec<Vecd>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -102,35 +97,34 @@ int main(int ac, char *av[])
         //	Define body relation map used for particle relaxation.
         //----------------------------------------------------------------------
         InnerRelation ball_inner(ball);
-        InnerRelation wall_boundary_inner(wall_boundary);
+        InnerRelation rigid_shell_inner(rigid_shell);
         //----------------------------------------------------------------------
-        //	Define the methods for particle relaxation for ball.
+        //	Define the methods for particle relaxation for the ball.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        relax_dynamics::RelaxationStepInner ball_relaxation_step_inner(ball_inner);
+        RelaxationStepInner ball_relaxation_step(ball_inner);
         //----------------------------------------------------------------------
-        //	Define the methods for particle relaxation for wall boundary.
+        //	Define the methods for particle relaxation for the rigid shell.
         //----------------------------------------------------------------------
-        SimpleDynamics<RandomizeParticlePosition> wall_boundary_random_particles(wall_boundary);
-        relax_dynamics::ShellRelaxationStepInner
-            relaxation_step_wall_boundary_inner(wall_boundary_inner, thickness, level_set_refinement_ratio);
-        relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(wall_boundary_inner, thickness, cos(Pi / 3.75));
-        wall_boundary.addBodyStateForRecording<int>("UpdatedIndicator");
+        SimpleDynamics<RandomizeParticlePosition> rigid_shell_random_particles(rigid_shell);
+        ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner);
+        ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, thickness, cos(Pi / 3.75));
+        rigid_shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-        MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, wall_boundary.getCellLinkedList());
-        ReloadParticleIO write_particle_reload(io_environment, {&ball, &wall_boundary});
+        BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+        MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, rigid_shell.getCellLinkedList());
+        ReloadParticleIO write_particle_reload({&ball, &rigid_shell});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
         ball_random_particles.exec(0.25);
-        wall_boundary_random_particles.exec(0.25);
-
-        relaxation_step_wall_boundary_inner.mid_surface_bounding_.exec();
+        ball_relaxation_step.SurfaceBounding().exec();
+        rigid_shell_random_particles.exec(0.25);
+        rigid_shell_relaxation_step.MidSurfaceBounding().exec();
         write_relaxed_particles.writeToFile(0);
-        wall_boundary.updateCellLinkedList();
         write_mesh_cell_linked_list.writeToFile(0);
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
@@ -139,9 +133,9 @@ int main(int ac, char *av[])
         int relax_step = 1000;
         while (ite < relax_step)
         {
-            ball_relaxation_step_inner.exec();
+            ball_relaxation_step.exec();
             for (int k = 0; k < 2; ++k)
-                relaxation_step_wall_boundary_inner.exec();
+                rigid_shell_relaxation_step.exec();
             ite += 1;
             if (ite % 100 == 0)
             {
@@ -159,32 +153,29 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation ball_inner(ball);
-    SurfaceContactRelation ball_contact(ball, {&wall_boundary});
+    SurfaceContactRelation ball_contact(ball, {&rigid_shell});
     ContactRelation ball_observer_contact(ball_observer, {&ball});
     //----------------------------------------------------------------------
-    //	Define the main numerical methods used in the simulation.
+    //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Define external force.*/
-    SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
-    InteractionWithUpdate<CorrectedConfigurationInner> ball_corrected_configuration(ball_inner);
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
-    /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
-    /** Algorithms for solid-solid contact. */
     InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
-    // DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
-    // 	ball_friction(0.1, ball_contact, physical_viscosity);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_ball_center_displacement("Position", io_environment, ball_observer_contact);
+        write_ball_center_displacement("Position", ball_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -192,10 +183,10 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     ball_corrected_configuration.exec();
-
-    /** Initial states output. */
-    body_states_recording.writeToFile(0);
-    /** Main loop. */
+    ball_constant_gravity.exec();
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     int ite = 0;
     Real T0 = 10.0;
     Real end_time = T0;
@@ -208,6 +199,10 @@ int main(int ac, char *av[])
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile();
+    //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
@@ -218,7 +213,6 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                ball_initialize_timestep.exec();
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
@@ -227,7 +221,6 @@ int main(int ac, char *av[])
                 ball_update_contact_density.exec();
                 ball_compute_solid_contact_forces.exec();
                 ball_stress_relaxation_first_half.exec(dt);
-                // ball_friction.exec(dt);
                 ball_stress_relaxation_second_half.exec(dt);
 
                 ball.updateCellLinkedList();
@@ -240,7 +233,6 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
             }
-
             write_ball_center_displacement.writeToFile(ite);
         }
         TickCount t2 = TickCount::now();
@@ -254,7 +246,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_ball_center_displacement.generateDataBase(1.0e-2);
     }

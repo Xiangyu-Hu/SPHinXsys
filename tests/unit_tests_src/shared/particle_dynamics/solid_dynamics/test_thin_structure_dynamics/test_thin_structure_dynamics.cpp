@@ -50,10 +50,10 @@ TEST(Plate, RigidRotationTest)
 }
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class PlateParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -148,12 +148,13 @@ int main(int ac, char *av[])
         stress_relaxation_first_half(plate_body_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
         stress_relaxation_second_half(plate_body_inner);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** Constrain the Boundary. */
     ControledGeometry controled_geometry(plate_body, "ControledGeometry");
     SimpleDynamics<ControledRotation> controled_rotaton(controled_geometry);
     /** Output */
     IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system.real_bodies_);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -215,9 +216,12 @@ int main(int ac, char *av[])
 
     for (int i = 0; i < 10; i++)
     {
-        rondom_index.push_back((double)rand() / (RAND_MAX)*shell_particles->total_real_particles_);
+        rondom_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->total_real_particles_);
         von_mises_strain.push_back(shell_particles->getVonMisesStrain(rondom_index[i]));
     }
+
+    update_normal.exec();
+
     pseudo_normal = shell_particles->pseudo_n_;
     normal = shell_particles->n_;
 

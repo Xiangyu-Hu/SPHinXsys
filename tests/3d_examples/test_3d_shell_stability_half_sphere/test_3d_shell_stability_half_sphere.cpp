@@ -1,9 +1,10 @@
 /**
- * @file 	test_3d_sphere_compression.cpp
- * @brief 	Shell verification  incl. refinement study
+ * @file test_3d_sphere_compression.cpp
+ * @brief Shell verification  incl. refinement study
  * @details Circular plastic shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
- * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH051: Bending of a Circular Plate Using Axisymmetric Elements
+ * @ref ANSYS Workbench Verification Manual, Release 15.0, November 2013,
+ * VMMECH051: Bending of a Circular Plate Using Axis symmetric Elements
  */
 
 #include "sphinxsys.h"
@@ -12,7 +13,7 @@
 
 using namespace SPH;
 
-class ShellSphereParticleGenerator : public SurfaceParticleGenerator
+class ShellSphereParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -20,8 +21,9 @@ class ShellSphereParticleGenerator : public SurfaceParticleGenerator
     const Real thickness_;
 
   public:
-    explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+    explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
+                                          const Vec3d &center, Real particle_area, Real thickness)
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -59,8 +61,8 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 {
     std::cout << "read_obj_vertices started" << std::endl;
 
-    std::ifstream myfile(file_name, std::ios_base::in);
-    if (!myfile.is_open())
+    std::ifstream my_file(file_name, std::ios_base::in);
+    if (!my_file.is_open())
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
@@ -68,7 +70,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
     unsigned int count = 0;
     Real value = 0;
 
-    while (myfile >> value)
+    while (my_file >> value)
     {
         particle[count] = value;
         ++count;
@@ -133,34 +135,27 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     shell_body.generateParticles<ShellSphereParticleGenerator>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
-    IOEnvironment io_env(system, false);
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
+    BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
+
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
+    SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
-
-    // pressure boundary condition
-    auto apply_pressure = [&]()
-    {
-        Real pressure_MPa = pressure * pow(unit_mm, 2);
-        for (size_t i = 0; i < shell_particles->acc_prior_.size(); ++i)
-        {
-            // opposite to normals
-            shell_particles->acc_prior_[i] -= pressure_MPa * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
-        }
-    };
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
@@ -183,10 +178,11 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
+    apply_constant_gravity.exec();
 
     {     // tests on initialization
         { // checking particle distances - avoid bugs of reading file
-            Real min_rij = Infinity;
+            Real min_rij = MaxReal;
             Real max_rij = 0;
             for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
             {
@@ -244,9 +240,11 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                               << dt << "\n";
                 }
 
-                initialize_external_force.exec(dt);
                 if (pressure > TinyReal)
-                    apply_pressure();
+                {
+                    normal_update.exec();
+                    apply_pressure.exec();
+                }
 
                 dt = computing_time_step_size.exec();
                 { // checking for excessive time step reduction
@@ -266,8 +264,6 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 ++ite;
                 integral_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
-
-                // shell_body.updateCellLinkedList();
 
                 { // checking if any position has become nan
                     for (const auto &pos : shell_body.getBaseParticles().pos_)

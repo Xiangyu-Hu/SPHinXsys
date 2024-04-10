@@ -51,11 +51,11 @@ StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * Gate_width)};
 //----------------------------------------------------------------------
 Real rho0_f = 1000.0;  /**< Reference density of fluid. */
 Real gravity_g = 9.81; /**< Value of gravity. */
-Real U_max = 2.0 * sqrt(Dam_H * gravity_g);
+Real U_ref = 2.0 * sqrt(Dam_H * gravity_g);
 ;                                     /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;              /**< Reference sound speed. */
+Real c_f = 10.0 * U_ref;              /**< Reference sound speed. */
 Real Re = 0.1;                        /**< Reynolds number. */
-Real mu_f = rho0_f * U_max * DL / Re; /**< Dynamics viscosity. */
+Real mu_f = rho0_f * U_ref * DL / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Material properties of the elastic gate.
 //----------------------------------------------------------------------
@@ -189,65 +189,71 @@ std::vector<Vecd> createGateConstrainShapeRight()
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    /** Set the starting time to zero. */
-    GlobalStaticVariables::physical_time_ = 0.0;
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody gate(system, makeShared<Gate>("Gate"));
+    SolidBody gate(sph_system, makeShared<Gate>("Gate"));
     gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
-    ObserverBody gate_observer(system, "Observer");
-    gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    ObserverBody gate_observer(sph_system, "Observer");
+    gate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation gate_inner(gate);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &gate});
+    ContactRelation water_block_contact(water_block, {&wall_boundary, &gate});
     ContactRelation gate_contact(gate, {&water_block});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+    //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Initialize particle acceleration. */ // TODO: this is missing for solid body.
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of fluid density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_fluid_density(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     /** Compute time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation using verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
-        fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
+        fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> gate_corrected_configuration(gate_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
     /** Stress relaxation stepping for the elastic gate. */
@@ -261,29 +267,30 @@ int main()
     /** Compute the average velocity of gate. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     /** Compute the force exerted on elastic gate due to fluid pressure. */
-    InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_gate(gate_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output body states for visualization. */
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of gate free end. */
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", io_environment, gate_observer_contact);
+        write_beam_tip_displacement("Position", gate_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     /** initialize cell linked lists for all bodies. */
-    system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemCellLinkedLists();
     /** initialize configurations for all bodies. */
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemConfigurations();
     /** computing surface normal direction for the wall. */
     wall_boundary_normal_direction.exec();
     /** computing surface normal direction for the insert body. */
     gate_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     gate_corrected_configuration.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -309,8 +316,6 @@ int main()
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
             /** Update normal direction on elastic body. */

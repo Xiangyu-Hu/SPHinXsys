@@ -41,13 +41,13 @@ class Beam : public ComplexShape
 };
 
 /* define load*/
-class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dynamics::ElasticSolidDataSimple
+class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>,
+                     public solid_dynamics::ElasticSolidDataSimple
 {
   public:
-    LoadForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
-        : BaseLocalDynamics<BodyPartByParticle>(body_part),
+    PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
+        : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
           solid_dynamics::ElasticSolidDataSimple(sph_body_),
-          acc_prior(particles_->acc_prior_),
           mass_n_(particles_->mass_),
           Vol_(particles_->Vol_),
           F_(particles_->F_),
@@ -74,11 +74,11 @@ class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dyn
         // current_area = J * area_0 * current_normal_norm
         Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
 
-        acc_prior[index_i] += (mean_force_ / mass_n_[index_i]) * normal;
+        loading_force_[index_i] = mean_force_ * normal;
+        ForcePrior::update(index_i, time);
     }
 
   protected:
-    StdLargeVec<Vecd> &acc_prior;
     StdLargeVec<Real> &mass_n_;
     StdLargeVec<Real> area_0_;
     StdLargeVec<Real> &Vol_;
@@ -111,29 +111,27 @@ class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dyn
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
 
     /** Import a beam body, with corresponding material and particles. */
-    SolidBody beam_body(system, makeShared<Beam>("beam"));
+    SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 
     // Define Observer
-    ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    ObserverBody beam_observer(sph_system, "BeamObserver");
+    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
-    /** initialize a time step */
-    SimpleDynamics<TimeStepInitialization> beam_initialize(beam_body);
 
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(beam_body_inner);
 
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
@@ -155,7 +153,7 @@ int main(int ac, char *av[])
         {Real(0.1) * end_time, Real(0.1) * load_total_force},
         {Real(0.4) * end_time, load_total_force},
         {Real(end_time), Real(load_total_force)}};
-    SimpleDynamics<LoadForce> pull_force(load_surface, force_over_time);
+    SimpleDynamics<PullingForce> pull_force(load_surface, force_over_time);
     std::cout << "load surface particle number: " << load_surface.body_part_particles_.size() << std::endl;
 
     //=== define constraint ===
@@ -169,13 +167,13 @@ int main(int ac, char *av[])
         beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
     /** Output */
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
-        write_beam_stress("VonMisesStress", io_environment, beam_observer_contact);
+        write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
 
     /** apply initial condition */
     corrected_configuration.exec();
@@ -204,7 +202,6 @@ int main(int ac, char *av[])
                           << dt << "\n";
             }
 
-            beam_initialize.exec();
             pull_force.exec(GlobalStaticVariables::physical_time_);
 
             /** Stress relaxation and damping. */
@@ -215,7 +212,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half.exec(dt);
 
             ite++;
-            dt = system.getSmallestTimeStepAmongSolidBodies();
+            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
             integration_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
@@ -232,7 +229,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_beam_stress.generateDataBase(0.01, 0.01);
     }

@@ -24,7 +24,7 @@
  * @file 	time_averaged_method.h
  * @brief 	Classes for the comparison between validated and tested results
  *        	with time-averaged meanvalue and variance method.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -80,8 +80,8 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     int testNewResult(BiVector<Matd> &current_result, StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance);
 
   public:
-    template <typename... ConstructorArgs>
-    explicit RegressionTestTimeAverage(ConstructorArgs &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    explicit RegressionTestTimeAverage(Args &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
                                                                      mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
                                                                      mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
     {

@@ -36,7 +36,7 @@
 #include "base_variable.h"
 #include "particle_sorting.h"
 #include "sph_data_containers.h"
-#include "xml_engine.h"
+#include "xml_parser.h"
 #include "execution_queue.hpp"
 #include "execution_policy.h"
 
@@ -47,7 +47,6 @@ namespace SPH
 
 class SPHBody;
 class BaseMaterial;
-class ParticleGenerator;
 class BodySurface;
 template <class ReturnType>
 class BaseDynamics;
@@ -87,7 +86,7 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
-    DataContainerUniquePtrAssemble<GlobalVariable> all_global_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
     DataContainerUniquePtrAssemble<DeviceVariable> all_device_variable_ptrs_;
     UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_;
 
@@ -99,15 +98,15 @@ class BaseParticles
         freeDeviceData(sequence_device_);
     };
 
-    StdLargeVec<Vecd> pos_;       /**< Position */
-    StdLargeVec<Vecd> vel_;       /**< Velocity */
-    StdLargeVec<Vecd> acc_;       /**< Acceleration induced by pressure- or stress */
-    StdLargeVec<Vecd> acc_prior_; /**< Other, such as gravity and viscous, accelerations computed before acc_ */
+    StdLargeVec<Vecd> pos_;         /**< Position */
+    StdLargeVec<Vecd> vel_;         /**< Velocity */
+    StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
+    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
 
-    StdLargeVec<Real> Vol_;              /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;              /**< Density */
-    StdLargeVec<Real> mass_;             /**< Massive measure, also mass per-unit thickness and per-unit cross-section of surface and linear particle */
-    StdLargeVec<int> surface_indicator_; /**< free surface indicator */
+    StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> rho_;      /**< Density */
+    StdLargeVec<Real> mass_;     /**< Mass*/
+    StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     //----------------------------------------------------------------------
@@ -145,10 +144,10 @@ class BaseParticles
     ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
 
     template <typename DataType>
-    DataType *registerGlobalVariable(const std::string &variable_name,
+    DataType *registerSingleVariable(const std::string &variable_name,
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *getGlobalVariableByName(const std::string &variable_name);
+    DataType *getSingleVariableByName(const std::string &variable_name);
 
     template <typename DeviceDataType, typename HostDataType = void>
     DeviceDataType *registerDeviceVariable(const std::string &variable_name, std::size_t size,
@@ -180,6 +179,7 @@ class BaseParticles
 
     template <class DerivedVariableMethod, class... Ts>
     void addDerivedVariableToWrite(Ts &&...);
+    void computeDerivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting
     //----------------------------------------------------------------------
@@ -205,18 +205,18 @@ class BaseParticles
     void writeParticlesToVtk(OutStreamType &output_stream);
     void writeParticlesToPltFile(std::ofstream &output_file);
     virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface &surface_particles);
-    void resizeXmlDocForParticles(XmlEngine &xml_engine);
+    void resizeXmlDocForParticles(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(std::string &filefullpath);
     void readParticleFromXmlForRestart(std::string &filefullpath);
     void writeToXmlForReloadParticle(std::string &filefullpath);
     void readFromXmlForReloadParticle(std::string &filefullpath);
-    XmlEngine *getReloadXmlEngine() { return &reload_xml_engine_; };
+    XmlParser *getReloadXmlParser() { return &reload_xml_parser_; };
     virtual BaseParticles *ThisObjectPtr() { return this; };
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
-    virtual Real ParticleMass(size_t index) { return mass_[index]; }
+    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
     virtual void registerDeviceMemory();
     virtual execution::ExecutionEvent copyToDeviceMemory();
@@ -227,11 +227,11 @@ class BaseParticles
     SPHBody &sph_body_;
     std::string body_name_;
     BaseMaterial &base_material_;
-    XmlEngine restart_xml_engine_;
-    XmlEngine reload_xml_engine_;
+    XmlParser restart_xml_parser_;
+    XmlParser reload_xml_parser_;
     ParticleData all_particle_data_;
     ParticleVariables all_discrete_variables_;
-    GlobalVariables all_global_variables_;
+    SingleVariables all_single_variables_;
     DeviceVariables all_device_variables_;
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
@@ -276,10 +276,10 @@ class BaseParticles
  */
 struct WriteAParticleVariableToXml
 {
-    XmlEngine &xml_engine_;
+    XmlParser &xml_parser_;
     size_t &total_real_particles_;
-    WriteAParticleVariableToXml(XmlEngine &xml_engine, size_t &total_real_particles)
-        : xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
+    WriteAParticleVariableToXml(XmlParser &xml_parser, size_t &total_real_particles)
+        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
 
     template <typename DataType>
     void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
@@ -291,10 +291,10 @@ struct WriteAParticleVariableToXml
  */
 struct ReadAParticleVariableFromXml
 {
-    XmlEngine &xml_engine_;
+    XmlParser &xml_parser_;
     size_t &total_real_particles_;
-    ReadAParticleVariableFromXml(XmlEngine &xml_engine, size_t &total_real_particles)
-        : xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
+    ReadAParticleVariableFromXml(XmlParser &xml_parser, size_t &total_real_particles)
+        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
 
     template <typename DataType>
     void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;

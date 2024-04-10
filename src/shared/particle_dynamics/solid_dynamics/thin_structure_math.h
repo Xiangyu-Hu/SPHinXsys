@@ -52,12 +52,8 @@ Vec2d getVectorChangeRateAfterThinStructureRotation(const Vec2d &initial_vector,
 Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel);
 
 /** get the rotation from pseudo-normal for finite deformation. */
-Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
-Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
-
-/** get the rotation from pseudo-normal for small deformation. */
-Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
-Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
+Vec2d getRotationFromPseudoNormal(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
+Vec3d getRotationFromPseudoNormal(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
 
 /** get the current normal direction from deformation gradient tensor. */
 Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F);
@@ -76,10 +72,6 @@ Vecd getWENOLeftState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i
 Vecd getWENORightState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
                        const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value);
 
-/** get the artificial rotation from the pseudo-normal jump. */
-Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix);
-Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix);
-
 /** get the corrected Eulerian Almansi strain tensor according to plane stress problem. */
 Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_);
 Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_);
@@ -87,6 +79,10 @@ Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const
 /** get the correction matrix. */
 Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one);
 Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one);
+
+/** get curvature. */
+std::tuple<Real, Real> get_principle_curvatures(const Mat2d &dn);
+std::tuple<Real, Real> get_principle_curvatures(const Mat3d &dn);
 } // namespace thin_structure_dynamics
 } // namespace SPH
 #endif // THIN_STRUCTURE_MATH_H

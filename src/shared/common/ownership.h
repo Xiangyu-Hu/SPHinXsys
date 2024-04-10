@@ -35,13 +35,15 @@
  *          Generally, the classes here are private member and
  * 			the smart pointer is used only when the memory is allocated.
  *          After that, we take reference or raw pointer out and use them as observer.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef OWNERSHIP_H
 #define OWNERSHIP_H
 
 #include "base_data_type.h"
+#include "execution_queue.hpp"
 
+#include <memory>
 #include <typeinfo>
 
 namespace SPH
@@ -75,10 +77,10 @@ CastingType &DynamicCast(OwnerType *owner, CastedType &casted)
 template <class T>
 using UniquePtr = std::unique_ptr<T>;
 
-template <class T, typename... ConstructorArgs>
-UniquePtr<T> makeUnique(ConstructorArgs &&...args)
+template <class T, typename... Args>
+UniquePtr<T> makeUnique(Args &&...args)
 {
-    return std::unique_ptr<T>(new T(std::forward<ConstructorArgs>(args)...));
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
 /**
@@ -91,18 +93,18 @@ class UniquePtrKeeper
 {
   public:
     /** output the observer as derived pointer */
-    template <class DerivedType, typename... ConstructorArgs>
-    DerivedType *createPtr(ConstructorArgs &&...args)
+    template <class DerivedType, typename... Args>
+    DerivedType *createPtr(Args &&...args)
     {
-        ptr_member_.reset(new DerivedType(std::forward<ConstructorArgs>(args)...));
+        ptr_member_.reset(new DerivedType(std::forward<Args>(args)...));
         return static_cast<DerivedType *>(ptr_member_.get());
     };
 
     /** output the observer as derived reference */
-    template <class DerivedType, typename... ConstructorArgs>
-    DerivedType &createRef(ConstructorArgs &&...args)
+    template <class DerivedType, typename... Args>
+    DerivedType &createRef(Args &&...args)
     {
-        ptr_member_.reset(new DerivedType(std::forward<ConstructorArgs>(args)...));
+        ptr_member_.reset(new DerivedType(std::forward<Args>(args)...));
         return *static_cast<DerivedType *>(ptr_member_.get());
     };
 
@@ -129,12 +131,12 @@ class UniquePtrsKeeper
   public:
     /** used to create a new derived object in the vector
      * and output its pointer as observer */
-    template <class DerivedType, typename... ConstructorArgs>
-    DerivedType *createPtr(ConstructorArgs &&...args)
+    template <class DerivedType, typename... Args>
+    DerivedType *createPtr(Args &&...args)
     {
         ptr_keepers_.push_back(UniquePtrKeeper<BaseType>());
         BaseType *observer = ptr_keepers_.back()
-                                 .template createPtr<DerivedType>(std::forward<ConstructorArgs>(args)...);
+                                 .template createPtr<DerivedType>(std::forward<Args>(args)...);
         return static_cast<DerivedType *>(observer);
     };
 
@@ -155,10 +157,10 @@ class UniquePtrsKeeper
 template <class T>
 using SharedPtr = std::shared_ptr<T>;
 
-template <class T, typename... ConstructorArgs>
-SharedPtr<T> makeShared(ConstructorArgs &&...args)
+template <class T, typename... Args>
+SharedPtr<T> makeShared(Args &&...args)
 {
-    return std::make_shared<T>(std::forward<ConstructorArgs>(args)...);
+    return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
 template <class T, typename... ConstructorArgs>
@@ -180,18 +182,18 @@ class SharedPtrKeeper
 {
   public:
     /** output the observer as pointer */
-    template <class DerivedType, typename... ConstructorArgs>
-    DerivedType *resetPtr(ConstructorArgs &&...args)
+    template <class DerivedType, typename... Args>
+    DerivedType *resetPtr(Args &&...args)
     {
-        ptr_member_ = makeShared<DerivedType>(std::forward<ConstructorArgs>(args)...);
+        ptr_member_ = makeShared<DerivedType>(std::forward<Args>(args)...);
         return static_cast<DerivedType *>(ptr_member_.get());
     };
 
     /** output the observer as derived reference */
-    template <class DerivedType, typename... ConstructorArgs>
-    DerivedType &resetRef(ConstructorArgs &&...args)
+    template <class DerivedType, typename... Args>
+    DerivedType &resetRef(Args &&...args)
     {
-        return *resetPtr<DerivedType>(std::forward<ConstructorArgs>(args)...);
+        return *resetPtr<DerivedType>(std::forward<Args>(args)...);
     };
 
     /** output the observer as pointer */

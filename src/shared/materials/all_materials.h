@@ -23,7 +23,7 @@
 /**
  * @file 	all_materials.h
  * @brief 	This is the header file for materials.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -35,3 +35,4 @@
 #include "elastic_solid.h"
 #include "inelastic_solid.h"
 #include "weakly_compressible_fluid.h"
+#include "general_continuum.h"

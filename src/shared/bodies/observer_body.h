@@ -30,7 +30,7 @@
  * 			Then, all shapes used in body definition should be either contain
  * 			or not contain each other.
  *			Partial overlap between them are not permitted.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef OBSERVER_BODY_H
@@ -43,7 +43,7 @@ namespace SPH
 class ObserverBody : public SPHBody
 {
   public:
-    ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
+    ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr);
     ObserverBody(SPHSystem &sph_system, const std::string &name);
     virtual ~ObserverBody(){};
 };

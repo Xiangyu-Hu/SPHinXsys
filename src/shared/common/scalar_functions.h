@@ -23,7 +23,7 @@
 /**
  * @file 	scalar_functions.h
  * @brief 	Base scalar function definition.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef SCALAR_FUNCTIONS_H
 #define SCALAR_FUNCTIONS_H
@@ -147,21 +147,30 @@ inline bool Not_a_number(T a)
     return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 }
 
-inline Real rand_norm(Real u, Real std)
+inline Real rand_normal(Real u, Real std)
 {
     unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::normal_distribution<Real> distribution(u, std);
     return distribution(generator);
 }
+
+inline Real rand_uniform(Real lower, Real upper)
+{
+    unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<Real> distribution(lower, upper);
+    return distribution(generator);
+}
+
 /** rotating axis once according to right hand rule.
  * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
-int SecondAxis(int first_axis);
+int NextAxis(int first_axis);
 /** rotating axis twice  according to right hand rule.
  * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
-int ThirdAxis(int first_axis);
+int NextNextAxis(int first_axis);
 
 Real getLeftStateInWeno(Real v1, Real v2, Real v3, Real v4);
 Real getRightStateInWeno(Real v1, Real v2, Real v3, Real v4);

@@ -1,15 +1,14 @@
 /**
- * @file 	regression_test.cpp
- * @brief 	This is a test case based on diffusion, which can be used to
-                        validate the generation of the converged database in a regression test.
-                        It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
+ * @file egression_test.cpp
+ * @brief This is a test case based on diffusion, which can be used to
+ * validate the generation of the converged database in a regression test.
+ * It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
  * @author 	Bo Zhang and Xiangyu Hu
  */
-
 #include "sphinxsys.h" //SPHinXsys Library
 using namespace SPH;   // namespace cite here
 //----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
+//	Basic geometry parameters and simulation setup.
 //----------------------------------------------------------------------
 Real L = 0.2;
 Real H = 0.2;
@@ -19,8 +18,8 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
-Real diffusion_coff = 1.0e-3;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 1.0e-3;
+Real bias_coeff = 0.0;
 Real alpha = Pi / 4.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
 Real initial_temperature = 0.0;
@@ -103,7 +102,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
   public:
     DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
     {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
+        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
     };
 };
 //----------------------------------------------------------------------
@@ -155,7 +154,7 @@ class DiffusionInitialCondition
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
     : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<DiffusionParticles, CorrectedKernelGradientInner>>
+          DiffusionRelaxation<Inner<DiffusionParticles, CorrectedKernelGradientInner>>>
 {
   public:
     explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
@@ -165,11 +164,11 @@ class DiffusionBodyRelaxation
 //----------------------------------------------------------------------
 //	an observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
+class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
     explicit TemperatureObserverParticleGenerator(SPHBody &sph_body)
-        : ObserverParticleGenerator(sph_body)
+        : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 11;
@@ -186,13 +185,13 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
@@ -208,6 +207,7 @@ int main()
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner_relation(diffusion_body);
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
@@ -217,7 +217,7 @@ int main()
     //----------------------------------------------------------------------
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(diffusion_body_inner_relation);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
     SimpleDynamics<ConstantTemperatureConstraint> left_boundary_condition(left_boundary, "Phi", high_temperature);
@@ -227,13 +227,12 @@ int main()
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+        write_solid_temperature("Phi", temperature_observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
-        ReduceAverage<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
-        write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<Average<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
+        write_solid_average_temperature_part(inner_domain, "Phi");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -244,9 +243,6 @@ int main()
     setup_diffusion_initial_condition.exec();
     left_boundary_condition.exec();
     other_boundary_condition.exec();
-    /** Output global basic parameters. */
-    write_states.writeToFile(0);
-    write_solid_temperature.writeToFile(0);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -261,6 +257,11 @@ int main()
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_states.writeToFile(0);
+    write_solid_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -307,7 +308,7 @@ int main()
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     //----------------------------------------------------------------------
     //	@ensemble_average_method.
-    //	The first argument is the threshold of meanvalue convergence.
+    //	The first argument is the threshold of mean value convergence.
     //	The second argument is the threshold of variance convergence.
     //----------------------------------------------------------------------
     write_solid_temperature.generateDataBase(0.001, 0.001);

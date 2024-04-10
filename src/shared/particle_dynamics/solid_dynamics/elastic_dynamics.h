@@ -24,7 +24,7 @@
  * @file 	elastic_dynamics.h
  * @brief 	Here, we define the algorithm classes for elastic solid dynamics.
  * @details 	We consider here a weakly compressible solids.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ELASTIC_DYNAMICS_H
@@ -34,7 +34,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 
@@ -90,7 +90,8 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 {
   protected:
     Real CFL_;
-    StdLargeVec<Vecd> &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
+    StdLargeVec<Real> &mass_;
     Real smoothing_length_, c0_;
 
   public:
@@ -144,7 +145,7 @@ class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInne
 
   protected:
     StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_;
+    StdLargeVec<Vecd> &pos_, &vel_, &force_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 };
 
@@ -163,7 +164,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
   protected:
     ElasticSolid &elastic_solid_;
     Real rho0_, inv_rho0_;
-    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Vecd> &force_prior_;
     Real smoothing_length_;
 };
 
@@ -181,7 +182,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         // including gravity and force from fluid
-        Vecd acceleration = Vecd::Zero();
+        Vecd force = Vecd::Zero();
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
@@ -195,13 +196,13 @@ class Integration1stHalf : public BaseIntegration1stHalf
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Matd numerical_stress_ij =
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
-            acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
                             (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
                              numerical_dissipation_factor_ * weight * numerical_stress_ij) *
                             e_ij;
         }
 
-        acc_[index_i] = acceleration;
+        force_[index_i] = force;
     };
 
   protected:
@@ -270,7 +271,7 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         // including gravity and force from fluid
-        Vecd acceleration = Vecd::Zero();
+        Vecd force = Vecd::Zero();
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
@@ -278,10 +279,10 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
             Vecd shear_force_ij = correction_factor_ * elastic_solid_.ShearModulus() *
                                   (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
                                   (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
-            acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
+            force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
                             inner_neighborhood.dW_ijV_j_[n] * inv_rho0_;
         }
-        acc_[index_i] = acceleration;
+        force_[index_i] = force;
     };
 
   protected:

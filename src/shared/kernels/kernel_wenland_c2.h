@@ -23,7 +23,7 @@
 /**
  * @file 	base_data_type.h
  * @brief 	This is the class for Wenland kernel.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_WENLAND_C2_H
@@ -83,6 +83,12 @@ class DeviceKernelWendlandC2
     SYCL_EXTERNAL DeviceReal d2W_1D(DeviceReal q) const;
     SYCL_EXTERNAL DeviceReal d2W_2D(DeviceReal q) const;
     SYCL_EXTERNAL DeviceReal d2W_3D(DeviceReal q) const;
+
+    SYCL_EXTERNAL DeviceVec2d e(const DeviceReal &distance, const DeviceVec2d &displacement) const;
+    SYCL_EXTERNAL DeviceVec3d e(const DeviceReal &distance, const DeviceVec3d &displacement) const;
+
+    SYCL_EXTERNAL bool checkIfWithinCutOffRadius(const DeviceVec2d &displacement) const;
+    SYCL_EXTERNAL bool checkIfWithinCutOffRadius(const DeviceVec3d &displacement) const;
 
     inline DeviceReal CutOffRadius() const { return rc_ref_; };
     inline DeviceReal CutOffRadiusSqr() const { return rc_ref_sqr_; };

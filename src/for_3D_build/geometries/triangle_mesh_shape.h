@@ -24,7 +24,7 @@
  * @file 	  triangle_mesh_shape.h
  * @brief   Here, we define the 3D geometries based on the polymesh.
  * @details The idea is to define complex geometry by passing stl, obj or other polymesh files.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef TRIANGULAR_MESH_SHAPE_H
@@ -63,12 +63,12 @@ class TriangleMeshShape : public Shape
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
-    SimTK::ContactGeometry::TriangleMesh *getTriangleMesh() { return triangle_mesh_; };
+    SimTK::ContactGeometry::TriangleMesh *getTriangleMesh();
 
   protected:
     SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
 
-    /** generate triangle mesh from polymesh */
+    /** generate triangle mesh from polygon mesh */
     SimTK::ContactGeometry::TriangleMesh *generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh);
     virtual BoundingBox findBounds() override;
 };

@@ -16,8 +16,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -25,13 +24,13 @@ int main(int ac, char *av[])
     diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
     diffusion_body.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
-    wall_boundary_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary_Dirichlet.generateParticles<ParticleGeneratorLattice>();
+    SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
+    wall_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
+    wall_Dirichlet.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
-    wall_boundary_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary_Neumann.generateParticles<ParticleGeneratorLattice>();
+    SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
+    wall_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
+    wall_Neumann.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
@@ -42,44 +41,37 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    InnerRelation diffusion_body_inner_relation(diffusion_body);
-
-    ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, {&wall_boundary_Dirichlet});
-    ContactRelation diffusion_body_contact_Neumann(diffusion_body, {&wall_boundary_Neumann});
-
+    InnerRelation diffusion_body_inner(diffusion_body);
+    ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, {&wall_Dirichlet});
+    ContactRelation diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
-
+    DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
-
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
-    SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
+    SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_Dirichlet);
+    SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_Neumann);
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary_Neumann);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    // ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    // ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+        write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-
     setup_diffusion_initial_condition.exec();
-
     setup_boundary_condition_Dirichlet.exec();
     setup_boundary_condition_Neumann.exec();
-
     diffusion_body_normal_direction.exec();
     wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
@@ -143,7 +135,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
     }

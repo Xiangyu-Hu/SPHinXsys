@@ -30,7 +30,7 @@ class SphinxsysRegressionTestByCTest:
 
     def run_particle_relaxation(self) -> None:
         print('Start particle relaxation for the simulation...')
-        command = f".{os.sep}{self.sphinxsys_case_name} --r=true"
+        command = f".{os.sep}{self.sphinxsys_case_name} --relax=true"
         os.system(self.enter_sphinxsys_exec_folder)
         os.system(command)
         print('Simulating case is finished...')
@@ -38,7 +38,15 @@ class SphinxsysRegressionTestByCTest:
     def run_case(self) -> None:
         print('Start case simulation...')
         print(self.enter_sphinxsys_exec_folder)
-        command = f".{os.sep}{self.sphinxsys_case_name} --r=false --i=true --rt=true"
+        command = f".{os.sep}{self.sphinxsys_case_name} --regression=true"
+        os.system(self.enter_sphinxsys_exec_folder)
+        os.system(command)
+        print('Simulating case is finished...')
+
+    def run_case_with_reload(self) -> None:
+        print('Start case simulation with particle reload...')
+        print(self.enter_sphinxsys_exec_folder)
+        command = f".{os.sep}{self.sphinxsys_case_name} --reload=true --regression=true"
         os.system(self.enter_sphinxsys_exec_folder)
         os.system(command)
         print('Simulating case is finished...')
@@ -88,7 +96,7 @@ class SphinxsysRegressionTest:
 
     def run_particle_relaxation(self) -> None:
         print('Start particle relaxation for the simulation...')
-        command = f".{os.sep}{self.sphinxsys_case_name} --r=true"
+        command = f".{os.sep}{self.sphinxsys_case_name} --relax=true"
         os.chdir(self.sphinxsys_exec_path)
         os.system(command)
         print('Simulating case is finished...')
@@ -96,7 +104,15 @@ class SphinxsysRegressionTest:
     def run_case(self) -> None:
         print('Start case simulation...')
         print(self.enter_sphinxsys_exec_folder)
-        command = f".{os.sep}{self.sphinxsys_case_name} --r=false --i=true --rt=true"
+        command = f".{os.sep}{self.sphinxsys_case_name} --regression=true"
+        os.chdir(self.sphinxsys_exec_path)
+        os.system(command)
+        print('Simulating case is finished...')
+
+    def run_case_with_reload(self) -> None:
+        print('Start case simulation with particle reload...')
+        print(self.enter_sphinxsys_exec_folder)
+        command = f".{os.sep}{self.sphinxsys_case_name} --reload=true --regression=true"
         os.chdir(self.sphinxsys_exec_path)
         os.system(command)
         print('Simulating case is finished...')

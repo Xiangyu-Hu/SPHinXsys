@@ -75,10 +75,10 @@ void DampingBySplittingInner<VariableType>::
 //=================================================================================================//
 template <typename VariableType>
 DampingBySplittingComplex<VariableType>::
-    DampingBySplittingComplex(ComplexRelation &complex_relation,
+    DampingBySplittingComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
                               const std::string &variable_name, Real eta)
-    : DampingBySplittingInner<VariableType>(complex_relation.getInnerRelation(), variable_name, eta),
-      DissipationDataContact(complex_relation.getContactRelation())
+    : DampingBySplittingInner<VariableType>(inner_relation, variable_name, eta),
+      DissipationDataContact(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -154,10 +154,10 @@ void DampingBySplittingComplex<VariableType>::
 template <typename VariableType,
           template <typename BaseVariableType> class BaseDampingBySplittingType>
 DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
-    DampingBySplittingWithWall(ComplexRelation &complex_wall_relation,
+    DampingBySplittingWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
                                const std::string &variable_name, Real eta)
-    : BaseDampingBySplittingType<VariableType>(complex_wall_relation.getInnerRelation(), variable_name, eta),
-      DissipationDataWithWall(complex_wall_relation.getContactRelation())
+    : BaseDampingBySplittingType<VariableType>(inner_relation, variable_name, eta),
+      DissipationDataWithWall(contact_relation)
 {
     for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
     {
@@ -247,8 +247,10 @@ void DampingPairwiseInner<VariableType>::
 }
 //=================================================================================================//
 template <typename VariableType>
-DampingPairwiseComplex<VariableType>::DampingPairwiseComplex(BaseInnerRelation &inner_relation,
-                                                             BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
+DampingPairwiseComplex<VariableType>::
+    DampingPairwiseComplex(BaseInnerRelation &inner_relation,
+                           BaseContactRelation &contact_relation,
+                           const std::string &variable_name, Real eta)
     : DampingPairwiseInner<VariableType>(inner_relation, variable_name, eta),
       DissipationDataContact(contact_relation)
 {
@@ -259,12 +261,6 @@ DampingPairwiseComplex<VariableType>::DampingPairwiseComplex(BaseInnerRelation &
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
-//=================================================================================================//
-template <typename VariableType>
-DampingPairwiseComplex<VariableType>::
-    DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta)
-    : DampingPairwiseComplex(complex_relation.getInnerRelation(),
-                             complex_relation.getContactRelation(), variable_name, eta) {}
 //=================================================================================================//
 template <typename VariableType>
 void DampingPairwiseComplex<VariableType>::
@@ -326,13 +322,6 @@ DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
-//=================================================================================================//
-template <typename VariableType,
-          template <typename BaseVariableType> class BaseDampingPairwiseType>
-DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
-    DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta)
-    : DampingPairwiseWithWall(complex_wall_relation.getInnerRelation(),
-                              complex_wall_relation.getContactRelation(), variable_name, eta) {}
 //=================================================================================================//
 template <typename VariableType,
           template <typename BaseVariableType> class BaseDampingPairwiseType>
@@ -425,10 +414,10 @@ void DampingPairwiseFromWall<VariableType>::
 }
 //=================================================================================================//
 template <class DampingAlgorithmType>
-template <typename... ConstructorArgs>
+template <typename... Args>
 DampingWithRandomChoice<DampingAlgorithmType>::
-    DampingWithRandomChoice(Real random_ratio, ConstructorArgs &&...args)
-    : DampingAlgorithmType(std::forward<ConstructorArgs>(args)...), random_ratio_(random_ratio)
+    DampingWithRandomChoice(Real random_ratio, Args &&...args)
+    : DampingAlgorithmType(std::forward<Args>(args)...), random_ratio_(random_ratio)
 {
     this->eta_ /= random_ratio;
 }
@@ -436,7 +425,7 @@ DampingWithRandomChoice<DampingAlgorithmType>::
 template <class DampingAlgorithmType>
 bool DampingWithRandomChoice<DampingAlgorithmType>::RandomChoice()
 {
-    return ((Real)rand() / (RAND_MAX)) < random_ratio_ ? true : false;
+    return rand_uniform(0.0, 1.0) < random_ratio_ ? true : false;
 }
 //=================================================================================================//
 template <class DampingAlgorithmType>

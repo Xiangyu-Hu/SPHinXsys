@@ -23,7 +23,7 @@
 /**
  * @file 	adaptation.h
  * @brief 	Adaptation scheme for particle in multi-resolution scenario.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ADAPTATION_H
@@ -81,15 +81,15 @@ class SPHAdaptation
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
-    virtual void registerAdaptationVariables(BaseParticles &base_particles){};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles){};
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
-    template <class KernelType, typename... ConstructorArgs>
-    void resetKernel(ConstructorArgs &&...args)
+    template <class KernelType, typename... Args>
+    void resetKernel(Args &&...args)
     {
-        kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
+        kernel_ptr_.reset(new KernelType(h_ref_, std::forward<Args>(args)...));
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
@@ -117,12 +117,12 @@ class ParticleWithLocalRefinement : public SPHAdaptation
 
     virtual size_t getCellLinkedListTotalLevel();
     size_t getLevelSetTotalLevel();
-    virtual void registerAdaptationVariables(BaseParticles &base_particles) override;
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
         return h_ratio_[particle_index_i];
     };
 
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
@@ -138,12 +138,11 @@ class ParticleWithLocalRefinement : public SPHAdaptation
 class ParticleRefinementByShape : public ParticleWithLocalRefinement
 {
   public:
-    template <typename... ConstructorArgs>
-    ParticleRefinementByShape(ConstructorArgs &&...args)
-        : ParticleWithLocalRefinement(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    ParticleRefinementByShape(Args &&...args)
+        : ParticleWithLocalRefinement(std::forward<Args>(args)...){};
 
     virtual ~ParticleRefinementByShape(){};
-
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
 
   protected:
@@ -157,9 +156,9 @@ class ParticleRefinementByShape : public ParticleWithLocalRefinement
 class ParticleRefinementNearSurface : public ParticleRefinementByShape
 {
   public:
-    template <typename... ConstructorArgs>
-    ParticleRefinementNearSurface(ConstructorArgs &&...args)
-        : ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    ParticleRefinementNearSurface(Args &&...args)
+        : ParticleRefinementByShape(std::forward<Args>(args)...){};
     virtual ~ParticleRefinementNearSurface(){};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
@@ -172,9 +171,9 @@ class ParticleRefinementNearSurface : public ParticleRefinementByShape
 class ParticleRefinementWithinShape : public ParticleRefinementByShape
 {
   public:
-    template <typename... ConstructorArgs>
-    ParticleRefinementWithinShape(ConstructorArgs &&...args)
-        : ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    ParticleRefinementWithinShape(Args &&...args)
+        : ParticleRefinementByShape(std::forward<Args>(args)...){};
     virtual ~ParticleRefinementWithinShape(){};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;

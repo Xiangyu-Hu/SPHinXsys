@@ -6,8 +6,11 @@ import argparse
 # add dynamic link library or shared object to python env
 # attention: match current python version with the version exposing the cpp code
 sys_str = platform.system()
+# If this doesn't works, try path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
 path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 if sys_str == 'Windows':
+    # Append 'RelWithDebInfo' or 'Debug' depending on the configuration
+    # For example, path_2 = 'lib/RelWithDebInfo'
     path_2 = 'lib'
 elif sys_str == 'Linux':
     path_2 = 'lib'

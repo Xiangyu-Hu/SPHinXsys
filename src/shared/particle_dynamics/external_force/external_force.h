@@ -24,7 +24,7 @@
  * @file 	external_force.h
  * @brief 	Here, we define the base external force class.
  * @details The simple derived classes, such as gravity will be defined in applications.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef EXTERNAL_FORCE_H
@@ -44,7 +44,7 @@ class ExternalForce
     ExternalForce();
     virtual ~ExternalForce(){};
     /** This function can be used for runtime control of external force. */
-    virtual Vecd InducedAcceleration(Vecd &position) = 0;
+    virtual Vecd InducedAcceleration(const Vecd &position = Vecd::Zero()) = 0;
 };
 
 /**
@@ -63,11 +63,11 @@ class Gravity
     Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
 
     /** This function can be used for runtime control of external force. */
-    Vecd InducedAcceleration(Vecd &position) const
+    Vecd InducedAcceleration(const Vecd &position = VecdZero<Vecd>()) const
     {
         return global_acceleration_;
     }
-    Real getPotential(Vecd &position) const
+    Real getPotential(const Vecd &position) const
     {
         return InducedAcceleration(position).dot(zero_potential_reference_ - position);
     }
@@ -75,7 +75,7 @@ class Gravity
     template<class Vec,
               typename = std::enable_if_t<std::conjunction_v<std::is_same<Vec, DeviceVecd>>,
                                           std::is_same<is_device_type_different_from_host<DeviceVecd>, std::true_type>>>
-    DeviceVecd InducedAcceleration(const Vec& position) const {
+    DeviceVecd InducedAcceleration(const Vecd &position = VecdZero<DeviceVecd>()) const {
         return global_acceleration_device_;
     }
     template<class Vec,

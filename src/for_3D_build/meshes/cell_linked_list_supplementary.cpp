@@ -15,13 +15,6 @@ void CellLinkedList ::allocateMeshDataMatrix()
 {
     Allocate3dArray(cell_index_lists_, all_cells_);
     Allocate3dArray(cell_data_lists_, all_cells_);
-
-    mesh_parallel_for(MeshRange(Array3i::Zero(), all_cells_),
-                      [&](int i, int j, int k)
-                      {
-                          cell_index_lists_[i][j][k].reserve(36);
-                          cell_data_lists_[i][j][k].reserve(36);
-                      });
 }
 //=================================================================================================//
 void CellLinkedList ::deleteMeshDataMatrix()
@@ -89,8 +82,8 @@ void CellLinkedList ::InsertListDataEntry(size_t particle_index,
 //=================================================================================================//
 ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 {
-    Real min_distance_sqr = Infinity;
-    ListData nearest_entry = std::make_tuple(MaxSize_t, Infinity * Vecd::Ones(), Infinity);
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry = std::make_tuple(MaxSize_t, MaxReal * Vecd::Ones(), MaxReal);
 
     Array3i cell = CellIndexFromPosition(position);
     mesh_for_each(
@@ -138,8 +131,8 @@ void CellLinkedList::
 void CellLinkedList::
     tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis)
 {
-    int second_axis = SecondAxis(axis);
-    int third_axis = ThirdAxis(axis);
+    int second_axis = NextAxis(axis);
+    int third_axis = NextNextAxis(axis);
     Array3i body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first_);
     Array3i body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second_);
 

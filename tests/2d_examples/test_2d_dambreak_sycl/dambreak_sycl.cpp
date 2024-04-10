@@ -1,10 +1,10 @@
 /**
- * @file	dambreak.cpp
- * @brief	2D dambreak example.
- * @details	This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for fluid simulation.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
+* @file dambreak.cpp
+* @brief 2D dambreak example.
+* @details This is the one of the basic test cases, also the first case for
+* understanding SPH method for free surface flow simulation.
+* @author Luhui Han, Chi Zhang and Xiangyu Hu
+*/
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
@@ -21,8 +21,8 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -51,12 +51,11 @@ class WallBoundary : public ComplexShape
 int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
-    //	Build up an SPHSystem.
+    //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -75,30 +74,33 @@ int main(int ac, char *av[])
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     fluid_observer.getBaseParticles().registerDeviceMemory();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    InnerRelation water_block_inner(water_block);
+    ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_wall_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    water_block_complex.getInnerRelation().allocateInnerConfigurationDevice();
-    water_block_complex.getContactRelation().allocateContactConfiguration();
-    fluid_observer_contact.allocateContactConfiguration();
-
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex, ParallelSYCLDevicePolicy> fluid_density_by_summation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann, ParallelSYCLDevicePolicy> fluid_pressure_relaxation(water_block_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann, ParallelSYCLDevicePolicy> fluid_density_relaxation(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface, ParallelSYCLDevicePolicy> fluid_density_by_summation(water_block_inner, water_wall_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy> fluid_step_initialization(water_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step(water_block, U_max);
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce, ParallelSYCLDevicePolicy> constant_gravity(water_block, gravity);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step(water_block);
 
     water_block.getBaseParticles().copyToDeviceMemory().wait();
@@ -108,21 +110,21 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy, ParallelSYCLDevicePolicy>>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy, ParallelSYCLDevicePolicy>>
+        write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real, ParallelSYCLDevicePolicy>>
-        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists(execution::par_sycl).wait();
-    auto system_configuration_update_event = sph_system.initializeSystemDeviceConfigurations();
 
     wall_boundary_normal_direction.exec();
     wall_boundary.getBaseParticles().copyToDeviceMemory().wait();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -130,9 +132,6 @@ int main(int ac, char *av[])
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList(execution::par_sycl).wait();
-        system_configuration_update_event.wait();
-        system_configuration_update_event.add(water_block_complex.updateDeviceConfiguration())
-            .add(fluid_observer_contact.updateDeviceConfiguration());
     }
 
     //----------------------------------------------------------------------
@@ -179,17 +178,7 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
-            interval_computing_time_step += TickCount::now() - time_instance;
-
-            /** Wait on system configuration to finish updating */
-            time_instance = TickCount::now();
-            system_configuration_update_event.wait();
-            interval_updating_configuration += TickCount::now() - time_instance;
-
-            /** Evaluation of density by summation */
-            time_instance = TickCount::now();
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -243,18 +232,14 @@ int main(int ac, char *av[])
             /** Write restart files */
             if (number_of_iterations % restart_output_interval == 0)
             {
-                time_instance = TickCount::now();
+                /*time_instance = TickCount::now();
                 async_real_bodies_write_event.wait();
                 restart_io.copyVariablesToRestartFromDevice()
                     .then([&, number_of_iterations]
                           { restart_io.writeToFile(number_of_iterations); },
                           async_real_bodies_write_event);
-                interval_writing_files += TickCount::now() - time_instance;
+                interval_writing_files += TickCount::now() - time_instance;*/
             }
-
-            /** Submit task for system configuration update */
-            system_configuration_update_event = water_block_complex.updateDeviceConfiguration().add(
-                fluid_observer_contact.updateDeviceConfiguration());
 
             number_of_iterations++;
         }
@@ -289,7 +274,7 @@ int main(int ac, char *av[])
               << interval_writing_files.seconds() << "\n";
 
     water_block.getBaseParticles().copyFromDeviceMemory().wait();
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         write_recorded_water_pressure.generateDataBase(1.0e-3);

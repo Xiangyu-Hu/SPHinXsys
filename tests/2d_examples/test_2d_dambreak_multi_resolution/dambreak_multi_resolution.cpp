@@ -31,8 +31,8 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
  */
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -91,7 +91,7 @@ int main(int ac, char *av[])
                         Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
+    water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
@@ -100,41 +100,48 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
-
-    /** topology */
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
+    //----------------------------------------------------------------------
     AdaptiveInnerRelation water_inner(water_block);
     AdaptiveContactRelation water_contact(water_block, {&wall_boundary});
-    ComplexRelation water_complex(water_inner, water_contact);
     AdaptiveContactRelation fluid_observer_contact(fluid_observer, {&water_block});
-
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_complex(water_inner, water_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_inner, water_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_inner, water_contact);
 
     MultiPolygonShape split_merge_region(createRefinementArea());
-    InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall, SequencedPolicy> particle_split_(water_complex, split_merge_region, 8000);
-    InteractionDynamics<MergeWithMinimumDensityErrorWithWall, SequencedPolicy> particle_merge_(water_complex, split_merge_region);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> fluid_density_by_summation(water_complex);
+    InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall, SequencedPolicy> particle_split_(water_inner, water_contact, split_merge_region, 8000);
+    InteractionDynamics<MergeWithMinimumDensityErrorWithWall, SequencedPolicy> particle_merge_(water_inner, water_contact, split_merge_region);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> fluid_density_by_summation(water_inner, water_contact);
 
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -142,6 +149,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -178,7 +186,6 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            fluid_step_initialization.exec();
             Real Dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -243,12 +250,6 @@ int main(int ac, char *av[])
               << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-
-    /*	if (sph_system.RestartStep() == 0)
-            {
-                    write_water_mechanical_energy.testResult();
-                    write_recorded_water_pressure.testResult();
-            } */
 
     return 0;
 };

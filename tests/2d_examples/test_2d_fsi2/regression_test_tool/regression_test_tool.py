@@ -12,7 +12,7 @@ case name: test_2d_fsi2
 
 case_name = "test_2d_fsi2"
 body_name = "InsertedBody"
-parameter_name = "TotalViscousForceOnSolid"
+parameter_name = "TotalViscousForceFromFluid"
 body_name_1 = "BeamObserver"
 parameter_name_1 = "Position"
 
@@ -24,7 +24,7 @@ sphinxsys_1 = SphinxsysRegressionTest(case_name, body_name_1, parameter_name_1)
 while True:
     print("Now start a new run......")
     sphinxsys.run_particle_relaxation()
-    sphinxsys.run_case()
+    sphinxsys.run_case_with_reload()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
     converged_1 = sphinxsys_1.read_dat_file()

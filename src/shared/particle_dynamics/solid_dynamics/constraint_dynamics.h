@@ -24,7 +24,7 @@
  * @file 	constraint_dynamics.h
  * @brief 	Here, we define the algorithm classes for solid dynamics.
  * @details We consider here a weakly compressible solids.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef CONSTRAINT_DYNAMICS_H
@@ -32,12 +32,12 @@
 
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
+#include "all_simbody.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "general_dynamics.h"
+#include "general_reduce.h"
 #include "solid_body.h"
 #include "solid_particles.h"
-#include "all_simbody.h"
 
 namespace SPH
 {
@@ -59,45 +59,47 @@ typedef DataDelegateInner<SolidParticles> SolidDataInner;
  * 			TODO: to clarify the treatment of particle position,
  * 			how to achieve consistency between velocity and position constraints.
  */
-template <class DynamicsIdentifier>
-class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public SolidDataSimple
+template <class DynamicsIdentifier, class DataDelegationType>
+class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public DataDelegationType
 {
   public:
     explicit BaseMotionConstraint(DynamicsIdentifier &identifier)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier), SolidDataSimple(identifier.getSPHBody()),
-          pos_(particles_->pos_), pos0_(particles_->pos0_),
-          n_(particles_->n_), n0_(particles_->n0_),
-          vel_(particles_->vel_), acc_(particles_->acc_){};
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier), DataDelegationType(identifier.getSPHBody()),
+          pos_(this->particles_->pos_), pos0_(this->particles_->pos0_),
+          n_(this->particles_->n_), n0_(this->particles_->n0_),
+          vel_(this->particles_->vel_), force_(this->particles_->force_), mass_(this->particles_->mass_){};
 
     virtual ~BaseMotionConstraint(){};
 
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_;
     StdLargeVec<Vecd> &n_, &n0_;
-    StdLargeVec<Vecd> &vel_, &acc_;
+    StdLargeVec<Vecd> &vel_, &force_;
+    StdLargeVec<Real> &mass_;
 };
+using MotionConstraint = BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>;
 
 /**@class FixConstraint
  * @brief Constraint with zero velocity.
  */
-template <class DynamicsIdentifier>
-class FixConstraint : public BaseMotionConstraint<DynamicsIdentifier>
+template <class DynamicsIdentifier, class DataDelegationType>
+class FixConstraint : public BaseMotionConstraint<DynamicsIdentifier, DataDelegationType>
 {
   public:
     explicit FixConstraint(DynamicsIdentifier &identifier)
-        : BaseMotionConstraint<DynamicsIdentifier>(identifier){};
+        : BaseMotionConstraint<DynamicsIdentifier, DataDelegationType>(identifier){};
     virtual ~FixConstraint(){};
 
     void update(size_t index_i, Real dt = 0.0) { this->vel_[index_i] = Vecd::Zero(); };
 };
-using FixBodyConstraint = FixConstraint<SPHBody>;
-using FixBodyPartConstraint = FixConstraint<BodyPartByParticle>;
+using FixBodyConstraint = FixConstraint<SPHBody, SolidDataSimple>;
+using FixBodyPartConstraint = FixConstraint<BodyPartByParticle, SolidDataSimple>;
 
 /**@class SpringConstrain
  * @brief Constrain with a spring for each constrained particles to its original position.
  * //TODO: a test case is required for this class.
  */
-class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle>
+class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>
 {
   public:
     SpringConstrain(BodyPartByParticle &body_part, Real stiffness);
@@ -117,7 +119,7 @@ class SpringConstrain : public BaseMotionConstraint<BodyPartByParticle>
  * 			can be considered as a quasi-static position driven boundary condition.
  * 			Note that, this constraint is not for a elastic solid body.
  */
-class PositionSolidBody : public BaseMotionConstraint<SPHBody>
+class PositionSolidBody : public BaseMotionConstraint<SPHBody, SolidDataSimple>
 {
   public:
     PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center);
@@ -138,7 +140,7 @@ class PositionSolidBody : public BaseMotionConstraint<SPHBody>
  * 			can be considered as a quasi-static position driven boundary condition.
  * 			Note that, this constraint is not for a elastic solid body.
  */
-class PositionScaleSolidBody : public BaseMotionConstraint<SPHBody>
+class PositionScaleSolidBody : public BaseMotionConstraint<SPHBody, SolidDataSimple>
 {
   public:
     PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale);
@@ -160,11 +162,11 @@ class PositionScaleSolidBody : public BaseMotionConstraint<SPHBody>
  * 			Note that, this constraint is not for a elastic solid body.
  */
 template <class DynamicsIdentifier>
-class PositionTranslate : public BaseMotionConstraint<DynamicsIdentifier>
+class PositionTranslate : public BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>
 {
   public:
     PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation)
-        : BaseMotionConstraint<DynamicsIdentifier>(identifier),
+        : BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>(identifier),
           start_time_(start_time), end_time_(end_time), translation_(translation){};
     virtual ~PositionTranslate(){};
     void update(size_t index_i, Real dt = 0.0)
@@ -181,12 +183,11 @@ class PositionTranslate : public BaseMotionConstraint<DynamicsIdentifier>
   protected:
     Real start_time_, end_time_;
     Vecd translation_;
+
     Vecd getDisplacement(size_t index_i, Real dt)
     {
-        Vecd displacement = Vecd::Zero();
-        displacement = (this->pos0_[index_i] + translation_ - this->pos_[index_i]) * dt /
-                       (end_time_ - GlobalStaticVariables::physical_time_);
-        return displacement;
+        return (this->pos0_[index_i] + translation_ - this->pos_[index_i]) * dt /
+               (end_time_ - GlobalStaticVariables::physical_time_);
     };
 };
 using TranslateSolidBody = PositionTranslate<SPHBody>;
@@ -196,22 +197,33 @@ using TranslateSolidBodyPart = PositionTranslate<BodyPartByParticle>;
  * @class FixedInAxisDirection
  * @brief Constrain the velocity of a solid body part.
  */
-class FixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle>
+template <class DataDelegationType>
+class BaseFixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle, DataDelegationType>
 {
   public:
-    FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero());
-    virtual ~FixedInAxisDirection(){};
-    void update(size_t index_i, Real dt = 0.0);
+    explicit BaseFixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero())
+        : BaseMotionConstraint<BodyPartByParticle, DataDelegationType>(body_part), constrain_matrix_(Matd::Identity())
+    {
+        for (int k = 0; k != Dimensions; ++k)
+            constrain_matrix_(k, k) = constrained_axises[k];
+    };
+    virtual ~BaseFixedInAxisDirection(){};
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        this->vel_[index_i] = constrain_matrix_ * this->vel_[index_i];
+    };
 
   protected:
     Matd constrain_matrix_;
 };
+using FixedInAxisDirection = BaseFixedInAxisDirection<SolidDataSimple>;
 
 /**
  * @class ConstrainSolidBodyMassCenter
  * @brief Constrain the mass center of a solid body.
  */
-class ConstrainSolidBodyMassCenter : public LocalDynamics, public SolidDataSimple
+template <class DataDelegationType>
+class BaseConstrainSolidBodyMassCenter : public LocalDynamics, public DataDelegationType
 {
   private:
     Real total_mass_;
@@ -221,28 +233,44 @@ class ConstrainSolidBodyMassCenter : public LocalDynamics, public SolidDataSimpl
     ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
 
   protected:
-    virtual void setupDynamics(Real dt = 0.0) override;
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        velocity_correction_ =
+            correction_matrix_ * compute_total_momentum_.exec(dt) / total_mass_;
+    }
 
   public:
-    explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones());
-    virtual ~ConstrainSolidBodyMassCenter(){};
+    explicit BaseConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones())
+        : LocalDynamics(sph_body), DataDelegationType(sph_body),
+          correction_matrix_(Matd::Identity()), vel_(this->particles_->vel_),
+          compute_total_momentum_(sph_body, "Velocity")
+    {
+        for (int i = 0; i != Dimensions; ++i)
+            correction_matrix_(i, i) = constrain_direction[i];
+        ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "Mass");
+        total_mass_ = compute_total_mass_.exec();
+    }
+    virtual ~BaseConstrainSolidBodyMassCenter(){};
 
-    void update(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        this->vel_[index_i] -= velocity_correction_;
+    }
 };
-
+using ConstrainSolidBodyMassCenter = BaseConstrainSolidBodyMassCenter<SolidDataSimple>;
 /**
  * @class ConstraintBySimBody
  * @brief Constrain by the motion computed from Simbody.
  */
 template <class DynamicsIdentifier>
-class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
+class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>
 {
   public:
     ConstraintBySimBody(DynamicsIdentifier &identifier,
                         SimTK::MultibodySystem &MBsystem,
                         SimTK::MobilizedBody &mobod,
                         SimTK::RungeKuttaMersonIntegrator &integ)
-        : BaseMotionConstraint<DynamicsIdentifier>(identifier),
+        : BaseMotionConstraint<DynamicsIdentifier, SolidDataSimple>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
         simbody_state_ = &integ_.getState();
@@ -268,11 +296,11 @@ class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
          * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
          * base_particle_data_i.pos_ = (p_GB + r);
          */
-        degradeToVecd(SimTKToEigen(pos), this->pos_[index_i]);
-        degradeToVecd(SimTKToEigen(vel), this->vel_[index_i]);
+        this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
+        this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
 
         SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(this->n0_[index_i])));
-        degradeToVecd(SimTKToEigen(n), this->n_[index_i]);
+        this->n_[index_i] = degradeToVecd(SimTKToEigen(n));
     };
 
   protected:
@@ -297,11 +325,10 @@ class TotalForceForSimBody
 {
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &acc_, &acc_prior_, &pos_;
+    StdLargeVec<Vecd> &force_, &force_prior_, &pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
-    const SimTK::State *simbody_state_;
     SimTKVec3 current_mobod_origin_location_;
 
   public:
@@ -312,7 +339,7 @@ class TotalForceForSimBody
         : BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(
               identifier, SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0))),
           SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
-          acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
+          force_(particles_->force_), force_prior_(particles_->force_prior_),
           pos_(particles_->pos_),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
@@ -323,14 +350,14 @@ class TotalForceForSimBody
 
     virtual void setupDynamics(Real dt = 0.0) override
     {
-        simbody_state_ = &integ_.getState();
-        MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
-        current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
+        const SimTK::State *simbody_state = &integ_.getState();
+        MBsystem_.realize(*simbody_state, SimTK::Stage::Acceleration);
+        current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state);
     };
 
     SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
     {
-        Vecd force = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
+        Vecd force = force_[index_i] + force_prior_[index_i];
         SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
         SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
         SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);

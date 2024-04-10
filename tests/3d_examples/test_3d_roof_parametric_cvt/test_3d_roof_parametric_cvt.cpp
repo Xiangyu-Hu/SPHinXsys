@@ -14,19 +14,19 @@ using namespace SPH;
 
 Real to_rad(Real angle) { return angle * Pi / 180; }
 
-void relax_shell(RealBody &plate_body, Real thickness, Real level_set_refinement_ratio)
+void relax_shell(RealBody &plate_body, Real thickness)
 {
     // BUG: apparently only works if dp > thickness, otherwise ShellNormalDirectionPrediction::correctNormalDirection() throws error
-
+    using namespace relax_dynamics;
     InnerRelation imported_model_inner(plate_body);
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(plate_body);
-    relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
-    relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
+    ShellRelaxationStep relaxation_step_inner(imported_model_inner);
+    ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_imported_model_particles.exec(0.25);
-    relaxation_step_inner.mid_surface_bounding_.exec();
+    relaxation_step_inner.MidSurfaceBounding().exec();
     plate_body.updateCellLinkedList();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
@@ -45,7 +45,7 @@ void relax_shell(RealBody &plate_body, Real thickness, Real level_set_refinement
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 }
 
-class ShellRoofParticleGenerator : public SurfaceParticleGenerator
+class ShellRoofParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -54,7 +54,7 @@ class ShellRoofParticleGenerator : public SurfaceParticleGenerator
 
   public:
     explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -94,8 +94,8 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 {
     std::cout << "read_obj_vertices started" << std::endl;
 
-    std::ifstream myfile(file_name, std::ios_base::in);
-    if (!myfile.is_open())
+    std::ifstream my_file(file_name, std::ios_base::in);
+    if (!my_file.is_open())
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
@@ -103,7 +103,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
     unsigned int count = 0;
     Real value = 0;
 
-    while (myfile >> value)
+    while (my_file >> value)
     {
         particle[count] = value;
         ++count;
@@ -198,12 +198,12 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
     Real particle_number_;
 
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : SurfaceParticleGenerator(sph_body),
+    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : ParticleGeneratorSurface(sph_body),
                                                                                        particle_number_(particle_number){};
     virtual void initializeGeometricVariables() override
     {
@@ -242,11 +242,11 @@ struct return_data
 
     void write_data_to_txt(const std::string &file_name) const
     {
-        std::ofstream myfile;
-        myfile.open(file_name);
-        myfile << "displ_y_A; displ_x_A; total_area; total_mass; dp\n";
-        myfile << displ_y_A << "; " << displ_x_A << "; " << total_area << "; " << total_mass << "; " << dp << "\n";
-        myfile.close();
+        std::ofstream my_file;
+        my_file.open(file_name);
+        my_file << "displ_y_A; displ_x_A; total_area; total_mass; dp\n";
+        my_file << displ_y_A << "; " << displ_x_A << "; " << total_area << "; " << total_mass << "; " << dp << "\n";
+        my_file.close();
     }
 };
 
@@ -270,7 +270,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     observer_point_shell point_A;
     observer_point_shell point_B;
     point_A.pos_0 = Vec3d(radius * std::sin(theta_radian), radius * std::cos(theta_radian) - radius, 0);
-    point_B.pos_0 = Vec3d(0);
+    point_B.pos_0 = Vec3d::Zero();
     // resolution
     const int dp_cm = dp * 100;
     Real total_area = length * 2 * arc; // accounting for particles being on the edges
@@ -280,7 +280,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Real E = 4.32e8;
     Real mu = 0.3;
     auto material = makeShared<LinearElasticSolid>(rho, E, mu);
-    Real physical_viscosity = 7e3;
+    Real physical_viscosity = 7e3 * thickness;
     std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
     // physical_viscosity = 2*get_physical_viscosity_general(rho, E, thickness);
     // std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
@@ -305,6 +305,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     if (cvt)
@@ -321,9 +322,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
       // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
     // output
-    IOEnvironment io_env(system, false);
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
+    BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
@@ -355,7 +355,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
@@ -382,10 +383,11 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
+    apply_constant_gravity.exec();
 
     // TESTS on initialization
     // checking particle distances - avoid bugs of reading file
-    Real min_rij = Infinity;
+    Real min_rij = MaxReal;
     for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
     {
         Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
@@ -400,7 +402,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
     std::cout << "total_mass: " << total_mass << std::endl;
     EXPECT_FLOAT_EQ(total_volume, total_area);
-    EXPECT_FLOAT_EQ(total_mass, total_area * rho);
+    EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
 
     /**
      * From here the time stepping begins.
@@ -429,8 +431,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
                               << GlobalStaticVariables::physical_time_ << "	dt: "
                               << dt << "\n";
                 }
-
-                initialize_external_force.exec(dt);
 
                 dt = std::min(thickness / dp, Real(0.5)) * computing_time_step_size.exec();
                 { // checking for excessive time step reduction

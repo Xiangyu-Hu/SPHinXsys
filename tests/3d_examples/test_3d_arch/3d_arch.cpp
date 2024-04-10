@@ -36,18 +36,18 @@ Mat3d rotation_matrix{
 // Observer location
 Real observation_rot_cos = cos(45.0 / 180.0 * Pi);
 StdVec<Vecd> observation_location = {rotation_matrix *
-                                     Vecd(radius_mid_surface * observation_rot_cos, height / Real(2.0), radius_mid_surface * observation_rot_cos)};
+                                     Vecd(radius_mid_surface * observation_rot_cos, height / Real(2.0), radius_mid_surface *observation_rot_cos)};
 /** For material properties of the solid. */
-Real rho0_s = 7.800;             /** Normalized density. */
-Real Youngs_modulus = 210e6;     /** Normalized Youngs Modulus. */
-Real poisson = 0.3;              /** Poisson ratio. */
-Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
+Real rho0_s = 7.800;                         /** Normalized density. */
+Real Youngs_modulus = 210e6;                 /** Normalized Youngs Modulus. */
+Real poisson = 0.3;                          /** Poisson ratio. */
+Real physical_viscosity = 200.0 * thickness; /** physical damping, here we choose the same value as numerical viscosity. */
 
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public ParticleGeneratorSurface
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -83,22 +83,22 @@ class DisControlGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        Vecd pos_bofore_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
-        if (pos_bofore_rotation[0] < 0.5 * particle_spacing_ref && pos_bofore_rotation[0] > -0.5 * particle_spacing_ref)
+        Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
+        if (pos_before_rotation[0] < 0.5 * particle_spacing_ref && pos_before_rotation[0] > -0.5 * particle_spacing_ref)
         {
             body_part_particles_.push_back(index_i);
         }
     };
 };
 
-/** Define the controled displacement. */
-class ControlDiaplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
+/** Define the controlled displacement. */
+class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
 {
   public:
-    ControlDiaplacement(BodyPartByParticle &body_part)
+    ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
           vel_(particles_->vel_){};
-    virtual ~ControlDiaplacement(){};
+    virtual ~ControlDisplacement(){};
 
   protected:
     StdLargeVec<Vecd> &vel_;
@@ -137,20 +137,19 @@ class BoundaryGeometry : public BodyPartByParticle
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.generate_regression_data_ = false;
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     /** create a cylinder body with shell particles and linear elasticity. */
-    SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
+    SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles<CylinderParticleGenerator>();
 
     /** Define Observer. */
-    ObserverBody cylinder_observer(system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    ObserverBody cylinder_observer(sph_system, "CylinderObserver");
+    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -172,7 +171,7 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
     /** Control the displacement. */
     DisControlGeometry dis_control_geometry(cylinder_body, "DisControlGeometry");
-    SimpleDynamics<ControlDiaplacement> dis_control(dis_control_geometry);
+    SimpleDynamics<ControlDisplacement> dis_control(dis_control_geometry);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
@@ -181,13 +180,13 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_max_displacement("Position", cylinder_observer_contact);
 
     /** Apply initial condition. */
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
     /**
@@ -246,7 +245,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_cylinder_max_displacement.generateDataBase(0.05);
     }

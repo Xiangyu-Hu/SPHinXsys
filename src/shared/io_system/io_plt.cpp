@@ -41,22 +41,28 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
     {
         if (body->checkNewlyUpdated())
         {
-            std::string filefullpath = io_environment_.output_folder_ +
-                                       "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
-            if (fs::exists(filefullpath))
+            BaseParticles &base_particles = body->getBaseParticles();
+            base_particles.computeDerivedVariables();
+
+            if (state_recording_)
             {
-                fs::remove(filefullpath);
+                std::string filefullpath = io_environment_.output_folder_ +
+                                           "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
+                if (fs::exists(filefullpath))
+                {
+                    fs::remove(filefullpath);
+                }
+                std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+                body->writeParticlesToPltFile(out_file);
+                out_file.close();
             }
-            std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
-            body->writeParticlesToPltFile(out_file);
-            out_file.close();
         }
         body->setNotNewlyUpdated();
     }
 }
 //=============================================================================================//
-MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field)
-    : BaseIO(io_environment), mesh_field_(mesh_field),
+MeshRecordingToPlt ::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field)
+    : BaseIO(sph_system), mesh_field_(mesh_field),
       filefullpath_(io_environment_.output_folder_ + "/" + mesh_field.Name() + ".dat") {}
 //=============================================================================================//
 void MeshRecordingToPlt::writeToFile(size_t iteration_step)

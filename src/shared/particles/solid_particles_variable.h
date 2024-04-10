@@ -24,7 +24,7 @@
  * @file 	solid_particle_variable.h
  * @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables.
  * @details 	These variable can be added into variable list for state output.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SOLID_PARTICLES_VARIABLE_H
@@ -91,42 +91,6 @@ class TranslationAndRotation : public SolidDataSimple,
   protected:
     Transform &transform_;
     StdLargeVec<Vecd> &pos_, &pos0_;
-};
-
-/**
- * @class NormalDirectionFromBodyShape
- * @brief normal direction at particles
- */
-class NormalDirectionFromBodyShape : public SolidDataSimple,
-                                     public LocalDynamics
-{
-  public:
-    explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
-    virtual ~NormalDirectionFromBodyShape(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Shape &body_shape_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-};
-
-/**
- * @class NormalDirectionFromBodyShape
- * @brief normal direction at particles
- */
-class NormalDirectionFromShapeAndOp : public SolidDataSimple,
-                                      public LocalDynamics
-{
-  public:
-    explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
-    virtual ~NormalDirectionFromShapeAndOp(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    ShapeAndOp *shape_and_op_;
-    Shape *shape_;
-    const Real switch_sign_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
 };
 
 //----------------------------------------------------------------------
@@ -203,16 +167,16 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
 //----------------------------------------------------------------------
 typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
 /**
- * @class MidSurfaceVonMisesStressofShells
+ * @class MidSurfaceVonMisesStress
  * @brief computing mid-surface von Mises stress of shells
  */
-class MidSurfaceVonMisesStressofShells : public BaseDerivedVariable<Real>,
+class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
                                          public ShellSolidDataSimple,
                                          public LocalDynamics
 {
   public:
-    explicit MidSurfaceVonMisesStressofShells(SPHBody &sph_body);
-    virtual ~MidSurfaceVonMisesStressofShells(){};
+    explicit MidSurfaceVonMisesStress(SPHBody &sph_body);
+    virtual ~MidSurfaceVonMisesStress(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

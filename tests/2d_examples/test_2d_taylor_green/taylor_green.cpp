@@ -69,8 +69,7 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -78,12 +77,15 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     // Using relaxed particle distribution if needed
     sph_system.ReloadParticles()
-        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
+        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     //----------------------------------------------------------------------
@@ -91,16 +93,15 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
-    SimpleDynamics<TimeStepInitialization> time_step_initialization(water_block);
     /** Pressure relaxation algorithm by using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous.
      * The other reason is that we are using transport velocity formulation,
      * which will also introduce numerical dissipation slightly. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerNoRiemann> density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<ZerothConsistencyLimiter, AllParticles>> transport_velocity_correction(water_block_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
@@ -109,12 +110,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    ReloadParticleIO write_particle_reload_files(io_environment, water_block);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-        write_total_mechanical_energy(io_environment, water_block);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
-        write_maximum_speed(io_environment, water_block);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    ReloadParticleIO write_particle_reload_files(water_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_total_kinetic_energy(water_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>>
+        write_maximum_speed(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -141,16 +142,15 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile(0);
-    write_total_mechanical_energy.writeToFile(0);
+    write_total_kinetic_energy.writeToFile(0);
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            time_step_initialization.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
 
             Real relaxation_time = 0.0;
@@ -183,7 +183,7 @@ int main(int ac, char *av[])
         }
 
         TickCount t2 = TickCount::now();
-        write_total_mechanical_energy.writeToFile(number_of_iterations);
+        write_total_kinetic_energy.writeToFile(number_of_iterations);
         write_maximum_speed.writeToFile(number_of_iterations);
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
@@ -198,14 +198,14 @@ int main(int ac, char *av[])
 
     write_particle_reload_files.writeToFile();
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
-        write_total_mechanical_energy.generateDataBase(1.0e-3);
+        write_total_kinetic_energy.generateDataBase(1.0e-3);
         write_maximum_speed.generateDataBase(1.0e-3);
     }
     else if (!sph_system.ReloadParticles())
     {
-        write_total_mechanical_energy.testResult();
+        write_total_kinetic_energy.testResult();
         write_maximum_speed.testResult();
     }
 

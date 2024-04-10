@@ -91,7 +91,7 @@ class SolidBodyForSimulation
     InnerRelation inner_body_relation_;
 
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_;
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
@@ -108,7 +108,7 @@ class SolidBodyForSimulation
     InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
     SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
-    InteractionWithUpdate<CorrectedConfigurationInner> *getCorrectConfiguration() { return &correct_configuration_; };
+    InteractionWithUpdate<KernelCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
@@ -116,8 +116,7 @@ class SolidBodyForSimulation
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
-void relaxParticlesSingleResolution(IOEnvironment &io_environment,
-                                    bool write_particles_to_file,
+void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,
                                     ElasticSolidParticles &solid_body_from_mesh_particles,
                                     InnerRelation &solid_body_from_mesh_inner);
@@ -151,7 +150,7 @@ class StructuralSimulationInput
     bool write_particle_relaxation_data_;
     // boundary conditions
     StdVec<GravityPair> non_zero_gravity_;
-    StdVec<AccelTuple> acceleration_bounding_box_tuple_;
+    StdVec<AccelTuple> force_bounding_box_tuple_;
     StdVec<ForceTuple> force_in_body_region_tuple_;
     StdVec<PressureTuple> surface_pressure_tuple_;
     StdVec<SpringDamperTuple> spring_damper_tuple_;
@@ -210,11 +209,12 @@ class StructuralSimulation
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
-    StdVec<SharedPtr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
+    StdVec<Gravity> gravity_list_;
+    StdVec<SharedPtr<SimpleDynamics<GravityForce>>> initialize_gravity_;
     StdVec<GravityPair> non_zero_gravity_;
-    // for AccelerationForBodyPartInBoundingBox
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
-    StdVec<AccelTuple> acceleration_bounding_box_tuple_;
+    // for ExternalForceInBoundingBox
+    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ExternalForceInBoundingBox>>> force_bounding_box_;
+    StdVec<AccelTuple> force_bounding_box_tuple_;
     // for ForceInBodyRegion
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>> force_in_body_region_;
     StdVec<ForceTuple> force_in_body_region_tuple_;
@@ -267,7 +267,7 @@ class StructuralSimulation
 
     // for initializeBoundaryConditions
     void initializeGravity();
-    void initializeAccelerationForBodyPartInBoundingBox();
+    void initializeExternalForceInBoundingBox();
     void initializeForceInBodyRegion();
     void initializeSurfacePressure();
     void initializeSpringDamperConstraintParticleWise();
@@ -283,8 +283,8 @@ class StructuralSimulation
     void executeInitialNormalDirection();
     void executeCorrectConfiguration();
     void executeUpdateElasticNormalDirection();
-    void executeInitializeATimeStep();
-    void executeAccelerationForBodyPartInBoundingBox();
+    void executeInitializeGravity();
+    void executeExternalForceInBoundingBox();
     void executeForceInBodyRegion();
     void executeSurfacePressure();
     void executeSpringDamperConstraintParticleWise();

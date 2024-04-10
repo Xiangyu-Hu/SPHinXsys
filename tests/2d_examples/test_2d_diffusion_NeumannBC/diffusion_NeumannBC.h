@@ -3,8 +3,8 @@
  * @brief 	This is the head files used by diffusion_NeumannBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef DIFFUSION_NEUMANNBC_H
-#define DIFFUSION_NEUMANNBC_H
+#ifndef DIFFUSION_NEUMANN_BC_H
+#define DIFFUSION_NEUMANN_BC_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -20,7 +20,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-Real diffusion_coff = 1;
+Real diffusion_coeff = 1;
 std::array<std::string, 1> species_name_list{"Phi"};
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
@@ -95,7 +95,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
   public:
     DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     }
 };
 using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
@@ -129,7 +129,8 @@ class DirichletWallBoundaryInitialCondition
     size_t phi_;
 
   public:
-    DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
+    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body)
+        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -157,8 +158,9 @@ class NeumannWallBoundaryInitialCondition
     StdLargeVec<Real> &heat_flux_;
 
   public:
-    NeumannWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-                                                                     heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux")))
+    explicit NeumannWallBoundaryInitialCondition(SolidBody &diffusion_body)
+        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
+          heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -173,31 +175,18 @@ class NeumannWallBoundaryInitialCondition
         }
     }
 };
-
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
-using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
-using SolidDiffusionNeumann = DiffusionRelaxationNeumann<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(InnerRelation &inner_relation,
-                                     ContactRelation &body_contact_relation_Dirichlet,
-                                     ContactRelation &body_contact_relation_Neumann)
-        : DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>(
-              inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
+    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
+class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
 {
   public:
-    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 5;
@@ -213,4 +202,4 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
         }
     }
 };
-#endif // DIFFUSION_NEUMANNBC_H
+#endif // DIFFUSION_NEUMANN_BC_H

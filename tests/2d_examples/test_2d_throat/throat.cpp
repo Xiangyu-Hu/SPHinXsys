@@ -125,77 +125,86 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody fluid_block(system, makeShared<FluidBlock>("FluidBody"));
+    FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
     fluid_block.defineParticlesAndMaterial<BaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
     fluid_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody fluid_observer(system, "FluidObserver");
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd::Zero()};
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_block_inner(fluid_block);
-    ComplexRelation fluid_block_complex(fluid_block_inner, {&wall_boundary});
+    ContactRelation fluid_block_contact(fluid_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&fluid_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation fluid_block_complex(fluid_block_inner, fluid_block_contact);
     //-------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
     // evaluation of density by summation approach
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
     // time step size without considering sound wave speed and viscosity
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
     // time step size with considering sound wave speed
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
     // pressure relaxation using verlet time stepping
-    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_complex);
+    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_complex);
+    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     // define external force
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_complex);
-    // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
+    // computing viscous effect implicitly and with update velocity directly other than viscous force
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-        implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
+        implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
     // impose transport velocity
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_block_complex);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+        transport_velocity_correction(fluid_block_inner, fluid_block_contact);
     // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-        write_fluid_mechanical_energy(io_environment, fluid_block);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_fluid_kinetic_energy(fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_fluid_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemCellLinkedLists();
     // initial periodic boundary condition
     periodic_condition.ghost_creation_.exec();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemConfigurations();
     // prepare quantities will be used once only
     wall_boundary_normal_direction.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -223,7 +232,6 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
 
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             transport_velocity_correction.exec();
@@ -246,9 +254,9 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.RestartStep())
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_fluid_mechanical_energy.writeToFile(number_of_iterations);
+                    write_fluid_kinetic_energy.writeToFile(number_of_iterations);
                     write_recorded_fluid_pressure.writeToFile(number_of_iterations);
                 }
             }
@@ -273,14 +281,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
-        write_fluid_mechanical_energy.generateDataBase(1.0e-2);
+        write_fluid_kinetic_energy.generateDataBase(1.0e-2);
         write_recorded_fluid_pressure.generateDataBase(1.0e-2);
     }
     else
     {
-        write_fluid_mechanical_energy.testResult();
+        write_fluid_kinetic_energy.testResult();
         write_recorded_fluid_pressure.testResult();
     }
 

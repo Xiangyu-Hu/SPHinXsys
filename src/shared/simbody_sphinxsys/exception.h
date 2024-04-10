@@ -23,7 +23,7 @@
 /**
  * @file 	exception.h
  * @details A toolkit for exception functionality.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef EXCEPTION_SIMBODY_H

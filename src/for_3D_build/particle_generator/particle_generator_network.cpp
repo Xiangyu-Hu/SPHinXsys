@@ -5,16 +5,17 @@
 #include "io_all.h"
 #include "level_set.h"
 #include "sph_system.h"
-//=================================================================================================//
+
 namespace SPH
 {
 //=================================================================================================//
-ParticleGeneratorNetwork::
-    ParticleGeneratorNetwork(SPHBody &sph_body, const Vecd &starting_pnt, const Vecd &second_pnt, int iterator, Real grad_factor)
-    : ParticleGenerator(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
+ParticleGenerator<Network>::
+    ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
+                      const Vecd &second_pnt, int iterator, Real grad_factor)
+    : ParticleGenerator<Base>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      grad_factor_(grad_factor), sph_body_(sph_body), body_shape_(*sph_body.body_shape_),
+      grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(*sph_body.initial_shape_),
       cell_linked_list_(DynamicCast<RealBody>(this, sph_body).getCellLinkedList()),
       tree_(DynamicCast<TreeBody>(this, &sph_body))
 {
@@ -25,7 +26,8 @@ ParticleGeneratorNetwork::
     cell_linked_list_.InsertListDataEntry(0, pos_[0], segment_length_);
 }
 //=================================================================================================//
-void ParticleGeneratorNetwork::growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
+void ParticleGenerator<Network>::
+    growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
 {
     initializePositionAndVolumetricMeasure(new_point, segment_length_);
     tree_->branch_locations_.push_back(branch->id_);
@@ -33,10 +35,10 @@ void ParticleGeneratorNetwork::growAParticleOnBranch(TreeBody::Branch *branch, c
     branch->end_direction_ = end_direction;
 }
 //=================================================================================================//
-Vecd ParticleGeneratorNetwork::getGradientFromNearestPoints(Vecd pt, Real delta)
+Vecd ParticleGenerator<Network>::getGradientFromNearestPoints(Vecd pt, Real delta)
 {
-    Vecd upgrad = Vecd::Zero();
-    Vecd downgrad = Vecd::Zero();
+    Vecd up_grad = Vecd::Zero();
+    Vecd down_grad = Vecd::Zero();
     Vecd shift = delta * Vecd::Ones();
 
     for (int i = 0; i != Dimensions; i++)
@@ -47,24 +49,28 @@ Vecd ParticleGeneratorNetwork::getGradientFromNearestPoints(Vecd pt, Real delta)
         downwind[i] += shift[i];
         ListData up_nearest_list = cell_linked_list_.findNearestListDataEntry(upwind);
         ListData down_nearest_list = cell_linked_list_.findNearestListDataEntry(downwind);
-        upgrad[i] = std::get<0>(up_nearest_list) != MaxSize_t ? (upwind - std::get<1>(up_nearest_list)).norm() / 2.0 * delta : 1.0;
-        downgrad[i] = std::get<0>(down_nearest_list) != MaxSize_t ? (downwind - std::get<1>(down_nearest_list)).norm() / 2.0 * delta : 1.0;
+        up_grad[i] = std::get<0>(up_nearest_list) != MaxSize_t
+                         ? (upwind - std::get<1>(up_nearest_list)).norm() / 2.0 * delta
+                         : 1.0;
+        down_grad[i] = std::get<0>(down_nearest_list) != MaxSize_t
+                           ? (downwind - std::get<1>(down_nearest_list)).norm() / 2.0 * delta
+                           : 1.0;
     }
-    return downgrad - upgrad;
+    return down_grad - up_grad;
 }
 //=================================================================================================//
-Vecd ParticleGeneratorNetwork::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
+Vecd ParticleGenerator<Network>::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
 {
     Vecd pnt_to_project = init_point + dir * segment_length_;
 
-    Real phi = body_shape_.findSignedDistance(pnt_to_project);
-    Vecd unit_normal = body_shape_.findNormalDirection(pnt_to_project);
+    Real phi = initial_shape_.findSignedDistance(pnt_to_project);
+    Vecd unit_normal = initial_shape_.findNormalDirection(pnt_to_project);
     unit_normal /= unit_normal.norm() + TinyReal;
     Vecd new_point = pnt_to_project - phi * unit_normal;
     return new_point;
 }
 //=================================================================================================//
-bool ParticleGeneratorNetwork::
+bool ParticleGenerator<Network>::
     isCollision(const Vecd &new_point, const ListData &nearest_neighbor, size_t parent_id)
 {
     bool collision = false;
@@ -93,7 +99,7 @@ bool ParticleGeneratorNetwork::
     return collision;
 }
 //=================================================================================================//
-bool ParticleGeneratorNetwork::
+bool ParticleGenerator<Network>::
     createABranchIfValid(size_t parent_id, Real angle, Real repulsivity, size_t number_segments)
 {
     bool is_valid = false;
@@ -103,7 +109,7 @@ bool ParticleGeneratorNetwork::
     Vecd init_point = pos_[parent_elements.back()];
     Vecd init_direction = parent_branch->end_direction_;
 
-    Vecd surface_norm = body_shape_.findNormalDirection(init_point);
+    Vecd surface_norm = initial_shape_.findNormalDirection(init_point);
     surface_norm /= surface_norm.norm() + TinyReal;
     Vecd in_plane = -init_direction.cross(surface_norm);
 
@@ -123,7 +129,7 @@ bool ParticleGeneratorNetwork::
 
         for (size_t i = 1; i < number_segments; i++)
         {
-            surface_norm = body_shape_.findNormalDirection(new_point);
+            surface_norm = initial_shape_.findNormalDirection(new_point);
             surface_norm /= surface_norm.norm() + TinyReal;
             /** Project grad to surface. */
             grad = getGradientFromNearestPoints(new_point, delta);
@@ -158,10 +164,9 @@ bool ParticleGeneratorNetwork::
     return is_valid;
 }
 //=================================================================================================//
-void ParticleGeneratorNetwork::initializeGeometricVariables()
+void ParticleGenerator<Network>::initializeGeometricVariables()
 {
-    IOEnvironment *io_environment = sph_body_.getSPHSystem().io_environment_;
-    BodyStatesRecordingToVtp write_states(*io_environment, {sph_body_});
+    BodyStatesRecordingToVtp write_states({sph_body_});
 
     std::cout << "Now creating Particles on network... " << std::endl;
 
@@ -205,7 +210,7 @@ void ParticleGeneratorNetwork::initializeGeometricVariables()
         for (size_t j = 0; j != branches_to_grow.size(); j++)
         {
             size_t grow_id = branches_to_grow[j];
-            Real rand_num = ((Real)rand() / (RAND_MAX)) - 0.5;
+            Real rand_num = rand_uniform(-0.5, 0.5);
             Real angle_to_use = angle_ + rand_num * 0.05;
             for (size_t k = 0; k != 2; k++)
             {
@@ -227,8 +232,8 @@ void ParticleGeneratorNetwork::initializeGeometricVariables()
         write_states.writeToFile(ite);
     }
 
-    std::cout << base_particles_.total_real_particles_ << " Particles has been successfully created!" << std::endl;
+    std::cout << base_particles_.total_real_particles_
+              << " Particles has been successfully created!" << std::endl;
 }
 //=================================================================================================//
 } // namespace SPH
-  //=================================================================================================//

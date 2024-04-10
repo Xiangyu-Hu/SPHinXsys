@@ -3,11 +3,9 @@
  * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
-#include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;
-#include "io_simbody_cable.h"   //output for cable data
-#include "io_simbody_free.h"    //output for free body data
 #include "nonlinear_wave_fsi.h" //header for this case
+#include "sphinxsys.h"          //SPHinXsys Library.
+using namespace SPH;
 
 int main(int ac, char *av[])
 {
@@ -17,13 +15,12 @@ int main(int ac, char *av[])
     //	Build up the Structure Relax SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
-    system_fit.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment_fit(system_fit);
+    system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment_fit);
+    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure_fit.generateParticles<ParticleGeneratorMultiResolution>();
+    structure_fit.generateParticles<ParticleGeneratorAdaptive>();
     structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     //----------------------------------------------------------------------
@@ -34,12 +31,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structure_fit);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(structure_adaptive_inner, true);
-    SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
     /** Write the particle reload files. */
-    ReloadParticleIO write_particle_reload_files(io_environment_fit, structure_fit);
+    ReloadParticleIO write_particle_reload_files(structure_fit);
 
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
@@ -53,12 +51,12 @@ int main(int ac, char *av[])
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
-    while (ite_p < 1000)
+    while (ite_p < 100)
     {
         update_smoothing_length_ratio.exec();
         relaxation_step_inner.exec();
         ite_p += 1;
-        if (ite_p % 100 == 0)
+        if (ite_p % 10 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
         }
@@ -70,153 +68,111 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the Main environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<Vecd>("Position");
     water_block.addBodyStateForRecording<Real>("Pressure");
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
+    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
+    structure.generateParticles<ParticleGeneratorReload>("Structure_Fit");
 
-    ObserverBody observer(system, "Observer");
+    ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
-    observer.generateParticles<ObserverParticleGenerator>(
+    observer.generateParticles<ParticleGeneratorObserver>(
         StdVec<Vecd>{obs});
 
-    ObserverBody WMobserver(system, "WMObserver");
+    ObserverBody WMobserver(sph_system, "WMObserver");
     WMobserver.defineAdaptationRatios(h, 2.0);
     Vecd WMpos0 = Vecd(0.0, -Maker_width / 2, HWM / 2);
-    WMobserver.generateParticles<ObserverParticleGenerator>(
+    WMobserver.generateParticles<ParticleGeneratorObserver>(
         StdVec<Vecd>{WMpos0});
 
     //---------------------------------------------------------
     // PRESSURE PROBES
     //---------------------------------------------------------
-    ObserverBody tp1(system, "TP1");
-    Real tp1x = 1. - 0.285;
-    Real tp1y = 12.286 + .035;
-    Real tp1z = 1.043;
-    StdVec<Vecd> tp1l = {Vecd(tp1x, tp1y, tp1z)};
-    tp1.generateParticles<ObserverParticleGenerator>(tp1l);
-    ObserverBody tp2(system, "TP2");
-    Real tp2x = 1. + 0.04;
-    Real tp2y = 12.286 + .035;
-    Real tp2z = 1.043;
-    StdVec<Vecd> tp2l = {Vecd(tp2x, tp2y, tp2z)};
-    tp2.generateParticles<ObserverParticleGenerator>(tp2l);
-    ObserverBody fp1(system, "FP1");
-    Real fp1x = 1. - 0.12;
-    Real fp1y = 12.286;
+
+    ObserverBody fp1(sph_system, "FP1");
+    Real fp1x = Strx - 0.12;
+    Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
-    fp1.generateParticles<ObserverParticleGenerator>(fp1l);
-    ObserverBody fp2(system, "FP2");
-    Real fp2x = 1.;
-    Real fp2y = 12.286;
-    Real fp2z = 0.968;
-    StdVec<Vecd> fp2l = {Vecd(fp2x, fp2y, fp2z)};
-    fp2.generateParticles<ObserverParticleGenerator>(fp2l);
-    ObserverBody fp3(system, "FP3");
-    Real fp3x = 1.;
-    Real fp3y = 12.286;
-    Real fp3z = 1.013;
-    StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y, fp3z)};
-    fp3.generateParticles<ObserverParticleGenerator>(fp3l);
-    ObserverBody fp4(system, "FP4");
-    Real fp4x = 1. + 0.31;
-    Real fp4y = 12.286;
-    Real fp4z = 1.013;
-    StdVec<Vecd> fp4l = {Vecd(fp4x, fp4y, fp4z)};
-    fp4.generateParticles<ObserverParticleGenerator>(fp4l);
-    ObserverBody bp1(system, "BP1");
-    Real bp1x = 1. - 0.295;
-    Real bp1y = 12.286 + .035;
+    fp1.generateParticles<ParticleGeneratorObserver>(fp1l);
+
+    ObserverBody bp1(sph_system, "BP1");
+    Real bp1x = Strx - 0.295;
+    Real bp1y = Stry + .035;
     Real bp1z = 0.933;
     StdVec<Vecd> bp1l = {Vecd(bp1x, bp1y, bp1z)};
-    bp1.generateParticles<ObserverParticleGenerator>(bp1l);
-    ObserverBody bp2(system, "BP2");
-    Real bp2x = 1. - 0.04;
-    Real bp2y = 12.286 + .035;
-    Real bp2z = 0.933;
-    StdVec<Vecd> bp2l = {Vecd(bp2x, bp2y, bp2z)};
-    bp2.generateParticles<ObserverParticleGenerator>(bp2l);
+    bp1.generateParticles<ParticleGeneratorObserver>(bp1l);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation structure_inner(structure);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &structure});
+    ContactRelation water_block_contact(water_block, {&wall_boundary, &structure});
     ContactRelation structure_contact(structure, {&water_block});
     ContactRelation observer_contact_with_water(observer, {&water_block});
     ContactRelation observer_contact_with_structure(observer, {&structure});
     ContactRelation WMobserver_contact_with_water(WMobserver, {&water_block});
     ContactRelation WMobserver_contact_with_wall(WMobserver, {&wall_boundary});
-
-    ContactRelation tp1_contact_s(tp1, {&structure});
-    ContactRelation tp2_contact_s(tp2, {&structure});
     ContactRelation fp1_contact_s(fp1, {&structure});
-    ContactRelation fp2_contact_s(fp2, {&structure});
-    ContactRelation fp3_contact_s(fp3, {&structure});
-    ContactRelation fp4_contact_s(fp4, {&structure});
     ContactRelation bp1_contact_s(bp1, {&structure});
-    ContactRelation bp2_contact_s(bp2, {&structure});
-
-    ContactRelation tp1_contact_w(tp1, {&water_block});
-    ContactRelation tp2_contact_w(tp2, {&water_block});
     ContactRelation fp1_contact_w(fp1, {&water_block});
-    ContactRelation fp2_contact_w(fp2, {&water_block});
-    ContactRelation fp3_contact_w(fp3, {&water_block});
-    ContactRelation fp4_contact_w(fp4, {&water_block});
     ContactRelation bp1_contact_w(bp1, {&water_block});
-    ContactRelation bp2_contact_w(bp2, {&water_block});
-
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
-    /** Time step initialization, add gravity. */
-    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
+    /** apply gravity. */
+    Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity_to_fluid(water_block, gravity);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
     /** time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** pressure relaxation using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> pressure_relaxation(water_block_complex);
-    // Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 2, 0.4);
-    InteractionWithUpdate<CorrectedConfigurationInner> structure_corrected_configuration(structure_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
+    /** pressure relaxation using Verlet time stepping. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Damp waves */
-    Vecd translation_damping(0.5 * DW, 16.5, 0.5 * HWM);
-    Vecd damping(0.5 * DW, 1.5, 0.5 * HWM);
+    Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
+    Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
     BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on structure. */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_structure(structure_contact, viscous_force_on_solid);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_wave_maker), wave_maker_shape));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
@@ -256,7 +212,7 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Weld fixed_spotBL(matter.Ground(), SimTK::Transform(SimTK::Vec3(ground_tethering_BL[0], ground_tethering_BL[1], ground_tethering_BL[2])),
                                             fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
     /*---------------------------------------------------------------------------*/
-    // A SEASIDE PILLARS; B PORTSIDE PILLARS
+    // A SEASIDE PILLARS; B PORT_SIDE PILLARS
     /*-----------------------------------------------------------------------------*/
     Vecd disp_cable_endAR = structure_tethering_AR - structure_multibody.initial_mass_center_;
     SimTK::CablePath tethering_lineAR(cables, fixed_spotAR, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endAR[0], disp_cable_endAR[1], disp_cable_endAR[2]));
@@ -300,101 +256,77 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Cable SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_AR(io_environment, integ, tethering_springAR, "AR");
-    WriteSimBodyCableData write_cable_AL(io_environment, integ, tethering_springAL, "AL");
-    WriteSimBodyCableData write_cable_BR(io_environment, integ, tethering_springBR, "BR");
-    WriteSimBodyCableData write_cable_BL(io_environment, integ, tethering_springBL, "BL");
-    WriteSimBodyFreeRotationMatrix write_free_body_rotation(io_environment, integ, tethered_struct);
-    WriteSimBodyVelocity write_free_body_velocity(io_environment, integ, tethered_struct);
+    WriteSimBodyCableData write_cable_AR(sph_system, integ, tethering_springAR, "AR");
+    WriteSimBodyCableData write_cable_AL(sph_system, integ, tethering_springAL, "AL");
+    WriteSimBodyCableData write_cable_BR(sph_system, integ, tethering_springBR, "BR");
+    WriteSimBodyCableData write_cable_BL(sph_system, integ, tethering_springBL, "BL");
+    WriteSimBodyFreeRotationMatrix write_free_body_rotation(sph_system, integ, tethered_struct);
+    WriteSimBodyVelocity write_free_body_velocity(sph_system, integ, tethered_struct);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
-    ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>> wave_gauge(io_environment, wave_probe_buffer);
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_str_displacement("Position", io_environment, observer_contact_with_structure);
+        write_str_displacement("Position", observer_contact_with_structure);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_WMobserver_position(WMobserver_contact_with_wall, "Position", "Position");
     ObservedQuantityRecording<Vecd>
-        write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
+        write_WM_displacement("Position", WMobserver_contact_with_wall);
 
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_tp1_position(tp1_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_tp2_position(tp2_contact_s, "Position", "Position");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp1_position(fp1_contact_s, "Position", "Position");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_fp2_position(fp2_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_fp3_position(fp3_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_fp4_position(fp4_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_bp1_position(bp1_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_bp2_position(bp2_contact_s, "Position", "Position");
 
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_tp1("Pressure", io_environment, tp1_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_tp2("Pressure", io_environment, tp2_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
+        write_recorded_pressure_fp1("Pressure", fp1_contact_w);
     ObservedQuantityRecording<Real>
-        write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_fp4("Pressure", io_environment, fp4_contact_w);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_bp2("Pressure", io_environment, bp2_contact_w);
+        write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
-    RestartIO restart_io(io_environment, system.real_bodies_);
+    RestartIO restart_io(sph_system.real_bodies_);
 
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
     GlobalStaticVariables::physical_time_ = 0.0;
     int number_of_iterations = 0;
-    int screen_output_interval = 1000;
+    int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
-    Real output_interval = end_time / 25;
+    Real output_interval = end_time / 100;
     Real dt = 0.0;
     Real total_time = 0.0;
     Real relax_time = 1.0;
     /** statistics for computing time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
-
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     structure_offset_position.exec();
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
-
+    constant_gravity_to_fluid.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    if (system.RestartStep() != 0)
+    if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.RestartStep());
+        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedListWithParticleSort(100);
         wall_boundary.updateCellLinkedList();
         structure.updateCellLinkedList();
@@ -403,14 +335,8 @@ int main(int ac, char *av[])
         observer_contact_with_water.updateConfiguration();
         WMobserver_contact_with_water.updateConfiguration();
 
-        tp1_contact_w.updateConfiguration();
-        tp2_contact_w.updateConfiguration();
         fp1_contact_w.updateConfiguration();
-        fp2_contact_w.updateConfiguration();
-        fp3_contact_w.updateConfiguration();
-        fp4_contact_w.updateConfiguration();
         bp1_contact_w.updateConfiguration();
-        bp2_contact_w.updateConfiguration();
     }
 
     //----------------------------------------------------------------------
@@ -421,14 +347,8 @@ int main(int ac, char *av[])
     write_WM_displacement.writeToFile(number_of_iterations);
     wave_gauge.writeToFile(number_of_iterations);
 
-    write_recorded_pressure_tp1.writeToFile(number_of_iterations);
-    write_recorded_pressure_tp2.writeToFile(number_of_iterations);
     write_recorded_pressure_fp1.writeToFile(number_of_iterations);
-    write_recorded_pressure_fp2.writeToFile(number_of_iterations);
-    write_recorded_pressure_fp3.writeToFile(number_of_iterations);
-    write_recorded_pressure_fp4.writeToFile(number_of_iterations);
     write_recorded_pressure_bp1.writeToFile(number_of_iterations);
-    write_recorded_pressure_bp2.writeToFile(number_of_iterations);
 
     write_cable_AR.writeToFile(number_of_iterations);
     write_cable_AL.writeToFile(number_of_iterations);
@@ -446,12 +366,10 @@ int main(int ac, char *av[])
         Real integral_time = 0.0;
         while (integral_time < output_interval)
         {
-            initialize_time_step_to_fluid.exec();
-
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             corrected_configuration_fluid.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             /** Viscous force exerting on structure. */
             viscous_force_on_solid.exec();
 
@@ -461,7 +379,7 @@ int main(int ac, char *av[])
                 dt = get_fluid_time_step_size.exec();
 
                 pressure_relaxation.exec(dt);
-                fluid_force_on_structure.exec();
+                pressure_force_on_structure.exec();
                 density_relaxation.exec(dt);
                 /** coupled rigid body dynamics. */
                 if (total_time >= relax_time)
@@ -474,14 +392,8 @@ int main(int ac, char *av[])
                     wave_making.exec(dt);
                 }
                 interpolation_observer_position.exec();
-                interpolation_tp1_position.exec();
-                interpolation_tp2_position.exec();
                 interpolation_fp1_position.exec();
-                interpolation_fp2_position.exec();
-                interpolation_fp3_position.exec();
-                interpolation_fp4_position.exec();
                 interpolation_bp1_position.exec();
-                interpolation_bp2_position.exec();
 
                 relaxation_time += dt;
                 integral_time += dt;
@@ -509,14 +421,8 @@ int main(int ac, char *av[])
             observer_contact_with_water.updateConfiguration();
             WMobserver_contact_with_water.updateConfiguration();
 
-            tp1_contact_w.updateConfiguration();
-            tp2_contact_w.updateConfiguration();
             fp1_contact_w.updateConfiguration();
-            fp2_contact_w.updateConfiguration();
-            fp3_contact_w.updateConfiguration();
-            fp4_contact_w.updateConfiguration();
             bp1_contact_w.updateConfiguration();
-            bp2_contact_w.updateConfiguration();
 
             if (total_time >= relax_time)
             {
@@ -524,14 +430,8 @@ int main(int ac, char *av[])
                 write_WM_displacement.writeToFile(number_of_iterations);
                 wave_gauge.writeToFile(number_of_iterations);
 
-                write_recorded_pressure_tp1.writeToFile(number_of_iterations);
-                write_recorded_pressure_tp2.writeToFile(number_of_iterations);
                 write_recorded_pressure_fp1.writeToFile(number_of_iterations);
-                write_recorded_pressure_fp2.writeToFile(number_of_iterations);
-                write_recorded_pressure_fp3.writeToFile(number_of_iterations);
-                write_recorded_pressure_fp4.writeToFile(number_of_iterations);
                 write_recorded_pressure_bp1.writeToFile(number_of_iterations);
-                write_recorded_pressure_bp2.writeToFile(number_of_iterations);
 
                 write_cable_AR.writeToFile(number_of_iterations);
                 write_cable_AL.writeToFile(number_of_iterations);
@@ -555,15 +455,15 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_str_displacement.generateDataBase(1.0e-3);
-        write_recorded_pressure_fp2.generateDataBase(1.0e-3);
+        write_recorded_pressure_fp1.generateDataBase(1.0e-3);
     }
-    else if (system.RestartStep() == 0)
+    else if (sph_system.RestartStep() == 0)
     {
         write_str_displacement.testResult();
-        write_recorded_pressure_fp2.testResult();
+        write_recorded_pressure_fp1.testResult();
     }
 
     return 0;

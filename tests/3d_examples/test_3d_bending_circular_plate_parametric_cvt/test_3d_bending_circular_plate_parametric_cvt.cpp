@@ -3,7 +3,8 @@
  * @brief 	Shell verification  incl. refinement study
  * @details Circular plastic shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
- * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH051: Bending of a Circular Plate Using Axisymmetric Elements
+ * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013,
+ * VMMECH051: Bending of a Circular Plate Using Axis symmetric Elements
  */
 
 #include "sphinxsys.h"
@@ -15,7 +16,7 @@ using namespace SPH;
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 
-class ShellCircleParticleGenerator : public SurfaceParticleGenerator
+class ShellCircleParticleGenerator : public ParticleGeneratorSurface
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -24,7 +25,7 @@ class ShellCircleParticleGenerator : public SurfaceParticleGenerator
 
   public:
     explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : SurfaceParticleGenerator(sph_body),
+        : ParticleGeneratorSurface(sph_body),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
@@ -61,8 +62,8 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 {
     std::cout << "read_obj_vertices started" << std::endl;
 
-    std::ifstream myfile(file_name, std::ios_base::in);
-    if (!myfile.is_open())
+    std::ifstream my_file(file_name, std::ios_base::in);
+    if (!my_file.is_open())
         throw std::runtime_error("read_obj_vertices: file doesn't exist: " + file_name);
 
     StdVec<Vec3d> pos_0;
@@ -70,7 +71,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
     unsigned int count = 0;
     Real value = 0;
 
-    while (myfile >> value)
+    while (my_file >> value)
     {
         particle[count] = value;
         ++count;
@@ -163,11 +164,11 @@ struct return_data
 
     void write_data_to_txt(const std::string &file_name) const
     {
-        std::ofstream myfile;
-        myfile.open(file_name);
-        myfile << "deflection; stress_max\n";
-        myfile << deflection << "; " << stress_max << "\n";
-        myfile.close();
+        std::ofstream my_file;
+        my_file.open(file_name);
+        my_file << "deflection; stress_max\n";
+        my_file << deflection << "; " << stress_max << "\n";
+        my_file.close();
     }
 };
 
@@ -190,7 +191,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real E = 3e7 * psi_to_pa;
     Real mu = 0.3;
     auto material = makeShared<LinearElasticSolid>(rho, E, mu);
-    Real physical_viscosity = 7e3; // where is this value coming from?
+    Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
     Vec3d gravity = -pressure / (thickness * rho) * sym_vec; // force/mass simplified by area
@@ -228,14 +229,14 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
+    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     shell_body.generateParticles<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
-    IOEnvironment io_env(system, false);
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
+    BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
@@ -253,7 +254,8 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
@@ -279,10 +281,11 @@ return_data bending_circular_plate(Real dp_ratio)
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
+    constant_gravity_force.exec();
 
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file
-        Real min_rij = Infinity;
+        Real min_rij = MaxReal;
         for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
         {
             Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
@@ -298,7 +301,7 @@ return_data bending_circular_plate(Real dp_ratio)
         Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
-        EXPECT_FLOAT_EQ(total_mass, total_area * rho);
+        EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
     }
 
     /**
@@ -329,8 +332,6 @@ return_data bending_circular_plate(Real dp_ratio)
                               << dt << "\n";
                 }
 
-                initialize_external_force.exec(dt);
-
                 dt = std::min(thickness / dp, Real(0.5)) * computing_time_step_size.exec();
                 { // checking for excessive time step reduction
                     if (dt > max_dt)
@@ -358,8 +359,7 @@ return_data bending_circular_plate(Real dp_ratio)
                             throw std::runtime_error("position has become nan");
                 }
             }
-            { // output data
-                // std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+            {
                 vtp_output.writeToFile(ite);
             }
         }
@@ -381,11 +381,9 @@ return_data bending_circular_plate(Real dp_ratio)
         std::cout << "deflection_ref: " << deflection_ref << std::endl;
 
         EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref) * 5e-2); // 5%
-                                                                                                                               // EXPECT_NEAR(point_center.stress_max, stress_max_ref, stress_max_ref*1e-2);
     }
     return_data data;
     data.deflection = point_center.displacement[sym_axis];
-    // data.stress_max = point_center.stress_max;
     return data;
 }
 

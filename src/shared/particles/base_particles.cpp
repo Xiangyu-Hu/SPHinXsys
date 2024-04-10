@@ -4,7 +4,7 @@
 #include "base_body_part.h"
 #include "base_material.h"
 #include "base_particle_generator.h"
-#include "xml_engine.h"
+#include "xml_parser.h"
 #include "base_particles.h"
 
 
@@ -17,8 +17,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       particle_sorting_(*this),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
-      restart_xml_engine_("xml_restart", "particles"),
-      reload_xml_engine_("xml_particle_reload", "particles")
+      restart_xml_parser_("xml_restart", "particles"),
+      reload_xml_parser_("xml_particle_reload", "particles")
 {
     //----------------------------------------------------------------------
     //		register geometric data only
@@ -38,13 +38,13 @@ void BaseParticles::initializeOtherVariables()
     //		register non-geometric data
     //----------------------------------------------------------------------
     registerVariable(vel_, "Velocity");
-    registerVariable(acc_, "Acceleration");
-    registerVariable(acc_prior_, "PriorAcceleration");
+    registerVariable(force_, "Force");
+    registerVariable(force_prior_, "ForcePrior");
     registerVariable(rho_, "Density", base_material_.ReferenceDensity());
-    registerVariable(mass_, "MassiveMeasure",
+    registerVariable(mass_, "Mass",
                      [&](size_t i) -> Real
-                     { return rho_[i] * Vol_[i]; });
-    registerVariable(surface_indicator_, "SurfaceIndicator");
+                     { return rho_[i] * ParticleVolume(i); });
+    registerVariable(indicator_, "Indicator");
     /**
      *	add basic output particle data
      */
@@ -54,7 +54,8 @@ void BaseParticles::initializeOtherVariables()
      */
     addVariableToList<Vecd>(variables_to_restart_, "Position");
     addVariableToList<Vecd>(variables_to_restart_, "Velocity");
-    addVariableToList<Vecd>(variables_to_restart_, "Acceleration");
+    addVariableToList<Vecd>(variables_to_restart_, "ForcePrior");
+    addVariableToList<Vecd>(variables_to_restart_, "Force");
     addVariableToList<Real>(variables_to_restart_, "VolumetricMeasure");
     //----------------------------------------------------------------------
     //		initialize unregistered data
@@ -154,6 +155,14 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
     };
 }
 //=================================================================================================//
+void BaseParticles::computeDerivedVariables()
+{
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
+}
+//=================================================================================================//
 void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
 {
     // write particle positions and index first
@@ -188,12 +197,6 @@ void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
 {
     writePltFileHeader(output_file);
     output_file << "\n";
-
-    // compute derived particle variables
-    for (auto &derived_variable : derived_variables_)
-    {
-        derived_variable->exec();
-    }
 
     size_t total_real_particles = total_real_particles_;
     for (size_t i = 0; i != total_real_particles; ++i)
@@ -317,53 +320,52 @@ void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream &output_file, Bo
     }
 }
 //=================================================================================================//
-void BaseParticles::resizeXmlDocForParticles(XmlEngine &xml_engine)
+void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
-    size_t total_elements = xml_engine.SizeOfXmlDoc();
+    size_t total_elements = xml_parser.Size(xml_parser.first_element_);
 
     if (total_elements <= total_real_particles_)
     {
-        for (size_t i = total_elements; i != total_real_particles_; ++i)
-            xml_engine.addElementToXmlDoc("particle");
+        xml_parser.resize(xml_parser.first_element_, total_real_particles_, "particle");
     }
 }
 //=================================================================================================//
 void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
-    resizeXmlDocForParticles(restart_xml_engine_);
-    WriteAParticleVariableToXml write_variable_to_xml(restart_xml_engine_, total_real_particles_);
+    resizeXmlDocForParticles(restart_xml_parser_);
+    WriteAParticleVariableToXml write_variable_to_xml(restart_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_restart_, write_variable_to_xml);
-    restart_xml_engine_.writeToXmlFile(filefullpath);
+    restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 {
-    restart_xml_engine_.loadXmlFile(filefullpath);
-    ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_engine_, total_real_particles_);
+    restart_xml_parser_.loadXmlFile(filefullpath);
+    ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_restart_, read_variable_from_xml);
 }
 //=================================================================================================//
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 {
-    resizeXmlDocForParticles(reload_xml_engine_);
-    WriteAParticleVariableToXml write_variable_to_xml(reload_xml_engine_, total_real_particles_);
+    resizeXmlDocForParticles(reload_xml_parser_);
+    WriteAParticleVariableToXml write_variable_to_xml(reload_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, write_variable_to_xml);
-    reload_xml_engine_.writeToXmlFile(filefullpath);
+    reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 {
-    reload_xml_engine_.loadXmlFile(filefullpath);
-    total_real_particles_ = reload_xml_engine_.SizeOfXmlDoc();
+    reload_xml_parser_.loadXmlFile(filefullpath);
+    total_real_particles_ = reload_xml_parser_.Size(reload_xml_parser_.first_element_);
     for (size_t i = 0; i != total_real_particles_; ++i)
     {
         unsorted_id_.push_back(i);
     };
     resize_particle_data_(all_particle_data_, total_real_particles_);
-    ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_engine_, total_real_particles_);
+    ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
 }
@@ -374,8 +376,8 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         sequence_device_ = allocateDeviceData<size_t>(total_real_particles_);
         registerDeviceVariable<DeviceVecd>("Position", total_real_particles_, pos_.data());
         registerDeviceVariable<DeviceVecd>("Velocity", total_real_particles_, vel_.data());
-        registerDeviceVariable<DeviceVecd>("Acceleration", total_real_particles_, acc_.data());
-        registerDeviceVariable<DeviceVecd>("AccelerationPrior", total_real_particles_, acc_prior_.data());
+        registerDeviceVariable<DeviceVecd>("Force", total_real_particles_, force_.data());
+        registerDeviceVariable<DeviceVecd>("ForcePrior", total_real_particles_, force_prior_.data());
         registerDeviceVariable<DeviceReal>("Density", total_real_particles_, rho_.data());
         registerDeviceVariable<DeviceReal>("Mass", total_real_particles_, mass_.data());
         registerDeviceVariable<DeviceReal>("Volume", total_real_particles_, Vol_.data());
@@ -388,8 +390,8 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         copy_events.add(copyDataToDevice(sequence_.data(), sequence_device_, total_real_particles_));
         copy_events.add(copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
         copy_events.add(copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
-        copy_events.add(copyDataToDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_));
-        copy_events.add(copyDataToDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_));
+        copy_events.add(copyDataToDevice(force_.data(), getDeviceVariableByName<DeviceVecd>("Force"), total_real_particles_));
+        copy_events.add(copyDataToDevice(force_prior_.data(), getDeviceVariableByName<DeviceVecd>("ForcePrior"), total_real_particles_));
         copy_events.add(copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
         copy_events.add(copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
         copy_events.add(copyDataToDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
@@ -403,8 +405,8 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         copy_events.add(copyDataFromDevice(sequence_.data(), sequence_device_, total_real_particles_));
         copy_events.add(copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
         copy_events.add(copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(force_.data(), getDeviceVariableByName<DeviceVecd>("Force"), total_real_particles_));
+        copy_events.add(copyDataFromDevice(force_prior_.data(), getDeviceVariableByName<DeviceVecd>("ForcePrior"), total_real_particles_));
         copy_events.add(copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
         copy_events.add(copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
         copy_events.add(copyDataFromDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));

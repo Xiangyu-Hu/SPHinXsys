@@ -28,9 +28,9 @@ std::string full_path_to_file = "./input/triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.75; // Tank width.
-Real DH = 1.3;  // Tank height.
-Real DW = 1.2;  // Tank width.
+Real DL = 0.75; // Domain width.
+Real DH = 1.3;  // Domain height.
+Real DW = 1.2;  // Domain width.
 Vec3d domain_lower_bound(-0.2, -0.2, -0.2);
 Vec3d domain_upper_bound(DL, DH, DW);
 Vecd translation(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -48,44 +48,49 @@ class SolidBodyFromMesh : public ComplexShape
   public:
     explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+        add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * dp_0, full_path_to_file, translation, scaling);
+        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
     }
 };
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
-    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
+    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
     imported_model.defineParticlesAndMaterial();
     imported_model.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-    MeshRecordingToPlt write_cell_linked_list(io_environment, imported_model.getCellLinkedList());
+    BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
+    MeshRecordingToPlt write_cell_linked_list(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation imported_model_inner(imported_model);
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

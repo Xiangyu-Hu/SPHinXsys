@@ -1,7 +1,7 @@
 /**
 * @file 	particle_generator_single_resolution.cpp
-* @brief 	This is the test of using levelset to generate particles with single resolution and relax particles.
-* @details	We use this case to test the particle generation and relaxation by levelset for a complex geometry (2D).
+* @brief 	This is the test of using level set to generate particles with single resolution and relax particles.
+* @details	We use this case to test the particle generation and relaxation by level set for a complex geometry (2D).
 *			Before particle generation, we clean the level set, then do re-initialization.
 
 * @author 	Yongchuan Yu and Xiangyu Hu
@@ -18,55 +18,62 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
-Real DL = 2.3;                          /**< InputBody length right part. */
-Real DL1 = 2.3;                         /**< InputBody length left part. */
-Real DH = 4.5;                          /**< InputBody height. */
+Real DL = 2.5;                          /**< InputBody length right part. */
+Real DL1 = 2.5;                         /**< InputBody length left part. */
+Real DH = 5.0;                          /**< InputBody height. */
 Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, 0), Vec2d(DL, DH));
+BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Shape of the InputBody
 //----------------------------------------------------------------------
-class InputBody : public MultiPolygonShape
+class InputBody : public ComplexShape
 {
   public:
-    explicit InputBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        multi_polygon_.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        MultiPolygon original_logo;
+        original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
+        subtract<MultiPolygonShape>(original_logo);
     }
 };
 //----------------------------------------------------------------------
 //	The main program
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody input_body(system, makeShared<InputBody>("SPHInXsysLogo"));
-    input_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+    RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
+    input_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     input_body.defineParticlesAndMaterial();
     input_body.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation input_body_inner(input_body);
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_input_body_particles(input_body);
-    relax_dynamics::RelaxationStepInner relaxation_step_inner(input_body_inner, true);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp input_body_recording_to_vtp(io_environment, input_body);
-    MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body.getCellLinkedList());
+    BodyStatesRecordingToVtp input_body_recording_to_vtp(input_body);
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -89,11 +96,11 @@ int main()
         ite_p += 1;
         if (ite_p % 100 == 0)
         {
-            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
+            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             input_body_recording_to_vtp.writeToFile(ite_p);
         }
     }
-    std::cout << "The physics relaxation process of airfoil finish !" << std::endl;
+    std::cout << "The physics relaxation process finish !" << std::endl;
 
     return 0;
 }

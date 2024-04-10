@@ -24,7 +24,7 @@
  * @file 	dynamic_time_warping_method.h
  * @brief 	Classes for the comparison between validated and tested results
                         with dynamic time warping method.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -65,8 +65,8 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     StdVec<Real> calculateDTWDistance(BiVector<VariableType> dataset_a_, BiVector<VariableType> dataset_b_);
 
   public:
-    template <typename... ConstructorArgs>
-    explicit RegressionTestDynamicTimeWarping(ConstructorArgs &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    explicit RegressionTestDynamicTimeWarping(Args &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...),
                                                                            dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
                                                                            dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
     {

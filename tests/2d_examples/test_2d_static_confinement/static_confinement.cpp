@@ -22,8 +22,8 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -76,10 +76,10 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Shape for the wall.
 //----------------------------------------------------------------------
-class Wall : public MultiPolygonShape
+class WallShape : public MultiPolygonShape
 {
   public:
-    explicit Wall(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WallShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
     }
@@ -105,8 +105,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -115,11 +114,14 @@ int main(int ac, char *av[])
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
@@ -128,27 +130,25 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    /** Initialize particle acceleration. */
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     /** Define the confinement condition for wall. */
-    NearShapeSurface near_surface_wall(water_block, makeShared<Wall>("Wall"));
-    near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallShape>("Wall"));
+    near_surface_wall.getLevelSetShape().writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
-    NearShapeSurface near_surface_triangle(water_block, makeShared<ExclusiveShape<Triangle>>("Triangle"));
-    near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
+    NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
+    near_surface_triangle.getLevelSetShape().writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
-    /** Push back the static confinement conditiont to corresponding dynamics. */
+    /** Push back the static confinement condition to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
     update_density_by_summation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
@@ -161,17 +161,18 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
+    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
+        write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -203,9 +204,8 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Acceleration due to viscous force and gravity. */
+            /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -264,7 +264,7 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         write_recorded_water_pressure.generateDataBase(1.0e-3);
