@@ -46,22 +46,6 @@ typedef DataDelegateSimple<ShellParticles> ShellDataSimple;
 typedef DataDelegateInner<ShellParticles> ShellDataInner;
 
 /**
- * @class ShellDynamicsInitialCondition
- * @brief  set initial condition for shell particles
- * This is a abstract class to be override for case specific initial conditions.
- */
-class ShellDynamicsInitialCondition : public LocalDynamics, public ShellDataSimple
-{
-  public:
-    explicit ShellDynamicsInitialCondition(SPHBody &sph_body);
-    virtual ~ShellDynamicsInitialCondition(){};
-
-  protected:
-    StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
-    StdLargeVec<Matd> &transformation_matrix_;
-};
-
-/**
  * @class UpdateShellNormalDirection
  * @brief update particle normal directions for shell
  */
@@ -189,8 +173,8 @@ class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
-    StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
     StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 };
 
 /**
@@ -259,10 +243,12 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 
   protected:
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
+    Real smoothing_length_;
+    Matd numerical_damping_scaling_matrix_;
+    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
     StdLargeVec<Vecd> &global_shear_stress_;
     Real rho0_, inv_rho0_;
-    Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
+    Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
     const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;

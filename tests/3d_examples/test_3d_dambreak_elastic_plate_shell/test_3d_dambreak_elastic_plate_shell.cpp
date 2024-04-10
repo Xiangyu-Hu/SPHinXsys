@@ -214,10 +214,10 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
     // Shell
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> plate_time_step_size(plate);
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> plate_corrected_configuration(plate_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> plate_stress_relaxation_first(plate_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> plate_stress_relaxation_second(plate_inner);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> plate_time_step_size(plate);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> plate_corrected_configuration(plate_inner);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> plate_average_curvature(plate_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> plate_update_normal(plate);
     /** constraint and damping */

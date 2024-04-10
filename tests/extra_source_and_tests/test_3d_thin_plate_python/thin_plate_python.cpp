@@ -181,16 +181,13 @@ class Environment : public PreSettingCase
     /**
      * This section define all numerical methods will be used in this case.
      */
+    /** active-passive stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half;
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half;
     /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration;
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration;
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size;
-    /** active-passive stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half;
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half;
     /** Constrain the Boundary. */
     BoundaryGeometryParallelToXAxis boundary_geometry_x;
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
@@ -218,10 +215,10 @@ class Environment : public PreSettingCase
                                                     plate_observer_contact(plate_observer, {&plate_body}),
                                                     time_dependent_external_force(Vec3d(0.0, 0.0, q * loading_factor / (PT * rho0_s) - gravitational_acceleration)),
                                                     apply_time_dependent_external_force(plate_body, time_dependent_external_force),
-                                                    corrected_configuration(plate_body_inner),
-                                                    computing_time_step_size(plate_body),
                                                     stress_relaxation_first_half(plate_body_inner),
                                                     stress_relaxation_second_half(plate_body_inner),
+                                                    corrected_configuration(plate_body_inner),
+                                                    computing_time_step_size(plate_body),
                                                     boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis"),
                                                     constrain_holder_x(boundary_geometry_x, 0),
                                                     boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis"),

@@ -47,23 +47,6 @@ typedef DataDelegateSimple<BarParticles> BarDataSimple;
 typedef DataDelegateInner<BarParticles> BarDataInner;
 
 /**
- * @class BarDynamicsInitialCondition
- * @brief  set initial condition for bar particles
- * This is a abstract class to be override for case specific initial conditions.
- */
-class BarDynamicsInitialCondition : public LocalDynamics, public BarDataSimple
-{
-  public:
-    explicit BarDynamicsInitialCondition(SPHBody &sph_body);
-    virtual ~BarDynamicsInitialCondition(){};
-
-  protected:
-    StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
-    StdLargeVec<Matd> &transformation_matrix_;
-    StdLargeVec<Vecd> &b_n0_, &b_n_, &pseudo_b_n_;
-};
-
-/**
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
@@ -154,8 +137,8 @@ class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
             deformation_part_three -= ((pseudo_b_n_i - b_n0_[index_i]) - (pseudo_b_n_[index_j] - b_n0_[index_j])) * gradW_ijV_j.transpose();
         }
         F_[index_i] = transformation_matrix_i * deformation_part_one * transformation_matrix_i.transpose() * B_[index_i];
-        F_[index_i].col(Dimensions - 1) = transformation_matrix_i * pseudo_n_[index_i];
-        F_[index_i].col(Dimensions - 2) = transformation_matrix_i * pseudo_b_n_[index_i];
+        F_[index_i].col(2) = transformation_matrix_i * pseudo_n_[index_i];
+        F_[index_i].col(1) = transformation_matrix_i * pseudo_b_n_[index_i];
         F_bending_[index_i] = transformation_matrix_i * deformation_part_two * transformation_matrix_i.transpose() * B_[index_i];
         F_b_bending_[index_i] = transformation_matrix_i * deformation_part_three * transformation_matrix_i.transpose() * B_[index_i];
     };
@@ -186,11 +169,11 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
-    StdLargeVec<Matd> &transformation_matrix_;
 
     StdLargeVec<Real> &width_;
     StdLargeVec<Vecd> &b_n0_, &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
         &angular_b_vel_, dangular_b_vel_dt_;
+    StdLargeVec<Matd> &transformation_matrix_;
     StdLargeVec<Matd> &F_b_bending_, &dF_b_bending_dt_;
 };
 
@@ -225,7 +208,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
             size_t index_j = inner_neighborhood.j_[n];
 
             force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) *
-                            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+                     inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) *
                                           inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             pseudo_b_normal_acceleration += (global_b_moment_i + global_b_moment_[index_j]) *
@@ -248,12 +231,14 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
   protected:
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Real>& Vol_;
-    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
+    Real smoothing_length_;
+    Matd numerical_damping_scaling_matrix_;
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
     StdLargeVec<Vecd> &global_shear_stress_, &n_;
 
     Real rho0_, inv_rho0_;
-    Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
+    Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
     const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;
@@ -316,8 +301,8 @@ class BarStressRelaxationSecondHalf : public BaseBarRelaxation
         }
         dF_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_one *
                           transformation_matrix_i.transpose() * B_[index_i];
-        dF_dt_[index_i].col(Dimensions - 1) = transformation_matrix_i * dpseudo_n_dt_[index_i];
-        dF_dt_[index_i].col(Dimensions - 2) = transformation_matrix_i * dpseudo_b_n_dt_[index_i];
+        dF_dt_[index_i].col(2) = transformation_matrix_i * dpseudo_n_dt_[index_i];
+        dF_dt_[index_i].col(1) = transformation_matrix_i * dpseudo_b_n_dt_[index_i];
         dF_bending_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_two *
                                   transformation_matrix_i.transpose() * B_[index_i];
         dF_b_bending_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_three *

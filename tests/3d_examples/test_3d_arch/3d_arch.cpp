@@ -161,14 +161,14 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
+    /** the main shell dynamics model. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
     /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
         corrected_configuration(cylinder_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    /** stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
     /** Control the displacement. */
     DisControlGeometry dis_control_geometry(cylinder_body, "DisControlGeometry");
     SimpleDynamics<ControlDisplacement> dis_control(dis_control_geometry);

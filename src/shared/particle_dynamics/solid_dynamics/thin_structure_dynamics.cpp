@@ -6,15 +6,10 @@ namespace SPH
 namespace thin_structure_dynamics
 {
 //=================================================================================================//
-ShellDynamicsInitialCondition::ShellDynamicsInitialCondition(SPHBody &sph_body)
-    : LocalDynamics(sph_body), ShellDataSimple(sph_body),
-      n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
-      pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
-//=================================================================================================//
 UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body), ShellDataSimple(sph_body),
       n_(particles_->n_), F_(particles_->F_),
-      transformation_matrix_(particles_->transformation_matrix_) {}
+      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=========================================================================================//
 void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 {
@@ -52,19 +47,20 @@ ShellCorrectConfiguration::
     ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       Vol_(particles_->Vol_), B_(particles_->B_),
-      n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
+      n0_(particles_->n0_),
+      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 ShellDeformationGradientTensor::
     ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      Vol_(particles_->Vol_), pos_(particles_->pos_), 
-      pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_), 
+      Vol_(particles_->Vol_), pos_(particles_->pos_),
+      pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
-      transformation_matrix_(particles_->transformation_matrix_) {}
+      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      rho_(particles_->rho_), 
+      rho_(particles_->rho_),
       thickness_(particles_->thickness_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_),
       force_(particles_->force_),
@@ -73,23 +69,27 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_),
+      transformation_matrix_(*particles_->registerSharedVariable<Matd>(
+          "TransformationMatrix", [&](size_t index_i) -> Matd
+          { return getTransformationMatrix(n0_[index_i]); })), // Transformation matrix from global to local coordinates
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
-      F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_),
-      transformation_matrix_(particles_->transformation_matrix_) {}
+      F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_)
+{
+}
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                    int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
-      numerical_damping_scaling_(particles_->numerical_damping_scaling_),
       global_shear_stress_(particles_->global_shear_stress_),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
@@ -151,8 +151,11 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
 
         /** correct out-plane numerical damping. */
-        Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
-                                                                                                      elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+        numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
+        Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) +
+                             current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+                                 elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_matrix_, index_i) *
+                                 F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -299,7 +302,8 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 //=================================================================================================//
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation), Vol_(particles_->Vol_),
-      n0_(particles_->n0_), B_(particles_->B_), transformation_matrix_(particles_->transformation_matrix_),
+      n0_(particles_->n0_), B_(particles_->B_),
+      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
       k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature"))

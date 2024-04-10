@@ -233,13 +233,13 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
         fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
+    /** The main shell dynamics model: stress relaxation stepping for the elastic gate. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
     /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> gate_computing_time_step_size(gate);
-    /** Stress relaxation stepping for the elastic gate. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner, 3, true);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
     /**Constrain a solid body part.  */
     BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> gate_constraint(gate_constraint_part);

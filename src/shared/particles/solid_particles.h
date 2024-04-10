@@ -143,7 +143,6 @@ class ShellParticles : public ElasticSolidParticles
     virtual ~ShellParticles(){};
 
     Real thickness_ref_;                      /**< Shell thickness. */
-    StdLargeVec<Matd> transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
     StdLargeVec<Real> thickness_;             /**< shell thickness */
     /**
      *	extra generalized coordinates in global coordinate
@@ -172,10 +171,6 @@ class ShellParticles : public ElasticSolidParticles
      *	extra stress for calculating von Mises stress of shell mid-surface
      */
     StdLargeVec<Matd> mid_surface_cauchy_stress_;
-    /**
-     *	extra scaling matrix fot numerical damping
-     */
-    StdLargeVec<Matd> numerical_damping_scaling_;
 
     /** get particle volume. */
     virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }

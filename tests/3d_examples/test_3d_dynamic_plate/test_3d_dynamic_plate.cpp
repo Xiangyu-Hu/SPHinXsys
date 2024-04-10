@@ -127,16 +127,13 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
+    /** active-passive stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
     /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(plate_body_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    /** active-passive stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(plate_body_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
     SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);

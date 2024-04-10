@@ -277,7 +277,6 @@ void ShellParticles::initializeOtherVariables()
     registerVariable(n0_, "InitialNormalDirection",
                      [&](size_t i) -> Vecd
                      { return n_[i]; });
-    registerVariable(transformation_matrix_, "TransformationMatrix");
     registerVariable(B_, "LinearGradientCorrectionMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
     registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
@@ -297,9 +296,6 @@ void ShellParticles::initializeOtherVariables()
     registerVariable(global_stress_, "GlobalStress");
     registerVariable(global_moment_, "GlobalMoment");
     registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
-    registerVariable(numerical_damping_scaling_, "NumericalDampingScaling",
-                     [&](size_t i) -> Matd
-                     { return Matd::Identity() * sph_body_.sph_adaptation_->ReferenceSmoothingLength(); });
     /**
      * for FSI
      */
@@ -322,15 +318,6 @@ void ShellParticles::initializeOtherVariables()
     addVariableToRestart<Matd>("DeformationGradient");
     addVariableToWrite<Vecd>("Rotation");
     addDerivedVariableToWrite<MidSurfaceVonMisesStress>();
-    /**
-     * initialize transformation matrix
-     */
-    for (size_t i = 0; i != real_particles_bound_; ++i)
-    {
-        transformation_matrix_[i] = getTransformationMatrix(n_[i]);
-        numerical_damping_scaling_[i](Dimensions - 1, Dimensions - 1) =
-            thickness_[i] < sph_body_.sph_adaptation_->ReferenceSmoothingLength() ? thickness_[i] : sph_body_.sph_adaptation_->ReferenceSmoothingLength();
-    }
 }
 
 } // namespace SPH

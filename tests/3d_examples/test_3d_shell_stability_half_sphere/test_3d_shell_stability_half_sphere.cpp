@@ -152,10 +152,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     Gravity constant_gravity(gravity);
     SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");

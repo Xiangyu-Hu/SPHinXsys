@@ -119,16 +119,13 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
+    /** The main shell dynamics model: stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
     /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(cylinder_body_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    /** stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(cylinder_body_inner, 3, true);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(cylinder_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fixed_free_rotate_shell_boundary(boundary_geometry);
