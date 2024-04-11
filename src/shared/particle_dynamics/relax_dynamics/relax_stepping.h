@@ -100,14 +100,14 @@ class RelaxationResidue<Contact<>>
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+            contact_Vol_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("VolumetricMeasure"));
         }
     };
     virtual ~RelaxationResidue(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
-protected:
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
 };
 
 /**

@@ -51,7 +51,7 @@ DensitySummation<Contact<Base>>::DensitySummation(BaseContactRelation &contact_r
     {
         Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
         contact_inv_rho0_.push_back(1.0 / rho0_k);
-        contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
     }
 }
 //=================================================================================================//

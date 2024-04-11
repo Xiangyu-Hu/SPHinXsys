@@ -88,7 +88,7 @@ class DiffusionBCs
   public:
     DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : DiffusionReactionSpeciesConstraint<BodyPartByParticle, FiberDirectionDiffusionParticles>(body_part, species_name),
-          pos_(particles_->pos_){};
+          pos_(particles_->ParticlePositions()){};
     virtual ~DiffusionBCs(){};
 
     void update(size_t index_i, Real dt = 0.0)

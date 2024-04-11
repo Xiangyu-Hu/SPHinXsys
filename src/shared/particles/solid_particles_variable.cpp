@@ -6,7 +6,7 @@ namespace SPH
 //=============================================================================================//
 Displacement::Displacement(SPHBody &sph_body)
     : BaseDerivedVariable<Vecd>(sph_body, "Displacement"), SolidDataSimple(sph_body),
-      LocalDynamics(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_) {}
+      LocalDynamics(sph_body), pos_(particles_->ParticlePositions()), pos0_(particles_->pos0_) {}
 //=============================================================================================//
 void Displacement::update(size_t index_i, Real dt)
 {
@@ -16,7 +16,7 @@ void Displacement::update(size_t index_i, Real dt)
 OffsetInitialPosition::
     OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
     : SolidDataSimple(sph_body), LocalDynamics(sph_body),
-      offset_(offset), pos_(particles_->pos_), pos0_(particles_->pos0_) {}
+      offset_(offset), pos_(particles_->ParticlePositions()), pos0_(particles_->pos0_) {}
 //=============================================================================================//
 void OffsetInitialPosition::update(size_t index_i, Real dt)
 {
@@ -26,7 +26,7 @@ void OffsetInitialPosition::update(size_t index_i, Real dt)
 //=============================================================================================//
 TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transform &transform)
     : SolidDataSimple(sph_body), LocalDynamics(sph_body), transform_(transform),
-      pos_(particles_->pos_), pos0_(particles_->pos0_) {}
+      pos_(particles_->ParticlePositions()), pos0_(particles_->pos0_) {}
 //=============================================================================================//
 void TranslationAndRotation::update(size_t index_i, Real dt)
 {
@@ -47,7 +47,7 @@ void GreenLagrangeStrain::update(size_t index_i, Real dt)
 VonMisesStress::VonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"), ElasticSolidDataSimple(sph_body),
       LocalDynamics(sph_body), rho0_(sph_body_.base_material_->ReferenceDensity()),
-      rho_(particles_->rho_), F_(particles_->F_), elastic_solid_(particles_->elastic_solid_) {}
+      rho_(*particles_->getVariableByName<Real>("Density")), F_(particles_->F_), elastic_solid_(particles_->elastic_solid_) {}
 //=============================================================================================//
 VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrain"),

@@ -170,7 +170,7 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
   public:
     explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones())
         : MotionConstraint<SPHBody>(sph_body),
-          correction_matrix_(Matd::Identity()), vel_(this->particles_->vel_),
+          correction_matrix_(Matd::Identity()), vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
           compute_total_momentum_(sph_body, "Velocity")
     {
         for (int i = 0; i != Dimensions; ++i)
@@ -200,8 +200,8 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
                         SimTK::RungeKuttaMersonIntegrator &integ)
         : MotionConstraint<DynamicsIdentifier>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
-          n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),   
-          n0_(*this->particles_->template getVariableByName<Vecd>("InitialNormalDirection"))   
+          n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
+          n0_(*this->particles_->template getVariableByName<Vecd>("InitialNormalDirection"))
     {
         simbody_state_ = &integ_.getState();
         MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
@@ -224,7 +224,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
          * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
          * const SimTKVec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
          * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
-         * base_particle_data_i.pos_ = (p_GB + r);
+         * base_particle_data_i.ParticlePositions() = (p_GB + r);
          */
         this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
         this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
@@ -268,9 +268,10 @@ class TotalForceForSimBody
                          SimTK::MobilizedBody &mobod,
                          SimTK::RungeKuttaMersonIntegrator &integ)
         : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
-          SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
-          force_(particles_->force_), force_prior_(particles_->force_prior_),
-          pos_(particles_->pos_),
+          SolidDataSimple(identifier.getSPHBody()), mass_(*particles_->getVariableByName<Real>("Mass")),
+          force_(*particles_->getVariableByName<Vecd>("Force")),
+          force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+          pos_(particles_->ParticlePositions()),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
         this->quantity_name_ = "TotalForceForSimBody";

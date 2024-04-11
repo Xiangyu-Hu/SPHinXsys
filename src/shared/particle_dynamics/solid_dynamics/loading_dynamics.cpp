@@ -11,11 +11,13 @@ namespace solid_dynamics
 SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringDamperConstraintForce"), SolidDataSimple(sph_body),
-      pos_(particles_->pos_), pos0_(particles_->pos0_),
-      vel_(particles_->vel_), mass_(particles_->mass_)
+      pos_(particles_->ParticlePositions()),
+      pos0_(particles_->pos0_),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      mass_(*particles_->getVariableByName<Real>("Mass"))
 {
     // scale stiffness and damping by mass here, so it's not necessary in each iteration
-    stiffness_ = stiffness / std::accumulate(&particles_->mass_[0], &particles_->mass_[particles_->total_real_particles_], 0.0);
+    stiffness_ = stiffness / std::accumulate(&mass_[0], &mass_[particles_->total_real_particles_], 0.0);
     damping_coeff_ = stiffness_ * damping_ratio;
 }
 //=================================================================================================//
@@ -51,8 +53,12 @@ SpringNormalOnSurfaceParticles::
     SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
                                    Vecd source_point, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "NormalSpringForceOnSurface"), SolidDataSimple(sph_body),
-      pos_(particles_->pos_), pos0_(particles_->pos0_), n_(particles_->n_),
-      n0_(particles_->n0_), vel_(particles_->vel_), mass_(particles_->mass_),
+      pos_(particles_->ParticlePositions()),
+      pos0_(particles_->pos0_), n_(particles_->n_),
+      n0_(particles_->n0_),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -78,7 +84,7 @@ SpringNormalOnSurfaceParticles::
     }
     // scale stiffness and damping by area here, so it's not necessary in each iteration
     // we take the area of the first particle, assuming they are uniform
-    Real area = pow(particles_->Vol_[0], 2.0 / 3.0);
+    Real area = pow(Vol_[0], 2.0 / 3.0);
     stiffness_ = stiffness * area;
     damping_coeff_ = stiffness_ * damping_ratio;
 }
@@ -116,8 +122,10 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 SpringOnSurfaceParticles::
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringForceOnSurface"), SolidDataSimple(sph_body),
-      pos_(particles_->pos_), pos0_(particles_->pos0_),
-      vel_(particles_->vel_), mass_(particles_->mass_),
+      pos_(particles_->ParticlePositions()), pos0_(particles_->pos0_),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -128,7 +136,7 @@ SpringOnSurfaceParticles::
 
     // scale stiffness and damping by area here, so it's not necessary in each iteration
     // we take the area of the first particle, assuming they are uniform
-    Real area = pow(particles_->Vol_[0], 2.0 / 3.0);
+    Real area = pow(Vol_[0], 2.0 / 3.0);
     stiffness_ = stiffness * area;
     damping_coeff_ = stiffness_ * damping_ratio;
 }
@@ -153,7 +161,8 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
 ExternalForceInBoundingBox::
     ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
     : LoadingForce(sph_body, "ExternalForceInBoundingBox"), SolidDataSimple(sph_body),
-      pos_(particles_->pos_), mass_(particles_->mass_),
+      pos_(particles_->ParticlePositions()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       bounding_box_(bounding_box), acceleration_(acceleration) {}
 //=================================================================================================//
 void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
@@ -167,12 +176,15 @@ void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
 //=================================================================================================//
 ForceInBodyRegion::
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
-    : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"), SolidDataSimple(sph_body_),
-      pos0_(particles_->pos0_), force_vector_(Vecd::Zero()), end_time_(end_time)
+    : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
+      SolidDataSimple(sph_body_),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      pos0_(particles_->pos0_),
+      force_vector_(Vecd::Zero()), end_time_(end_time)
 {
     Real total_mass_in_region(0);
     for (size_t particle_i : body_part.body_part_particles_)
-        total_mass_in_region += particles_->mass_[particle_i];
+        total_mass_in_region += mass_[particle_i];
     force_vector_ = force;
 }
 //=================================================================================================//
@@ -186,9 +198,12 @@ void ForceInBodyRegion::update(size_t index_i, Real dt)
 SurfacePressureFromSource::
     SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
                               StdVec<std::array<Real, 2>> pressure_over_time)
-    : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"), SolidDataSimple(sph_body_),
+    : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
+      SolidDataSimple(sph_body_),
       pos0_(particles_->pos0_), n_(particles_->n_),
-      mass_(particles_->mass_), pressure_over_time_(pressure_over_time),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      pressure_over_time_(pressure_over_time),
       apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body_);
@@ -239,7 +254,7 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
 {
     if (apply_pressure_to_particle_[index_i])
     {
-        Real area = pow(particles_->Vol_[index_i], 2.0 / 3.0);
+        Real area = pow(Vol_[index_i], 2.0 / 3.0);
         Real acc_from_pressure = getPressure() * area / mass_[index_i];
         // vector is made by multiplying it with the surface normal
         // add the force to the particle
@@ -250,7 +265,9 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
 //=================================================================================================//
 PressureForceOnShell::PressureForceOnShell(SPHBody &sph_body, Real pressure)
     : LoadingForce(sph_body, "PressureForceOnShell"), SolidDataSimple(sph_body),
-      pressure_(pressure), Vol_(particles_->Vol_), n_(particles_->n_) {}
+      pressure_(pressure),
+      Vol_(particles_->VolumetricMeasures()),
+      n_(particles_->n_) {}
 //=================================================================================================//
 void PressureForceOnShell::update(size_t index_i, Real dt)
 {

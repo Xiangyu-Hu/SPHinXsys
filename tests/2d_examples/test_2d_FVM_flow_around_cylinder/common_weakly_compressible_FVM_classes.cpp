@@ -8,8 +8,8 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL)
-    : AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(particles_->vel_), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
+    : AcousticTimeStepSize(sph_body), rho_(*particles_->getVariableByName<Real>("Density")), p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
       min_distance_between_nodes_(min_distance_between_nodes), acousticCFL_(acousticCFL){};
 //=================================================================================================//
 Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
@@ -19,11 +19,11 @@ Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 }
 //=================================================================================================//
 BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), fluid_dynamics::FluidDataInner(inner_relation), Vol_(particles_->Vol_){};
+    : LocalDynamics(inner_relation.getSPHBody()), fluid_dynamics::FluidDataInner(inner_relation), Vol_(particles_->VolumetricMeasures()){};
 //=================================================================================================//
 ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
     : BaseForceFromFluidInFVM(inner_relation), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-      vel_(particles_->vel_), mu_(fluid_.ReferenceViscosity()), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")), mu_(fluid_.ReferenceViscosity()), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
 {
     particles_->registerVariable(force_from_fluid_, "ViscousForceOnSolid");
 };

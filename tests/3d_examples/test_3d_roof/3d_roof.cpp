@@ -85,7 +85,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height + 0.5 * particle_spacing_ref)
+        if (base_particles_.ParticlePositions()[index_i][1] < 0.0 || base_particles_.ParticlePositions()[index_i][1] > height + 0.5 * particle_spacing_ref)
         {
             body_part_particles_.push_back(index_i);
         }

@@ -94,15 +94,15 @@ class DynamicContactForceWithWall : public LocalDynamics,
     explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0)
         : LocalDynamics(solid_body_contact_relation.getSPHBody()),
           DataDelegateContact<SolidParticles, SolidParticles>(solid_body_contact_relation),
-          solid_(particles_->solid_), Vol_(particles_->Vol_), vel_(particles_->vel_),
-          force_prior_(particles_->force_prior_), penalty_strength_(penalty_strength)
+          solid_(particles_->solid_), Vol_(particles_->VolumetricMeasures()), vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+          force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")), penalty_strength_(penalty_strength)
     {
         impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());
         reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-            contact_vel_.push_back(&(contact_particles_[k]->vel_));
+            contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+            contact_vel_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
             contact_n_.push_back(&(contact_particles_[k]->n_));
         }
     };
@@ -119,7 +119,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
 
             StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
             StdLargeVec<Vecd> &vel_n_k = *(contact_vel_[k]);
-            StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -146,8 +146,8 @@ class DynamicContactForceWithWall : public LocalDynamics,
     Solid &solid_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
-    StdVec<StdLargeVec<Vecd>*> contact_vel_, contact_n_;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_n_;
     Real penalty_strength_;
     Real impedance_, reference_pressure_;
 };

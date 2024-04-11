@@ -91,16 +91,6 @@ class BaseParticles
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~BaseParticles(){};
-
-    StdLargeVec<Vecd> pos_;         /**< Position */
-    StdLargeVec<Vecd> vel_;         /**< Velocity */
-    StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
-    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
-
-    StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;      /**< Density */
-    StdLargeVec<Real> mass_;     /**< Mass*/
-    StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     //----------------------------------------------------------------------
@@ -189,10 +179,21 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
+    StdLargeVec<Vecd> &ParticlePositions() { return pos_; }
+    StdLargeVec<Real> &VolumetricMeasures() { return Vol_; }
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
+    StdLargeVec<Vecd> pos_;         /**< Position */
+    StdLargeVec<Vecd> vel_;         /**< Velocity */
+    StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
+    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
+    StdLargeVec<Real> Vol_;         /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> rho_;         /**< Density */
+    StdLargeVec<Real> mass_;        /**< Mass*/
+    StdLargeVec<int> indicator_;    /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
+
     SPHBody &sph_body_;
     std::string body_name_;
     BaseMaterial &base_material_;

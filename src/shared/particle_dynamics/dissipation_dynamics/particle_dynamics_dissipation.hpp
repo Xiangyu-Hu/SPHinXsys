@@ -12,7 +12,8 @@ DampingBySplittingInner<VariableType>::
                             const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
       DissipationDataInner(inner_relation), eta_(eta),
-      Vol_(particles_->Vol_), mass_(particles_->mass_),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
 //=================================================================================================//
 template <typename VariableType>
@@ -82,8 +83,8 @@ DampingBySplittingComplex<VariableType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -162,7 +163,7 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
 {
     for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -206,7 +207,8 @@ DampingPairwiseInner<VariableType>::
                          const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
       DissipationDataInner(inner_relation),
-      Vol_(particles_->Vol_), mass_(particles_->mass_),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)),
       eta_(eta) {}
 //=================================================================================================//
@@ -258,8 +260,8 @@ DampingPairwiseComplex<VariableType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -321,7 +323,7 @@ DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
 {
     for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -343,7 +345,7 @@ void DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
-        StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
         // forward sweep
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -371,12 +373,13 @@ DampingPairwiseFromWall<VariableType>::
     DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
     : LocalDynamics(contact_relation.getSPHBody()),
       DataDelegateContact<BaseParticles, SolidParticles>(contact_relation),
-      eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
+      eta_(eta), Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }

@@ -93,7 +93,8 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
   public:
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
         : BaseLocalDynamicsReduce<ReduceMax, BodyPartByCell>(identifier),
-          GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis), pos_(particles_->pos_)
+          GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis),
+          pos_(particles_->ParticlePositions())
     {
         this->quantity_name_ = name;
     }
@@ -195,7 +196,7 @@ class QuantityMoment : public QuantitySummation<VariableType>
   public:
     explicit QuantityMoment(SPHBody &sph_body, const std::string &variable_name)
         : QuantitySummation<VariableType>(sph_body, variable_name),
-          mass_(this->particles_->mass_)
+          mass_(*this->particles_->template getVariableByName<Real>("Mass"))
     {
         this->quantity_name_ = variable_name + "Moment";
     };

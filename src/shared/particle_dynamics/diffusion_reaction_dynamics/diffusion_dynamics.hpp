@@ -30,7 +30,7 @@ DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType
     : LocalDynamics(identifier.getSPHBody()),
       DataDelegationType<ParticlesType, ContactParticlesType...>(identifier),
       material_(this->particles_->diffusion_reaction_material_),
-      Vol_(this->particles_->Vol_),
+      Vol_(this->particles_->VolumetricMeasures()),
       all_diffusions_(material_.AllDiffusions()),
       diffusion_species_(this->particles_->DiffusionSpecies()),
       gradient_species_(this->particles_->GradientSpecies())
@@ -150,7 +150,7 @@ DiffusionRelaxation<Dirichlet<CommonControlTypes...>>::
             size_t contact_species_index_k_m = all_species_map_k[contact_species_names_k_m];
             StdVec<StdLargeVec<Real>> &all_contact_species_k = this->contact_particles_[k]->all_species_;
             contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
-            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+            contact_Vol_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("VolumetricMeasure"));
         }
     }
 }
@@ -176,7 +176,7 @@ void DiffusionRelaxation<Dirichlet<CommonControlTypes...>>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdVec<StdLargeVec<Real> *> &gradient_species_k = this->contact_gradient_species_[k];
-        StdLargeVec<Real>& wall_Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -204,7 +204,7 @@ DiffusionRelaxation<Neumann<CommonControlTypes...>>::
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
-            contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+            contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
             contact_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
         }
     }
@@ -229,7 +229,7 @@ void DiffusionRelaxation<Neumann<CommonControlTypes...>>::
     {
         StdLargeVec<Real> &heat_flux_k = *(contact_heat_flux_[k]);
         StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -259,7 +259,7 @@ DiffusionRelaxation<Robin<CommonControlTypes...>>::
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_n_.push_back(&(this->contact_particles_[k]->n_));
-            contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+            contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
             contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
             contact_T_infinity_[m] = this->contact_particles_[k]->template registerSingleVariable<Real>("T_infinity");
         }
@@ -285,7 +285,7 @@ void DiffusionRelaxation<Robin<CommonControlTypes...>>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         StdLargeVec<Real> &convection_k = *(contact_convection_[k]);
         Real &T_infinity_k = *(contact_T_infinity_[k]);
 

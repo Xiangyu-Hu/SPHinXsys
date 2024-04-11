@@ -339,16 +339,16 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     };
     /* Compare all simulation to the anayltical solution. */
     // Axial direction.
-    for (size_t i = 0; i < fluid_axial_observer.getBaseParticles().pos_.size(); i++)
+    for (size_t i = 0; i < fluid_axial_observer.getBaseParticles().ParticlePositions().size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(fluid_axial_observer.getBaseParticles().pos_[i])[1],
+        EXPECT_NEAR(inflow_velocity(fluid_axial_observer.getBaseParticles().ParticlePositions()[i])[1],
                     fluid_axial_observer.getBaseParticles().vel_[i][1],
                     U_f * 5e-2);
     }
     // Radial direction
-    for (size_t i = 0; i < fluid_radial_observer.getBaseParticles().pos_.size(); i++)
+    for (size_t i = 0; i < fluid_radial_observer.getBaseParticles().ParticlePositions().size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(fluid_radial_observer.getBaseParticles().pos_[i])[1],
+        EXPECT_NEAR(inflow_velocity(fluid_radial_observer.getBaseParticles().ParticlePositions()[i])[1],
                     fluid_radial_observer.getBaseParticles().vel_[i][1],
                     U_f * 5e-2);
     }

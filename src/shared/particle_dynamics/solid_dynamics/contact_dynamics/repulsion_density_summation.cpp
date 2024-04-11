@@ -8,7 +8,7 @@ namespace solid_dynamics
 RepulsionDensitySummation<Inner<>>::
     RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
     : RepulsionDensitySummation<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionDensity"),
-      mass_(particles_->mass_)
+      mass_(*particles_->getVariableByName<Real>("Mass"))
 {
     Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
     offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
@@ -29,11 +29,12 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 RepulsionDensitySummation<Contact<>>::
     RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
     : RepulsionDensitySummation<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionDensity"),
-      mass_(particles_->mass_), offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
     }
 
     // we modify the default formulation by an offset, so that exactly touching bodies produce 0 initial force
@@ -92,7 +93,7 @@ ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_cont
         /** a calibration factor to avoid particle penetration into shell structure */
         calibration_factor_.push_back(solid_.ReferenceDensity() / (contact_max + Eps));
 
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

@@ -50,7 +50,7 @@ class RepulsionForce<Base, DataDelegationType>
     RepulsionForce(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
           repulsion_force_(*this->particles_->template registerSharedVariable<Vecd>(variable_name)),
-          Vol_(this->particles_->Vol_){};
+          Vol_(this->particles_->VolumetricMeasures()){};
     virtual ~RepulsionForce(){};
 
   protected:
@@ -101,7 +101,7 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, ContactWithWal
   protected:
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
 };
 using ContactForceFromWall = RepulsionForce<Contact<Wall>>;
 

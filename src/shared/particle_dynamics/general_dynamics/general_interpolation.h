@@ -49,7 +49,7 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+            contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
             StdLargeVec<DataType> *contact_data =
                 this->contact_particles_[k]->template getVariableByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);

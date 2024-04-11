@@ -11,8 +11,10 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      rho_(this->particles_->rho_), mass_(this->particles_->mass_), 
-      Vol_(this->particles_->Vol_), vel_(this->particles_->vel_),
+      rho_(*this->particles_->template getVariableByName<Real>("Density")),
+      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
+      Vol_(this->particles_->VolumetricMeasures()),
+      vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
       viscous_force_(*this->particles_->template registerSharedVariable<Vecd>("ViscousForce")),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -71,7 +73,7 @@ void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Rea
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -102,7 +104,7 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interactio
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -128,8 +130,8 @@ ViscousForce<Contact<>, ViscosityType>::ViscousForce(BaseContactRelation &contac
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_mu_.emplace_back(ViscosityType(particles_, contact_particles_[k]));
-        contact_vel_.push_back(&(contact_particles_[k]->vel_));
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        contact_vel_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
+        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -141,7 +143,7 @@ void ViscousForce<Contact<>, ViscosityType>::interaction(size_t index_i, Real dt
     {
         auto &contact_mu_k = contact_mu_[k];
         StdLargeVec<Vecd> &vel_k = *(contact_vel_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

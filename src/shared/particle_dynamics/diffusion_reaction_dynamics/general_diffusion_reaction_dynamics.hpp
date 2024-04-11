@@ -16,7 +16,8 @@ DiffusionReactionInitialCondition<ParticlesType>::
     DiffusionReactionInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       DiffusionReactionSimpleData<ParticlesType>(sph_body),
-      pos_(this->particles_->pos_), all_species_(this->particles_->all_species_) {}
+      pos_(this->particles_->ParticlePositions()),
+      all_species_(this->particles_->all_species_) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_DIFFUSION_REACTION_DYNAMICS_HPP

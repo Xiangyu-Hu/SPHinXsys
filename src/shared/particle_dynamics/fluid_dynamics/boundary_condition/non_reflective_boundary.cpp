@@ -10,9 +10,13 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
       rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
-      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      Vol_(particles_->Vol_), mass_(particles_->mass_), vel_(particles_->vel_),
-      mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+      pos_(particles_->ParticlePositions()),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {

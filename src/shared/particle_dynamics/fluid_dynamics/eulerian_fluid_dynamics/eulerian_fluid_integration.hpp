@@ -15,7 +15,7 @@ EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &b
       mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
       dmom_dt_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
       dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
-      Vol_(this->particles_->Vol_) {}
+      Vol_(this->particles_->VolumetricMeasures()) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::

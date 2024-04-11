@@ -470,9 +470,10 @@ class WaveMaking : public BodyPartMotionConstraint
         vel_[index_i] = getVelocity(time);
         force_[index_i] = mass_[index_i] * getAcceleration(time);
     };
+
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &force_;    
+    StdLargeVec<Vecd> &force_;
 };
 
 //----------------------------------------------------------------------

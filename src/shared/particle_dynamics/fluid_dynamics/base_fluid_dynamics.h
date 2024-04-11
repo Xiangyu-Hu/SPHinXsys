@@ -68,8 +68,8 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
             wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
             wall_force_ave_.push_back(solid_material.AverageForce(this->contact_particles_[k]));
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
-            wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
-            wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+            wall_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
+            wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~InteractionWithWall(){};

@@ -83,7 +83,7 @@ class DisControlGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
+        Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.ParticlePositions()[index_i];
         if (pos_before_rotation[0] < 0.5 * particle_spacing_ref && pos_before_rotation[0] > -0.5 * particle_spacing_ref)
         {
             body_part_particles_.push_back(index_i);
@@ -97,7 +97,7 @@ class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRe
   public:
     ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(particles_->vel_){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")){};
     virtual ~ControlDisplacement(){};
 
   protected:
@@ -124,7 +124,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi))
+        if (base_particles_.ParticlePositions()[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi))
         {
             body_part_particles_.push_back(index_i);
         }

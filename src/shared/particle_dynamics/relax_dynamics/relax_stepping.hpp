@@ -12,12 +12,14 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      sph_adaptation_(sph_body_.sph_adaptation_), Vol_(this->particles_->Vol_),
+      sph_adaptation_(sph_body_.sph_adaptation_),
+      Vol_(this->particles_->VolumetricMeasures()),
       residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
-    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...), pos_(particles_->pos_),
+    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...),
+      pos_(particles_->ParticlePositions()),
       level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())){};
 //=================================================================================================//
 template <class RelaxationResidueType>

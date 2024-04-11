@@ -163,7 +163,8 @@ class ElectroPhysiologyInitialCondition : public LocalDynamics,
     explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           ElectroPhysiologyDataDelegateSimple(sph_body),
-          pos_(particles_->pos_), all_species_(particles_->all_species_){};
+          pos_(particles_->ParticlePositions()),
+          all_species_(particles_->all_species_){};
     virtual ~ElectroPhysiologyInitialCondition(){};
 
   protected:

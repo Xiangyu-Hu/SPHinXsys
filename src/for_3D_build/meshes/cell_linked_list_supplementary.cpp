@@ -34,7 +34,7 @@ void CellLinkedList::clearCellLists()
 //=================================================================================================//
 void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.pos_;
+    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
     mesh_parallel_for(
         MeshRange(Array3i::Zero(), all_cells_),
         [&](int i, int j, int k)

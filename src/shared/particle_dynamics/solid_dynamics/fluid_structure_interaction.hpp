@@ -12,15 +12,16 @@ template <class FluidIntegration2ndHalfType>
 PressureForceFromFluid<FluidIntegration2ndHalfType>::
     PressureForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
-      vel_ave_(*solid_.AverageVelocity(particles_)), force_ave_(*solid_.AverageForce(particles_)),
+      vel_ave_(*solid_.AverageVelocity(particles_)),
+      force_ave_(*solid_.AverageForce(particles_)),
       n_(particles_->n_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
-        contact_vel_.push_back(&(contact_particles_[k]->vel_));
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
+        contact_vel_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
         contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
         contact_force_prior_.push_back(&(contact_particles_[k]->force_prior_));
         riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));

@@ -12,11 +12,15 @@ template <class BaseRelationType>
 BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
-      rho_(this->particles_->rho_), mass_(this->particles_->mass_), Vol_(this->particles_->Vol_),
+      rho_(*this->particles_->template getVariableByName<Real>("Density")),
+      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
+      Vol_(this->particles_->VolumetricMeasures()),
       p_(*this->particles_->template getVariableByName<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
-      pos_(this->particles_->pos_), vel_(this->particles_->vel_),
-      force_(this->particles_->force_), force_prior_(this->particles_->force_prior_) {}
+      pos_(this->particles_->ParticlePositions()),
+      vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
+      force_(*this->particles_->template getVariableByName<Vecd>("Force")),
+      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
@@ -91,14 +95,14 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
     Real rho_dissipation(0);
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd>& force_ave_k = *(wall_force_ave_[k]);
-        StdLargeVec<Real>& wall_mass_k = *(wall_mass_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
-        Neighborhood& wall_neighborhood = (*contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
+        StdLargeVec<Real> &wall_mass_k = *(wall_mass_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
-            Vecd& e_ij = wall_neighborhood.e_ij_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
@@ -137,7 +141,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
-        StdLargeVec<Real> &Vol_k  = *(this->contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
         KernelCorrectionType &correction_k = contact_corrections_[k];
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -160,7 +164,8 @@ template <class RiemannSolverType>
 Integration2ndHalf<Inner<>, RiemannSolverType>::
     Integration2ndHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
-      mass_(particles_->mass_), Vol_(particles_->Vol_) {}
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      Vol_(particles_->VolumetricMeasures()) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void Integration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -209,7 +214,7 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -249,7 +254,7 @@ void Integration2ndHalf<Contact<>, RiemannSolverType>::interaction(size_t index_
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
-        StdLargeVec<Real>& Vol_k = *(this->contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

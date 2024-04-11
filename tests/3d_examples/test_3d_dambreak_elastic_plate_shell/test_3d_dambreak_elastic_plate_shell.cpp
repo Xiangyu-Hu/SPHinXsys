@@ -119,7 +119,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i].y() <= 0)
+        if (base_particles_.ParticlePositions()[index_i].y() <= 0)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -201,7 +201,7 @@ int main(int ac, char *av[])
             IndexRange(0, gate.getBaseParticles().total_real_particles_),
             [&](size_t index_i)
             {
-                gate.getBaseParticles().pos_[index_i][1] = pos0[index_i][1] + h_g;
+                gate.getBaseParticles().ParticlePositions()[index_i][1] = pos0[index_i][1] + h_g;
             });
     };
     // fluid

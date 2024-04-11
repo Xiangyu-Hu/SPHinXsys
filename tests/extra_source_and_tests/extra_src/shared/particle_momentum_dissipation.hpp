@@ -10,12 +10,12 @@ namespace multi_species_continuum
 template <typename VariableType>
 PorousMediaDampingPairwiseInner<VariableType>::
     PorousMediaDampingPairwiseInner(BaseInnerRelation &inner_relation,
-        const std::string &variable_name, Real eta)
+                                    const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
-    PorousMediaSolidDataInner(inner_relation),
-    Vol_(particles_->Vol_), mass_(particles_->mass_), 
-    variable_(*particles_->getVariableByName<VariableType>(variable_name)),
-    eta_(eta) {} 
+      PorousMediaSolidDataInner(inner_relation),
+      Vol_(particles_->VolumetricMeasures()), mass_(*particles_->getVariableByName<Real>("Mass")),
+      variable_(*particles_->getVariableByName<VariableType>(variable_name)),
+      eta_(eta) {}
 //=================================================================================================//
 template <typename VariableType>
 void PorousMediaDampingPairwiseInner<VariableType>::interaction(size_t index_i, Real dt)
@@ -29,15 +29,15 @@ void PorousMediaDampingPairwiseInner<VariableType>::interaction(size_t index_i, 
     // forward sweep
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-    size_t index_j = inner_neighborhood.j_[n];
-    Real mass_j = mass_[index_j];
+        size_t index_j = inner_neighborhood.j_[n];
+        Real mass_j = mass_[index_j];
 
-    VariableType variable_derivative = (variable_i - variable_[index_j]);
-    parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+        VariableType variable_derivative = (variable_i - variable_[index_j]);
+        parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
-    VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
-    variable_[index_i] += increment * mass_j;
-    variable_[index_j] -= increment * mass_i;
+        VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
+        variable_[index_i] += increment * mass_j;
+        variable_[index_j] -= increment * mass_i;
     }
 
     // backward sweep
@@ -54,6 +54,6 @@ void PorousMediaDampingPairwiseInner<VariableType>::interaction(size_t index_i, 
     }
 }
 //=================================================================================================//
-}
-}// namespace SPH
-#endif// PARTICLE_MOMENTUM_DISSIPATION_HPP
+} // namespace multi_species_continuum
+} // namespace SPH
+#endif // PARTICLE_MOMENTUM_DISSIPATION_HPP

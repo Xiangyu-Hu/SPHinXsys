@@ -161,8 +161,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-            if (shell_body.getBaseParticles().pos_[i][2] < 0.67 * dp)
+        for (size_t i = 0; i < shell_body.getBaseParticles().ParticlePositions().size(); ++i)
+            if (shell_body.getBaseParticles().ParticlePositions()[i][2] < 0.67 * dp)
                 ids.push_back(i);
         return ids;
     }();
@@ -267,7 +267,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 GlobalStaticVariables::physical_time_ += dt;
 
                 { // checking if any position has become nan
-                    for (const auto &pos : shell_body.getBaseParticles().pos_)
+                    for (const auto &pos : shell_body.getBaseParticles().ParticlePositions())
                         if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
                             throw std::runtime_error("position has become nan, iteration: " + std::to_string(ite));
                 }

@@ -7,7 +7,8 @@ namespace relax_dynamics
 //=================================================================================================//
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part), RelaxDataDelegateSimple(body_part.getSPHBody()),
-      pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
+      pos_(particles_->ParticlePositions()),
+      constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
       particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
 //=================================================================================================//
@@ -81,7 +82,8 @@ void ShellNormalDirectionPrediction::correctNormalDirection()
 ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
     : RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
-      pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+      pos_(particles_->ParticlePositions()),
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {
     particles_->registerVariable(n_temp_, "PreviousNormalDirection", [&](size_t i) -> Vecd
                                  { return n_[i]; });
@@ -96,7 +98,8 @@ void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Re
 ShellNormalDirectionPrediction::PredictionConvergenceCheck::
     PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
     : LocalDynamicsReduce<ReduceAND>(sph_body), RelaxDataDelegateSimple(sph_body),
-      convergence_criterion_(convergence_criterion), n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+      convergence_criterion_(convergence_criterion),
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) {}
 //=================================================================================================//
 bool ShellNormalDirectionPrediction::PredictionConvergenceCheck::reduce(size_t index_i, Real dt)

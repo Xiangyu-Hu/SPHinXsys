@@ -63,14 +63,14 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
     Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
     Real rho_i = rho_[index_i];
-    Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]); 
+    Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n]  * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
@@ -102,7 +102,7 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     {
         StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
         StdLargeVec<Real> &wall_mass_k = *(wall_mass_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -130,7 +130,9 @@ template <class RiemannSolverType>
 PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       acc_deviatoric_plastic_strain_(particles_->acc_deviatoric_plastic_strain_),
-      vertical_stress_(particles_->vertical_stress_), Vol_(particles_->Vol_), mass_(particles_->mass_),
+      vertical_stress_(particles_->vertical_stress_),
+      Vol_(particles_->VolumetricMeasures()),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -166,7 +168,7 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Vol_[index_i] = mass_[index_i] / rho_[index_i];
-    Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]); 
+    Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
     Mat3d stress_tensor_rate_3D_ = plastic_continuum_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
     stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
@@ -202,7 +204,7 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-        StdLargeVec<Real>& wall_Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {

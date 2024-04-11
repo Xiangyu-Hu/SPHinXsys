@@ -39,7 +39,7 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
     Vecd residue = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -68,7 +68,8 @@ Real RelaxationScaling::outputResult(Real reduced_value)
 //=================================================================================================//
 PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
     : LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
-      sph_adaptation_(sph_body.sph_adaptation_), pos_(particles_->pos_),
+      sph_adaptation_(sph_body.sph_adaptation_),
+      pos_(particles_->ParticlePositions()),
       residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 void PositionRelaxation::update(size_t index_i, Real dt_square)
@@ -80,7 +81,9 @@ UpdateSmoothingLengthRatioByShape::
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape)
     : LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-      Vol_(particles_->Vol_), pos_(particles_->pos_), target_shape_(target_shape),
+      Vol_(particles_->VolumetricMeasures()),
+      pos_(particles_->ParticlePositions()),
+      target_shape_(target_shape),
       particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//

@@ -128,9 +128,9 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
           GeneralDataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha), Vol_(particles_->Vol_),
+          beta_(beta), alpha_(alpha), Vol_(particles_->VolumetricMeasures()),
           B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-          pos_(particles_->pos_)
+          pos_(particles_->ParticlePositions())
     {
         particles_->registerVariable(show_neighbor_, "ShowingNeighbor", Real(0.0));
     }

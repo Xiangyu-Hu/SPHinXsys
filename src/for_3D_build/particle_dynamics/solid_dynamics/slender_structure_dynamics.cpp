@@ -8,10 +8,13 @@ namespace slender_structure_dynamics
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       BarDataSimple(sph_body), CFL_(CFL),
-      vel_(particles_->vel_), force_(particles_->force_),
-      angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
-      force_prior_(particles_->force_prior_),
-      thickness_(particles_->thickness_), mass_(particles_->mass_),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      force_(*particles_->getVariableByName<Vecd>("Force")),
+      angular_vel_(particles_->angular_vel_),
+      dangular_vel_dt_(particles_->dangular_vel_dt_),
+      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+      thickness_(particles_->thickness_),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       rho0_(particles_->elastic_solid_.ReferenceDensity()),
       E0_(particles_->elastic_solid_.YoungsModulus()),
       nu_(particles_->elastic_solid_.PoissonRatio()),
@@ -38,26 +41,30 @@ Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      Vol_(particles_->Vol_), B_(particles_->B_),
+      Vol_(particles_->VolumetricMeasures()),
+      B_(particles_->B_),
       n0_(particles_->n0_), b_n0_(particles_->b_n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BarDeformationGradientTensor::
     BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      Vol_(particles_->Vol_),
-      pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
+      Vol_(particles_->VolumetricMeasures()),
+      pos_(particles_->ParticlePositions()), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_), F_b_bending_(particles_->F_b_bending_) {}
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      rho_(particles_->rho_),
-      thickness_(particles_->thickness_), mass_(particles_->mass_), Vol_(particles_->Vol_),
-      pos_(particles_->pos_), vel_(particles_->vel_),
-      force_(particles_->force_),
-      force_prior_(particles_->force_prior_),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      thickness_(particles_->thickness_),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      Vol_(particles_->VolumetricMeasures()),
+      pos_(particles_->ParticlePositions()),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      force_(*particles_->getVariableByName<Vecd>("Force")),
+      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -82,7 +89,7 @@ BarStressRelaxationFirstHalf::
       elastic_solid_(particles_->elastic_solid_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
-      Vol_(particles_->Vol_),
+      Vol_(particles_->VolumetricMeasures()),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
@@ -272,7 +279,9 @@ void BarStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 ConstrainBarBodyRegion::
     ConstrainBarBodyRegion(BodyPartByParticle &body_part)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
-      vel_(particles_->vel_), angular_vel_(particles_->angular_vel_), angular_b_vel_(particles_->angular_b_vel_) {}
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      angular_vel_(particles_->angular_vel_),
+      angular_b_vel_(particles_->angular_b_vel_) {}
 //=================================================================================================//
 void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 {
@@ -283,8 +292,11 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
-      axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_), vel_(particles_->vel_),
-      force_(particles_->force_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
+      axis_(axis), pos_(particles_->ParticlePositions()),
+      pos0_(particles_->pos0_),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      force_(*particles_->getVariableByName<Vecd>("Force")),
+      rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_), rotation_b_(particles_->rotation_b_),
       angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_) {}
 //=================================================================================================//
@@ -301,7 +313,8 @@ DistributingPointForcesToBar::
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-      pos0_(particles_->pos0_), force_prior_(particles_->force_prior_),
+      pos0_(particles_->pos0_),
+      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       thickness_(particles_->thickness_)
 {
     for (size_t i = 0; i < point_forces_.size(); i++)

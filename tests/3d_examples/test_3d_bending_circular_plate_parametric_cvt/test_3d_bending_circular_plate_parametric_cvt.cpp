@@ -265,8 +265,8 @@ return_data bending_circular_plate(Real dp_ratio)
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-            if (shell_body.getBaseParticles().pos_[i].norm() > radius - dp / 2)
+        for (size_t i = 0; i < shell_body.getBaseParticles().ParticlePositions().size(); ++i)
+            if (shell_body.getBaseParticles().ParticlePositions()[i].norm() > radius - dp / 2)
                 ids.push_back(i);
         return ids;
     }();
@@ -355,7 +355,7 @@ return_data bending_circular_plate(Real dp_ratio)
                 // shell_body.updateCellLinkedList();
 
                 { // checking if any position has become nan
-                    for (const auto &pos : shell_body.getBaseParticles().pos_)
+                    for (const auto &pos : shell_body.getBaseParticles().ParticlePositions())
                         if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
                             throw std::runtime_error("position has become nan");
                 }

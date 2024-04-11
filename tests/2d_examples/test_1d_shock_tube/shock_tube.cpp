@@ -46,8 +46,8 @@ class ShockTubeInitialCondition
 {
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
+        : FluidInitialCondition(sph_body), pos_(particles_->ParticlePositions()), vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+          rho_(*particles_->getVariableByName<Real>("Density")), Vol_(particles_->VolumetricMeasures()), mass_(*particles_->getVariableByName<Real>("Mass")),
           p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");

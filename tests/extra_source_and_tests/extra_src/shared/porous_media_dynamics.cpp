@@ -11,8 +11,8 @@ namespace multi_species_continuum
 BasePorousMediaRelaxation::
     BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
-      PorousMediaSolidDataInner(inner_relation), Vol_(particles_->Vol_),
-      pos_(particles_->pos_), vel_(particles_->vel_),
+      PorousMediaSolidDataInner(inner_relation), Vol_(particles_->VolumetricMeasures()),
+      pos_(particles_->ParticlePositions()), vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_)
 {
     rho0_ = particles_->porous_solid_.ReferenceDensity();

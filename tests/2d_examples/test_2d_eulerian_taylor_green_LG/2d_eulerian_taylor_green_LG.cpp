@@ -49,8 +49,8 @@ class TaylorGreenInitialCondition
 {
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_),
+        : FluidInitialCondition(sph_body), pos_(particles_->ParticlePositions()), vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+          rho_(*particles_->getVariableByName<Real>("Density")), mass_(*particles_->getVariableByName<Real>("Mass")), Vol_(particles_->VolumetricMeasures()),
           p_(*particles_->getVariableByName<Real>("Pressure"))
     {
         particles_->registerVariable(mom_, "Momentum");

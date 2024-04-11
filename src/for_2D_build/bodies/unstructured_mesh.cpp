@@ -512,8 +512,8 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
         IndexRange(0, base_particles_.total_real_particles_),
         [&](const IndexRange &r)
         {
-            StdLargeVec<Vecd> &pos_n = source_particles.pos_;
-            StdLargeVec<Real> &Vol_n = source_particles.Vol_;
+            StdLargeVec<Vecd> &pos_n = source_particles.ParticlePositions();
+            StdLargeVec<Real> &Vol_n = source_particles.VolumetricMeasures();
             for (size_t num = r.begin(); num != r.end(); ++num)
             {
                 size_t index_i = get_particle_index(num);
@@ -551,7 +551,7 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                     {
                         r_ij = node1_to_center_direction.dot(normal_vector) * 2.0;
                     }
-                    Real dW_ij = -interface_area_size  / (2.0 * Vol_i * Vol_n[index_j]);
+                    Real dW_ij = -interface_area_size / (2.0 * Vol_i * Vol_n[index_j]);
                     get_neighbor_relation(neighborhood, r_ij, dW_ij, normal_vector, index_j);
                 }
             }
@@ -573,7 +573,8 @@ GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ans
       ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh.node_coordinates_),
       mesh_topology_(ansys_mesh.mesh_topology_),
-      pos_(particles_->pos_), Vol_(particles_->Vol_),
+      pos_(particles_->ParticlePositions()),
+      Vol_(particles_->VolumetricMeasures()),
       ghost_bound_(ghost_boundary.GhostBound())
 {
     ghost_boundary.checkParticlesReserved();
@@ -731,10 +732,12 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
 //=================================================================================================//
 BoundaryConditionSetupInFVM::
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
-    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_),
-      Vol_(particles_->Vol_), mass_(particles_->mass_),
+    : fluid_dynamics::FluidDataInner(inner_relation),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      Vol_(particles_->VolumetricMeasures()), mass_(*particles_->getVariableByName<Real>("Mass")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(particles_->vel_), pos_(particles_->pos_),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      pos_(particles_->ParticlePositions()),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       ghost_bound_(ghost_creation.ghost_bound_),
       each_boundary_type_with_all_ghosts_index_(ghost_creation.each_boundary_type_with_all_ghosts_index_),

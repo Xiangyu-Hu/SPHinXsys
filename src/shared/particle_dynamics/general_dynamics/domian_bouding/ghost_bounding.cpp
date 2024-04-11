@@ -42,7 +42,7 @@ PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
       upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
       cell_linked_list_(real_body.getCellLinkedList()),
-      Vol_(base_particles_.Vol_) {}
+      Vol_(base_particles_.VolumetricMeasures()) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::setupDynamics(Real dt)
 {

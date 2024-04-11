@@ -55,7 +55,7 @@ void Oldroyd_BIntegration1stHalf<Contact<Wall>>::interaction(size_t index_i, Rea
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -96,7 +96,7 @@ SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusion
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       FluidDataSimple(sph_body),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      rho_(this->particles_->rho_),
+      rho_(*this->particles_->template getVariableByName<Real>("Density")),
       mu_srd_(*this->particles_->getVariableByName<Real>("VariableViscosity")),
       diffusionCFL(diffusionCFL) {}
 //=================================================================================================//

@@ -197,8 +197,8 @@ class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<B
     PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part)
         : BaseLocalDynamics<BodyPartByParticle>(body_part), PorousMediaSolidDataSimple(body_part.getSPHBody()),
           fluid_mass_(particles_->fluid_mass_), fluid_saturation_(particles_->fluid_saturation_),
-          total_mass_(particles_->total_mass_), rho_n_(particles_->rho_),
-          Vol_update_(particles_->Vol_update_), pos_(particles_->pos_){};
+          total_mass_(particles_->total_mass_), rho_n_(*particles_->getVariableByName<Real>("Density")),
+          Vol_update_(particles_->Vol_update_), pos_(particles_->ParticlePositions()){};
 
     virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
 

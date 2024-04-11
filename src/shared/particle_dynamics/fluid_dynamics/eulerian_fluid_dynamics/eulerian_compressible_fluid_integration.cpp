@@ -7,8 +7,10 @@ namespace fluid_dynamics
 //=================================================================================================//
 EulerianCompressibleAcousticTimeStepSize::
     EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body)
-    : AcousticTimeStepSize(sph_body), rho_(particles_->rho_),
-      p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
+    : AcousticTimeStepSize(sph_body),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
       compressible_fluid_(CompressibleFluid(1.0, 1.4)){};
 //=================================================================================================//
@@ -25,7 +27,8 @@ Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
 BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &inner_relation)
     : BaseIntegration(inner_relation),
       compressible_fluid_(CompressibleFluid(1.0, 1.4)),
-      Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")),
+      Vol_(particles_->VolumetricMeasures()),
+      E_(*particles_->getVariableByName<Real>("TotalEnergy")),
       dE_dt_(*particles_->getVariableByName<Real>("TotalEnergyChangeRate")),
       dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),

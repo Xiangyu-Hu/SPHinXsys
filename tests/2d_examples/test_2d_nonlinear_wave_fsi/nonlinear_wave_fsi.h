@@ -542,7 +542,7 @@ class WaveMaking : public BodyPartMotionConstraint
     WaveMaking(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           h(WH), tf(20.480), xf(12.0), fmn(0.32), fmx(0.96), a(0.0068), N(32), g(gravity_g),
-        mass_(*particles_->getVariableByName<Real>("Mass")),
+          mass_(*particles_->getVariableByName<Real>("Mass")),
           force_(*particles_->getVariableByName<Vecd>("Force"))
     {
         ComputeWaveChar();

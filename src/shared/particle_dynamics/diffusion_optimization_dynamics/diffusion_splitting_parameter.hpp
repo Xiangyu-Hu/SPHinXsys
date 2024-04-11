@@ -139,7 +139,7 @@ ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, Variabl
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        boundary_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+        boundary_Vol_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("VolumetricMeasure"));
         boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
         boundary_species_.push_back(&(this->contact_particles_[k]->all_species_));
         boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
@@ -158,7 +158,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
     {
         StdLargeVec<Real> &heat_flux_k = *(this->boundary_heat_flux_[k]);
         StdLargeVec<Vecd> &normal_vector_k = *(this->boundary_normal_vector_[k]);
-        StdLargeVec<Real>& Vol_k = *(this->boundary_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->boundary_Vol_[k]);
         StdVec<StdLargeVec<Real>> &species_k = *(boundary_species_[k]);
 
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];

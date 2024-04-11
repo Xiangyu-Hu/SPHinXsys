@@ -373,9 +373,9 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-            if (shell_body.getBaseParticles().pos_[i][length_axis] < bb_system.first_[length_axis] + dp / 2 ||
-                shell_body.getBaseParticles().pos_[i][length_axis] > bb_system.second_[length_axis] - dp / 2)
+        for (size_t i = 0; i < shell_body.getBaseParticles().ParticlePositions().size(); ++i)
+            if (shell_body.getBaseParticles().ParticlePositions()[i][length_axis] < bb_system.first_[length_axis] + dp / 2 ||
+                shell_body.getBaseParticles().ParticlePositions()[i][length_axis] > bb_system.second_[length_axis] - dp / 2)
                 ids.push_back(i);
         return ids;
     }();
@@ -462,7 +462,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
                 // shell_body.updateCellLinkedList();
 
                 { // checking if any position has become nan
-                    for (const auto &pos : shell_body.getBaseParticles().pos_)
+                    for (const auto &pos : shell_body.getBaseParticles().ParticlePositions())
                         if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
                             throw std::runtime_error("position has become nan");
                 }
