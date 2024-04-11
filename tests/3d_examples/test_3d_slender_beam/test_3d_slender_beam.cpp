@@ -158,16 +158,13 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
+    /** active-passive stress relaxation. */
+    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationFirstHalf> stress_relaxation_first_half(bar_body_inner);
+    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationSecondHalf> stress_relaxation_second_half(bar_body_inner);
     /** Corrected configuration. */
-    InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration>
-        corrected_configuration(bar_body_inner);
+    InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration> corrected_configuration(bar_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<slender_structure_dynamics::BarAcousticTimeStepSize> computing_time_step_size(bar_body);
-    /** active-passive stress relaxation. */
-    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationFirstHalf>
-        stress_relaxation_first_half(bar_body_inner);
-    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationSecondHalf>
-        stress_relaxation_second_half(bar_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometryParallelToXAxis boundary_geometry_x(bar_body, "BoundaryGeometryParallelToXAxis");
     SimpleDynamics<slender_structure_dynamics::ConstrainBarBodyRegionAlongAxis>

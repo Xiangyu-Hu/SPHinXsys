@@ -40,7 +40,7 @@ BarCorrectConfiguration::
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       Vol_(particles_->Vol_), B_(particles_->B_),
       n0_(particles_->n0_), b_n0_(particles_->b_n0_),
-      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BarDeformationGradientTensor::
     BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
@@ -48,7 +48,7 @@ BarDeformationGradientTensor::
       Vol_(particles_->Vol_),
       pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
-      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_), F_b_bending_(particles_->F_b_bending_) {}
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
@@ -69,9 +69,7 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       dpseudo_b_n_dt_(particles_->dpseudo_b_n_dt_), dpseudo_b_n_d2t_(particles_->dpseudo_b_n_d2t_),
       rotation_b_(particles_->rotation_b_), angular_b_vel_(particles_->angular_b_vel_),
       dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
-      transformation_matrix_(*particles_->registerSharedVariable<Matd>(
-          "TransformationMatrix", [&](size_t index_i) -> Matd
-          { return getTransformationMatrix(n0_[index_i], b_n0_[index_i]); })), // Transformation matrix from global to local coordinates
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       F_b_bending_(particles_->F_b_bending_),
       dF_b_bending_dt_(particles_->dF_b_bending_dt_)
 {
@@ -143,8 +141,8 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     rho_[index_i] = rho0_ / J;
 
     /** Calculate the current normal direction of mid-surface. */
-    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
-    b_n_[index_i] = transformation_matrix_[index_i].transpose() * getBinormalFromDeformationGradientTensor(F_[index_i]);
+    n_[index_i] = transformation_matrix0_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
+    b_n_[index_i] = transformation_matrix0_[index_i].transpose() * getBinormalFromDeformationGradientTensor(F_[index_i]);
 
     /** Get transformation matrix from global coordinates to current local coordinates. */
     Matd current_transformation_matrix = getTransformationMatrix(n_[index_i], b_n_[index_i]);
@@ -162,9 +160,9 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_y[i] * dF_bending_dt_[index_i] * thickness_[index_i] * 0.5 +
                                     gaussian_point_x[i] * dF_b_bending_dt_[index_i] * width_[index_i] * 0.5;
         Matd inverse_F_gaussian_point = F_gaussian_point.inverse();
-        Matd current_local_almansi_strain = current_transformation_matrix * transformation_matrix_[index_i].transpose() * 0.5 *
+        Matd current_local_almansi_strain = current_transformation_matrix * transformation_matrix0_[index_i].transpose() * 0.5 *
                                             (Matd::Identity() - inverse_F_gaussian_point.transpose() * inverse_F_gaussian_point) *
-                                            transformation_matrix_[index_i] * current_transformation_matrix.transpose();
+                                            transformation_matrix0_[index_i] * current_transformation_matrix.transpose();
 
         /** correct Almansi strain tensor according to plane stress problem. */
         current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
@@ -173,9 +171,9 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         numerical_damping_scaling_matrix_(1, 1) = width_[i] < smoothing_length_ ? width_[i] : smoothing_length_;
         numerical_damping_scaling_matrix_(2, 2) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) +
-                             current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+                             current_transformation_matrix * transformation_matrix0_[index_i].transpose() * F_gaussian_point *
                                  elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_matrix_, index_i) *
-                                 F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+                                 F_gaussian_point.transpose() * transformation_matrix0_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.row(2) *= shear_correction_factor_;
@@ -220,14 +218,14 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     /** stress and moment in global coordinates for pair interaction */
     global_stress_[index_i] = J * current_transformation_matrix.transpose() *
-                              resultant_stress * current_transformation_matrix * transformation_matrix_[index_i].transpose() *
-                              inverse_F.transpose() * transformation_matrix_[index_i];
+                              resultant_stress * current_transformation_matrix * transformation_matrix0_[index_i].transpose() *
+                              inverse_F.transpose() * transformation_matrix0_[index_i];
     global_moment_[index_i] = J * current_transformation_matrix.transpose() * resultant_moment * current_transformation_matrix *
-                              transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
+                              transformation_matrix0_[index_i].transpose() * inverse_F.transpose() * transformation_matrix0_[index_i];
     global_shear_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_shear_stress;
 
     global_b_moment_[index_i] = J * current_transformation_matrix.transpose() * resultant_b_moment * current_transformation_matrix *
-                                transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
+                                transformation_matrix0_[index_i].transpose() * inverse_F.transpose() * transformation_matrix0_[index_i];
     global_b_shear_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_b_shear_stress;
 }
 //=================================================================================================//
@@ -246,10 +244,10 @@ void BarStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
     Vecd pseudo_n_temp = pseudo_n_[index_i];
     Vecd pseudo_b_n_temp = pseudo_b_n_[index_i];
 
-    pseudo_n_[index_i] = transformation_matrix_[index_i].transpose() *
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() *
                          getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 
-    pseudo_b_n_[index_i] = transformation_matrix_[index_i].transpose() *
+    pseudo_b_n_[index_i] = transformation_matrix0_[index_i].transpose() *
                            getVectorAfterThinStructureRotation(local_pseudo_b_n_0, rotation_b_[index_i]);
 
     if (dt < 1e-10)

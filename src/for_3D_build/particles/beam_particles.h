@@ -77,6 +77,7 @@ class BarParticles : public ShellParticles
     virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i] * width_[index_i]; }
     /** Initialize variable for shell particles. */
     virtual void initializeOtherVariables() override;
+    virtual void registerTransformationMatrix() override;
     virtual BarParticles *ThisObjectPtr() override { return this; };
 };
 

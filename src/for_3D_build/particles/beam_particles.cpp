@@ -67,4 +67,10 @@ void BarParticles::initializeOtherVariables()
     addVariableToWrite<Vecd>("Rotation_b");
 }
 //=================================================================================================//
+void BarParticles::registerTransformationMatrix()
+{
+    registerVariable(transformation_matrix0_, "TransformationMatrix", [&](size_t index_i) -> Matd
+                     { return getTransformationMatrix(n_[index_i], b_n_[index_i]); });
+}
+//=================================================================================================//
 } // namespace SPH

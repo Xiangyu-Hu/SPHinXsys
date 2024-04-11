@@ -93,7 +93,7 @@ class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
             global_configuration += r_ji * gradW_ijV_j.transpose();
         }
         Matd local_configuration =
-            transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
+            transformation_matrix0_[index_i] * global_configuration * transformation_matrix0_[index_i].transpose();
         /** correction matrix is obtained from local configuration. */
         B_[index_i] = getCorrectionMatrix_beam(local_configuration);
     };
@@ -103,7 +103,7 @@ class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &n0_;
     StdLargeVec<Vecd> &b_n0_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
 };
 
 /**
@@ -122,7 +122,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
         const Vecd &pseudo_n_i = pseudo_n_[index_i];
         const Vecd &pseudo_b_n_i = pseudo_b_n_[index_i];
         const Vecd &pos_n_i = pos_[index_i];
-        const Matd &transformation_matrix_i = transformation_matrix_[index_i];
+        const Matd &transformation_matrix_i = transformation_matrix0_[index_i];
 
         Matd deformation_part_one = Matd::Zero();
         Matd deformation_part_two = Matd::Zero();
@@ -147,7 +147,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
     StdLargeVec<Matd> &B_, &F_, &F_bending_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
 
     StdLargeVec<Vecd> &pseudo_b_n_, &b_n0_;
     StdLargeVec<Matd> &F_b_bending_;
@@ -173,7 +173,7 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
     StdLargeVec<Real> &width_;
     StdLargeVec<Vecd> &b_n0_, &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
         &angular_b_vel_, dangular_b_vel_dt_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
     StdLargeVec<Matd> &F_b_bending_, &dF_b_bending_dt_;
 };
 
@@ -219,8 +219,8 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
         dpseudo_b_n_d2t_[index_i] = -pseudo_b_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
 
-        Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
-        Vecd local_dpseudo_b_n_d2t = transformation_matrix_[index_i] * dpseudo_b_n_d2t_[index_i];
+        Vecd local_dpseudo_n_d2t = transformation_matrix0_[index_i] * dpseudo_n_d2t_[index_i];
+        Vecd local_dpseudo_b_n_d2t = transformation_matrix0_[index_i] * dpseudo_b_n_d2t_[index_i];
         dangular_b_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation_b(
             Vec3d(local_dpseudo_b_n_d2t), Vec3d(local_dpseudo_n_d2t), Vec3d(rotation_b_[index_i]), Vec3d(angular_b_vel_[index_i]), dt);
         dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation(
@@ -284,7 +284,7 @@ class BarStressRelaxationSecondHalf : public BaseBarRelaxation
         const Vecd &vel_n_i = vel_[index_i];
         const Vecd &dpseudo_n_dt_i = dpseudo_n_dt_[index_i];
         const Vecd &dpseudo_b_n_dt_i = dpseudo_b_n_dt_[index_i];
-        const Matd &transformation_matrix_i = transformation_matrix_[index_i];
+        const Matd &transformation_matrix_i = transformation_matrix0_[index_i];
 
         Matd deformation_gradient_change_rate_part_one = Matd::Zero();
         Matd deformation_gradient_change_rate_part_three = Matd::Zero();

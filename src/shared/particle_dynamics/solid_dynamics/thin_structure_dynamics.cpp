@@ -9,12 +9,12 @@ namespace thin_structure_dynamics
 UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body), ShellDataSimple(sph_body),
       n_(particles_->n_), F_(particles_->F_),
-      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=========================================================================================//
 void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 {
     /** Calculate the current normal direction of mid-surface. */
-    n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
+    n_[index_i] = transformation_matrix0_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
 }
 //=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
@@ -48,7 +48,7 @@ ShellCorrectConfiguration::
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
       Vol_(particles_->Vol_), B_(particles_->B_),
       n0_(particles_->n0_),
-      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 ShellDeformationGradientTensor::
     ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
@@ -56,7 +56,7 @@ ShellDeformationGradientTensor::
       Vol_(particles_->Vol_), pos_(particles_->pos_),
       pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
-      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
@@ -69,9 +69,7 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_),
-      transformation_matrix_(*particles_->registerSharedVariable<Matd>(
-          "TransformationMatrix", [&](size_t index_i) -> Matd
-          { return getTransformationMatrix(n0_[index_i]); })), // Transformation matrix from global to local coordinates
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
       F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_)
 {
@@ -143,9 +141,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;
         Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * thickness_[index_i] * 0.5;
         Matd inverse_F_gaussian_point = F_gaussian_point.inverse();
-        Matd current_local_almansi_strain = current_transformation_matrix * transformation_matrix_[index_i].transpose() * 0.5 *
+        Matd current_local_almansi_strain = current_transformation_matrix * transformation_matrix0_[index_i].transpose() * 0.5 *
                                             (Matd::Identity() - inverse_F_gaussian_point.transpose() * inverse_F_gaussian_point) *
-                                            transformation_matrix_[index_i] * current_transformation_matrix.transpose();
+                                            transformation_matrix0_[index_i] * current_transformation_matrix.transpose();
 
         /** correct Almansi strain tensor according to plane stress problem. */
         current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
@@ -153,9 +151,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         /** correct out-plane numerical damping. */
         numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) +
-                             current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+                             current_transformation_matrix * transformation_matrix0_[index_i].transpose() * F_gaussian_point *
                                  elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_matrix_, index_i) *
-                                 F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+                                 F_gaussian_point.transpose() * transformation_matrix0_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -180,8 +178,8 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     }
 
     /** stress and moment in global coordinates for pair interaction */
-    global_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_stress * current_transformation_matrix * transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
-    global_moment_[index_i] = J * current_transformation_matrix.transpose() * resultant_moment * current_transformation_matrix * transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
+    global_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_stress * current_transformation_matrix * transformation_matrix0_[index_i].transpose() * inverse_F.transpose() * transformation_matrix0_[index_i];
+    global_moment_[index_i] = J * current_transformation_matrix.transpose() * resultant_moment * current_transformation_matrix * transformation_matrix0_[index_i].transpose() * inverse_F.transpose() * transformation_matrix0_[index_i];
     global_shear_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_shear_stress;
 }
 //=================================================================================================//
@@ -195,7 +193,7 @@ void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
 {
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
-    dpseudo_n_dt_[index_i] = transformation_matrix_[index_i].transpose() *
+    dpseudo_n_dt_[index_i] = transformation_matrix0_[index_i].transpose() *
                              getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
     pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
 }
@@ -303,7 +301,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation), Vol_(particles_->Vol_),
       n0_(particles_->n0_), B_(particles_->B_),
-      transformation_matrix_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
+      transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
       k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature"))
@@ -320,7 +318,7 @@ void ShellCurvature::compute_initial_curvature()
         {
             Matd dn_0_i = Matd::Zero();
             // transform initial local B_ to global B_
-            const Matd B_global_i = transformation_matrix_[index_i].transpose() * B_[index_i] * transformation_matrix_[index_i];
+            const Matd B_global_i = transformation_matrix0_[index_i].transpose() * B_[index_i] * transformation_matrix0_[index_i];
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
@@ -337,10 +335,10 @@ void ShellCurvature::compute_initial_curvature()
 //=================================================================================================//
 void ShellCurvature::update(size_t index_i, Real)
 {
-    Matd dn_0_i = dn_0_[index_i] + transformation_matrix_[index_i].transpose() *
-                                       F_bending_[index_i] * transformation_matrix_[index_i];
+    Matd dn_0_i = dn_0_[index_i] + transformation_matrix0_[index_i].transpose() *
+                                       F_bending_[index_i] * transformation_matrix0_[index_i];
     Matd inverse_F = F_[index_i].inverse();
-    Matd dn_i = dn_0_i * transformation_matrix_[index_i].transpose() * inverse_F * transformation_matrix_[index_i];
+    Matd dn_i = dn_0_i * transformation_matrix0_[index_i].transpose() * inverse_F * transformation_matrix0_[index_i];
     auto [k1, k2] = get_principle_curvatures(dn_i);
     k1_[index_i] = k1;
     k2_[index_i] = k2;

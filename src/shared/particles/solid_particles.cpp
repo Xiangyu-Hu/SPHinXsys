@@ -271,6 +271,7 @@ void ShellParticles::initializeOtherVariables()
     /**
      * register particle data
      */
+    registerTransformationMatrix();
     registerVariable(pos0_, "InitialPosition",
                      [&](size_t i) -> Vecd
                      { return pos_[i]; });
@@ -319,5 +320,11 @@ void ShellParticles::initializeOtherVariables()
     addVariableToWrite<Vecd>("Rotation");
     addDerivedVariableToWrite<MidSurfaceVonMisesStress>();
 }
-
+//=================================================================================================//
+void ShellParticles::registerTransformationMatrix()
+{
+    registerVariable(transformation_matrix0_, "TransformationMatrix", [&](size_t index_i) -> Matd
+                     { return getTransformationMatrix(n_[index_i]); });
+}
+//=================================================================================================//
 } // namespace SPH

@@ -142,8 +142,9 @@ class ShellParticles : public ElasticSolidParticles
     ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
     virtual ~ShellParticles(){};
 
-    Real thickness_ref_;                      /**< Shell thickness. */
-    StdLargeVec<Real> thickness_;             /**< shell thickness */
+    Real thickness_ref_;                       /**< Shell thickness. */
+    StdLargeVec<Real> thickness_;              /**< shell thickness */
+    StdLargeVec<Matd> transformation_matrix0_; /**< initial transformation matrix from global to local coordinates */
     /**
      *	extra generalized coordinates in global coordinate
      */
@@ -174,6 +175,7 @@ class ShellParticles : public ElasticSolidParticles
 
     /** get particle volume. */
     virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
+    virtual void registerTransformationMatrix();
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */
     virtual ShellParticles *ThisObjectPtr() override { return this; };
