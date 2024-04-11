@@ -18,7 +18,7 @@ PressureForceFromFluid<FluidIntegration2ndHalfType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+        contact_rho_n_.push_back(contact_particles_[k]->getVariableByName<Real>("Density"));
         contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
         contact_vel_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
         contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));

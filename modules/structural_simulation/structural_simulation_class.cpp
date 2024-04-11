@@ -958,7 +958,7 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
     StdLargeVec<Vecd> &pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos0_;
-    StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_;
+    StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->ParticlePositions();
     Real displ_max = 0;
     for (size_t i = 0; i < pos_0.size(); i++)
     {
