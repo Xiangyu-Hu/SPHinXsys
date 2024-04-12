@@ -122,18 +122,12 @@ struct observer_point_shell
 
     void interpolate(ShellParticles &particles)
     {
-        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                            { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
-        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Vec3d>("Displacement"))[id]; });
-        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                          { return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id]; });
-        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                    { return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id]; });
-        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id]; });
-        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                 {
+        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
+        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Vec3d>("Displacement"))[id]; });
+        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id]; });
+        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id]; });
+        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id]; });
+        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) {
 			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
 			return particles.elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
@@ -297,9 +291,11 @@ return_data bending_circular_plate(Real dp_ratio)
         EXPECT_GT(min_rij, dp / 2);
 
         // test volume
-        Real total_volume = std::accumulate(shell_particles->Vol_.begin(), shell_particles->Vol_.end(), 0.0);
+        StdLargeVec<Real> &Vol_ = shell_particles->VolumetricMeasures();
+        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+        Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
-        Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
+        Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
         EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);

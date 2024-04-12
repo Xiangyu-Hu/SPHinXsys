@@ -154,18 +154,12 @@ struct observer_point_shell
 
     void interpolate(ShellParticles &particles)
     {
-        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                            { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
-        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Vec3d>("Displacement"))[id]; });
-        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                          { return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id]; });
-        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                    { return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id]; });
-        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id]; });
-        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                 {
+        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
+        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Vec3d>("Displacement"))[id]; });
+        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id]; });
+        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id]; });
+        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id]; });
+        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) {
 			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
 			return particles.elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
@@ -321,27 +315,28 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     }
 
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
-    bb_system = get_particles_bounding_box(shell_particles->pos_);
+    bb_system = get_particles_bounding_box(shell_particles->ParticlePositions());
     system.system_domain_bounds_ = bb_system;
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
     { // recalculate the volume/area after knowing the particle positions
-      // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
-      // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
+        // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
+        // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
+    StdLargeVec<Vecd> &pos0 = *shell_particles->getVariableByName<Vecd>("InitialPosition");
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
         IndexVector ids;
         Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
         Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp / 2;
-        for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
+        for (size_t i = 0; i < pos0.size(); ++i)
         {
-            if ((shell_particles->pos0_[i] - point_A.pos_0).norm() < smoothing_length &&
-                std::abs(shell_particles->pos0_[i][tangential_axis]) > x_min)
+            if ((pos0[i] - point_A.pos_0).norm() < smoothing_length &&
+                std::abs(pos0[i][tangential_axis]) > x_min)
                 ids.push_back(i);
         }
         return ids;
@@ -349,9 +344,9 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     point_B.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
         Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
+        for (size_t i = 0; i < pos0.size(); ++i)
         {
-            if ((shell_particles->pos0_[i] - point_B.pos_0).norm() < smoothing_length)
+            if ((pos0[i] - point_B.pos_0).norm() < smoothing_length)
                 ids.push_back(i);
         }
         return ids;
@@ -396,7 +391,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // TESTS on initialization
     // checking particle distances - avoid bugs of reading file
     Real min_rij = MaxReal;
-    for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
+    for (size_t index_i = 0; index_i < pos0.size(); ++index_i)
     {
         Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -404,10 +399,13 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
                 min_rij = inner_neighborhood.r_ij_[n];
     }
     EXPECT_GT(min_rij, dp / 2);
+
     // test volume
-    Real total_volume = std::accumulate(shell_particles->Vol_.begin(), shell_particles->Vol_.end(), 0.0);
+    StdLargeVec<Real> &Vol_ = shell_particles->VolumetricMeasures();
+    StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+    Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
     std::cout << "total_volume: " << total_volume << std::endl;
-    Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
+    Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);
     std::cout << "total_mass: " << total_mass << std::endl;
     EXPECT_FLOAT_EQ(total_volume, total_area);
     EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);

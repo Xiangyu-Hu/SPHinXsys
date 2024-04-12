@@ -143,8 +143,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	define geometry of SPH bodies
     //----------------------------------------------------------------------
     /** create a water block shape */
-    auto createWaterBlockShape = [&]()
-    {
+    auto createWaterBlockShape = [&]() {
         // geometry
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
@@ -332,25 +331,24 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
      * @brief 	Gtest strat from here.
      */
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)
-    {
+    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos) {
         Real y = 2 * pos[1] / DH - 1;
         return Vec2d(1.5 * U_f * (1 - y * y), 0);
     };
-    /* Compare all simulation to the anayltical solution. */
+    /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    for (size_t i = 0; i < fluid_axial_observer.getBaseParticles().ParticlePositions().size(); i++)
+    StdLargeVec<Vecd> &pos_axial = fluid_axial_observer.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_axial = *fluid_axial_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    for (size_t i = 0; i < pos_axial.size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(fluid_axial_observer.getBaseParticles().ParticlePositions()[i])[1],
-                    fluid_axial_observer.getBaseParticles().vel_[i][1],
-                    U_f * 5e-2);
+        EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_f * 5e-2);
     }
     // Radial direction
-    for (size_t i = 0; i < fluid_radial_observer.getBaseParticles().ParticlePositions().size(); i++)
+    StdLargeVec<Vecd> &pos_radial = fluid_radial_observer.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_radial = *fluid_radial_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    for (size_t i = 0; i < pos_radial.size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(fluid_radial_observer.getBaseParticles().ParticlePositions()[i])[1],
-                    fluid_radial_observer.getBaseParticles().vel_[i][1],
-                    U_f * 5e-2);
+        EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_f * 5e-2);
     }
 }
 

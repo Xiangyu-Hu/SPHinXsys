@@ -388,28 +388,25 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
-    {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
         return Vec3d(0.0,
-                     2.0 * U_f *
-                         (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) /
-                                    (diameter * 0.5) / (diameter * 0.5)),
+                     2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);
     };
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    for (size_t i = 0; i < observer_axial.getBaseParticles().ParticlePositions().size(); i++)
+    StdLargeVec<Vecd> &pos_axial = observer_axial.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_axial = *observer_axial.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    for (size_t i = 0; i < pos_axial.size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(observer_axial.getBaseParticles().ParticlePositions()[i])[1],
-                    observer_axial.getBaseParticles().vel_[i][1],
-                    U_max * 10e-2); // it's below 5% but 10% for CI
+        EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }
     // Radial direction
-    for (size_t i = 0; i < observer_radial.getBaseParticles().ParticlePositions().size(); i++)
+    StdLargeVec<Vecd> &pos_radial = observer_radial.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_radial = *observer_radial.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    for (size_t i = 0; i < pos_radial.size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(observer_radial.getBaseParticles().ParticlePositions()[i])[1],
-                    observer_radial.getBaseParticles().vel_[i][1],
-                    U_max * 10e-2); // it's below 5% but 10% for CI
+        EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }
 }
 

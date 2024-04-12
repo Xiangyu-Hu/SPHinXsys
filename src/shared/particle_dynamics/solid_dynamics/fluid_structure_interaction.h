@@ -54,7 +54,7 @@ class BaseForceFromFluid : public LocalDynamics, public FSIContactData, public F
     StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
 
   protected:
-      Solid &solid_;
+    Solid &solid_;
     StdLargeVec<Real> &Vol_;
     StdVec<Fluid *> contact_fluids_;
     StdLargeVec<Vecd> &force_from_fluid_;
@@ -73,8 +73,8 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 
   protected:
     StdLargeVec<Vecd> &vel_ave_;
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
-    StdVec<StdLargeVec<Vecd>*> contact_vel_;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
     StdVec<Real> mu_;
     StdVec<Real> smoothing_length_;
 };
@@ -97,6 +97,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    StdLargeVec<Real> &mass_;
     StdLargeVec<Vecd> &vel_ave_, &force_ave_, &n_;
     StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_mass_, contact_p_, contact_Vol_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_force_prior_;

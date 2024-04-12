@@ -190,7 +190,7 @@ void SurfaceOperationsVentricle::update_srf_area()
     for (size_t i = 0; i < ids_.size(); ++i)
     {
         size_t index_i = ids_[i];
-        srf_area_n_[i] = srf_area_0_[i] * (particles_.F_[index_i]).determinant() * ((particles_.F_[index_i]).inverse().transpose() * particles_.n0_[index_i]).norm();
+        srf_area_n_[i] = srf_area_0_[i] * (F_[index_i]).determinant() * ((F_[index_i]).inverse().transpose() * n0_[index_i]).norm();
     }
 }
 
@@ -205,7 +205,7 @@ void SurfaceOperationsVentricle::update_flow_rate(Real dt)
         size_t index_i = ids_[i];
         // flow rate towards the normal is positive by definition
         // this will mean positive change in case of ventricular contraction
-        Q_current_ += srf_area_n_[i] * (particles_.vel_[index_i]).dot(particles_.n_[index_i]);
+        Q_current_ += srf_area_n_[i] * (vel_[index_i]).dot(n_[index_i]);
     };
 }
 

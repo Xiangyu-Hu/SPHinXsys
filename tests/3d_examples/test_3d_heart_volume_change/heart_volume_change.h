@@ -92,9 +92,14 @@ class MyocardiumSurfaces
 class SurfaceOperationsVentricle
 {
   public:
-    SurfaceOperationsVentricle(ElasticSolidParticles &particles, const IndexVector &ids, InnerRelation &inner_relation) : particles_(particles), ids_(ids),
-                                                                                                                          srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
-                                                                                                                          Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)
+    SurfaceOperationsVentricle(ElasticSolidParticles &particles, const IndexVector &ids, InnerRelation &inner_relation)
+        : particles_(particles),
+          vel_(*particles_.getVariableByName<Vecd>("Velocity")),
+          n_(*particles_.getVariableByName<Vecd>("NormalDirection")),
+          n0_(*particles_.getVariableByName<Vecd>("InitialNormalDirection")),
+          F_(*particles_.getVariableByName<Matd>("DeformationGradient")),
+          ids_(ids), srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
+          Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)
     {
         std::cout << "SurfaceOperationsVentricle number of particles: " << ids_.size() << std::endl;
         init_srf_area(inner_relation);
@@ -123,6 +128,8 @@ class SurfaceOperationsVentricle
     void init_srf_area(InnerRelation &inner_relation);
 
     ElasticSolidParticles &particles_;
+    StdLargeVec<Vecd> &vel_, &n_, &n0_;
+    StdLargeVec<Matd> &F_;
     // ids_, srf_area_0_, srf_area_n_ maintain particle correspondence
     const IndexVector &ids_;  // ids of srf particles of interest
     StdVec<Real> srf_area_0_; // initial surface area
