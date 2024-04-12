@@ -90,32 +90,32 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_inner, water_block_contact);
+
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
+
     BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
+
     BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
+
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
+
     /** Time-space method to detect surface particles. */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
-    /** Evaluation of density by freestream approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_inner, water_block_contact);
-    /** We can output a method-specific particle data for debug */
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<int>("Indicator");
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** modify the velocity of boundary particles with free-stream velocity. */
     SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
-    /** Pressure relaxation using verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     /** Correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
     pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Computing viscous acceleration. */
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     /** Impose transport velocity formulation. */
@@ -144,12 +144,14 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> fish_body_stress_relaxation_second_half(fish_inner);
     /** Update norm .*/
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal(fish_body);
-    fish_body.addBodyStateForRecording<Real>("Density");
-    fish_body.addBodyStateForRecording<int>("MaterialID");
-    fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    water_block.addBodyStateForRecording<Real>("Pressure");
+    water_block.addBodyStateForRecording<int>("Indicator");
+    fish_body.addBodyStateForRecording<Real>("Density");
+    fish_body.addBodyStateForRecording<int>("MaterialID");
+    fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
