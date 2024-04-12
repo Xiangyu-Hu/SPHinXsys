@@ -44,23 +44,12 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class TaylorGreenInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
+class TaylorGreenInitialCondition : public fluid_dynamics::CompressibleFluidInitialCondition
 {
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), pos_(particles_->ParticlePositions()), vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          rho_(*particles_->getVariableByName<Real>("Density")), mass_(*particles_->getVariableByName<Real>("Mass")), Vol_(particles_->VolumetricMeasures()),
-          p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-        particles_->registerVariable(E_, "TotalEnergy");
-        particles_->registerVariable(dE_dt_, "TotalEnergyChangeRate");
-        particles_->registerVariable(dE_dt_prior_, "OtherEnergyChangeRate");
-        gamma_ = heat_capacity_ratio;
-    };
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
+    virtual ~TaylorGreenInitialCondition(){};
 
     void update(size_t index_i, Real dt)
     {
@@ -78,11 +67,7 @@ class TaylorGreenInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &mass_, &Vol_, &p_;
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-    StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
-    Real gamma_;
+    Real gamma_ = heat_capacity_ratio;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -114,14 +99,15 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
+
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     PeriodicAlongAxis periodic_along_x(water_body.getSPHBodyBounds(), xAxis);
     PeriodicAlongAxis periodic_along_y(water_body.getSPHBodyBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, periodic_along_x);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
-    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_body_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> kernel_correction_matrix(water_body_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(water_body_inner);
