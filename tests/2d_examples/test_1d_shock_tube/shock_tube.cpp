@@ -41,20 +41,11 @@ class WaveBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class ShockTubeInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
+class ShockTubeInitialCondition : public fluid_dynamics::CompressibleFluidInitialCondition
 {
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body),
-          pos_(particles_->ParticlePositions()),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-          rho_(*particles_->getVariableByName<Real>("Density")),
-          Vol_(particles_->VolumetricMeasures()),
-          mass_(*particles_->getVariableByName<Real>("Mass")),
-          p_(*particles_->getVariableByName<Real>("Pressure")),
-          E_(*particles_->getVariableByName<Real>("TotalEnergy")){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][0] < DL / 10.0)
@@ -82,8 +73,6 @@ class ShockTubeInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_, &mom_;
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_, &E_;
     Real gamma_ = heat_capacity_ratio;
 };
 //----------------------------------------------------------------------
@@ -114,9 +103,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
+
     SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
-    wave_body.addBodyStateForRecording<Real>("TotalEnergy");
-    wave_body.addBodyStateForRecording<Real>("Density");
     PeriodicAlongAxis periodic_along_y(wave_body.getSPHBodyBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
@@ -126,6 +114,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
+    wave_body.addBodyStateForRecording<Real>("TotalEnergy");
+    wave_body.addBodyStateForRecording<Real>("Density");
     BodyStatesRecordingToPlt body_states_recording(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(wave_body);
