@@ -62,7 +62,7 @@ class BidirectionalBuffer
               pos_(particles_->ParticlePositions()), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
-            particles_->registerSortableVariable<int>("BufferParticleIndicator");
+            particles_->addVariableToSort<int>("BufferParticleIndicator");
         };
         virtual ~TagBufferParticles(){};
 

@@ -116,7 +116,8 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std::string &variable_name)
+DiscreteVariable<DataType> *BaseParticles::
+    addVariableToList(ParticleVariables &variable_set, const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
 
@@ -128,6 +129,7 @@ void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             std::get<type_index>(variable_set).push_back(variable);
+            return variable;
         }
     }
     else
@@ -135,6 +137,20 @@ void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std
         std::cout << "\n Error: the variable '" << variable_name << "' to write is not particle data!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
+    }
+    return nullptr;
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::addVariableToSort(const std::string &variable_name)
+{
+    DiscreteVariable<DataType> *new_sortable =
+        addVariableToList<DataType>(sortable_variables_, variable_name);
+    if (new_sortable != nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        StdLargeVec<DataType> *variable_data = std::get<type_index>(all_particle_data_)[new_sortable->IndexInContainer()];
+        std::get<type_index>(sortable_data_).push_back(variable_data);
     }
 }
 //=================================================================================================//
@@ -164,31 +180,6 @@ template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &variable_name)
 {
     addVariableToList<DataType>(variables_to_reload_, variable_name);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::registerSortableVariable(const std::string &variable_name)
-{
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
-
-    if (variable != nullptr)
-    {
-        DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(sortable_variables_, variable_name);
-
-        if (listed_variable == nullptr)
-        {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            std::get<type_index>(sortable_variables_).push_back(variable);
-            StdLargeVec<DataType> *variable_data = std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
-            std::get<type_index>(sortable_data_).push_back(variable_data);
-        }
-    }
-    else
-    {
-        std::cout << "\n Error: the variable '" << variable_name << "' to write is not particle data!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
 }
 //=================================================================================================//
 template <typename SequenceMethod>

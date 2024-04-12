@@ -11,7 +11,7 @@ Oldroyd_BIntegration1stHalf<Inner<>>::
 {
     particles_->registerVariable(tau_, "ElasticStress");
     particles_->registerVariable(dtau_dt_, "ElasticStressChangeRate");
-    particles_->registerSortableVariable<Matd>("ElasticStress");
+    particles_->addVariableToSort<Matd>("ElasticStress");
     particles_->addVariableToRestart<Matd>("ElasticStress");
 }
 //=================================================================================================//

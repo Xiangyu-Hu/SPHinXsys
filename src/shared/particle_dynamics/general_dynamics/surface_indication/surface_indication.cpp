@@ -49,7 +49,7 @@ FreeSurfaceIndication<Inner<SpatialTemporal>>::
     : FreeSurfaceIndication<Inner<>>(inner_relation)
 {
     particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
-    particles_->registerSortableVariable<int>("PreviousSurfaceIndicator");
+    particles_->addVariableToSort<int>("PreviousSurfaceIndicator");
 }
 //=================================================================================================//
 void FreeSurfaceIndication<Inner<SpatialTemporal>>::interaction(size_t index_i, Real dt)

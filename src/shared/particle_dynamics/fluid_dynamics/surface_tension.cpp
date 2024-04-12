@@ -10,10 +10,10 @@ SurfaceTensionStress::
     : LocalDynamics(contact_relation.getSPHBody()), FluidContactData(contact_relation)
 {
     particles_->registerVariable(color_gradient_, "ColorGradient");
-    particles_->registerSortableVariable<Vecd>("ColorGradient");
+    particles_->addVariableToSort<Vecd>("ColorGradient");
     particles_->addVariableToWrite<Vecd>("ColorGradient");
     particles_->registerVariable(surface_tension_stress_, "SurfaceTensionStress");
-    particles_->registerSortableVariable<Matd>("SurfaceTensionStress");
+    particles_->addVariableToSort<Matd>("SurfaceTensionStress");
     particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
     Real rho0 = getSPHBody().base_material_->ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)

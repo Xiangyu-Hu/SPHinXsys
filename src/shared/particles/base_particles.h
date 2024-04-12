@@ -135,7 +135,7 @@ class BaseParticles
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
     template <typename DataType>
-    void addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
+    DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
     template <typename DataType>
     void addVariableToWrite(const std::string &variable_name);
     template <typename DataType>
@@ -159,7 +159,7 @@ class BaseParticles
     ParticleSorting particle_sorting_;
 
     template <typename DataType>
-    void registerSortableVariable(const std::string &variable_name);
+    void addVariableToSort(const std::string &variable_name);
     template <typename SequenceMethod>
     void sortParticles(SequenceMethod &sequence_method);
     //----------------------------------------------------------------------

@@ -15,7 +15,7 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       rho_(*this->particles_->template getVariableByName<Real>("Density")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       Vol_(this->particles_->VolumetricMeasures()),
-      p_(*this->particles_->template getVariableByName<Real>("Pressure")),
+      p_(*this->particles_->template registerSharedVariable<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
       pos_(this->particles_->ParticlePositions()),
       vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
@@ -31,17 +31,17 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
     //----------------------------------------------------------------------
-    //		register sortable particle data
+    //		add sortable particle data
     //----------------------------------------------------------------------
-    particles_->registerSortableVariable<Vecd>("Position");
-    particles_->registerSortableVariable<Vecd>("Velocity");
-    particles_->registerSortableVariable<Real>("Mass");
-    particles_->registerSortableVariable<Vecd>("ForcePrior");
-    particles_->registerSortableVariable<Vecd>("Force");
-    particles_->registerSortableVariable<Real>("DensityChangeRate");
-    particles_->registerSortableVariable<Real>("Density");
-    particles_->registerSortableVariable<Real>("Pressure");
-    particles_->registerSortableVariable<Real>("VolumetricMeasure");
+    particles_->addVariableToSort<Vecd>("Position");
+    particles_->addVariableToSort<Vecd>("Velocity");
+    particles_->addVariableToSort<Real>("Mass");
+    particles_->addVariableToSort<Vecd>("ForcePrior");
+    particles_->addVariableToSort<Vecd>("Force");
+    particles_->addVariableToSort<Real>("DensityChangeRate");
+    particles_->addVariableToSort<Real>("Density");
+    particles_->addVariableToSort<Real>("Pressure");
+    particles_->addVariableToSort<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
     //		add restart output particle data
     //----------------------------------------------------------------------

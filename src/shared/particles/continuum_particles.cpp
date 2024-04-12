@@ -24,14 +24,14 @@ void ContinuumParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     //		register sortable particle data
     //----------------------------------------------------------------------
-    registerSortableVariable<Vecd>("AccelerationByShear");
-    registerSortableVariable<Matd>("ShearStress");
-    registerSortableVariable<Matd>("ShearStressRate");
-    registerSortableVariable<Real>("VonMisesStress");
-    registerSortableVariable<Real>("VonMisesStrain");
-    registerSortableVariable<Matd>("VelocityGradient");
-    registerSortableVariable<Matd>("StrainTensor");
-    registerSortableVariable<Matd>("StrainTensorRate");
+    addVariableToSort<Vecd>("AccelerationByShear");
+    addVariableToSort<Matd>("ShearStress");
+    addVariableToSort<Matd>("ShearStressRate");
+    addVariableToSort<Real>("VonMisesStress");
+    addVariableToSort<Real>("VonMisesStrain");
+    addVariableToSort<Matd>("VelocityGradient");
+    addVariableToSort<Matd>("StrainTensor");
+    addVariableToSort<Matd>("StrainTensorRate");
     //----------------------------------------------------------------------
     registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd
                      { return pos_[i]; });
@@ -62,14 +62,14 @@ void PlasticContinuumParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     //		register sortable particle data
     //----------------------------------------------------------------------
-    registerSortableVariable<Mat3d>("ElasticStrainTensor3D");
-    registerSortableVariable<Mat3d>("ElasticStrainRate3D");
-    registerSortableVariable<Mat3d>("StrainTensor3D");
-    registerSortableVariable<Mat3d>("StressTensor3D");
-    registerSortableVariable<Mat3d>("StrainRate3D");
-    registerSortableVariable<Mat3d>("StressRate3D");
-    registerSortableVariable<Real>("VerticalStress");
-    registerSortableVariable<Real>("AccDeviatoricPlasticStrain");
+    addVariableToSort<Mat3d>("ElasticStrainTensor3D");
+    addVariableToSort<Mat3d>("ElasticStrainRate3D");
+    addVariableToSort<Mat3d>("StrainTensor3D");
+    addVariableToSort<Mat3d>("StressTensor3D");
+    addVariableToSort<Mat3d>("StrainRate3D");
+    addVariableToSort<Mat3d>("StressRate3D");
+    addVariableToSort<Real>("VerticalStress");
+    addVariableToSort<Real>("AccDeviatoricPlasticStrain");
 }
 //=================================================================================================//
 Real PlasticContinuumParticles::getDeviatoricPlasticStrain(Mat3d &strain_tensor)
