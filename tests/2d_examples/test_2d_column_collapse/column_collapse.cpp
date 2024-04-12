@@ -76,15 +76,10 @@ int main(int ac, char *av[])
     RealBody soil_block(sph_system, makeShared<Soil>("GranularBody"));
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<Lattice>();
-    soil_block.addBodyStateForRecording<Real>("Pressure");
-    soil_block.addBodyStateForRecording<Real>("Density");
-    soil_block.addBodyStateForRecording<Real>("VerticalStress");
-    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -103,16 +98,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
+    Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
+    Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-    Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
-    Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
+    soil_block.addBodyStateForRecording<Real>("Pressure");
+    soil_block.addBodyStateForRecording<Real>("Density");
+    soil_block.addBodyStateForRecording<Real>("VerticalStress");
+    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
+    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
