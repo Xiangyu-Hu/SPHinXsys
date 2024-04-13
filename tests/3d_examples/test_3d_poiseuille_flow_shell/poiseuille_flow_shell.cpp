@@ -188,6 +188,12 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     ShellBoundaryGenerator shell_boundary_particle_generator(shell_boundary, resolution_shell, wall_thickness, shell_thickness);
     shell_boundary.generateParticles(shell_boundary_particle_generator);
 
+    ObserverBody observer_axial(system, "fluid_observer_axial");
+    ObserverAxialGenerator observer_axial_particle_generator(observer_axial, full_length);
+    observer_axial.generateParticles(observer_axial_particle_generator);
+    ObserverBody observer_radial(system, "fluid_observer_radial");
+    ObserverRadialGenerator observer_radial_particle_generator(observer_radial, full_length, diameter, number_of_particles);
+    observer_radial.generateParticles(observer_radial_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -200,6 +206,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
     ContactRelationToShell water_block_contact(water_block, {&shell_boundary}, {false});
+    ContactRelation observer_contact_axial(observer_axial, {&water_block});
+    ContactRelation observer_contact_radial(observer_radial, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -207,35 +215,27 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
 
     //----------------------------------------------------------------------
-    //	Define the numerical methods used in the simulation.
-    //	Note that there may be data dependence on the sequence of constructions.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    /** time-space method to detect surface particles. (Important for
-     * DensitySummationFreeSurfaceComplex work correctly.)*/
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
-        inlet_outlet_surface_particle_indicator(water_block_inner, water_block_contact);
-    /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex>
-        update_density_by_summation(water_block_inner, water_block_contact);
-    /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize>
-        get_fluid_advection_time_step_size(water_block, U_max);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(
-        water_block);
-    /** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann>
-        pressure_relaxation(water_block_inner, water_block_contact);
-    /** Pressure relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann>
-        density_relaxation(water_block_inner, water_block_contact);
-    /** Computing viscous acceleration. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
-        viscous_acceleration(water_block_inner, water_block_contact);
-    /** Impose transport velocity. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
-        transport_velocity_correction(water_block_inner, water_block_contact);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(wall_curvature_inner);
 
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_block_contact);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
     //	Boundary conditions. Inflow & Outflow in Y-direction
     //----------------------------------------------------------------------
@@ -245,11 +245,6 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
-    /** Wall boundary configuration correction*/
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
-    // Curvature calculation
-    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(wall_curvature_inner);
-
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
@@ -258,19 +253,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     BodyStatesRecordingToVtp body_states_recording(system.real_bodies_);
-
-    ObserverBody observer_axial(system, "fluid_observer_axial");
-    ObserverAxialGenerator observer_axial_particle_generator(observer_axial, full_length);
-    observer_axial.generateParticles(observer_axial_particle_generator);
-    ObserverBody observer_radial(system, "fluid_observer_radial");
-    ObserverRadialGenerator observer_radial_particle_generator(observer_radial, full_length, diameter, number_of_particles);
-    observer_radial.generateParticles(observer_radial_particle_generator);
-
-    ContactRelation observer_contact_axial(observer_axial, {&water_block});
-    ContactRelation observer_contact_radial(observer_radial, {&water_block});
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", observer_contact_axial);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial("Velocity", observer_contact_radial);
-
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -388,7 +372,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
+    {
         return Vec3d(0.0,
                      2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);
