@@ -162,31 +162,24 @@ int main(int ac, char *av[])
     //-------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
+    InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
+
     Gravity gravity(Vecd(gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
-    InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
-    /** Periodic BCs in x direction. */
-    PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);
-    // evaluation of density by summation approach
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
-    // time step size without considering sound wave speed and viscosity
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
-    // time step size with considering sound wave speed
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
-    // pressure relaxation using verlet time stepping
-    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
-    pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    InteractionDynamics<fluid_dynamics::DistanceFromWall, SequencedPolicy> distance_to_wall(fluid_block_contact);
+    InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>> update_velocity_gradient(fluid_block_inner, fluid_block_contact);
+
+    Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
+    InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>> implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
+    PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);
+    pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    // computing viscous effect implicitly and with update velocity directly other than viscous force
-    InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-        implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
-    // impose transport velocity
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>>
-        transport_velocity_correction(fluid_block_inner, fluid_block_contact);
-    // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
