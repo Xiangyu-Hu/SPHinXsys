@@ -127,7 +127,6 @@ class PlasticIntegration1stHalf<Inner<>, RiemannSolverType>
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
-    virtual Vecd computeNonConservativeForce(size_t index_i);
 
   protected:
     RiemannSolverType riemann_solver_;
@@ -146,10 +145,10 @@ class PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>
     explicit PlasticIntegration1stHalf(BaseContactRelation &wall_contact_relation);
     virtual ~PlasticIntegration1stHalf(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
-    virtual Vecd computeNonConservativeForce(size_t index_i);
 
   protected:
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &force_prior_;
 };
 
 template <class RiemannSolverType>

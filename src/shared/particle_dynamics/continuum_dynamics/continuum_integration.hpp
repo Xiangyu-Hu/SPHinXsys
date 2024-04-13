@@ -44,22 +44,6 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::initialization(size_
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Vecd PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
-{
-    Vecd force = force_prior_[index_i];
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
-        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-
-        force += Vol_[index_i] * (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
-    }
-    return force;
-}
-//=================================================================================================//
-template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
@@ -91,12 +75,13 @@ template <class RiemannSolverType>
 PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::
     PlasticIntegration1stHalf(BaseContactRelation &wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
-      riemann_solver_(plastic_continuum_, plastic_continuum_) {}
+      riemann_solver_(plastic_continuum_, plastic_continuum_),
+      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
-    Vecd force_prior_i = computeNonConservativeForce(index_i);
+    Vecd force_prior_i = force_prior_[index_i];
     Vecd force = force_prior_i;
     Real rho_dissipation(0);
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
@@ -120,12 +105,6 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     }
     total_force_[index_i] += force / rho_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
-}
-//=================================================================================================//
-template <class RiemannSolverType>
-Vecd PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
-{
-    return this->force_prior_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -224,5 +203,6 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     total_force_[index_i] += p_dissipation / rho_[index_i];
     velocity_gradient_[index_i] += velocity_gradient;
 }
+//=================================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH
