@@ -37,7 +37,7 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
         force += mass_[index_i] * (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
     }
 
-    force_[index_i] += force / rho_[index_i];
+    total_force_[index_i] += force / rho_[index_i];
 }
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf<Contact<Wall>>::
@@ -66,7 +66,7 @@ void Oldroyd_BIntegration1stHalf<Contact<Wall>>::interaction(size_t index_i, Rea
         }
     }
 
-    force_[index_i] += force;
+    total_force_[index_i] += force;
 }
 //=================================================================================================//
 Oldroyd_BIntegration2ndHalf<Inner<>>::

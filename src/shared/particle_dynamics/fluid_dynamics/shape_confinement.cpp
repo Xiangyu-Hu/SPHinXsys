@@ -29,14 +29,14 @@ StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearSha
       mass_(*particles_->getVariableByName<Real>("Mass")),
       pos_(particles_->ParticlePositions()),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       level_set_shape_(&near_surface.getLevelSetShape()),
       riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 {
     Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-    force_[index_i] -= 2.0 * mass_[index_i] * p_[index_i] * kernel_gradient / rho_[index_i];
+    total_force_[index_i] -= 2.0 * mass_[index_i] * p_[index_i] * kernel_gradient / rho_[index_i];
 }
 //=================================================================================================//
 StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)

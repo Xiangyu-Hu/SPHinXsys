@@ -44,7 +44,7 @@ class EulerianIntegration : public BaseIntegration<DataDelegationType>
     virtual ~EulerianIntegration(){};
 
   protected:
-    StdLargeVec<Vecd> &mom_, &dmom_dt_;
+    StdLargeVec<Vecd> &mom_, &total_force_;
     StdLargeVec<Real> &dmass_dt_, &Vol_;
 };
 
@@ -66,6 +66,7 @@ class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &force_prior_;
 };
 using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, AcousticRiemannSolver>;
 

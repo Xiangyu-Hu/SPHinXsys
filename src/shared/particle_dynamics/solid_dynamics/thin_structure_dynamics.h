@@ -72,7 +72,7 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
 {
   protected:
     Real CFL_;
-    StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
+    StdLargeVec<Vecd> &vel_, &total_force_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
@@ -170,7 +170,7 @@ class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
 
   protected:
     StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &pos_, &vel_, &total_force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &transformation_matrix0_; // Transformation matrix from global to local coordinates
@@ -196,7 +196,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
         const Matd &global_stress_i = global_stress_[index_i];
         const Matd &global_moment_i = global_moment_[index_i];
 
-        Vecd force = Vecd::Zero();
+        Vecd force = force_prior_[index_i];
         Vecd pseudo_normal_acceleration = global_shear_stress_i;
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -231,7 +231,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
             pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
 
-        force_[index_i] = force * inv_rho0_ / thickness_[index_i];
+        total_force_[index_i] = force * inv_rho0_ / thickness_[index_i];
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 3);
 
         /** the relation between pseudo-normal and rotations */
@@ -331,7 +331,7 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
   protected:
     const int axis_; /**< the axis direction for bounding*/
     StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &vel_, &force_;
+    StdLargeVec<Vecd> &vel_, &total_force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Real> &mass_;
 };

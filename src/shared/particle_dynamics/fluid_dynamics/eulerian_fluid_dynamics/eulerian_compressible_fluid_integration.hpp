@@ -33,13 +33,13 @@ void EulerianCompressibleIntegration1stHalf<RiemannSolverType>::interaction(size
         Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
         momentum_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij;
     }
-    force_[index_i] = momentum_change_rate;
+    total_force_[index_i] = momentum_change_rate;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianCompressibleIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    mom_[index_i] += force_[index_i] * dt;
+    mom_[index_i] += total_force_[index_i] * dt;
     vel_[index_i] = mom_[index_i] / mass_[index_i];
 }
 //=================================================================================================//

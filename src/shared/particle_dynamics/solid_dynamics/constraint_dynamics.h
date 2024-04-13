@@ -256,7 +256,7 @@ class TotalForceForSimBody
 {
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &force_, &force_prior_, &pos_;
+    StdLargeVec<Vecd> &total_force_, &force_prior_, &pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
@@ -269,7 +269,7 @@ class TotalForceForSimBody
                          SimTK::RungeKuttaMersonIntegrator &integ)
         : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
           SolidDataSimple(identifier.getSPHBody()), mass_(*particles_->getVariableByName<Real>("Mass")),
-          force_(*particles_->getVariableByName<Vecd>("Force")),
+          total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
           force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
           pos_(particles_->ParticlePositions()),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
@@ -288,7 +288,7 @@ class TotalForceForSimBody
 
     SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
     {
-        Vecd force = force_[index_i] + force_prior_[index_i];
+        Vecd force = total_force_[index_i];
         SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
         SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
         SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);

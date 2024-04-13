@@ -53,7 +53,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public Fluid
   protected:
     Fluid &fluid_;
     StdLargeVec<Real> &rho_, &p_, &mass_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &vel_, &total_force_;
     Real smoothing_length_min_;
     Real acousticCFL_;
 };
@@ -75,7 +75,7 @@ class AdvectionTimeStepSizeForImplicitViscosity
 
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &vel_, &total_force_;
     Real smoothing_length_min_;
     Real speed_ref_, advectionCFL_;
 };

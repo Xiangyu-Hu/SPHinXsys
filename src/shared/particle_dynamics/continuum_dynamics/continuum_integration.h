@@ -131,6 +131,7 @@ class PlasticIntegration1stHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &force_prior_;
 };
 using PlasticIntegration1stHalfInnerNoRiemann = PlasticIntegration1stHalf<Inner<>, NoRiemannSolver>;
 using PlasticIntegration1stHalfInnerRiemann = PlasticIntegration1stHalf<Inner<>, AcousticRiemannSolver>;
@@ -207,6 +208,7 @@ class StressDiffusion : public BasePlasticIntegration<PlasticContinuumDataInner>
   protected:
     Real zeta_ = 0.1, fai_; /*diffusion coefficient*/
     Real smoothing_length_, sound_speed_;
+    StdLargeVec<Vecd> &force_prior_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

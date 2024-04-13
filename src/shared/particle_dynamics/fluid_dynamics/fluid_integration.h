@@ -77,7 +77,7 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
   protected:
     Fluid &fluid_;
     StdLargeVec<Real> &rho_, &mass_, &Vol_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &pos_, &vel_, &total_force_;
 };
 
 template <typename... InteractionTypes>
@@ -97,6 +97,7 @@ class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
   protected:
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &force_prior_;
 };
 using Integration1stHalfInnerNoRiemann = Integration1stHalf<Inner<>, NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfInnerRiemann = Integration1stHalf<Inner<>, AcousticRiemannSolver, NoKernelCorrection>;
@@ -118,6 +119,7 @@ class Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
   protected:
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &force_prior_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>

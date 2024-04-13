@@ -91,7 +91,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
 {
   protected:
     Real CFL_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &vel_, &total_force_;
     StdLargeVec<Real> &mass_;
     Real smoothing_length_, c0_;
 
@@ -130,7 +130,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
     };
 
   protected:
-    StdLargeVec<Real>& Vol_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Matd> &B_, &F_;
 };
@@ -147,7 +147,7 @@ class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInne
 
   protected:
     StdLargeVec<Real> &rho_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    StdLargeVec<Vecd> &pos_, &vel_, &total_force_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 };
 
@@ -184,7 +184,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         // including gravity and force from fluid
-        Vecd force = Vecd::Zero();
+        Vecd force = force_prior_[index_i];
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
@@ -198,13 +198,13 @@ class Integration1stHalf : public BaseIntegration1stHalf
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Matd numerical_stress_ij =
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
-            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * 
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
                      (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
                       numerical_dissipation_factor_ * weight * numerical_stress_ij) *
                      e_ij;
         }
 
-        force_[index_i] = force;
+        total_force_[index_i] = force;
     };
 
   protected:
@@ -282,9 +282,9 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
                                   (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
                                   (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
             force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
-                            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
+                     inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
         }
-        force_[index_i] = force;
+        total_force_[index_i] = force;
     };
 
   protected:

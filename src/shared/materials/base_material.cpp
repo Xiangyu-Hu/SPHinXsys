@@ -27,7 +27,7 @@ StdLargeVec<Vecd> *Solid::AverageVelocity(BaseParticles *base_particles)
 //=================================================================================================//
 StdLargeVec<Vecd> *Solid::AverageForce(BaseParticles *base_particles)
 {
-    return base_particles->getVariableByName<Vecd>("Force");
+    return base_particles->getVariableByName<Vecd>("TotalForce");
 }
 //=================================================================================================//
 } // namespace SPH

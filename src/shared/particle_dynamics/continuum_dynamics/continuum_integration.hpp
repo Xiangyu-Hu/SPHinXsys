@@ -13,7 +13,7 @@ BaseIntegration1stHalf<FluidDynamicsType>::BaseIntegration1stHalf(BaseInnerRelat
 template <class FluidDynamicsType>
 void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
 {
-    this->vel_[index_i] += ((this->force_prior_[index_i] + this->force_[index_i]) / this->mass_[index_i] + this->acc_shear_[index_i]) * dt;
+    this->vel_[index_i] += ((this->force_prior_[index_i] + this->total_force_[index_i]) / this->mass_[index_i] + this->acc_shear_[index_i]) * dt;
 }
 //=================================================================================================//
 template <class DataDelegationType>
@@ -31,7 +31,8 @@ template <class RiemannSolverType>
 PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::
     PlasticIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
-      riemann_solver_(plastic_continuum_, plastic_continuum_) {}
+      riemann_solver_(plastic_continuum_, plastic_continuum_),
+      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -39,12 +40,13 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::initialization(size_
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     p_[index_i] = -stress_tensor_3D_[index_i].trace() / 3;
     pos_[index_i] += vel_[index_i] * dt * 0.5;
+    total_force_[index_i] += force_prior_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 Vecd PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::computeNonConservativeForce(size_t index_i)
 {
-    Vecd force = force_prior_[index_i] * rho_[index_i];
+    Vecd force = force_prior_[index_i];
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -52,9 +54,9 @@ Vecd PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::computeNonConservati
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        force += mass_[index_i] * (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
+        force += Vol_[index_i] * (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
     }
-    return force / rho_[index_i];
+    return force;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -75,14 +77,14 @@ void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t i
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
-    force_[index_i] += force;
+    total_force_[index_i] += force;
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
+    vel_[index_i] += total_force_[index_i] / mass_[index_i] * dt;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -116,7 +118,7 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
-    force_[index_i] += force / rho_[index_i];
+    total_force_[index_i] += force / rho_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
@@ -159,7 +161,7 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t i
         velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * e_ij.transpose();
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
-    force_[index_i] = p_dissipation / rho_[index_i];
+    total_force_[index_i] = p_dissipation / rho_[index_i];
     velocity_gradient_[index_i] = velocity_gradient;
 }
 //=================================================================================================//
@@ -219,7 +221,7 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
         }
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
-    force_[index_i] += p_dissipation / rho_[index_i];
+    total_force_[index_i] += p_dissipation / rho_[index_i];
     velocity_gradient_[index_i] += velocity_gradient;
 }
 } // namespace continuum_dynamics

@@ -37,7 +37,7 @@ EmitterInflowCondition::
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       pos_(particles_->ParticlePositions()),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
       drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),

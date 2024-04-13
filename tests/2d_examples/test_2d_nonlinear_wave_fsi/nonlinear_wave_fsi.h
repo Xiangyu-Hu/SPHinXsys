@@ -543,7 +543,7 @@ class WaveMaking : public BodyPartMotionConstraint
         : BodyPartMotionConstraint(body_part),
           h(WH), tf(20.480), xf(12.0), fmn(0.32), fmx(0.96), a(0.0068), N(32), g(gravity_g),
           mass_(*particles_->getVariableByName<Real>("Mass")),
-          force_(*particles_->getVariableByName<Vecd>("Force"))
+          total_force_(*particles_->getVariableByName<Vecd>("TotalForce"))
     {
         ComputeWaveChar();
     }
@@ -553,12 +553,12 @@ class WaveMaking : public BodyPartMotionConstraint
         Real time = GlobalStaticVariables::physical_time_;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
-        force_[index_i] = mass_[index_i] * getAcceleration(time);
+        total_force_[index_i] = mass_[index_i] * getAcceleration(time);
     };
 
   protected:
     StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &force_;
+    StdLargeVec<Vecd> &total_force_;
 };
 
 //----------------------------------------------------------------------

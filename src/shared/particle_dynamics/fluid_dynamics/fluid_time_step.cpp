@@ -13,15 +13,13 @@ AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
       p_(*particles_->getVariableByName<Real>("Pressure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
-    Real acceleration_scale = 4.0 * smoothing_length_min_ *
-                              (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+    Real acceleration_scale = 4.0 * smoothing_length_min_ * total_force_[index_i].norm() / mass_[index_i];
     return SMAX(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
 }
 //=================================================================================================//
@@ -37,15 +35,13 @@ AdvectionTimeStepSizeForImplicitViscosity::
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       FluidDataSimple(sph_body), mass_(*particles_->getVariableByName<Real>("Mass")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//
 Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 {
-    Real acceleration_scale = 4.0 * smoothing_length_min_ *
-                              (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+    Real acceleration_scale = 4.0 * smoothing_length_min_ * total_force_[index_i].norm() / mass_[index_i];
     return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
 }
 //=================================================================================================//

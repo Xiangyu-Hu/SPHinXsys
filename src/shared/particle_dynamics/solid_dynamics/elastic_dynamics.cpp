@@ -13,8 +13,7 @@ AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       ElasticSolidDataSimple(sph_body), CFL_(CFL),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
       c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
@@ -23,7 +22,7 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
-    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / (((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm() + TinyReal)),
+    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / (total_force_[index_i].norm() / mass_[index_i] + TinyReal)),
                        smoothing_length_ / (c0_ + vel_[index_i].norm()));
 }
 //=================================================================================================//
@@ -64,7 +63,7 @@ BaseElasticIntegration::
       Vol_(particles_->VolumetricMeasures()),
       pos_(particles_->ParticlePositions()),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 //=================================================================================================//
 BaseIntegration1stHalf::
@@ -77,7 +76,7 @@ BaseIntegration1stHalf::
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {
-    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
+    vel_[index_i] += total_force_[index_i] / mass_[index_i] * dt;
 }
 //=================================================================================================//
 Integration1stHalf::

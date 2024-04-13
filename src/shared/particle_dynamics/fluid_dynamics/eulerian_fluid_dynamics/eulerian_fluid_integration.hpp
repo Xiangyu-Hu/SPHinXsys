@@ -13,7 +13,7 @@ template <class BaseRelationType>
 EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &base_relation)
     : BaseIntegration<DataDelegationType>(base_relation),
       mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
-      dmom_dt_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
+      total_force_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
       dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
       Vol_(this->particles_->VolumetricMeasures()) {}
 //=================================================================================================//
@@ -21,13 +21,14 @@ template <class RiemannSolverType>
 EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::
     EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
     : EulerianIntegration<FluidDataInner>(inner_relation),
-      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter) {}
+      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter),
+      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidStateIn state_i(rho_[index_i], vel_[index_i], p_[index_i]);
-    Vecd momentum_change_rate = Vecd::Zero();
+    Vecd momentum_change_rate = force_prior_[index_i];
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -40,13 +41,13 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t 
         Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
         momentum_change_rate -= 2.0 * Vol_[index_i] * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
-    dmom_dt_[index_i] = momentum_change_rate;
+    total_force_[index_i] = momentum_change_rate;
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    mom_[index_i] += (dmom_dt_[index_i] + force_prior_[index_i]) * dt;
+    mom_[index_i] += total_force_[index_i] * dt;
     vel_[index_i] = mom_[index_i] / mass_[index_i];
 }
 //=================================================================================================//
@@ -81,7 +82,7 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
             momentum_change_rate -= 2.0 * Vol_[index_i] * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
         }
     }
-    dmom_dt_[index_i] += momentum_change_rate;
+    total_force_[index_i] += momentum_change_rate;
 }
 //=================================================================================================//
 template <class RiemannSolverType>

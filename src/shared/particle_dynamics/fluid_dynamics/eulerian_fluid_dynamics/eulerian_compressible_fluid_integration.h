@@ -50,7 +50,7 @@ class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
   protected:
     CompressibleFluid compressible_fluid_;
     StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dmass_dt_;
-    StdLargeVec<Vecd> &mom_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &mom_, &total_force_, &force_prior_;
 };
 
 template <class RiemannSolverType>

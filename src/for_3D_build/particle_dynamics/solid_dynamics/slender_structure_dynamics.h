@@ -55,7 +55,7 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
 {
   protected:
     Real CFL_;
-    StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
+    StdLargeVec<Vecd> &vel_, &total_force_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
@@ -165,7 +165,7 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
 
   protected:
     StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
+    StdLargeVec<Vecd> &pos_, &vel_, &total_force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
@@ -198,7 +198,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
         const Matd &global_b_moment_i = global_b_moment_[index_i];
         const Vecd &global_b_shear_stress_i = global_b_shear_stress_[index_i];
 
-        Vecd force = Vecd::Zero();
+        Vecd force = force_prior_[index_i];
         Vecd pseudo_normal_acceleration = global_shear_stress_i;
         Vecd pseudo_b_normal_acceleration = global_b_shear_stress_i;
 
@@ -215,7 +215,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
                                             inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
 
-        force_[index_i] = force * inv_rho0_ / (thickness_[index_i] * width_[index_i]);
+        total_force_[index_i] = force * inv_rho0_ / (thickness_[index_i] * width_[index_i]);
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
         dpseudo_b_n_d2t_[index_i] = -pseudo_b_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
 
@@ -341,7 +341,7 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
   protected:
     const int axis_; /**< the axis direction for bounding*/
     StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &vel_, &force_;
+    StdLargeVec<Vecd> &vel_, &total_force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;
 };

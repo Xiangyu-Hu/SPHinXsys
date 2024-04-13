@@ -70,7 +70,7 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
   protected:
     Fluid &fluid_;
     StdLargeVec<Real> &rho_, &p_, &mass_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    StdLargeVec<Vecd> &pos_, &vel_, &total_force_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };

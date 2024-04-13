@@ -84,7 +84,8 @@ StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
       fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
+      sound_speed_(plastic_continuum_.ReferenceSoundSpeed()),
+      force_prior_(*particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //====================================================================================//
 void StressDiffusion::interaction(size_t index_i, Real dt)
 {

@@ -9,10 +9,9 @@ BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       BarDataSimple(sph_body), CFL_(CFL),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       thickness_(particles_->thickness_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       rho0_(particles_->elastic_solid_.ReferenceDensity()),
@@ -27,7 +26,7 @@ Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // Since the particle does not change its configuration in pressure relaxation step,
     // I chose a time-step size according to Eulerian method.
-    Real time_setp_0 = SMIN((Real)sqrt(smoothing_length_ / (((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm() + TinyReal)),
+    Real time_setp_0 = SMIN((Real)sqrt(smoothing_length_ / (total_force_[index_i] / mass_[index_i]).norm() + TinyReal),
                             smoothing_length_ / (c0_ + vel_[index_i].norm()));
     Real time_setp_1 = SMIN((Real)sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
                             Real(1.0) / (angular_vel_[index_i].norm() + TinyReal));
@@ -63,7 +62,7 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       Vol_(particles_->VolumetricMeasures()),
       pos_(particles_->ParticlePositions()),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
@@ -238,7 +237,7 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 //=================================================================================================//
 void BarStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
-    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
+    vel_[index_i] += total_force_[index_i] / mass_[index_i] * dt;
     angular_vel_[index_i] += (dangular_vel_dt_[index_i]) * dt;
     angular_b_vel_[index_i] += (dangular_b_vel_dt_[index_i]) * dt;
 }
@@ -295,7 +294,7 @@ ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParti
       axis_(axis), pos_(particles_->ParticlePositions()),
       pos0_(particles_->pos0_),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableByName<Vecd>("Force")),
+      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_), rotation_b_(particles_->rotation_b_),
       angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_) {}
