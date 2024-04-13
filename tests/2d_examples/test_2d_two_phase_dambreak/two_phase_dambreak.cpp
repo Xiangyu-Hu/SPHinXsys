@@ -60,33 +60,33 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Initialize particle acceleration. */
     SimpleDynamics<NormalDirectionFromSubShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
+
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
     SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
     InteractionDynamics<fluid_dynamics::BoundingFromWall> air_near_wall_bounding(air_wall_contact);
-    /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
-        update_water_density_by_summation(water_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
-        update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(air_inner, air_water_contact, air_wall_contact);
-    /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
-    /** Pressure relaxation for water by using position verlet time stepping. */
+
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
         water_pressure_relaxation(water_inner, water_air_contact, water_wall_contact);
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         water_density_relaxation(water_inner, water_air_contact, water_wall_contact);
-    /** Extend Pressure relaxation is used for air. */
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
         air_pressure_relaxation(air_inner, air_water_contact, air_wall_contact);
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann>
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
+
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
+        pdate_water_density_by_summation(water_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
+        update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
+        air_transport_correction(air_inner, air_water_contact, air_wall_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
+
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
