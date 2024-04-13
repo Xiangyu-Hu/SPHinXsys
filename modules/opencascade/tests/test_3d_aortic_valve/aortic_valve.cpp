@@ -153,7 +153,6 @@ int main(int ac, char *av[])
     RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
     BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
-    SimpleDynamics<ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
     SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
@@ -169,7 +168,6 @@ int main(int ac, char *av[])
     while (ite < relax_step)
     {
         leaflet_relaxation_first_half.exec();
-        constrain_holder.exec();
         leaflet_relaxation_second_half.exec();
         ite += 1;
         if (ite % 100 == 0)
