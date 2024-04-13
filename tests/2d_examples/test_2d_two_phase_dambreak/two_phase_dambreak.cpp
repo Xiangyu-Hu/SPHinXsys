@@ -76,7 +76,7 @@ int main(int ac, char *av[])
         air_density_relaxation(air_inner, air_water_contact, air_wall_contact);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface>
-        pdate_water_density_by_summation(water_inner, water_wall_contact);
+        update_water_density_by_summation(water_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
         update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
