@@ -93,15 +93,10 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
-    water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<Real>("Pressure");
 
     FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
     air_block.generateParticles<Lattice>();
-    air_block.addBodyStateForRecording<Real>("Density");
-    air_block.addBodyStateForRecording<Real>("Pressure");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -159,8 +154,13 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
+    water_block.addBodyStateForRecording<int>("Indicator");
+    water_block.addBodyStateForRecording<Real>("Density");
+    water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
     air_block.addBodyStateForRecording<Vecd>("ForcePrior");
+    air_block.addBodyStateForRecording<Real>("Density");
+    air_block.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_water_kinetic_energy(water_block);
     //----------------------------------------------------------------------
