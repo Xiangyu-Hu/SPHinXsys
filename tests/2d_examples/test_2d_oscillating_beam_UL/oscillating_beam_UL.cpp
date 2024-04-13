@@ -112,10 +112,6 @@ int main(int ac, char *av[])
     beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
     beam_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam_body.generateParticles<Lattice>();
-    beam_body.addBodyStateForRecording<Real>("VonMisesStress");
-    beam_body.addBodyStateForRecording<Real>("VonMisesStrain");
-    beam_body.addBodyStateForRecording<Real>("Pressure");
-    beam_body.addBodyStateForRecording<Real>("Density");
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
@@ -134,13 +130,14 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     /** initial condition */
-    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
-    Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
-    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
+    Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
+
+    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
+    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
@@ -149,6 +146,10 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
+    beam_body.addBodyStateForRecording<Real>("VonMisesStress");
+    beam_body.addBodyStateForRecording<Real>("VonMisesStrain");
+    beam_body.addBodyStateForRecording<Real>("Pressure");
+    beam_body.addBodyStateForRecording<Real>("Density");
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
