@@ -224,6 +224,8 @@ class AlignedBoxRegion : public BodyRegionType
   public:
     AlignedBoxShape &aligned_box_;
 
+    AlignedBoxRegion(RealBody &real_body, AlignedBoxShape &aligned_box)
+        : BodyRegionType(real_body, aligned_box), aligned_box_(aligned_box){};
     AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
         : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
     virtual ~AlignedBoxRegion(){};

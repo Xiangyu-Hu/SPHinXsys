@@ -86,7 +86,9 @@ class BidirectionalBuffer
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
               axis_(axis), particle_buffer_(particle_buffer), aligned_box_(aligned_box_part.aligned_box_),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-              pos_n_(*particles_->getVariableByName<Vecd>("Position")), rho_n_(*particles_->getVariableByName<Real>("Density")), p_(*particles_->getVariableByName<Real>("Pressure")),
+              pos_n_(*particles_->getVariableByName<Vecd>("Position")),
+              rho_n_(*particles_->getVariableByName<Real>("Density")),
+              p_(*particles_->getVariableByName<Real>("Pressure")),
               previous_surface_indicator_(*particles_->getVariableByName<int>("PreviousSurfaceIndicator")),
               buffer_particle_indicator_(*particles_->getVariableByName<int>("BufferParticleIndicator")),
               target_pressure_(target_pressure)
