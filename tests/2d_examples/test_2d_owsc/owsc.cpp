@@ -51,36 +51,36 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
-    //	Define all numerical methods which are used in this case.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    // For typical fluid-structure interaction, we first define structure dynamics,
+    // Then fluid dynamics and the corresponding coupling dynamics.
+    // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     SimpleDynamics<OffsetInitialPosition> flap_offset_position(flap, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
-
-    /** corrected strong configuration. */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
-    /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
-    /** time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    /** time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** pressure relaxation using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
-    /** Computing viscous acceleration. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    /** Inflow boundary condition. */
-    BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
-    SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
-    /** Fluid force on flap. */
-    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(flap_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(flap_contact);
-    /** constrain region of the part of wall boundary. */
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
+    SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
+
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(flap_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(flap_contact);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -197,7 +197,6 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     flap_normal_direction.exec();
-    flap_corrected_configuration.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
