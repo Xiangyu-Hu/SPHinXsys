@@ -182,21 +182,20 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_ball_stress_relaxation_first_half(free_ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> damping_ball_stress_relaxation_first_half(damping_ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
     /** Algorithms for solid-solid contact. */
     InteractionDynamics<solid_dynamics::ContactDensitySummation> free_ball_update_contact_density(free_ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_ball_compute_solid_contact_forces(free_ball_contact);
     InteractionDynamics<solid_dynamics::ContactDensitySummation> damping_ball_update_contact_density(damping_ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> damping_ball_compute_solid_contact_forces(damping_ball_contact);
-    /** Damping for one ball */
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

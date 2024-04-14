@@ -183,12 +183,10 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system(system_domain_bounds, resolution_ref_large);
-#ifdef BOOST_AVAILABLE
-    // handle command line arguments
-    system.handleCommandlineOptions(ac, av);
-#endif //----------------------------------------------------------------------
-       //	Creating body, materials and particles.
-       //----------------------------------------------------------------------
+    system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    //----------------------------------------------------------------------
+    //	Creating body, materials and particles.
+    //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -204,28 +202,30 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
-    //-----------------------------------------------------------------------------
-    // this section define all numerical methods will be used in this case
-    //-----------------------------------------------------------------------------
-    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    // corrected strong configuration
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
     InteractionWithUpdate<AnisotropicCorrectConfiguration> beam_corrected_configuration(beam_body_inner);
-    beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
-    // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    // stress relaxation for the beam
+
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    // clamping a solid body part.
+
+    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(system);
+    beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
     BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", beam_observer_contact);
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
