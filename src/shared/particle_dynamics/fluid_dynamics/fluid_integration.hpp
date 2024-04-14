@@ -19,14 +19,14 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
       pos_(this->particles_->ParticlePositions()),
       vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
-      total_force_(*this->particles_->template getVariableByName<Vecd>("TotalForce")) {}
+      total_force_(*this->particles_->template registerSharedVariable<Vecd>("TotalForce")) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_),
-      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior"))
+      force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior"))
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -47,6 +47,8 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     //----------------------------------------------------------------------
     particles_->addVariableToRestart<Real>("Pressure");
     particles_->addVariableToRestart<Real>("DensityChangeRate");
+    particles_->addVariableToRestart<Vecd>("ForcePrior");
+    particles_->addVariableToRestart<Vecd>("TotalForce");
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>

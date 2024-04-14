@@ -170,7 +170,7 @@ class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
 
   protected:
     StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &total_force_, &force_prior_;
+    StdLargeVec<Vecd> &pos_, &vel_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &transformation_matrix0_; // Transformation matrix from global to local coordinates
@@ -246,7 +246,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
     Real smoothing_length_;
     Matd numerical_damping_scaling_matrix_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
-    StdLargeVec<Vecd> &global_shear_stress_;
+    StdLargeVec<Vecd> &total_force_, &force_prior_, &global_shear_stress_;
     Real rho0_, inv_rho0_;
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;

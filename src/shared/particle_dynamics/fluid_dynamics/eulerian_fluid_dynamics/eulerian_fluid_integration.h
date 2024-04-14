@@ -35,25 +35,12 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-template <class DataDelegationType>
-class EulerianIntegration : public BaseIntegration<DataDelegationType>
-{
-  public:
-    template <class BaseRelationType>
-    explicit EulerianIntegration(BaseRelationType &base_relation);
-    virtual ~EulerianIntegration(){};
-
-  protected:
-    StdLargeVec<Vecd> &mom_, &total_force_;
-    StdLargeVec<Real> &dmass_dt_, &Vol_;
-};
-
 template <typename... InteractionTypes>
 class EulerianIntegration1stHalf;
 
 template <class RiemannSolverType>
 class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
-    : public EulerianIntegration<FluidDataInner>
+    : public BaseIntegration<FluidDataInner>
 {
   public:
     explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
@@ -66,14 +53,13 @@ class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Vecd> &force_prior_;
+    StdLargeVec<Vecd> &mom_, &total_force_, &force_prior_;
 };
 using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, AcousticRiemannSolver>;
 
-using BaseEulerianIntegrationWithWall = InteractionWithWall<EulerianIntegration>;
 template <class RiemannSolverType>
 class EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>
-    : public BaseEulerianIntegrationWithWall
+    : public BaseIntegrationWithWall
 {
   public:
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
@@ -94,7 +80,7 @@ class EulerianIntegration2ndHalf;
 
 template <class RiemannSolverType>
 class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
-    : public EulerianIntegration<FluidDataInner>
+    : public BaseIntegration<FluidDataInner>
 {
   public:
     typedef RiemannSolverType RiemannSolver;
@@ -109,6 +95,7 @@ class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Real> &dmass_dt_;
 };
 using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
 
@@ -118,7 +105,7 @@ using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<
  */
 template <class RiemannSolverType>
 class EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
-    : public BaseEulerianIntegrationWithWall
+    : public BaseIntegrationWithWall
 {
   public:
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);

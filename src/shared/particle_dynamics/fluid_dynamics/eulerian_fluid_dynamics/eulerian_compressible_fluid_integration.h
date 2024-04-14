@@ -50,7 +50,7 @@ class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
   protected:
     CompressibleFluid compressible_fluid_;
     StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dmass_dt_;
-    StdLargeVec<Vecd> &mom_, &total_force_, &force_prior_;
+    StdLargeVec<Vecd> &mom_, &force_prior_;
 };
 
 template <class RiemannSolverType>
@@ -59,9 +59,12 @@ class EulerianCompressibleIntegration1stHalf : public BaseIntegrationInCompressi
   public:
     explicit EulerianCompressibleIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 5.0);
     virtual ~EulerianCompressibleIntegration1stHalf(){};
-    RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &total_force_;
 };
 using EulerianCompressibleIntegration1stHalfNoRiemann = EulerianCompressibleIntegration1stHalf<NoRiemannSolverInCompressibleEulerianMethod>;
 using EulerianCompressibleIntegration1stHalfHLLCRiemann = EulerianCompressibleIntegration1stHalf<HLLCRiemannSolver>;

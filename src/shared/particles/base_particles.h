@@ -187,8 +187,6 @@ class BaseParticles
   protected:
     StdLargeVec<Vecd> pos_;         /**< Position */
     StdLargeVec<Vecd> vel_;         /**< Velocity */
-    StdLargeVec<Vecd> total_force_; /**< Force induced by pressure- or stress */
-    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before total_force_ */
     StdLargeVec<Real> Vol_;         /**< Volumetric measure, also area and length of surface and linear particle */
     StdLargeVec<Real> rho_;         /**< Density */
     StdLargeVec<Real> mass_;        /**< Mass*/

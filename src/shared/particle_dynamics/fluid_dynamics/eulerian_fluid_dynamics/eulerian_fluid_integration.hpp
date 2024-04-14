@@ -8,20 +8,13 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class DataDelegationType>
-template <class BaseRelationType>
-EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &base_relation)
-    : BaseIntegration<DataDelegationType>(base_relation),
-      mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
-      total_force_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
-      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
-      Vol_(this->particles_->VolumetricMeasures()) {}
-//=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::
     EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : EulerianIntegration<FluidDataInner>(inner_relation),
+    : BaseIntegration<FluidDataInner>(inner_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter),
+      mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
+      total_force_(*this->particles_->template registerSharedVariable<Vecd>("TotalForce")),
       force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -54,7 +47,7 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::update(size_t index
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
-    : BaseEulerianIntegrationWithWall(wall_contact_relation),
+    : BaseIntegrationWithWall(wall_contact_relation),
       riemann_solver_(fluid_, fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -88,8 +81,9 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
 template <class RiemannSolverType>
 EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : EulerianIntegration<FluidDataInner>(inner_relation),
-      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter) {}
+    : BaseIntegration<FluidDataInner>(inner_relation),
+      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter),
+      dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)
@@ -121,7 +115,7 @@ void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index
 template <class RiemannSolverType>
 EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
-    : BaseEulerianIntegrationWithWall(wall_contact_relation),
+    : BaseIntegrationWithWall(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter){};
 //=================================================================================================//
 template <class RiemannSolverType>

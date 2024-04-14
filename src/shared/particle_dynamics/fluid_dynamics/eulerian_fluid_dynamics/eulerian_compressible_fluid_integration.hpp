@@ -12,7 +12,8 @@ template <class RiemannSolverType>
 EulerianCompressibleIntegration1stHalf<RiemannSolverType>::
     EulerianCompressibleIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
     : BaseIntegrationInCompressible(inner_relation),
-      riemann_solver_(compressible_fluid_, compressible_fluid_, limiter_parameter) {}
+      riemann_solver_(compressible_fluid_, compressible_fluid_, limiter_parameter),
+      total_force_(*particles_->registerSharedVariable<Vecd>("TotalForce")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianCompressibleIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)

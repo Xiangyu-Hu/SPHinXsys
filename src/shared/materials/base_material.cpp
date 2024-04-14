@@ -22,12 +22,12 @@ Fluid::Fluid(Real rho0, Real c0, Real mu)
 //=================================================================================================//
 StdLargeVec<Vecd> *Solid::AverageVelocity(BaseParticles *base_particles)
 {
-    return base_particles->getVariableByName<Vecd>("Velocity");
+    return base_particles->registerSharedVariable<Vecd>("Velocity");
 }
 //=================================================================================================//
 StdLargeVec<Vecd> *Solid::AverageForce(BaseParticles *base_particles)
 {
-    return base_particles->getVariableByName<Vecd>("TotalForce");
+    return base_particles->registerSharedVariable<Vecd>("TotalForce");
 }
 //=================================================================================================//
 } // namespace SPH

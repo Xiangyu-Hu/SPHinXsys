@@ -13,8 +13,7 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
       dE_dt_(*particles_->registerSharedVariable<Real>("TotalEnergyChangeRate")),
       dmass_dt_(*particles_->registerSharedVariable<Real>("MassChangeRate")),
       mom_(*particles_->registerSharedVariable<Vecd>("Momentum")),
-      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")){};
+      force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")){};
 //=================================================================================================//
 CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sph_body)
     : FluidInitialCondition(sph_body),

@@ -63,7 +63,6 @@ BaseElasticIntegration::
       Vol_(particles_->VolumetricMeasures()),
       pos_(particles_->ParticlePositions()),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      total_force_(*particles_->getVariableByName<Vecd>("TotalForce")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 //=================================================================================================//
 BaseIntegration1stHalf::
@@ -71,7 +70,8 @@ BaseIntegration1stHalf::
     : BaseElasticIntegration(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
       rho0_(particles_->elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+      total_force_(*particles_->registerSharedVariable<Vecd>("TotalForce")),
+      force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)

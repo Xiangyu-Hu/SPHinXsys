@@ -165,7 +165,7 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
 
   protected:
     StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &total_force_, &force_prior_;
+    StdLargeVec<Vecd> &pos_, &vel_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
@@ -235,7 +235,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
     Matd numerical_damping_scaling_matrix_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
-    StdLargeVec<Vecd> &global_shear_stress_, &n_;
+    StdLargeVec<Vecd> &total_force_, &force_prior_, &global_shear_stress_, &n_;
 
     Real rho0_, inv_rho0_;
     Real E0_, G0_, nu_, hourglass_control_factor_;
