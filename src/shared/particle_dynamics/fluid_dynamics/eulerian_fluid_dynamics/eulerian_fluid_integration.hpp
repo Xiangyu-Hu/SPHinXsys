@@ -15,7 +15,7 @@ EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter),
       mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
       total_force_(*this->particles_->template registerSharedVariable<Vecd>("TotalForce")),
-      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
+      force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i, Real dt)

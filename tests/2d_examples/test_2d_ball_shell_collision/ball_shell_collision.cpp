@@ -49,9 +49,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
-    sph_system.handleCommandlineOptions(ac, av);
-
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -165,11 +163,13 @@ int main(int ac, char *av[])
     Gravity constant_gravity(gravity);
     SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
+
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
     InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
