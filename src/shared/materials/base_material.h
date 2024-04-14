@@ -119,6 +119,7 @@ class Solid : public BaseMaterial
     virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
     virtual StdLargeVec<Vecd> *AverageForce(BaseParticles *base_particles);
+    virtual StdLargeVec<Vecd> *TotalForce(BaseParticles *base_particles);
 
   protected:
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/

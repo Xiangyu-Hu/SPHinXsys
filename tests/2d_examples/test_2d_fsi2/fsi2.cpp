@@ -109,10 +109,30 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
-    //	Define the main numerical methods used in the simulation.
-    //	Note that there may be data dependence on the constructors of these methods.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    // For typical fluid-structure interaction, we first define structure dynamics,
+    // Then fluid dynamics and the corresponding coupling dynamics.
+    // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
-    /** Pressure relaxation using verlet time stepping. */
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
+
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> insert_body_stress_relaxation_first_half(insert_body_inner);
+    Dynamics1Level<solid_dynamics::Integration2ndHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
+    BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
+    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
+
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
@@ -128,8 +148,7 @@ int main(int ac, char *av[])
     /** Computing vorticity in the flow for visualization. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
-    BodyAlignedBoxByCell inflow_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    BodyAlignedBoxByCell inflow_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
@@ -137,28 +156,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
-    /** Corrected configuration for the elastic insert body. */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
-    /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(insert_body_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(insert_body_contact);
-    /** Compute the average velocity of the insert body. */
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
-    //----------------------------------------------------------------------
-    //	Algorithms of solid dynamics.
-    //----------------------------------------------------------------------
-    /** Compute time step size of elastic solid. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
-    /** Stress relaxation for the inserted body. */
-    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> insert_body_stress_relaxation_first_half(insert_body_inner);
-    Dynamics1Level<solid_dynamics::Integration2ndHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
-    /** Constrain region of the inserted body. */
-    BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
-    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
-    /** Update surface norm direction.*/
-    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

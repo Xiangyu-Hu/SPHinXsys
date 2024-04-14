@@ -27,7 +27,12 @@ StdLargeVec<Vecd> *Solid::AverageVelocity(BaseParticles *base_particles)
 //=================================================================================================//
 StdLargeVec<Vecd> *Solid::AverageForce(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("TotalForce");
+    return base_particles->registerSharedVariable<Vecd>("ForcePrior");
+}
+//=================================================================================================//
+StdLargeVec<Vecd> *Solid::TotalForce(BaseParticles *base_particles)
+{
+    return base_particles->registerSharedVariable<Vecd>("ForcePrior");
 }
 //=================================================================================================//
 } // namespace SPH

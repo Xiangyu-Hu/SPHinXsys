@@ -35,6 +35,11 @@ StdLargeVec<Vecd> *ElasticSolid::AverageForce(BaseParticles *base_particles)
     return base_particles->getVariableByName<Vecd>("AverageForce");
 }
 //=================================================================================================//
+StdLargeVec<Vecd> *ElasticSolid::TotalForce(BaseParticles *base_particles)
+{
+    return base_particles->getVariableByName<Vecd>("TotalForce");
+}
+//=================================================================================================//
 LinearElasticSolid::
     LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio) : ElasticSolid(rho0)
 {

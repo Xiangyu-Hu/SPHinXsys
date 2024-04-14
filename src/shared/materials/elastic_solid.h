@@ -106,6 +106,7 @@ class ElasticSolid : public Solid
     virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles) override;
     /** Get  average acceleration when interacting with fluid. */
     virtual StdLargeVec<Vecd> *AverageForce(BaseParticles *base_particles) override;
+    virtual StdLargeVec<Vecd> *TotalForce(BaseParticles *base_particles) override;
     virtual ElasticSolid *ThisObjectPtr() override { return this; };
 };
 
