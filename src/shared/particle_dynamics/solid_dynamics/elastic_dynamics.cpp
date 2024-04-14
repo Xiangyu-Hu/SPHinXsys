@@ -44,9 +44,8 @@ void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 {
     // Nanson's relation is used to update the normal direction
     Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
-    Real inverse_norm = 1.0 / (current_normal.norm() + SqrtEps);
-    n_[index_i] = current_normal * inverse_norm;
-    phi_[index_i] = phi0_[index_i] * inverse_norm;
+    n_[index_i] = current_normal.stableNormalized();
+    phi_[index_i] = phi0_[index_i] / (current_normal.norm() + SqrtEps);
 }
 //=================================================================================================//
 DeformationGradientBySummation::
