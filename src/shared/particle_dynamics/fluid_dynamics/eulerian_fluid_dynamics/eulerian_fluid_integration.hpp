@@ -116,7 +116,8 @@ template <class RiemannSolverType>
 EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter)
     : BaseIntegrationWithWall(wall_contact_relation),
-      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter){};
+      riemann_solver_(this->fluid_, this->fluid_, limiter_parameter),
+      dmass_dt_(*this->particles_->template getVariableByName<Real>("MassChangeRate")){};
 //=================================================================================================//
 template <class RiemannSolverType>
 void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)

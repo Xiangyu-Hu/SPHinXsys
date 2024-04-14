@@ -117,6 +117,7 @@ class EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
+    StdLargeVec<Real> &dmass_dt_;
 };
 using EulerianIntegration2ndHalfWithWallRiemann =
     ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, Contact<Wall>>, AcousticRiemannSolver>;
