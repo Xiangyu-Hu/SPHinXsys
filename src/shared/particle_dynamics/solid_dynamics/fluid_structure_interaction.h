@@ -131,8 +131,7 @@ class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimp
 class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public ElasticSolidDataSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &force_ave_;
-    StdLargeVec<Real> &mass_;
+    StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &acc_ave_;
 
   public:
     explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp);

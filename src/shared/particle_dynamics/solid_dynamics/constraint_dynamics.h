@@ -255,7 +255,6 @@ class TotalForceForSimBody
       public SolidDataSimple
 {
   protected:
-    StdLargeVec<Real> &mass_;
     StdLargeVec<Vecd> &force_, &force_prior_, &pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
@@ -268,8 +267,8 @@ class TotalForceForSimBody
                          SimTK::MobilizedBody &mobod,
                          SimTK::RungeKuttaMersonIntegrator &integ)
         : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
-          SolidDataSimple(identifier.getSPHBody()), mass_(*particles_->getVariableByName<Real>("Mass")),
-          force_(*particles_->getVariableByName<Vecd>("Force")),
+          SolidDataSimple(identifier.getSPHBody()),
+          force_(*particles_->registerSharedVariable<Vecd>("Force")),
           force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
           pos_(particles_->ParticlePositions()),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)

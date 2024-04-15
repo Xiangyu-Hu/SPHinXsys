@@ -242,10 +242,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
+    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
+    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
 
     //----------------------------------------------------------------------
     //	Cable SimBody Output

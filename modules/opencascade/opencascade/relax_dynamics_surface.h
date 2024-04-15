@@ -98,20 +98,6 @@ class SurfaceNormalDirection : public RelaxDataDelegateSimple, public LocalDynam
     StdLargeVec<Vecd> &pos_, &n_;
 };
 
-/**@class ConstrainSuefaceBodyRegion
- * @brief Fix the position surafce body part.
- */
-class ConstrainSurfaceBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public RelaxDataDelegateSimple
-{
-  public:
-    ConstrainSurfaceBodyRegion(BodyPartByParticle &body_part);
-    virtual ~ConstrainSurfaceBodyRegion(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Vecd> &force_;
-};
-
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // RELAX_DYNAMICS_H

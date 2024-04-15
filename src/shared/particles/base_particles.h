@@ -185,14 +185,12 @@ class BaseParticles
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    StdLargeVec<Vecd> pos_;         /**< Position */
-    StdLargeVec<Vecd> vel_;         /**< Velocity */
-    StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
-    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
-    StdLargeVec<Real> Vol_;         /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;         /**< Density */
-    StdLargeVec<Real> mass_;        /**< Mass*/
-    StdLargeVec<int> indicator_;    /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
+    StdLargeVec<Vecd> pos_;      /**< Position */
+    StdLargeVec<Vecd> vel_;      /**< Velocity */
+    StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> rho_;      /**< Density */
+    StdLargeVec<Real> mass_;     /**< Mass*/
+    StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
 
     SPHBody &sph_body_;
     std::string body_name_;

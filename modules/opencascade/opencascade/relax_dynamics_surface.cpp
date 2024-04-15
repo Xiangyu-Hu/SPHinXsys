@@ -7,7 +7,6 @@
 
 namespace SPH
 {
-//=====================================================================================================//
 namespace relax_dynamics
 {
 //=================================================================================================//
@@ -81,18 +80,5 @@ void SurfaceNormalDirection::update(size_t index_i, Real dt)
     n_[index_i] = normal_direction_.normalized();
 }
 //=================================================================================================//
-ConstrainSurfaceBodyRegion::
-    ConstrainSurfaceBodyRegion(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), RelaxDataDelegateSimple(sph_body_),
-      force_(*particles_->getVariableByName<Vecd>("Force"))
-{
-}
-//=================================================================================================//
-void ConstrainSurfaceBodyRegion::update(size_t index_i, Real dt)
-{
-    force_[index_i] = Vecd::Zero();
-}
-//=================================================================================================//
 } // namespace relax_dynamics
-  //=================================================================================================//
 } // namespace SPH

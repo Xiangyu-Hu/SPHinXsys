@@ -109,9 +109,13 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
         constexpr int type_index = DataTypeIndex<DataType>::value;
         return std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
     }
+    else
+    {
+        std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
 
-    std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     return nullptr;
 }
 //=================================================================================================//

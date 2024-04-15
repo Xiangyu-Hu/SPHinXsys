@@ -63,8 +63,7 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
 InitializeDisplacement::
     InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp),
-      pos_(particles_->ParticlePositions()) {}
+      pos_temp_(pos_temp), pos_(particles_->ParticlePositions()) {}
 //=================================================================================================//
 void InitializeDisplacement::update(size_t index_i, Real dt)
 {
@@ -74,15 +73,14 @@ void InitializeDisplacement::update(size_t index_i, Real dt)
 UpdateAverageVelocityAndAcceleration::
     UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp),
-      pos_(particles_->ParticlePositions()),
-      vel_ave_(particles_->vel_ave_),
-      force_ave_(particles_->force_ave_), mass_(*particles_->getVariableByName<Real>("Mass")) {}
+      pos_temp_(pos_temp), pos_(particles_->ParticlePositions()),
+      vel_ave_(*particles_->getVariableByName<Vecd>("AverageVelocity")),
+      acc_ave_(*particles_->getVariableByName<Vecd>("AverageAcceleration")) {}
 //=================================================================================================//
 void UpdateAverageVelocityAndAcceleration::update(size_t index_i, Real dt)
 {
     Vecd updated_vel_ave = (pos_[index_i] - pos_temp_[index_i]) / (dt + Eps);
-    force_ave_[index_i] = mass_[index_i] * (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
+    acc_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
     vel_ave_[index_i] = updated_vel_ave;
 }
 //=================================================================================================//

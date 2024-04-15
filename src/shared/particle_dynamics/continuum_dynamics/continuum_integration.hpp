@@ -100,8 +100,7 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
-        StdLargeVec<Real> &wall_mass_k = *(wall_mass_[k]);
+        StdLargeVec<Vecd> &wall_acc_ave_k = *(wall_acc_ave_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -110,7 +109,7 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Real r_ij = wall_neighborhood.r_ij_[n];
-            Real face_wall_external_acceleration = (force_prior_i / mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
+            Real face_wall_external_acceleration = (force_prior_i / mass_[index_i] - wall_acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             force += 2 * mass_[index_i] * stress_tensor_i * dW_ijV_j * wall_neighborhood.e_ij_[n];
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;

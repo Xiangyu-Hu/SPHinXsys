@@ -39,11 +39,6 @@ void ElasticSolidParticles::initializeOtherVariables()
                      { return Matd::Identity(); });
     registerVariable(dF_dt_, "DeformationRate");
     /**
-     *	register FSI data
-     */
-    registerVariable(vel_ave_, "AverageVelocity");
-    registerVariable(force_ave_, "AverageForce");
-    /**
      *	add restart output particle data
      */
     addVariableToRestart<Matd>("DeformationGradient");
@@ -297,11 +292,6 @@ void ShellParticles::initializeOtherVariables()
     registerVariable(global_stress_, "GlobalStress");
     registerVariable(global_moment_, "GlobalMoment");
     registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
-    /**
-     * for FSI
-     */
-    registerVariable(vel_ave_, "AverageVelocity");
-    registerVariable(force_ave_, "AverageForce");
     /**
      * for rotation.
      */

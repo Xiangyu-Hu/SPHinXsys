@@ -66,17 +66,16 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
         {
             Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
             wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
-            wall_force_ave_.push_back(solid_material.AverageForce(this->contact_particles_[k]));
+            wall_acc_ave_.push_back(solid_material.AverageAcceleration(this->contact_particles_[k]));
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
-            wall_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
             wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~InteractionWithWall(){};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
+    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<StdLargeVec<Real> *> wall_Vol_;
 };
 
 } // namespace fluid_dynamics

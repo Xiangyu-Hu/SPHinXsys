@@ -19,8 +19,8 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
       pos_(this->particles_->ParticlePositions()),
       vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
-      force_(*this->particles_->template getVariableByName<Vecd>("Force")),
-      force_prior_(*this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
+      force_(*this->particles_->template registerSharedVariable<Vecd>("Force")),
+      force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
@@ -47,6 +47,8 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     //----------------------------------------------------------------------
     particles_->addVariableToRestart<Real>("Pressure");
     particles_->addVariableToRestart<Real>("DensityChangeRate");
+    particles_->addVariableToRestart<Vecd>("Force");
+    particles_->addVariableToRestart<Vecd>("ForcePrior");
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -95,8 +97,7 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
     Real rho_dissipation(0);
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &force_ave_k = *(wall_force_ave_[k]);
-        StdLargeVec<Real> &wall_mass_k = *(wall_mass_[k]);
+        StdLargeVec<Vecd> &wall_acc_ave_k = *(wall_acc_ave_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -106,7 +107,7 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
-            Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - force_ave_k[index_j] / wall_mass_k[index_j]).dot(-e_ij);
+            Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             force -= (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;

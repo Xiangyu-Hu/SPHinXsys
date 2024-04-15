@@ -77,11 +77,6 @@ class ElasticSolidParticles : public SolidParticles
     StdLargeVec<Matd> F_;     /**<  deformation tensor */
     StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
     ElasticSolid &elastic_solid_;
-    //----------------------------------------------------------------------
-    //		for fluid-structure interaction (FSI)
-    //----------------------------------------------------------------------
-    StdLargeVec<Vecd> vel_ave_;   /**<  fluid time-step averaged particle velocity */
-    StdLargeVec<Vecd> force_ave_; /**<  fluid time-step averaged particle force */
 
     /** Return the Lagrange strain. */
     Matd getGreenLagrangeStrain(size_t particle_i);
