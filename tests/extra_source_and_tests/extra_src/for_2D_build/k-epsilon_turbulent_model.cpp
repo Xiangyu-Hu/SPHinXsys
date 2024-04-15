@@ -501,6 +501,8 @@ namespace fluid_dynamics
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
 				Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 
+				//force_j = force_j - (force_j.dot(e_j_n)) * e_j_n;
+
 				force += force_j;
 			}
 		}
@@ -848,10 +850,10 @@ namespace fluid_dynamics
 			
 			//** Calculate friction velocity, including P2 region. *  
 			Real velo_fric_mag = 0.0;
-			Real velo_tan = 0.0; //** tangitial velo for fluid particle i *
+			Real velo_tan_mag = 0.0; //** tangitial velo magnitude for fluid particle i *
 
-			velo_tan = abs(e_i_nearest_tau.dot(vel_i));
-			velo_tan_[index_i] = velo_tan;
+			velo_tan_mag = abs(e_i_nearest_tau.dot(vel_i));
+			velo_tan_[index_i] = velo_tan_mag;
 
 			if (wall_Y_star_[index_i] != static_cast<Real>(wall_Y_star_[index_i]))
 			{
@@ -861,24 +863,24 @@ namespace fluid_dynamics
 				
 
 			Real u_star = get_dimensionless_velocity(wall_Y_star_[index_i]);
-			velo_fric_mag = sqrt(C_mu_25_ * turbu_k_i_05 * velo_tan / u_star);
+			velo_fric_mag = sqrt(C_mu_25_ * turbu_k_i_05 * velo_tan_mag / u_star);
 
 			if (velo_fric_mag != static_cast<Real>(velo_fric_mag))
 			{
 				std::cout << "friction velocity is not a real, please check" << std::endl;
-				std::cout << "velo_fric=" << velo_fric_mag << std::endl << "velo_tan=" << velo_tan << std::endl;
+				std::cout << "velo_fric=" << velo_fric_mag << std::endl << "velo_tan_mag=" << velo_tan_mag << std::endl;
 				std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
-				std::cout << "sum=" << (Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) /
+				std::cout << "sum=" << (Karman_ * velo_tan_mag * C_mu_25_ * pow(turbu_k_[index_i], 0.5) /
 					log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_constant_i * rho_i / molecular_viscosity_)) << std::endl;
-				std::cout << "numerator=" << Karman_ * velo_tan * C_mu_25_ * pow(turbu_k_[index_i], 0.5) << std::endl;
+				std::cout << "numerator=" << Karman_ * velo_tan_mag * C_mu_25_ * pow(turbu_k_[index_i], 0.5) << std::endl;
 				std::cout << "denominator=" << log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_constant_i * rho_i / molecular_viscosity_) << std::endl;
-				Real temp = C_mu_25_* pow(turbu_k_[index_i], 0.5)* velo_tan / u_star;
+				Real temp = C_mu_25_* pow(turbu_k_[index_i], 0.5)* velo_tan_mag / u_star;
 
 				std::cout << "temp =" <<temp<< std::endl;
 
 				std::cout << "pow(turbu_k_[index_i], 0.5) =" << pow(turbu_k_[index_i], 0.5) << std::endl;
-				std::cout << "velo_tan / u_star =" << velo_tan / u_star << std::endl;
-				std::cout << "velo_tan =" << velo_tan  << std::endl;
+				std::cout << "velo_tan_mag / u_star =" << velo_tan_mag / u_star << std::endl;
+				std::cout << "velo_tan_mag =" << velo_tan_mag << std::endl;
 				std::cout << " u_star =" << u_star << std::endl;
 				system("pause");
 			}
@@ -965,11 +967,15 @@ namespace fluid_dynamics
 				vel_grad_i_tn(0, 1) = dudn_p_weighted_sum / total_weight;
 				vel_grad_i_tn(1, 0) = 0.0;
 				vel_grad_i_tn(1, 1) = 0.0;
+				
 				Q = getTransformationMatrix(e_i_nearest_n);
+				
 				velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
 
 				k_production_[index_i] = G_k_p_weighted_sum / total_weight;
 
+				//** Correct normal velocity at particle P *
+				//vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
 			}
 		}
 	}

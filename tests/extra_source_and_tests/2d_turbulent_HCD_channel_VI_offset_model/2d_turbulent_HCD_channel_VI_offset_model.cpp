@@ -1,4 +1,4 @@
-#include "2d_turbulent_channel_VI_offset_model.h"
+#include "2d_turbulent_HCD_channel_VI_offset_model.h"
 using namespace SPH;            
 
 
@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
-    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
+    //SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce,SequencedPolicy> apply_gravity_force(water_block, time_dependent_acceleration);
 
     BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
     BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
     
@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 20000000.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -276,8 +276,8 @@ int main(int ac, char *av[])
 
             if (GlobalStaticVariables::physical_time_ > end_time * 0.6) 
             {
-                get_time_average_cross_section_data.exec();
-                get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
+                //get_time_average_cross_section_data.exec();
+                //get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
 
             }
             //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
@@ -285,9 +285,9 @@ int main(int ac, char *av[])
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
-        //num_output_file++;
-        //if (num_output_file == 100)
-        //    system("pause");
+        num_output_file++;
+        if (num_output_file == 200)
+            system("pause");
         TickCount t3 = TickCount::now();
 
     }
@@ -298,7 +298,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
 
-    get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
-    std::cout << "The time-average data is output " << std::endl;
+    //get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
+    //std::cout << "The time-average data is output " << std::endl;
     return 0;
 }
