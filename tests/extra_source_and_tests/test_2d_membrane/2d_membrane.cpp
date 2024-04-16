@@ -159,17 +159,16 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
-
     // corrected strong configuration
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
-    // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    ReduceDynamics<multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
 
-    // stress relaxation for the beam
     Dynamics1Level<multi_species_continuum::PorousMediaStressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<multi_species_continuum::PorousMediaStressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
     Dynamics1Level<multi_species_continuum::SaturationRelaxationInPorousMedia> saturation_relaxation(beam_body_inner);
+
+    // time step size calculation
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
 
     // clamping a solid body part. This is softer than a direct constraint
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));

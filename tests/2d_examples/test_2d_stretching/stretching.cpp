@@ -248,17 +248,14 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
-
-    // corrected strong configuration
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
 
-    // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     BodyRegionByParticle beam_left_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamLeftStretchShape()));
     SimpleDynamics<LeftStretchSolidBodyRegion> stretch_beam_left_end(beam_left_stretch);
     BodyRegionByParticle beam_right_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamRightStretchShape()));
@@ -267,11 +264,9 @@ int main(int ac, char *av[])
     SimpleDynamics<ConstrainXVelocity> constrain_beam_end(beam_constrain);
     InteractionDynamics<solid_dynamics::DeformationGradientBySummation> beam_deformation_gradient_tensor(beam_body_inner);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
-
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-
     BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
     ReducedQuantityRecording<TotalKineticEnergy> write_kinetic_mechanical_energy(beam_body);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", beam_observer_contact);

@@ -159,11 +159,11 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
-    /** stress relaxation for the balls. */
+
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> cream_stress_relaxation_second_half(cream_inner);
-    /** constraint for the cream. */
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
     BodyRegionByParticle platform(cream, makeShared<MultiPolygonShape>(createPlatformConstraint()));
     SimpleDynamics<FixBodyPartConstraint> platform_constraint(platform);
     //----------------------------------------------------------------------

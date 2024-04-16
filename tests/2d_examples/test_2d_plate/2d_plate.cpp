@@ -83,14 +83,13 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles(PlateParticleGenerator(plate_body));
-    plate_body.addBodyStateForRecording<Vecd>("ForcePrior");
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.generateParticles<Observer>(observation_location);
@@ -107,12 +106,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    /** stress relaxation. */
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
-    /** Time step size. */
+
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
     SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
         apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
@@ -126,7 +123,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
+    plate_body.addBodyStateForRecording<Vecd>("ForcePrior");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact); // TODO: using ensemble better

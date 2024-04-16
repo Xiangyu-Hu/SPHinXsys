@@ -30,7 +30,8 @@ PorousMediaStressRelaxationFirstHalf::
       Vol_update_(particles_->Vol_update_), fluid_saturation_(particles_->fluid_saturation_),
       total_mass_(particles_->total_mass_), fluid_mass_(particles_->fluid_mass_),
       dfluid_mass_dt_(particles_->dfluid_mass_dt_), total_momentum_(particles_->total_momentum_),
-      dtotal_momentum_dt_(particles_->dtotal_momentum_dt_),
+      force_(*particles_->registerSharedVariable<Vecd>("Force")),
+      force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
       fluid_velocity_(particles_->fluid_velocity_), relative_fluid_flux_(particles_->relative_fluid_flux_),
       outer_fluid_velocity_relative_fluid_flux_(particles_->outer_fluid_velocity_relative_fluid_flux_),
       Stress_(particles_->Stress_), diffusivity_constant_(particles_->porous_solid_.getDiffusivityConstant()),
@@ -57,7 +58,7 @@ void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real d
 //=================================================================================================//
 void PorousMediaStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
-    total_momentum_[index_i] += dtotal_momentum_dt_[index_i] * dt;
+    total_momentum_[index_i] += (force_prior_[index_i] + force_[index_i]) * dt;
 }
 //=================================================================================================//
 void PorousMediaStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)

@@ -117,7 +117,7 @@ class PorousMediaStressRelaxationFirstHalf
 
   protected:
     StdLargeVec<Real> &Vol_update_, &fluid_saturation_, &total_mass_, &fluid_mass_, &dfluid_mass_dt_;
-    StdLargeVec<Vecd> &total_momentum_, &dtotal_momentum_dt_, &fluid_velocity_, &relative_fluid_flux_;
+    StdLargeVec<Vecd> &total_momentum_, &force_, &force_prior_, &fluid_velocity_, &relative_fluid_flux_;
     StdLargeVec<Matd> &outer_fluid_velocity_relative_fluid_flux_, &Stress_;
 
     Real diffusivity_constant_, fluid_initial_density_, water_pressure_constant_;
@@ -150,7 +150,7 @@ class PorousMediaStressRelaxationFirstHalf
             total_momentum_increment += (Stress_[index_i] + Stress_[index_j] + numerical_dissipation_factor_ * numerical_stress_ij * weight - outer_fluid_velocity_relative_fluid_flux_[index_i] - outer_fluid_velocity_relative_fluid_flux_[index_j]) * gradW_ijV_j;
         }
 
-        dtotal_momentum_dt_[index_i] = total_momentum_increment;
+        force_[index_i] = total_momentum_increment;
     };
     void update(size_t index_i, Real dt = 0.0);
 };
