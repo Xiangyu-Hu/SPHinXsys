@@ -159,7 +159,7 @@ int main(int ac, char *av[])
 
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f,0.1);
     //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     
     /** Time step size with considering sound wave speed. */
@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 20000000.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -281,12 +281,15 @@ int main(int ac, char *av[])
 
             }
             //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
-                //body_states_recording.writeToFile();
+            //{
+            //    body_states_recording.writeToFile(); 
+            //    num_output_file++;
+            //}
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
         num_output_file++;
-        if (num_output_file == 200)
+        if (num_output_file == 240)
             system("pause");
         TickCount t3 = TickCount::now();
 

@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 #include "k-epsilon_turbulent_model.hpp"
 namespace SPH
 {
@@ -7,9 +7,8 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
-		: C_mu_(0.09), C_l_(1.44), C_2_(1.92), sigma_k_(1.0), sigma_E_(1.3),
-		Karman_(0.41), turbu_const_E_(9.8), 
-		turbulent_intensity_(5.0e-2), mixing_length_for_epsilon_inlet_(0.07),
+		: Karman_(0.41), turbu_const_E_(9.8), C_mu_(0.09), turbulent_intensity_(5.0e-2), 
+		sigma_k_(1.0),  C_l_(1.44), C_2_(1.92), sigma_E_(1.3), mixing_length_for_epsilon_inlet_(0.07),
 		start_time_laminar_(0.0), y_star_threshold_laminar_(11.225)
 	{
 		C_mu_25_ = pow(C_mu_, 0.25);
@@ -198,7 +197,7 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
 	{
-		Vecd vel_i = vel_[index_i];
+		//Vecd vel_i = vel_[index_i];
 		Real rho_i = rho_[index_i];
 		Real turbu_mu_i = turbu_mu_[index_i];
 		Real turbu_k_i = turbu_k_[index_i];
@@ -261,13 +260,13 @@ namespace fluid_dynamics
 //=================================================================================================//
 	E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
-		k_production_(*particles_->getVariableByName<Real>("K_Production")),
-		k_production_prior_(*particles_->getVariableByName<Real>("K_ProductionPrior")),
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
-		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
 		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
+		k_production_(*particles_->getVariableByName<Real>("K_Production")),
+		k_production_prior_(*particles_->getVariableByName<Real>("K_ProductionPrior")),		
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
 	{
 		particles_->registerVariable(dE_dt_, "ChangeRateOfTDR");
@@ -291,8 +290,8 @@ namespace fluid_dynamics
 		interaction(size_t index_i, Real dt)
 	{
 		Real rho_i = rho_[index_i];
-		Real turbu_mu_i = turbu_mu_[index_i];
-		Real turbu_k_i = turbu_k_[index_i];
+		//Real turbu_mu_i = turbu_mu_[index_i];
+		//Real turbu_k_i = turbu_k_[index_i];
 		Real turbu_epsilon_i = turbu_epsilon_[index_i];
 
 		Real mu_eff_i = turbu_mu_[index_i] / sigma_E_ + mu_;
@@ -383,7 +382,7 @@ namespace fluid_dynamics
 			Neighborhood& contact_neighborhood = (*FluidContactData::contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = contact_neighborhood.j_[n];
+				//size_t index_j = contact_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				//** weak form * 
 				k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
@@ -419,7 +418,7 @@ namespace fluid_dynamics
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			const Vecd& e_ij = inner_neighborhood.e_ij_[n];
+			//const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
 			Real mu_eff_j = turbu_mu_[index_j] + molecular_viscosity_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
@@ -445,7 +444,7 @@ namespace fluid_dynamics
 	void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 	{
 		this->visc_acc_wall_[index_i] = Vecd::Zero();
-		int is_near_wall_P2 = this->is_near_wall_P2_[index_i];		
+		//int is_near_wall_P2 = this->is_near_wall_P2_[index_i];		
 		//** Wall viscous force only affects P2 region fluid particles *
 		if (this->is_near_wall_P2_[index_i] != 10)
 			return;
@@ -465,13 +464,13 @@ namespace fluid_dynamics
 		Matd Q = Matd::Zero();
 		for (size_t k = 0; k < contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
+			//StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
 			Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 			StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = contact_neighborhood.j_[n];
-				Real r_ij = contact_neighborhood.r_ij_[n];
+				//Real r_ij = contact_neighborhood.r_ij_[n];
 				Vecd& e_ij = contact_neighborhood.e_ij_[n];
 
 				e_j_n = n_k[index_j];
@@ -514,12 +513,13 @@ namespace fluid_dynamics
 	TurbulentEddyViscosity::
 		TurbulentEddyViscosity(SPHBody& sph_body)
 		: LocalDynamics(sph_body), FluidDataSimple(sph_body),
-		rho_(particles_->rho_), wall_Y_star_(*particles_->getVariableByName<Real>("WallYstar")),
-		wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
-		mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
-		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		rho_(particles_->rho_), 
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
-		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")) {}
+		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
+		wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
+		wall_Y_star_(*particles_->getVariableByName<Real>("WallYstar")),
+		mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()) {}
 	//=================================================================================================//
 	void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 	{
@@ -528,10 +528,11 @@ namespace fluid_dynamics
 //=================================================================================================//
 	TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL)
 		: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max* U_max), FluidDataSimple(sph_body),
-		vel_(particles_->vel_), advectionCFL_(advectionCFL),
+		vel_(particles_->vel_), 
 		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-		fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))
+		advectionCFL_(advectionCFL),
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+		fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
 	{
 		Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
 		reference_ = SMAX(viscous_speed * viscous_speed, reference_);
@@ -975,7 +976,7 @@ namespace fluid_dynamics
 				k_production_[index_i] = G_k_p_weighted_sum / total_weight;
 
 				//** Correct normal velocity at particle P *
-				//vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
+				vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
 			}
 		}
 	}
@@ -986,11 +987,11 @@ namespace fluid_dynamics
 
 //=================================================================================================//
 	BaseGetTimeAverageData::BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points)
-		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
+		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),  plt_engine_(),
 		pos_(particles_->pos_), num_cell(num_observer_points),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
-		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")), plt_engine_()
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
 	{
 		num_data = 5;
 		file_name_.push_back("vel_x_sto_");
@@ -1003,17 +1004,17 @@ namespace fluid_dynamics
 		data_time_aver_sto_.resize(num_cell); //Rows
 
 		data_sto_.resize(num_cell); //Rows
-		for (size_t i = 0; i != num_cell; ++i)
+		for (int i = 0; i != num_cell; ++i)
 		{
 			data_sto_[i].resize(num_data); //Cols
 		}
 
-		for (size_t j = 0; j != num_data; ++j)
+		for (int j = 0; j != num_data; ++j)
 		{
 			file_path_output_ = "../bin/output/" + file_name_[j] + ".dat";
 			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
 			out_file << "run_time" << "   ";
-			for (size_t i = 0; i != num_cell; ++i)
+			for (int i = 0; i != num_cell; ++i)
 			{
 				std::string quantity_name_i = file_name_[j] + "[" + std::to_string(i) + "]";
 				plt_engine_.writeAQuantityHeader(out_file, data_sto_[i][j], quantity_name_i);
@@ -1026,12 +1027,12 @@ namespace fluid_dynamics
 	void BaseGetTimeAverageData::output_time_history_data(Real cutoff_time)
 	{
 		/** Output for .dat file. */
-		for (size_t j = 0; j != num_data; ++j)
+		for (int j = 0; j != num_data; ++j)
 		{
 			file_path_output_ = "../bin/output/" + file_name_[j] + ".dat";
 			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
 			out_file << GlobalStaticVariables::physical_time_ << "   ";
-			for (size_t i = 0; i != num_cell; ++i)
+			for (int i = 0; i != num_cell; ++i)
 			{
 				//if (num_in_cell_[i] == 0 && GlobalStaticVariables::physical_time_ > cutoff_time)
 				//{
@@ -1048,7 +1049,7 @@ namespace fluid_dynamics
 		for (int i = 0; i < num_cell; i++)
 		{
 			num_in_cell_[i] = 0;
-			for (size_t j = 0; j != num_data; ++j)
+			for (int j = 0; j != num_data; ++j)
 			{
 				data_sto_[i][j] = 0.0;
 			}
@@ -1057,7 +1058,7 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void BaseGetTimeAverageData::get_time_average_data(Real cutoff_time)
 	{
-		for (size_t j = 0; j != num_data; ++j)
+		for (int j = 0; j != num_data; ++j)
 		{
 			data_loaded_.clear();
 			int num_line_data = 0;
@@ -1086,11 +1087,11 @@ namespace fluid_dynamics
 
 			in_file.close();
 			//** Deal with data *
-			for (size_t k = 0; k != num_cell; ++k)
+			for (int k = 0; k != num_cell; ++k)
 			{
 				Real sum = 0.0;
 				int count = 0;
-				for (size_t i = 0; i != num_line_data; ++i)
+				for (int i = 0; i != num_line_data; ++i)
 				{
 					if (data_loaded_[i][0] > cutoff_time)
 					{
@@ -1107,7 +1108,7 @@ namespace fluid_dynamics
 			file_path_output_ = "../bin/output/TimeAverageData.dat";
 			std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
 			out_file << file_name_[j] << "\n";
-			for (size_t k = 0; k != num_cell; ++k)
+			for (int k = 0; k != num_cell; ++k)
 			{
 				plt_engine_.writeAQuantity(out_file, data_time_aver_sto_[k]);
 			}
@@ -1132,7 +1133,7 @@ namespace fluid_dynamics
 		}
 		file_path_output_ = "../bin/output/monitor_cell_center_y.dat";
 		std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
-		for (size_t i = 0; i != num_cell; ++i)
+		for (int i = 0; i != num_cell; ++i)
 		{
 			plt_engine_.writeAQuantity(out_file, monitor_cellcenter_y[i]);
 			out_file << "\n";
@@ -1177,7 +1178,7 @@ namespace fluid_dynamics
 		{
 			for (int i = 0; i < num_cell; i++)
 			{
-				if (i < bound_x_f_.size() - 1) //* Front of cylinder
+				if (i < static_cast<int>(bound_x_f_.size()) - 1) //* Front of cylinder
 				{
 					if (pos_[index_i][0] > bound_x_f_[i] && pos_[index_i][0] <= bound_x_f_[i + 1])
 					{
@@ -1189,9 +1190,9 @@ namespace fluid_dynamics
 						data_sto_[i][4] += vel_[index_i].norm();
 					}
 				}
-				else if (i >= bound_x_f_.size() - 1) //* behind of cylinder
+				else if (i >= static_cast<int>(bound_x_f_.size()) - 1) //* behind of cylinder
 				{
-					int j = i - (bound_x_f_.size() - 1);
+					int j = i - (static_cast<int>(bound_x_f_.size()) - 1);
 					if (pos_[index_i][0] > bound_x_b_[j] && pos_[index_i][0] <= bound_x_b_[j + 1])
 					{
 						num_in_cell_[i] += 1;
@@ -1210,16 +1211,16 @@ namespace fluid_dynamics
 	void GetTimeAverageCrossSectionData_Y::output_monitor_x_coordinate()
 	{
 		StdVec<Real> monitor_cellcenter_x;
-		if (bound_x_f_.size() != 0)
+		if (static_cast<int>(bound_x_f_.size()) != 0)
 		{
-			for (int i = 0; i < bound_x_f_.size() - 1; i++)
+			for (int i = 0; i < static_cast<int>(bound_x_f_.size()) - 1; i++)
 			{
 				monitor_cellcenter_x.push_back((bound_x_f_[i] + bound_x_f_[i + 1]) / 2.0);
 			}
 		}
-		if (bound_x_b_.size() != 0)
+		if (static_cast<int>(bound_x_b_.size()) != 0)
 		{
-			for (int i = 0; i < bound_x_b_.size() - 1; i++)
+			for (int i = 0; i < static_cast<int>(bound_x_b_.size()) - 1; i++)
 			{
 				monitor_cellcenter_x.push_back((bound_x_b_[i] + bound_x_b_[i + 1]) / 2.0);
 			}
@@ -1228,7 +1229,7 @@ namespace fluid_dynamics
 
 		file_path_output_ = "../bin/output/monitor_cell_center_x.dat";
 		std::ofstream out_file(file_path_output_.c_str(), std::ios::app);
-		for (size_t i = 0; i != num_cell; ++i)
+		for (int i = 0; i != num_cell; ++i)
 		{
 			plt_engine_.writeAQuantity(out_file, monitor_cellcenter_x[i]);
 			out_file << "\n";
