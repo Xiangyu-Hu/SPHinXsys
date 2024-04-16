@@ -201,7 +201,8 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
         : MotionConstraint<DynamicsIdentifier>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
           n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
-          n0_(*this->particles_->template getVariableByName<Vecd>("InitialNormalDirection"))
+          n0_(*this->particles_->template getVariableByName<Vecd>("InitialNormalDirection")),
+          acc_(*this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
     {
         simbody_state_ = &integ_.getState();
         MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
@@ -228,6 +229,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
          */
         this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
         this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
+        acc_[index_i] = degradeToVecd(SimTKToEigen(acc));
 
         SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(n0_[index_i])));
         n_[index_i] = degradeToVecd(SimTKToEigen(n));
@@ -237,7 +239,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
-    StdLargeVec<Vecd> &n_, &n0_;
+    StdLargeVec<Vecd> &n_, &n0_, &acc_;
     const SimTK::State *simbody_state_;
     SimTKVec3 initial_mobod_origin_location_;
 };
