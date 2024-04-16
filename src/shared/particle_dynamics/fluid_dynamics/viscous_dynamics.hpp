@@ -31,18 +31,19 @@ template <class ViscosityType>
 void ViscousForce<Inner<>, ViscosityType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
-    Vecd vel_derivative = Vecd::Zero();
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
 
         // viscous force
-        vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-        force += 2.0 * mass_[index_i] * mu_(index_i, index_j) * vel_derivative * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+        Vecd vel_derivative = (vel_[index_i] - vel_[index_j]) /
+                              (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+        force += 2.0 * mu_(index_i, index_j) * vel_derivative *
+                 inner_neighborhood.dW_ij_[n] * Vol_[index_j];
     }
 
-    viscous_force_[index_i] = force / rho_[index_i];
+    viscous_force_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 template <typename ViscosityType>
@@ -59,11 +60,12 @@ void ViscousForce<Inner<AngularConservative>, ViscosityType>::interaction(size_t
         /** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
          * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
         Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(e_ij);
-        Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_j) * v_r_ij / (r_ij + 0.01 * smoothing_length_);
-        force += eta_ij * mass_[index_i] * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * e_ij;
+        Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_j) * v_r_ij /
+                      (r_ij + 0.01 * smoothing_length_);
+        force += eta_ij * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * e_ij;
     }
 
-    viscous_force_[index_i] = force / rho_[index_i];
+    viscous_force_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 template <typename ViscosityType>
@@ -80,13 +82,14 @@ void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Rea
             size_t index_j = contact_neighborhood.j_[n];
             Real r_ij = contact_neighborhood.r_ij_[n];
 
-            Vecd vel_derivative = 2.0 * (vel_[index_i] - vel_ave_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
-            force += 2.0 * mu_(index_i, index_i) * mass_[index_i] *
-                     vel_derivative * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
+            Vecd vel_derivative = 2.0 * (vel_[index_i] - vel_ave_k[index_j]) /
+                                  (r_ij + 0.01 * smoothing_length_);
+            force += 2.0 * mu_(index_i, index_i) * vel_derivative *
+                     contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
         }
     }
 
-    viscous_force_[index_i] += force / rho_[index_i];
+    viscous_force_[index_i] += force * Vol_[index_i];
 }
 //=================================================================================================//
 template <typename ViscosityType>
@@ -115,12 +118,13 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interactio
             Vecd distance_diff = distance_from_wall - r_ij * e_ij;
             Real factor = 1.0 - distance_from_wall.dot(distance_diff) / distance_from_wall.squaredNorm();
             Real v_r_ij = factor * (vel_[index_i] - vel_ave_k[index_j]).dot(e_ij);
-            Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_i) * v_r_ij / (r_ij + 0.01 * smoothing_length_);
-            force += eta_ij * mass_[index_i] * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j] * e_ij;
+            Real eta_ij = 2.0 * Real(Dimensions + 2) * mu_(index_i, index_i) * v_r_ij /
+                          (r_ij + 0.01 * smoothing_length_);
+            force += eta_ij * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j] * e_ij;
         }
     }
 
-    viscous_force_[index_i] += force / rho_[index_i];
+    viscous_force_[index_i] += force * Vol_[index_i];
 }
 //=================================================================================================//
 template <typename ViscosityType>
@@ -150,11 +154,11 @@ void ViscousForce<Contact<>, ViscosityType>::interaction(size_t index_i, Real dt
             size_t index_j = contact_neighborhood.j_[n];
             Vecd vel_derivative = (vel_[index_i] - vel_k[index_j]) /
                                   (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-            force += 2.0 * mass_[index_i] * contact_mu_k(index_i, index_j) *
-                     vel_derivative * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
+            force += 2.0 * contact_mu_k(index_i, index_j) * vel_derivative *
+                     contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
         }
     }
-    viscous_force_[index_i] += force / rho_[index_i];
+    viscous_force_[index_i] += force * Vol_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

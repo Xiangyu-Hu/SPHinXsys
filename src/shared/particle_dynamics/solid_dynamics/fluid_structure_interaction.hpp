@@ -12,9 +12,8 @@ template <class FluidIntegration2ndHalfType>
 PressureForceFromFluid<FluidIntegration2ndHalfType>::
     PressureForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
       vel_ave_(*solid_.AverageVelocity(particles_)),
-      force_ave_(*solid_.AverageAcceleration(particles_)),
+      acc_ave_(*solid_.AverageAcceleration(particles_)),
       n_(particles_->n_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -49,14 +48,14 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
             Vecd e_ij = contact_neighborhood.e_ij_[n];
             Real r_ij = contact_neighborhood.r_ij_[n];
             Real face_wall_external_acceleration =
-                (force_prior_k[index_j] / mass_k[index_j] - force_ave_[index_i] / mass_[index_i]).dot(e_ij);
+                (force_prior_k[index_j] / mass_k[index_j] - acc_ave_[index_i]).dot(e_ij);
             Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
             force -= (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] + (p_in_wall + p_k[index_j]) * e_ij) *
-                     Vol_[index_i] * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
+                     contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    force_from_fluid_[index_i] = force;
+    force_from_fluid_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 } // namespace solid_dynamics

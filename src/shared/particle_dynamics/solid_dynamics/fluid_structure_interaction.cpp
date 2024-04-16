@@ -34,9 +34,6 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
 //=================================================================================================//
 void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
 {
-    Real Vol_i = Vol_[index_i];
-    const Vecd &vel_ave_i = vel_ave_[index_i];
-
     Vecd force = Vecd::Zero();
     /** Contact interaction. */
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -50,14 +47,13 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
 
-            Vecd vel_derivative = 2.0 * (vel_ave_i - vel_n_k[index_j]) /
+            Vecd vel_derivative = 2.0 * (vel_ave_[index_i] - vel_n_k[index_j]) /
                                   (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
-
-            force += 2.0 * mu_k * vel_derivative * Vol_i * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
+            force += 2.0 * mu_k * vel_derivative * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
 
-    force_from_fluid_[index_i] = force;
+    force_from_fluid_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 InitializeDisplacement::
