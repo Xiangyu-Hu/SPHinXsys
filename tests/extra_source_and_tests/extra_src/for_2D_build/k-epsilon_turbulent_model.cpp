@@ -988,10 +988,11 @@ namespace fluid_dynamics
 //=================================================================================================//
 	BaseGetTimeAverageData::BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),  plt_engine_(),
-		pos_(particles_->pos_), num_cell(num_observer_points),
+		pos_(particles_->pos_), 
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
-		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
+		num_cell(num_observer_points)
 	{
 		num_data = 5;
 		file_name_.push_back("vel_x_sto_");
