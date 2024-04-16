@@ -283,12 +283,12 @@ int main(int ac, char *av[])
             //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
                 //body_states_recording.writeToFile();
         }
-        TickCount t2 = TickCount::now();
+        //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
-        //num_output_file++;
+        num_output_file++;
         //if (num_output_file == 100)
         //    system("pause");
-        TickCount t3 = TickCount::now();
+        //TickCount t3 = TickCount::now();
 
     }
     TickCount t4 = TickCount::now();

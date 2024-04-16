@@ -286,12 +286,12 @@ int main(int ac, char *av[])
             //    num_output_file++;
             //}
         }
-        TickCount t2 = TickCount::now();
+        //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
         num_output_file++;
         if (num_output_file == 240)
             system("pause");
-        TickCount t3 = TickCount::now();
+        //TickCount t3 = TickCount::now();
 
     }
     TickCount t4 = TickCount::now();
