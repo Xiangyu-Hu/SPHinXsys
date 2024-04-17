@@ -133,13 +133,13 @@ int main(int ac, char *av[])
     /** Corrected configuration. */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(beam_body_inner);
 
-    /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
-
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
+
+    /** Time step size calculation. */
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
     /** specify end-time for defining the force-time profile */
     Real end_time = 1;

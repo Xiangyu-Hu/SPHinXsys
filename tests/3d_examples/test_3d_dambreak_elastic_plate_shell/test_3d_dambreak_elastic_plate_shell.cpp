@@ -126,6 +126,19 @@ class BoundaryGeometry : public BodyPartByParticle
     };
 };
 
+class GateMotionConstraint : public MotionConstraint<SPHBody>
+{
+  public:
+    GateMotionConstraint(SPHBody &body) : MotionConstraint<SPHBody>(body){};
+    virtual ~GateMotionConstraint(){};
+    void update(size_t index_i, Real dt)
+    {
+        Real run_time = GlobalStaticVariables::physical_time_;
+        Real h_g = -285.115 * run_time * run_time * run_time + 72.305 * run_time * run_time + 0.1463 * run_time;
+        pos_[index_i][1] = pos0_[index_i][1] + h_g;
+    };
+};
+
 // the main program with commandline options
 int main(int ac, char *av[])
 {
@@ -192,27 +205,21 @@ int main(int ac, char *av[])
     // solid
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
-    auto update_gate_position = [&](Real run_time)
-    {
-        const auto &pos0 = *gate.getBaseParticles().getVariableByName<Vecd>("InitialPosition");
-        Real h_g = -285.115 * run_time * run_time * run_time + 72.305 * run_time * run_time + 0.1463 * run_time;
-        particle_for(
-            par,
-            IndexRange(0, gate.getBaseParticles().total_real_particles_),
-            [&](size_t index_i)
-            {
-                gate.getBaseParticles().ParticlePositions()[index_i][1] = pos0[index_i][1] + h_g;
-            });
-    };
+    SimpleDynamics<GateMotionConstraint> update_gate_position(gate);
+
     // fluid
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>>
+        pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>>
+        density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>>
+        update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>>
+        viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
     // Shell
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> plate_stress_relaxation_first(plate_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> plate_stress_relaxation_second(plate_inner);
@@ -329,7 +336,7 @@ int main(int ac, char *av[])
 
             if (GlobalStaticVariables::physical_time_ < gate_moving_time)
             {
-                update_gate_position(GlobalStaticVariables::physical_time_);
+                update_gate_position.exec();
                 gate.updateCellLinkedList();
             }
             if (GlobalStaticVariables::physical_time_ > contact_time)
