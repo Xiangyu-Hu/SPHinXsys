@@ -88,16 +88,14 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
-    SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
     /** Corrected configuration. */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner>
-        corrected_configuration(cantilever_body_inner);
-    /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
-        computing_time_step_size(cantilever_body);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(cantilever_body_inner);
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(cantilever_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cantilever_body_inner);
+    SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
+    /** Time step size calculation. */
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cantilever_body);
     /** Constrain the holder. */
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(cantilever_body, holder_shape);

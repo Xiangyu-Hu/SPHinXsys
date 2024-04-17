@@ -107,7 +107,6 @@ int main(int ac, char *av[])
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles(PlateParticleGenerator(plate_body));
-    plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
@@ -139,6 +138,7 @@ int main(int ac, char *av[])
     SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
+    plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact);
