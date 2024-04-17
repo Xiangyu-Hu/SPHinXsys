@@ -42,10 +42,11 @@ UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
 //=================================================================================================//
 void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 {
-    // Nanson's relation is used to update the normal direction
+    // Still used polar decomposition to update the normal direction
+    n_[index_i] = getRotatedNormalDirection(F_[index_i], n0_[index_i]);
+    // Nanson's relation is used to update the distance to surface
     Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
-    n_[index_i] = current_normal.stableNormalized();
-    phi_[index_i] = phi0_[index_i] / (current_normal.norm() + SqrtEps);
+    phi_[index_i] = phi0_[index_i] / (current_normal.norm() + SqrtEps); // todo: check this
 }
 //=================================================================================================//
 DeformationGradientBySummation::

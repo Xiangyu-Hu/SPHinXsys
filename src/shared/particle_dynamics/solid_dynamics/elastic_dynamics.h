@@ -73,6 +73,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
     StdLargeVec<Vecd> &n_, &n0_;
     StdLargeVec<Real> &phi_, &phi0_;
     StdLargeVec<Matd> &F_;
+    Vecd getRotatedNormalDirection(const Matd &F, const Vecd &n0);
 
   public:
     explicit UpdateElasticNormalDirection(SPHBody &sph_body);
@@ -130,7 +131,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
     };
 
   protected:
-    StdLargeVec<Real>& Vol_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Matd> &B_, &F_;
 };
@@ -198,7 +199,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Matd numerical_stress_ij =
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
-            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * 
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
                      (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
                       numerical_dissipation_factor_ * weight * numerical_stress_ij) *
                      e_ij;
@@ -282,7 +283,7 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
                                   (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
                                   (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
             force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
-                            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
+                     inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
         }
         force_[index_i] = force;
     };
