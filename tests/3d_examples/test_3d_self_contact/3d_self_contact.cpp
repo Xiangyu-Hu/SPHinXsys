@@ -140,8 +140,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
-    // Time step size
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+
     // stress relaxation.
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(coil_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
@@ -150,6 +149,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+
     // Damping the velocity field for quasi-static solution
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
