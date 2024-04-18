@@ -1,4 +1,4 @@
-#include "MeshHelper.h"
+#include "mesh_helper.h"
 namespace SPH
 {
 
@@ -40,14 +40,12 @@ namespace SPH
             }
     }
 
-    void MeshFileHelpers::nodeCoordinates(ifstream& mesh_file, size_t& node_index,
-                                     vector<vector<Real>>& node_coordinates_, string& text_line, size_t& dimension, vector<vector<Real>>& point_coordinates)
+    void MeshFileHelpers::nodeCoordinates(ifstream& mesh_file, StdLargeVec<Vecd>& node_coordinates_, string& text_line, size_t& dimension)
     {
         while (getline(mesh_file, text_line))
             {
                 if (text_line.find("(", 0) == string::npos && text_line.find("))", 0) == string::npos)
                 {
-                    Real Coords[3] = { 0.0, 0.0, 0.0 };
                     if (text_line.find(" ", 0) != string::npos)
                     {
                         if (dimension == 3)
@@ -62,21 +60,15 @@ namespace SPH
                             y_coordinate_string = y_coordinate_string.erase(0, first_devide_position);
                             string z_coordinate_string = z_part.erase(0, last_devide_position);
                             istringstream streamx, streamy, streamz;
+                            Vecd Coords = Vecd::Zero();
                             streamx.str(x_coordinate_string);
                             streamy.str(y_coordinate_string);
                             streamz.str(z_coordinate_string);
                             streamx >> Coords[0];
                             streamy >> Coords[1];
                             streamz >> Coords[2];
-                            
-                            node_coordinates_[node_index][0] = Coords[0];
-                            node_coordinates_[node_index][1] = Coords[1];
-                            node_coordinates_[node_index][2] = Coords[2];
-                            ++node_index;
-                        }
-                        for (std::size_t iDim = 0; iDim != dimension; ++iDim)
-                        {
-                            point_coordinates[iDim].push_back(Coords[iDim]);
+
+                            node_coordinates_.push_back(Coords);
                         }
                     }
                 }
@@ -108,8 +100,8 @@ namespace SPH
             }
     }
 
-    void MeshFileHelpers::dataStruct(vector<vector<vector<size_t>>>& mesh_topology_, vector<vector<size_t>>& elements_nodes_connection_,
-                                    size_t number_of_elements, size_t mesh_type, size_t dimension, StdLargeVec<Vecd>& elements_neighbors_connection_)
+    void MeshFileHelpers::dataStruct(vector<vector<vector<size_t>>>& mesh_topology_, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_,
+                                    size_t number_of_elements, size_t mesh_type, size_t dimension)
     {
 
         mesh_topology_.resize(number_of_elements + 1);
@@ -127,12 +119,11 @@ namespace SPH
         }
             /*--- reinitialize the number of elements ---*/
         elements_nodes_connection_.resize(number_of_elements + 1);
-        elements_neighbors_connection_.resize(number_of_elements + 1);
-        //cell_lists_.resize(number_of_elements + 1);
+        mesh_topology_.resize(number_of_elements + 1);
         for (std::size_t element = 0; element != number_of_elements + 1; ++element)
         {
             elements_nodes_connection_[element].resize(4);
-            for (std::vector<long unsigned int>::size_type node = 0; node != elements_nodes_connection_[element].size(); ++node)
+            for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
             {
                 elements_nodes_connection_[element][node] = -1;
             }
@@ -171,7 +162,7 @@ namespace SPH
     Vecd MeshFileHelpers::nodeIndex(string& text_line)
     
     {
-            /*--- find the node1 between two cells ---*/
+        /*--- find the node1 between two cells ---*/
         string node1_string_copy = text_line;
         size_t first_devide_position = text_line.find_first_of(" ", 0);
         string node1_index_string = node1_string_copy.erase(first_devide_position);
@@ -187,7 +178,6 @@ namespace SPH
         size_t node2_index_decimal = stoi(node2_string, nullptr, 16) - 1;
 
         /*--- find the node3 between two cells---*/
-
         node3_string = node3_string.erase(0, second_devide_position + 1);
         size_t third_devide_position = node3_string.find_first_of(" ", 0);
         node3_string.erase(third_devide_position);
@@ -225,7 +215,7 @@ namespace SPH
         return cells;
     }
 
-    void MeshFileHelpers::updateElementsNodesConnection(vector<vector<size_t>>& elements_nodes_connection_, Vecd nodes, Vec2d cells,
+    void MeshFileHelpers::updateElementsNodesConnection(StdLargeVec<StdVec<size_t>>& elements_nodes_connection_, Vecd nodes, Vec2d cells,
                                                         bool& check_neighbor_cell1, bool& check_neighbor_cell2)
     {
 
@@ -257,7 +247,7 @@ namespace SPH
     }
     }
 
-    void MeshFileHelpers::updateCellLists(vector<vector<vector<size_t>>>& mesh_topology_, vector<vector<size_t>>& elements_nodes_connection_, Vecd nodes, 
+    void MeshFileHelpers::updateCellLists(vector<vector<vector<size_t>>>& mesh_topology_, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_, Vecd nodes,
                                             Vec2d cells, bool& check_neighbor_cell1, bool& check_neighbor_cell2, size_t boundary_type)
     {
         if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][1][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][2][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][3][0] != cells[check_neighbor_cell1])
@@ -315,7 +305,7 @@ namespace SPH
     
     }
 
-    void MeshFileHelpers::updateBoundaryCellLists(vector<vector<vector<size_t>>>& mesh_topology_, vector<vector<size_t>>& elements_nodes_connection_,
+    void MeshFileHelpers::updateBoundaryCellLists(vector<vector<vector<size_t>>>& mesh_topology_, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_,
                                                     Vecd nodes, Vec2d cells, bool& check_neighbor_cell1, bool& check_neighbor_cell2, size_t boundary_type)
     {
         if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(0) && mesh_topology_[cells[check_neighbor_cell2]][2][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][3][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
@@ -360,23 +350,19 @@ namespace SPH
 
     }
 
-
-
-
-    void MeshFileHelpers::cellCenterCoordinates(vector<vector<size_t>>& elements_nodes_connection_, std::vector<std::vector<long unsigned int>>::size_type& element,
-                                                vector<vector<Real>>& node_coordinates_, StdLargeVec<Vecd>& elements_centroids_, Vecd& center_coordinate)
+    void MeshFileHelpers::cellCenterCoordinates(StdLargeVec<StdVec<size_t>>& elements_nodes_connection_, std::size_t& element,
+                                                StdLargeVec<Vecd>& node_coordinates_, StdLargeVec<Vecd>& elements_centroids_, Vecd& center_coordinate)
     {
         
-        for (std::vector<long unsigned int>::size_type node = 0; node != elements_nodes_connection_[element].size(); ++node)
+        for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
         {
-            center_coordinate += Vecd(node_coordinates_[elements_nodes_connection_[element][node]][0] / 4.0,
-                node_coordinates_[elements_nodes_connection_[element][node]][1] / 4.0, node_coordinates_[elements_nodes_connection_[element][node]][2] / 4.0);
+            center_coordinate += node_coordinates_[elements_nodes_connection_[element][node]] / 4.0;
         }
         elements_centroids_[element] = center_coordinate;
     } 
 
-    void MeshFileHelpers::elementVolume(vector<vector<size_t>>& elements_nodes_connection_, std::vector<std::vector<long unsigned int>>::size_type& element,
-                                        vector<vector<Real>>& node_coordinates_, StdLargeVec<Real>& elements_volumes_)
+    void MeshFileHelpers::elementVolume(StdLargeVec<StdVec<size_t>>& elements_nodes_connection_, std::size_t& element,
+                                        StdLargeVec<Vecd>& node_coordinates_, StdLargeVec<Real>& elements_volumes_)
     {
         // get nodes position
         Real Total_volume = 0;
@@ -395,21 +381,21 @@ namespace SPH
     }
 
     void MeshFileHelpers::minimumdistance(vector<Real>& all_data_of_distance_between_nodes, StdLargeVec<Real>& elements_volumes_, vector<vector<vector<size_t>>>& mesh_topology_,
-                                            vector<vector<Real>>& node_coordinates_)
+                                           StdLargeVec<Vecd>& node_coordinates_)
     {
 
         for (size_t element_index = 0; element_index != elements_volumes_.size(); ++element_index)
         {
            
-        for (std::vector<std::vector<long unsigned int>>::size_type neighbor = 0; neighbor != mesh_topology_[element_index].size(); ++neighbor)
+        for (std::size_t neighbor = 0; neighbor != mesh_topology_[element_index].size(); ++neighbor)
         {
            
             size_t interface_node1_index = mesh_topology_[element_index][neighbor][2];
             size_t interface_node2_index = mesh_topology_[element_index][neighbor][3];
             size_t interface_node3_index = mesh_topology_[element_index][neighbor][4];
-            Vecd node1_position = Vecd(node_coordinates_[interface_node1_index][0], node_coordinates_[interface_node1_index][1], node_coordinates_[interface_node1_index][2]);
-            Vecd node2_position = Vecd(node_coordinates_[interface_node2_index][0], node_coordinates_[interface_node2_index][1], node_coordinates_[interface_node2_index][2]);
-            Vecd node3_position = Vecd(node_coordinates_[interface_node3_index][0], node_coordinates_[interface_node3_index][1], node_coordinates_[interface_node3_index][2]);
+            Vecd node1_position = node_coordinates_[interface_node1_index];
+            Vecd node2_position = node_coordinates_[interface_node2_index];
+            Vecd node3_position = node_coordinates_[interface_node3_index];
             Vecd interface_area_vector1 = node2_position - node1_position;
             Vecd interface_area_vector2 = node3_position - node1_position;
             Vecd area_vector = interface_area_vector1.cross(interface_area_vector2);
@@ -417,7 +403,7 @@ namespace SPH
             Real distance = sqrt(triangle_area);
             all_data_of_distance_between_nodes.push_back(distance);
         }
-    }
+        }
     }
 
     void MeshFileHelpers::vtuFileHeader(std::ofstream& out_file)
@@ -432,8 +418,8 @@ namespace SPH
     }
 
 
-    void MeshFileHelpers::vtuFileNodeCoordinates(std::ofstream& out_file, vector<vector<Real>>& node_coordinates_, 
-                                                vector<vector<size_t>>& elements_nodes_connection_, SPHBody& bounds_, Real& rangemax)
+    void MeshFileHelpers::vtuFileNodeCoordinates(std::ofstream& out_file, StdLargeVec<Vecd>& node_coordinates_, 
+                                            StdLargeVec<StdVec<size_t>>& elements_nodes_connection_, SPHBody& bounds_, Real& rangemax)
     {
         // Write point data
         out_file << "<Piece NumberOfPoints=\"" << node_coordinates_.size() << "\" NumberOfCells=\"" << elements_nodes_connection_.size() << "\">\n";
@@ -479,7 +465,7 @@ namespace SPH
       
     }
 
-    void MeshFileHelpers::vtuFileCellConnectivity(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_, vector<vector<Real>>& node_coordinates_)
+    void MeshFileHelpers::vtuFileCellConnectivity(std::ofstream& out_file, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_, StdLargeVec<Vecd>& node_coordinates_)
     {
         out_file << "<Cells>\n";
         // Write Cell data
@@ -498,7 +484,7 @@ namespace SPH
     }
 
 
-    void MeshFileHelpers::vtuFileOffsets(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_)
+    void MeshFileHelpers::vtuFileOffsets(std::ofstream& out_file, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_)
     {
         out_file << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\" RangeMin=\"4\" RangeMax=\"" << 4 * elements_nodes_connection_.size() << "\">\n";
 
@@ -511,7 +497,7 @@ namespace SPH
         out_file << "\n</DataArray>\n";
     }
 
-    void MeshFileHelpers::vtuFileTypeOfCell(std::ofstream& out_file, vector<vector<size_t>>& elements_nodes_connection_)
+    void MeshFileHelpers::vtuFileTypeOfCell(std::ofstream& out_file, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_)
     {
         size_t type = 10;
         //Specifies type of cell 10 = tetrahedral
@@ -569,8 +555,8 @@ namespace SPH
         }
     }
 
-    void MeshFileHelpers::nodeCoordinatesFluent(ifstream& mesh_file, size_t& node_index, vector<vector<Real>>& node_coordinates_, string& text_line,
-                                                size_t& dimension, vector<vector<Real>>& point_coordinates)
+    void MeshFileHelpers::nodeCoordinatesFluent(ifstream& mesh_file, StdLargeVec<Vecd>& node_coordinates_, string& text_line,
+                                                size_t& dimension)
     {
         while (getline(mesh_file, text_line))
         {
@@ -581,8 +567,6 @@ namespace SPH
                 {
                     if (text_line.find("(", 0) == string::npos && text_line.find("))", 0) == string::npos && text_line.find(" ", 0) != string::npos)
                     {
- 
-                        Real Coords[3] = { 0.0, 0.0, 0.0 };
                         if (dimension == 3)
                         {
                             size_t first_devide_position = text_line.find_first_of(" ");
@@ -594,6 +578,7 @@ namespace SPH
                             string y_coordinate_string = y_part.erase(last_devide_position);
                             y_coordinate_string = y_coordinate_string.erase(0, first_devide_position);
                             string z_coordinate_string = z_part.erase(0, last_devide_position);
+                            Vecd Coords = Vecd::Zero();
                             istringstream streamx, streamy, streamz;
                             streamx.str(x_coordinate_string);
                             streamy.str(y_coordinate_string);
@@ -601,14 +586,7 @@ namespace SPH
                             streamx >> Coords[0];
                             streamy >> Coords[1];
                             streamz >> Coords[2];
-                            node_coordinates_[node_index][0] = Coords[0];
-                            node_coordinates_[node_index][1] = Coords[1];
-                            node_coordinates_[node_index][2] = Coords[2];
-                            ++node_index;
-                        }
-                        for (std::size_t iDim = 0; iDim != dimension; ++iDim)
-                        {
-                            point_coordinates[iDim].push_back(Coords[iDim]);
+                            node_coordinates_.push_back(Coords);
                         }
                     }
                     text_line.erase(0, 1);
@@ -625,7 +603,7 @@ namespace SPH
         }
     }
 
-    void MeshFileHelpers::updateBoundaryCellListsFluent(vector<vector<vector<size_t>>>& mesh_topology_, vector<vector<size_t>>& elements_nodes_connection_, 
+    void MeshFileHelpers::updateBoundaryCellListsFluent(vector<vector<vector<size_t>>>& mesh_topology_, StdLargeVec<StdVec<size_t>>& elements_nodes_connection_,
                                                         Vecd nodes, Vec2d cells, bool& check_neighbor_cell1, bool& check_neighbor_cell2, size_t boundary_type)
     {
 

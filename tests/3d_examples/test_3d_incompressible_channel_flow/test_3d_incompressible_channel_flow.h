@@ -6,8 +6,8 @@
 
 #ifndef TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
 #define TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
-#include "unstructured_mesh_3d.h"             
-#include "common_weakly_compressible_FVM_classes_3d.h"
+#include "unstructured_mesh.h"             
+#include "common_weakly_compressible_FVM_classes.h"
 
 using namespace SPH;
 using namespace std;
@@ -55,12 +55,11 @@ class InvCFInitialCondition
     public:
     explicit InvCFInitialCondition(SPHBody& sph_body)
         : FluidInitialCondition(sph_body), rho_(particles_->rho_),
-        p_(*particles_->getVariableByName<Real>("Pressure")), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+        p_(*particles_->getVariableByName<Real>("Pressure")),
         vel_(particles_->vel_) {};
 
 protected:
     StdLargeVec<Real>& rho_, & p_;
-    StdLargeVec<Vecd>& mom_;
     void update(size_t index_i, Real dt)
     {
         rho_[index_i] = rho0_f;
@@ -77,11 +76,11 @@ protected:
 ///----------------------------------------------------------------------
 //	InvCFBoundaryConditionSetup
 //----------------------------------------------------------------------
-class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM_3d
+class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 {
     public:
-        InvCFBoundaryConditionSetup(BaseInnerRelationInFVM_3d & inner_relation, GhostCreationFromMesh_3d& ghost_creation)
-            : BoundaryConditionSetupInFVM_3d(inner_relation, ghost_creation),
+        InvCFBoundaryConditionSetup(BaseInnerRelationInFVM& inner_relation, GhostCreationFromMesh& ghost_creation)
+            : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
             fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())) {};
         virtual ~InvCFBoundaryConditionSetup() {};
 

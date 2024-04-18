@@ -1,18 +1,18 @@
 
-#include "unstructured_mesh_3d.h"
-#include "MeshHelper.h"
+#include "unstructured_mesh.h"
+#include "mesh_helper.h"
 namespace SPH
 {
     //=================================================================================================//
-    ANSYSMesh_3d::ANSYSMesh_3d(const std::string &full_path)
+    ANSYSMesh::ANSYSMesh(const std::string &full_path)
     {
-        getDataFromMeshFile3d(full_path);
+        getDataFromMeshFile(full_path);
         getElementCenterCoordinates();
         getMinimumDistanceBetweenNodes();
     }
 //===
     //=================================================================================================//
-    void ANSYSMesh_3d::getDataFromMeshFile3d(const std::string &full_path)
+    void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
     {
         Real ICEM = 0;
         ifstream mesh_file; /*!< \brief File object for the Ansys ASCII mesh file. */
@@ -29,6 +29,7 @@ namespace SPH
         if (text_line.find("Created by", 0) != string::npos)
         {
             ICEM = 1;
+            cout << "Reading 3D ICEM mesh." << endl;
         }
        
         if (ICEM == 1)
@@ -41,22 +42,7 @@ namespace SPH
             /*--- Read the node data (index is starting from zero) ---*/
             size_t number_of_points(0);
             MeshFileHelpers::numberofNodes(mesh_file, number_of_points, text_line);
-
-            /* Prepare our data structure for the point coordinates. */
-            node_coordinates_.resize(number_of_points);
-            for (std::vector<std::vector<double>>::size_type point = 0; point != node_coordinates_.size(); ++point)
-            {
-                node_coordinates_[point].resize(dimension);
-            }
-
-            point_coordinates.resize(dimension);
-            for (std::size_t k = 0; k < dimension; k++)
-            {
-                point_coordinates[k].reserve(number_of_points);
-            }
-
-            size_t node_index = 0;
-            MeshFileHelpers::nodeCoordinates(mesh_file, node_index, node_coordinates_, text_line, dimension, point_coordinates);
+            MeshFileHelpers::nodeCoordinates(mesh_file, node_coordinates_, text_line, dimension);
             
             size_t boundary_type(0);
             size_t number_of_elements(0);
@@ -64,7 +50,7 @@ namespace SPH
             MeshFileHelpers::numberofElements(mesh_file, number_of_elements, text_line);
 
             /*Preparing and initializing the data structure of mesh topology and element node connection*/
-            MeshFileHelpers::dataStruct(mesh_topology_, elements_nodes_connection_, number_of_elements, mesh_type, dimension, elements_neighbors_connection_);
+            MeshFileHelpers::dataStruct(mesh_topology_, elements_nodes_connection_, number_of_elements, mesh_type, dimension);
 
             /*--- find the elements lines ---*/
             while (getline(mesh_file, text_line))
@@ -113,31 +99,21 @@ namespace SPH
         }
         else /*This section is for mesh files created from fluent*/
         {
+            cout << "Reading 3D Fluent mesh." << endl;
             size_t dimension(0);
             MeshFileHelpers::meshDimension(mesh_file, dimension, text_line);
 
             /*--- Read the node data (index is starting from zero) ---*/
             size_t number_of_points(0);
             MeshFileHelpers::numberofNodesFluent(mesh_file, number_of_points, text_line);
-            node_coordinates_.resize(number_of_points);
-            for (std::vector<std::vector<double>>::size_type point = 0; point != node_coordinates_.size(); ++point)
-            {
-                node_coordinates_[point].resize(dimension);
-            }
-            point_coordinates.resize(dimension);
-            for (std::size_t k = 0; k < dimension; k++)
-            {
-                point_coordinates[k].reserve(number_of_points);
-            }
             
-            size_t node_index = 0;
             size_t boundary_type(0);
             size_t number_of_elements(0);
             size_t mesh_type = 4;
 
             MeshFileHelpers::numberofElementsFluent(mesh_file, number_of_elements, text_line);
-            MeshFileHelpers::dataStruct(mesh_topology_, elements_nodes_connection_, number_of_elements, mesh_type, dimension, elements_neighbors_connection_);
-            MeshFileHelpers::nodeCoordinatesFluent( mesh_file, node_index, node_coordinates_, text_line, dimension, point_coordinates);
+            MeshFileHelpers::dataStruct(mesh_topology_, elements_nodes_connection_, number_of_elements, mesh_type, dimension);
+            MeshFileHelpers::nodeCoordinatesFluent( mesh_file, node_coordinates_, text_line, dimension);
 
             while (getline(mesh_file, text_line))
             {
@@ -195,11 +171,11 @@ namespace SPH
     }
     //=================================================================================================//
 
-        void ANSYSMesh_3d::getElementCenterCoordinates()
+        void ANSYSMesh::getElementCenterCoordinates()
         {
             elements_centroids_.resize(elements_nodes_connection_.size());
             elements_volumes_.resize(elements_nodes_connection_.size());
-            for (std::vector<std::vector<long unsigned int>>::size_type element = 1; element != elements_nodes_connection_.size(); ++element)
+            for (std::size_t element = 1; element != elements_nodes_connection_.size(); ++element)
             {
                 Vecd center_coordinate = Vecd::Zero();
                 MeshFileHelpers::cellCenterCoordinates(elements_nodes_connection_, element, node_coordinates_, elements_centroids_, center_coordinate);
@@ -211,7 +187,7 @@ namespace SPH
         }
         //=================================================================================================//
 
-        void ANSYSMesh_3d::getMinimumDistanceBetweenNodes()
+        void ANSYSMesh::getMinimumDistanceBetweenNodes()
         {
             vector<Real> all_data_of_distance_between_nodes;
             all_data_of_distance_between_nodes.resize(0);
@@ -227,24 +203,7 @@ namespace SPH
             }
         }
         //=================================================================================================//
-        
-        GeneratingMethod<UnstructuredMesh_3d>::GeneratingMethod(ANSYSMesh_3d& ansys_mesh_3d)
-            : elements_centroids_(ansys_mesh_3d.elements_centroids_), // Assume ANSYSMesh_3d has a similar interface
-            elements_volumes_(ansys_mesh_3d.elements_volumes_) {}
-        //=================================================================================================//
-        ParticleGenerator<UnstructuredMesh_3d>::ParticleGenerator(SPHBody& sph_body, ANSYSMesh_3d& ansys_mesh_3d)
-            : ParticleGenerator<Base>(sph_body), GeneratingMethod<UnstructuredMesh_3d>(ansys_mesh_3d) {}
-        //=================================================================================================//
-        void ParticleGenerator<UnstructuredMesh_3d>::initializeGeometricVariables()
-        {
-            for (size_t i = 0; i != elements_centroids_.size(); ++i)
-            {
-                initializePositionAndVolumetricMeasure(elements_centroids_[i], elements_volumes_[i]);
-            }
-        }
-        //=================================================================================================//
-    
-        BaseInnerRelationInFVM_3d::BaseInnerRelationInFVM_3d(RealBody &real_body, ANSYSMesh_3d& ansys_mesh)
+        BaseInnerRelationInFVM::BaseInnerRelationInFVM(RealBody& real_body, ANSYSMesh& ansys_mesh)
         : BaseInnerRelation(real_body), real_body_(&real_body), node_coordinates_(ansys_mesh.node_coordinates_),
         mesh_topology_(ansys_mesh.mesh_topology_)
         {
@@ -252,7 +211,7 @@ namespace SPH
             inner_configuration_.resize(base_particles_.real_particles_bound_, Neighborhood());
         };
     //=================================================================================================//
-    void BaseInnerRelationInFVM_3d::resetNeighborhoodCurrentSize()
+    void BaseInnerRelationInFVM::resetNeighborhoodCurrentSize()
     {
         parallel_for(
             IndexRange(0, base_particles_.total_real_particles_),
@@ -266,7 +225,7 @@ namespace SPH
             ap);
     }
     //=================================================================================================//
-    void NeighborBuilderInFVM_3d::createRelation(Neighborhood &neighborhood, Real &distance,
+    void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance,
                                             Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
         neighborhood.j_.push_back(j_index);
@@ -276,7 +235,7 @@ namespace SPH
         neighborhood.allocated_size_++;
     }
     //=================================================================================================//
-    void NeighborBuilderInFVM_3d::initializeRelation(Neighborhood &neighborhood, Real &distance,
+    void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &distance,
                                                 Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
         size_t current_size = neighborhood.current_size_;
@@ -287,11 +246,11 @@ namespace SPH
     }
 
     //=================================================================================================//
-    InnerRelationInFVM_3d::InnerRelationInFVM_3d(RealBody &real_body, ANSYSMesh_3d& ansys_mesh)
-        : BaseInnerRelationInFVM_3d(real_body, ansys_mesh), get_inner_neighbor_(&real_body){};
+    InnerRelationInFVM::InnerRelationInFVM(RealBody &real_body, ANSYSMesh& ansys_mesh)
+        : BaseInnerRelationInFVM(real_body, ansys_mesh), get_inner_neighbor_(&real_body){};
     //=================================================================================================//
     template <typename GetParticleIndex, typename GetNeighborRelation>
-    void InnerRelationInFVM_3d::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,
+    void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,
                                                         ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
     {
         parallel_for(
@@ -325,7 +284,7 @@ namespace SPH
                         Vecd node1_to_center_direction = particle_position - node1_position; 
                         if (node1_to_center_direction.dot(normalized_normal_vector) < 0)
                         {
-                            normalized_normal_vector = -normalized_normal_vector; // vector pointing towards i
+                            normalized_normal_vector = -normalized_normal_vector;
                         };
                         Real r_ij = 0; // we need r_ij to calculate the viscous force
                         // boundary_type == 2 means both of them are inside of fluid
@@ -333,9 +292,9 @@ namespace SPH
                         {
                             r_ij = (particle_position - pos_n[index_j]).dot(normalized_normal_vector);
                         }
-                        // boundary_type == 3 means fulid particle with wall boundary
-                        if ((boundary_type == 3) | (boundary_type == 4) | (boundary_type == 9) | (boundary_type == 10) | (boundary_type == 36) 
-                            | (boundary_type == 5) | (boundary_type == 7))
+                        // this refer to the different types of wall boundary condtions
+                        if ((boundary_type == 3) | (boundary_type == 4) | (boundary_type == 5) | (boundary_type == 7) | (boundary_type == 9) |
+                            (boundary_type == 10) | (boundary_type == 36)) 
                         {
                             r_ij = node1_to_center_direction.dot(normalized_normal_vector) * 2.0;
                         }
@@ -347,7 +306,7 @@ namespace SPH
             ap);
     }
     //=================================================================================================//
-    void InnerRelationInFVM_3d::updateConfiguration()
+    void InnerRelationInFVM::updateConfiguration()
     {
         resetNeighborhoodCurrentSize();
         searchNeighborsByParticles(base_particles_.total_real_particles_,
@@ -355,7 +314,7 @@ namespace SPH
                                 get_particle_index_, get_inner_neighbor_);
     }
     //=================================================================================================//
-    GhostCreationFromMesh_3d::GhostCreationFromMesh_3d(RealBody& real_body, ANSYSMesh_3d& ansys_mesh, Ghost<ReserveSizeFactor>& ghost_boundary)
+    GhostCreationFromMesh::GhostCreationFromMesh(RealBody& real_body, ANSYSMesh& ansys_mesh, Ghost<ReserveSizeFactor>& ghost_boundary)
         : GeneralDataDelegateSimple(real_body),
         ghost_boundary_(ghost_boundary),
         node_coordinates_(ansys_mesh.node_coordinates_),
@@ -370,7 +329,7 @@ namespace SPH
         addGhostParticleAndSetInConfiguration();
     }
     //=================================================================================================//
-    void GhostCreationFromMesh_3d::addGhostParticleAndSetInConfiguration()
+    void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
     {
         ghost_bound_.second = ghost_bound_.first;
 
@@ -390,9 +349,9 @@ namespace SPH
                     size_t node1_index = mesh_topology_[index_i][neighbor_index][2];
                     size_t node2_index = mesh_topology_[index_i][neighbor_index][3];
                     size_t node3_index = mesh_topology_[index_i][neighbor_index][4];
-                    Vecd node1_position = Vecd(node_coordinates_[node1_index][0], node_coordinates_[node1_index][1], node_coordinates_[node1_index][2]);
-                    Vecd node2_position = Vecd(node_coordinates_[node2_index][0], node_coordinates_[node2_index][1], node_coordinates_[node2_index][2]);
-                    Vecd node3_position = Vecd(node_coordinates_[node3_index][0], node_coordinates_[node3_index][1], node_coordinates_[node3_index][2]);
+                    Vecd node1_position = node_coordinates_[node1_index];
+                    Vecd node2_position = node_coordinates_[node2_index];
+                    Vecd node3_position = node_coordinates_[node3_index];
                     Vecd ghost_particle_position = (1.0 / 3.0) * (node1_position + node2_position + node3_position);
 
                     mesh_topology_[index_i][neighbor_index][0] = ghost_particle_index + 1;
@@ -402,15 +361,15 @@ namespace SPH
                     mesh_topology_.resize(ghost_particle_index);
                     std::vector<std::vector<size_t>> new_element;
 
-                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
+                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index, node3_index) to the new element
                     std::vector<size_t> sub_element1 = { index_i + 1, boundary_type, node1_index, node2_index, node3_index };
                     new_element.push_back(sub_element1);
 
-                    // Add (correspon ding_index_i,boundary_type,node1_index,node2_index) to the new element
+                    // Add (correspon ding_index_i,boundary_type,node1_index,node2_index, node3_index) to the new element
                     std::vector<size_t> sub_element2 = { index_i + 1, boundary_type, node1_index, node2_index, node3_index };
                     new_element.push_back(sub_element2);
 
-                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
+                    // Add (corresponding_index_i,boundary_type,node1_index,node2_index, node3_index) to the new element
                     std::vector<size_t> sub_element3 = { index_i + 1, boundary_type, node1_index, node2_index, node3_index };
                     new_element.push_back(sub_element3);
 
@@ -448,7 +407,7 @@ namespace SPH
         }
     };
     //=================================================================================================//
-    BodyStatesRecordingInMeshToVtu::BodyStatesRecordingInMeshToVtu(SPHBody& body, ANSYSMesh_3d& ansys_mesh)
+    BodyStatesRecordingInMeshToVtu::BodyStatesRecordingInMeshToVtu(SPHBody& body, ANSYSMesh& ansys_mesh)
         : BodyStatesRecording(body), node_coordinates_(ansys_mesh.node_coordinates_),
         elements_nodes_connection_(ansys_mesh.elements_nodes_connection_), bounds_(body) {};
     //=================================================================================================//
@@ -491,7 +450,7 @@ namespace SPH
         }
     } 
     //=================================================================================================//
-    BoundaryConditionSetupInFVM_3d::BoundaryConditionSetupInFVM_3d(BaseInnerRelationInFVM_3d& inner_relation, GhostCreationFromMesh_3d& ghost_creation) 
+    BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM& inner_relation, GhostCreationFromMesh& ghost_creation) 
         : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
         p_(*particles_->getVariableByName<Real>("Pressure")),
         vel_(particles_->vel_), pos_(particles_->pos_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
@@ -500,7 +459,7 @@ namespace SPH
         each_boundary_type_with_all_ghosts_eij_(ghost_creation.each_boundary_type_with_all_ghosts_eij_),
         each_boundary_type_contact_real_index_(ghost_creation.each_boundary_type_contact_real_index_) {};
     //=================================================================================================//
-    void BoundaryConditionSetupInFVM_3d::resetBoundaryConditions()
+    void BoundaryConditionSetupInFVM::resetBoundaryConditions()
     {
         for (size_t boundary_type = 0; boundary_type < each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
         {
@@ -519,11 +478,17 @@ namespace SPH
                         applyNonSlipWallBoundary(ghost_index, index_i);
                         applyReflectiveWallBoundary(ghost_index, index_i, e_ij);
                         break;
+                    case 4:
+                        applyTopBoundary(ghost_index, index_i);
+                        break;
                     case 5:
                         applyPressureOutletBC(ghost_index, index_i);
                         break;
                     case 7:
                         applySymmetryBoundary(ghost_index, index_i, e_ij);
+                        break;
+                    case 9:
+                        applyFarFieldBoundary(ghost_index);
                         break;
                     case 10:
                         applyGivenValueInletFlow(ghost_index);
@@ -531,12 +496,6 @@ namespace SPH
                         break;
                     case 36:
                         applyOutletBoundary(ghost_index, index_i);
-                        break;
-                    case 4:
-                        applyTopBoundary(ghost_index, index_i);
-                        break;
-                    case 9:
-                        applyFarFieldBoundary(ghost_index);
                         break;
                     }
                 }

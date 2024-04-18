@@ -28,7 +28,7 @@
 
 #ifndef COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_3D_H
 #define COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_3D_H
-#include "unstructured_mesh_3d.h"
+#include "unstructured_mesh.h"
 
 namespace SPH
 {

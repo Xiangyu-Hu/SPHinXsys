@@ -12,7 +12,7 @@ using namespace SPH;
 int main(int ac, char* av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh_3d read_mesh_data(mesh_fullpath);
+    ANSYSMesh read_mesh_data(mesh_fullpath);
     //----------------------------------------------------------------------
    //	Build up the environment of a SPHSystem.
    //----------------------------------------------------------------------
@@ -25,15 +25,15 @@ int main(int ac, char* av[])
     FluidBody air_block(sph_system, makeShared<AirBody>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
-    air_block.generateParticlesWithReserve<UnstructuredMesh_3d>(ghost_boundary, read_mesh_data);
+    air_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, read_mesh_data);
     air_block.addBodyStateForRecording<Real>("Density");
     air_block.addBodyStateForRecording<Real>("Pressure");
     SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
-    GhostCreationFromMesh_3d ghost_creation(air_block, read_mesh_data, ghost_boundary);
+    GhostCreationFromMesh ghost_creation(air_block, read_mesh_data, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
-    InnerRelationInFVM_3d air_block_inner(air_block, read_mesh_data);
+    InnerRelationInFVM air_block_inner(air_block, read_mesh_data);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.

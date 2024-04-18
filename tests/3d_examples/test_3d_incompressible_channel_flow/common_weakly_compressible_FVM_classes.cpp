@@ -1,5 +1,5 @@
 
-#include "common_weakly_compressible_FVM_classes_3d.h"
+#include "common_weakly_compressible_FVM_classes.h"
 
 using namespace std;
 namespace SPH
