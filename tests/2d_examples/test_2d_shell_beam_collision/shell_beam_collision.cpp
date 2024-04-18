@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
     BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);

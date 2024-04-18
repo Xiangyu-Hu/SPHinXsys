@@ -258,7 +258,7 @@ class FlapSystemForSimbody : public SolidBodyPartForSimbody
     }
 };
 
-class WaveMaking : public solid_dynamics::MotionConstraint
+class WaveMaking : public BodyPartMotionConstraint
 {
     Real model_scale_;
     Real gravity_;
@@ -325,9 +325,11 @@ class WaveMaking : public solid_dynamics::MotionConstraint
 
   public:
     WaveMaking(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part),
+        : BodyPartMotionConstraint(body_part),
           model_scale_(25.0), gravity_(gravity_g), water_depth_(Water_H), wave_height_(5.0),
-          wave_period_(10.0)
+          wave_period_(10.0),
+          mass_(*particles_->getVariableByName<Real>("Mass")),
+          force_(*particles_->getVariableByName<Vecd>("Force"))
     {
         computeWaveStrokeAndFrequency();
     }
@@ -339,6 +341,10 @@ class WaveMaking : public solid_dynamics::MotionConstraint
         vel_[index_i] = getVelocity(time);
         force_[index_i] = mass_[index_i] * getAcceleration(time);
     };
+
+  protected:
+    StdLargeVec<Real> &mass_;
+    StdLargeVec<Vecd> &force_;
 };
 
 Real h = 1.3 * particle_spacing_ref;

@@ -139,7 +139,7 @@ int main(int ac, char *av[])
         stress_relaxation_second_half(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
+    SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);

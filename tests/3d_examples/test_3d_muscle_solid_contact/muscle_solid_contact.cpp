@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     /** Constrain the holder. */
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
     BodyRegionByParticle holder(myocardium_body, holder_shape);
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
