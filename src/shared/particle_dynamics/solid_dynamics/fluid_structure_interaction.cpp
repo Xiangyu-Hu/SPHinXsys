@@ -10,7 +10,7 @@ BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, co
     : LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
       ForcePrior(&base_particles_, force_name),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       force_from_fluid_(*particles_->getVariableByName<Vecd>(force_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -59,7 +59,7 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
 InitializeDisplacement::
     InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp), pos_(particles_->ParticlePositions()) {}
+      pos_temp_(pos_temp), pos_(*base_particles_.getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 void InitializeDisplacement::update(size_t index_i, Real dt)
 {
@@ -69,7 +69,7 @@ void InitializeDisplacement::update(size_t index_i, Real dt)
 UpdateAverageVelocityAndAcceleration::
     UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp), pos_(particles_->ParticlePositions()),
+      pos_temp_(pos_temp), pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_ave_(*particles_->getVariableByName<Vecd>("AverageVelocity")),
       acc_ave_(*particles_->getVariableByName<Vecd>("AverageAcceleration")) {}
 //=================================================================================================//

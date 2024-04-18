@@ -130,7 +130,7 @@ PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf
     : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       acc_deviatoric_plastic_strain_(particles_->acc_deviatoric_plastic_strain_),
       vertical_stress_(particles_->vertical_stress_),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
 //=================================================================================================//

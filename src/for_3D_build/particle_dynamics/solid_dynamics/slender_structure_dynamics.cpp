@@ -41,7 +41,7 @@ Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       B_(particles_->B_),
       n0_(particles_->n0_), b_n0_(particles_->b_n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
@@ -49,8 +49,8 @@ BarCorrectConfiguration::
 BarDeformationGradientTensor::
     BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_), F_b_bending_(particles_->F_b_bending_) {}
@@ -60,8 +60,8 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       rho_(*particles_->getVariableByName<Real>("Density")),
       thickness_(particles_->thickness_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
@@ -89,7 +89,7 @@ BarStressRelaxationFirstHalf::
       elastic_solid_(particles_->elastic_solid_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
@@ -292,7 +292,7 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
-      axis_(axis), pos_(particles_->ParticlePositions()),
+      axis_(axis), pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       pos0_(particles_->pos0_),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),

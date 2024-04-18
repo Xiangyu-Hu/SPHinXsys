@@ -7,7 +7,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity"))
 {
     particles_->registerVariable(vorticity_, "VorticityInner");

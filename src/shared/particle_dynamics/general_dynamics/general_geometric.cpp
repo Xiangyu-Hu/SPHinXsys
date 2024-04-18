@@ -7,7 +7,7 @@ namespace SPH
 NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
       initial_shape_(sph_body.getInitialShape()),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
@@ -29,7 +29,7 @@ NormalDirectionFromSubShapeAndOp::
       shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.getInitialShape()).getSubShapeAndOpByName(shape_name)),
       shape_(shape_and_op_->first),
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
@@ -48,12 +48,12 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
 NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
       initial_shape_(sph_body_.getInitialShape()),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariable<Vecd>("InitialNormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
       phi0_(*particles_->registerSharedVariable<Real>("InitialSignedDistance")),
-      Vol_(particles_->VolumetricMeasures()) {}
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 void NormalDirectionFromParticles::interaction(size_t index_i, Real dt)
 {

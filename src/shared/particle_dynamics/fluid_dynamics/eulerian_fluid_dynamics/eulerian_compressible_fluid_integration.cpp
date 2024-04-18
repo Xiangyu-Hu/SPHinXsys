@@ -8,7 +8,7 @@ namespace fluid_dynamics
 BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &inner_relation)
     : BaseIntegration(inner_relation),
       compressible_fluid_(CompressibleFluid(1.0, 1.4)),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       E_(*particles_->registerSharedVariable<Real>("TotalEnergy")),
       dE_dt_(*particles_->registerSharedVariable<Real>("TotalEnergyChangeRate")),
       dmass_dt_(*particles_->registerSharedVariable<Real>("MassChangeRate")),
@@ -18,11 +18,11 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
 //=================================================================================================//
 CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sph_body)
     : FluidInitialCondition(sph_body),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       rho_(*particles_->getVariableByName<Real>("Density")),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
       E_(*particles_->getVariableByName<Real>("TotalEnergy")) {}

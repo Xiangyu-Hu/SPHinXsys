@@ -12,11 +12,11 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
       rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {

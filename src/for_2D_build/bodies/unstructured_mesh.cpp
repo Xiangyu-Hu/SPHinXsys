@@ -512,12 +512,11 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
         IndexRange(0, base_particles_.total_real_particles_),
         [&](const IndexRange &r)
         {
-            StdLargeVec<Vecd> &pos_n = source_particles.ParticlePositions();
             StdLargeVec<Real> &Vol_n = source_particles.VolumetricMeasures();
             for (size_t num = r.begin(); num != r.end(); ++num)
             {
                 size_t index_i = get_particle_index(num);
-                Vecd &particle_position = pos_n[index_i];
+                Vecd &particle_position = pos_[index_i];
                 Real &Vol_i = Vol_n[index_i];
 
                 Neighborhood &neighborhood = particle_configuration[index_i];
@@ -544,7 +543,7 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                     // boundary_type == 2 means both of them are inside of fluid
                     if (boundary_type == 2)
                     {
-                        r_ij = (particle_position - pos_n[index_j]).dot(normal_vector);
+                        r_ij = (particle_position - pos_[index_j]).dot(normal_vector);
                     }
                     // boundary_type == 3 means fluid particle with wall boundary
                     if ((boundary_type == 3) | (boundary_type == 4) | (boundary_type == 9) | (boundary_type == 10) | (boundary_type == 36))
@@ -573,8 +572,8 @@ GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ans
       ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh.node_coordinates_),
       mesh_topology_(ansys_mesh.mesh_topology_),
-      pos_(particles_->ParticlePositions()),
-      Vol_(particles_->VolumetricMeasures()),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       ghost_bound_(ghost_boundary.GhostBound())
 {
     ghost_boundary.checkParticlesReserved();
@@ -734,10 +733,11 @@ BoundaryConditionSetupInFVM::
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
     : fluid_dynamics::FluidDataInner(inner_relation),
       rho_(*particles_->getVariableByName<Real>("Density")),
-      Vol_(particles_->VolumetricMeasures()), mass_(*particles_->getVariableByName<Real>("Mass")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      pos_(particles_->ParticlePositions()),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       ghost_bound_(ghost_creation.ghost_bound_),
       each_boundary_type_with_all_ghosts_index_(ghost_creation.each_boundary_type_with_all_ghosts_index_),

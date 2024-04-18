@@ -99,7 +99,7 @@ class DiffusionBasedMapping
     explicit DiffusionBasedMapping(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           DiffusionReactionSimpleData<ParticlesType>(sph_body),
-          pos_(this->particles_->ParticlePositions()),
+          pos_(*this->base_particles_.getVariableByName<Vecd>("Position")),
           all_species_(this->particles_->all_species_){};
     virtual ~DiffusionBasedMapping(){};
 

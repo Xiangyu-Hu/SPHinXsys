@@ -6,7 +6,7 @@ namespace continuum_dynamics
 {
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), PlasticContinuumDataSimple(sph_body),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       stress_tensor_3D_(particles_->stress_tensor_3D_) {}
 //=================================================================================================//
@@ -42,7 +42,7 @@ ShearStressRelaxation ::
       velocity_gradient_(particles_->velocity_gradient_), strain_tensor_(particles_->strain_tensor_),
       strain_tensor_rate_(particles_->strain_tensor_rate_), von_mises_stress_(particles_->von_mises_stress_),
       von_mises_strain_(particles_->von_mises_strain_),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")) {}
 //====================================================================================//
 void ShearStressRelaxation::initialization(size_t index_i, Real dt)

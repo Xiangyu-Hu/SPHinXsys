@@ -13,7 +13,7 @@ PorousMediaDampingPairwiseInner<VariableType>::
                                     const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
       PorousMediaSolidDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()), mass_(*particles_->getVariableByName<Real>("Mass")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")), mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)),
       eta_(eta) {}
 //=================================================================================================//

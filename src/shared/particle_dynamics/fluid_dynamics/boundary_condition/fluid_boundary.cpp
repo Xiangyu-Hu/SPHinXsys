@@ -9,7 +9,7 @@ BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part), FluidDataSimple(sph_body_),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")){};
 //=================================================================================================//
 FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
@@ -35,7 +35,7 @@ EmitterInflowCondition::
     EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       rho_(*particles_->getVariableByName<Real>("Density")),
@@ -61,7 +61,7 @@ EmitterInflowInjection::
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
       buffer_(buffer), axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
@@ -92,7 +92,7 @@ void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
 DisposerOutflowDeletion::
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
 //=================================================================================================//
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)

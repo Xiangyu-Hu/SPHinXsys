@@ -14,10 +14,10 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
       rho_(*this->particles_->template getVariableByName<Real>("Density")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
-      Vol_(this->particles_->VolumetricMeasures()),
+      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       p_(*this->particles_->template registerSharedVariable<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
-      pos_(this->particles_->ParticlePositions()),
+      pos_(*this->base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
       force_(*this->particles_->template registerSharedVariable<Vecd>("Force")),
       force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior")) {}
@@ -166,7 +166,7 @@ Integration2ndHalf<Inner<>, RiemannSolverType>::
     Integration2ndHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      Vol_(particles_->VolumetricMeasures()) {}
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void Integration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)

@@ -10,8 +10,8 @@ BaseLifeTimeDynamics::BaseLifeTimeDynamics(SPHBody &sph_body)
       particle_split_merge_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
       inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
       rho_(*particles_->getVariableByName<Real>("Density")),
-      pos_(particles_->ParticlePositions()),
-      Vol_(particles_->VolumetricMeasures()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//

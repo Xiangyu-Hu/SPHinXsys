@@ -49,7 +49,7 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
         : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
           solid_dynamics::ElasticSolidDataSimple(sph_body_),
           mass_n_(*particles_->getVariableByName<Real>("Mass")),
-          Vol_(particles_->VolumetricMeasures()),
+          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
           F_(particles_->F_),
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())

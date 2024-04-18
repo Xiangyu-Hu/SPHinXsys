@@ -30,7 +30,7 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       ElasticSolidDataSimple(sph_body),
-      pos_(particles_->ParticlePositions()), vel_(*particles_->getVariableByName<Vecd>("Velocity")) {}
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")), vel_(*particles_->getVariableByName<Vecd>("Velocity")) {}
 //=================================================================================================//
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
@@ -52,8 +52,8 @@ void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       B_(particles_->B_), F_(particles_->F_) {}
 //=================================================================================================//
 BaseElasticIntegration::
@@ -61,8 +61,8 @@ BaseElasticIntegration::
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
       rho_(*particles_->getVariableByName<Real>("Density")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}

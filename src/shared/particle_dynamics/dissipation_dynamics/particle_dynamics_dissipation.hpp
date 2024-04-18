@@ -12,7 +12,7 @@ DampingBySplittingInner<VariableType>::
                             const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
       DissipationDataInner(inner_relation), eta_(eta),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
 //=================================================================================================//
@@ -207,7 +207,7 @@ DampingPairwiseInner<VariableType>::
                          const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
       DissipationDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)),
       eta_(eta) {}
@@ -373,7 +373,7 @@ DampingPairwiseFromWall<VariableType>::
     DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
     : LocalDynamics(contact_relation.getSPHBody()),
       DataDelegateContact<BaseParticles, SolidParticles>(contact_relation),
-      eta_(eta), Vol_(particles_->VolumetricMeasures()),
+      eta_(eta), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name))
 {

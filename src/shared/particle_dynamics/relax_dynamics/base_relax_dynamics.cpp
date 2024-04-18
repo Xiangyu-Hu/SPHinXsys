@@ -7,7 +7,7 @@ namespace relax_dynamics
 //=================================================================================================//
 RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
     : LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
 //=================================================================================================//
 void RandomizeParticlePosition::update(size_t index_i, Real dt)

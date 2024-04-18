@@ -30,7 +30,7 @@ DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType
     : LocalDynamics(identifier.getSPHBody()),
       DataDelegationType<ParticlesType, ContactParticlesType...>(identifier),
       material_(this->particles_->diffusion_reaction_material_),
-      Vol_(this->particles_->VolumetricMeasures()),
+      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       all_diffusions_(material_.AllDiffusions()),
       diffusion_species_(this->particles_->DiffusionSpecies()),
       gradient_species_(this->particles_->GradientSpecies())

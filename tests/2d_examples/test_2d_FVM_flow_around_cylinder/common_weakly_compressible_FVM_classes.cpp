@@ -19,7 +19,7 @@ Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 }
 //=================================================================================================//
 BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), fluid_dynamics::FluidDataInner(inner_relation), Vol_(particles_->VolumetricMeasures()){};
+    : LocalDynamics(inner_relation.getSPHBody()), fluid_dynamics::FluidDataInner(inner_relation), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")){};
 //=================================================================================================//
 ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
     : BaseForceFromFluidInFVM(inner_relation), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),

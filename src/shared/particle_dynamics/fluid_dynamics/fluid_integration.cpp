@@ -8,12 +8,12 @@ namespace fluid_dynamics
 FluidInitialCondition::
     FluidInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")) {}
 //=================================================================================================//
 ContinuumVolumeUpdate::ContinuumVolumeUpdate(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       rho_(*particles_->getVariableByName<Real>("Density")) {}
 //=================================================================================================//

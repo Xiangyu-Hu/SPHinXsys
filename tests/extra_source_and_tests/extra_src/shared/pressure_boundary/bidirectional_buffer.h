@@ -59,7 +59,7 @@ class BidirectionalBuffer
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, int axis)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
-              pos_(particles_->ParticlePositions()), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
+              pos_(*base_particles_.getVariableByName<Vecd>("Position")), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");

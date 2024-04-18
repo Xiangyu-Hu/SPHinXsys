@@ -49,15 +49,15 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 ShellCorrectConfiguration::
     ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()), B_(particles_->B_),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")), B_(particles_->B_),
       n0_(particles_->n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 ShellDeformationGradientTensor::
     ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
       B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
@@ -67,8 +67,8 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       rho_(*particles_->getVariableByName<Real>("Density")),
       thickness_(particles_->thickness_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
@@ -225,7 +225,7 @@ void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
-      axis_(axis), pos_(particles_->ParticlePositions()),
+      axis_(axis), pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       pos0_(particles_->pos0_), vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -312,7 +312,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 //=================================================================================================//
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       n0_(particles_->n0_), B_(particles_->B_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       n_(particles_->n_), F_(particles_->F_), F_bending_(particles_->F_bending_),
@@ -359,7 +359,7 @@ void ShellCurvature::update(size_t index_i, Real)
 //=================================================================================================//
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       n_(particles_->n_),
       k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
       k2_ave_(*particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};

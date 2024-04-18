@@ -20,9 +20,9 @@ void ForcePrior::update(size_t index_i, Real dt)
 //=================================================================================================//
 GravityForce::GravityForce(SPHBody &sph_body, Gravity &gravity)
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-      ForcePrior(&base_particles_, "GravityForce"), gravity_(gravity),
-      pos_(base_particles_.ParticlePositions()),
-      mass_(*base_particles_.registerSharedVariable<Real>("Mass")) {}
+      ForcePrior(particles_, "GravityForce"), gravity_(gravity),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      mass_(*particles_->registerSharedVariable<Real>("Mass")) {}
 //=================================================================================================//
 void GravityForce::update(size_t index_i, Real dt)
 {

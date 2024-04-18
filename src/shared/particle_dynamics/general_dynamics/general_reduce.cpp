@@ -32,7 +32,7 @@ Real MaximumSpeed::reduce(size_t index_i, Real dt)
 PositionLowerBound::PositionLowerBound(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceLowerBound>(sph_body),
       GeneralDataDelegateSimple(sph_body),
-      pos_(particles_->ParticlePositions())
+      pos_(*base_particles_.getVariableByName<Vecd>("Position"))
 {
     quantity_name_ = "PositionLowerBound";
 }
@@ -45,7 +45,7 @@ Vecd PositionLowerBound::reduce(size_t index_i, Real dt)
 PositionUpperBound::PositionUpperBound(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceUpperBound>(sph_body),
       GeneralDataDelegateSimple(sph_body),
-      pos_(particles_->ParticlePositions())
+      pos_(*base_particles_.getVariableByName<Vecd>("Position"))
 {
     quantity_name_ = "PositionUpperBound";
 }
@@ -72,7 +72,7 @@ Real TotalKineticEnergy::reduce(size_t index_i, Real dt)
 TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity)
     : TotalKineticEnergy(sph_body),
       gravity_(gravity),
-      pos_(particles_->ParticlePositions())
+      pos_(*base_particles_.getVariableByName<Vecd>("Position"))
 {
     quantity_name_ = "TotalMechanicalEnergy";
 }

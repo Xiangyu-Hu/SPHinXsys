@@ -10,9 +10,9 @@ ComputeDensityErrorInner::ComputeDensityErrorInner(BaseInnerRelation &inner_rela
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
       rho0_(sph_body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
-      pos_(particles_->ParticlePositions()),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-      Vol_(particles_->VolumetricMeasures()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       mass_(*particles_->getVariableByName<Real>("Mass"))
 
@@ -306,8 +306,8 @@ ParticleRefinementWithPrescribedArea::
       refinement_region_bounds_(refinement_region.getBounds()),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
       inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
-      Vol_(particles_->VolumetricMeasures()),
-      pos_(particles_->ParticlePositions()),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}

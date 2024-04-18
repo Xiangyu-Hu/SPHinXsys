@@ -88,7 +88,7 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(particles_->ParticlePositions()){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
 
     virtual ~LeftStretchSolidBodyRegion(){};
 
@@ -107,7 +107,7 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(particles_->ParticlePositions()){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
 
     virtual ~RightStretchSolidBodyRegion(){};
 
@@ -149,7 +149,7 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(particles_->ParticlePositions()){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
 
     virtual ~ConstrainXVelocity(){};
 

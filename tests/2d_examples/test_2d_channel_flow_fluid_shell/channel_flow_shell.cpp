@@ -329,7 +329,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     /**
-     * @brief 	Gtest strat from here.
+     * @brief 	Gtest start from here.
      */
     /* Define analytical solution of the inflow velocity.*/
     std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)

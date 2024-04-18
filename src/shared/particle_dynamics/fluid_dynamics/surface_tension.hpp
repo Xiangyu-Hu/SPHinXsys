@@ -13,7 +13,7 @@ SurfaceStressForce<DataDelegationType>::SurfaceStressForce(BaseRelationType &bas
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       rho_(*this->particles_->template getVariableByName<Real>("Density")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
-      Vol_(this->particles_->VolumetricMeasures()),
+      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       color_gradient_(*this->particles_->template getVariableByName<Vecd>("ColorGradient")),
       surface_tension_force_(*this->particles_->template registerSharedVariable<Vecd>("SurfaceTensionForce")),
       surface_tension_stress_(*this->particles_->template getVariableByName<Matd>("SurfaceTensionStress")) {}

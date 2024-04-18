@@ -10,7 +10,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 LinearGradientCorrectionMatrix<DataDelegationType>::LinearGradientCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      Vol_(this->particles_->VolumetricMeasures()),
+      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       B_(*this->particles_->template registerSharedVariable<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>
