@@ -26,7 +26,8 @@
  * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef REGRESSION_TEST_BASE_H
+#define REGRESSION_TEST_BASE_H
 
 #include "all_physical_dynamics.h"
 #include "io_all.h"
@@ -165,4 +166,5 @@ class RegressionTestBase : public ObserveMethodType
         return false;
     };
 };
-}; // namespace SPH
+};     // namespace SPH
+#endif // REGRESSION_TEST_BASE_H

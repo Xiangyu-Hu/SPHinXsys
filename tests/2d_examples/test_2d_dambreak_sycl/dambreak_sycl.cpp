@@ -1,9 +1,9 @@
 /**
-* @file dambreak.cpp
-* @brief 2D dambreak example.
-* @details This is the one of the basic test cases, also the first case for
-* understanding SPH method for free surface flow simulation.
-* @author Luhui Han, Chi Zhang and Xiangyu Hu
+* @file dambreak_sycl.cpp
+* @brief 2D dambreak example running with SYCL.
+* @details Basic test case that exemplifies the correct usage of
+* the SYCL execution policy
+* @author Alberto Guarnieri, Luhui Han, Chi Zhang and Xiangyu Hu
 */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
@@ -59,22 +59,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(
-        sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                        Transform(water_block_translation), water_block_halfsize, "WaterBody"));
+    TransformShape<GeometricShapeBox> initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
+    FluidBody water_block(sph_system, initial_water_block);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
     water_block.getBaseParticles().registerDeviceMemory();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     wall_boundary.getBaseParticles().registerDeviceMemory();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    fluid_observer.generateParticles<Observer>(observation_location);
     fluid_observer.getBaseParticles().registerDeviceMemory();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -232,13 +231,13 @@ int main(int ac, char *av[])
             /** Write restart files */
             if (number_of_iterations % restart_output_interval == 0)
             {
-                /*time_instance = TickCount::now();
+                time_instance = TickCount::now();
                 async_real_bodies_write_event.wait();
                 restart_io.copyVariablesToRestartFromDevice()
                     .then([&, number_of_iterations]
                           { restart_io.writeToFile(number_of_iterations); },
                           async_real_bodies_write_event);
-                interval_writing_files += TickCount::now() - time_instance;*/
+                interval_writing_files += TickCount::now() - time_instance;
             }
 
             number_of_iterations++;

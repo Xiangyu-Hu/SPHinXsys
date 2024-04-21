@@ -91,7 +91,7 @@ class SolidBodyForSimulation
     InnerRelation inner_body_relation_;
 
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_;
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
@@ -108,7 +108,7 @@ class SolidBodyForSimulation
     InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
     SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
-    InteractionWithUpdate<KernelCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
@@ -228,10 +228,10 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
     StdVec<SurfaceSpringTuple> surface_spring_tuple_;
     // for ConstrainSolidBody
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyConstraint>>> fixed_constraint_body_;
+    StdVec<SharedPtr<SimpleDynamics<FixBodyConstraint>>> fixed_constraint_body_;
     StdVec<int> body_indices_fixed_constraint_;
     // for ConstrainSolidBodyRegion
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_region_;
+    StdVec<SharedPtr<SimpleDynamics<FixBodyPartConstraint>>> fixed_constraint_region_;
     StdVec<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
     // for PositionSolidBody
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;

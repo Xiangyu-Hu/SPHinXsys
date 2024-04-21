@@ -1,6 +1,5 @@
 #include "cell_linked_list.h"
 #include "adaptation.h"
-#include "base_body.h"
 #include "base_kernel.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
@@ -10,9 +9,24 @@ namespace SPH
 {
 //=================================================================================================//
 BaseCellLinkedList::
-    BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
+    BaseCellLinkedList(SPHAdaptation &sph_adaptation)
     : BaseMeshField("CellLinkedList"),
-      real_body_(real_body), kernel_(*sph_adaptation.getKernel()) {}
+      kernel_(*sph_adaptation.getKernel()) {}
+//=================================================================================================//
+SplitCellLists *BaseCellLinkedList::getSplitCellLists()
+{
+    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    exit(1);
+    return nullptr;
+}
+//=================================================================================================//
+void BaseCellLinkedList::setUseSplitCellLists()
+{
+    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    exit(1);
+};
 //=================================================================================================//
 void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 {
@@ -20,13 +34,13 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
         split_cell_lists[i].clear();
 }
 
-CellLinkedListKernel::CellLinkedListKernel(BaseParticles &particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
+CellLinkedListKernel::CellLinkedListKernel(const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                                            const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells)
-    : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
-      list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), mesh_lower_bound_(allocateDeviceData<DeviceVecd>(1)),
-      grid_spacing_(allocateDeviceData<DeviceReal>(1)), all_grid_points_(allocateDeviceData<DeviceArrayi>(1)),
-      all_cells_(allocateDeviceData<DeviceArrayi>(1)), index_list_(allocateDeviceData<size_t>(total_real_particles_)),
-      index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(allCells))), index_head_list_size_(VecdFoldProduct(allCells))
+    : total_real_particles_(0), list_data_pos_(nullptr),  // will be initialized at first UpdateCellLists execution
+      mesh_lower_bound_(allocateDeviceData<DeviceVecd>(1)), grid_spacing_(allocateDeviceData<DeviceReal>(1)),
+      all_grid_points_(allocateDeviceData<DeviceArrayi>(1)), all_cells_(allocateDeviceData<DeviceArrayi>(1)),
+      index_list_(nullptr), index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(allCells))),
+      index_head_list_size_(VecdFoldProduct(allCells))
 {
     copyDataToDevice(&meshLowerBound, mesh_lower_bound_, 1)
         .add(copyDataToDevice(&gridSpacing, grid_spacing_, 1))
@@ -48,8 +62,14 @@ execution::ExecutionEvent CellLinkedListKernel::clearCellLists()
     return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, index_head_list_size_));
 }
 
-execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
+execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(const SPH::BaseParticles &base_particles)
 {
+    if(!index_list_)  // initialize list data with base_particles at first execution
+    {
+        total_real_particles_ = base_particles.total_real_particles_;
+        list_data_pos_ = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
+        index_list_ = allocateDeviceData<size_t>(total_real_particles_);
+    }
     auto clear_event = clearCellLists();
     auto *pos_n = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
     size_t total_real_particles = base_particles.total_real_particles_;
@@ -106,14 +126,15 @@ size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
 }
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-                               RealBody &real_body, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      device_kernel(real_body_.getBaseParticles(),
-                    hostToDeviceVecd(mesh_lower_bound_), DeviceReal(grid_spacing_),
-                    hostToDeviceArrayi(all_grid_points_), hostToDeviceArrayi(all_cells_))
+                               SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
+      use_split_cell_lists_(false), device_kernel(hostToDeviceVecd(mesh_lower_bound_), DeviceReal(grid_spacing_),
+                                                  hostToDeviceArrayi(all_grid_points_), hostToDeviceArrayi(all_cells_))
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
+    size_t number_of_split_cell_lists = pow(3, Dimensions);
+    split_cell_lists_.resize(number_of_split_cell_lists);
 }
 //=================================================================================================//
 execution::ExecutionEvent CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
@@ -134,9 +155,9 @@ execution::ExecutionEvent CellLinkedList::UpdateCellLists(BaseParticles &base_pa
 
     UpdateCellListData(base_particles);
 
-    if (real_body_.getUseSplitCellLists())
+    if (use_split_cell_lists_)
     {
-        updateSplitCellLists(real_body_.getSplitCellLists());
+        updateSplitCellLists(split_cell_lists_);
     }
 
     return {};
@@ -144,26 +165,19 @@ execution::ExecutionEvent CellLinkedList::UpdateCellLists(BaseParticles &base_pa
 //=================================================================================================//
 size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-    //    return computingSequence(base_particles, execution::par);
-
     StdLargeVec<Vecd> &pos = base_particles.pos_;
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
-    particle_for(execution::ParallelPolicy(), total_real_particles, [&](size_t i)
-                 {
-                     sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i]));
-                 });
-    auto p = pos[19999];
-    auto meshIndex = CellIndexFromPosition(p);
-    transferMeshIndexToMortonOrder(meshIndex);
+    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
+                 { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
     return sequence.data();
 }
 //=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing,
-    size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+    size_t total_levels, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-          tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
+          tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
       h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
 }
@@ -180,18 +194,16 @@ size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelCellLinkedList::
-    insertParticleIndex(size_t particle_index, const Vecd &particle_position)
+void MultilevelCellLinkedList::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::
-    InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
+void MultilevelCellLinkedList::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position, volumetric);
+    mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position);
 }
 //=================================================================================================//
 execution::ExecutionEvent MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
@@ -218,11 +230,6 @@ execution::ExecutionEvent MultilevelCellLinkedList::UpdateCellLists(BaseParticle
         mesh_levels_[level]->UpdateCellListData(base_particles);
     }
 
-    if (real_body_.getUseSplitCellLists())
-    {
-        updateSplitCellLists(real_body_.getSplitCellLists());
-    }
-
     return {};
 }
 //=================================================================================================//
@@ -231,7 +238,7 @@ size_t *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particle
     StdLargeVec<Vecd> &pos = base_particles.pos_;
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
-    particle_for(execution::ParallelPolicy(), total_real_particles,
+    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
                  [&](size_t i)
                  {
 						 size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));

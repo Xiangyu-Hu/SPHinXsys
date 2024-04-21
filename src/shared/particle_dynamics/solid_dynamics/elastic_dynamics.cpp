@@ -10,7 +10,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<Real, ReduceMin>(sph_body, MaxReal),
+    : LocalDynamicsReduce<ReduceMin>(sph_body),
       ElasticSolidDataSimple(sph_body), CFL_(CFL),
       vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
       mass_(particles_->mass_), smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
@@ -32,17 +32,29 @@ ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_bo
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       ElasticSolidDataSimple(sph_body),
-      n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
+      n_(particles_->n_), n0_(particles_->n0_),
+      phi_(*particles_->getVariableByName<Real>("SignedDistance")),
+      phi0_(*particles_->getVariableByName<Real>("InitialSignedDistance")),
+      F_(particles_->F_) {}
+//=================================================================================================//
+void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
+{
+    // Nanson's relation is used to update the normal direction
+    Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
+    Real inverse_norm = 1.0 / (current_normal.norm() + TinyReal);
+    n_[index_i] = current_normal * inverse_norm;
+    phi_[index_i] = phi0_[index_i] * inverse_norm;
+}
 //=================================================================================================//
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
+      Vol_(particles_->Vol_), pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      rho_(particles_->rho_), mass_(particles_->mass_),
+      rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_),
       pos_(particles_->pos_), vel_(particles_->vel_), force_(particles_->force_),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 //=================================================================================================//
@@ -50,12 +62,9 @@ BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseElasticIntegration(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
-      force_prior_(particles_->force_prior_)
-{
-    rho0_ = particles_->elastic_solid_.ReferenceDensity();
-    inv_rho0_ = 1.0 / rho0_;
-    smoothing_length_ = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
-}
+      rho0_(particles_->elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
+      force_prior_(particles_->force_prior_),
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {

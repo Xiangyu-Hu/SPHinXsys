@@ -7,17 +7,29 @@
 namespace SPH
 {
 //=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr, const std::string &body_name)
-    : sph_system_(sph_system), body_name_(body_name), newly_updated_(true), base_particles_(nullptr),
-      initial_shape_(initial_shape_ptr_keeper_.assignPtr(initial_shape_ptr)),
-      sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
+SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
+    : sph_system_(sph_system), body_name_(name), newly_updated_(true),
+      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
+      sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(sph_system.ReferenceResolution())),
       base_material_(nullptr)
 {
     sph_system_.sph_bodies_.push_back(this);
 }
 //=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr)
-    : SPHBody(sph_system, initial_shape_ptr, initial_shape_ptr->getName()) {}
+SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
+    : SPHBody(sph_system, shape, shape.getName()) {}
+//=================================================================================================//
+SPHBody::SPHBody(SPHSystem &sph_system, const std::string &name)
+    : SPHBody(sph_system, makeShared<DefaultShape>(name)) {}
+//=================================================================================================//
+SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name)
+    : SPHBody(sph_system, *shape_ptr.get(), name)
+{
+    shape_ptr_keeper_.assignPtr(shape_ptr);
+}
+//=================================================================================================//
+SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
+    : SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
 //=================================================================================================//
 BoundingBox SPHBody::getSPHSystemBounds()
 {
@@ -51,17 +63,15 @@ BaseMaterial &SPHBody::getBaseMaterial()
     return *base_material_;
 };
 //=================================================================================================//
-void SPHBody::allocateConfigurationMemoriesForBufferParticles()
+void SPHBody::setSPHBodyBounds(const BoundingBox &bound)
 {
-    for (size_t i = 0; i < body_relations_.size(); i++)
-    {
-        body_relations_[i]->resizeConfiguration();
-    }
+    bound_ = bound;
+    is_bound_set_ = true;
 }
 //=================================================================================================//
-BoundingBox SPHBody::getBodyShapeBounds()
+BoundingBox SPHBody::getSPHBodyBounds()
 {
-    return initial_shape_->getBounds();
+    return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
 void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)

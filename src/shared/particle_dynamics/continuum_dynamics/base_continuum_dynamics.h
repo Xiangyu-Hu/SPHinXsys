@@ -47,6 +47,7 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
     explicit InteractionWithWall(BaseContactRelation &wall_contact_relation)
         : BaseInteractionType<FSIContactData>(wall_contact_relation),
           wall_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
+          wall_Vol_device_(this->contact_particles_.size(), executionQueue.getQueue()),
           wall_vel_ave_device_(this->contact_particles_.size(), executionQueue.getQueue()),
           wall_force_ave_device_(this->contact_particles_.size(), executionQueue.getQueue()),
           wall_n_device_(this->contact_particles_.size(), executionQueue.getQueue())
@@ -57,9 +58,11 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
             wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
             wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
+            wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
 
             // Device variables
             wall_mass_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Mass");;
+            wall_Vol_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Volume");;
             wall_vel_ave_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Velocity");
             wall_force_ave_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Force");
             wall_n_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Normal");
@@ -69,9 +72,9 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
 
   protected:
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_;
+    StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
 
-    StdSharedVec<DeviceReal*> wall_mass_device_;
+    StdSharedVec<DeviceReal*> wall_mass_device_, wall_Vol_device_;
     StdSharedVec<DeviceVecd*> wall_vel_ave_device_, wall_force_ave_device_, wall_n_device_;
 };
 } // namespace continuum_dynamics

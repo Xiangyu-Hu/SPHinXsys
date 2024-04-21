@@ -70,7 +70,7 @@ class TemperatureSplittingByPDEWithBoundary
 
   protected:
     StdVec<StdLargeVec<VariableType> *> boundary_variable_;
-    StdVec<StdLargeVec<Real> *> boundary_heat_flux_;
+    StdVec<StdLargeVec<Real> *> boundary_heat_flux_, boundary_Vol_;
     StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
     virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
 };

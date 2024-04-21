@@ -26,7 +26,8 @@
  * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_OBSERVATION_H
+#define IO_OBSERVATION_H
 
 #include "io_base.h"
 
@@ -127,7 +128,7 @@ class ReducedQuantityRecording : public BaseIO
 
   public:
     /*< deduce variable type from reduce method. */
-    using VariableType = typename LocalReduceMethodType::ReduceReturnType;
+    using VariableType = typename LocalReduceMethodType::ReturnType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
@@ -159,3 +160,4 @@ class ReducedQuantityRecording : public BaseIO
     };
 };
 } // namespace SPH
+#endif // IO_OBSERVATION_H

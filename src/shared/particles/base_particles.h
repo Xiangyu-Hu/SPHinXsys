@@ -67,9 +67,10 @@ class BaseDynamics;
  * 		  the first buffer particle and increase total_real_particles_ by one.
  * 		  The other is ghost particles whose states are updated according to
  * 		  boundary condition if their indices are included in the neighbor particle list.
- * 		  The ghost particles are saved behind the buffer particles.
- * 		  The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles.
- * 		  The global value of total_ghost_particles_ indicates the total number of ghost particles in use.
+ * 		  Ghost particles whose states are updated according to
+ *      boundary condition if their indices are included in the neighbor particle list.
+ *      The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
+ *      All particles are bounded by particle_bound_, which is the total number of particles in all types.
  * 		  It will be initialized to zero before a time step.
  * 		  In SPHinXsys, the discrete variables (state of each particle) registered in general particle data
  *      (ParticleData) belong to a hierarchy of two layers.
@@ -111,8 +112,8 @@ class BaseParticles
     // Global information for defining particle groups
     //----------------------------------------------------------------------
     size_t total_real_particles_;
-    size_t real_particles_bound_; /**< Maximum possible number of real particles. Also start index of ghost particles. */
-    size_t total_ghost_particles_;
+    size_t real_particles_bound_; /**< Maximum possible number of real particles. Also starting index for ghost particles. */
+    size_t particles_bound_;      /**< Total number of particles in all types. */
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
@@ -122,10 +123,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
-    void addBufferParticles(size_t buffer_size);
+    void initializeAllParticlesBounds();
+    void increaseAllParticlesBounds(size_t buffer_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
-    void updateFromAnotherParticle(size_t index, size_t another_index);
-    size_t insertAGhostParticle(size_t index);
+    void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
     //----------------------------------------------------------------------
     //		Parameterized management on generalized particle data
@@ -136,9 +137,8 @@ class BaseParticles
     template <typename DataType, class InitializationFunction>
     void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
                           const InitializationFunction &initialization);
-    template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariable(
-        const std::string &variable_name, const DataType &default_value = ZeroData<DataType>::value);
+    template <typename DataType, typename... Args>
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
     ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
@@ -238,66 +238,51 @@ class BaseParticles
     ParticleVariables variables_to_reload_;
     StdVec<BaseDynamics<void> *> derived_variables_;
 
-    void addAParticleEntry(); /**< Add a particle entry to the particle array. */
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
     //----------------------------------------------------------------------
     //		Small structs for generalize particle operations
     //----------------------------------------------------------------------
-    template <typename DataType>
-    struct resizeParticleData
+    struct ResizeParticles
     {
-        void operator()(ParticleData &particle_data, size_t new_size) const;
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size);
     };
 
-    /** Add a particle data with default value. */
-    template <typename DataType>
-    struct addParticleDataWithDefaultValue
+    struct CopyParticleData
     {
-        void operator()(ParticleData &particle_data) const;
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index);
     };
 
-    template <typename DataType>
-    struct copyParticleData
+    struct WriteAParticleVariableToXml
     {
-        void operator()(ParticleData &particle_data, size_t index, size_t another_index) const;
+        XmlParser &xml_parser_;
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
     };
+
+    struct ReadAParticleVariableFromXml
+    {
+        XmlParser &xml_parser_;
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+    };
+
+  public:
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------
-    DataAssembleOperation<resizeParticleData> resize_particle_data_;
-    DataAssembleOperation<addParticleDataWithDefaultValue> add_particle_data_with_default_value_;
-    DataAssembleOperation<copyParticleData> copy_particle_data_;
-};
+    OperationOnDataAssemble<ParticleData, ResizeParticles> resize_particles_;
+    OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
 
-/**
- * @struct WriteAParticleVariableToXml
- * @brief Define a operator for writing particle variable to XML format.
- */
-struct WriteAParticleVariableToXml
-{
-    XmlParser &xml_parser_;
-    size_t &total_real_particles_;
-    WriteAParticleVariableToXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
-
-    template <typename DataType>
-    void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
-};
-
-/**
- * @struct ReadAParticleVariableFromXml
- * @brief Define a operator for reading particle variable to XML format.
- */
-struct ReadAParticleVariableFromXml
-{
-    XmlParser &xml_parser_;
-    size_t &total_real_particles_;
-    ReadAParticleVariableFromXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
-
-    template <typename DataType>
-    void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
+  protected:
+    OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
 };
 
 /**

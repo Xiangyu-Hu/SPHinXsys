@@ -269,6 +269,11 @@ class BaseBoundingBox
         }
         return is_contain;
     };
+
+    VecType getBoundSize()
+    {
+        return second_ - first_;
+    };
 };
 /** Operator define. */
 template <class T>

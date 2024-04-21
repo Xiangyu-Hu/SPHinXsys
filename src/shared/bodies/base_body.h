@@ -39,6 +39,7 @@
 #include "all_geometries.h"
 #include "base_data_package.h"
 #include "base_material.h"
+#include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "particle_sorting.h"
@@ -62,7 +63,7 @@ class BodySurface;
 class SPHBody
 {
   private:
-    SharedPtrKeeper<Shape> initial_shape_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_ptr_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
@@ -72,32 +73,38 @@ class SPHBody
     std::string body_name_;
     bool newly_updated_;            /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
+    bool is_bound_set_;             /**< whether the bounding box is set */
+    BoundingBox bound_;             /**< bounding box of the body */
+    Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
 
   public:
-    Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
-    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr, const std::string &body_name);
-    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr);
+    SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
+    SPHBody(SPHSystem &sph_system, Shape &shape);
+    SPHBody(SPHSystem &sph_system, const std::string &name);
+    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name);
+    SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
     virtual ~SPHBody(){};
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
+    Shape &getInitialShape() { return *initial_shape_; };
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
-    size_t &LoopRange() { return base_particles_->total_real_particles_; };
+    IndexRange LoopRange() { return IndexRange(0, base_particles_->total_real_particles_); };
     size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
     Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };
     bool checkNewlyUpdated() { return newly_updated_; };
-    BoundingBox getBodyShapeBounds();
+    void setSPHBodyBounds(const BoundingBox &bound);
+    BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
-    void allocateConfigurationMemoriesForBufferParticles();
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
@@ -107,7 +114,7 @@ class SPHBody
     void defineAdaptation(Args &&...args)
     {
         sph_adaptation_ = sph_adaptation_ptr_keeper_
-                              .createPtr<AdaptationType>(*this, std::forward<Args>(args)...);
+                              .createPtr<AdaptationType>(sph_system_.ReferenceResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
@@ -121,7 +128,7 @@ class SPHBody
     LevelSetShape *defineBodyLevelSetShape(Args &&...args)
     {
         LevelSetShape *level_set_shape =
-            initial_shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
+            shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
 
         initial_shape_ = level_set_shape;
         return level_set_shape;
@@ -142,17 +149,31 @@ class SPHBody
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
         defineParticlesWithMaterial<ParticleType>(material);
     };
-
-    /** initialize particle data using a particle generator for geometric data.
-     * the local material parameters are also initialized. */
-    template <class ParticleGeneratorType, typename... Args>
-    void generateParticles(Args &&...args)
+    //----------------------------------------------------------------------
+    // Particle generating methods
+    // Initialize particle data using a particle generator for geometric data.
+    // The local material parameters are also initialized.
+    //----------------------------------------------------------------------
+    template <class ParticleGeneratorType> // for self-defined particle generator
+    void generateParticles(ParticleGeneratorType &&particle_generator)
     {
-        ParticleGeneratorType particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
+    };
+    // Using predefined particle generator
+    template <class... Parameters, typename... Args>
+    void generateParticles(Args &&...args)
+    {
+        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
+        generateParticles(particle_generator);
+    };
+    // Buffer or ghost particles can be generated together with real particles
+    template <class... Parameters, class ReserveType, typename... Args>
+    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    {
+        generateParticles<ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
     template <typename DataType>
@@ -199,14 +220,6 @@ class RealBody : public SPHBody
 {
   private:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    /**
-     * @brief particle by cells lists is for parallel splitting algorithm.
-     * All particles in each cell are collected together.
-     * If two particles each belongs two different cell entries,
-     * they have no interaction because they are too far.
-     */
-    SplitCellLists split_cell_lists_;
-    bool use_split_cell_lists_;
     size_t iteration_count_;
     bool cell_linked_list_created_;
 
@@ -223,12 +236,9 @@ class RealBody : public SPHBody
     template <typename... Args>
     RealBody(Args &&...args)
         : SPHBody(std::forward<Args>(args)...),
-          use_split_cell_lists_(false), iteration_count_(1),
-          cell_linked_list_created_(false)
+          iteration_count_(1), cell_linked_list_created_(false)
     {
         this->getSPHSystem().real_bodies_.push_back(this);
-        size_t number_of_split_cell_lists = pow(3, Dimensions);
-        split_cell_lists_.resize(number_of_split_cell_lists);
     };
     virtual ~RealBody(){};
     template<class ExecutionPolicy = execution::ParallelPolicy>
@@ -236,19 +246,15 @@ class RealBody : public SPHBody
     {
         if (!cell_linked_list_created_)
         {
-            cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *this);
+            cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(getSPHSystemBounds());
             cell_linked_list_created_ = true;
         }
         return *getCellLinkedListPtr(execution_policy);
     }
-    void setUseSplitCellLists() { use_split_cell_lists_ = true; };
-    bool getUseSplitCellLists() { return use_split_cell_lists_; };
-    SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
     template<class ExecutionPolicy = execution::ParallelPolicy>
     execution::ExecutionEvent updateCellLinkedList(ExecutionPolicy execution_policy = execution::par)
     {
-        return getCellLinkedList(execution_policy).UpdateCellLists(*base_particles_)
-            .then([=]() { base_particles_->total_ghost_particles_ = 0; });
+        return getCellLinkedList(execution_policy).UpdateCellLists(*base_particles_);
     }
     template<class ExecutionPolicy = execution::ParallelPolicy>
     execution::ExecutionEvent updateCellLinkedListWithParticleSort(size_t particle_sort_period, ExecutionPolicy execution_policy = execution::par)

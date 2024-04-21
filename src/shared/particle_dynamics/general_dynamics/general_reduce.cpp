@@ -6,7 +6,7 @@ namespace SPH
 //=================================================================================================//
 VelocityBoundCheck::
     VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound)
-    : LocalDynamicsReduce<bool, ReduceOR>(sph_body, false),
+    : LocalDynamicsReduce<ReduceOR>(sph_body),
       GeneralDataDelegateSimple(sph_body),
       vel_(particles_->vel_), velocity_bound_(velocity_bound) {}
 //=================================================================================================//
@@ -16,7 +16,7 @@ bool VelocityBoundCheck::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 MaximumSpeed::MaximumSpeed(SPHBody &sph_body)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+    : LocalDynamicsReduce<ReduceMax>(sph_body),
       GeneralDataDelegateSimple(sph_body),
       vel_(particles_->vel_)
 {
@@ -29,7 +29,7 @@ Real MaximumSpeed::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PositionLowerBound::PositionLowerBound(SPHBody &sph_body)
-    : LocalDynamicsReduce<Vecd, ReduceLowerBound>(sph_body, MaxReal * Vecd::Ones()),
+    : LocalDynamicsReduce<ReduceLowerBound>(sph_body),
       GeneralDataDelegateSimple(sph_body),
       pos_(particles_->pos_)
 {
@@ -42,7 +42,7 @@ Vecd PositionLowerBound::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PositionUpperBound::PositionUpperBound(SPHBody &sph_body)
-    : LocalDynamicsReduce<Vecd, ReduceUpperBound>(sph_body, MinReal * Vecd::Ones()),
+    : LocalDynamicsReduce<ReduceUpperBound>(sph_body),
       GeneralDataDelegateSimple(sph_body),
       pos_(particles_->pos_)
 {
@@ -55,7 +55,7 @@ Vecd PositionUpperBound::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 TotalKineticEnergy::TotalKineticEnergy(SPHBody &sph_body)
-    : LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
+    : LocalDynamicsReduce<ReduceSum<Real>>(sph_body),
       GeneralDataDelegateSimple(sph_body),
       mass_(particles_->mass_), vel_(particles_->vel_)
 {

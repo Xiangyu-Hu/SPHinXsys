@@ -7,7 +7,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      vel_(particles_->vel_)
+      Vol_(particles_->Vol_), vel_(particles_->vel_)
 {
     particles_->registerVariable(vorticity_, "VorticityInner");
     particles_->addVariableToWrite<AngularVecd>("VorticityInner");
@@ -22,7 +22,7 @@ void VorticityInner::interaction(size_t index_i, Real dt)
         size_t index_j = inner_neighborhood.j_[n];
 
         Vecd vel_diff = vel_[index_i] - vel_[index_j];
-        vorticity += getCrossProduct(vel_diff, inner_neighborhood.e_ij_[n]) * inner_neighborhood.dW_ijV_j_[n];
+        vorticity += getCrossProduct(vel_diff, inner_neighborhood.e_ij_[n]) * inner_neighborhood.dW_ij_[n] * Vol_[index_j];
     }
 
     vorticity_[index_i] = vorticity;

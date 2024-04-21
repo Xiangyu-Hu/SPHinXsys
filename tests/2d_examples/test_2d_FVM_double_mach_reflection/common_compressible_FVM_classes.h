@@ -26,7 +26,7 @@ class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTim
     virtual ~CompressibleAcousticTimeStepSizeInFVM(){};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
-    CompressibleFluid compressible_fluid_;
+    Fluid &compressible_fluid_;
     Real acousticCFL_;
 };
 } // namespace SPH

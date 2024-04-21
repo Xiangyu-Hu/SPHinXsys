@@ -58,12 +58,11 @@ class BaseInterpolationKernel {
             const auto *data_k = contact_data_[k];
             const auto& neighbor_builder = *contact_neighbor_builders_[k];
             contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_pos_,
-                                                           [&](const DeviceVecd &pos_i, size_t index_j,
-                                                               const DeviceVecd &pos_j, const DeviceReal &Vol_j)
+                                                           [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
                                                            {
                                                                if (neighbor_builder.isWithinCutoff(pos_i, pos_j))
                                                                {
-                                                                   const auto weight_j = neighbor_builder.W_ij(pos_i, pos_j) * Vol_j;
+                                                                   const auto weight_j = neighbor_builder.W_ij(pos_i, pos_j) * Vol_k[index_j];
                                                                    observed_quantity += weight_j * data_k[index_j];
                                                                    ttl_weight += weight_j;
                                                                }
@@ -257,7 +256,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
                 size_t index_j = contact_neighborhood.j_[n];
                 Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
                 Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
-                Vecd gradW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                Vecd gradW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
 
                 weight_correction += weight_j * r_ji;
                 local_configuration += r_ji * gradW_ijV_j.transpose();
@@ -276,7 +275,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 contact_neighborhood.W_ij_[n] -= normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]) *
-                                                 contact_neighborhood.dW_ijV_j_[n] / Vol_k[index_j];
+                                                 contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
             }
         }
     };

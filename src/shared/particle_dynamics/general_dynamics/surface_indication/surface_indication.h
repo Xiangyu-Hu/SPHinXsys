@@ -52,7 +52,7 @@ class FreeSurfaceIndication<DataDelegationType>
 
   protected:
     StdLargeVec<int> &indicator_;
-    StdLargeVec<Real> &pos_div_;
+    StdLargeVec<Real> &pos_div_, &Vol_;
     Real threshold_by_dimensions_;
 };
 
@@ -93,9 +93,18 @@ class FreeSurfaceIndication<Contact<>>
 {
   public:
     explicit FreeSurfaceIndication(BaseContactRelation &contact_relation)
-        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation){};
+        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation)
+    {
+        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+        {
+            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+        }
+    };
     virtual ~FreeSurfaceIndication(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
 };
 
 /**
@@ -117,7 +126,7 @@ class FreeSurfaceIndication<Contact<NonWetting>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_phi_;
+    StdVec<StdLargeVec<Real> *> contact_phi_, contact_Vol_;
 };
 
 using FreeSurfaceIndicationComplex =

@@ -42,37 +42,37 @@ template <class ExecutionPolicy, typename DynamicsRange, class LocalDynamicsFunc
 void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &dynamics_range,
                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle dynamics !" << std::endl;
+    std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle_for !" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     exit(1);
 };
 
 /**
- * Body-wise iterators (for sequential and parallel computing).
+ * Range-wise iterators (for sequential and parallel computing).
  */
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const SequencedPolicy &seq, const size_t &all_real_particles,
+inline void particle_for(const SequencedPolicy &seq, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
-    for (size_t i = 0; i < all_real_particles; ++i)
+    for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
         local_dynamics_function(i);
 };
 
 template <class LocalDynamicsFunction, class LocalDynamics>
-inline void particle_for(const SequencedPolicy &seq, const size_t &all_real_particles,
+inline void particle_for(const SequencedPolicy &seq, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function, LocalDynamics &local_dynamics)
 {
-    for (size_t i = 0; i < all_real_particles; ++i)
+    for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
         local_dynamics_function(i, local_dynamics);
 };
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par, const size_t &all_real_particles,
+inline void particle_for(const ParallelPolicy &par, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     parallel_for(
-        IndexRange(0, all_real_particles),
+        particles_range,
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
@@ -84,11 +84,11 @@ inline void particle_for(const ParallelPolicy &par, const size_t &all_real_parti
 };
 
 template <class LocalDynamicsFunction, class LocalDynamics>
-inline void particle_for(const ParallelPolicy &par_policy, const size_t &all_real_particles,
+inline void particle_for(const ParallelPolicy &par_policy, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function, LocalDynamics &local_dynamics)
 {
     parallel_for(
-        IndexRange(0, all_real_particles),
+        particles_range,
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
@@ -290,16 +290,17 @@ inline void particle_for(const ParallelPolicy &par, const SplitCellLists &split_
 }
 
 template <class LocalDynamicsFunction, class LocalDynamics>
-inline void particle_for(const ParallelSYCLDevicePolicy &sycl_policy, const size_t &all_real_particles,
+inline void particle_for(const ParallelSYCLDevicePolicy &sycl_policy, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function, LocalDynamics &local_dynamics)
 {
     auto &sycl_queue = executionQueue.getQueue();
     auto &local_dynamics_buffer = local_dynamics.device_kernel.get_buffer();
+    const size_t particles_size = particles_range.size();
     sycl_queue.submit([&](sycl::handler &cgh)
                       {
             auto local_dynamics_accessor = local_dynamics_buffer.get_access(cgh, sycl::read_write);
-            cgh.parallel_for(executionQueue.getUniformNdRange(all_real_particles), [=](sycl::nd_item<1> index) {
-                                 if(index.get_global_id(0) < all_real_particles)
+            cgh.parallel_for(executionQueue.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index) {
+                                 if(index.get_global_id(0) < particles_size)
                                      local_dynamics_function(index.get_global_id(0), local_dynamics_accessor[0]);
                              }); })
         .wait_and_throw();
@@ -319,11 +320,11 @@ void particle_reduce(const ExecutionPolicy &execution_policy, const DynamicsRang
  * Body-wise reduce iterators (for sequential and parallel computing).
  */
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const SequencedPolicy &seq, const IndexRange &particles_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    for (size_t i = 0; i < all_real_particles; ++i)
+    for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
     {
         temp = operation(temp, local_dynamics_function(i));
     }
@@ -331,11 +332,11 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction, class LocalDynamics>
-inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const SequencedPolicy &seq, const IndexRange &particles_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function, LocalDynamics &local_dynamics)
 {
-    for (size_t i = 0; i < all_real_particles; ++i)
+    for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
     {
         temp = operation(temp, local_dynamics_function(i, local_dynamics));
     }
@@ -343,12 +344,12 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelPolicy &par, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const ParallelPolicy &par, const IndexRange &particles_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     return parallel_reduce(
-        IndexRange(0, all_real_particles),
+        particles_range,
         temp, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
 				for (size_t i = r.begin(); i != r.end(); ++i)
@@ -363,12 +364,12 @@ inline ReturnType particle_reduce(const ParallelPolicy &par, const size_t &all_r
 };
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction, class LocalDynamics>
-inline ReturnType particle_reduce(const ParallelPolicy &par_policy, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const ParallelPolicy &par_policy, const IndexRange &particles_range,
                                   ReturnType identity, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function, LocalDynamics &local_dynamics)
 {
     return parallel_reduce(
-        IndexRange(0, all_real_particles),
+        particles_range,
         identity, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
             for (size_t i = r.begin(); i != r.end(); ++i)
@@ -383,13 +384,14 @@ inline ReturnType particle_reduce(const ParallelPolicy &par_policy, const size_t
 };
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction, class LocalDynamics>
-inline ReturnType particle_reduce(const ParallelSYCLDevicePolicy &sycl_policy, const size_t &all_real_particles,
+inline ReturnType particle_reduce(const ParallelSYCLDevicePolicy &sycl_policy, const IndexRange &particles_range,
                                   ReturnType identity, Operation &&,
                                   const LocalDynamicsFunction &local_dynamics_function, LocalDynamics &local_dynamics)
 {
     ReturnType result = identity;
     auto &local_dynamics_buffer = local_dynamics.device_kernel.get_buffer();
     auto &sycl_queue = executionQueue.getQueue();
+    const size_t particles_size = particles_range.size();
     {
         sycl::buffer<ReturnType> buffer_result(&result, 1);
         sycl_queue.submit([&](sycl::handler &cgh)
@@ -397,9 +399,9 @@ inline ReturnType particle_reduce(const ParallelSYCLDevicePolicy &sycl_policy, c
                               auto local_dynamics_accessor = local_dynamics_buffer.get_access(cgh, sycl::read_only);
                               auto reduction_operator = sycl::reduction(buffer_result, cgh,
                                                                         typename std::remove_reference_t<Operation>::SYCLOp());
-                              cgh.parallel_for(executionQueue.getUniformNdRange(all_real_particles), reduction_operator,
+                              cgh.parallel_for(executionQueue.getUniformNdRange(particles_size), reduction_operator,
                                                [=](sycl::nd_item<1> item, auto& reduction) {
-                                                   if(item.get_global_id() < all_real_particles)
+                                                   if(item.get_global_id() < particles_size)
                                                        reduction.combine(local_dynamics_function(item.get_global_id(0), local_dynamics_accessor[0]));
                                                }); })
             .wait_and_throw();

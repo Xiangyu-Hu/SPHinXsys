@@ -50,7 +50,7 @@ namespace SPH
 
 	public:
 		size_t phi_;
-		StdLargeVec<Real>& Vol_, & mass_;
+		StdLargeVec<Real> &Vol_, & mass_;
 		StdLargeVec<Vecd>& normal_vector_;
 		StdLargeVec<VariableType>& variable_;
 		StdLargeVec<Real>& heat_flux_, & heat_source_;

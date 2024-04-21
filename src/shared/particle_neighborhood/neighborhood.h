@@ -53,11 +53,11 @@ class Neighborhood
     size_t current_size_;   /**< the current number of neighbors */
     size_t allocated_size_; /**< the limit of neighbors does not require memory allocation  */
 
-    StdLargeVec<size_t> j_;      /**< index of the neighbor particle. */
-    StdLargeVec<Real> W_ij_;     /**< kernel value or particle volume contribution */
-    StdLargeVec<Real> dW_ijV_j_; /**< derivative of kernel function or inter-particle surface contribution */
-    StdLargeVec<Real> r_ij_;     /**< distance between j and i. */
-    StdLargeVec<Vecd> e_ij_;     /**< unit vector pointing from j to i or inter-particle surface direction */
+    StdLargeVec<size_t> j_;   /**< index of the neighbor particle. */
+    StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */
+    StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
+    StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
+    StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
     Neighborhood() : current_size_(0), allocated_size_(0){};
     ~Neighborhood(){};
@@ -71,17 +71,6 @@ class NeighborBuilderKernel {
     explicit NeighborBuilderKernel(Kernel &kernel) : smoothing_kernel(kernel) {}
 
   protected:
-    template<class NeighborhoodType, class RealType, class VecType>
-    void initializeNeighbor(NeighborhoodType &neighborhood, const size_t current_size, const RealType &distance,
-                            const VecType &displacement, const size_t index_j, const RealType &Vol_j) const
-    {
-        neighborhood.j_[current_size] = index_j;
-        neighborhood.W_ij_[current_size] = smoothing_kernel.W(distance, displacement);
-        neighborhood.dW_ijV_j_[current_size] = smoothing_kernel.dW(distance, displacement) * Vol_j;
-        neighborhood.r_ij_[current_size] = distance;
-        neighborhood.e_ij_[current_size] = smoothing_kernel.e(distance, displacement);
-    }
-
     DeviceKernelWendlandC2 smoothing_kernel;
 };
 
@@ -96,17 +85,15 @@ class NeighborBuilder
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
-    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t j_index, const Real &Vol_j);
-    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t j_index, const Real &Vol_j);
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
     //----------------------------------------------------------------------
     //	Below are for variable smoothing length.
     //----------------------------------------------------------------------
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
+                        const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
+                            const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     static Kernel *chooseKernel(SPHBody &body, SPHBody &target_body);
 
   public:
@@ -131,10 +118,10 @@ class NeighborBuilderInnerKernel : public NeighborBuilderKernel {
         return smoothing_kernel.W(VecdNorm(displacement), displacement);
     }
 
-    inline DeviceReal dW_ijV_j(const DeviceVecd &pos_i, const DeviceVecd &pos_j, const DeviceReal& Vol_j) const
+    inline DeviceReal dW_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
     {
         const DeviceVecd displacement = pos_i - pos_j;
-        return smoothing_kernel.dW(VecdNorm(displacement), displacement) * Vol_j;
+        return smoothing_kernel.dW(VecdNorm(displacement), displacement);
     }
 
     inline DeviceReal r_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
@@ -212,10 +199,10 @@ class NeighborBuilderContactKernel : public NeighborBuilderKernel {
         return smoothing_kernel.W(VecdNorm(displacement), displacement);
     }
 
-    inline DeviceReal dW_ijV_j(const DeviceVecd &pos_i, const DeviceVecd &pos_j, const DeviceReal& Vol_j) const
+    inline DeviceReal dW_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
     {
         const DeviceVecd displacement = pos_i - pos_j;
-        return smoothing_kernel.dW(VecdNorm(displacement), displacement) * Vol_j;
+        return smoothing_kernel.dW(VecdNorm(displacement), displacement);
     }
 
     inline DeviceReal r_ij(const DeviceVecd &pos_i, const DeviceVecd &pos_j) const
@@ -311,10 +298,10 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         size_t index_j, const Real &W_ij,
-                        const Real &dW_ijV_j, const Vecd &e_ij);
+                        const Real &dW_ij, const Vecd &e_ij);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
                             size_t index_j, const Real &W_ij,
-                            const Real &dW_ijV_j, const Vecd &e_ij);
+                            const Real &dW_ij, const Vecd &e_ij);
 };
 
 /**

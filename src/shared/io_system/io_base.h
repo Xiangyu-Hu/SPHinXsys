@@ -26,7 +26,8 @@
  * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_BASE_H
+#define IO_BASE_H
 
 #include "all_physical_dynamics.h"
 #include "base_data_package.h"
@@ -144,3 +145,4 @@ class ReloadParticleIO : public BaseIO
     virtual void readFromFile(size_t iteration_step = 0);
 };
 } // namespace SPH
+#endif // IO_BASE_H

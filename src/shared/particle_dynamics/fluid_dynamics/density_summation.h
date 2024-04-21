@@ -52,10 +52,12 @@ class DensitySummationKernel<Base>
     explicit DensitySummationKernel(BaseParticles* particles, DeviceReal rho0, DeviceReal invSigma0, DeviceReal W0)
         : rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
           rho_sum_(particles->registerDeviceVariable<DeviceReal>("DensitySummation", particles->total_real_particles_)),
-          mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")), rho0_(rho0), inv_sigma0_(invSigma0), W0_(W0) {}
+          mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")),
+          Vol_(particles->getDeviceVariableByName<DeviceReal>("Volume")),
+          rho0_(rho0), inv_sigma0_(invSigma0), W0_(W0) {}
 
   protected:
-    DeviceReal *rho_, *rho_sum_, *mass_;
+    DeviceReal *rho_, *rho_sum_, *mass_, *Vol_;
     DeviceReal rho0_, inv_sigma0_, W0_;
 };
 
@@ -69,7 +71,7 @@ class DensitySummation<Base, DataDelegationType>
     virtual ~DensitySummation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &rho_sum_;
+    StdLargeVec<Real> &rho_, &mass_, &rho_sum_, &Vol_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
@@ -108,8 +110,7 @@ class DensitySummationKernel<Inner<>> : public DensitySummationKernel<Inner<Base
     void interaction(size_t index_i, Real dt = 0.0) {
         DeviceReal sigma = W0_;
         const auto &neighbor_builder = *inner_neighbor_builder_;
-        cell_linked_list_->forEachInnerNeighbor(index_i, [&](const DeviceVecd &pos_i, size_t index_j,
-                                                             const DeviceVecd &pos_j, const DeviceReal &Vol_j)
+        cell_linked_list_->forEachInnerNeighbor(index_i, [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
                                                 {
                                                     if(neighbor_builder.isWithinCutoff(pos_i, pos_j) && index_i != index_j)
                                                         sigma += neighbor_builder.W_ij(pos_i, pos_j);
@@ -117,7 +118,10 @@ class DensitySummationKernel<Inner<>> : public DensitySummationKernel<Inner<Base
         rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
     }
 
-    void update(size_t index_i, Real dt = 0.0) { rho_[index_i] = rho_sum_[index_i]; }
+    void update(size_t index_i, Real dt = 0.0) {
+        rho_[index_i] = rho_sum_[index_i];
+        Vol_[index_i] = mass_[index_i] / rho_[index_i];
+    }
 };
 
 template <>
@@ -176,8 +180,7 @@ class DensitySummationKernel<Contact<Base>> : public DensitySummationKernel<Base
             const DeviceReal& contact_inv_rho0_k = contact_inv_rho0_[k];
             const auto& neighbor_builder = *contact_neighbor_builders_[k];
             contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
-                                                           [&](const DeviceVecd &pos_i, size_t index_j,
-                                                               const DeviceVecd &pos_j, const DeviceReal& Vol_j)
+                                                           [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
                                                            {
                                                                if(neighbor_builder.isWithinCutoff(pos_i, pos_j))
                                                                    sigma += neighbor_builder.W_ij(pos_i, pos_j) *

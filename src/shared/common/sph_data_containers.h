@@ -37,7 +37,6 @@ namespace SPH
 {
 class Base;             // Indicating base class
 class Adaptive;         // Indicating with adaptive resolution
-class ReducedOrder;     // Indicating with reduced order
 class Lattice;          // Indicating with lattice points
 class UnstructuredMesh; // Indicating with unstructured mesh
 class BaseMaterial;
@@ -46,6 +45,7 @@ class RealBody;
 class SolidBody;
 class BodyPart;
 class BaseParticles;
+class UserDefined; // Indicating with user defined type in apps
 
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
@@ -55,9 +55,10 @@ using BodyPartVector = StdVec<BodyPart *>;
 
 using IndexVector = StdVec<size_t>;
 using ConcurrentIndexVector = ConcurrentVec<size_t>;
+using ParticlesBound = std::pair<size_t, size_t>;
 
 /** List data pair: first for indexes, second for particle position. */
-using ListData = std::tuple<size_t, Vecd, Real>;
+using ListData = std::pair<size_t, Vecd>;
 using ListDataVector = StdLargeVec<ListData>;
 using DataListsInCells = StdLargeVec<ListDataVector *>;
 using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
@@ -80,21 +81,5 @@ template <typename DataType>
 using MeshVariable = DiscreteVariable<DataType>;
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
-/** operation by looping or going through a particle variables */
-template <typename DataType>
-struct loopParticleVariables
-{
-    template <typename VariableOperation>
-    void operator()(ParticleData &particle_data,
-                    ParticleVariables &particle_variables, VariableOperation &variable_operation) const
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        for (DiscreteVariable<DataType> *variable : std::get<type_index>(particle_variables))
-        {
-            StdLargeVec<DataType> &variable_data = *(std::get<type_index>(particle_data)[variable->IndexInContainer()]);
-            variable_operation(variable->Name(), variable_data);
-        }
-    };
-};
 } // namespace SPH
 #endif // SPH_DATA_CONTAINERS_H

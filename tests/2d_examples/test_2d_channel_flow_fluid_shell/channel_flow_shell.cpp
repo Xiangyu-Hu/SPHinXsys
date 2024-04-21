@@ -33,7 +33,7 @@ class WaterBlock : public MultiPolygonShape
 };
 
 /** Particle generator and constraint boundary for shell baffle. */
-class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
+class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
 {
     Real DL_sponge_;
     Real BW_;
@@ -42,8 +42,8 @@ class WallBoundaryParticleGenerator : public ParticleGeneratorSurface
 
   public:
     explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
-        : ParticleGeneratorSurface(sph_body),
-          DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref), resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
+        : ParticleGenerator<Surface>(sph_body), DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
+          resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
     void initializeGeometricVariables() override
     {
         auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / resolution_ref_);
@@ -93,10 +93,11 @@ struct InflowVelocity
 };
 
 /** fluid observer particle generator */
-class FluidAxialObserverParticleGenerator : public ParticleGeneratorObserver
+class FluidAxialObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit FluidAxialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref) : ParticleGeneratorObserver(sph_body)
+    explicit FluidAxialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref)
+        : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 51;
@@ -111,10 +112,11 @@ class FluidAxialObserverParticleGenerator : public ParticleGeneratorObserver
         }
     }
 };
-class FluidRadialObserverParticleGenerator : public ParticleGeneratorObserver
+class FluidRadialObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit FluidRadialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref) : ParticleGeneratorObserver(sph_body)
+    explicit FluidRadialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref)
+        : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 21;
@@ -165,17 +167,20 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0); // dummy material parameters
-    wall_boundary.generateParticles<WallBoundaryParticleGenerator>(resolution_ref, wall_thickness);
+    WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, resolution_ref, wall_thickness);
+    wall_boundary.generateParticles(wall_boundary_particle_generator);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    fluid_axial_observer.generateParticles<FluidAxialObserverParticleGenerator>(resolution_ref);
+    FluidAxialObserverParticleGenerator fluid_axial_observer_particle_generator(fluid_axial_observer, resolution_ref);
+    fluid_axial_observer.generateParticles(fluid_axial_observer_particle_generator);
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    fluid_radial_observer.generateParticles<FluidRadialObserverParticleGenerator>(resolution_ref);
+    FluidRadialObserverParticleGenerator fluid_radial_observer_particle_generator(fluid_radial_observer, resolution_ref);
+    fluid_radial_observer.generateParticles(fluid_radial_observer_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -216,7 +221,8 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
-    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
     //----------------------------------------------------------------------

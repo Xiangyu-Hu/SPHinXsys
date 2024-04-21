@@ -73,12 +73,12 @@ int main(int ac, char *av[])
     coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? coil.generateParticles<ParticleGeneratorReload>(coil.getName())
-        : coil.generateParticles<ParticleGeneratorLattice>();
+        ? coil.generateParticles<Reload>(coil.getName())
+        : coil.generateParticles<Lattice>();
 
     SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
     stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    stationary_plate.generateParticles<ParticleGeneratorLattice>();
+    stationary_plate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     Gravity gravity(Vec3d(0.0, -1.0, 0.0));
     SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(coil_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
     // Time step size
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
     // stress relaxation.

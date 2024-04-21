@@ -13,12 +13,18 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
+    : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
       particle_sorting_(*this),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles")
+      reload_xml_parser_("xml_particle_reload", "particles"),
+      resize_particles_(all_particle_data_),
+      copy_particle_data_(all_particle_data_),
+      write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
+      write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
+      read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_),
+      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_)
 {
     //----------------------------------------------------------------------
     //		register geometric data only
@@ -60,60 +66,35 @@ void BaseParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
-    for (size_t i = 0; i != real_particles_bound_; ++i)
+    for (size_t i = 0; i != particles_bound_; ++i)
     {
         sorted_id_.push_back(sequence_.size());
         sequence_.push_back(0);
     }
 }
 //=================================================================================================//
-void BaseParticles::addAParticleEntry()
+void BaseParticles::initializeAllParticlesBounds()
 {
-    unsorted_id_.push_back(sequence_.size());
-    sorted_id_.push_back(sequence_.size());
-    sequence_.push_back(0);
-
-    add_particle_data_with_default_value_(all_particle_data_);
+    real_particles_bound_ = total_real_particles_;
+    particles_bound_ = real_particles_bound_;
 }
 //=================================================================================================//
-void BaseParticles::addBufferParticles(size_t buffer_size)
+void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
 {
-    for (size_t i = 0; i != buffer_size; ++i)
-    {
-        addAParticleEntry();
-    }
     real_particles_bound_ += buffer_size;
+    particles_bound_ += buffer_size;
 }
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
-    updateFromAnotherParticle(index, another_index);
+    copy_particle_data_(index, another_index);
 }
 //=================================================================================================//
-void BaseParticles::updateFromAnotherParticle(size_t index, size_t another_index)
+void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
 {
-    copy_particle_data_(all_particle_data_, index, another_index);
-}
-//=================================================================================================//
-size_t BaseParticles::insertAGhostParticle(size_t index)
-{
-    total_ghost_particles_ += 1;
-    size_t expected_size = real_particles_bound_ + total_ghost_particles_;
-    size_t expected_particle_index = expected_size - 1;
-    if (expected_size <= pos_.size())
-    {
-        copyFromAnotherParticle(expected_particle_index, index);
-        /** For a ghost particle, its sorted id is that of corresponding real particle. */
-        sorted_id_[expected_particle_index] = index;
-    }
-    else
-    {
-        addAParticleEntry();
-        copyFromAnotherParticle(expected_particle_index, index);
-        /** For a ghost particle, its sorted id is that of corresponding real particle. */
-        sorted_id_[expected_particle_index] = index;
-    }
-    return expected_particle_index;
+    copyFromAnotherParticle(ghost_index, index);
+    /** For a ghost particle, its sorted id is that of corresponding real particle. */
+    sorted_id_[ghost_index] = index;
 }
 //=================================================================================================//
 void BaseParticles::switchToBufferParticle(size_t index)
@@ -121,7 +102,7 @@ void BaseParticles::switchToBufferParticle(size_t index)
     size_t last_real_particle_index = total_real_particles_ - 1;
     if (index < last_real_particle_index)
     {
-        updateFromAnotherParticle(index, last_real_particle_index);
+        copyFromAnotherParticle(index, last_real_particle_index);
         // update unsorted and sorted_id as well
         std::swap(unsorted_id_[index], unsorted_id_[last_real_particle_index]);
         sorted_id_[unsorted_id_[index]] = index;
@@ -333,26 +314,20 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    WriteAParticleVariableToXml write_variable_to_xml(restart_xml_parser_, total_real_particles_);
-    DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
-    loop_variable_namelist(all_particle_data_, variables_to_restart_, write_variable_to_xml);
+    write_restart_variable_to_xml_(all_particle_data_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
-    ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_parser_, total_real_particles_);
-    DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
-    loop_variable_namelist(all_particle_data_, variables_to_restart_, read_variable_from_xml);
+    read_restart_variable_from_xml_(all_particle_data_);
 }
 //=================================================================================================//
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
-    WriteAParticleVariableToXml write_variable_to_xml(reload_xml_parser_, total_real_particles_);
-    DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
-    loop_variable_namelist(all_particle_data_, variables_to_reload_, write_variable_to_xml);
+    write_reload_variable_to_xml_(all_particle_data_);
     reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
@@ -364,54 +339,52 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
     {
         unsorted_id_.push_back(i);
     };
-    resize_particle_data_(all_particle_data_, total_real_particles_);
-    ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_parser_, total_real_particles_);
-    DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
-    loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
+    resize_particles_(total_real_particles_);
+    read_reload_variable_from_xml_(all_particle_data_);
 }
-
-    void BaseParticles::registerDeviceMemory() {
-        unsorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
-        sorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
-        sequence_device_ = allocateDeviceData<size_t>(total_real_particles_);
-        registerDeviceVariable<DeviceVecd>("Position", total_real_particles_, pos_.data());
-        registerDeviceVariable<DeviceVecd>("Velocity", total_real_particles_, vel_.data());
-        registerDeviceVariable<DeviceVecd>("Force", total_real_particles_, force_.data());
-        registerDeviceVariable<DeviceVecd>("ForcePrior", total_real_particles_, force_prior_.data());
-        registerDeviceVariable<DeviceReal>("Density", total_real_particles_, rho_.data());
-        registerDeviceVariable<DeviceReal>("Mass", total_real_particles_, mass_.data());
-        registerDeviceVariable<DeviceReal>("Volume", total_real_particles_, Vol_.data());
-    }
-
-    execution::ExecutionEvent BaseParticles::copyToDeviceMemory() {
-        execution::ExecutionEvent copy_events;
-        copy_events.add(copyDataToDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_));
-        copy_events.add(copyDataToDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_));
-        copy_events.add(copyDataToDevice(sequence_.data(), sequence_device_, total_real_particles_));
-        copy_events.add(copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
-        copy_events.add(copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
-        copy_events.add(copyDataToDevice(force_.data(), getDeviceVariableByName<DeviceVecd>("Force"), total_real_particles_));
-        copy_events.add(copyDataToDevice(force_prior_.data(), getDeviceVariableByName<DeviceVecd>("ForcePrior"), total_real_particles_));
-        copy_events.add(copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
-        copy_events.add(copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
-        copy_events.add(copyDataToDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
-        return std::move(copy_events);
-    }
-
-    execution::ExecutionEvent BaseParticles::copyFromDeviceMemory() {
-        execution::ExecutionEvent copy_events;
-        copy_events.add(copyDataFromDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_));
-        copy_events.add(copyDataFromDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_));
-        copy_events.add(copyDataFromDevice(sequence_.data(), sequence_device_, total_real_particles_));
-        copy_events.add(copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(force_.data(), getDeviceVariableByName<DeviceVecd>("Force"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(force_prior_.data(), getDeviceVariableByName<DeviceVecd>("ForcePrior"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
-        copy_events.add(copyDataFromDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
-        return std::move(copy_events);
-    }
+//=================================================================================================//
+void BaseParticles::registerDeviceMemory() {
+    unsorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
+    sorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
+    sequence_device_ = allocateDeviceData<size_t>(total_real_particles_);
+    registerDeviceVariable<DeviceVecd>("Position", total_real_particles_, pos_.data());
+    registerDeviceVariable<DeviceVecd>("Velocity", total_real_particles_, vel_.data());
+    registerDeviceVariable<DeviceVecd>("Force", total_real_particles_, force_.data());
+    registerDeviceVariable<DeviceVecd>("ForcePrior", total_real_particles_, force_prior_.data());
+    registerDeviceVariable<DeviceReal>("Density", total_real_particles_, rho_.data());
+    registerDeviceVariable<DeviceReal>("Mass", total_real_particles_, mass_.data());
+    registerDeviceVariable<DeviceReal>("Volume", total_real_particles_, Vol_.data());
+}
+//=================================================================================================//
+execution::ExecutionEvent BaseParticles::copyToDeviceMemory() {
+    execution::ExecutionEvent copy_events;
+    copy_events.add(copyDataToDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_));
+    copy_events.add(copyDataToDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_));
+    copy_events.add(copyDataToDevice(sequence_.data(), sequence_device_, total_real_particles_));
+    copy_events.add(copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
+    copy_events.add(copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
+    copy_events.add(copyDataToDevice(force_.data(), getDeviceVariableByName<DeviceVecd>("Force"), total_real_particles_));
+    copy_events.add(copyDataToDevice(force_prior_.data(), getDeviceVariableByName<DeviceVecd>("ForcePrior"), total_real_particles_));
+    copy_events.add(copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
+    copy_events.add(copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
+    copy_events.add(copyDataToDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
+    return std::move(copy_events);
+}
+//=================================================================================================//
+execution::ExecutionEvent BaseParticles::copyFromDeviceMemory() {
+    execution::ExecutionEvent copy_events;
+    copy_events.add(copyDataFromDevice(unsorted_id_.data(), unsorted_id_device_, total_real_particles_));
+    copy_events.add(copyDataFromDevice(sorted_id_.data(), sorted_id_device_, total_real_particles_));
+    copy_events.add(copyDataFromDevice(sequence_.data(), sequence_device_, total_real_particles_));
+    copy_events.add(copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(force_.data(), getDeviceVariableByName<DeviceVecd>("Force"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(force_prior_.data(), getDeviceVariableByName<DeviceVecd>("ForcePrior"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_));
+    copy_events.add(copyDataFromDevice(Vol_.data(), getDeviceVariableByName<DeviceReal>("Volume"), total_real_particles_));
+    return std::move(copy_events);
+}
 //=================================================================================================//
 template <typename DataType>
 struct copyVariablesFromDeviceOperation
