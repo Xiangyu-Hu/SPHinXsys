@@ -30,7 +30,6 @@
 #define GENERAL_REDUCE_H
 
 #include "base_general_dynamics.h"
-#include <limits>
 
 namespace SPH
 {
