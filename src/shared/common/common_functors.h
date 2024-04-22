@@ -72,7 +72,7 @@ class TruncatedLinear : public Limiter
     Real operator()(Real measure)
     {
         Real measure_scale = measure * ref_;
-        return SMIN(slope_ * measure_scale, 1.0);
+        return SMIN(slope_ * measure_scale, Real(1));
     };
 };
 
