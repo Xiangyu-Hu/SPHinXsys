@@ -55,7 +55,7 @@ namespace fluid_dynamics
 		//** Closure coefficients for Epsilon *
 		Real C_l_, C_2_;
 		Real sigma_E_;
-		Real mixing_length_for_epsilon_inlet_;
+		Real turbulent_length_ratio_for_epsilon_inlet_;
 
 		//** Start time for laminar law *
 		Real start_time_laminar_;
@@ -443,6 +443,22 @@ namespace fluid_dynamics
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 	};
+//=================================================================================================//
+	class ConstrainNormalVelocityInRegionP : public LocalDynamics,
+		public FluidDataSimple
+	{
+	public:
+		explicit ConstrainNormalVelocityInRegionP(SPHBody& sph_body);
+		virtual ~ConstrainNormalVelocityInRegionP() {};
+
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Vecd>& vel_;
+		StdLargeVec<int>& is_near_wall_P1_;
+		StdLargeVec<Vecd>& e_nearest_normal_;
+	};
+
+
 //=================================================================================================//
 //*********************TESTING MODULES*********************
 //=================================================================================================//

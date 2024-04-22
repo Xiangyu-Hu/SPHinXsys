@@ -124,7 +124,10 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
-    //SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
+    /** Turbulent eddy viscosity calculation needs values of Wall Y start. */
+    SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
+
+    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
@@ -159,7 +162,7 @@ int main(int ac, char *av[])
 
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f,0.1);
+    ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
     //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     
     /** Time step size with considering sound wave speed. */
@@ -234,6 +237,8 @@ int main(int ac, char *av[])
 
                 pressure_relaxation.exec(dt);
                 
+                constrain_normal_velocity_in_P_region.exec();
+
                 inlet_velocity_buffer_inflow_condition.exec();
 
                 impose_turbulent_inflow_condition.exec();
@@ -274,13 +279,13 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
 
-            if (GlobalStaticVariables::physical_time_ > end_time * 0.6) 
+            if (GlobalStaticVariables::physical_time_ > end_time * 0.5) 
             {
-                //get_time_average_cross_section_data.exec();
-                //get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
+                get_time_average_cross_section_data.exec();
+                get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
 
             }
-            //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
+            //if (GlobalStaticVariables::physical_time_ > end_time * 10.0)
             //{
             //    body_states_recording.writeToFile(); 
             //    num_output_file++;
@@ -301,7 +306,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
 
-    //get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
-    //std::cout << "The time-average data is output " << std::endl;
+    get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
+    std::cout << "The time-average data is output " << std::endl;
     return 0;
 }

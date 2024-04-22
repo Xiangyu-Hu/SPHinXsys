@@ -8,7 +8,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 		: Karman_(0.41), turbu_const_E_(9.8), C_mu_(0.09), turbulent_intensity_(5.0e-2), 
-		sigma_k_(1.0),  C_l_(1.44), C_2_(1.92), sigma_E_(1.3), mixing_length_for_epsilon_inlet_(0.07),
+		sigma_k_(1.0),  C_l_(1.44), C_2_(1.92), sigma_E_(1.3), turbulent_length_ratio_for_epsilon_inlet_(0.07),
 		start_time_laminar_(0.0), y_star_threshold_laminar_(11.225)
 	{
 		C_mu_25_ = pow(C_mu_, 0.25);
@@ -563,7 +563,7 @@ namespace fluid_dynamics
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
 	{
-		TurbulentLength_ = mixing_length_for_epsilon_inlet_ * CharacteristicLength_ / C_mu_75_;
+		TurbulentLength_ = turbulent_length_ratio_for_epsilon_inlet_ * CharacteristicLength_ ;
 	}
 	//=================================================================================================//
 	void InflowTurbulentCondition::update(size_t index_i, Real dt)
@@ -589,7 +589,7 @@ namespace fluid_dynamics
 	Real InflowTurbulentCondition::getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E)
 	{
 		//Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
-		Real temp_in_turbu_E = pow(turbu_k, 1.5) / TurbulentLength_;
+		Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
 		Real turbu_E_original = turbu_E;
 		if (position[0] < 0.0)
 		{
@@ -895,7 +895,6 @@ namespace fluid_dynamics
 			wall_Y_plus_[index_i] = y_p_constant_i * velo_fric_mag  / nu_i;
 			
 			// ** Correct the near wall values, only for P1 region *
-
 			if (is_near_wall_P1_[index_i] == 1)
 			{
 				Matd vel_grad_i_tn = Matd::Zero();  //** velocity gradient of wall-nearest fluid particle i on t-n plane *
@@ -976,11 +975,29 @@ namespace fluid_dynamics
 				k_production_[index_i] = G_k_p_weighted_sum / total_weight;
 
 				//** Correct normal velocity at particle P *
-				vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
+				//vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
 			}
+			//** Correct normal velocity at particle P *
+			//vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
 		}
 	}
 //=================================================================================================//
+	ConstrainNormalVelocityInRegionP::
+		ConstrainNormalVelocityInRegionP(SPHBody& sph_body)
+		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
+		vel_(particles_->vel_),
+		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+		e_nearest_normal_(*particles_->getVariableByName<Vecd>("WallNearestNormalUnitVector")){}
+	//=================================================================================================//
+	void ConstrainNormalVelocityInRegionP::update(size_t index_i, Real dt)
+	{
+		if (is_near_wall_P1_[index_i] == 1)
+		{
+			vel_[index_i] = vel_[index_i] - (vel_[index_i].dot(e_nearest_normal_[index_i])) * e_nearest_normal_[index_i];
+		}
+	}
+//=================================================================================================//
+
 //=================================================================================================//
 //*********************TESTING MODULES*********************
 //=================================================================================================//
