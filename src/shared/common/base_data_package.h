@@ -29,6 +29,7 @@
 #define BASE_DATA_PACKAGE_H
 
 #include "array_allocation.h"
+#include "common_functors.h"
 #include "data_type.h"
 #include "large_data_containers.h"
 #include "ownership.h"
@@ -80,7 +81,7 @@ class DataAssembleOperation
 
   public:
     template <typename... Args>
-    DataAssembleOperation(Args &&...args)
+    DataAssembleOperation(Args &&... args)
         : scalar_operation(std::forward<Args>(args)...),
           vector2d_operation(std::forward<Args>(args)...),
           vector3d_operation(std::forward<Args>(args)...),
@@ -88,7 +89,7 @@ class DataAssembleOperation
           matrix3d_operation(std::forward<Args>(args)...),
           integer_operation(std::forward<Args>(args)...){};
     template <typename... OperationArgs>
-    void operator()(OperationArgs &&...operation_args)
+    void operator()(OperationArgs &&... operation_args)
     {
         scalar_operation(std::forward<OperationArgs>(operation_args)...);
         vector2d_operation(std::forward<OperationArgs>(operation_args)...);
@@ -108,18 +109,18 @@ class OperationOnDataAssemble
     OperationType operation_;
 
     template <std::size_t... Is, typename... OperationArgs>
-    void operationSequence(std::index_sequence<Is...>, OperationArgs &&...operation_args)
+    void operationSequence(std::index_sequence<Is...>, OperationArgs &&... operation_args)
     {
         (operation_(std::get<Is>(data_assemble_), std::forward<OperationArgs>(operation_args)...), ...);
     }
 
   public:
     template <typename... Args>
-    OperationOnDataAssemble(DataAssembleType &data_assemble, Args &&...args)
+    OperationOnDataAssemble(DataAssembleType &data_assemble, Args &&... args)
         : data_assemble_(data_assemble), operation_(std::forward<Args>(args)...){};
 
     template <typename... OperationArgs>
-    void operator()(OperationArgs &&...operation_args)
+    void operator()(OperationArgs &&... operation_args)
     {
         operationSequence(std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
     }

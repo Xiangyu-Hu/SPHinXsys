@@ -32,7 +32,6 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
-#include "particle_functors.h"
 #include "sph_data_containers.h"
 
 namespace SPH
@@ -108,7 +107,7 @@ class Average : public ReduceSumType
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    Average(DynamicsIdentifier &identifier, Args &&...args)
+    Average(DynamicsIdentifier &identifier, Args &&... args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
     virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
@@ -132,7 +131,7 @@ struct ConstructorArgs
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&...other_args)
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&... other_args)
         : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
 };
 
@@ -165,7 +164,7 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
-                                OtherParameterSets &&...other_parameter_sets)
+                                OtherParameterSets &&... other_parameter_sets)
         : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 

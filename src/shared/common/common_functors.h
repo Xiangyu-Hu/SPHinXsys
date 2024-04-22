@@ -21,14 +21,60 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_particle_dynamics.h
- * @brief   Head file for all particle dynamics.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    common_functors.h
+ * @brief 	TBD.
+ * @author	Xiangyu Hu
  */
 
-#ifndef ALL_PARTICLE_DYNAMICS_H
-#define ALL_PARTICLE_DYNAMICS_H
+#ifndef COMMON_FUNCTORS_H
+#define COMMON_FUNCTORS_H
 
-#include "particle_dynamics_algorithms.h"
-#include "particle_functors.h"
-#endif // ALL_PARTICLE_DYNAMICS_H
+#include "base_data_type.h"
+#include "scalar_functions.h"
+
+namespace SPH
+{
+
+/** 
+ * @class Limiter
+ * Base class introduce the concept of limiter, 
+ * which limits the magnitude of a value with a fraction. 
+ * The derived class should implement the operator Real() 
+ * to indicate limiting fraction.
+ * Generally, the object of the derived class 
+ * should be named as "limiter" or "limiter_" (class member) 
+ * so that the code can be more readable.
+ */
+class Limiter
+{
+};
+
+class NoLimiter : public Limiter
+{
+  public:
+    template <typename... Args>
+    NoLimiter(Args &&... args) : Limiter(){};
+
+    template <typename... Args>
+    Real operator()(Args &&... args)
+    {
+        return 1.0;
+    };
+};
+
+class TruncatedLinear : public Limiter
+{
+    Real ref_, slope_;
+
+  public:
+    TruncatedLinear(Real ref, Real slope = 100.0)
+        : Limiter(), ref_(ref), slope_(slope){};
+    Real operator()(Real measure)
+    {
+        Real measure_scale = measure * ref_;
+        return SMIN(slope_ * measure_scale, 1.0);
+    };
+};
+
+} // namespace SPH
+#endif // COMMON_FUNCTORS_H
