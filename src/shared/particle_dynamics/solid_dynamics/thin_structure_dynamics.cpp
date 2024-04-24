@@ -64,12 +64,10 @@ ShellDeformationGradientTensor::
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
-      rho_(*particles_->getVariableByName<Real>("Density")),
       thickness_(particles_->thickness_),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
       n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
@@ -78,23 +76,25 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       dangular_vel_dt_(particles_->dangular_vel_dt_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
-      F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_)
-{
-}
+      F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_){}
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                    int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
       elastic_solid_(particles_->elastic_solid_),
+      rho0_(elastic_solid_.ReferenceDensity()),
+      inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
+      rho_(*particles_->registerSharedVariable<Real>("Density", rho0_)),
+      mass_(*particles_->registerSharedVariable<Real>(
+          "Mass", [&](size_t index_i) -> Real
+          { return rho_[index_i] * Vol_[index_i] * thickness_[index_i]; })),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       global_shear_stress_(particles_->global_shear_stress_),
-      rho0_(elastic_solid_.ReferenceDensity()),
-      inv_rho0_(1.0 / rho0_),
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),

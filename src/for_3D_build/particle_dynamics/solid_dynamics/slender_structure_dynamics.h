@@ -164,13 +164,12 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
     virtual ~BaseBarRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
+    StdLargeVec<Real> &Vol_, &thickness_, &width_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 
-    StdLargeVec<Real> &width_;
     StdLargeVec<Vecd> &b_n0_, &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
         &angular_b_vel_, dangular_b_vel_dt_;
     StdLargeVec<Matd> &transformation_matrix0_;
@@ -231,13 +230,13 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
   protected:
     ElasticSolid &elastic_solid_;
+    Real rho0_, inv_rho0_;
     Real smoothing_length_;
     Matd numerical_damping_scaling_matrix_;
-    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
     StdLargeVec<Vecd> &global_shear_stress_, &n_;
 
-    Real rho0_, inv_rho0_;
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
     const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);

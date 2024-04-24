@@ -12,13 +12,15 @@ template <class BaseRelationType>
 BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
-      rho_(*this->particles_->template getVariableByName<Real>("Density")),
-      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+      rho_(*this->particles_->template registerSharedVariable<Real>("Density", fluid_.ReferenceDensity())),
+      mass_(*this->particles_->template registerSharedVariable<Real>(
+          "Mass", [&](size_t index_i) -> Real
+          { return rho_[index_i] * Vol_[index_i]; })),
       p_(*this->particles_->template registerSharedVariable<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
       pos_(*this->base_particles_.getVariableByName<Vecd>("Position")),
-      vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
+      vel_(*this->particles_->template registerSharedVariable<Vecd>("Velocity")),
       force_(*this->particles_->template registerSharedVariable<Vecd>("Force")),
       force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior")) {}
 //=================================================================================================//
@@ -45,10 +47,17 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     //----------------------------------------------------------------------
     //		add restart output particle data
     //----------------------------------------------------------------------
+    particles_->addVariableToRestart<Vecd>("Position");
+    particles_->addVariableToRestart<Real>("VolumetricMeasure");
     particles_->addVariableToRestart<Real>("Pressure");
     particles_->addVariableToRestart<Real>("DensityChangeRate");
+    particles_->addVariableToRestart<Vecd>("Velocity");
     particles_->addVariableToRestart<Vecd>("Force");
     particles_->addVariableToRestart<Vecd>("ForcePrior");
+    //----------------------------------------------------------------------
+    //		add output particle data
+    //----------------------------------------------------------------------
+    particles_->addVariableToWrite<Vecd>("Velocity");
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>

@@ -169,7 +169,7 @@ class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
     virtual ~BaseShellRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
+    StdLargeVec<Real> &thickness_, &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
@@ -243,11 +243,12 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 
   protected:
     ElasticSolid &elastic_solid_;
+    Real rho0_, inv_rho0_;
     Real smoothing_length_;
     Matd numerical_damping_scaling_matrix_;
+    StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
     StdLargeVec<Vecd> &global_shear_stress_;
-    Real rho0_, inv_rho0_;
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
     const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);

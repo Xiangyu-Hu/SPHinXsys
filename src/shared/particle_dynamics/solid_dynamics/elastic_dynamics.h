@@ -147,7 +147,7 @@ class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInne
     virtual ~BaseElasticIntegration(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &Vol_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 };
@@ -167,6 +167,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
   protected:
     ElasticSolid &elastic_solid_;
     Real rho0_, inv_rho0_;
+        StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Vecd> &force_prior_;
     Real smoothing_length_;
 };
