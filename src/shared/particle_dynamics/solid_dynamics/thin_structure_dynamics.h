@@ -72,6 +72,7 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
 {
   protected:
     Real CFL_;
+    ElasticSolid &elastic_solid_;
     StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
     StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;

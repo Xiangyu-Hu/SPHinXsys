@@ -93,7 +93,9 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
   public:
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), angular_vel_(particles_->angular_vel_), pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+          angular_vel_(particles_->angular_vel_),
+          pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
     virtual ~ControlledRotation(){};
 
   protected:
@@ -128,6 +130,7 @@ int main(int ac, char *av[])
     plate_body.generateParticles(ParticleGeneratorPlate(plate_body));
     auto shell_particles = dynamic_cast<ShellParticles *>(&plate_body.getBaseParticles());
     plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
+    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -214,7 +217,7 @@ int main(int ac, char *av[])
     for (int i = 0; i < 10; i++)
     {
         random_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->total_real_particles_);
-        von_mises_strain.push_back(shell_particles->getVonMisesStrain(random_index[i]));
+        von_mises_strain.push_back(all_von_mises_strain[random_index[i]]);
     }
 
     update_normal.exec();

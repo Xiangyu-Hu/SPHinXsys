@@ -143,6 +143,9 @@ class VonMisesStrain : public BaseDerivedVariable<Real>,
     explicit VonMisesStrain(SPHBody &sph_body);
     virtual ~VonMisesStrain(){};
     void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &F_;
 };
 
 /**
@@ -159,7 +162,9 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    ElasticSolid &elastic_solid_;
     Real poisson_ratio_;
+        StdLargeVec<Matd> &F_;
 };
 
 //----------------------------------------------------------------------
@@ -171,8 +176,8 @@ typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
  * @brief computing mid-surface von Mises stress of shells
  */
 class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
-                                         public ShellSolidDataSimple,
-                                         public LocalDynamics
+                                 public ShellSolidDataSimple,
+                                 public LocalDynamics
 {
   public:
     explicit MidSurfaceVonMisesStress(SPHBody &sph_body);

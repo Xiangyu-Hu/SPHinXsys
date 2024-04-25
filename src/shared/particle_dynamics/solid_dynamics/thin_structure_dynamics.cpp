@@ -20,16 +20,17 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       ShellDataSimple(sph_body), CFL_(CFL),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
       force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       thickness_(particles_->thickness_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      rho0_(particles_->elastic_solid_.ReferenceDensity()),
-      E0_(particles_->elastic_solid_.YoungsModulus()),
-      nu_(particles_->elastic_solid_.PoissonRatio()),
-      c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
+      rho0_(elastic_solid_.ReferenceDensity()),
+      E0_(elastic_solid_.YoungsModulus()),
+      nu_(elastic_solid_.PoissonRatio()),
+      c0_(elastic_solid_.ReferenceSoundSpeed()),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -76,13 +77,13 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       dangular_vel_dt_(particles_->dangular_vel_dt_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
-      F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_){}
+      F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_) {}
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                    int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
-      elastic_solid_(particles_->elastic_solid_),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),

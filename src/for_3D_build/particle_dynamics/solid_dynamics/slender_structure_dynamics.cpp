@@ -8,6 +8,7 @@ namespace slender_structure_dynamics
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       BarDataSimple(sph_body), CFL_(CFL),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       angular_vel_(particles_->angular_vel_),
@@ -15,10 +16,10 @@ BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
       force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       thickness_(particles_->thickness_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      rho0_(particles_->elastic_solid_.ReferenceDensity()),
-      E0_(particles_->elastic_solid_.YoungsModulus()),
-      nu_(particles_->elastic_solid_.PoissonRatio()),
-      c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
+      rho0_(elastic_solid_.ReferenceDensity()),
+      E0_(elastic_solid_.YoungsModulus()),
+      nu_(elastic_solid_.PoissonRatio()),
+      c0_(elastic_solid_.ReferenceSoundSpeed()),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
       angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
       width_(particles_->thickness_) {}
@@ -76,15 +77,13 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       F_b_bending_(particles_->F_b_bending_),
-      dF_b_bending_dt_(particles_->dF_b_bending_dt_)
-{
-}
+      dF_b_bending_dt_(particles_->dF_b_bending_dt_) {}
 //=================================================================================================//
 BarStressRelaxationFirstHalf::
     BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                  int number_of_gaussian_points, bool hourglass_control)
     : BaseBarRelaxation(inner_relation),
-      elastic_solid_(particles_->elastic_solid_),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),

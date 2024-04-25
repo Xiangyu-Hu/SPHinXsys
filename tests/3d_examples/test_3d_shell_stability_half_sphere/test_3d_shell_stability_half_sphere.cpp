@@ -122,7 +122,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // generating particles from predefined positions from obj file
     StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
-    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec) { vec *= scale; });
+    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec)
+                  { vec *= scale; });
     Real particle_area = total_area / obj_vertices.size();
     // find out BoundingBox
     bb_system = get_particles_bounding_box(obj_vertices);
@@ -156,6 +157,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
@@ -274,21 +276,21 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 }
             }
             { // output data
-                std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+                std::cout << "max displacement: " << maximum_displace_norm.exec() << std::endl;
                 vtp_output.writeToFile(ite);
             }
             { // recording - not pushed to GitHub due to lack of matplotlib there
                 time.push_back(GlobalStaticVariables::physical_time_);
-                max_displacement.push_back(shell_particles->getMaxDisplacement());
+                max_displacement.push_back(maximum_displace_norm.exec());
             }
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-        std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+        std::cout << "max displacement: " << maximum_displace_norm.exec() << std::endl;
     }
     catch (const std::exception &e)
     {
-        std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+        std::cout << "max displacement: " << maximum_displace_norm.exec() << std::endl;
         vtp_output.writeToFile(ite);
         throw std::runtime_error(e.what());
     }

@@ -6,7 +6,9 @@ namespace SPH
 //=============================================================================================//
 Displacement::Displacement(SPHBody &sph_body)
     : BaseDerivedVariable<Vecd>(sph_body, "Displacement"), SolidDataSimple(sph_body),
-      LocalDynamics(sph_body), pos_(*base_particles_.getVariableByName<Vecd>("Position")), pos0_(particles_->pos0_) {}
+      LocalDynamics(sph_body),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos0_(particles_->pos0_) {}
 //=============================================================================================//
 void Displacement::update(size_t index_i, Real dt)
 {
@@ -16,7 +18,9 @@ void Displacement::update(size_t index_i, Real dt)
 OffsetInitialPosition::
     OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
     : SolidDataSimple(sph_body), LocalDynamics(sph_body),
-      offset_(offset), pos_(*base_particles_.getVariableByName<Vecd>("Position")), pos0_(particles_->pos0_) {}
+      offset_(offset),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos0_(particles_->pos0_) {}
 //=============================================================================================//
 void OffsetInitialPosition::update(size_t index_i, Real dt)
 {
@@ -26,7 +30,8 @@ void OffsetInitialPosition::update(size_t index_i, Real dt)
 //=============================================================================================//
 TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transform &transform)
     : SolidDataSimple(sph_body), LocalDynamics(sph_body), transform_(transform),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")), pos0_(particles_->pos0_) {}
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos0_(particles_->pos0_) {}
 //=============================================================================================//
 void TranslationAndRotation::update(size_t index_i, Real dt)
 {
@@ -47,26 +52,19 @@ void GreenLagrangeStrain::update(size_t index_i, Real dt)
 VonMisesStress::VonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"), ElasticSolidDataSimple(sph_body),
       LocalDynamics(sph_body), rho0_(sph_body_.base_material_->ReferenceDensity()),
-      rho_(*particles_->getVariableByName<Real>("Density")), F_(particles_->F_), elastic_solid_(particles_->elastic_solid_) {}
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      F_(particles_->F_),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {}
 //=============================================================================================//
 VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrain"),
-      ElasticSolidDataSimple(sph_body), LocalDynamics(sph_body) {}
-//=============================================================================================//
-void VonMisesStrain::update(size_t index_i, Real dt)
-{
-    derived_variable_[index_i] = particles_->getVonMisesStrain(index_i);
-}
+      ElasticSolidDataSimple(sph_body), LocalDynamics(sph_body), F_(particles_->F_) {}
 //=============================================================================================//
 VonMisesStrainDynamic::VonMisesStrainDynamic(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrainDynamic"),
       ElasticSolidDataSimple(sph_body), LocalDynamics(sph_body),
-      poisson_ratio_(particles_->elastic_solid_.PoissonRatio()) {}
-//=============================================================================================//
-void VonMisesStrainDynamic::update(size_t index_i, Real dt)
-{
-    derived_variable_[index_i] = particles_->getVonMisesStrainDynamic(index_i, poisson_ratio_);
-}
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      poisson_ratio_(elastic_solid_.PoissonRatio()), F_(particles_->F_) {}
 //=============================================================================================//
 MidSurfaceVonMisesStress::MidSurfaceVonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "MidSurfaceVonMisesStress"), ShellSolidDataSimple(sph_body),

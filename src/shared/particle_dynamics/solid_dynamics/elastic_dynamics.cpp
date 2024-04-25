@@ -12,12 +12,13 @@ namespace solid_dynamics
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       ElasticSolidDataSimple(sph_body), CFL_(CFL),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
-      c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
+      c0_(elastic_solid_.ReferenceSoundSpeed()) {}
 //=================================================================================================//
 Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
@@ -70,8 +71,8 @@ BaseElasticIntegration::
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseElasticIntegration(inner_relation),
-      elastic_solid_(particles_->elastic_solid_),
-      rho0_(particles_->elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       rho_(*particles_->registerSharedVariable<Real>("Density", rho0_)),
       mass_(*particles_->registerSharedVariable<Real>(
           "Mass", [&](size_t index_i) -> Real

@@ -86,7 +86,8 @@ class BeamInitialCondition
 {
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
 
     void update(size_t index_i, Real dt)
     {
@@ -94,10 +95,13 @@ class BeamInitialCondition
         Real x = pos_[index_i][0] / PL;
         if (x > 0.0)
         {
-            vel_[index_i][1] = vf * particles_->elastic_solid_.ReferenceSoundSpeed() / Q *
+            vel_[index_i][1] = vf * elastic_solid_.ReferenceSoundSpeed() / Q *
                                (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x)));
         }
     };
+
+  protected:
+    ElasticSolid &elastic_solid_;
 };
 //------------------------------------------------------------------------------
 // the main program

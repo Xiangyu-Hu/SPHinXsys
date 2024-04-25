@@ -49,14 +49,13 @@ class ElasticSolid;
 class SolidParticles : public BaseParticles
 {
   public:
-    SolidParticles(SPHBody &sph_body, Solid *solid);
+    SolidParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~SolidParticles(){};
 
     StdLargeVec<Vecd> pos0_; /**< initial position */
     StdLargeVec<Vecd> n_;    /**< normal direction */
     StdLargeVec<Vecd> n0_;   /**< initial normal direction */
     StdLargeVec<Matd> B_;    /**< configuration correction for linear reproducing */
-    Solid &solid_;
 
     /** Initialized variables for solid particles. */
     virtual void initializeOtherVariables() override;
@@ -71,55 +70,11 @@ class SolidParticles : public BaseParticles
 class ElasticSolidParticles : public SolidParticles
 {
   public:
-    ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
+    ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~ElasticSolidParticles(){};
 
     StdLargeVec<Matd> F_;     /**<  deformation tensor */
     StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
-    ElasticSolid &elastic_solid_;
-
-    /** Return the Lagrange strain. */
-    Matd getGreenLagrangeStrain(size_t particle_i);
-    /** Computing principal strain - returns the principal strains in descending order (starting from the largest) */
-    Vecd getPrincipalStrains(size_t particle_i);
-    /** Computing von Mises equivalent strain from a static (constant) formulation. */
-    Real getVonMisesStrain(size_t particle_i);
-    /** Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
-    Real getVonMisesStrainDynamic(size_t particle_i, Real poisson);
-    /** Computing von Mises strain for all particles. - "static" or "dynamic"*/
-    StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
-    /** Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
-    Real getVonMisesStrainMax(std::string strain_measure = "static");
-    /** Return the max principal strain. */
-    Real getPrincipalStrainMax();
-    /** get the Cauchy stress. */
-    Matd getStressCauchy(size_t particle_i);
-    /** get the PK2 stress. */
-    Matd getStressPK2(size_t particle_i);
-    /** Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
-    Vecd getPrincipalStresses(size_t particle_i);
-    /** Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
-    Real getVonMisesStress(size_t particle_i);
-    /** Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
-    StdLargeVec<Real> getVonMisesStressVector();
-    /** Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
-    Real getVonMisesStressMax();
-    Real getPrincipalStressMax();
-
-    /** Computing displacement. */
-    Vecd displacement(size_t particle_i);
-    /** Return the displacement. */
-    StdLargeVec<Vecd> getDisplacement();
-    /** get the max displacement. */
-    Real getMaxDisplacement();
-
-    /**< Computing normal vector. */
-    Vecd normal(size_t particle_i);
-    /** get the normal vector. */
-    StdLargeVec<Vecd> getNormal();
-
-    /** relevant stress measure */
-    std::string stress_measure_;
 
     /** Initialize the variables for elastic particle. */
     virtual void initializeOtherVariables() override;
@@ -134,7 +89,7 @@ class ElasticSolidParticles : public SolidParticles
 class ShellParticles : public ElasticSolidParticles
 {
   public:
-    ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
+    ShellParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~ShellParticles(){};
 
     Real thickness_ref_;                       /**< Shell thickness. */

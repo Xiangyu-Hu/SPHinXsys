@@ -71,7 +71,7 @@ void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
     : RepulsionDensitySummation<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionDensity"),
-      solid_(particles_->solid_),
+      solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
       particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 {

@@ -92,6 +92,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
 {
   protected:
     Real CFL_;
+    ElasticSolid &elastic_solid_;
     StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
     StdLargeVec<Real> &mass_;
     Real smoothing_length_, c0_;
@@ -167,7 +168,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
   protected:
     ElasticSolid &elastic_solid_;
     Real rho0_, inv_rho0_;
-        StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Vecd> &force_prior_;
     Real smoothing_length_;
 };

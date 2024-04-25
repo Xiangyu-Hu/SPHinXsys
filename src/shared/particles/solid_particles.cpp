@@ -9,8 +9,8 @@
 namespace SPH
 {
 //=============================================================================================//
-SolidParticles::SolidParticles(SPHBody &sph_body, Solid *solid)
-    : BaseParticles(sph_body, solid), solid_(*solid) {}
+SolidParticles::SolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
+    : BaseParticles(sph_body, base_material) {}
 //=================================================================================================//
 void SolidParticles::initializeOtherVariables()
 {
@@ -24,10 +24,8 @@ void SolidParticles::initializeOtherVariables()
                      { return Matd::Identity(); });
 }
 //=============================================================================================//
-ElasticSolidParticles::
-    ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
-    : SolidParticles(sph_body, elastic_solid),
-      elastic_solid_(*elastic_solid) {}
+ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
+    : SolidParticles(sph_body, base_material) {}
 //=================================================================================================//
 void ElasticSolidParticles::initializeOtherVariables()
 {
@@ -50,199 +48,10 @@ void ElasticSolidParticles::initializeOtherVariables()
     addDerivedVariableToWrite<VonMisesStress>();
     addDerivedVariableToWrite<VonMisesStrain>();
     addVariableToRestart<Matd>("DeformationGradient");
-    // get which stress measure is relevant for the material
-    stress_measure_ = elastic_solid_.getRelevantStressMeasureName();
-}
-//=================================================================================================//
-Matd ElasticSolidParticles::getGreenLagrangeStrain(size_t particle_i)
-{
-    Matd F = F_[particle_i];
-    return 0.5 * (F.transpose() * F - Matd::Identity());
-}
-//=================================================================================================//
-Vecd ElasticSolidParticles::getPrincipalStrains(size_t particle_i)
-{
-    Matd epsilon = getGreenLagrangeStrain(particle_i);
-    return getPrincipalValuesFromMatrix(epsilon);
-}
-//=================================================================================================//
-Matd ElasticSolidParticles::getStressCauchy(size_t particle_i)
-{
-    Matd F = F_[particle_i];
-    Matd stress_PK2 = elastic_solid_.StressPK2(F, particle_i);
-    return (1.0 / F.determinant()) * F * stress_PK2 * F.transpose();
-}
-//=================================================================================================//
-Matd ElasticSolidParticles::getStressPK2(size_t particle_i)
-{
-    return elastic_solid_.StressPK2(F_[particle_i], particle_i);
-}
-//=================================================================================================//
-Vecd ElasticSolidParticles::getPrincipalStresses(size_t particle_i)
-{
-    Matd sigma;
-    if (stress_measure_ == "Cauchy")
-    {
-        sigma = getStressCauchy(particle_i); // Cauchy stress
-    }
-    else if (stress_measure_ == "PK2")
-    {
-        sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
-    }
-    else
-    {
-        throw std::runtime_error("get_Principal_stresses: wrong input");
-    }
-
-    return getPrincipalValuesFromMatrix(sigma);
-}
-//=================================================================================================//
-Real ElasticSolidParticles::getVonMisesStress(size_t particle_i)
-{
-    Matd sigma;
-    if (stress_measure_ == "Cauchy")
-    {
-        sigma = getStressCauchy(particle_i); // Cauchy stress
-    }
-    else if (stress_measure_ == "PK2")
-    {
-        sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
-    }
-    else
-    {
-        throw std::runtime_error("get_von_Mises_stress: wrong input");
-    }
-
-    return getVonMisesStressFromMatrix(sigma);
-}
-//=================================================================================================//
-StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrainVector(std::string strain_measure)
-{
-    StdLargeVec<Real> strain_vector = {};
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        Real strain = 0.0;
-        if (strain_measure == "static")
-        {
-            strain = getVonMisesStrain(index_i);
-        }
-        else if (strain_measure == "dynamic")
-        {
-            strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
-        }
-        else
-        {
-            throw std::runtime_error("getVonMisesStrainVector: wrong input");
-        }
-
-        strain_vector.push_back(strain);
-    }
-
-    return strain_vector;
-}
-//=================================================================================================//
-Real ElasticSolidParticles::getVonMisesStrainMax(std::string strain_measure)
-{
-    Real strain_max = 0;
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        Real strain = 0.0;
-        if (strain_measure == "static")
-        {
-            strain = getVonMisesStrain(index_i);
-        }
-        else if (strain_measure == "dynamic")
-        {
-            strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
-        }
-        else
-        {
-            throw std::runtime_error("getVonMisesStrainMax: wrong input");
-        }
-        if (strain_max < strain)
-            strain_max = strain;
-    }
-    return strain_max;
-}
-//=================================================================================================//
-Real ElasticSolidParticles::getPrincipalStressMax()
-{
-    Real stress_max = 0.0;
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        /** take the max. component, which is the first one, this represents the max. tension. */
-        Real stress = getPrincipalStresses(index_i)[0];
-        if (stress_max < stress)
-            stress_max = stress;
-    }
-    return stress_max;
-};
-//=================================================================================================//
-StdLargeVec<Real> ElasticSolidParticles::getVonMisesStressVector()
-{
-    StdLargeVec<Real> stress_vector = {};
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        Real stress = getVonMisesStress(index_i);
-        stress_vector.push_back(stress);
-    }
-    return stress_vector;
-}
-//=================================================================================================//
-Real ElasticSolidParticles::getVonMisesStressMax()
-{
-    Real stress_max = 0.0;
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        Real stress = getVonMisesStress(index_i);
-        if (stress_max < stress)
-            stress_max = stress;
-    }
-    return stress_max;
-}
-//=================================================================================================//
-Vecd ElasticSolidParticles::displacement(size_t particle_i)
-{
-    return pos_[particle_i] - pos0_[particle_i];
-}
-//=================================================================================================//
-Vecd ElasticSolidParticles::normal(size_t particle_i)
-{
-    return n_[particle_i];
-}
-//=================================================================================================//
-StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
-{
-    StdLargeVec<Vecd> displacement_vector = {};
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        displacement_vector.push_back(displacement(index_i));
-    }
-    return displacement_vector;
-}
-//=================================================================================================//
-Real ElasticSolidParticles::getMaxDisplacement()
-{
-    Real maximum = 0.0;
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        maximum = SMAX(maximum, displacement(index_i).norm());
-    }
-    return maximum;
-};
-//=================================================================================================//
-StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
-{
-    StdLargeVec<Vecd> normal_vector = {};
-    for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
-    {
-        normal_vector.push_back(normal(index_i));
-    }
-    return normal_vector;
 }
 //=============================================================================================//
-ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
-    : ElasticSolidParticles(sph_body, elastic_solid), thickness_ref_(1.0)
+ShellParticles::ShellParticles(SPHBody &sph_body, BaseMaterial *base_material)
+    : ElasticSolidParticles(sph_body, base_material), thickness_ref_(1.0)
 {
     //----------------------------------------------------------------------
     //		modify kernel function for surface particles

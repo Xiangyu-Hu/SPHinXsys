@@ -249,13 +249,6 @@ class StructuralSimulation
     // iterators
     int iteration_;
 
-    // data storage
-    StdVec<Real> von_mises_stress_max_;
-    StdLargeVec<StdLargeVec<Real>> von_mises_stress_particles_;
-
-    StdVec<Real> von_mises_strain_max_;
-    StdLargeVec<StdLargeVec<Real>> von_mises_strain_particles_;
-
     // for constructor, the order is important
     void scaleTranslationAndResolution();
     void setSystemResolutionMax();
