@@ -9,7 +9,7 @@ FluidInitialCondition::
     FluidInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")) {}
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")) {}
 //=================================================================================================//
 ContinuumVolumeUpdate::ContinuumVolumeUpdate(SPHBody &sph_body)
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),

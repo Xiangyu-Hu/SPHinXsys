@@ -75,7 +75,7 @@ class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public Ge
           pos0_(*this->particles_->template registerSharedVariable<Vecd>(
               "InitialPosition", [&](size_t index_i)
               { return pos_[index_i]; })),
-          vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")){};
+          vel_(*this->particles_->template registerSharedVariable<Vecd>("Velocity")){};
 
     virtual ~MotionConstraint(){};
 

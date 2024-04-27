@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     SolidBody shell(sph_system, makeShared<Shell>("Shell"));
     shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
+    shell.defineParticlesAndMaterial<ShellParticles, Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
         shell.generateParticles<Reload>(shell.getName());
@@ -226,10 +226,8 @@ int main(int ac, char *av[])
     integ.setAllowInterpolation(false);
     integ.initialize(state);
     /** Coupling between SimBody and SPH.*/
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_shell(shell_multibody, MBsystem, shellMBody, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_shell(shell_multibody, MBsystem, shellMBody, integ);
+    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_shell(shell_multibody, MBsystem, shellMBody, integ);
+    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_shell(shell_multibody, MBsystem, shellMBody, integ);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

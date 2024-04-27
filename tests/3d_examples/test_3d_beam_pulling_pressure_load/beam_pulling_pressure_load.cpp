@@ -166,6 +166,7 @@ int main(int ac, char *av[])
         beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
     /** Output */
+    beam_body.addDerivedBodyStateForRecording<VonMisesStress>();
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", beam_observer_contact);

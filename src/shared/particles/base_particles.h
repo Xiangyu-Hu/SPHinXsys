@@ -146,7 +146,7 @@ class BaseParticles
     inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
 
     template <class DerivedVariableMethod, class... Ts>
-    void addDerivedVariableToWrite(Ts &&...);
+    void addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...);
     void computeDerivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting

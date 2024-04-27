@@ -36,18 +36,6 @@ void ElasticSolidParticles::initializeOtherVariables()
     registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
     registerVariable(dF_dt_, "DeformationRate");
-    /**
-     *	add restart output particle data
-     */
-    addVariableToRestart<Matd>("DeformationGradient");
-    /**
-     *	add restart output particle data
-     */
-    addVariableToWrite<Vecd>("NormalDirection");
-    addDerivedVariableToWrite<Displacement>();
-    addDerivedVariableToWrite<VonMisesStress>();
-    addDerivedVariableToWrite<VonMisesStrain>();
-    addVariableToRestart<Matd>("DeformationGradient");
 }
 //=============================================================================================//
 ShellParticles::ShellParticles(SPHBody &sph_body, BaseMaterial *base_material)
@@ -65,8 +53,8 @@ ShellParticles::ShellParticles(SPHBody &sph_body, BaseMaterial *base_material)
     /**
      * add particle reload data
      */
-    addVariableToList<Vecd>(variables_to_reload_, "NormalDirection");
-    addVariableToList<Real>(variables_to_reload_, "Thickness");
+    addVariableToReload<Vecd>("NormalDirection");
+    addVariableToReload<Real>("Thickness");
 }
 //=================================================================================================//
 void ShellParticles::initializeOtherVariables()
@@ -101,23 +89,6 @@ void ShellParticles::initializeOtherVariables()
     registerVariable(global_stress_, "GlobalStress");
     registerVariable(global_moment_, "GlobalMoment");
     registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
-    /**
-     * for rotation.
-     */
-    addVariableToRestart<Matd>("DeformationGradient");
-    addVariableToRestart<Vecd>("PseudoNormal");
-    addVariableToRestart<Vecd>("Rotation");
-    addVariableToRestart<Vecd>("AngularVelocity");
-    /**
-     * add basic output particle data
-     */
-    addVariableToWrite<Vecd>("NormalDirection");
-    addDerivedVariableToWrite<Displacement>();
-    addDerivedVariableToWrite<VonMisesStress>();
-    addDerivedVariableToWrite<VonMisesStrain>();
-    addVariableToRestart<Matd>("DeformationGradient");
-    addVariableToWrite<Vecd>("Rotation");
-    addDerivedVariableToWrite<MidSurfaceVonMisesStress>();
 }
 //=================================================================================================//
 void ShellParticles::registerTransformationMatrix()

@@ -251,7 +251,7 @@ Integration2ndHalf<Contact<>, RiemannSolverType>::
     {
         Fluid &contact_fluid = DynamicCast<Fluid>(this, contact_particles_[k]->getBaseMaterial());
         riemann_solvers_.push_back(RiemannSolverType(fluid_, contact_fluid));
-        contact_vel_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
+        contact_vel_.push_back(contact_particles_[k]->template registerSharedVariable<Vecd>("Velocity"));
         contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
     }
 }

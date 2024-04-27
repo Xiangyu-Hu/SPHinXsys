@@ -69,7 +69,7 @@ int main(int ac, char *av[])
 
     SolidBody rigid_shell(sph_system, makeShared<ShellShape>("ShellShape"));
     rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    rigid_shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
+    rigid_shell.defineParticlesAndMaterial<ShellParticles, Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
         rigid_shell.generateParticles<Reload>(rigid_shell.getName());

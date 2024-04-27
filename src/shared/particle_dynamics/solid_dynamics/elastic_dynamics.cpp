@@ -33,7 +33,7 @@ ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_bo
     : LocalDynamics(sph_body),
       ElasticSolidDataSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")) {}
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")) {}
 //=================================================================================================//
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),

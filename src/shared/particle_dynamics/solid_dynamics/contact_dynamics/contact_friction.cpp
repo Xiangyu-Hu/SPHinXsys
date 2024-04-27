@@ -14,7 +14,7 @@ PairwiseFrictionFromWall::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        wall_vel_n_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
+        wall_vel_n_.push_back(contact_particles_[k]->registerSharedVariable<Vecd>("Velocity"));
         wall_n_.push_back(&contact_particles_[k]->n_);
         wall_Vol_n_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
     }

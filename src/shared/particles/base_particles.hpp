@@ -165,10 +165,10 @@ void BaseParticles::addVariableToWrite(const std::string &variable_name)
 }
 //=================================================================================================//
 template <class DerivedVariableMethod, class... Ts>
-void BaseParticles::addDerivedVariableToWrite(Ts &&...args)
+void BaseParticles::addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...args)
 {
     SimpleDynamics<DerivedVariableMethod> *derived_data =
-        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
+        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body, std::forward<Ts>(args)...);
     derived_variables_.push_back(derived_data);
     using DerivedDataType = typename DerivedVariableMethod::DerivedDataType;
     addVariableToList<DerivedDataType>(variables_to_write_, derived_data->variable_name_);

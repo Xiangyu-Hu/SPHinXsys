@@ -238,6 +238,7 @@ return_data bending_circular_plate(Real dp_ratio)
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
+    shell_body.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
     // observer point

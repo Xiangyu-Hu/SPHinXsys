@@ -271,6 +271,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     gate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     gate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
+    gate.addDerivedBodyStateForRecording<Displacement>();
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of gate center. */

@@ -143,6 +143,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
+    shell_body.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
 

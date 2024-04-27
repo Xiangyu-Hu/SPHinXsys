@@ -130,7 +130,6 @@ int main(int ac, char *av[])
     plate_body.generateParticles(ParticleGeneratorPlate(plate_body));
     auto shell_particles = dynamic_cast<ShellParticles *>(&plate_body.getBaseParticles());
     plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
-    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -154,6 +153,8 @@ int main(int ac, char *av[])
     SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
     /** Output */
     IOEnvironment io_environment(system);
+    plate_body.addDerivedBodyStateForRecording<VonMisesStrain>();
+    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
     BodyStatesRecordingToVtp write_states(system.real_bodies_);
 
     /** Apply initial condition. */

@@ -157,7 +157,6 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
     Real total_mass_;
     Matd correction_matrix_;
     Vecd velocity_correction_;
-    StdLargeVec<Vecd> &vel_;
     ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
 
   protected:
@@ -169,8 +168,7 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
 
   public:
     explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones())
-        : MotionConstraint<SPHBody>(sph_body),
-          correction_matrix_(Matd::Identity()), vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
+        : MotionConstraint<SPHBody>(sph_body), correction_matrix_(Matd::Identity()),
           compute_total_momentum_(sph_body, "Velocity")
     {
         for (int i = 0; i != Dimensions; ++i)

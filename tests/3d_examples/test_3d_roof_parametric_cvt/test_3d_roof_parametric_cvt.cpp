@@ -332,6 +332,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     }
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
+    shell_body.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
     StdLargeVec<Vecd> &pos0 = *shell_particles->getVariableByName<Vecd>("InitialPosition");

@@ -242,6 +242,7 @@ int main(int ac, char *av[])
     plate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     plate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     plate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
+    plate.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);
