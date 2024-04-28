@@ -45,7 +45,6 @@ void BaseParticles::initializeOtherVariables()
     registerVariable(mass_, "Mass",
                      [&](size_t i) -> Real
                      { return rho_[i] * ParticleVolume(i); });
-    registerVariable(indicator_, "Indicator");
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------

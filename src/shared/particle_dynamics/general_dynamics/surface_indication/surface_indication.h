@@ -28,6 +28,8 @@
  * However, some other applications may use this function,
  * such as transport velocity formulation,
  * for masking some function which is only applicable for the bulk of the fluid body.
+ * Currently, indicator used 0 for bulk, 1 for free surface indicator,
+ * other to be defined.
  * @author	Xiangyu Hu
  */
 

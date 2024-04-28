@@ -18,6 +18,7 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
+      smeared_surface_(*particles_->getVariableByName<int>("SmearedSurface")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {
     particles_->registerVariable(inner_weight_summation_, "InnerWeightSummation");
@@ -25,7 +26,6 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
     particles_->registerVariable(vel_normal_average_, "VelocityNormalAverage");
     particles_->registerVariable(vel_tangential_average_, "VelocityTangentialAverage");
     particles_->registerVariable(vel_average_, "VelocityAverage");
-    particles_->registerVariable(smeared_surface_, "SmearedSurface");
 };
 //=================================================================================================//
 void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
