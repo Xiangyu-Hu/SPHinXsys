@@ -13,10 +13,8 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      rho_(*this->particles_->template registerSharedVariable<Real>("Density", fluid_.ReferenceDensity())),
-      mass_(*this->particles_->template registerSharedVariable<Real>(
-          "Mass", [&](size_t index_i) -> Real
-          { return rho_[index_i] * Vol_[index_i]; })),
+      rho_(*this->particles_->template getVariableByName<Real>("Density")),
+      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       p_(*this->particles_->template registerSharedVariable<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
       pos_(*this->base_particles_.getVariableByName<Vecd>("Position")),

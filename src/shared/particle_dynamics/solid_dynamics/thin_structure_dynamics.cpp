@@ -88,10 +88,8 @@ ShellStressRelaxationFirstHalf::
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
-      rho_(*particles_->registerSharedVariable<Real>("Density", rho0_)),
-      mass_(*particles_->registerSharedVariable<Real>(
-          "Mass", [&](size_t index_i) -> Real
-          { return rho_[index_i] * Vol_[index_i] * thickness_[index_i]; })),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       global_stress_(particles_->global_stress_),
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
