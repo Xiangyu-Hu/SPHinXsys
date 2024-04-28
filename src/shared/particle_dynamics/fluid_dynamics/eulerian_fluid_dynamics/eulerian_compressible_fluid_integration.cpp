@@ -18,8 +18,6 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
 //=================================================================================================//
 CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sph_body)
     : FluidInitialCondition(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),

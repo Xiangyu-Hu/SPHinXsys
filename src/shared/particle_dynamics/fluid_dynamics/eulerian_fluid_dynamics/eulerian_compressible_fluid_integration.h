@@ -85,8 +85,7 @@ using EulerianCompressibleIntegration2ndHalfNoRiemann = EulerianCompressibleInte
 using EulerianCompressibleIntegration2ndHalfHLLCRiemann = EulerianCompressibleIntegration2ndHalf<HLLCRiemannSolver>;
 using EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann = EulerianCompressibleIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 
-class CompressibleFluidInitialCondition
-    : public FluidInitialCondition
+class CompressibleFluidInitialCondition : public FluidInitialCondition
 {
   public:
     explicit CompressibleFluidInitialCondition(SPHBody &sph_body);

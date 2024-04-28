@@ -7,7 +7,7 @@ namespace continuum_dynamics
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), PlasticContinuumDataSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       stress_tensor_3D_(particles_->stress_tensor_3D_) {}
 //=================================================================================================//
 ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
