@@ -154,7 +154,6 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
