@@ -91,7 +91,7 @@ class CompressibleFluidInitialCondition : public FluidInitialCondition
     explicit CompressibleFluidInitialCondition(SPHBody &sph_body);
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_, &mom_;
+    StdLargeVec<Vecd> &mom_;
     StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_, &E_;
 };
 
