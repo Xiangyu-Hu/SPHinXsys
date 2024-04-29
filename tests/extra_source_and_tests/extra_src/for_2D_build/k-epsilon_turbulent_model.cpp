@@ -5,6 +5,7 @@ namespace SPH
 //=================================================================================================//
 namespace fluid_dynamics
 {
+	using TurbuIntegration2ndHalfWithWallDissipativeRieman = ComplexInteraction<Integration2ndHalf<Inner<>, Contact<Wall>>, DissipativeRiemannSolver>;
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 		: Karman_(0.41), turbu_const_E_(9.8), C_mu_(0.09), turbulent_intensity_(5.0e-2), 
@@ -193,6 +194,10 @@ namespace fluid_dynamics
 		particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
 		particles_->registerVariable(vel_x_, "Velocity_X");
 		particles_->registerSortableVariable<Real>("Velocity_X");
+
+		particles_->registerVariable(turbu_indicator_, "TurbulentIndicator");
+		particles_->registerSortableVariable<int>("TurbulentIndicator");
+		particles_->addVariableToWrite<int>("TurbulentIndicator");
 	}
 	//=================================================================================================//
 	void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
@@ -398,7 +403,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation& inner_relation)
 		: TurbuViscousForce<FluidDataInner>(inner_relation), 
-		ForcePrior(&base_particles_, "ViscousForce")
+		ForcePrior(&base_particles_, "ViscousForce"),
+		turbu_indicator_(*this->particles_->template getVariableByName<int>("TurbulentIndicator"))
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 		this->particles_->registerSortableVariable<Vecd>("ViscousAccInner");
@@ -407,6 +413,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 	{
+		turbu_indicator_[index_i] = 0;
+
 		Real mu_eff_i = turbu_mu_[index_i] + molecular_viscosity_;
 		
 		visc_acc_inner_[index_i] = Vecd::Zero();
@@ -418,13 +426,27 @@ namespace fluid_dynamics
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			//const Vecd& e_ij = inner_neighborhood.e_ij_[n];
-
+			const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 			Real mu_eff_j = turbu_mu_[index_j] + molecular_viscosity_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+			
+			Vecd shear_stress = mu_harmo * vel_derivative;
+			Vecd shear_stress_eij = shear_stress.dot(e_ij) * e_ij;
+			Real dissipation_judge = 0.0025 * rho_[index_i] * c0_ * smoothing_length_;
+			Real dissipation = 0.1 * rho_[index_i] * c0_ * smoothing_length_;
 
-			Vecd force_j = 2.0 * mass_[index_i] * mu_harmo * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+			//** Introduce dissipation *
+			Vecd shear_stress_eij_corrected = shear_stress_eij;
+			if (mu_harmo < dissipation_judge)
+			{
+				shear_stress_eij_corrected = ((dissipation * vel_derivative).dot(e_ij)) * e_ij;
+				turbu_indicator_[index_i]++; //** For test *
+			}
+			shear_stress = (shear_stress - shear_stress_eij) + shear_stress_eij_corrected;
+			
+			
+			Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ijV_j_[n];
 			force += force_j;
 		}
 		viscous_force_[index_i] = force / rho_[index_i];

@@ -80,7 +80,8 @@ namespace fluid_dynamics
 		velo_friction_(*this->particles_->template getVariableByName<Vecd>("FrictionVelocity")),
 		y_p_(*this->particles_->template getVariableByName<Real>("Y_P")),
 		is_near_wall_P2_(*this->particles_->template getVariableByName<int>("IsNearWallP2")),
-		molecular_viscosity_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()) {}
+		molecular_viscosity_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
+		c0_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceSoundSpeed()) {}
 //=================================================================================================//
 
 }

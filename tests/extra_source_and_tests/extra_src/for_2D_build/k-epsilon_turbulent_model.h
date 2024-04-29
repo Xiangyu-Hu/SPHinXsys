@@ -181,6 +181,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& turbu_mu_;
 
 		//** for test */
+		StdLargeVec<int>  turbu_indicator_;
 		StdLargeVec<Real>  k_diffusion_, vel_x_;
 	};
 
@@ -284,6 +285,8 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& y_p_;
 		StdLargeVec<int>& is_near_wall_P2_;
 		Real molecular_viscosity_;
+		Real c0_;
+
 		//** For test *
 		//StdLargeVec<Matd> visc_direction_matrix_;
 		StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
@@ -298,6 +301,8 @@ namespace fluid_dynamics
 		explicit TurbuViscousForce(BaseInnerRelation& inner_relation);
 		virtual ~TurbuViscousForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<int>  &turbu_indicator_;
 	};
 
 	//** Wall part *

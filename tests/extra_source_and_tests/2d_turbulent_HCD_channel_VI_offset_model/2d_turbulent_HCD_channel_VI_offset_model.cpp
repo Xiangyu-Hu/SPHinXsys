@@ -111,7 +111,8 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);    
-    
+    //Dynamics1Level<fluid_dynamics::TurbuIntegration2ndHalfWithWallDissipativeRieman> density_relaxation(water_block_inner, water_wall_contact);
+
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
     InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact, near_surface);
 
@@ -294,7 +295,7 @@ int main(int ac, char *av[])
         //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
         num_output_file++;
-        if (num_output_file == 240)
+        if (num_output_file == 440)
             system("pause");
         //TickCount t3 = TickCount::now();
 
