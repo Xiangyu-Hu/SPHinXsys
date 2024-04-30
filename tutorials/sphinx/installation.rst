@@ -59,7 +59,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh
     ./vcpkg install --clean-after-build \
@@ -273,7 +273,7 @@ Open Windows PowerShell or Git CMD, and then run the commands below one by one.
 
 ..  code-block:: pwsh
     
-    git clone https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     .\bootstrap-vcpkg.bat
     .\vcpkg install --clean-after-build         \
@@ -292,7 +292,7 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
 
 ..  code-block:: bash
     
-    git clone https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.bat
     ./vcpkg install --clean-after-build             \
@@ -389,17 +389,21 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh -disableMetrics
+    ./vcpkg env --triplet=x64-osx
     ./vcpkg install --clean-after-build         \
-        eigen3:x64-osx                          \
-        tbb:x64-osx                             \
-        boost-program-options:x64-osx           \
-        boost-geometry:x64-osx                  \
-        simbody:x64-osx                         \
-        gtest:x64-osx                           \
-        pybind11:x64-osx
+        eigen3                                  \
+        tbb                                     \
+        boost-program-options                   \
+        boost-geometry                          \
+        simbody                                 \
+        gtest                                   \
+        pybind11
+
+Note that, if you are using ARM Mac (M1 or later chips), 
+you should use the triplet :code:`arm64-osx` instead of :code:`x64-osx`.
 
 Building SPHinXsys
 ^^^^^^^^^^^^^^^^^^^^^
