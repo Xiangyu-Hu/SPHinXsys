@@ -95,11 +95,12 @@ VariableType interpolate_observer(
 {
     Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
     Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    StdLargeVec<Vecd> &pos0_ = *particles.registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     VariableType variable_sum = VariableType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
     {
-        Real distance = (particles.pos0_[id] - observer_pos_0).norm();
+        Real distance = (pos0_[id] - observer_pos_0).norm();
         Real kernel = kernel_ptr->W_3D(distance / smoothing_length);
         kernel_sum += kernel;
         variable_sum += kernel * (get_variable_value(id));
@@ -241,13 +242,15 @@ return_data bending_circular_plate(Real dp_ratio)
     shell_body.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
+    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
         Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
+
+        for (size_t i = 0; i < pos0_.size(); ++i)
         {
-            if ((shell_particles->pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
+            if ((pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
                 ids.push_back(i);
         }
         return ids;
@@ -290,7 +293,7 @@ return_data bending_circular_plate(Real dp_ratio)
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file
         Real min_rij = MaxReal;
-        for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
+        for (size_t index_i = 0; index_i < pos0_.size(); ++index_i)
         {
             Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)

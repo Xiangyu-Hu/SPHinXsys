@@ -100,6 +100,28 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
 }
 //=================================================================================================//
 template <typename DataType>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(const std::string &new_name, const std::string &old_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
+
+    if (variable != nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        StdLargeVec<DataType> *old_data = std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
+        return registerSharedVariable<DataType>(new_name, [&](size_t index)
+                                                { return (*old_data)[index]; });
+    }
+    else
+    {
+        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    return nullptr;
+}
+//=================================================================================================//
+template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);

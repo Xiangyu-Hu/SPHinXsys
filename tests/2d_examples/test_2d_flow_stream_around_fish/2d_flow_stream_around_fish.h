@@ -149,8 +149,7 @@ Real b3 = -15.73 * muscle_thickness / pow(fish_length, 3);
 Real b4 = 21.87 * muscle_thickness / pow(fish_length, 4);
 Real b5 = -10.55 * muscle_thickness / pow(fish_length, 5);
 
-class FishMaterialInitialization
-    : public MaterialIdInitialization
+class FishMaterialInitialization : public MaterialIdInitialization
 {
   public:
     explicit FishMaterialInitialization(SolidBody &solid_body)
@@ -158,8 +157,8 @@ class FishMaterialInitialization
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real x = pos0_[index_i][0] - cx;
-        Real y = pos0_[index_i][1];
+        Real x = pos_[index_i][0] - cx;
+        Real y = pos_[index_i][1];
 
         Real y1 = a1 * pow(x, 0 + 1) + a2 * pow(x, 1 + 1) + a3 * pow(x, 2 + 1) + a4 * pow(x, 3 + 1) + a5 * pow(x, 4 + 1);
         if (x <= (fish_length - head_length) && y > (y1 - 0.004 + cy) && y > (cy + bone_thickness / 2))
@@ -189,7 +188,7 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
     explicit ImposingActiveStrain(SolidBody &solid_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
           material_id_(*particles_->getVariableByName<int>("MaterialID")),
-          pos0_(*particles_->getVariableByName<Vecd>("InitialPosition")),
+          pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
           active_strain_(*particles_->getVariableByName<Matd>("ActiveStrain")){};
     virtual void update(size_t index_i, Real dt = 0.0)
     {

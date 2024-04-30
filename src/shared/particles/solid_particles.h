@@ -52,10 +52,9 @@ class SolidParticles : public BaseParticles
     SolidParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~SolidParticles(){};
 
-    StdLargeVec<Vecd> pos0_; /**< initial position */
-    StdLargeVec<Vecd> n_;    /**< normal direction */
-    StdLargeVec<Vecd> n0_;   /**< initial normal direction */
-    StdLargeVec<Matd> B_;    /**< configuration correction for linear reproducing */
+    StdLargeVec<Vecd> n_;  /**< normal direction */
+    StdLargeVec<Vecd> n0_; /**< initial normal direction */
+    StdLargeVec<Matd> B_;  /**< configuration correction for linear reproducing */
 
     /** Initialized variables for solid particles. */
     virtual void initializeOtherVariables() override;

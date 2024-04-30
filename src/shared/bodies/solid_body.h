@@ -77,10 +77,9 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
     virtual ~SolidBodyPartForSimbody(){};
 
   protected:
-    Real solid_body_density_;
-    SolidParticles *solid_particles_;
+    Real rho0_;
     StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos0_;
+    StdLargeVec<Vecd> &pos_;
 
   private:
     void setMassProperties();

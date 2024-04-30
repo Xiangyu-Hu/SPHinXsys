@@ -11,7 +11,7 @@ void SolidBodyPartForSimbody::setMassProperties()
     for (size_t i = 0; i < body_part_particles_.size(); ++i)
     {
         size_t index_i = body_part_particles_[i];
-        Vecd particle_position = pos0_[index_i];
+        Vecd particle_position = pos_[index_i];
         Real particle_volume = Vol_[index_i];
 
         initial_mass_center_ += particle_volume * particle_position;
@@ -26,7 +26,7 @@ void SolidBodyPartForSimbody::setMassProperties()
     for (size_t i = 0; i < body_part_particles_.size(); ++i)
     {
         size_t index_i = body_part_particles_[i];
-        Vecd particle_position = pos0_[index_i];
+        Vecd particle_position = pos_[index_i];
         Real particle_volume = Vol_[index_i];
 
         Vec3d displacement = particle_position - initial_mass_center_;
@@ -42,7 +42,7 @@ void SolidBodyPartForSimbody::setMassProperties()
     inertia_products /= body_part_volume;
 
     body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-        body_part_volume * solid_body_density_, SimTKVec3(0),
+        body_part_volume * rho0_, SimTKVec3(0),
         SimTK::UnitInertia(SimTKVec3(inertia_moments[0], inertia_moments[1], inertia_moments[2]),
                            SimTKVec3(inertia_products[0], inertia_products[1], inertia_products[2])));
 }

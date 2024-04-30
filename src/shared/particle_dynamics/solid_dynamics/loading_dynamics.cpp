@@ -12,7 +12,7 @@ SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringDamperConstraintForce"), SolidDataSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      pos0_(particles_->pos0_),
+      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mass_(*particles_->getVariableByName<Real>("Mass"))
 {
@@ -54,7 +54,8 @@ SpringNormalOnSurfaceParticles::
                                    Vecd source_point, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "NormalSpringForceOnSurface"), SolidDataSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      pos0_(particles_->pos0_), n_(particles_->n_),
+      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      n_(particles_->n_),
       n0_(particles_->n0_),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
@@ -122,7 +123,8 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 SpringOnSurfaceParticles::
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringForceOnSurface"), SolidDataSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")), pos0_(particles_->pos0_),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
@@ -179,7 +181,7 @@ ForceInBodyRegion::
     : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
       SolidDataSimple(sph_body_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      pos0_(particles_->pos0_),
+      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time)
 {
     Real total_mass_in_region(0);
@@ -200,7 +202,8 @@ SurfacePressureFromSource::
                               StdVec<std::array<Real, 2>> pressure_over_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
       SolidDataSimple(sph_body_),
-      pos0_(particles_->pos0_), n_(particles_->n_),
+      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      n_(particles_->n_),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
@@ -210,7 +213,7 @@ SurfacePressureFromSource::
 
     for (size_t particle_i : surface_layer.body_part_particles_)
     {
-        Vecd vector_to_particle = source_point - particles_->pos0_[particle_i];
+        Vecd vector_to_particle = source_point - pos0_[particle_i];
         Vecd normal = particles_->n0_[particle_i];
         Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
         // if the angle is less than 90°, we apply the pressure to the surface particle

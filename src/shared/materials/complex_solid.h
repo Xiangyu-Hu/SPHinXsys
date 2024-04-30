@@ -29,8 +29,8 @@
 #ifndef COMPLEX_SOLID_H
 #define COMPLEX_SOLID_H
 
-#include "elastic_solid.h"
 #include "base_general_dynamics.h"
+#include "elastic_solid.h"
 
 namespace SPH
 {
@@ -103,7 +103,7 @@ class MaterialIdInitialization
 
   protected:
     StdLargeVec<int> &material_id_;
-    StdLargeVec<Vecd> &pos0_;
+    StdLargeVec<Vecd> &pos_;
 };
 } // namespace SPH
 #endif // COMPLEX_SOLID_H

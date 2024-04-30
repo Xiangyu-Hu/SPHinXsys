@@ -127,11 +127,12 @@ VariableType interpolate_observer(
 {
     Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
     Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    StdLargeVec<Vecd> &pos0_ = *particles.registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     VariableType variable_sum = VariableType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
     {
-        Real distance = (particles.pos0_[id] - observer_pos_0).norm();
+        Real distance = (pos0_[id] - observer_pos_0).norm();
         Real kernel = kernel_ptr->W_3D(distance / smoothing_length);
         kernel_sum += kernel;
         variable_sum += kernel * (get_variable_value(id));
@@ -335,16 +336,17 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     shell_body.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
-    StdLargeVec<Vecd> &pos0 = *shell_particles->getVariableByName<Vecd>("InitialPosition");
+
+    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
         IndexVector ids;
         Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
         Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp / 2;
-        for (size_t i = 0; i < pos0.size(); ++i)
+        for (size_t i = 0; i < pos0_.size(); ++i)
         {
-            if ((pos0[i] - point_A.pos_0).norm() < smoothing_length &&
-                std::abs(pos0[i][tangential_axis]) > x_min)
+            if ((pos0_[i] - point_A.pos_0).norm() < smoothing_length &&
+                std::abs(pos0_[i][tangential_axis]) > x_min)
                 ids.push_back(i);
         }
         return ids;
@@ -352,9 +354,9 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     point_B.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
         Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        for (size_t i = 0; i < pos0.size(); ++i)
+        for (size_t i = 0; i < pos0_.size(); ++i)
         {
-            if ((pos0[i] - point_B.pos_0).norm() < smoothing_length)
+            if ((pos0_[i] - point_B.pos_0).norm() < smoothing_length)
                 ids.push_back(i);
         }
         return ids;
@@ -400,7 +402,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // TESTS on initialization
     // checking particle distances - avoid bugs of reading file
     Real min_rij = MaxReal;
-    for (size_t index_i = 0; index_i < pos0.size(); ++index_i)
+    for (size_t index_i = 0; index_i < pos0_.size(); ++index_i)
     {
         Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)

@@ -63,7 +63,9 @@ class MeshData
 class MyocardiumSurfaces
 {
   public:
-    MyocardiumSurfaces(SolidBody &body, ElasticSolidParticles &particles) : particles_(particles){};
+    MyocardiumSurfaces(SolidBody &body, ElasticSolidParticles &particles)
+        : particles_(particles),
+          pos0_(*particles_.registerSharedVariableFrom<Vecd>("InitialPosition", "Position")){};
     ~MyocardiumSurfaces() = default;
 
     // mesh_offset: max distance between myocardium and ventricle mesh
@@ -83,6 +85,7 @@ class MyocardiumSurfaces
 
   private:
     ElasticSolidParticles &particles_;
+    StdLargeVec<Vecd> &pos0_;
     IndexVector myo_surface_ids_; // full myocardium surface
     IndexVector lv_ids_;
     IndexVector rv_ids_;

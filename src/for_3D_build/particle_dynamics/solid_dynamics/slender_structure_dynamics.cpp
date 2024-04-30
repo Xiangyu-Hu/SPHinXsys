@@ -289,8 +289,8 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
-      axis_(axis), pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      pos0_(particles_->pos0_),
+      axis_(axis), pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -310,7 +310,7 @@ DistributingPointForcesToBar::
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-      pos0_(particles_->pos0_),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       thickness_(particles_->thickness_)
 {
@@ -338,7 +338,7 @@ void DistributingPointForcesToBar::getWeight()
         for (size_t index = 0; index < particles_->total_real_particles_; ++index)
         {
             weight_[i][index] = 0.0;
-            Vecd displacement = reference_positions_[i] - pos0_[index];
+            Vecd displacement = reference_positions_[i] - pos_[index];
             if (displacement.squaredNorm() <= cutoff_radius_sqr)
             {
                 weight_[i][index] = kernel_->W(h_ratio, displacement.norm(), displacement);

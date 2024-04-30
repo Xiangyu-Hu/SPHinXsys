@@ -15,8 +15,6 @@ SolidParticles::SolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
 void SolidParticles::initializeOtherVariables()
 {
     BaseParticles::initializeOtherVariables();
-    registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd
-                     { return pos_[i]; });
     registerVariable(n_, "NormalDirection");
     registerVariable(n0_, "InitialNormalDirection", [&](size_t i) -> Vecd
                      { return n_[i]; });
@@ -64,9 +62,6 @@ void ShellParticles::initializeOtherVariables()
      * register particle data
      */
     registerTransformationMatrix();
-    registerVariable(pos0_, "InitialPosition",
-                     [&](size_t i) -> Vecd
-                     { return pos_[i]; });
     registerVariable(n0_, "InitialNormalDirection",
                      [&](size_t i) -> Vecd
                      { return n_[i]; });

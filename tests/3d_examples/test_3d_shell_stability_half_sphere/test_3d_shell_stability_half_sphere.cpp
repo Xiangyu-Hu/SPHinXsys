@@ -183,11 +183,12 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     corrected_configuration.exec();
     apply_constant_gravity.exec();
 
+    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     {     // tests on initialization
         { // checking particle distances - avoid bugs of reading file
             Real min_rij = MaxReal;
             Real max_rij = 0;
-            for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
+            for (size_t i = 0; i < pos0_.size(); ++i)
             {
                 Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
