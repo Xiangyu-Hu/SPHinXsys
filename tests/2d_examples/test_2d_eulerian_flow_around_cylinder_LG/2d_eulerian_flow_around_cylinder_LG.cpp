@@ -113,6 +113,7 @@ int main(int ac, char *av[])
     //	Note that the same relation should be defined only once.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
+    InnerRelation cylinder_inner(cylinder);
     ContactRelation water_block_contact(water_block, {&cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
     //----------------------------------------------------------------------
@@ -126,7 +127,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        InnerRelation cylinder_inner(cylinder);
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
@@ -171,7 +171,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionWithUpdate<FreeSurfaceIndicationComplex> surface_indicator(water_block_inner, water_block_contact);
     InteractionDynamics<SmearedSurfaceIndication> smeared_surface(water_block_inner);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_matrix(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> cylinder_kernel_correction_matrix(cylinder_inner, cylinder_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> water_block_kernel_correction_matrix(water_block_inner, water_block_contact);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 
@@ -208,7 +209,8 @@ int main(int ac, char *av[])
     smeared_surface.exec();
     water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
-    kernel_correction_matrix.exec();
+    cylinder_kernel_correction_matrix.exec();
+    water_block_kernel_correction_matrix.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
