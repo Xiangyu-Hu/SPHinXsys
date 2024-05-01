@@ -83,7 +83,6 @@ class PreSettingCase : public Parameter
 
         wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
         wall_boundary.generateParticles<Lattice>();
-        wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
         fluid_observer.generateParticles<Observer>(observation_location);
     }
