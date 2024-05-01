@@ -14,7 +14,7 @@ NearWallDistance::NearWallDistance(BaseContactRelation &wall_contact_relation)
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         wall_pos_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Position"));
-        wall_n_.push_back(&(contact_particles_[k]->n_));
+        wall_n_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
         wall_phi_.push_back(contact_particles_[k]->getVariableByName<Real>("SignedDistance"));
     }
 }

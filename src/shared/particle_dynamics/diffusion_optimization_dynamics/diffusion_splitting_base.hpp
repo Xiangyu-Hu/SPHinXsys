@@ -17,7 +17,7 @@ OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<ParticlesType>(inner_relation),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
-      normal_vector_(this->particles_->n_),
+      normal_vector_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
       variable_(*(this->particles_->template getVariableByName<VariableType>(variable_name))),
       heat_flux_(*(this->particles_->template registerSharedVariable<Real>("HeatFlux"))),
       heat_source_(*(this->particles_->template registerSharedVariable<Real>("HeatSource"))),

@@ -52,16 +52,16 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Robin);
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet);
+    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin);
 
+    DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Robin);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
     SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin(wall_boundary_Robin);
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet);
-    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

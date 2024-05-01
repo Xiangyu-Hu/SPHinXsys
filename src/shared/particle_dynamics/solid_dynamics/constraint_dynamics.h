@@ -199,7 +199,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
         : MotionConstraint<DynamicsIdentifier>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
           n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
-          n0_(*this->particles_->template getVariableByName<Vecd>("InitialNormalDirection")),
+          n0_(*this->particles_->template registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
           acc_(*this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
     {
         simbody_state_ = &integ_.getState();

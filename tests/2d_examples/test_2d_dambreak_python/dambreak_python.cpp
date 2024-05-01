@@ -110,12 +110,14 @@ class Environment : public PreSettingCase
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+    Gravity gravity;
+    SimpleDynamics<GravityForce> constant_gravity;
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
+
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation;
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation;
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation;
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
-    Gravity gravity;
-    SimpleDynamics<GravityForce> constant_gravity;
+
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step;
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step;
     //----------------------------------------------------------------------

@@ -106,7 +106,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
         {
             contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
             contact_vel_.push_back(contact_particles_[k]->registerSharedVariable<Vecd>("Velocity"));
-            contact_n_.push_back(&(contact_particles_[k]->n_));
+            contact_n_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
         }
     };
     virtual ~DynamicContactForceWithWall(){};

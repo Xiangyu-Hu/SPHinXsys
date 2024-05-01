@@ -52,10 +52,6 @@ class SolidParticles : public BaseParticles
     SolidParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~SolidParticles(){};
 
-    StdLargeVec<Vecd> n_;  /**< normal direction */
-    StdLargeVec<Vecd> n0_; /**< initial normal direction */
-    StdLargeVec<Matd> B_;  /**< configuration correction for linear reproducing */
-
     /** Initialized variables for solid particles. */
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */
@@ -92,6 +88,7 @@ class ShellParticles : public ElasticSolidParticles
     virtual ~ShellParticles(){};
 
     Real thickness_ref_;                       /**< Shell thickness. */
+    StdLargeVec<Vecd> n_;                      /**< normal direction */
     StdLargeVec<Real> thickness_;              /**< shell thickness */
     StdLargeVec<Matd> transformation_matrix0_; /**< initial transformation matrix from global to local coordinates */
     /**

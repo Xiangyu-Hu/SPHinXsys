@@ -196,14 +196,14 @@ template <typename... CommonControlTypes>
 DiffusionRelaxation<Neumann<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
     : DiffusionRelaxation<Contact<Base>, CommonControlTypes...>(contact_relation),
-      n_(this->particles_->n_)
+      n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     contact_heat_flux_.resize(this->contact_particles_.size());
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_n_.push_back(&(this->contact_particles_[k]->n_));
+            contact_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
             contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
             contact_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
         }
@@ -249,7 +249,7 @@ template <typename... CommonControlTypes>
 DiffusionRelaxation<Robin<CommonControlTypes...>>::
     DiffusionRelaxation(BaseContactRelation &contact_relation)
     : DiffusionRelaxation<Contact<Base>, CommonControlTypes...>(contact_relation),
-      n_(this->particles_->n_)
+      n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     contact_convection_.resize(this->contact_particles_.size());
     contact_T_infinity_.resize(this->all_diffusions_.size());
@@ -258,7 +258,7 @@ DiffusionRelaxation<Robin<CommonControlTypes...>>::
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_n_.push_back(&(this->contact_particles_[k]->n_));
+            contact_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
             contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
             contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
             contact_T_infinity_[m] = this->contact_particles_[k]->template registerSingleVariable<Real>("T_infinity");

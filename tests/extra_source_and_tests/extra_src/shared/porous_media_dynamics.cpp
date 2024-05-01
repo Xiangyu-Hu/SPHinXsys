@@ -15,7 +15,8 @@ BasePorousMediaRelaxation::
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
-      B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_)
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      F_(particles_->F_), dF_dt_(particles_->dF_dt_)
 {
     rho0_ = particles_->porous_solid_.ReferenceDensity();
     inv_rho0_ = 1.0 / rho0_;

@@ -55,7 +55,7 @@ SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body)
     : RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body),
       surface_shape_(DynamicCast<SurfaceShape>(this, &sph_body.getInitialShape())),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection")) {}
+      n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")) {}
 
 //=================================================================================================//
 void SurfaceNormalDirection::update(size_t index_i, Real dt)

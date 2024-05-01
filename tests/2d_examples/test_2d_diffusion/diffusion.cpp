@@ -144,9 +144,11 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
+
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
+
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);

@@ -43,18 +43,21 @@ BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      B_(particles_->B_),
-      n0_(particles_->n0_), b_n0_(particles_->b_n0_),
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      b_n0_(particles_->b_n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BarDeformationGradientTensor::
     BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
-      B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")), pseudo_n_(particles_->pseudo_n_),
+      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      F_(particles_->F_), F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
-      pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_), F_b_bending_(particles_->F_b_bending_) {}
+      pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->b_n0_), F_b_bending_(particles_->F_b_bending_) {}
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
@@ -65,11 +68,13 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
-      n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
+      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      pseudo_n_(particles_->pseudo_n_),
       dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_),
-      B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      F_(particles_->F_), dF_dt_(particles_->dF_dt_),
       F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_),
       b_n0_(particles_->b_n0_), pseudo_b_n_(particles_->pseudo_b_n_),
       dpseudo_b_n_dt_(particles_->dpseudo_b_n_dt_), dpseudo_b_n_d2t_(particles_->dpseudo_b_n_d2t_),
@@ -93,7 +98,7 @@ BarStressRelaxationFirstHalf::
       global_moment_(particles_->global_moment_),
       mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
       global_shear_stress_(particles_->global_shear_stress_),
-      n_(particles_->n_),
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),

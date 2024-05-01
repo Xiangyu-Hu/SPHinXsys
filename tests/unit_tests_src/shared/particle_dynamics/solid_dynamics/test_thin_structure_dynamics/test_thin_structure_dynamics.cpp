@@ -224,7 +224,7 @@ int main(int ac, char *av[])
     update_normal.exec();
 
     pseudo_normal = shell_particles->pseudo_n_;
-    normal = shell_particles->n_;
+    normal = *shell_particles->template getVariableByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

@@ -15,11 +15,6 @@ SolidParticles::SolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
 void SolidParticles::initializeOtherVariables()
 {
     BaseParticles::initializeOtherVariables();
-    registerVariable(n_, "NormalDirection");
-    registerVariable(n0_, "InitialNormalDirection", [&](size_t i) -> Vecd
-                     { return n_[i]; });
-    registerVariable(B_, "LinearGradientCorrectionMatrix", [&](size_t i) -> Matd
-                     { return Matd::Identity(); });
 }
 //=============================================================================================//
 ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
@@ -62,11 +57,6 @@ void ShellParticles::initializeOtherVariables()
      * register particle data
      */
     registerTransformationMatrix();
-    registerVariable(n0_, "InitialNormalDirection",
-                     [&](size_t i) -> Vecd
-                     { return n_[i]; });
-    registerVariable(B_, "LinearGradientCorrectionMatrix", [&](size_t i) -> Matd
-                     { return Matd::Identity(); });
     registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
     registerVariable(dF_dt_, "DeformationRate");
