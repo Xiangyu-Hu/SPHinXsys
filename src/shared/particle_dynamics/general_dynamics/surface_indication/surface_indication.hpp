@@ -11,6 +11,6 @@ FreeSurfaceIndication<DataDelegationType>::FreeSurfaceIndication(BaseRelationTyp
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       indicator_(*this->particles_->template getVariableByName<int>("Indicator")),
       pos_div_(*this->particles_->template registerSharedVariable<Real>("PositionDivergence")),
-      threshold_by_dimensions_(0.75 * Dimensions) {}
+      Vol_(this->particles_->Vol_), threshold_by_dimensions_(0.75 * Dimensions) {}
 //=================================================================================================//
 } // namespace SPH

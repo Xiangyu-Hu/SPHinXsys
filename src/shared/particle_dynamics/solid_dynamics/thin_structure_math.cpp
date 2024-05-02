@@ -193,5 +193,22 @@ Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
     return correction_matrix;
 }
 //=================================================================================================//
+std::tuple<Real, Real> get_principle_curvatures(const Mat2d &dn)
+{
+    return {dn.trace(), 0};
+}
+//=================================================================================================//
+std::tuple<Real, Real> get_principle_curvatures(const Mat3d &dn)
+{
+    Real H = 0.5 * dn.trace();
+    Real K = dn(0, 0) * dn(1, 1) + dn(0, 0) * dn(2, 2) + dn(1, 1) * dn(2, 2) -
+             dn(0, 1) * dn(1, 0) - dn(0, 2) * dn(2, 0) - dn(1, 2) * dn(2, 1);
+    Real root = H * H - K;
+    if (root <= 0)
+        return {H, H};
+    Real sqrt_root = sqrt(root);
+    return {H + sqrt_root, H - sqrt_root};
+}
+//=================================================================================================//
 } // namespace thin_structure_dynamics
 } // namespace SPH

@@ -38,10 +38,10 @@ Real time_to_full_external_force = 0.0;
 Real gravitational_acceleration = 0.0;
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGeneratorSurface
+class PlateParticleGenerator : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -106,13 +106,13 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
+    plate_body.generateParticles(PlateParticleGenerator(plate_body));
     plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    plate_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
         stress_relaxation_second_half(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
+    SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);

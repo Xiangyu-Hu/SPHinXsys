@@ -41,4 +41,5 @@
 #include "shape_confinement.h"
 #include "surface_tension.hpp"
 #include "transport_velocity_correction.hpp"
+#include "velocity_gradient.hpp"
 #include "viscous_dynamics.hpp"

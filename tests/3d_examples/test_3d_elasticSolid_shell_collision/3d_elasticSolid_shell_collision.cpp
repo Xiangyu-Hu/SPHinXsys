@@ -29,10 +29,10 @@ Real poisson = 0.45;
 Real physical_viscosity = 1.0e6;
 //----------------------------------------------------------------------
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGeneratorSurface
+class CylinderParticleGenerator : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -71,22 +71,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
     shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    shell.generateParticles<CylinderParticleGenerator>();
+    shell.generateParticles(CylinderParticleGenerator(shell));
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
     ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<ParticleGeneratorReload>(ball.getName());
+        ball.generateParticles<Reload>(ball.getName());
     }
     else
     {
         ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<ParticleGeneratorLattice>();
+        ball.generateParticles<Lattice>();
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<ParticleGeneratorObserver>(StdVec<Vec3d>{ball_center});
+    ball_observer.generateParticles<Observer>(StdVec<Vec3d>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(ball, gravity);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);

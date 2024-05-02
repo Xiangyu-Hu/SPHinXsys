@@ -19,18 +19,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     SolidBody flap(sph_system, makeShared<Flap>("Flap"));
     flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
-    flap.generateParticles<ParticleGeneratorLattice>();
+    flap.generateParticles<Lattice>();
 
-    ObserverBody observer(sph_system, "FlapObserver");
-    observer.generateParticles<FlapObserverParticleGenerator>();
+    ObserverBody observer(sph_system, "Observer");
+    observer.generateParticles<Observer>(creatObserverPositions());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -58,7 +58,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     /** Evaluation of density by summation approach. */

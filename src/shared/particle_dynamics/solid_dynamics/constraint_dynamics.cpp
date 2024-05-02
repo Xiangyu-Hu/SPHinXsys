@@ -7,8 +7,9 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 SpringConstrain::SpringConstrain(BodyPartByParticle &body_part, Real stiffness)
-    : BaseMotionConstraint<BodyPartByParticle, SolidDataSimple>(body_part),
-      mass_(particles_->mass_), stiffness_(stiffness * Vecd::Ones()) {}
+    : MotionConstraint<BodyPartByParticle>(body_part),
+      stiffness_(stiffness * Vecd::Ones()),
+      mass_(*particles_->getVariableByName<Real>("Mass")) {}
 //=================================================================================================//
 Vecd SpringConstrain::getAcceleration(Vecd &disp, Real mass)
 {
@@ -28,10 +29,10 @@ void SpringConstrain::update(size_t index_i, Real dt)
 //=================================================================================================//
 PositionSolidBody::
     PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center)
-    : BaseMotionConstraint<SPHBody, SolidDataSimple>(sph_body),
+    : MotionConstraint<SPHBody>(sph_body),
       start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 {
-    BoundingBox bounds = sph_body.getBodyShapeBounds();
+    BoundingBox bounds = sph_body.getSPHBodyBounds();
     pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
     translation_ = pos_end_center_ - pos_0_center_;
 }
@@ -56,10 +57,10 @@ void PositionSolidBody::update(size_t index_i, Real dt)
 //=================================================================================================//
 PositionScaleSolidBody::
     PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale)
-    : BaseMotionConstraint<SPHBody, SolidDataSimple>(sph_body),
+    : MotionConstraint<SPHBody>(sph_body),
       start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 {
-    BoundingBox bounds = sph_body.getBodyShapeBounds();
+    BoundingBox bounds = sph_body.getSPHBodyBounds();
     pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
 }
 //=================================================================================================//

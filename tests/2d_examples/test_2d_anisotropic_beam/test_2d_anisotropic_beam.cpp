@@ -24,10 +24,10 @@ Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate 
 //----------------------------------------------------------------------
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
-class AnisotropicParticleGenerator : public ParticleGenerator<Base>
+class ParticleGeneratorAnisotropic : public ParticleGenerator<Base>
 {
   public:
-    AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
+    ParticleGeneratorAnisotropic(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
 
     virtual void initializeGeometricVariables() override
     {
@@ -128,8 +128,8 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
           GeneralDataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha),
-          B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")),
+          beta_(beta), alpha_(alpha), Vol_(particles_->Vol_),
+          B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
           pos_(particles_->pos_)
     {
         particles_->registerVariable(show_neighbor_, "ShowingNeighbor", Real(0.0));
@@ -140,6 +140,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
   protected:
     int beta_;
     Real alpha_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> show_neighbor_;
@@ -151,7 +152,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+            Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
             Vecd e_ij = inner_neighborhood.e_ij_[n];
             if (index_i == 67)
             {
@@ -191,11 +192,11 @@ int main(int ac, char *av[])
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<AnisotropicParticleGenerator>();
+    beam_body.generateParticles(ParticleGeneratorAnisotropic(beam_body));
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -217,7 +218,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------

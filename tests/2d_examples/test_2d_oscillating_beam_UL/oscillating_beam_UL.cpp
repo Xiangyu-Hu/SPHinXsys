@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     RealBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
     beam_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
     beam_body.addBodyStateForRecording<Real>("VonMisesStress");
     beam_body.addBodyStateForRecording<Real>("VonMisesStrain");
     beam_body.addBodyStateForRecording<Real>("Pressure");
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -135,16 +135,17 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
+    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<continuum_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
@@ -182,6 +183,7 @@ int main(int ac, char *av[])
         {
             Real relaxation_time = 0.0;
             Real advection_dt = fluid_advection_time_step.exec();
+            beam_volume_update.exec();
 
             while (relaxation_time < advection_dt)
             {

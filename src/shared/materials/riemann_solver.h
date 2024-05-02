@@ -79,34 +79,48 @@ class NoRiemannSolver
     Real rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
 };
 
-class AcousticRiemannSolver : public NoRiemannSolver
+template <typename LimiterType>
+class BaseAcousticRiemannSolver : public NoRiemannSolver
 {
   public:
     template <class FluidI, class FluidJ>
-    AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, const Real limiter_coeff = 3.0)
+    BaseAcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff = 3.0)
         : NoRiemannSolver(fluid_i, fluid_j),
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
-          inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_),
-          limiter_coeff_(limiter_coeff){};
-    Real DissipativePJump(const Real &u_jump);
-    Real DissipativeUJump(const Real &p_jump);
-    FluidStateOut InterfaceState(const FluidStateIn &state_i, const FluidStateIn &state_j, const Vecd &e_ij);
+          limiter_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_, limiter_coeff){};
+    Real DissipativePJump(const Real &u_jump)
+    {
+        return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0)));
+    };
+    Real DissipativeUJump(const Real &p_jump)
+    {
+        return p_jump * inv_rho0c0_ave_;
+    };
+
+    FluidStateOut InterfaceState(const FluidStateIn &state_i, const FluidStateIn &state_j, const Vecd &e_ij)
+    {
+        FluidStateOut average_state = NoRiemannSolver::InterfaceState(state_i, state_j, e_ij);
+
+        Real ul = -e_ij.dot(state_i.vel_);
+        Real ur = -e_ij.dot(state_j.vel_);
+        Real u_jump = ul - ur;
+        Real limited_mach_number = limiter_(SMAX(u_jump, Real(0)));
+
+        Real p_star = average_state.p_ + 0.5 * rho0c0_geo_ave_ * u_jump * limited_mach_number;
+        Real u_dissipative = 0.5 * (state_i.p_ - state_j.p_) * inv_rho0c0_ave_ * limited_mach_number * limited_mach_number;
+        Vecd vel_star = average_state.vel_ - e_ij * u_dissipative;
+
+        return FluidStateOut(average_state.rho_, vel_star, p_star);
+    };
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;
-    Real inv_c_ave_;
+    LimiterType limiter_;
     Real limiter_coeff_;
 };
+using AcousticRiemannSolver = BaseAcousticRiemannSolver<TruncatedLinear>;
+using DissipativeRiemannSolver = BaseAcousticRiemannSolver<NoLimiter>;
 
-class DissipativeRiemannSolver : public AcousticRiemannSolver
-{
-  public:
-    template <class FluidI, class FluidJ>
-    DissipativeRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
-        : AcousticRiemannSolver(fluid_i, fluid_j){};
-    Real DissipativePJump(const Real &u_jump);
-};
 } // namespace SPH
-
 #endif // RIEMANN_SOLVER_H

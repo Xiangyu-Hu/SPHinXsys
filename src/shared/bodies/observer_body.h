@@ -43,8 +43,12 @@ namespace SPH
 class ObserverBody : public SPHBody
 {
   public:
-    ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> initial_shape_ptr);
-    ObserverBody(SPHSystem &sph_system, const std::string &name);
+    template <typename... Args>
+    ObserverBody(Args &&...args) : SPHBody(std::forward<Args>(args)...)
+    {
+        defineParticlesAndMaterial();
+        sph_system_.observation_bodies_.push_back(this);
+    };
     virtual ~ObserverBody(){};
 };
 } // namespace SPH

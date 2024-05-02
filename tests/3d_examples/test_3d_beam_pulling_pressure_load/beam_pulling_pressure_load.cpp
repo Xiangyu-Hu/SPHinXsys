@@ -121,17 +121,17 @@ int main(int ac, char *av[])
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
 
     // Define Observer
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
 
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(beam_body_inner);
 
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     /* create a brick to tag the region */
     Vecd half_size_1(0.03, 0.03, 0.02);
     BodyRegionByParticle holder(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_1, 1, Vecd(0.0, 0.0, -0.02)));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
 
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>

@@ -115,7 +115,6 @@ class SPHRelation
     virtual ~SPHRelation(){};
 
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
-    virtual void resizeConfiguration() = 0;
     virtual void updateConfiguration() = 0;
 };
 
@@ -134,7 +133,6 @@ class BaseInnerRelation : public SPHRelation
     explicit BaseInnerRelation(RealBody &real_body);
     virtual ~BaseInnerRelation(){};
     BaseInnerRelation &getRelation() { return *this; };
-    virtual void resizeConfiguration() override;
 };
 
 /**
@@ -155,8 +153,6 @@ class BaseContactRelation : public SPHRelation
         : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
     virtual ~BaseContactRelation(){};
     BaseContactRelation &getRelation() { return *this; };
-
-    virtual void resizeConfiguration() override;
 };
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H

@@ -20,7 +20,7 @@ int main(int ac, char *av[])
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
     structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure_fit.generateParticles<ParticleGeneratorAdaptive>();
+    structure_fit.generateParticles<Lattice, Adaptive>();
     structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     //----------------------------------------------------------------------
@@ -76,27 +76,27 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
     water_block.addBodyStateForRecording<Vecd>("Position");
     water_block.addBodyStateForRecording<Real>("Pressure");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure.generateParticles<ParticleGeneratorReload>("Structure_Fit");
+    structure.generateParticles<Reload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
-    observer.generateParticles<ParticleGeneratorObserver>(
+    observer.generateParticles<Observer>(
         StdVec<Vecd>{obs});
 
     ObserverBody WMobserver(sph_system, "WMObserver");
     WMobserver.defineAdaptationRatios(h, 2.0);
     Vecd WMpos0 = Vecd(0.0, -Maker_width / 2, HWM / 2);
-    WMobserver.generateParticles<ParticleGeneratorObserver>(
+    WMobserver.generateParticles<Observer>(
         StdVec<Vecd>{WMpos0});
 
     //---------------------------------------------------------
@@ -108,14 +108,14 @@ int main(int ac, char *av[])
     Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
-    fp1.generateParticles<ParticleGeneratorObserver>(fp1l);
+    fp1.generateParticles<Observer>(fp1l);
 
     ObserverBody bp1(sph_system, "BP1");
     Real bp1x = Strx - 0.295;
     Real bp1y = Stry + .035;
     Real bp1z = 0.933;
     StdVec<Vecd> bp1l = {Vecd(bp1x, bp1y, bp1z)};
-    bp1.generateParticles<ParticleGeneratorObserver>(bp1l);
+    bp1.generateParticles<Observer>(bp1l);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -158,8 +158,8 @@ int main(int ac, char *av[])
     /** time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
     /** pressure relaxation using Verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
@@ -168,13 +168,15 @@ int main(int ac, char *av[])
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
-    BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
+    TransformShape<GeometricShapeBox> damping_buffer_shape(Transform(translation_damping), damping);
+    BodyRegionByCell damping_buffer(water_block, damping_buffer_shape);
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on structure. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
-    BodyRegionByParticle wave_maker(wall_boundary, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_wave_maker), wave_maker_shape));
+    TransformShape<GeometricShapeBox> transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
+    BodyRegionByParticle wave_maker(wall_boundary, transform_wave_maker_shape);
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
 
     //----------------------------------------------------------------------

@@ -141,11 +141,11 @@ int main(int ac, char *av[])
     SolidBody beam_body(sph_system, makeShared<Beam>("2dMembrane"));
     beam_body.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(
         rho_0, Youngs_modulus, poisson, diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "MembraneObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -161,7 +161,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
 
     // corrected strong configuration
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     ReduceDynamics<multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);

@@ -72,10 +72,10 @@ class InitialCondition
 };
 
 // define an observer body
-class ColumnObserverParticleGenerator : public ParticleGeneratorObserver
+class ColumnObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         positions_.push_back(Vecd(0.0, 0.0, PW));
     }
@@ -101,6 +101,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
         reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
+            contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
             contact_vel_.push_back(&(contact_particles_[k]->vel_));
             contact_n_.push_back(&(contact_particles_[k]->n_));
         }
@@ -118,7 +119,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
 
             StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
             StdLargeVec<Vecd> &vel_n_k = *(contact_vel_[k]);
-
+            StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -134,7 +135,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
 
                 // force due to pressure
                 force -= 2.0 * (impedance_p + penalty_p) * e_ij.dot(n_k_j) *
-                         n_k_j * contact_neighborhood.dW_ijV_j_[n];
+                         n_k_j * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
             }
         }
 
@@ -145,7 +146,8 @@ class DynamicContactForceWithWall : public LocalDynamics,
     Solid &solid_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
-    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_n_;
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdVec<StdLargeVec<Vecd>*> contact_vel_, contact_n_;
     Real penalty_strength_;
     Real impedance_, reference_pressure_;
 };

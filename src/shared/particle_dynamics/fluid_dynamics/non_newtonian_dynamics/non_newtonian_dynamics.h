@@ -24,7 +24,7 @@
  * @file non_newtonian_dynamics.h
  * @brief Here, we define the time integration algorithm classes for non-newtonian fluids.
  * @details We consider here weakly compressible fluids.
- * @author	Xiangyu Hu
+ * @author	Theodor Hennings and Xiangyu Hu
  */
 
 #ifndef NON_NEWTONIAN_DYNAMICS_H
@@ -78,12 +78,11 @@ class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiema
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
+    StdLargeVec<Matd> &vel_grad_, &tau_, &dtau_dt_;
     Real mu_p_, lambda_;
 };
 
@@ -94,142 +93,46 @@ template <>
 class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfContactWallRiemann
 {
   public:
-    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
+    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
+        : Integration2ndHalfContactWallRiemann(wall_contact_relation){};
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
-    Real mu_p_, lambda_;
 };
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
 
 /**
- * @class GenearlizedNewtonianViscousForce
- * @brief Calculates the viscous force based on a generalized Newtonian fluid model
- * @note This needs the VelocityGradient & ShearRateDependentViscosity to work
+ * @class SRDViscousTimeStepSize
+ * @brief Computing the viscous time step size using the SRD viscosity
  */
-template <typename... InteractionTypes>
-class GeneralizedNewtonianViscousForce;
-
-template <class DataDelegationType>
-class GeneralizedNewtonianViscousForce<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public FluidDataSimple
 {
   public:
-    template <class BaseRelationType>
-    explicit GeneralizedNewtonianViscousForce(BaseRelationType &base_relation);
-    virtual ~GeneralizedNewtonianViscousForce(){};
+    explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
+    virtual ~SRDViscousTimeStepSize(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &vel_, &viscous_force_;
-    GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
     Real smoothing_length_;
-};
-
-template <>
-class GeneralizedNewtonianViscousForce<Inner<>> : public GeneralizedNewtonianViscousForce<FluidDataInner>, public ForcePrior
-{
-  public:
-    explicit GeneralizedNewtonianViscousForce(BaseInnerRelation &inner_relation);
-    virtual ~GeneralizedNewtonianViscousForce(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
+    StdLargeVec<Real> &rho_;
     StdLargeVec<Real> &mu_srd_;
-};
-using GeneralizedNewtonianViscousForceInner = GeneralizedNewtonianViscousForce<Inner<>>;
-
-using BaseGeneralizedNewtonianViscousForceWithWall = InteractionWithWall<GeneralizedNewtonianViscousForce>;
-template <>
-class GeneralizedNewtonianViscousForce<Contact<Wall>> : BaseGeneralizedNewtonianViscousForceWithWall, public ForcePrior
-{
-  public:
-    explicit GeneralizedNewtonianViscousForce(BaseContactRelation &contact_relation);
-    virtual ~GeneralizedNewtonianViscousForce(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Real> &mu_srd_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
-};
-using GeneralizedNewtonianViscousForceWall = GeneralizedNewtonianViscousForce<Contact<Wall>>;
-using GeneralizedNewtonianViscousForceWithWall = ComplexInteraction<GeneralizedNewtonianViscousForce<Inner<>, Contact<Wall>>>;
-
-/**
- * @class VelocityGradient
- * @brief computes the shear rate of the fluid
- * @note this is needed for the ShearRateDependentViscosity (and therefore also the GeneralizedNewtonianViscousForce)
- */
-template <typename... InteractionTypes>
-class VelocityGradient;
-
-template <class DataDelegationType>
-class VelocityGradient<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
-{
-  public:
-    template <class BaseRelationType>
-    explicit VelocityGradient(BaseRelationType &base_relation);
-    virtual ~VelocityGradient(){};
-
-  protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Matd> combined_velocity_gradient_;
+    Real diffusionCFL;
+    Real max_viscosity = 1e-12;
 };
 
-template <>
-class VelocityGradient<Inner<>> : public VelocityGradient<FluidDataInner>
+class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
 {
   public:
-    explicit VelocityGradient(BaseInnerRelation &inner_relation);
-    virtual ~VelocityGradient(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &combined_velocity_gradient_;
-};
-
-template <>
-class VelocityGradient<Contact<Wall>> : InteractionWithWall<VelocityGradient>
-{
-  public:
-    explicit VelocityGradient(BaseContactRelation &contact_relation);
-    virtual ~VelocityGradient(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
-    StdLargeVec<Matd> &combined_velocity_gradient_;
-};
-using VelocityGradientWithWall = ComplexInteraction<VelocityGradient<Inner<>, Contact<Wall>>>;
-
-/**
- * @class ShearRateDependentViscosity
- * @brief computes the viscosity based on the generalized Newtonian fluid model specified
- * @note needs VelocityGradient to work and is needed for GenearlizedNewtonianViscousForce
- */
-class ShearRateDependentViscosity : public LocalDynamics, public FluidDataInner
-{
-  public:
-    explicit ShearRateDependentViscosity(BaseInnerRelation &inner_relation);
+    explicit ShearRateDependentViscosity(SPHBody &sph_body);
     virtual ~ShearRateDependentViscosity(){};
 
-    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &combined_velocity_gradient_;
+    StdLargeVec<Matd> &vel_grad_;
     GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
-    StdLargeVec<Real> mu_srd_;
-    StdLargeVec<Real> scalar_shear_rate_;
+    StdLargeVec<Real> &mu_srd_;
 };
 
 } // namespace fluid_dynamics

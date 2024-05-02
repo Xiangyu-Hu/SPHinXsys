@@ -34,10 +34,10 @@ Real physical_viscosity = 2000.0; /** physical damping, here we choose the same 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10000.0;
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGeneratorSurface
+class CylinderParticleGenerator : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGeneratorSurface(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -100,12 +100,12 @@ int main(int ac, char *av[])
     /** Create a Cylinder body. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    cylinder_body.generateParticles<CylinderParticleGenerator>();
+    cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
     cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    cylinder_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

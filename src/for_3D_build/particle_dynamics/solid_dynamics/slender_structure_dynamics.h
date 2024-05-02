@@ -67,7 +67,7 @@ class BarDynamicsInitialCondition : public LocalDynamics, public BarDataSimple
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
-class BarAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                                 public BarDataSimple
 {
   protected:
@@ -104,7 +104,8 @@ class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
             global_configuration += r_ji * gradW_ijV_j.transpose();
         }
@@ -115,6 +116,7 @@ class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
     };
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &n0_;
     StdLargeVec<Vecd> &b_n0_;
@@ -146,7 +148,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_i] * inner_neighborhood.e_ij_[n];
             deformation_part_one -= (pos_n_i - pos_[index_j]) * gradW_ijV_j.transpose();
             deformation_part_two -= ((pseudo_n_i - n0_[index_i]) - (pseudo_n_[index_j] - n0_[index_j])) * gradW_ijV_j.transpose();
             deformation_part_three -= ((pseudo_b_n_i - b_n0_[index_i]) - (pseudo_b_n_[index_j] - b_n0_[index_j])) * gradW_ijV_j.transpose();
@@ -159,6 +161,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
     };
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
     StdLargeVec<Matd> &B_, &F_, &F_bending_;
     StdLargeVec<Matd> &transformation_matrix_;
@@ -178,7 +181,7 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
     virtual ~BaseBarRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_, &mass_;
+    StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
@@ -222,11 +225,11 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
             size_t index_j = inner_neighborhood.j_[n];
 
             force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) *
-                            inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) *
-                                          inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                                          inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             pseudo_b_normal_acceleration += (global_b_moment_i + global_b_moment_[index_j]) *
-                                            inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                                            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
 
         force_[index_i] = force * inv_rho0_ / (thickness_[index_i] * width_[index_i]);
@@ -245,6 +248,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
   protected:
     ElasticSolid &elastic_solid_;
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
     StdLargeVec<Vecd> &global_shear_stress_, &n_;
 
@@ -305,7 +309,7 @@ class BarStressRelaxationSecondHalf : public BaseBarRelaxation
         {
             size_t index_j = inner_neighborhood.j_[n];
 
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
             deformation_gradient_change_rate_part_one -= (vel_n_i - vel_[index_j]) * gradW_ijV_j.transpose();
             deformation_gradient_change_rate_part_two -= (dpseudo_n_dt_i - dpseudo_n_dt_[index_j]) * gradW_ijV_j.transpose();
             deformation_gradient_change_rate_part_three -= (dpseudo_b_n_dt_i - dpseudo_b_n_dt_[index_j]) * gradW_ijV_j.transpose();

@@ -29,17 +29,32 @@
 #ifndef PARTICLE_FUNCTORS_H
 #define PARTICLE_FUNCTORS_H
 
-#include "base_particles.h"
+#include "base_particles.hpp"
 
 namespace SPH
 {
+
+/** 
+ * @class WithinScope
+ * Base class introduce the concept of "within the scope". 
+ * The derived class should implement the operator bool(size_t...) 
+ * to indicate whether an indexed element is within the scope.
+ * Generally, the object of the derived class 
+ * should be named as "within_scope" or "within_scope_" (class member) 
+ * so that the code can be more readable.
+ */
+class WithinScope
+{
+};
+
 //----------------------------------------------------------------------
-// Particle group scope functors
-//----------------------------------------------------------------------
-class AllParticles
+// Particle scope functors
+//---------------------------------------------------------------------
+
+class AllParticles : public WithinScope
 {
   public:
-    explicit AllParticles(BaseParticles *base_particles){};
+    explicit AllParticles(BaseParticles *base_particles) : WithinScope(){};
     bool operator()(size_t index_i)
     {
         return true;
@@ -47,13 +62,14 @@ class AllParticles
 };
 
 template <int INDICATOR>
-class IndicatedParticles
+class IndicatedParticles : public WithinScope
 {
     StdLargeVec<int> &indicator_;
 
   public:
     explicit IndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+        : WithinScope(),
+          indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] == INDICATOR;
@@ -63,58 +79,35 @@ class IndicatedParticles
 using BulkParticles = IndicatedParticles<0>;
 
 template <int INDICATOR>
-class NotIndicatedParticles
+class NotIndicatedParticles : public WithinScope
 {
     StdLargeVec<int> &indicator_;
 
   public:
     explicit NotIndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+        : WithinScope(),
+          indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] != INDICATOR;
     };
 };
-//----------------------------------------------------------------------
-// Particle limiter functors
-//----------------------------------------------------------------------
-class NoLimiter
-{
-  public:
-    NoLimiter(BaseParticles *base_particles){};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
 
-class ZerothInconsistencyLimiter
-{
-    Real h_ref_;
-    StdLargeVec<Vecd> &inconsistency0_;
-
-  public:
-    ZerothInconsistencyLimiter(BaseParticles *base_particles)
-        : h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          inconsistency0_(*base_particles->getVariableByName<Vecd>("ZerothInconsistency")){};
-    virtual ~ZerothInconsistencyLimiter(){};
-    Real operator()(size_t index_i)
-    {
-        Real error_scale = inconsistency0_[index_i].squaredNorm() * h_ref_ * h_ref_;
-        return SMIN(Real(100) * error_scale, Real(1));
-    };
-};
 //----------------------------------------------------------------------
 // Particle average functors
 //----------------------------------------------------------------------
+class ParticleAverage // base class to indicate the concept of particle average
+{
+};
+
 template <typename T>
-class PairAverageFixed
+class PairAverageFixed : public ParticleAverage
 {
     const T average_;
 
   public:
     PairAverageFixed(const T &c1, const T &c2)
-        : average_(0.5 * (c1 + c2)){};
+        : ParticleAverage(), average_(0.5 * (c1 + c2)){};
     explicit PairAverageFixed(const T &c)
         : PairAverageFixed(c, c){};
     T operator()(size_t index_i, size_t index_j)
@@ -123,10 +116,10 @@ class PairAverageFixed
     };
 };
 
-class GeomAverage
+class GeomAverage : public ParticleAverage
 {
   public:
-    GeomAverage(){};
+    GeomAverage() : ParticleAverage(){};
 
   protected:
     Real inverse(const Real &x) { return 1.0 / x; };
@@ -152,13 +145,13 @@ class PairGeomAverageFixed : public GeomAverage
 };
 
 template <typename T>
-class PairAverageVariable
+class PairAverageVariable : public ParticleAverage
 {
     StdLargeVec<T> &v1_, &v2_;
 
   public:
     PairAverageVariable(StdLargeVec<T> &v1, StdLargeVec<T> &v2)
-        : v1_(v1), v2_(v2){};
+        : ParticleAverage(), v1_(v1), v2_(v2){};
     explicit PairAverageVariable(StdLargeVec<T> &v)
         : PairAverageVariable(v, v){};
     T operator()(size_t index_i, size_t index_j)
@@ -184,23 +177,27 @@ class PairGeomAverageVariable : public GeomAverage
     };
 };
 //----------------------------------------------------------------------
-// Particle kernel functors
+// Particle kernel correction functors
 //----------------------------------------------------------------------
-class NoKernelCorrection
+class KernelCorrection // base class to indicate the concept of kernel correction
+{
+};
+class NoKernelCorrection : public KernelCorrection
 {
   public:
-    NoKernelCorrection(BaseParticles *particles){};
+    NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
     Real operator()(size_t index_i)
     {
         return 1.0;
     };
 };
 
-class KernelCorrection
+class LinearGradientCorrection : public KernelCorrection
 {
   public:
-    KernelCorrection(BaseParticles *particles)
-        : B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+    LinearGradientCorrection(BaseParticles *particles)
+        : KernelCorrection(),
+          B_(*particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
 
     Matd operator()(size_t index_i)
     {
@@ -243,31 +240,37 @@ class AdaptiveResolution
 template <class ReturnType>
 struct ReduceSum
 {
+    ReturnType reference_ = ZeroData<ReturnType>::value;
     ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
 };
 
 struct ReduceMax
 {
+    Real reference_ = MinReal;
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
 
 struct ReduceMin
 {
+    Real reference_ = MaxReal;
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
 
 struct ReduceOR
 {
+    bool reference_ = false;
     bool operator()(bool x, bool y) const { return x || y; };
 };
 
 struct ReduceAND
 {
+    bool reference_ = true;
     bool operator()(bool x, bool y) const { return x && y; };
 };
 
 struct ReduceLowerBound
 {
+    Vecd reference_ = MaxReal * Vecd::Ones();
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
         Vecd lower_bound;
@@ -276,8 +279,10 @@ struct ReduceLowerBound
         return lower_bound;
     };
 };
+
 struct ReduceUpperBound
 {
+    Vecd reference_ = MinReal * Vecd::Ones();
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
         Vecd upper_bound;

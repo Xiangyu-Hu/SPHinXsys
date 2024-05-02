@@ -8,12 +8,12 @@
 using namespace SPH;
 
 // setup parameters
-bool relaxation = true;
-bool linearized_iteration = true;
+bool relaxation = false;
+bool linearized_iteration = false;
 bool reload = false;
 
 // simulation setup
-Real particle_spacing = 0.001;                                  // particle spacing (must be small enough so blades are resolved)
+Real particle_spacing = 0.002;                                  // particle spacing (must be small enough so blades are resolved)
 Real gravity_g = 9.81;                                          // gravity
 Real end_time = 0.5;                                            // end time
 Real RPS = 5;                                                   // revolutions per second
@@ -103,14 +103,14 @@ int main(int ac, char *av[])
     fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     sph_system.ReloadParticles()
-        ? fluid.generateParticles<ParticleGeneratorReload>(fluid.getName())
-        : fluid.generateParticles<ParticleGeneratorLattice>();
+        ? fluid.generateParticles<Reload>(fluid.getName())
+        : fluid.generateParticles<Lattice>();
 
     SolidBody mixer_housing(sph_system, makeShared<Mixer_Housing>("Mixer_Housing"));
     mixer_housing.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? mixer_housing.generateParticles<ParticleGeneratorReload>(mixer_housing.getName())
-        : mixer_housing.generateParticles<ParticleGeneratorLattice>();
+        ? mixer_housing.generateParticles<Reload>(mixer_housing.getName())
+        : mixer_housing.generateParticles<Lattice>();
     mixer_housing.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody mixer_shaft(sph_system, makeShared<Mixer_Shaft>("Mixer_Shaft"));
@@ -118,14 +118,18 @@ int main(int ac, char *av[])
     mixer_shaft.defineBodyLevelSetShape();
     mixer_shaft.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? mixer_shaft.generateParticles<ParticleGeneratorReload>(mixer_shaft.getName())
-        : mixer_shaft.generateParticles<ParticleGeneratorLattice>();
+        ? mixer_shaft.generateParticles<Reload>(mixer_shaft.getName())
+        : mixer_shaft.generateParticles<Lattice>();
     mixer_shaft.addBodyStateForRecording<Vec3d>("NormalDirection");
+
+    ObserverBody observer_body(sph_system, makeShared<Fluid_Filling>("ObserverBody"));
+    observer_body.generateParticles<Lattice>();
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
     InnerRelation shaft_inner(mixer_shaft);
     InnerRelation housing_inner(mixer_housing);
+    ContactRelation fluid_observer_contact(observer_body, {&fluid});
     ContactRelation fluid_wall_contact(fluid, {&mixer_housing, &mixer_shaft});
     ContactRelation fluid_shaft_contact(fluid, {&mixer_shaft});
     ContactRelation shaft_fluid_contact(mixer_shaft, {&fluid});
@@ -137,43 +141,45 @@ int main(int ac, char *av[])
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_wall_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(fluid_inner, 0.3), fluid_wall_contact);
+    SimpleDynamics<NormalDirectionFromBodyShape> housing_normal_direction(mixer_housing);
+    SimpleDynamics<NormalDirectionFromBodyShape> shaft_normal_direction(mixer_shaft);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>> pressure_relaxation(fluid_inner, fluid_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<AcousticRiemannSolver>> density_relaxation(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(fluid_inner, fluid_wall_contact);
 
-    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_wall_contact);
-    InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
-    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
+    InteractionDynamics<fluid_dynamics::DistanceFromWall, SequencedPolicy> distance_to_wall(fluid_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(fluid_inner, fluid_wall_contact);
+    SimpleDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_dependent_viscosity(fluid);
+    InteractionWithUpdate<fluid_dynamics::NonNewtonianViscousForceWithWall<AngularConservative>> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
-    SimpleDynamics<NormalDirectionFromBodyShape> housing_normal_direction(mixer_housing);
-    SimpleDynamics<NormalDirectionFromBodyShape> shaft_normal_direction(mixer_shaft);
+    ObservingAQuantity<Real> observing_viscosity(fluid_observer_contact, "VariableViscosity");
+    SimpleDynamics<ParticleSnapshotAverage<Real>> average_viscosity(observer_body, "VariableViscosity");
 
     if (sph_system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation.
         //----------------------------------------------------------------------
-        SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_shaft_particles(mixer_shaft);
-        SimpleDynamics<SPH::relax_dynamics::RandomizeParticlePosition> random_input_fluid_particles(fluid);
-        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_shaft(shaft_inner);
-        relax_dynamics::RelaxationStepLevelSetCorrectionComplex relaxation_step_complex_fluid(ConstructorArgs(fluid_inner, "OuterBoundary"), fluid_shaft_contact);
+        using namespace relax_dynamics;
+        SimpleDynamics<RandomizeParticlePosition> random_input_shaft_particles(mixer_shaft);
+        SimpleDynamics<RandomizeParticlePosition> random_input_fluid_particles(fluid);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner_shaft(shaft_inner);
+        RelaxationStepLevelSetCorrectionComplex relaxation_step_complex_fluid(ConstructorArgs(fluid_inner, std::string("OuterBoundary")), fluid_shaft_contact);
 
         Real relax_time = 0.1;
         random_input_shaft_particles.exec(relax_time);
-        // random_input_housing_particles.exec(relax_time);
         random_input_fluid_particles.exec(relax_time);
         relaxation_step_inner_shaft.SurfaceBounding().exec();
-        // relaxation_step_inner_housing.SurfaceBounding().exec();
         relaxation_step_complex_fluid.SurfaceBounding().exec();
-        //? mixer_shaft.updateCellLinkedList();
-        //? mixer_housing.updateCellLinkedList();
 
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
@@ -191,10 +197,12 @@ int main(int ac, char *av[])
     }
 
     //	Define the methods for I/O operations, observations
-    BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
     fluid.addBodyStateForRecording<Real>("Pressure");
     fluid.addBodyStateForRecording<Real>("Density");
     fluid.addBodyStateForRecording<Real>("Mass");
+    BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
+    observer_body.addBodyStateForRecording<Real>("VariableViscosity");
+    BodyStatesRecordingToVtp write_observation_states(observer_body);
 
     //----------------------------------------------------------------------
     //	Building Simbody.
@@ -224,9 +232,10 @@ int main(int ac, char *av[])
     //	Prepare the simulation
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    constant_gravity.exec();
     housing_normal_direction.exec();
     shaft_normal_direction.exec();
+    distance_to_wall.exec();
+    constant_gravity.exec();
 
     //	Setup for time-stepping control
     // size_t number_of_iterations = sph_system.RestartStep();
@@ -257,9 +266,11 @@ int main(int ac, char *av[])
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
+            corrected_configuration_fluid.exec();
+            distance_to_wall.exec();
             free_surface_indicator.exec();
             vel_grad_calculation.exec();
-            shear_rate_calculation.exec();
+            shear_dependent_viscosity.exec();
 
             // Viscous Substepping
             while (viscous_time < Dt_adv)
@@ -277,9 +288,11 @@ int main(int ac, char *av[])
         else
         {
             Dt = SMIN(Dt_visc, Dt_adv);
+            corrected_configuration_fluid.exec();
+            distance_to_wall.exec();
             free_surface_indicator.exec(Dt);
             vel_grad_calculation.exec(Dt);
-            shear_rate_calculation.exec(Dt);
+            shear_dependent_viscosity.exec(Dt);
             viscous_acceleration.exec(Dt);
             transport_velocity_correction.exec(Dt);
         }

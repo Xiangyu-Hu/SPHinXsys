@@ -111,5 +111,22 @@ class TreeInnerRelation : public InnerRelation
 
     virtual void updateConfiguration() override;
 };
+
+/**
+ * @class ShellInnerRelationWithContactKernel
+ * @brief Shell inner relation with the cut-off radius of the contact body
+ *  This class is used in fluid-shell interaction problems to compute shell curvature with the cut-off radius of fluid
+ */
+class ShellInnerRelationWithContactKernel : public BaseInnerRelation
+{
+  private:
+    CellLinkedList &cell_linked_list_;
+    SearchDepthContact get_contact_search_depth_;
+    ShellNeighborBuilderInnerWithContactKernel get_inner_neighbor_with_contact_kernel_;
+
+  public:
+    explicit ShellInnerRelationWithContactKernel(RealBody &real_body, RealBody &contact_body);
+    void updateConfiguration() override;
+};
 } // namespace SPH
 #endif // INNER_BODY_RELATION_H

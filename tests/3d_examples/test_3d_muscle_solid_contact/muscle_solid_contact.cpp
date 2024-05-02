@@ -64,11 +64,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    myocardium_body.generateParticles<ParticleGeneratorLattice>();
+    myocardium_body.generateParticles<Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    moving_plate.generateParticles<ParticleGeneratorLattice>();
+    moving_plate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
     /** active and passive stress relaxation. */
@@ -95,9 +95,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
     /** Constrain the holder. */
-    BodyRegionByParticle holder(myocardium_body, makeShared<TransformShape<GeometricShapeBox>>(
-                                                     Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
+    BodyRegionByParticle holder(myocardium_body, holder_shape);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
@@ -117,8 +117,8 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     SimTK::CableTrackerSubsystem cables(MBsystem);
     /** mass properties of the fixed spot. */
-    SolidBodyPartForSimbody plate_multibody(moving_plate, makeShared<TransformShape<GeometricShapeBox>>(
-                                                              Transform(translation_moving_plate), halfsize_moving_plate, "Plate"));
+    TransformShape<GeometricShapeBox> moving_plate_shape(Transform(translation_moving_plate), halfsize_moving_plate, "Plate");
+    SolidBodyPartForSimbody plate_multibody(moving_plate, moving_plate_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */

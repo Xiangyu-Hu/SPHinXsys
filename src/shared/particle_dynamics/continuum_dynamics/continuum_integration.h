@@ -23,7 +23,7 @@
 /**
  * @file 	continuum_integration.h
  * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
- * @details We consider here weakly compressible assumption to model elastic and 
+ * @details We consider here weakly compressible assumption to model elastic and
  * 			plastic materials with the updated Lagrangian framework.
  * @author	Shuaihao Zhang and Xiangyu Hu
  */
@@ -98,10 +98,6 @@ class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<ContinuumDa
     StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &Vol_;
     StdLargeVec<Matd> &B_;
 };
-
-using FixBodyPartConstraint = solid_dynamics::FixConstraint<BodyPartByParticle, ContinuumDataSimple>;
-using FixedInAxisDirection = solid_dynamics::BaseFixedInAxisDirection<ContinuumDataSimple>;
-using ConstrainSolidBodyMassCenter = solid_dynamics::BaseConstrainSolidBodyMassCenter<ContinuumDataSimple>;
 
 template <class DataDelegationType>
 class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelegationType>

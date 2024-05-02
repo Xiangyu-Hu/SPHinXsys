@@ -12,21 +12,20 @@ bool relaxation = true;
 bool linearized_iteration = true;
 bool reload = false;
 
-
 // simulation setup
-Real particle_spacing = 0.001; // particle spacing
-Real gravity_g = 0; //gravity
-Real end_time = 1; // end time
-Real RPS = 1;      // revolutions per second
-Real omega = RPS * 3.14 * 2; // angular velocity
-Real U_ref = 0.03 * omega; // tip velocity
-Real SOS = 10.0 * U_ref; // numerical speed of sound (0.287 is the fluid column height)
+Real particle_spacing = 0.002; // particle spacing
+Real gravity_g = 0;            // gravity
+Real end_time = 1;             // end time
+Real RPS = 1;                  // revolutions per second
+Real omega = RPS * 3.14 * 2;   // angular velocity
+Real U_ref = 0.03 * omega;     // tip velocity
+Real SOS = 10.0 * U_ref;       // numerical speed of sound (0.287 is the fluid column height)
 
 // material properties
 Real rho = 1000.0; // reference density
-Real K = 1;     // consistency index
-Real n = 1.25;  // power index
-Real tau_y = 0; // yield stress
+Real K = 1;        // consistency index
+Real n = 1.25;     // power index
+Real tau_y = 0;    // yield stress
 
 Real min_shear_rate = 5e-2; // cutoff low shear rate
 Real max_shear_rate = 1e+3; // cutoff high shear rate
@@ -114,31 +113,28 @@ int main(int ac, char *av[])
     fluid.defineComponentLevelSetShape("OuterBoundary");
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     sph_system.ReloadParticles()
-        ? fluid.generateParticles<ParticleGeneratorReload>(fluid.getName())
-        : fluid.generateParticles<ParticleGeneratorLattice>();
-
+        ? fluid.generateParticles<Reload>(fluid.getName())
+        : fluid.generateParticles<Lattice>();
 
     SolidBody barrel(sph_system, makeShared<Barrel>("Barrel"));
     barrel.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? barrel.generateParticles<ParticleGeneratorReload>(barrel.getName())
-        : barrel.generateParticles<ParticleGeneratorLattice>();
+        ? barrel.generateParticles<Reload>(barrel.getName())
+        : barrel.generateParticles<Lattice>();
     barrel.addBodyStateForRecording<Vec3d>("NormalDirection");
-
 
     SolidBody left_screw(sph_system, makeShared<Left_Screw>("Left_Screw"));
     left_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? left_screw.generateParticles<ParticleGeneratorReload>(left_screw.getName())
-        : left_screw.generateParticles<ParticleGeneratorLattice>();
+        ? left_screw.generateParticles<Reload>(left_screw.getName())
+        : left_screw.generateParticles<Lattice>();
     left_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
-
 
     SolidBody right_screw(sph_system, makeShared<Right_Screw>("Right_Screw"));
     right_screw.defineParticlesAndMaterial<SolidParticles, Solid>();
     sph_system.ReloadParticles()
-        ? right_screw.generateParticles<ParticleGeneratorReload>(right_screw.getName())
-        : right_screw.generateParticles<ParticleGeneratorLattice>();
+        ? right_screw.generateParticles<Reload>(right_screw.getName())
+        : right_screw.generateParticles<Lattice>();
     right_screw.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     //	Define body relation map
@@ -156,28 +152,29 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(fluid, gravity);
-    PeriodicConditionUsingCellLinkedList periodic_condition_z(fluid, fluid.getBodyShapeBounds(), zAxis);
+    PeriodicAlongAxis periodic_along_z(fluid.getSPHBodyBounds(), zAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_z(fluid, periodic_along_z);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_wall_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(fluid_inner, fluid_wall_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(fluid_inner, 0.3), fluid_wall_contact);
+    SimpleDynamics<NormalDirectionFromBodyShape> left_screw_normal_direction(left_screw);
+    SimpleDynamics<NormalDirectionFromBodyShape> right_screw_normal_direction(right_screw);
+    SimpleDynamics<NormalDirectionFromBodyShape> barrel_normal_direction(barrel);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>> pressure_relaxation(fluid_inner, fluid_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<AcousticRiemannSolver>> density_relaxation(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(fluid_inner, fluid_wall_contact);
 
-    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(fluid_inner, fluid_wall_contact);
-    InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(fluid_inner);
-    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_wall_contact);
+    InteractionDynamics<fluid_dynamics::DistanceFromWall, SequencedPolicy> distance_to_wall(fluid_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(fluid_inner, fluid_wall_contact);
+    SimpleDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_dependent_viscosity(fluid);
+    InteractionWithUpdate<fluid_dynamics::NonNewtonianViscousForceWithWall<AngularConservative>> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
-    //InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, AllParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, ZerothInconsistencyLimiter, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
-
+    InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
-
-    SimpleDynamics<NormalDirectionFromBodyShape> left_screw_normal_direction(left_screw);
-    SimpleDynamics<NormalDirectionFromBodyShape> right_screw_normal_direction(right_screw);
-    SimpleDynamics<NormalDirectionFromBodyShape> barrel_normal_direction(barrel);
 
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
@@ -231,6 +228,7 @@ int main(int ac, char *av[])
     barrel_normal_direction.exec();
     left_screw_normal_direction.exec();
     right_screw_normal_direction.exec();
+    distance_to_wall.exec();
 
     //	Setup for time-stepping control
     int nmbr_of_outputs = 100;
@@ -260,9 +258,11 @@ int main(int ac, char *av[])
         if (linearized_iteration == true && Dt_visc < Dt_adv && GlobalStaticVariables::physical_time_ < end_time * 0.001)
         {
             Real viscous_time = 0.0;
+            corrected_configuration_fluid.exec();
+            distance_to_wall.exec();
             free_surface_indicator.exec();
             vel_grad_calculation.exec();
-            shear_rate_calculation.exec();
+            shear_dependent_viscosity.exec();
 
             // Viscous Substepping
             while (viscous_time < Dt_adv)
@@ -280,9 +280,11 @@ int main(int ac, char *av[])
         else
         {
             Dt = SMIN(Dt_visc, Dt_adv);
-            free_surface_indicator.exec();
+            corrected_configuration_fluid.exec();
+            distance_to_wall.exec();
+            free_surface_indicator.exec(Dt);
             vel_grad_calculation.exec(Dt);
-            shear_rate_calculation.exec(Dt);
+            shear_dependent_viscosity.exec(Dt);
             viscous_acceleration.exec(Dt);
             transport_velocity_correction.exec(Dt);
         }

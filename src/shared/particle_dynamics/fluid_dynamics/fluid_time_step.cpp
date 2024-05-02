@@ -7,7 +7,7 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+    : LocalDynamicsReduce<ReduceMax>(sph_body),
       FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       mass_(particles_->mass_), vel_(particles_->vel_),
@@ -31,7 +31,7 @@ Real AcousticTimeStepSize::outputResult(Real reduced_value)
 //=================================================================================================//
 AdvectionTimeStepSizeForImplicitViscosity::
     AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_ref * U_ref),
+    : LocalDynamicsReduce<ReduceMax>(sph_body),
       FluidDataSimple(sph_body), mass_(particles_->mass_), vel_(particles_->vel_),
       force_(particles_->force_), force_prior_(particles_->force_prior_),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
@@ -61,27 +61,6 @@ AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_ref, Real
 Real AdvectionTimeStepSize::reduce(size_t index_i, Real dt)
 {
     return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
-}
-
-SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL) : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-                                                                                       FluidDataSimple(sph_body),
-                                                                                       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-                                                                                       rho_(this->particles_->rho_),
-                                                                                       mu_srd_(*this->particles_->getVariableByName<Real>("SRDViscosity")),
-                                                                                       diffusionCFL(diffusionCFL)
-{
-}
-
-Real SRDViscousTimeStepSize::outputResult(Real reduced_value)
-{
-    max_viscosity = TinyReal;
-    return this->diffusionCFL * smoothing_length_ * smoothing_length_ / (reduced_value + TinyReal);
-}
-
-Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
-{
-    max_viscosity = SMAX(mu_srd_[index_i] / rho_[index_i], max_viscosity);
-    return max_viscosity;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

@@ -52,11 +52,11 @@ class Neighborhood
     size_t current_size_;   /**< the current number of neighbors */
     size_t allocated_size_; /**< the limit of neighbors does not require memory allocation  */
 
-    StdLargeVec<size_t> j_;      /**< index of the neighbor particle. */
-    StdLargeVec<Real> W_ij_;     /**< kernel value or particle volume contribution */
-    StdLargeVec<Real> dW_ijV_j_; /**< derivative of kernel function or inter-particle surface contribution */
-    StdLargeVec<Real> r_ij_;     /**< distance between j and i. */
-    StdLargeVec<Vecd> e_ij_;     /**< unit vector pointing from j to i or inter-particle surface direction */
+    StdLargeVec<size_t> j_;   /**< index of the neighbor particle. */
+    StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */
+    StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
+    StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
+    StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
     Neighborhood() : current_size_(0), allocated_size_(0){};
     ~Neighborhood(){};
@@ -76,17 +76,15 @@ class NeighborBuilder
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
-    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t j_index, const Real &Vol_j);
-    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t j_index, const Real &Vol_j);
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
     //----------------------------------------------------------------------
     //	Below are for variable smoothing length.
     //----------------------------------------------------------------------
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
+                        const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
+                            const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     static Kernel *chooseKernel(SPHBody &body, SPHBody &target_body);
 
   public:
@@ -146,8 +144,8 @@ class NeighborBuilderContact : public NeighborBuilder
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContact(){};
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+    virtual void operator()(Neighborhood &neighborhood,
+                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 };
 
 /**
@@ -197,5 +195,80 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
     Real relative_h_ref_;
 };
 
+/**
+ * @class BaseNeighborBuilderShell
+ * @brief A base neighbor builder functor for contact relation to shell.
+ */
+class BaseNeighborBuilderContactShell : public NeighborBuilder
+{
+  public:
+    explicit BaseNeighborBuilderContactShell(SPHBody &shell_body);
+
+  protected:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+    StdLargeVec<Vecd> &n_; // normal direction of contact body
+    StdLargeVec<Real> &thickness_;
+    StdLargeVec<Real> &k1_ave_; // 1st principle curvature of contact body
+    StdLargeVec<Real> &k2_ave_; // 2nd principle curvature of contact body
+    Real particle_distance_;    // reference spacing of contact body
+
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+                        size_t index_j, const Real &W_ij,
+                        const Real &dW_ij, const Vecd &e_ij);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+                            size_t index_j, const Real &W_ij,
+                            const Real &dW_ij, const Vecd &e_ij);
+};
+
+/**
+ * @class NeighborBuilderContactToShell
+ * @brief A contact neighbor builder functor for contact relation from fluid to shell.
+ */
+class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    inline void operator()(Neighborhood &neighborhood,
+                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+    {
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius());
+    }
+
+  private:
+    Real direction_corrector_;
+
+  protected:
+    void update_neighbors(Neighborhood &neighborhood,
+                          const Vecd &pos_i, size_t index_i, const ListData &list_data_j, Real radius);
+};
+
+/**
+ * @class NeighborBuilderContactFromShell
+ * @brief A contact neighbor builder functor for contact relation from shell to fluid.
+ */
+class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+  private:
+    Real direction_corrector_;
+};
+
+/**
+ * @class ShellNeighborBuilderInnerWithContactKernel
+ * @brief A inner neighbor builder functor with reduced kernel.
+ * The smoothing length is equal to that of the contact body
+ */
+class ShellNeighborBuilderInnerWithContactKernel : public NeighborBuilderInner
+{
+  public:
+    explicit ShellNeighborBuilderInnerWithContactKernel(SPHBody &body, SPHBody &contact_body);
+
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+};
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

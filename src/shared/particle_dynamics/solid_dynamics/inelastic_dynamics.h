@@ -74,7 +74,7 @@ public:
             Vecd shear_force_ij = plastic_solid_.ShearModulus() * pair_scaling *
                 (e_ij + 8.0 * limiter * weight * Dimensions * e_ij_difference);
             force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * e_ij + shear_force_ij) *
-                inner_neighborhood.dW_ijV_j_[n] * inv_rho0_;
+                inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
         }
 
         force_[index_i] = force;

@@ -30,20 +30,17 @@
 #define ADAPTATION_H
 
 #include "base_data_package.h"
-#include "cell_linked_list.h"
-#include "level_set.h"
+#include "base_kernel.h"
 #include "sph_data_containers.h"
 
 namespace SPH
 {
 
-class SPHBody;
-class RealBody;
 class Shape;
-class Kernel;
 class BaseParticles;
-class BaseLevelSet;
 class BodyRegionByCell;
+class BaseLevelSet;
+class BaseCellLinkedList;
 
 /**
  * @class SPHAdaptation
@@ -68,7 +65,6 @@ class SPHAdaptation
 
   public:
     explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
-    explicit SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
     virtual ~SPHAdaptation(){};
 
     int LocalRefinementLevel() { return local_refinement_level_; };
@@ -83,7 +79,7 @@ class SPHAdaptation
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles){};
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
     template <class KernelType, typename... Args>
@@ -110,9 +106,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
   public:
     StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
-    ParticleWithLocalRefinement(SPHBody &sph_body, Real h_spacing_ratio_,
-                                Real system_refinement_ratio,
-                                int local_refinement_level);
+    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement(){};
 
     virtual size_t getCellLinkedListTotalLevel();
@@ -123,7 +117,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds) override;
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
   protected:
@@ -187,8 +181,7 @@ class ParticleRefinementWithinShape : public ParticleRefinementByShape
 class ParticleSplitAndMerge : public ParticleWithLocalRefinement
 {
   public:
-    ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
-                          Real system_resolution_ratio, int local_refinement_level);
+    ParticleSplitAndMerge(Real resolution_ref, Real h_spacing_ratio_, Real system_resolution_ratio, int local_refinement_level);
     virtual ~ParticleSplitAndMerge(){};
 
     virtual bool isSplitAllowed(Real current_volume);

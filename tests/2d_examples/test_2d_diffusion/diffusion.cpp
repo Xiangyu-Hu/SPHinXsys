@@ -92,11 +92,11 @@ class DiffusionBodyRelaxation
 //----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
+class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
 {
   public:
-    explicit TemperatureObserverParticleGenerator(SPHBody &sph_body)
-        : ParticleGeneratorObserver(sph_body)
+    explicit ParticleGeneratorTemperatureObserver(SPHBody &sph_body)
+        : ParticleGenerator<Observer>(sph_body)
     {
         size_t number_of_observation_points = 11;
         Real range_of_measure = 0.9 * L;
@@ -124,12 +124,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
     diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
+    temperature_observer.generateParticles(ParticleGeneratorTemperatureObserver(temperature_observer));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -146,9 +146,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

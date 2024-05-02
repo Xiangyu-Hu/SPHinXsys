@@ -45,7 +45,7 @@ void relax_shell(RealBody &plate_body, Real thickness)
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 }
 
-class ShellRoofParticleGenerator : public ParticleGeneratorSurface
+class ShellRoofParticleGenerator : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -54,7 +54,7 @@ class ShellRoofParticleGenerator : public ParticleGeneratorSurface
 
   public:
     explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGeneratorSurface(sph_body),
+        : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -198,12 +198,12 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-class CylinderParticleGenerator : public ParticleGeneratorSurface
+class CylinderParticleGenerator : public ParticleGenerator<Surface>
 {
     Real particle_number_;
 
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : ParticleGeneratorSurface(sph_body),
+    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : ParticleGenerator<Surface>(sph_body),
                                                                                        particle_number_(particle_number){};
     virtual void initializeGeometricVariables() override
     {
@@ -309,9 +309,17 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     SolidBody shell_body(system, shell_shape);
     shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
     if (cvt)
-        shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, center, particle_area, thickness);
+    {
+        ShellRoofParticleGenerator roof_particle_generator(shell_body, obj_vertices, center, particle_area, thickness);
+        shell_body.generateParticles(roof_particle_generator);
+    }
+
     else
-        shell_body.generateParticles<CylinderParticleGenerator>(particle_number);
+    {
+        CylinderParticleGenerator cylinder_particle_generator(shell_body, particle_number);
+        shell_body.generateParticles(cylinder_particle_generator);
+    }
+
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
     bb_system = get_particles_bounding_box(shell_particles->pos_);
     system.system_domain_bounds_ = bb_system;
@@ -373,7 +381,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     }();
     constrained_edges.body_part_particles_ = constrained_edge_ids;
 
-    SimpleDynamics<solid_dynamics::FixedInAxisDirection> constrain_holder(constrained_edges, length_vec);
+    SimpleDynamics<FixedInAxisDirection> constrain_holder(constrained_edges, length_vec);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>

@@ -33,7 +33,7 @@ void PorousMediaDampingPairwiseInner<VariableType>::interaction(size_t index_i, 
     Real mass_j = mass_[index_j];
 
     VariableType variable_derivative = (variable_i - variable_[index_j]);
-    parameter_b[n] = eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
+    parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
     VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
     variable_[index_i] += increment * mass_j;

@@ -110,7 +110,6 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, ContactDynami
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};
     const StdVec<Real> three_gaussian_weights_ = {0.5555555555555556, 0.8888888888888889, 0.5555555555555556};
 };
-
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // REPULSION_DENSITY_SUMMATION_H

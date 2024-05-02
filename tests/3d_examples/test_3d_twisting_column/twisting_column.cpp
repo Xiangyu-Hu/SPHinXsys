@@ -85,11 +85,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    column.generateParticles<ParticleGeneratorLattice>();
+    column.generateParticles<Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
-    my_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    my_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -103,13 +103,14 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
     /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
-    BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    BodyRegionByParticle holder(column, holder_shape);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

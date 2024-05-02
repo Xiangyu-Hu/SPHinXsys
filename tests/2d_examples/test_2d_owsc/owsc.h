@@ -258,7 +258,7 @@ class FlapSystemForSimbody : public SolidBodyPartForSimbody
     }
 };
 
-class WaveMaking : public solid_dynamics::MotionConstraint
+class WaveMaking : public BodyPartMotionConstraint
 {
     Real model_scale_;
     Real gravity_;
@@ -325,9 +325,11 @@ class WaveMaking : public solid_dynamics::MotionConstraint
 
   public:
     WaveMaking(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part),
+        : BodyPartMotionConstraint(body_part),
           model_scale_(25.0), gravity_(gravity_g), water_depth_(Water_H), wave_height_(5.0),
-          wave_period_(10.0)
+          wave_period_(10.0),
+          mass_(*particles_->getVariableByName<Real>("Mass")),
+          force_(*particles_->getVariableByName<Vecd>("Force"))
     {
         computeWaveStrokeAndFrequency();
     }
@@ -339,6 +341,10 @@ class WaveMaking : public solid_dynamics::MotionConstraint
         vel_[index_i] = getVelocity(time);
         force_[index_i] = mass_[index_i] * getAcceleration(time);
     };
+
+  protected:
+    StdLargeVec<Real> &mass_;
+    StdLargeVec<Vecd> &force_;
 };
 
 Real h = 1.3 * particle_spacing_ref;
@@ -382,21 +388,17 @@ MultiPolygon createWaveProbeShape12()
     multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
     return multi_polygon;
 }
-//------------------------------------------------------------------------------
-// Case-dependent observer particle generator
-//------------------------------------------------------------------------------
-class FlapObserverParticleGenerator : public ParticleGeneratorObserver
+
+StdVec<Vecd> creatObserverPositions()
 {
-  public:
-    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
-    {
-        /** the measuring particle with zero volume */
-        positions_.push_back(Vecd(7.862, 0.645));
-        positions_.push_back(Vecd(7.862, 0.741));
-        positions_.push_back(Vecd(7.862, 0.391));
-        positions_.push_back(Vecd(7.862, 0.574));
-        positions_.push_back(Vecd(7.862, 0.716));
-        positions_.push_back(Vecd(7.862, 0.452));
-    }
-};
+    StdVec<Vecd> observer_positions;
+    observer_positions.push_back(Vecd(7.862, 0.645));
+    observer_positions.push_back(Vecd(7.862, 0.741));
+    observer_positions.push_back(Vecd(7.862, 0.391));
+    observer_positions.push_back(Vecd(7.862, 0.574));
+    observer_positions.push_back(Vecd(7.862, 0.716));
+    observer_positions.push_back(Vecd(7.862, 0.452));
+    return observer_positions;
+}
+
 #endif // TEST_2D_OWSC_CASE_H

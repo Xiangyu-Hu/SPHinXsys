@@ -83,7 +83,7 @@ class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
  * @class ShellAcousticTimeStepSize
  * @brief Computing the acoustic time step size for shell
  */
-class ShellAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                                   public ShellDataSimple
 {
   protected:
@@ -117,7 +117,8 @@ class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
             global_configuration += r_ji * gradW_ijV_j.transpose();
         }
@@ -128,6 +129,7 @@ class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
     };
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &n0_;
     StdLargeVec<Matd> &transformation_matrix_;
@@ -156,7 +158,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInn
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             deformation_part_one -= (pos_n_i - pos_[index_j]) * gradW_ijV_j.transpose();
             deformation_part_two -= ((pseudo_n_i - n0_[index_i]) - (pseudo_n_[index_j] - n0_[index_j])) * gradW_ijV_j.transpose();
         }
@@ -166,6 +168,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInn
     };
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
     StdLargeVec<Matd> &B_, &F_, &F_bending_;
     StdLargeVec<Matd> &transformation_matrix_;
@@ -182,7 +185,7 @@ class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
     virtual ~BaseShellRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_, &mass_;
+    StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
@@ -199,7 +202,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 {
   public:
     explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-                                            int number_of_gaussian_points = 3, bool hourglass_control = false);
+                                            int number_of_gaussian_points = 3, bool hourglass_control = false, Real hourglass_control_factor = 0.002);
     virtual ~ShellStressRelaxationFirstHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
 
@@ -227,7 +230,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                                       transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
                 Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
                 force += mass_[index_i] * hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
-                                inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
+                         inner_neighborhood.dW_ij_[n] * Vol_[index_j] * limiter_pos;
 
                 Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
                 Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
@@ -237,11 +240,11 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                                                            transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
                 Real limiter_pseudo_n = SMIN(2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i - pseudo_n_variation_j).norm() + Eps), 1.0);
                 pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
-                                              inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 2) * limiter_pseudo_n;
+                                              inner_neighborhood.dW_ij_[n] * Vol_[index_j] * pow(thickness_[index_i], 2) * limiter_pseudo_n;
             }
 
-            force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-            pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            force += mass_[index_i] * (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+            pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
 
         force_[index_i] = force * inv_rho0_ / thickness_[index_i];
@@ -301,7 +304,7 @@ class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
         {
             size_t index_j = inner_neighborhood.j_[n];
 
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             deformation_gradient_change_rate_part_one -= (vel_n_i - vel_[index_j]) * gradW_ijV_j.transpose();
             deformation_gradient_change_rate_part_two -= (dpseudo_n_dt_i - dpseudo_n_dt_[index_j]) * gradW_ijV_j.transpose();
         }
@@ -372,6 +375,50 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
 
     virtual void setupDynamics(Real dt = 0.0) override;
     void update(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
+ */
+class ShellCurvature : public LocalDynamics, public ShellDataInner
+{
+  public:
+    explicit ShellCurvature(BaseInnerRelation &inner_relation);
+
+    void update(size_t index_i, Real);
+    void compute_initial_curvature();
+
+  private:
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &n0_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Matd> &F_;
+    StdLargeVec<Matd> &F_bending_;
+
+    StdLargeVec<Real> &k1_; // first principle curvature
+    StdLargeVec<Real> &k2_; // second principle curvature
+
+    StdLargeVec<Matd> dn_0_;
+};
+
+/**
+ * @class AverageShellCurvature
+ * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
+ */
+class AverageShellCurvature : public LocalDynamics, public ShellDataInner
+{
+  public:
+    explicit AverageShellCurvature(BaseInnerRelation &inner_relation);
+    void update(size_t index_i, Real);
+
+  private:
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &n_;
+    StdLargeVec<Real> &k1_ave_; // first principle curvature
+    StdLargeVec<Real> &k2_ave_; // second principle curvature
 };
 } // namespace thin_structure_dynamics
 } // namespace SPH

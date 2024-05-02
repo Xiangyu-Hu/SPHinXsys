@@ -8,23 +8,20 @@
 using namespace SPH;
 
 // general parameters for geometry
-Real resolution_ref = 0.025;  // particle spacing
+Real resolution_ref = 0.05;   // particle spacing
 Real BW = resolution_ref * 4; // boundary width
-Real DL = 3.22;               // tank length
-Real DH = 1.0;                // tank height
-Real DW = 1.0;                // tank width
-Real LL = 1.228;              // liquid length
-Real LH = 0.55;               // liquid height
-Real LW = 1.0;                // liquid width
+Real DL = 5.366;              // tank length
+Real DH = 2.0;                // tank height
+Real DW = 0.5;                // tank width
+Real LL = 2.0;                // liquid length
+Real LH = 1.0;                // liquid height
+Real LW = 0.5;                // liquid width
 
 // for material properties of the fluid
 Real rho0_f = 1.0;
-Real gravity_g = 9.81;
+Real gravity_g = 1.0;
 Real U_f = 2.0 * sqrt(gravity_g * LH);
 Real c_f = 10.0 * U_f;
-Real K = 1;
-Real n = 1;
-Real yield_stress = 0;
 
 //	define the water block shape
 class WaterBlock : public ComplexShape
@@ -52,10 +49,11 @@ class WallBoundary : public ComplexShape
 };
 
 //	define an observer particle generator
-class WaterObserverParticleGenerator : public ParticleGeneratorObserver
+class WaterObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit WaterObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit WaterObserverParticleGenerator(SPHBody &sph_body)
+        : ParticleGenerator<Observer>(sph_body)
     {
         // add observation points
         positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));
@@ -79,18 +77,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho0_f, c_f, K, n, yield_stress, 0.001, 1000);
-    // water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, 1);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    WaterBlock initial_water_block("WaterBody");
+    FluidBody water_block(sph_system, initial_water_block);
+    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<WaterObserverParticleGenerator>();
+    fluid_observer.generateParticles(WaterObserverParticleGenerator(fluid_observer));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -117,13 +115,6 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_wall_contact);
-
-    InteractionDynamics<fluid_dynamics::VelocityGradientWithWall> vel_grad_calculation(water_block_inner, water_wall_contact);
-    InteractionDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_rate_calculation(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::GeneralizedNewtonianViscousForceWithWall> viscous_acceleration(water_block_inner, water_wall_contact);
-
-    // InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
-
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -147,8 +138,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 1.0;
-    Real output_interval = end_time / 100.0;
+    Real end_time = 20.0;
+    Real output_interval = end_time / 20.0;
     Real dt = 0.0; // default acoustic time step sizes
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -168,15 +159,8 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            Real Dt = get_fluid_advection_time_step_size.exec() * 0.1;
-            update_density_by_summation.exec(Dt);
-
-            //! Viscous Force Steps
-            vel_grad_calculation.exec(Dt);
-            shear_rate_calculation.exec(Dt);
-            viscous_acceleration.exec(Dt);
-
-            // viscous_force.exec(Dt);
+            Real Dt = get_fluid_advection_time_step_size.exec();
+            update_density_by_summation.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
