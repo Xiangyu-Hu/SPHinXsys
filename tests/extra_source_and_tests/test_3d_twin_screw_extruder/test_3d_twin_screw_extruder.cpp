@@ -13,7 +13,7 @@ bool linearized_iteration = true;
 bool reload = false;
 
 // simulation setup
-Real particle_spacing = 0.002; // particle spacing
+Real particle_spacing = 0.001; // particle spacing
 Real gravity_g = 0;            // gravity
 Real end_time = 1;             // end time
 Real RPS = 1;                  // revolutions per second
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::ShearRateDependentViscosity> shear_dependent_viscosity(fluid);
     InteractionWithUpdate<fluid_dynamics::NonNewtonianViscousForceWithWall<AngularConservative>> viscous_acceleration(fluid_inner, fluid_wall_contact);
 
-    //InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
+    // InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_surface_indicator(fluid_inner, fluid_wall_contact);
     InteractionWithUpdate<fluid_dynamics::BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, NoKernelCorrection, BulkParticles>> transport_velocity_correction(fluid_inner, fluid_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, U_ref);
@@ -231,7 +231,7 @@ int main(int ac, char *av[])
     distance_to_wall.exec();
 
     //	Setup for time-stepping control
-    int nmbr_of_outputs = 100;
+    int nmbr_of_outputs = 1000;
     Real output_interval = end_time / nmbr_of_outputs;
     Real dt = 0;
     Real Dt = 0;
@@ -260,7 +260,7 @@ int main(int ac, char *av[])
             Real viscous_time = 0.0;
             corrected_configuration_fluid.exec();
             distance_to_wall.exec();
-            //free_surface_indicator.exec();
+            // free_surface_indicator.exec();
             vel_grad_calculation.exec();
             shear_dependent_viscosity.exec();
 
@@ -282,7 +282,7 @@ int main(int ac, char *av[])
             Dt = SMIN(Dt_visc, Dt_adv);
             corrected_configuration_fluid.exec();
             distance_to_wall.exec();
-            //free_surface_indicator.exec(Dt);
+            // free_surface_indicator.exec(Dt);
             vel_grad_calculation.exec(Dt);
             shear_dependent_viscosity.exec(Dt);
             viscous_acceleration.exec(Dt);
