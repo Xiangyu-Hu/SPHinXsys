@@ -127,6 +127,5 @@ void ShearRateDependentViscosity::update(size_t index_i, Real dt)
     mu_srd_[index_i] = generalized_newtonian_fluid_.getViscosity(shear_rate);
 }
 //=================================================================================================//
-
 } // namespace fluid_dynamics
 } // namespace SPH

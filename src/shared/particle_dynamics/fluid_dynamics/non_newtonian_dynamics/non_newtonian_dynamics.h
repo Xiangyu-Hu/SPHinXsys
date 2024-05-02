@@ -32,7 +32,6 @@
 
 #include "base_fluid_dynamics.h"
 #include "fluid_integration.hpp"
-#include "force_prior.h"
 
 namespace SPH
 {
@@ -137,5 +136,4 @@ class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
 
 } // namespace fluid_dynamics
 } // namespace SPH
-
 #endif // NON_NEWTONIAN_DYNAMICS_H
