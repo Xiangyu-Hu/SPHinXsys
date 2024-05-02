@@ -138,5 +138,4 @@ class ShearRateDependentViscosity : public LocalDynamics, public FluidDataSimple
 } // namespace fluid_dynamics
 } // namespace SPH
 
-#include "non_newtonian_dynamics.hpp"
 #endif // NON_NEWTONIAN_DYNAMICS_H
