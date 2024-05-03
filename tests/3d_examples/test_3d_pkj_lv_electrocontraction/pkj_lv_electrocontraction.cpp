@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     /** Physiology for PKJ*/
     /** Time step size calculation. */
     electro_physiology::GetElectroPhysiologyTimeStepSize get_pkj_physiology_time_step(pkj_body);
-    electro_physiology::ElectroPhysiologyDiffusionInnerRK2 pkj_diffusion_relaxation(pkj_inner);
+    electro_physiology::ElectroPhysiologyDiffusionNetworkRK2 pkj_diffusion_relaxation(pkj_inner);
     /** Solvers for ODE system */
     electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
     ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
-    /**Apply the Iron stimulus.*/
+    /**Apply the ion stimulus.*/
     SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
     /** Active mechanics. */

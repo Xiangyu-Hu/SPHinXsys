@@ -157,7 +157,6 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
     SolidBody gate(sph_system, makeShared<MovingGate>("Gate"));
     gate.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -242,6 +241,7 @@ int main(int ac, char *av[])
     plate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
     plate.addDerivedBodyStateForRecording<Displacement>();
     gate.addBodyStateForRecording<Vec3d>("NormalDirection");
+    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
     BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);

@@ -198,6 +198,19 @@ class ElectroPhysiologyDiffusionInnerRK2
     virtual ~ElectroPhysiologyDiffusionInnerRK2(){};
 };
 
+/**
+ * @class ElectroPhysiologyDiffusionNetworkRK2
+ * @brief Compute the diffusion relaxation process on network
+ */
+class ElectroPhysiologyDiffusionNetworkRK2
+    : public DiffusionRelaxationRK2<DiffusionRelaxation<Inner<ElectroPhysiologyParticles, KernelGradientInner>>>
+{
+  public:
+    explicit ElectroPhysiologyDiffusionNetworkRK2(BaseInnerRelation &inner_relation)
+        : DiffusionRelaxationRK2<DiffusionRelaxation<Inner<ElectroPhysiologyParticles, KernelGradientInner>>>(inner_relation){};
+    virtual ~ElectroPhysiologyDiffusionNetworkRK2(){};
+};
+
 using DiffusionRelaxationWithDirichletContact =
     DiffusionRelaxation<Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>;
 

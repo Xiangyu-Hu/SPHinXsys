@@ -118,6 +118,7 @@ int main(int ac, char *av[])
     SimTK::CableTrackerSubsystem cables(MBsystem);
     /** mass properties of the fixed spot. */
     TransformShape<GeometricShapeBox> moving_plate_shape(Transform(translation_moving_plate), halfsize_moving_plate, "Plate");
+    SimpleDynamics<NormalDirectionFromBodyShape> moving_plate_normal_direction(moving_plate);
     SolidBodyPartForSimbody plate_multibody(moving_plate, moving_plate_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
@@ -149,6 +150,7 @@ int main(int ac, char *av[])
     GlobalStaticVariables::physical_time_ = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
+    moving_plate_normal_direction.exec();
     corrected_configuration.exec();
 
     //----------------------------------------------------------------------

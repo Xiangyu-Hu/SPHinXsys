@@ -43,7 +43,7 @@ BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       b_n0_(particles_->b_n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}

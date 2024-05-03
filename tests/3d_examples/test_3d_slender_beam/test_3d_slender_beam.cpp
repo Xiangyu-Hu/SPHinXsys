@@ -155,14 +155,14 @@ int main(int ac, char *av[])
     /** Common particle dynamics. */
     TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
     SimpleDynamics<GravityForce> apply_time_dependent_external_force(bar_body, time_dependent_external_force);
+    InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration> corrected_configuration(bar_body_inner);
     /**
      * This section define all numerical methods will be used in this case.
      */
     /** active-passive stress relaxation. */
     Dynamics1Level<slender_structure_dynamics::BarStressRelaxationFirstHalf> stress_relaxation_first_half(bar_body_inner);
     Dynamics1Level<slender_structure_dynamics::BarStressRelaxationSecondHalf> stress_relaxation_second_half(bar_body_inner);
-    /** Corrected configuration. */
-    InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration> corrected_configuration(bar_body_inner);
+
     /** Time step size calculation. */
     ReduceDynamics<slender_structure_dynamics::BarAcousticTimeStepSize> computing_time_step_size(bar_body);
     /** Constrain the Boundary. */
