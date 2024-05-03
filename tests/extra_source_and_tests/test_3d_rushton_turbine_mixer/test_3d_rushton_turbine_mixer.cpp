@@ -19,7 +19,7 @@ Real end_time = 0.5;                                            // end time
 Real RPS = 5;                                                   // revolutions per second
 Real omega = RPS * 3.14 * 2;                                    // angular velocity
 Real U_ref = 0.0735 * 0.5 * omega;                              // tip velocity
-Real SOS = 10.0 * SMAX(U_ref, std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound
+Real SOS = 10.0 * SMAX(U_ref, (Real)std::sqrt(2 * gravity_g * 0.09)); // numerical speed of sound
 
 // material properties
 Real rho = 1000.0; // reference density
