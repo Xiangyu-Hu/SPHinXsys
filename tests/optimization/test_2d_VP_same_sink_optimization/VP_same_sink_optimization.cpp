@@ -263,6 +263,9 @@ TEST(test_optimization, test_problem1_optimized)
     //	Define the main numerical methods used for optimization
     //  Note that there may be data dependence on the constructors of tested methods.
     //----------------------------------------------------------------------
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
         temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "Phi");
     InteractionSplit<UpdateTemperaturePDEResidual<
@@ -301,6 +304,8 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
+    diffusion_body_normal_direction.exec();
+    wall_boundary_normal_direction.exec();
     setup_diffusion_initial_condition.exec();
     setup_diffusion_boundary_condition.exec();
     thermal_diffusivity_random_initialization.exec();

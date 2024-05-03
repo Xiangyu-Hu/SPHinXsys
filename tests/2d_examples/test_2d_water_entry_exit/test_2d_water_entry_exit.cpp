@@ -226,7 +226,6 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<DiffusionWallParticles, WettingWallBodyMaterial>();
     wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
@@ -310,6 +309,8 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
@@ -330,8 +331,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(cylinder_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(fluid_density_relaxation)>> pressure_force_from_fluid(cylinder_contact);
     //----------------------------------------------------------------------
@@ -384,6 +383,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");
     cylinder.addBodyStateForRecording<Real>("Density");
+    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);

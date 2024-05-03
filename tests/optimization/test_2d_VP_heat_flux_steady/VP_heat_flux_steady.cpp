@@ -217,13 +217,15 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
         temperature_splitting(diffusion_body_inner, diffusion_body_contact, "Phi");
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionBodyInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
     ReduceDynamics<Average<SpeciesSummation<SPHBody, DiffusionParticles>>>
         calculate_averaged_temperature(diffusion_body, "Phi");
     ReduceDynamics<Average<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>

@@ -30,7 +30,6 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<Observer>(observation_location);
@@ -91,12 +90,10 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    /** Output the body states. */
+    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    /** Output the mechanical energy of fluid body. */
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(water_block, gravity);
-    /** output the observed data from fluid body. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
