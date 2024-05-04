@@ -1,5 +1,4 @@
 #include "solid_particles.h"
-#include "solid_particles_variable.h"
 
 #include "base_body.h"
 #include "beam_particles.h"

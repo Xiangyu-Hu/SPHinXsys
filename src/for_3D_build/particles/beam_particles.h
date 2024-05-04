@@ -35,8 +35,6 @@
 #include "elastic_solid.h"
 #include "particle_generator_lattice.h"
 #include "solid_particles.h"
-// #include "solid_particles.h"
-#include "solid_particles_variable.h"
 
 #include <iterator>
 namespace SPH

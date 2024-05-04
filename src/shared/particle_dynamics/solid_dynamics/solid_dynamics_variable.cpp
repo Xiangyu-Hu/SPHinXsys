@@ -1,4 +1,4 @@
-#include "solid_particles_variable.h"
+#include "solid_dynamics_variable.h"
 #include "elastic_solid.h"
 
 namespace SPH

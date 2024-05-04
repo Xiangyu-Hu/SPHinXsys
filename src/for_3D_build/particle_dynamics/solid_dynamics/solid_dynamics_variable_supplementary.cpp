@@ -1,6 +1,6 @@
 #include "base_body.h"
+#include "solid_dynamics_variable.h"
 #include "solid_particles.h"
-#include "solid_particles_variable.h"
 
 #include <iterator>
 

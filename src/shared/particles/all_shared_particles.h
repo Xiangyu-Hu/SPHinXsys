@@ -34,6 +34,5 @@
 #include "diffusion_reaction_particles.h"
 #include "observer_particles.h"
 #include "solid_particles.h"
-#include "solid_particles_variable.h"
 
 #endif // ALL_SHARED_PARTICLES_H

@@ -21,10 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	solid_particle_variable.h
- * @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables.
- * @details 	These variable can be added into variable list for state output.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file solid_dynamics_variable.h
+ * @brief Here, we define the algorithm classes for computing derived solid dynamics variables.
+ * @details These variable can be added into variable list for state output.
+ * @author Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SOLID_PARTICLES_VARIABLE_H
