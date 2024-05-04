@@ -237,26 +237,8 @@ return_data bending_circular_plate(Real dp_ratio)
     ShellCircleParticleGenerator shell_particle_generator(shell_body, obj_vertices, sym_vec, particle_area, thickness);
     shell_body.generateParticles(shell_particle_generator);
     auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
-    // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
     shell_body.addDerivedBodyStateForRecording<Displacement>();
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.writeToFile(0);
-    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
-    // observer point
-    point_center.neighbor_ids = [&]() { // full neighborhood
-        IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-
-        for (size_t i = 0; i < pos0_.size(); ++i)
-        {
-            if ((pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
-                ids.push_back(i);
-        }
-        return ids;
-    }();
-    EXPECT_FALSE(point_center.neighbor_ids.empty());
-    point_center.interpolate(*shell_particles);
 
     // methods
     InnerRelation shell_body_inner(shell_body);
@@ -290,6 +272,25 @@ return_data bending_circular_plate(Real dp_ratio)
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
     constant_gravity_force.exec();
+
+    // output
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.writeToFile(0);
+    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    // observer point
+    point_center.neighbor_ids = [&]() { // full neighborhood
+        IndexVector ids;
+        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+
+        for (size_t i = 0; i < pos0_.size(); ++i)
+        {
+            if ((pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
+                ids.push_back(i);
+        }
+        return ids;
+    }();
+    EXPECT_FALSE(point_center.neighbor_ids.empty());
+    point_center.interpolate(*shell_particles);
 
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file

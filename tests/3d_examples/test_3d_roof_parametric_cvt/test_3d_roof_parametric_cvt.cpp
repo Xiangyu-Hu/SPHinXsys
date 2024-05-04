@@ -331,40 +331,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
       // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
       // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
-    // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
     shell_body.addDerivedBodyStateForRecording<Displacement>();
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.writeToFile(0);
-
-    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
-    // observer points A & B
-    point_A.neighbor_ids = [&]() { // only neighbors on the edges
-        IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp / 2;
-        for (size_t i = 0; i < pos0_.size(); ++i)
-        {
-            if ((pos0_[i] - point_A.pos_0).norm() < smoothing_length &&
-                std::abs(pos0_[i][tangential_axis]) > x_min)
-                ids.push_back(i);
-        }
-        return ids;
-    }();
-    point_B.neighbor_ids = [&]() { // full neighborhood
-        IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        for (size_t i = 0; i < pos0_.size(); ++i)
-        {
-            if ((pos0_[i] - point_B.pos_0).norm() < smoothing_length)
-                ids.push_back(i);
-        }
-        return ids;
-    }();
-    point_A.interpolate(*shell_particles);
-    point_B.interpolate(*shell_particles);
-    // point_A.write_data();
-    // point_B.write_data();
 
     // methods
     InnerRelation shell_body_inner(shell_body);
@@ -400,6 +368,37 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     system.initializeSystemConfigurations();
     corrected_configuration.exec();
     apply_constant_gravity.exec();
+
+    // output
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.writeToFile(0);
+
+    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    // observer points A & B
+    point_A.neighbor_ids = [&]() { // only neighbors on the edges
+        IndexVector ids;
+        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp / 2;
+        for (size_t i = 0; i < pos0_.size(); ++i)
+        {
+            if ((pos0_[i] - point_A.pos_0).norm() < smoothing_length &&
+                std::abs(pos0_[i][tangential_axis]) > x_min)
+                ids.push_back(i);
+        }
+        return ids;
+    }();
+    point_B.neighbor_ids = [&]() { // full neighborhood
+        IndexVector ids;
+        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        for (size_t i = 0; i < pos0_.size(); ++i)
+        {
+            if ((pos0_[i] - point_B.pos_0).norm() < smoothing_length)
+                ids.push_back(i);
+        }
+        return ids;
+    }();
+    point_A.interpolate(*shell_particles);
+    point_B.interpolate(*shell_particles);
 
     // TESTS on initialization
     // checking particle distances - avoid bugs of reading file

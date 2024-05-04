@@ -141,7 +141,6 @@ int main(int ac, char *av[])
      * This section define all numerical methods will be used in this case.
      */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
-    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
 
     /** active-passive stress relaxation. */
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner);
@@ -151,6 +150,7 @@ int main(int ac, char *av[])
     /** Constrain the Boundary. */
     ControlledGeometry controlled_geometry(plate_body, "ControlledGeometry");
     SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** Output */
     IOEnvironment io_environment(system);
     plate_body.addDerivedBodyStateForRecording<VonMisesStrain>();
