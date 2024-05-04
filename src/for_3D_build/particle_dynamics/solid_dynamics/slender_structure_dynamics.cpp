@@ -43,7 +43,7 @@ BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix")),
+      B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       b_n0_(particles_->b_n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
@@ -55,7 +55,7 @@ BarDeformationGradientTensor::
       pos_(*base_particles_.getVariableByName<Vecd>("Position")), pseudo_n_(particles_->pseudo_n_),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->b_n0_), F_b_bending_(particles_->F_b_bending_) {}
@@ -75,7 +75,7 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")),
       F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_),
       b_n0_(particles_->b_n0_), pseudo_b_n_(particles_->pseudo_b_n_),

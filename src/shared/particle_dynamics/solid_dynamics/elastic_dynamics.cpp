@@ -59,7 +59,7 @@ DeformationGradientBySummation::
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")) {}
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)) {}
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
@@ -69,7 +69,7 @@ BaseElasticIntegration::
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")) {}
 //=================================================================================================//
 BaseIntegration1stHalf::

@@ -16,7 +16,7 @@ BasePorousMediaRelaxation::
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate"))
 {
     rho0_ = particles_->porous_solid_.ReferenceDensity();
