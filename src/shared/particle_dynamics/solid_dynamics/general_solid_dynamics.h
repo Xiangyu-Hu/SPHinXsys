@@ -32,9 +32,9 @@
 
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
+#include "base_general_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "base_general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 
@@ -45,8 +45,8 @@ namespace solid_dynamics
 //----------------------------------------------------------------------
 //		for general solid dynamics
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
-typedef DataDelegateInner<SolidParticles> SolidDataInner;
+typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
+typedef DataDelegateInner<BaseParticles> SolidDataInner;
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // GENERAL_SOLID_DYNAMICS_H

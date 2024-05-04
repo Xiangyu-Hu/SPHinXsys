@@ -103,7 +103,7 @@ int main(int ac, char *av[])
         : damping_ball.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<Lattice>();
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");

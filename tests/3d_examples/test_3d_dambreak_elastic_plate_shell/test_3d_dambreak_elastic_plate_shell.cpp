@@ -155,11 +155,11 @@ int main(int ac, char *av[])
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     SolidBody gate(sph_system, makeShared<MovingGate>("Gate"));
-    gate.defineParticlesAndMaterial<SolidParticles, Solid>();
+    gate.defineParticlesAndMaterial<BaseParticles, Solid>();
     gate.generateParticles<Lattice>();
 
     SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));

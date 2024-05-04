@@ -43,26 +43,10 @@ class Solid;
 class ElasticSolid;
 
 /**
- * @class SolidParticles
- * @brief A group of particles with solid body particle data.
- */
-class SolidParticles : public BaseParticles
-{
-  public:
-    SolidParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~SolidParticles(){};
-
-    /** Initialized variables for solid particles. */
-    virtual void initializeOtherVariables() override;
-    /** Return this pointer. */
-    virtual SolidParticles *ThisObjectPtr() override { return this; };
-};
-
-/**
  * @class ElasticSolidParticles
  * @brief A group of particles with elastic body particle data.
  */
-class ElasticSolidParticles : public SolidParticles
+class ElasticSolidParticles : public BaseParticles
 {
   public:
     ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material);

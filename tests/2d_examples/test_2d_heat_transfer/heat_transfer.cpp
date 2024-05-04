@@ -117,7 +117,7 @@ class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
     };
 };
-using DiffusionSolidParticles = DiffusionReactionParticles<SolidParticles, ThermosolidBodyMaterial>;
+using DiffusionSolidParticles = DiffusionReactionParticles<BaseParticles, ThermosolidBodyMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------

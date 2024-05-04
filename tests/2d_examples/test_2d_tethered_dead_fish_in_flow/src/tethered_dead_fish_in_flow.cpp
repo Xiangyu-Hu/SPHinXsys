@@ -217,7 +217,7 @@ int main(int ac, char *av[])
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for fish.

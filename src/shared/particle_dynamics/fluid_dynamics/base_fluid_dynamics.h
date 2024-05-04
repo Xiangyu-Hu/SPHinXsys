@@ -48,8 +48,8 @@ namespace fluid_dynamics
 typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
 typedef DataDelegateInner<BaseParticles> FluidDataInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
-typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
-typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
+typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> FluidWallData;
+typedef DataDelegateContact<BaseParticles, BaseParticles> FSIContactData;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process

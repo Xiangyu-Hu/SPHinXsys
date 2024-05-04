@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     wall_boundary.defineBodyLevelSetShape();
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<Reload>(wall_boundary.getName())
         : wall_boundary.generateParticles<Lattice>();

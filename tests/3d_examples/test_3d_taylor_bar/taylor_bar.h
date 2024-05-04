@@ -88,12 +88,12 @@ class ColumnObserverParticleGenerator : public ParticleGenerator<Observer>
  *  updated before computing the contact force.
  */
 class DynamicContactForceWithWall : public LocalDynamics,
-                                    public DataDelegateContact<SolidParticles, SolidParticles>
+                                    public DataDelegateContact<BaseParticles, BaseParticles>
 {
   public:
     explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0)
         : LocalDynamics(solid_body_contact_relation.getSPHBody()),
-          DataDelegateContact<SolidParticles, SolidParticles>(solid_body_contact_relation),
+          DataDelegateContact<BaseParticles, BaseParticles>(solid_body_contact_relation),
           solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
           Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
           vel_(*particles_->getVariableByName<Vecd>("Velocity")),

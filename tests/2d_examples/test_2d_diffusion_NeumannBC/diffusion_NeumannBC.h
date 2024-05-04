@@ -98,8 +98,8 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     }
 };
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
+using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
+using WallParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
@@ -186,7 +186,7 @@ using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
 class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
 {
   public:
-    ParticleGeneratorTemperatureObserver(SPHBody &sph_body) :  ParticleGenerator<Observer>(sph_body)
+    ParticleGeneratorTemperatureObserver(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 5;

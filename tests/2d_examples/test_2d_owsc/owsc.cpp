@@ -22,11 +22,11 @@ int main(int ac, char *av[])
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     SolidBody flap(sph_system, makeShared<Flap>("Flap"));
-    flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
+    flap.defineParticlesAndMaterial<BaseParticles, Solid>(rho0_s);
     flap.generateParticles<Lattice>();
 
     ObserverBody observer(sph_system, "Observer");

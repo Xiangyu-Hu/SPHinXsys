@@ -47,7 +47,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
     };
 };
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
+using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------

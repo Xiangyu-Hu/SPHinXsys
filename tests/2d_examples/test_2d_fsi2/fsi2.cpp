@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));

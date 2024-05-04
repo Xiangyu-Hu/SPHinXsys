@@ -81,7 +81,7 @@ class PreSettingCase : public Parameter
         water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
         water_block.generateParticles<Lattice>();
 
-        wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+        wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
         wall_boundary.generateParticles<Lattice>();
 
         fluid_observer.generateParticles<Observer>(observation_location);

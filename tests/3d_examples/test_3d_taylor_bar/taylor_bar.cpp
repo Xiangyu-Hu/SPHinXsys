@@ -33,7 +33,7 @@ int main(int ac, char *av[])
         : column.generateParticles<Lattice>();
 
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
-    wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall.generateParticles<Lattice>();
 
     /** Define Observer. */

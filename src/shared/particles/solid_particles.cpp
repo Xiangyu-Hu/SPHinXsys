@@ -9,20 +9,12 @@
 namespace SPH
 {
 //=============================================================================================//
-SolidParticles::SolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : BaseParticles(sph_body, base_material) {}
-//=================================================================================================//
-void SolidParticles::initializeOtherVariables()
-{
-    BaseParticles::initializeOtherVariables();
-}
-//=============================================================================================//
 ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : SolidParticles(sph_body, base_material) {}
+    : BaseParticles(sph_body, base_material) {}
 //=================================================================================================//
 void ElasticSolidParticles::initializeOtherVariables()
 {
-    SolidParticles::initializeOtherVariables();
+    BaseParticles::initializeOtherVariables();
     /**
      *	register particle data
      */

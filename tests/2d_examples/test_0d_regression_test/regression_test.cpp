@@ -108,7 +108,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
 //----------------------------------------------------------------------
 //	Set left side boundary condition.
 //----------------------------------------------------------------------
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
+using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
 class ConstantTemperatureConstraint
     : public DiffusionReactionSpeciesConstraint<BodyPartByParticle, DiffusionParticles>
 {

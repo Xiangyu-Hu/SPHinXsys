@@ -102,7 +102,7 @@ int main(int ac, char *av[])
     cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
+    cylinder.defineParticlesAndMaterial<BaseParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<Reload>(cylinder.getName())
         : cylinder.generateParticles<Lattice>();

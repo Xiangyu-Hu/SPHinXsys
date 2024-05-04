@@ -131,7 +131,7 @@ class WettingWallBodyMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
     };
 };
-using DiffusionWallParticles = DiffusionReactionParticles<SolidParticles, WettingWallBodyMaterial>;
+using DiffusionWallParticles = DiffusionReactionParticles<BaseParticles, WettingWallBodyMaterial>;
 class WettingWallBodyInitialCondition
     : public DiffusionReactionInitialCondition<DiffusionWallParticles>
 {
@@ -169,7 +169,7 @@ class WettingCylinderBodyMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
-using DiffusionCylinderParticles = DiffusionReactionParticles<SolidParticles, WettingCylinderBodyMaterial>;
+using DiffusionCylinderParticles = DiffusionReactionParticles<BaseParticles, WettingCylinderBodyMaterial>;
 class WettingCylinderBodyInitialCondition
     : public DiffusionReactionInitialCondition<DiffusionCylinderParticles>
 {

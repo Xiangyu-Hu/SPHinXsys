@@ -35,7 +35,7 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateContact<PlasticContinuumParticles, SolidParticles> FSIContactData;
+typedef DataDelegateContact<PlasticContinuumParticles, BaseParticles> FSIContactData;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process

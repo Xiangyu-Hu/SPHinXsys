@@ -46,8 +46,8 @@ namespace solid_dynamics
 //----------------------------------------------------------------------
 //		for general solid dynamics
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
-typedef DataDelegateInner<SolidParticles> SolidDataInner;
+typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
+typedef DataDelegateInner<BaseParticles> SolidDataInner;
 
 template <class DynamicsIdentifier>
 class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public ForcePrior

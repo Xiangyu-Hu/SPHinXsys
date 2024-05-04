@@ -138,7 +138,7 @@ int main(int ac, char *av[])
     water_block.generateParticlesWithReserve<Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
@@ -207,7 +207,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("BufferParticleIndicator");
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>         write_centerline_velocity("Velocity", velocity_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

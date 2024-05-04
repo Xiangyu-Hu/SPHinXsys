@@ -39,8 +39,8 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
-typedef DataDelegateContact<SolidParticles, BaseParticles> FSIContactData;
+typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
+typedef DataDelegateContact<BaseParticles, BaseParticles> FSIContactData;
 
 /**
  * @class BaseForceFromFluid

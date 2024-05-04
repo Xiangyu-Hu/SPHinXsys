@@ -157,7 +157,7 @@ int main(int ac, char *av[])
     water_block.generateParticlesWithReserve<Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");

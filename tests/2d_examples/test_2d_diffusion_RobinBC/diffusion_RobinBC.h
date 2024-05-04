@@ -98,8 +98,8 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
     }
 };
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
+using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
+using WallParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------

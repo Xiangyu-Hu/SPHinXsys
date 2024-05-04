@@ -40,7 +40,7 @@ namespace SPH
 //----------------------------------------------------------------------
 //		for general solid dynamics variables
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
+typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
 
 /**
  * @class Displacement
@@ -164,7 +164,7 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
   protected:
     ElasticSolid &elastic_solid_;
     Real poisson_ratio_;
-        StdLargeVec<Matd> &F_;
+    StdLargeVec<Matd> &F_;
 };
 
 //----------------------------------------------------------------------

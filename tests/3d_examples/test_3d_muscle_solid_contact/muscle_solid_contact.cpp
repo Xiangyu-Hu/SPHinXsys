@@ -67,7 +67,7 @@ int main(int ac, char *av[])
     myocardium_body.generateParticles<Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
-    moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    moving_plate.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

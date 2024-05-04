@@ -123,11 +123,11 @@ class MonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
  * @brief A group of particles with electrophysiology particle data.
  */
 class ElectroPhysiologyParticles
-    : public DiffusionReactionParticles<SolidParticles, MonoFieldElectroPhysiology>
+    : public DiffusionReactionParticles<BaseParticles, MonoFieldElectroPhysiology>
 {
   public:
     ElectroPhysiologyParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology)
-        : DiffusionReactionParticles<SolidParticles, MonoFieldElectroPhysiology>(sph_body, mono_field_electro_physiology){};
+        : DiffusionReactionParticles<BaseParticles, MonoFieldElectroPhysiology>(sph_body, mono_field_electro_physiology){};
     virtual ~ElectroPhysiologyParticles(){};
     virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
 };

@@ -35,12 +35,12 @@
 
 namespace SPH
 {
-class SolidParticles;
+class BaseParticles;
 
 typedef DataDelegateInner<BaseParticles> DissipationDataInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
     DissipationDataContact;
-typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase>
+typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
     DissipationDataWithWall;
 
 template <typename VariableType>
@@ -180,7 +180,7 @@ class DampingPairwiseWithWall : public BaseDampingPairwiseType<VariableType>,
  */
 template <typename VariableType>
 class DampingPairwiseFromWall : public LocalDynamics,
-                                public DataDelegateContact<BaseParticles, SolidParticles>
+                                public DataDelegateContact<BaseParticles, BaseParticles>
 {
   public:
     DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);

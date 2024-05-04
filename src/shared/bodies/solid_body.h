@@ -38,7 +38,7 @@ namespace SPH
  * @brief pre-claimed class.
  */
 class SPHSystem;
-class SolidParticles;
+class BaseParticles;
 /**
  * @class SolidBody
  * @brief Declaration of solid body which is used for Solid BCs and derived from RealBody.
