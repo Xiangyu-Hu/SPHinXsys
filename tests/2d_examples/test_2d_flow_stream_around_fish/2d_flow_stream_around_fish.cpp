@@ -31,7 +31,7 @@ int main(int ac, char *av[])
     SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    fish_body.defineParticlesAndMaterial<ElasticSolidParticles, FishBodyComposite>();
+    fish_body.defineParticlesAndMaterial<BaseParticles, FishBodyComposite>();
     //  Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? fish_body.generateParticles<Reload>(fish_body.getName())

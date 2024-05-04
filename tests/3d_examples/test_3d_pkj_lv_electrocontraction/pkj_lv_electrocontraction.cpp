@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     /** create a SPH body, material and particles */
     SolidBody mechanics_heart(sph_system, level_set_heart_model, "MechanicalHeart");
     mechanics_heart.defineParticlesAndMaterial<
-        ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        BaseParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? mechanics_heart.generateParticles<Reload>("HeartModel")
         : mechanics_heart.generateParticles<Lattice>();

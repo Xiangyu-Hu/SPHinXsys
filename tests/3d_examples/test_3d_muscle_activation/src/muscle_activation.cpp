@@ -64,7 +64,7 @@ int main(int ac, char *av[])
     TransformShape<GeometricShapeBox> muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
     SolidBody muscle_body(sph_system, muscle_body_shape);
     muscle_body.defineParticlesAndMaterial<
-        ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        BaseParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     muscle_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

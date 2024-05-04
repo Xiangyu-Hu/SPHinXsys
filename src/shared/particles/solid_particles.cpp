@@ -9,22 +9,8 @@
 namespace SPH
 {
 //=============================================================================================//
-ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : BaseParticles(sph_body, base_material) {}
-//=================================================================================================//
-void ElasticSolidParticles::initializeOtherVariables()
-{
-    BaseParticles::initializeOtherVariables();
-    /**
-     *	register particle data
-     */
-    registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
-                     { return Matd::Identity(); });
-    registerVariable(dF_dt_, "DeformationRate");
-}
-//=============================================================================================//
 ShellParticles::ShellParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : ElasticSolidParticles(sph_body, base_material), thickness_ref_(1.0)
+    : BaseParticles(sph_body, base_material), thickness_ref_(1.0)
 {
     //----------------------------------------------------------------------
     //		modify kernel function for surface particles
@@ -49,9 +35,6 @@ void ShellParticles::initializeOtherVariables()
      * register particle data
      */
     registerTransformationMatrix();
-    registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
-                     { return Matd::Identity(); });
-    registerVariable(dF_dt_, "DeformationRate");
     registerVariable(pseudo_n_, "PseudoNormal",
                      [&](size_t i) -> Vecd
                      { return n_[i]; });

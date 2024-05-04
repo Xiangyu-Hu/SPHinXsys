@@ -107,7 +107,7 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
-using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
+using FiberDirectionDiffusionParticles = DiffusionReactionParticles<BaseParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation. */
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<FiberDirectionDiffusionParticles, KernelGradientInner>>>;

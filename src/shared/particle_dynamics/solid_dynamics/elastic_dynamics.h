@@ -45,8 +45,8 @@ namespace solid_dynamics
 //----------------------------------------------------------------------
 //		for elastic solid dynamics
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
-typedef DataDelegateInner<ElasticSolidParticles> ElasticSolidDataInner;
+typedef DataDelegateSimple<BaseParticles> ElasticSolidDataSimple;
+typedef DataDelegateInner<BaseParticles> ElasticSolidDataInner;
 
 /**
  * @class ElasticDynamicsInitialCondition

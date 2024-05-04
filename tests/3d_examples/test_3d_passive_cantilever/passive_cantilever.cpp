@@ -75,7 +75,7 @@ int main(int ac, char *av[])
     /** create a Cantilever body, corresponding material, particles and reaction model. */
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<
-        ElasticSolidParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        BaseParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     cantilever_body.generateParticles<Lattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");

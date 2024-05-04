@@ -9,7 +9,7 @@ namespace thin_structure_dynamics
 UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body), ShellDataSimple(sph_body),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-      F_(particles_->F_),
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=========================================================================================//
 void UpdateShellNormalDirection::update(size_t index_i, Real dt)
@@ -64,7 +64,8 @@ ShellDeformationGradientTensor::
       pseudo_n_(particles_->pseudo_n_),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->F_), F_bending_(particles_->F_bending_),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
@@ -82,7 +83,8 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       dangular_vel_dt_(particles_->dangular_vel_dt_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->F_), dF_dt_(particles_->dF_dt_),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")),
       F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_) {}
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
@@ -323,7 +325,8 @@ ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-      F_(particles_->F_), F_bending_(particles_->F_bending_),
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
+      F_bending_(particles_->F_bending_),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
       k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature"))
 {

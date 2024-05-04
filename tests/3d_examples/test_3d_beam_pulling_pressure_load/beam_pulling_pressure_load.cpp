@@ -50,7 +50,7 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
           solid_dynamics::ElasticSolidDataSimple(sph_body_),
           mass_n_(*particles_->getVariableByName<Real>("Mass")),
           Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-          F_(particles_->F_),
+          F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())
     {
@@ -120,7 +120,7 @@ int main(int ac, char *av[])
 
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
+    beam_body.defineParticlesAndMaterial<BaseParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
     beam_body.generateParticles<Lattice>();
 
     // Define Observer

@@ -184,7 +184,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("StretchingBody"));
     beam_body.defineBodyLevelSetShape();
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, NonLinearHardeningPlasticSolid>(
+    beam_body.defineParticlesAndMaterial<BaseParticles, NonLinearHardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())

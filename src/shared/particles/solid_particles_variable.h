@@ -96,7 +96,7 @@ class TranslationAndRotation : public SolidDataSimple,
 //----------------------------------------------------------------------
 //		for general elastic solid dynamics variables
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
+typedef DataDelegateSimple<BaseParticles> ElasticSolidDataSimple;
 
 class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
                             public ElasticSolidDataSimple,

@@ -55,7 +55,8 @@ BarDeformationGradientTensor::
       pos_(*base_particles_.getVariableByName<Vecd>("Position")), pseudo_n_(particles_->pseudo_n_),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->F_), F_bending_(particles_->F_bending_),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      F_bending_(particles_->F_bending_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
       pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->b_n0_), F_b_bending_(particles_->F_b_bending_) {}
 //=================================================================================================//
@@ -74,7 +75,8 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
       dangular_vel_dt_(particles_->dangular_vel_dt_),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->F_), dF_dt_(particles_->dF_dt_),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")),
       F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_),
       b_n0_(particles_->b_n0_), pseudo_b_n_(particles_->pseudo_b_n_),
       dpseudo_b_n_dt_(particles_->dpseudo_b_n_dt_), dpseudo_b_n_d2t_(particles_->dpseudo_b_n_d2t_),

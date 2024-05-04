@@ -77,7 +77,7 @@ int main(int ac, char *av[])
     cantilever_body.defineAdaptationRatios(1.3, 1.0);
     cantilever_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cantilever_body.defineParticlesAndMaterial<
-        ElasticSolidParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        BaseParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     cantilever_body.generateParticles<Lattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");

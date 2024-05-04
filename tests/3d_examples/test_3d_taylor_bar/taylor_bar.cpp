@@ -26,7 +26,7 @@ int main(int ac, char *av[])
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
     column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
+    column.defineParticlesAndMaterial<BaseParticles, HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? column.generateParticles<Reload>(column.getName())

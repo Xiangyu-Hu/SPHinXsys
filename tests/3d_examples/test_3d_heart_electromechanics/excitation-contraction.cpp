@@ -75,7 +75,7 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
-using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
+using FiberDirectionDiffusionParticles = DiffusionReactionParticles<BaseParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation method. */
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<FiberDirectionDiffusionParticles, KernelGradientInner>>>;
@@ -363,7 +363,7 @@ int main(int ac, char *av[])
     /** create a SPH body, material and particles */
     SolidBody mechanics_heart(sph_system, makeShared<Heart>("MechanicalHeart"));
     mechanics_heart.defineParticlesAndMaterial<
-        ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        BaseParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? mechanics_heart.generateParticles<Reload>("HeartModel")
         : mechanics_heart.generateParticles<Lattice>();

@@ -42,7 +42,7 @@ UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(*particles_->getVariableByName<Real>("SignedDistance")),
       phi0_(*particles_->getVariableByName<Real>("InitialSignedDistance")),
-      F_(particles_->F_) {}
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 {
@@ -59,7 +59,7 @@ DeformationGradientBySummation::
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->F_) {}
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
@@ -69,7 +69,8 @@ BaseElasticIntegration::
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient")),
+      dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")) {}
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)

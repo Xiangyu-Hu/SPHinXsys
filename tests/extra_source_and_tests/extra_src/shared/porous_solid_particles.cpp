@@ -8,11 +8,11 @@ namespace multi_species_continuum
 
 //=============================================================================================//
 PorousMediaParticles::PorousMediaParticles(SPHBody &body, PorousMediaSolid *porous_solid)
-    : ElasticSolidParticles(body, porous_solid), porous_solid_(*porous_solid) {}
+    : BaseParticles(body, porous_solid), porous_solid_(*porous_solid) {}
 //=============================================================================================//
 void PorousMediaParticles::initializeOtherVariables()
 {
-    ElasticSolidParticles::initializeOtherVariables();
+    BaseParticles::initializeOtherVariables();
     //----------------------------------------------------------------------
     //		register particle data
     //----------------------------------------------------------------------

@@ -208,7 +208,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<Lattice>();
 
     SolidBody gate(sph_system, makeShared<Gate>("Gate"));
-    gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.

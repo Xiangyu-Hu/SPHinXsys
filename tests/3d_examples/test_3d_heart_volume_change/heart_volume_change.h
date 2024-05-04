@@ -63,7 +63,7 @@ class MeshData
 class MyocardiumSurfaces
 {
   public:
-    MyocardiumSurfaces(SolidBody &body, ElasticSolidParticles &particles)
+    MyocardiumSurfaces(SolidBody &body, BaseParticles &particles)
         : particles_(particles),
           pos0_(*particles_.registerSharedVariableFrom<Vecd>("InitialPosition", "Position")){};
     ~MyocardiumSurfaces() = default;
@@ -84,7 +84,7 @@ class MyocardiumSurfaces
     inline const IndexVector &get_pericardium_ids() const { return pericardium_ids_; }
 
   private:
-    ElasticSolidParticles &particles_;
+    BaseParticles &particles_;
     StdLargeVec<Vecd> &pos0_;
     IndexVector myo_surface_ids_; // full myocardium surface
     IndexVector lv_ids_;
@@ -95,7 +95,7 @@ class MyocardiumSurfaces
 class SurfaceOperationsVentricle
 {
   public:
-    SurfaceOperationsVentricle(ElasticSolidParticles &particles, const IndexVector &ids, InnerRelation &inner_relation)
+    SurfaceOperationsVentricle(BaseParticles &particles, const IndexVector &ids, InnerRelation &inner_relation)
         : particles_(particles),
           vel_(*particles_.getVariableByName<Vecd>("Velocity")),
           n_(*particles_.getVariableByName<Vecd>("NormalDirection")),
@@ -130,7 +130,7 @@ class SurfaceOperationsVentricle
     // called in constructor
     void init_srf_area(InnerRelation &inner_relation);
 
-    ElasticSolidParticles &particles_;
+    BaseParticles &particles_;
     StdLargeVec<Vecd> &vel_, &n_, &n0_;
     StdLargeVec<Matd> &F_;
     // ids_, srf_area_0_, srf_area_n_ maintain particle correspondence

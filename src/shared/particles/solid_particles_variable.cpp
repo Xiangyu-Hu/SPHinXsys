@@ -40,7 +40,7 @@ void TranslationAndRotation::update(size_t index_i, Real dt)
 //=============================================================================================//
 GreenLagrangeStrain::GreenLagrangeStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Matd>(sph_body, "GreenLagrangeStrain"), ElasticSolidDataSimple(sph_body),
-      LocalDynamics(sph_body), F_(particles_->F_) {}
+      LocalDynamics(sph_body), F_(*particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=============================================================================================//
 void GreenLagrangeStrain::update(size_t index_i, Real dt)
 {
@@ -52,18 +52,20 @@ VonMisesStress::VonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"), ElasticSolidDataSimple(sph_body),
       LocalDynamics(sph_body), rho0_(sph_body_.base_material_->ReferenceDensity()),
       rho_(*particles_->getVariableByName<Real>("Density")),
-      F_(particles_->F_),
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {}
 //=============================================================================================//
 VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrain"),
-      ElasticSolidDataSimple(sph_body), LocalDynamics(sph_body), F_(particles_->F_) {}
+      ElasticSolidDataSimple(sph_body), LocalDynamics(sph_body),
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=============================================================================================//
 VonMisesStrainDynamic::VonMisesStrainDynamic(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrainDynamic"),
       ElasticSolidDataSimple(sph_body), LocalDynamics(sph_body),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
-      poisson_ratio_(elastic_solid_.PoissonRatio()), F_(particles_->F_) {}
+      poisson_ratio_(elastic_solid_.PoissonRatio()),
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=============================================================================================//
 MidSurfaceVonMisesStress::MidSurfaceVonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "MidSurfaceVonMisesStress"), ShellSolidDataSimple(sph_body),

@@ -195,7 +195,7 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles(ParticleGeneratorAnisotropic(beam_body));
 
     ObserverBody beam_observer(system, "BeamObserver");

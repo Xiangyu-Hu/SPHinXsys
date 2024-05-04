@@ -37,35 +37,10 @@
 namespace SPH
 {
 /**
- *	pre-claimed classes
- */
-class Solid;
-class ElasticSolid;
-
-/**
- * @class ElasticSolidParticles
- * @brief A group of particles with elastic body particle data.
- */
-class ElasticSolidParticles : public BaseParticles
-{
-  public:
-    ElasticSolidParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~ElasticSolidParticles(){};
-
-    StdLargeVec<Matd> F_;     /**<  deformation tensor */
-    StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
-
-    /** Initialize the variables for elastic particle. */
-    virtual void initializeOtherVariables() override;
-    /** Return this pointer. */
-    virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
-};
-
-/**
  * @class ShellParticles
  * @brief A group of particles with shell particle data.
  */
-class ShellParticles : public ElasticSolidParticles
+class ShellParticles : public BaseParticles
 {
   public:
     ShellParticles(SPHBody &sph_body, BaseMaterial *base_material);

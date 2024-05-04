@@ -84,7 +84,7 @@ int main(int ac, char *av[])
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
-    column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    column.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     column.generateParticles<Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");

@@ -41,7 +41,7 @@ namespace multi_species_continuum
  * @class PorousMediaParticles
  * @brief A group of particles with elastic body particle data.
  */
-class PorousMediaParticles : public ElasticSolidParticles
+class PorousMediaParticles : public BaseParticles
 {
   public:
     PorousMediaParticles(SPHBody &body, PorousMediaSolid *porous_solid);
@@ -61,7 +61,7 @@ class PorousMediaParticles : public ElasticSolidParticles
     StdLargeVec<Matd> Stress_;                                   /**< Cauchy stress on solid */
 
     virtual void initializeOtherVariables() override;
-    virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
+    virtual BaseParticles *ThisObjectPtr() override { return this; };
 };
 } // namespace multi_species_continuum
 } // namespace SPH

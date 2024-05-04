@@ -71,7 +71,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody coil(sph_system, makeShared<Coil>("Coil"));
     coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    coil.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? coil.generateParticles<Reload>(coil.getName())
         : coil.generateParticles<Lattice>();

@@ -68,7 +68,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-        elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
 
     void update(size_t index_i, Real dt)
     {
@@ -80,8 +80,9 @@ class BeamInitialCondition
                                (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
         }
     };
-    protected:
-        ElasticSolid &elastic_solid_;
+
+  protected:
+    ElasticSolid &elastic_solid_;
 };
 //----------------------------------------------------------------------
 //	define the beam base which will be constrained.
@@ -109,7 +110,7 @@ int main(int ac, char *av[])
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

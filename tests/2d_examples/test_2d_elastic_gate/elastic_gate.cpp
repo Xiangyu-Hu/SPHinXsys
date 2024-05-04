@@ -155,7 +155,7 @@ int main(int ac, char *av[])
 
     SolidBody gate(sph_system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
     gate.defineAdaptationRatios(1.15, 2.0);
-    gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<Lattice>();
 
     ObserverBody gate_observer(sph_system, "Observer");
