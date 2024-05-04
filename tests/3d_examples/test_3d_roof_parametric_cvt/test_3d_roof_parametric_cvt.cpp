@@ -120,7 +120,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 
 template <typename VariableType>
 VariableType interpolate_observer(
-    ShellParticles &particles,
+    SurfaceParticles &particles,
     const IndexVector &neighbor_ids,
     const Vec3d &observer_pos_0,
     std::function<VariableType(size_t)> get_variable_value)
@@ -153,7 +153,7 @@ struct observer_point_shell
     Mat3d pk2_stress;
     Mat3d cauchy_stress;
 
-    void interpolate(ShellParticles &particles)
+    void interpolate(SurfaceParticles &particles)
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
@@ -309,7 +309,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
+    shell_body.defineParticlesWithMaterial<SurfaceParticles>(material.get());
     if (cvt)
     {
         ShellRoofParticleGenerator roof_particle_generator(shell_body, obj_vertices, center, particle_area, thickness);
@@ -322,7 +322,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
         shell_body.generateParticles(cylinder_particle_generator);
     }
 
-    auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
+    auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     bb_system = get_particles_bounding_box(shell_particles->ParticlePositions());
     system.system_domain_bounds_ = bb_system;
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;

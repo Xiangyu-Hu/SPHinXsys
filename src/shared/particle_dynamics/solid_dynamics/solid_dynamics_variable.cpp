@@ -1,5 +1,4 @@
 #include "solid_dynamics_variable.h"
-#include "elastic_solid.h"
 
 namespace SPH
 {
@@ -69,6 +68,7 @@ VonMisesStrainDynamic::VonMisesStrainDynamic(SPHBody &sph_body)
 //=============================================================================================//
 MidSurfaceVonMisesStress::MidSurfaceVonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "MidSurfaceVonMisesStress"), ShellSolidDataSimple(sph_body),
-      LocalDynamics(sph_body), mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_) {}
+      LocalDynamics(sph_body),
+      mid_surface_cauchy_stress_(*particles_->getVariableByName<Matd>("MidSurfaceCauchyStress")) {}
 //=================================================================================================//
 } // namespace SPH

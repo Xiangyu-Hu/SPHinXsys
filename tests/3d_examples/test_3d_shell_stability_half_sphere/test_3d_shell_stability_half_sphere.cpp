@@ -137,10 +137,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
+    shell_body.defineParticlesWithMaterial<SurfaceParticles>(material.get());
     ShellSphereParticleGenerator shell_sphere_particle_generator(shell_body, obj_vertices, center, particle_area, thickness);
     shell_body.generateParticles(shell_sphere_particle_generator);
-    auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
+    auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
     shell_body.addDerivedBodyStateForRecording<Displacement>();

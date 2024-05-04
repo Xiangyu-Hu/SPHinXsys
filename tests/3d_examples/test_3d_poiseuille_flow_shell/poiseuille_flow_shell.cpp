@@ -184,7 +184,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
 
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    shell_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1, 1e3, 0.45);
+    shell_boundary.defineParticlesAndMaterial<SurfaceParticles, LinearElasticSolid>(1, 1e3, 0.45);
     ShellBoundaryGenerator shell_boundary_particle_generator(shell_boundary, resolution_shell, wall_thickness, shell_thickness);
     shell_boundary.generateParticles(shell_boundary_particle_generator);
 

@@ -170,7 +170,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<ShellParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<SurfaceParticles, Solid>();
     WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, resolution_ref, wall_thickness);
     wall_boundary.generateParticles(wall_boundary_particle_generator);
 

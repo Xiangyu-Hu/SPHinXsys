@@ -37,7 +37,6 @@
 #include "general_constraint.h"
 #include "general_reduce.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 
 namespace SPH
 {

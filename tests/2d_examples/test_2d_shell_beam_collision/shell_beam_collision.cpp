@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     SolidBody shell(sph_system, makeShared<Shell>("Shell"));
     shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    shell.defineParticlesAndMaterial<ShellParticles, Solid>();
+    shell.defineParticlesAndMaterial<SurfaceParticles, Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
         shell.generateParticles<Reload>(shell.getName());

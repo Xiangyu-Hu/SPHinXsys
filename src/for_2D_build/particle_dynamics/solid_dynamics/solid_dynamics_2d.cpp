@@ -7,7 +7,6 @@
 #include "external_force.h"
 #include "neighborhood.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 #include "weakly_compressible_fluid.h"
 
 #include "SimTKcommon.h"

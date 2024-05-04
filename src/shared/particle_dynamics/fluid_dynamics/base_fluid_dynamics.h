@@ -32,7 +32,6 @@
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
 #include "base_particles.hpp"
-#include "solid_particles.h"
 
 namespace SPH
 {

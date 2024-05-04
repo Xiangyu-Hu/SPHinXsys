@@ -1,6 +1,7 @@
 #include "solid_body.h"
+
 #include "base_material.h"
-#include "solid_particles.h"
+#include "base_particles.hpp"
 #include "sph_system.h"
 
 namespace SPH

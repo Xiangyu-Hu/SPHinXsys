@@ -1,6 +1,6 @@
 #include "solid_body.h"
-#include "solid_particles.h"
 
+#include "base_particles.hpp"
 namespace SPH
 {
 //=================================================================================================//

@@ -37,7 +37,6 @@
 #include "elastic_solid.h"
 #include "force_prior.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 
 namespace SPH
 {

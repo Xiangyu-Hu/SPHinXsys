@@ -31,7 +31,6 @@
 #define ELECTRO_PHYSIOLOGY_H
 
 #include "all_diffusion_reaction_dynamics.h"
-#include "solid_particles.h"
 
 namespace SPH
 {

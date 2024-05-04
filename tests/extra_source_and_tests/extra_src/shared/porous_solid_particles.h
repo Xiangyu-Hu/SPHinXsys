@@ -29,8 +29,8 @@
 #ifndef POROUS_SOLID_PARTICLES_H
 #define POROUS_SOLID_PARTICLES_H
 
+#include "base_particles.hpp"
 #include "porous_media_solid.h"
-#include "solid_particles.h"
 
 namespace SPH
 {

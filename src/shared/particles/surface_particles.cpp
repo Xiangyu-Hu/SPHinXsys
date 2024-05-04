@@ -1,15 +1,12 @@
-#include "solid_particles.h"
+#include "surface_particles.h"
 
 #include "base_body.h"
-#include "elastic_solid.h"
-#include "inelastic_solid.h"
-#include "xml_engine.h"
 
 namespace SPH
 {
 //=============================================================================================//
-ShellParticles::ShellParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : BaseParticles(sph_body, base_material), thickness_ref_(1.0)
+SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_material)
+    : BaseParticles(sph_body, base_material)
 {
     //----------------------------------------------------------------------
     //		modify kernel function for surface particles
@@ -27,30 +24,13 @@ ShellParticles::ShellParticles(SPHBody &sph_body, BaseMaterial *base_material)
     addVariableToReload<Real>("Thickness");
 }
 //=================================================================================================//
-void ShellParticles::initializeOtherVariables()
+void SurfaceParticles::initializeOtherVariables()
 {
     BaseParticles::initializeOtherVariables();
-    /**
-     * register particle data
-     */
     registerTransformationMatrix();
-    registerVariable(pseudo_n_, "PseudoNormal",
-                     [&](size_t i) -> Vecd
-                     { return n_[i]; });
-    registerVariable(dpseudo_n_dt_, "PseudoNormalChangeRate");
-    registerVariable(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
-    registerVariable(rotation_, "Rotation");
-    registerVariable(angular_vel_, "AngularVelocity");
-    registerVariable(dangular_vel_dt_, "AngularAcceleration");
-    registerVariable(F_bending_, "BendingDeformationGradient");
-    registerVariable(dF_bending_dt_, "BendingDeformationGradientChangeRate");
-    registerVariable(global_shear_stress_, "GlobalShearStress");
-    registerVariable(global_stress_, "GlobalStress");
-    registerVariable(global_moment_, "GlobalMoment");
-    registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
 }
 //=================================================================================================//
-void ShellParticles::registerTransformationMatrix()
+void SurfaceParticles::registerTransformationMatrix()
 {
     registerVariable(transformation_matrix0_, "TransformationMatrix", [&](size_t index_i) -> Matd
                      { return getTransformationMatrix(n_[index_i]); });

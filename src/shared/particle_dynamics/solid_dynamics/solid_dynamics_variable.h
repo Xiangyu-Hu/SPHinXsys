@@ -27,13 +27,14 @@
  * @author Chi Zhang and Xiangyu Hu
  */
 
-#ifndef SOLID_PARTICLES_VARIABLE_H
-#define SOLID_PARTICLES_VARIABLE_H
+#ifndef SOLID_DYNAMICS_VARIABLE_H
+#define SOLID_DYNAMICS_VARIABLE_H
 
 #include "all_body_relations.h"
+#include "base_particles.hpp"
+#include "elastic_solid.h"
 #include "particle_dynamics_algorithms.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 
 namespace SPH
 {
@@ -170,7 +171,7 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
 //----------------------------------------------------------------------
 //		for general shell dynamics variables
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
+typedef DataDelegateSimple<BaseParticles> ShellSolidDataSimple;
 /**
  * @class MidSurfaceVonMisesStress
  * @brief computing mid-surface von Mises stress of shells
@@ -188,4 +189,4 @@ class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
     StdLargeVec<Matd> &mid_surface_cauchy_stress_;
 };
 } // namespace SPH
-#endif // SOLID_PARTICLES_VARIABLE_H
+#endif // SOLID_DYNAMICS_VARIABLE_H

@@ -21,70 +21,39 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	solid_particles.h
- * @brief 	This is the derived class of base particles.
- * @author	Chi Zhang, Dong Wu and Xiangyu Hu
+ * @file surface_particles.h
+ * @brief This is the derived class of base particles.
+ * @author Chi Zhang, Dong Wu and Xiangyu Hu
  */
 
-#ifndef SOLID_PARTICLES_H
-#define SOLID_PARTICLES_H
+#ifndef SURFACE_PARTICLES_H
+#define SURFACE_PARTICLES_H
 
-#include "base_particles.h"
 #include "base_particles.hpp"
-#include "elastic_solid.h"
 
-#include "particle_generator_lattice.h"
 namespace SPH
 {
 /**
- * @class ShellParticles
+ * @class SurfaceParticles
  * @brief A group of particles with shell particle data.
  */
-class ShellParticles : public BaseParticles
+class SurfaceParticles : public BaseParticles
 {
   public:
-    ShellParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~ShellParticles(){};
+    SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_material);
+    virtual ~SurfaceParticles(){};
 
-    Real thickness_ref_;                       /**< Shell thickness. */
     StdLargeVec<Vecd> n_;                      /**< normal direction */
     StdLargeVec<Real> thickness_;              /**< shell thickness */
     StdLargeVec<Matd> transformation_matrix0_; /**< initial transformation matrix from global to local coordinates */
-    /**
-     *	extra generalized coordinates in global coordinate
-     */
-    StdLargeVec<Vecd> pseudo_n_;      /**< current pseudo-normal vector */
-    StdLargeVec<Vecd> dpseudo_n_dt_;  /**< pseudo-normal vector change rate */
-    StdLargeVec<Vecd> dpseudo_n_d2t_; /**< pseudo-normal vector second order time derivation */
-    /**
-     *	extra generalized coordinate and velocity in local coordinate
-     */
-    StdLargeVec<Vecd> rotation_;        /**< rotation angle of the initial normal respective to each axis */
-    StdLargeVec<Vecd> angular_vel_;     /**< angular velocity respective to each axis */
-    StdLargeVec<Vecd> dangular_vel_dt_; /**< angular acceleration of respective to each axis*/
-    /**
-     *	extra deformation and deformation rate in local coordinate
-     */
-    StdLargeVec<Matd> F_bending_;     /**< bending deformation gradient	*/
-    StdLargeVec<Matd> dF_bending_dt_; /**< bending deformation gradient change rate	*/
-    /**
-     *	extra stress for pair interaction in global coordinate
-     */
-    StdLargeVec<Vecd> global_shear_stress_; /**< global shear stress */
-    StdLargeVec<Matd> global_stress_;       /**<  global stress for pair interaction */
-    StdLargeVec<Matd> global_moment_;       /**<  global bending moment for pair interaction */
-    /**
-     *	extra stress for calculating von Mises stress of shell mid-surface
-     */
-    StdLargeVec<Matd> mid_surface_cauchy_stress_;
 
     /** get particle volume. */
     virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
     virtual void registerTransformationMatrix();
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */
-    virtual ShellParticles *ThisObjectPtr() override { return this; };
+    virtual SurfaceParticles *ThisObjectPtr() override { return this; };
 };
 
 } // namespace SPH
-#endif // SOLID_PARTICLES_H
+#endif // SURFACE_PARTICLES_H

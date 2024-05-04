@@ -3,7 +3,6 @@
 #include "adaptation.h"
 #include "base_body.h"
 #include "complex_shape.h"
-#include "solid_particles.h"
 
 namespace SPH
 {

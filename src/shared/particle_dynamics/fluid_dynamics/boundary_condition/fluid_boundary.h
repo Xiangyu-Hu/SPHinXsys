@@ -31,6 +31,8 @@
 #define FLUID_BOUNDARY_H
 
 #include "base_fluid_dynamics.h"
+#include "particle_reserve.h"
+
 #include <mutex>
 
 namespace SPH

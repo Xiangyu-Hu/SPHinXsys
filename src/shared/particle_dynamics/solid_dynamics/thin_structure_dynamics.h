@@ -35,15 +35,14 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 #include "thin_structure_math.h"
 
 namespace SPH
 {
 namespace thin_structure_dynamics
 {
-typedef DataDelegateSimple<ShellParticles> ShellDataSimple;
-typedef DataDelegateInner<ShellParticles> ShellDataInner;
+typedef DataDelegateSimple<BaseParticles> ShellDataSimple;
+typedef DataDelegateInner<BaseParticles> ShellDataInner;
 
 /**
  * @class UpdateShellNormalDirection

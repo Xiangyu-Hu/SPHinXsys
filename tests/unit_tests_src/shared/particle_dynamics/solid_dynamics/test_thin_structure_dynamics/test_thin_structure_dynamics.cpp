@@ -94,7 +94,7 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
           vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          angular_vel_(particles_->angular_vel_),
+          angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
           pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
     virtual ~ControlledRotation(){};
 
@@ -126,9 +126,9 @@ int main(int ac, char *av[])
 
     /** create a plate body. */
     SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles(ParticleGeneratorPlate(plate_body));
-    auto shell_particles = dynamic_cast<ShellParticles *>(&plate_body.getBaseParticles());
+    auto shell_particles = dynamic_cast<SurfaceParticles *>(&plate_body.getBaseParticles());
     plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
 
     /** Set body contact map
@@ -223,8 +223,8 @@ int main(int ac, char *av[])
 
     update_normal.exec();
 
-    pseudo_normal = shell_particles->pseudo_n_;
-    normal = *shell_particles->template getVariableByName<Vecd>("NormalDirection");
+    pseudo_normal = *shell_particles->getVariableByName<Vecd>("PseudoNormal");
+    normal = *shell_particles->getVariableByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

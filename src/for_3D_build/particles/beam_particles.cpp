@@ -1,16 +1,12 @@
-#include "solid_particles.h"
+#include "beam_particles.h"
 
 #include "base_body.h"
-#include "beam_particles.h"
-#include "elastic_solid.h"
-#include "inelastic_solid.h"
-#include "xml_engine.h"
 
 namespace SPH
 {
 //=============================================================================================//
 BarParticles::BarParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
-    : ShellParticles(sph_body, elastic_solid), width_ref_(1.0)
+    : SurfaceParticles(sph_body, elastic_solid), width_ref_(1.0)
 {
     //----------------------------------------------------------------------
     //		modify kernel function for surface particles
@@ -30,7 +26,7 @@ BarParticles::BarParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 //=================================================================================================//
 void BarParticles::initializeOtherVariables()
 {
-    ShellParticles::initializeOtherVariables();
+    SurfaceParticles::initializeOtherVariables();
     /**
      * register particle data
      */

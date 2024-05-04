@@ -34,16 +34,16 @@
 #include "base_particles.hpp"
 #include "elastic_solid.h"
 #include "particle_generator_lattice.h"
-#include "solid_particles.h"
+#include "surface_particles.h"
 
 #include <iterator>
 namespace SPH
 {
-class ShellParticles;
+class SurfaceParticles;
 class Solid;
 class ElasticSolid;
 class SPHBody;
-class BarParticles : public ShellParticles
+class BarParticles : public SurfaceParticles
 {
   public:
     BarParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);

@@ -180,13 +180,13 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    wall_boundary.defineParticlesAndMaterial<ShellParticles, Solid>();
+    wall_boundary.defineParticlesAndMaterial<SurfaceParticles, Solid>();
     WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, DH, DL, particle_spacing_gate);
     wall_boundary.generateParticles(wall_boundary_particle_generator);
 
     SolidBody gate(sph_system, makeShared<DefaultShape>("Gate"));
     gate.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     GateParticleGenerator gate_particle_generator(gate, DL, BW, particle_spacing_gate, Gate_thickness);
     gate.generateParticles(gate_particle_generator);
     //----------------------------------------------------------------------

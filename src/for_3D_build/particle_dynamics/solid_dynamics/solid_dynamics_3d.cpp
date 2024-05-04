@@ -8,7 +8,6 @@
 #include "neighborhood.h"
 #include "polar_decomposition_3x3.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 #include "weakly_compressible_fluid.h"
 
 using namespace polar;
