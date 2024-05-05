@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
-    beam_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    beam_body.defineParticlesAndMaterial<BaseParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

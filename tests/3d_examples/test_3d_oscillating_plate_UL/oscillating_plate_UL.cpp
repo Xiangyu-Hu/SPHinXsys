@@ -115,7 +115,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    plate_body.defineParticlesAndMaterial<BaseParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     plate_body.generateParticles(PlateParticleGenerator(plate_body));
 
     ObserverBody plate_observer(sph_system, "PlateObserver");

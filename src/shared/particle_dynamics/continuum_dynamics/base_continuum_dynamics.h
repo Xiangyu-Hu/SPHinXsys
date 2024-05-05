@@ -29,13 +29,12 @@
 #define BASE_CONTINUUM_DYNAMICS_H
 
 #include "base_fluid_dynamics.h"
-#include "continuum_particles.h"
 
 namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateContact<PlasticContinuumParticles, BaseParticles> FSIContactData;
+typedef DataDelegateContact<BaseParticles, BaseParticles> FSIContactData;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process

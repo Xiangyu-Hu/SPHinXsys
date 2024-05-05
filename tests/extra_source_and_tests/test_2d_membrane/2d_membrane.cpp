@@ -1,5 +1,5 @@
-/* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D menmbrane example-one body version           *
+/* ----------------------------------------------------------------------------*
+ *            SPHinXsys: 2D membrane example-one body version                  *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases, also the first case for            *
  * understanding SPH method for solid simulation.                              *
@@ -10,14 +10,13 @@
 #include "particle_momentum_dissipation.hpp"
 #include "porous_media_dynamics.h"
 #include "porous_media_solid.h"
-#include "porous_solid_particles.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
 Real PL = 10.0;  // membrane length
-Real PH = 0.125; // membrane thickenss
+Real PH = 0.125; // membrane thickness
 Real BC = PL * 0.15;
 
 int num = 8;
@@ -31,13 +30,13 @@ BoundingBox system_domain_bounds(Vec2d(-PL, -PL),
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho_0 = 2.0; // // reference density non-dimensionlaize
+Real rho_0 = 2.0; // // reference dimensionless density
 Real poisson = 0.26316;
 Real Youngs_modulus = 8.242e6;
 Real physical_viscosity = 5000.0;
 
 Real diffusivity_constant_ = 1.0e-4;
-Real fulid_initial_density_ = 1.0;
+Real fluid_initial_density_ = 1.0;
 Real water_pressure_constant_ = 3.0e6;
 Real saturation = 0.4;
 
@@ -118,7 +117,7 @@ class SaturationInitialCondition
     void update(size_t index_i, Real dt = 0.0)
     {
         fluid_saturation_[index_i] = saturation;
-        fluid_mass_[index_i] = saturation * fulid_initial_density_ * Vol_update_[index_i];
+        fluid_mass_[index_i] = saturation * fluid_initial_density_ * Vol_update_[index_i];
         total_mass_[index_i] = rho_n_[index_i] * Vol_update_[index_i] + fluid_mass_[index_i];
     };
 };
@@ -139,8 +138,8 @@ int main(int ac, char *av[])
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("2dMembrane"));
-    beam_body.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(
-        rho_0, Youngs_modulus, poisson, diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
+    beam_body.defineParticlesAndMaterial<BaseParticles, multi_species_continuum::PorousMediaSolid>(
+        rho_0, Youngs_modulus, poisson, diffusivity_constant_, fluid_initial_density_, water_pressure_constant_);
     beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "MembraneObserver");
@@ -246,7 +245,7 @@ int main(int ac, char *av[])
 
             while (relaxation_time < Dt)
             {
-                if (total_kinetic_energy > (5e-9 * refer_density_energy)) // this is because we change the total mehanical energy calculation
+                if (total_kinetic_energy > (5e-9 * refer_density_energy)) // this is because we change the total mechanical energy calculation
                 {
                     stress_relaxation_first_half.exec(dt);
                     clamp_constrain_beam_base.exec();

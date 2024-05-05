@@ -32,17 +32,16 @@
 
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
-#include "continuum_particles.h"
 #include "fluid_integration.hpp"
 #include "general_continuum.h"
 namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateSimple<ContinuumParticles> ContinuumDataSimple;
-typedef DataDelegateInner<ContinuumParticles> ContinuumDataInner;
-typedef DataDelegateSimple<PlasticContinuumParticles> PlasticContinuumDataSimple;
-typedef DataDelegateInner<PlasticContinuumParticles> PlasticContinuumDataInner;
+typedef DataDelegateSimple<BaseParticles> ContinuumDataSimple;
+typedef DataDelegateInner<BaseParticles> ContinuumDataInner;
+typedef DataDelegateSimple<BaseParticles> PlasticContinuumDataSimple;
+typedef DataDelegateInner<BaseParticles> PlasticContinuumDataInner;
 
 class ContinuumInitialCondition : public LocalDynamics, public PlasticContinuumDataSimple
 {
@@ -175,6 +174,8 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
     StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
     StdLargeVec<Real> &Vol_, &mass_;
     Real E_, nu_;
+
+    Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);
 };
 using PlasticIntegration2ndHalfInnerNoRiemann = PlasticIntegration2ndHalf<Inner<>, NoRiemannSolver>;
 using PlasticIntegration2ndHalfInnerRiemann = PlasticIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;

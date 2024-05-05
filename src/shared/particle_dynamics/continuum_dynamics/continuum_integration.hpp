@@ -1,5 +1,8 @@
 #pragma once
+
 #include "continuum_integration.h"
+
+#include "base_particles.hpp"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -21,11 +24,21 @@ template <class BaseRelationType>
 BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType &base_relation)
     : fluid_dynamics::BaseIntegration<DataDelegationType>(base_relation),
       plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
-      stress_tensor_3D_(this->particles_->stress_tensor_3D_), strain_tensor_3D_(this->particles_->strain_tensor_3D_),
-      stress_rate_3D_(this->particles_->stress_rate_3D_), strain_rate_3D_(this->particles_->strain_rate_3D_),
-      elastic_strain_tensor_3D_(this->particles_->elastic_strain_tensor_3D_),
-      elastic_strain_rate_3D_(this->particles_->elastic_strain_rate_3D_),
-      velocity_gradient_(this->particles_->velocity_gradient_) {}
+      stress_tensor_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StressTensor3D")),
+      strain_tensor_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StrainTensor3D")),
+      stress_rate_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StressRate3D")),
+      strain_rate_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StrainRate3D")),
+      elastic_strain_tensor_3D_(*this->particles_->template registerSharedVariable<Mat3d>("ElasticStrainTensor3D")),
+      elastic_strain_rate_3D_(*this->particles_->template registerSharedVariable<Mat3d>("ElasticStrainRate3D")),
+      velocity_gradient_(*this->particles_->template registerSharedVariable<Matd>("VelocityGradient"))
+{
+    this->particles_->template addVariableToSort<Mat3d>("ElasticStrainTensor3D");
+    this->particles_->template addVariableToSort<Mat3d>("ElasticStrainRate3D");
+    this->particles_->template addVariableToSort<Mat3d>("StrainTensor3D");
+    this->particles_->template addVariableToSort<Mat3d>("StressTensor3D");
+    this->particles_->template addVariableToSort<Mat3d>("StrainRate3D");
+    this->particles_->template addVariableToSort<Mat3d>("StressRate3D");
+}
 //=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::
@@ -127,12 +140,17 @@ Vecd PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::computeNonCons
 //=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation)
-    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation), riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
-      acc_deviatoric_plastic_strain_(particles_->acc_deviatoric_plastic_strain_),
-      vertical_stress_(particles_->vertical_stress_),
+    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
+      riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
+      acc_deviatoric_plastic_strain_(*particles_->registerSharedVariable<Real>("AccDeviatoricPlasticStrain")),
+      vertical_stress_(*particles_->registerSharedVariable<Real>("VerticalStress")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
+      E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio())
+{
+    this->particles_->addVariableToSort<Real>("AccDeviatoricPlasticStrain");
+    this->particles_->addVariableToSort<Real>("VerticalStress");
+}
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -163,6 +181,14 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t i
 }
 //=================================================================================================//
 template <class RiemannSolverType>
+Real PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::getDeviatoricPlasticStrain(Mat3d &strain_tensor)
+{
+    Mat3d deviatoric_strain_tensor = strain_tensor - (1.0 / (Real)Dimensions) * strain_tensor.trace() * Mat3d::Identity();
+    Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
+    return sqrt(sum * 2.0 / 3.0);
+}
+//=================================================================================================//
+template <class RiemannSolverType>
 void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
@@ -183,7 +209,7 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_
     elastic_strain_tensor_3D_[index_i] = deviatoric_stress / (2.0 * plastic_continuum_.getShearModulus(E_, nu_)) +
                                          hydrostatic_pressure * Mat3d::Identity() / (9.0 * plastic_continuum_.getBulkModulus(E_, nu_));
     Mat3d plastic_strain_tensor_3D = strain_tensor_3D_[index_i] - elastic_strain_tensor_3D_[index_i];
-    acc_deviatoric_plastic_strain_[index_i] = particles_->getDeviatoricPlasticStrain(plastic_strain_tensor_3D);
+    acc_deviatoric_plastic_strain_[index_i] = getDeviatoricPlasticStrain(plastic_strain_tensor_3D);
 }
 //=================================================================================================//
 template <class RiemannSolverType>

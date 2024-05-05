@@ -33,7 +33,7 @@
 #include "all_particle_dynamics.h"
 #include "elastic_dynamics.h"
 #include "porous_media_solid.h"
-#include "porous_solid_particles.h"
+
 namespace SPH
 {
 namespace multi_species_continuum
@@ -41,8 +41,8 @@ namespace multi_species_continuum
 //----------------------------------------------------------------------
 //		for porous elastic solid dynamics
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<SPH::multi_species_continuum::PorousMediaParticles> PorousMediaSolidDataSimple;
-typedef DataDelegateInner<SPH::multi_species_continuum::PorousMediaParticles> PorousMediaSolidDataInner;
+typedef DataDelegateSimple<BaseParticles> PorousMediaSolidDataSimple;
+typedef DataDelegateInner<BaseParticles> PorousMediaSolidDataInner;
 
 /**
  * @class GetSaturationTimeStepSize
@@ -53,20 +53,18 @@ class GetSaturationTimeStepSize
       public PorousMediaSolidDataSimple
 {
   protected:
+    PorousMediaSolid &porous_solid_;
     Real saturation_time_step_;
     Real smoothing_length_;
 
   public:
-    explicit GetSaturationTimeStepSize(SPHBody &sph_body)
-        : LocalDynamicsReduce<ReduceMin>(sph_body),
-          PorousMediaSolidDataSimple(sph_body),
-          smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()){};
+    explicit GetSaturationTimeStepSize(SPHBody &sph_body);
     virtual ~GetSaturationTimeStepSize(){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
     {
         return 0.5 * smoothing_length_ * smoothing_length_ /
-               particles_->porous_solid_.getDiffusivityConstant() / (Real)Dimensions;
+               porous_solid_.getDiffusivityConstant() / (Real)Dimensions;
     };
 };
 
@@ -96,6 +94,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public PorousMediaSolidD
     virtual ~BasePorousMediaRelaxation(){};
 
   protected:
+    PorousMediaSolid &porous_solid_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_;
@@ -144,10 +143,13 @@ class PorousMediaStressRelaxationFirstHalf
             Real strain_rate = pos_jump.dot(vel_jump) * dim_r_ij_1 * dim_r_ij_1;
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
 
-            Matd numerical_stress_ij = 0.5 * (F_[index_i] + F_[index_j]) * particles_->porous_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
+            Matd numerical_stress_ij = 0.5 * (F_[index_i] + F_[index_j]) *
+                                       porous_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
 
             // three parts for the momentum increment
-            total_momentum_increment += (Stress_[index_i] + Stress_[index_j] + numerical_dissipation_factor_ * numerical_stress_ij * weight - outer_fluid_velocity_relative_fluid_flux_[index_i] - outer_fluid_velocity_relative_fluid_flux_[index_j]) * gradW_ijV_j;
+            total_momentum_increment += (Stress_[index_i] + Stress_[index_j] + numerical_dissipation_factor_ * numerical_stress_ij * weight -
+                                         outer_fluid_velocity_relative_fluid_flux_[index_i] - outer_fluid_velocity_relative_fluid_flux_[index_j]) *
+                                        gradW_ijV_j;
         }
 
         force_[index_i] = total_momentum_increment;
@@ -195,10 +197,14 @@ class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<B
 {
   public:
     PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part)
-        : BaseLocalDynamics<BodyPartByParticle>(body_part), PorousMediaSolidDataSimple(body_part.getSPHBody()),
-          fluid_mass_(particles_->fluid_mass_), fluid_saturation_(particles_->fluid_saturation_),
-          total_mass_(particles_->total_mass_), rho_n_(*particles_->getVariableByName<Real>("Density")),
-          Vol_update_(particles_->Vol_update_), pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
+        : BaseLocalDynamics<BodyPartByParticle>(body_part),
+          PorousMediaSolidDataSimple(body_part.getSPHBody()),
+          fluid_mass_(*particles_->getVariableByName<Real>("FluidMass")),
+          fluid_saturation_(*particles_->getVariableByName<Real>("FluidSaturation")),
+          total_mass_(*particles_->getVariableByName<Real>("TotalMass")),
+          rho_n_(*particles_->getVariableByName<Real>("Density")),
+          Vol_update_(*particles_->getVariableByName<Real>("UpdateVolume")),
+          pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
 
     virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
 

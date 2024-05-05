@@ -8,10 +8,16 @@ namespace SPH
 namespace multi_species_continuum
 {
 //=================================================================================================//
-BasePorousMediaRelaxation::
-    BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
+GetSaturationTimeStepSize::GetSaturationTimeStepSize(SPHBody &sph_body)
+    : LocalDynamicsReduce<ReduceMin>(sph_body),
+      PorousMediaSolidDataSimple(sph_body),
+      porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
+      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+//=================================================================================================//
+BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       PorousMediaSolidDataInner(inner_relation),
+      porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
@@ -19,28 +25,33 @@ BasePorousMediaRelaxation::
       F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate"))
 {
-    rho0_ = particles_->porous_solid_.ReferenceDensity();
+    rho0_ = porous_solid_.ReferenceDensity();
     inv_rho0_ = 1.0 / rho0_;
     smoothing_length_ = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 }
 //=================================================================================================//
 MomentumConstraint::MomentumConstraint(BodyPartByParticle &body_part)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), PorousMediaSolidDataSimple(body_part.getSPHBody()),
-      total_momentum_(particles_->total_momentum_) {}
+      total_momentum_(*particles_->getVariableByName<Vecd>("TotalMomentum")) {}
 //=================================================================================================//
 PorousMediaStressRelaxationFirstHalf::
     PorousMediaStressRelaxationFirstHalf(BaseInnerRelation &body_inner_relation)
     : BasePorousMediaRelaxation(body_inner_relation),
-      Vol_update_(particles_->Vol_update_), fluid_saturation_(particles_->fluid_saturation_),
-      total_mass_(particles_->total_mass_), fluid_mass_(particles_->fluid_mass_),
-      dfluid_mass_dt_(particles_->dfluid_mass_dt_), total_momentum_(particles_->total_momentum_),
+      Vol_update_(*particles_->registerSharedVariable<Real>("UpdateVolume")),
+      fluid_saturation_(*particles_->registerSharedVariable<Real>("FluidSaturation")),
+      total_mass_(*particles_->registerSharedVariable<Real>("TotalMass")),
+      fluid_mass_(*particles_->registerSharedVariable<Real>("FluidMass")),
+      dfluid_mass_dt_(*particles_->registerSharedVariable<Real>("FluidMassIncrement")),
+      total_momentum_(*particles_->registerSharedVariable<Vecd>("TotalMomentum")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
-      fluid_velocity_(particles_->fluid_velocity_), relative_fluid_flux_(particles_->relative_fluid_flux_),
-      outer_fluid_velocity_relative_fluid_flux_(particles_->outer_fluid_velocity_relative_fluid_flux_),
-      Stress_(particles_->Stress_), diffusivity_constant_(particles_->porous_solid_.getDiffusivityConstant()),
-      fluid_initial_density_(particles_->porous_solid_.getFluidInitialDensity()),
-      water_pressure_constant_(particles_->porous_solid_.getWaterPressureConstant()) {}
+      fluid_velocity_(*particles_->registerSharedVariable<Vecd>("FluidVelocity")),
+      relative_fluid_flux_(*particles_->registerSharedVariable<Vecd>("RelativeFluidFlux")),
+      outer_fluid_velocity_relative_fluid_flux_(*particles_->registerSharedVariable<Matd>("OuterFluidVelocityRelativeFluidFlux")),
+      Stress_(*particles_->registerSharedVariable<Matd>("Stress")),
+      diffusivity_constant_(porous_solid_.getDiffusivityConstant()),
+      fluid_initial_density_(porous_solid_.getFluidInitialDensity()),
+      water_pressure_constant_(porous_solid_.getWaterPressureConstant()) {}
 //=================================================================================================//
 void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 {
@@ -55,7 +66,7 @@ void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real d
 
     // obtain the Stress_PK one without J, J is added in total momentum
     // Note if anisotropic kernel is used, B correction cannot be applied here
-    Stress_[index_i] = (particles_->porous_solid_.StressCauchy(almansi_strain, index_i) - water_pressure_constant_ * (fluid_saturation_[index_i] - Eps) * Matd::Identity()) * inverse_F_T;
+    Stress_[index_i] = (porous_solid_.StressCauchy(almansi_strain, index_i) - water_pressure_constant_ * (fluid_saturation_[index_i] - Eps) * Matd::Identity()) * inverse_F_T;
 
     outer_fluid_velocity_relative_fluid_flux_[index_i] = fluid_velocity_[index_i] * relative_fluid_flux_[index_i].transpose() * inverse_F_T;
 }

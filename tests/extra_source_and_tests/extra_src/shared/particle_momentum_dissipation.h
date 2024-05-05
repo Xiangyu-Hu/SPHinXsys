@@ -28,42 +28,39 @@
  * @author	Chi ZHang and Xiangyu Hu
  */
 
-#ifndef PARTICLE_MOMENTUM_DISSIPATION_H 
-#define PARTICLE_MOMENTUM_DISSIPATION_H 
+#ifndef PARTICLE_MOMENTUM_DISSIPATION_H
+#define PARTICLE_MOMENTUM_DISSIPATION_H
 
 #include "all_particle_dynamics.h"
-#include "porous_solid_particles.h"
 #include "porous_media_dynamics.h"
 
 namespace SPH
 {
 namespace multi_species_continuum
 {
-  class PorousMediaParticles;
- 
-   /**
-	 * @class DampingPairwiseInnerforporousmedia
-	 * @brief A quantity damping by a pairwise splitting scheme
-	 * this method modifies the quantity directly
-	 * Note that, if periodic boundary condition is applied,
-	 * the parallelized version of the method requires the one using ghost particles
-	 * because the splitting partition only works in this case.
-	 */
+/**
+ * @class PorousMediaDampingPairwiseInner
+ * @brief A quantity damping by a pairwise splitting scheme
+ * this method modifies the quantity directly
+ * Note that, if periodic boundary condition is applied,
+ * the parallelized version of the method requires the one using ghost particles
+ * because the splitting partition only works in this case.
+ */
 
-	template <typename VariableType>
-	class PorousMediaDampingPairwiseInner : public LocalDynamics, public PorousMediaSolidDataInner
-	{
-    public:
-      PorousMediaDampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
-      virtual ~PorousMediaDampingPairwiseInner() {};
-      void interaction(size_t index_i, Real dt = 0.0);
+template <typename VariableType>
+class PorousMediaDampingPairwiseInner : public LocalDynamics, public PorousMediaSolidDataInner
+{
+  public:
+    PorousMediaDampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
+    virtual ~PorousMediaDampingPairwiseInner(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 
-    protected:
-      StdLargeVec<Real> &Vol_, &mass_;
+  protected:
+    StdLargeVec<Real> &Vol_, &mass_;
 
-      StdLargeVec<VariableType> &variable_;
-      Real eta_; /**< damping coefficient */
-	};
-}
+    StdLargeVec<VariableType> &variable_;
+    Real eta_; /**< damping coefficient */
+};
+} // namespace multi_species_continuum
 } // namespace SPH
-#endif // PARTICLE_MOMENTUM_DISSIPATION_H 
+#endif // PARTICLE_MOMENTUM_DISSIPATION_H
