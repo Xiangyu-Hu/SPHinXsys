@@ -33,7 +33,6 @@
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
-#include "beam_particles.h"
 #include "elastic_solid.h"
 #include "slender_structure_math.h"
 #include "solid_body.h"
@@ -42,8 +41,8 @@ namespace SPH
 {
 namespace slender_structure_dynamics
 {
-typedef DataDelegateSimple<BarParticles> BarDataSimple;
-typedef DataDelegateInner<BarParticles> BarDataInner;
+typedef DataDelegateSimple<BaseParticles> BarDataSimple;
+typedef DataDelegateInner<BaseParticles> BarDataInner;
 
 /**
  * @class BarAcousticTimeStepSize
@@ -102,7 +101,6 @@ class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &n0_;
-    StdLargeVec<Vecd> &b_n0_;
     StdLargeVec<Matd> &transformation_matrix0_;
 };
 
@@ -170,7 +168,7 @@ class BaseBarRelaxation : public LocalDynamics, public BarDataInner
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 
-    StdLargeVec<Vecd> &b_n0_, &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
+    StdLargeVec<Vecd> &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
         &angular_b_vel_, dangular_b_vel_dt_;
     StdLargeVec<Matd> &transformation_matrix0_;
     StdLargeVec<Matd> &F_b_bending_, &dF_b_bending_dt_;

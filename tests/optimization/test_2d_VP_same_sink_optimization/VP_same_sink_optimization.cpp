@@ -167,9 +167,10 @@ class ImposeObjectiveFunction
     StdLargeVec<Real> &species_recovery_;
 
   public:
-    ImposeObjectiveFunction(SPHBody &sph_body) : DiffusionBasedMapping<DiffusionParticles>(sph_body),
-                                                 species_modified_((*particles_->getVariableByName<Real>("SpeciesModified"))),
-                                                 species_recovery_((*particles_->getVariableByName<Real>("SpeciesRecovery")))
+    ImposeObjectiveFunction(SPHBody &sph_body)
+        : DiffusionBasedMapping<DiffusionParticles>(sph_body),
+          species_modified_((*particles_->getVariableByName<Real>("SpeciesModified"))),
+          species_recovery_((*particles_->getVariableByName<Real>("SpeciesRecovery")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }

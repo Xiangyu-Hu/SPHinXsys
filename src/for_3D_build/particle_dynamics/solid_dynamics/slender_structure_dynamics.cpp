@@ -1,5 +1,6 @@
 #include "slender_structure_dynamics.h"
 
+#include "base_particles.hpp"
 namespace SPH
 {
 namespace slender_structure_dynamics
@@ -21,8 +22,9 @@ BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
       nu_(elastic_solid_.PoissonRatio()),
       c0_(elastic_solid_.ReferenceSoundSpeed()),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
-      angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
-      width_(particles_->thickness_) {}
+      angular_b_vel_(*particles_->getVariableByName<Vecd>("BinormalAngularVelocity")),
+      dangular_b_vel_dt_(*particles_->getVariableByName<Vecd>("BinormalAngularAcceleration")),
+      width_(*particles_->getVariableByName<Real>("Width")) {}
 //=================================================================================================//
 Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
@@ -45,7 +47,6 @@ BarCorrectConfiguration::
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      b_n0_(particles_->b_n0_),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BarDeformationGradientTensor::
@@ -59,13 +60,15 @@ BarDeformationGradientTensor::
       F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       F_bending_(*particles_->registerSharedVariable<Matd>("BendingDeformationGradient")),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
-      pseudo_b_n_(particles_->b_n_), b_n0_(particles_->b_n0_), F_b_bending_(particles_->F_b_bending_) {}
+      pseudo_b_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoBinormal", "BinormalDirection")),
+      b_n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
+      F_b_bending_(*particles_->registerSharedVariable<Matd>("BinormalBending")) {}
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       thickness_(*particles_->getVariableByName<Real>("Thickness")),
-      width_(particles_->width_),
+      width_(*particles_->getVariableByName<Real>("Width")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
@@ -82,13 +85,15 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")),
       F_bending_(*particles_->registerSharedVariable<Matd>("BendingDeformationGradient")),
       dF_bending_dt_(*particles_->registerSharedVariable<Matd>("BendingDeformationRate")),
-      b_n0_(particles_->b_n0_), pseudo_b_n_(particles_->pseudo_b_n_),
-      dpseudo_b_n_dt_(particles_->dpseudo_b_n_dt_), dpseudo_b_n_d2t_(particles_->dpseudo_b_n_d2t_),
-      rotation_b_(particles_->rotation_b_), angular_b_vel_(particles_->angular_b_vel_),
-      dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
+      pseudo_b_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoBinormal", "BinormalDirection")),
+      dpseudo_b_n_dt_(*particles_->registerSharedVariable<Vecd>("PseudoBinormalChangeRate")),
+      dpseudo_b_n_d2t_(*particles_->registerSharedVariable<Vecd>("PseudoBinormal2ndOrderTimeDerivative")),
+      rotation_b_(*particles_->registerSharedVariable<Vecd>("BinormalRotation")),
+      angular_b_vel_(*particles_->registerSharedVariable<Vecd>("BinormalAngularVelocity")),
+      dangular_b_vel_dt_(*particles_->registerSharedVariable<Vecd>("BinormalAngularAcceleration")),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")),
-      F_b_bending_(particles_->F_b_bending_),
-      dF_b_bending_dt_(particles_->dF_b_bending_dt_) {}
+      F_b_bending_(*particles_->registerSharedVariable<Matd>("BinormalBending")),
+      dF_b_bending_dt_(*particles_->registerSharedVariable<Matd>("BinormalBendingRate")) {}
 //=================================================================================================//
 BarStressRelaxationFirstHalf::
     BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
@@ -110,10 +115,10 @@ BarStressRelaxationFirstHalf::
       nu_(elastic_solid_.PoissonRatio()),
       hourglass_control_(hourglass_control),
       number_of_gaussian_points_(number_of_gaussian_points),
-      global_b_stress_(particles_->global_b_stress_),
-      global_b_moment_(particles_->global_b_moment_),
-      global_b_shear_stress_(particles_->global_b_shear_stress_),
-      b_n_(particles_->b_n_)
+      global_b_stress_(*particles_->registerSharedVariable<Matd>("GlobalBinormalStress")),
+      global_b_moment_(*particles_->registerSharedVariable<Matd>("GlobalBinormalMoment")),
+      global_b_shear_stress_(*particles_->registerSharedVariable<Vecd>("GlobalBinormalShearStress")),
+      b_n_(*particles_->getVariableByName<Vecd>("BinormalDirection"))
 {
     /** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
     switch (number_of_gaussian_points)
@@ -288,7 +293,7 @@ ConstrainBarBodyRegion::
     : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
-      angular_b_vel_(particles_->angular_b_vel_) {}
+      angular_b_vel_(*particles_->getVariableByName<Vecd>("BinormalAngularVelocity")) {}
 //=================================================================================================//
 void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 {
@@ -306,8 +311,9 @@ ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParti
       rotation_(*particles_->getVariableByName<Vecd>("Rotation")),
       angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
       dangular_vel_dt_(*particles_->getVariableByName<Vecd>("AngularAcceleration")),
-      rotation_b_(particles_->rotation_b_),
-      angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_) {}
+      rotation_b_(*particles_->getVariableByName<Vecd>("BinormalRotation")),
+      angular_b_vel_(*particles_->getVariableByName<Vecd>("BinormalAngularVelocity")),
+      dangular_b_vel_dt_(*particles_->getVariableByName<Vecd>("BinormalAngularAcceleration")) {}
 //=================================================================================================//
 void ConstrainBarBodyRegionAlongAxis::update(size_t index_i, Real dt)
 {

@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 
     /** create a bar body. */
     SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
-    bar_body.defineParticlesAndMaterial<BarParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    bar_body.defineParticlesAndMaterial<LinearParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     bar_body.generateParticles(BarParticleGenerator(bar_body));
 
     /** Define Observer. */
@@ -177,7 +177,7 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         bar_rotation_damping(0.5, bar_body_inner, "AngularVelocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
-        bar_rotation_b_damping(0.5, bar_body_inner, "AngularVelocity_b", physical_viscosity);
+        bar_rotation_b_damping(0.5, bar_body_inner, "BinormalAngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
