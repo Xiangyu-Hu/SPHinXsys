@@ -9,14 +9,13 @@ ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), PlasticContinuumDataSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
-      stress_tensor_3D_(*particles_->getVariableByName<Mat3d>("StressTensor3D")) {}
+      stress_tensor_3D_(*particles_->registerSharedVariable<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
 ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
     : fluid_dynamics::BaseIntegration<ContinuumDataInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      shear_stress_(*particles_->getVariableByName<Matd>("ShearStress")),
       acc_shear_(*particles_->registerSharedVariable<Vecd>("AccelerationByShear"))
 {
     particles_->addVariableToSort<Vecd>("AccelerationByShear");
@@ -39,8 +38,7 @@ void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
     acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
 }
 //=================================================================================================//
-ShearStressRelaxation ::
-    ShearStressRelaxation(BaseInnerRelation &inner_relation)
+ShearStressRelaxation::ShearStressRelaxation(BaseInnerRelation &inner_relation)
     : fluid_dynamics::BaseIntegration<ContinuumDataInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       shear_stress_(*particles_->registerSharedVariable<Matd>("ShearStress")),

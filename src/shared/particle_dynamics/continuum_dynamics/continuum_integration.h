@@ -78,7 +78,6 @@ class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<Conti
   protected:
     GeneralContinuum &continuum_;
     Real G_, smoothing_length_;
-    StdLargeVec<Matd> &shear_stress_;
     StdLargeVec<Vecd> &acc_shear_;
 };
 
