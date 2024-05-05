@@ -129,7 +129,6 @@ int main(int ac, char *av[])
     plate_body.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles(ParticleGeneratorPlate(plate_body));
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&plate_body.getBaseParticles());
-    plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -153,6 +152,7 @@ int main(int ac, char *av[])
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** Output */
     IOEnvironment io_environment(system);
+    plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
     plate_body.addDerivedBodyStateForRecording<VonMisesStrain>();
     StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
     BodyStatesRecordingToVtp write_states(system.real_bodies_);

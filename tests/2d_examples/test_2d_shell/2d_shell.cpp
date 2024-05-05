@@ -102,7 +102,6 @@ int main(int ac, char *av[])
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
-    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
@@ -133,6 +132,7 @@ int main(int ac, char *av[])
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
+    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_max_displacement("Position", cylinder_observer_contact);
