@@ -23,10 +23,10 @@ GetDiffusionTimeStepSize<DiffusionMaterialType>::
 }
 //=================================================================================================//
 template <class DataDelegationType, class DiffusionType>
-template <class DynamicsIdentifier>
+template <class BodyRelationType>
 DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(DynamicsIdentifier &identifier, StdVec<DiffusionType *> diffusions)
-    : LocalDynamics(identifier.getSPHBody()), DataDelegationType(identifier),
+    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions)
+    : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
       diffusions_(diffusions),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
 {
@@ -60,9 +60,11 @@ void DiffusionRelaxation<DataDelegationType, DiffusionType>::update(size_t index
 }
 //=================================================================================================//
 template <class KernelGradientType, class DiffusionType>
+template <typename... Args>
 DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>::
-    DiffusionRelaxation(BaseInnerRelation &inner_relation, StdVec<DiffusionType *> diffusions)
-    : DiffusionRelaxation<DataDelegateInner<BaseParticles>, DiffusionType>(inner_relation, diffusions),
+    DiffusionRelaxation(Args &&...args)
+    : DiffusionRelaxation<DataDelegateInner<BaseParticles>, DiffusionType>(
+          std::forward<ContactArgsType>(args)...),
       kernel_gradient_(this->particles_) {}
 //=================================================================================================//
 template <class KernelGradientType, class DiffusionType>
@@ -92,10 +94,11 @@ void DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>::interaction(
 }
 //=================================================================================================//
 template <class ContactKernelGradientType, class DiffusionType>
+template <typename... Args>
 DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>::
-    DiffusionRelaxation(BaseContactRelation &contact_relation, StdVec<DiffusionType *> diffusions)
-    : DiffusionRelaxation<DataDelegateContact<BaseParticles, BaseParticles>,
-                          DiffusionType>(contact_relation, diffusions)
+    DiffusionRelaxation(Args &&...args)
+    : DiffusionRelaxation<DataDelegateContact<BaseParticles, BaseParticles>, DiffusionType>(
+          std::forward<ContactArgsType>(args)...)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
@@ -106,15 +109,16 @@ DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>::
 }
 //=================================================================================================//
 template <class ContactKernelGradientType, class DiffusionType>
+template <typename... Args>
 DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
-    DiffusionRelaxation(BaseContactRelation &contact_relation, StdVec<DiffusionType *> diffusions)
-    : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(contact_relation, diffusions)
+    DiffusionRelaxation(Args &&...args)
+    : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(std::forward<ContactArgsType>(args)...)
 {
     contact_gradient_species_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
-        for (size_t m = 0; m < diffusions.size(); ++m)
+        for (size_t m = 0; m < this->diffusions_.size(); ++m)
         {
             std::string &gradient_species_name = diffusion->GradientSpeciesName();
             contact_gradient_species_[k].push_back(this->particles_->template getVariableName<Real>(gradient_species_name));
@@ -160,9 +164,11 @@ void DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
 }
 //=================================================================================================//
 template <class ContactKernelGradientType, class DiffusionType>
+template <typename... Args>
 DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
-    DiffusionRelaxation(BaseContactRelation &contact_relation, StdVec<DiffusionType *> diffusions)
-    : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(contact_relation, diffusions),
+    DiffusionRelaxation(Args &&...args)
+    : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
+          std::forward<ContactArgsType>(args)...),
       n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     contact_diffusive_flux_.resize(this->contact_particles_.size());
@@ -171,7 +177,7 @@ DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
         BaseParticles *contact_particles_k = this->contact_particles_[k];
         contact_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
 
-        for (size_t m = 0; m < diffusions.size(); ++m)
+        for (size_t m = 0; m < this->diffusions_.size(); ++m)
         {
             std::string &diffusion_species_name = diffusion->DiffusionSpeciesName();
             contact_diffusive_flux_[k].push_back(this->particles_->template getVariableName<Real>(diffusion_species_name + "Flux"));
@@ -216,9 +222,11 @@ void DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
 }
 //=================================================================================================//
 template <class ContactKernelGradientType, class DiffusionType>
+template <typename... Args>
 DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
-    DiffusionRelaxation(BaseContactRelation &contact_relation, StdVec<DiffusionType *> diffusions)
-    : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(contact_relation, diffusions),
+    DiffusionRelaxation(Args &&...args)
+    : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
+          td::forward<ContactArgsType>(args)...),
       n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     contact_convection_.resize(this->contact_particles_.size());
@@ -230,7 +238,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
         contact_n_.push_back(contact_particles_k->template getVariableByName<Vecd>("NormalDirection"));
         for (size_t m = 0; m < this->diffusions_.size(); ++m)
         {
-            std::string &diffusion_species_name = diffusions_[m]->DiffusionSpeciesName();
+            std::string &diffusion_species_name = this->diffusions_[m]->DiffusionSpeciesName();
             contact_convection_[k].push_back(
                 contact_particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Convection"));
             contact_species_infinity_[k].push_back(
@@ -328,15 +336,14 @@ void SecondStageRK2<DiffusionRelaxationType>::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 template <class DiffusionRelaxationType>
-template <typename IdentityType, typename... Args>
+template <typename ConstructorArgsType>
 DiffusionRelaxationRK2<DiffusionRelaxationType>::
-    DiffusionRelaxationRK2(IdentityType &identity, Args &&...args)
-    : BaseDynamics<void>(identity.getSPHBody()),
-      rk2_1st_stage_(identity, std::forward<ContactArgsType>(contact_args)...),
-      rk2_2nd_stage_(identity, std::forward<ContactArgsType>(contact_args)...) {}
+    DiffusionRelaxationRK2(const ConstructorArgsType &constructor_args)
+    : BaseDynamics<void>(constructor_args.getSPHBody()),
+      rk2_1st_stage_(constructor_args), rk2_2nd_stage_(constructor_args) {}
 //=================================================================================================//
-template <class FirstStageType>
-void DiffusionRelaxationRK2<FirstStageType>::exec(Real dt)
+template <class DiffusionRelaxationType>
+void DiffusionRelaxationRK2<DiffusionRelaxationType>::exec(Real dt)
 {
     rk2_1st_stage_.exec(dt);
     rk2_2nd_stage_.exec(dt);
