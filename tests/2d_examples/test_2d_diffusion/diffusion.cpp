@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 
-    GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
+    GetDiffusionTimeStepSize<DiffusionMaterial> get_time_step_size(diffusion_body);
     PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------

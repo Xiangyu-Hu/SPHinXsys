@@ -170,17 +170,6 @@ class ElectroPhysiologyInitialCondition : public LocalDynamics,
     StdLargeVec<Vecd> &pos_;
     StdVec<StdLargeVec<Real>> &all_species_;
 };
-/**
- * @class GetElectroPhysiologyTimeStepSize
- * @brief Computing the time step size from diffusion criteria
- */
-class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<ElectroPhysiologyParticles>
-{
-  public:
-    explicit GetElectroPhysiologyTimeStepSize(RealBody &real_body)
-        : GetDiffusionTimeStepSize<ElectroPhysiologyParticles>(real_body){};
-    virtual ~GetElectroPhysiologyTimeStepSize(){};
-};
 
 using ElectroPhysiologyDiffusionRelaxationInner =
     DiffusionRelaxation<Inner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>>;
