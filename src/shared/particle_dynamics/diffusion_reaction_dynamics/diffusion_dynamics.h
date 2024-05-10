@@ -108,7 +108,7 @@ class CorrectedKernelGradientInner
  */
 template <class KernelGradientType, class DiffusionType>
 class DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>
-    : public DiffusionRelaxation<DataDelegateInner<BaseParticles>, DiffusionType>,
+    : public DiffusionRelaxation<DataDelegateInner<BaseParticles>, DiffusionType>
 {
   protected:
     KernelGradientType kernel_gradient_;
@@ -219,7 +219,7 @@ class DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>
   protected:
     void getDiffusionChangeRateRobin(
         size_t particle_i, size_t particle_j, Real surface_area_ij_Robin,
-        StdVec<StdVec<StdLargeVec<Real> *>> &convection_k, StdVec<Real> &species_infinity_k);
+        StdVec<StdLargeVec<Real> *> &convection_k, StdVec<Real *> &species_infinity_k);
 
   public:
     template <typename... Args>

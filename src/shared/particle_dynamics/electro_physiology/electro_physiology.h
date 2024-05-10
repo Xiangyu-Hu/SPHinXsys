@@ -117,103 +117,39 @@ class MonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
     virtual ~MonoFieldElectroPhysiology(){};
 };
 
-/**
- * @class ElectroPhysiologyParticles
- * @brief A group of particles with electrophysiology particle data.
- */
-class ElectroPhysiologyParticles
-    : public DiffusionReactionParticles<BaseParticles, MonoFieldElectroPhysiology>
-{
-  public:
-    ElectroPhysiologyParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology)
-        : DiffusionReactionParticles<BaseParticles, MonoFieldElectroPhysiology>(sph_body, mono_field_electro_physiology){};
-    virtual ~ElectroPhysiologyParticles(){};
-    virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
-};
-
-/**
- * @class ElectroPhysiologyReducedParticles
- * @brief A group of reduced particles with electrophysiology particle data.
- */
-class ElectroPhysiologyReducedParticles : public ElectroPhysiologyParticles
-{
-  public:
-    /** Constructor. */
-    ElectroPhysiologyReducedParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology)
-        : ElectroPhysiologyParticles(sph_body, mono_field_electro_physiology){};
-    /** Destructor. */
-    virtual ~ElectroPhysiologyReducedParticles(){};
-    virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
-};
-
 namespace electro_physiology
 {
-typedef DiffusionReactionSimpleData<ElectroPhysiologyParticles> ElectroPhysiologyDataDelegateSimple;
-typedef DiffusionReactionInnerData<ElectroPhysiologyParticles> ElectroPhysiologyDataDelegateInner;
-/**
- * @class ElectroPhysiologyInitialCondition
- * @brief  set initial condition for a muscle body
- * This is a abstract class to be override for case specific initial conditions.
- */
-class ElectroPhysiologyInitialCondition : public LocalDynamics,
-                                          public ElectroPhysiologyDataDelegateSimple
-{
-  public:
-    explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body),
-          ElectroPhysiologyDataDelegateSimple(sph_body),
-          pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-          all_species_(particles_->all_species_){};
-    virtual ~ElectroPhysiologyInitialCondition(){};
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    StdVec<StdLargeVec<Real>> &all_species_;
-};
-
 using ElectroPhysiologyDiffusionRelaxationInner =
-    DiffusionRelaxation<Inner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>>;
+    DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, LocalDirectionalDiffusion>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
  */
-class ElectroPhysiologyDiffusionInnerRK2
-    : public DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner>
-{
-  public:
-    explicit ElectroPhysiologyDiffusionInnerRK2(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~ElectroPhysiologyDiffusionInnerRK2(){};
-};
+using ElectroPhysiologyDiffusionInnerRK2 =
+    DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner>;
 
 /**
  * @class ElectroPhysiologyDiffusionNetworkRK2
  * @brief Compute the diffusion relaxation process on network
  */
-class ElectroPhysiologyDiffusionNetworkRK2
-    : public DiffusionRelaxationRK2<DiffusionRelaxation<Inner<ElectroPhysiologyParticles, KernelGradientInner>>>
-{
-  public:
-    explicit ElectroPhysiologyDiffusionNetworkRK2(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2<DiffusionRelaxation<Inner<ElectroPhysiologyParticles, KernelGradientInner>>>(inner_relation){};
-    virtual ~ElectroPhysiologyDiffusionNetworkRK2(){};
-};
+using ElectroPhysiologyDiffusionNetworkRK2 =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 
 using DiffusionRelaxationWithDirichletContact =
-    DiffusionRelaxation<Dirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles, KernelGradientContact>>;
+    DiffusionRelaxation<Dirichlet<KernelGradientContact>, IsotropicDiffusion>;
 
 template <template <typename...> typename... ContactInteractionTypes>
 using ElectroPhysiologyDiffusionRelaxationComplex =
-    DiffusionBodyRelaxationComplex<ElectroPhysiologyParticles, ElectroPhysiologyParticles,
+    DiffusionBodyRelaxationComplex<IsotropicDiffusion,
                                    KernelGradientInner, KernelGradientContact,
                                    ContactInteractionTypes...>;
 
 /** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 using ElectroPhysiologyReactionRelaxationForward =
-    SimpleDynamics<ReactionRelaxationForward<ElectroPhysiologyParticles>>;
+    SimpleDynamics<ReactionRelaxationForward<BaseParticles>>;
 /** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 using ElectroPhysiologyReactionRelaxationBackward =
-    SimpleDynamics<ReactionRelaxationBackward<ElectroPhysiologyParticles>>;
+    SimpleDynamics<ReactionRelaxationBackward<BaseParticles>>;
 } // namespace electro_physiology
 } // namespace SPH
 #endif // ELECTRO_PHYSIOLOGY_H
