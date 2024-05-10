@@ -433,8 +433,15 @@ namespace fluid_dynamics
 			
 			Vecd shear_stress = mu_harmo * vel_derivative;
 			Vecd shear_stress_eij = shear_stress.dot(e_ij) * e_ij;
-			Real dissipation_judge = 0.0025 * rho_[index_i] * c0_ * smoothing_length_;
-			Real dissipation = 0.1 * rho_[index_i] * c0_ * smoothing_length_;
+			
+			Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
+			
+			//Real dissipation_judge = 0.0025 * rho_[index_i] * c0_ * smoothing_length_;
+			//Real dissipation = 0.1 * rho_[index_i] * c0_ * smoothing_length_;
+			
+			Real dissipation = rho_[index_i] *  smoothing_length_ * SMIN(3.0 * SMAX(u_jump, Real(0)), c0_);
+			Real dissipation_judge = dissipation;
+
 
 			//** Introduce dissipation *
 			Vecd shear_stress_eij_corrected = shear_stress_eij;
