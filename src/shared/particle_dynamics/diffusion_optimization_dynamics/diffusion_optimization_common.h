@@ -104,7 +104,7 @@ class ThermalConductivityConstrain
   protected:
     Real initial_thermal_conductivity_;
     Real new_average_thermal_conductivity_;
-    StdLargeVec<Real> &local_thermal_conductivity_;
+    StdLargeVec<Real> &local_diffusivity_;
     void update(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH

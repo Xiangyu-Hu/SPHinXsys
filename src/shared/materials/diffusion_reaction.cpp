@@ -4,9 +4,10 @@
 namespace SPH
 {
 //=================================================================================================//
-void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles* base_particles)
+void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
-    base_particles->registerVariable(local_thermal_conductivity_, "ThermalConductivity", [&](size_t i) -> Real {return diff_cf_; });
+    base_particles->registerVariable(local_diffusivity_, "ThermalConductivity", [&](size_t i) -> Real
+                                     { return diff_cf_; });
     base_particles->addVariableToWrite<Real>("ThermalConductivity");
 }
 //=================================================================================================//
@@ -31,7 +32,8 @@ void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_pa
         local_transformed_diffusivity_, "LocalTransformedDiffusivity",
         [&](size_t i) -> Matd
         {
-            Matd diff_i = diff_cf_ * Matd::Identity() + bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
+            Matd diff_i = diff_cf_ * Matd::Identity() +
+                          bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
             return inverseCholeskyDecomposition(diff_i);
         });
 

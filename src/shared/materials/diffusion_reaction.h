@@ -46,20 +46,25 @@ namespace SPH
 class BaseDiffusion : public BaseMaterial
 {
   public:
-    BaseDiffusion(size_t diffusion_species_index, size_t gradient_species_index)
-        : BaseMaterial(), diffusion_species_index_(diffusion_species_index),
-          gradient_species_index_(gradient_species_index)
+    BaseDiffusion(const std::string &diffusion_species_name,
+                  const std::string &gradient_species_name)
+        : BaseMaterial(),
+          diffusion_species_name_(diffusion_species_name),
+          gradient_species_name_(gradient_species_name)
     {
         material_type_name_ = "BaseDiffusion";
     };
     virtual ~BaseDiffusion(){};
 
-    size_t diffusion_species_index_;
-    size_t gradient_species_index_;
-
+    std::string DiffusionSpeciesName() { return diffusion_species_name_; };
+    std::string GradientSpeciesName() { return gradient_species_name_; };
     virtual Real getReferenceDiffusivity() = 0;
     virtual Real getDiffusionCoeffWithBoundary(size_t particle_i) = 0;
     virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) = 0;
+
+  protected:
+    std::string diffusion_species_name_;
+    std::string gradient_species_name_;
 };
 
 /**
@@ -72,9 +77,10 @@ class IsotropicDiffusion : public BaseDiffusion
     Real diff_cf_; /**< diffusion coefficient. */
 
   public:
-    IsotropicDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
+    IsotropicDiffusion(const std::string &diffusion_species_name,
+                       const std::string &gradient_species_name,
                        Real diff_cf = 1.0)
-        : BaseDiffusion(diffusion_species_index, gradient_species_index),
+        : BaseDiffusion(diffusion_species_name, gradient_species_name),
           diff_cf_(diff_cf)
     {
         material_type_name_ = "IsotropicDiffusion";
@@ -95,25 +101,26 @@ class IsotropicDiffusion : public BaseDiffusion
  */
 class LocalIsotropicDiffusion : public IsotropicDiffusion
 {
-protected:
-    StdLargeVec<Real> local_thermal_conductivity_;
+  protected:
+    StdLargeVec<Real> local_diffusivity_;
 
-public:
-    LocalIsotropicDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
+  public:
+    LocalIsotropicDiffusion(const std::string &diffusion_species_name,
+                            const std::string &gradient_species_name,
                             Real diff_cf = 1.0)
-        : IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf)
+        : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_cf)
     {
-        material_type_name_ = "LocalIstropicDiffusion";
+        material_type_name_ = "LocalIsotropicDiffusion";
     }
-    virtual ~LocalIsotropicDiffusion() {};
+    virtual ~LocalIsotropicDiffusion(){};
 
-    virtual void initializeLocalParameters(BaseParticles* base_particles) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
-    virtual Real getDiffusionCoeffWithBoundary(size_t particle_i) override { return local_thermal_conductivity_[particle_i]; };
-    virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd& direction_from_j_to_i) override
+    virtual Real getDiffusionCoeffWithBoundary(size_t particle_i) override { return local_diffusivity_[particle_i]; };
+    virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) override
     {
-        return 0.5 * (local_thermal_conductivity_[particle_i] + local_thermal_conductivity_[particle_j]);
+        return 0.5 * (local_diffusivity_[particle_i] + local_diffusivity_[particle_j]);
     };
 };
 
@@ -131,9 +138,10 @@ class DirectionalDiffusion : public IsotropicDiffusion
     void initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
 
   public:
-    DirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
+    DirectionalDiffusion(const std::string &diffusion_species_name,
+                         const std::string &gradient_species_name,
                          Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-        : IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf),
+        : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_cf),
           bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf),
           transformed_diffusivity_(Matd::Identity())
     {
@@ -148,7 +156,8 @@ class DirectionalDiffusion : public IsotropicDiffusion
     };
 
     virtual Real getInterParticleDiffusionCoeff(size_t particle_index_i,
-                                               size_t particle_index_j, const Vecd &inter_particle_direction) override
+                                                size_t particle_index_j,
+                                                const Vecd &inter_particle_direction) override
     {
         Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
         return 1.0 / grad_ij.squaredNorm();
@@ -166,9 +175,11 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
     StdLargeVec<Matd> local_transformed_diffusivity_;
 
   public:
-    LocalDirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
+    LocalDirectionalDiffusion(const std::string &diffusion_species_name,
+                              const std::string &gradient_species_name,
                               Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-        : DirectionalDiffusion(diffusion_species_index, gradient_species_index, diff_cf, bias_diff_cf, bias_direction)
+        : DirectionalDiffusion(diffusion_species_name, gradient_species_name,
+                               diff_cf, bias_diff_cf, bias_direction)
     {
         material_type_name_ = "LocalDirectionalDiffusion";
     };
@@ -298,8 +309,6 @@ class DiffusionReaction : public BaseMaterialType
     StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
     std::map<std::string, size_t> AllSpeciesIndexMap() { return all_species_indexes_map_; };
     IndexVector &ReactiveSpeciesIndexes() { return reactive_species_indexes_; };
-    IndexVector &DiffusionSpeciesIndexes() { return diffusion_species_indexes_; };
-    IndexVector &GradientSpeciesIndexes() { return gradient_species_indexes_; };
     StdVec<BaseDiffusion *> &AllDiffusions() { return all_diffusions_; };
     BaseReactionModel<NUM_REACTIVE_SPECIES> &ReactionModel() { return reaction_model_; };
 
@@ -336,12 +345,22 @@ class DiffusionReaction : public BaseMaterialType
     {
         size_t diffusion_species_index = all_species_indexes_map_[diffusion_species_name];
         size_t gradient_species_index = all_species_indexes_map_[gradient_species_name];
-        diffusion_species_indexes_.push_back(diffusion_species_index);
-        gradient_species_indexes_.push_back(gradient_species_index);
 
-        all_diffusions_.push_back(
-            diffusion_ptr_keeper_.createPtr<DiffusionType>(
-                diffusion_species_index, gradient_species_index, std::forward<Args>(args)...));
+        if (diffusion_species_index != all_species_indexes_map_.size() &&
+            gradient_species_index != all_species_indexes_map_.size())
+        {
+            all_diffusions_.push_back(
+                diffusion_ptr_keeper_.createPtr<DiffusionType>(
+                    diffusion_species_name, gradient_species_name, std::forward<Args>(args)...));
+        }
+        else
+        {
+            std::cout << "\n Error: diffusion species '" << diffusion_species_name
+                      << "' or gradient species '" << gradient_species_name
+                      << "' not defined!" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
     };
 
     virtual DiffusionReaction<BaseMaterialType, NUM_REACTIVE_SPECIES> *ThisObjectPtr() override { return this; };

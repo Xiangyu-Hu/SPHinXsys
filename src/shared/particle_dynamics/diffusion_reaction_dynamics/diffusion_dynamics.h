@@ -115,7 +115,7 @@ class DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxation(Args &&... args);
+    explicit DiffusionRelaxation(Args &&...args);
 
     virtual ~DiffusionRelaxation(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
@@ -156,7 +156,7 @@ class DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxation(Args &&... args);
+    explicit DiffusionRelaxation(Args &&...args);
     virtual ~DiffusionRelaxation(){};
 };
 
@@ -176,7 +176,7 @@ class DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxation(Args &&... args);
+    explicit DiffusionRelaxation(Args &&...args);
     virtual ~DiffusionRelaxation(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -199,7 +199,7 @@ class DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxation(Args &&... args);
+    explicit DiffusionRelaxation(Args &&...args);
     virtual ~DiffusionRelaxation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -223,7 +223,7 @@ class DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxation(Args &&... args);
+    explicit DiffusionRelaxation(Args &&...args);
 
     virtual ~DiffusionRelaxation(){};
     void interaction(size_t index_i, Real dt = 0.0);
@@ -242,7 +242,7 @@ class FirstStageRK2 : public DiffusionRelaxationType
 
   public:
     template <typename... Args>
-    FirstStageRK2(Args &&... args);
+    FirstStageRK2(Args &&...args);
 
     virtual ~FirstStageRK2(){};
     void initialization(size_t index_i, Real dt = 0.0);
@@ -260,7 +260,7 @@ class SecondStageRK2 : public DiffusionRelaxationType
 
   public:
     template <typename... Args>
-    SecondStageRK2(Args &&... args);
+    SecondStageRK2(Args &&...args);
 
     virtual ~SecondStageRK2(){};
     void update(size_t index_i, Real dt = 0.0);
@@ -279,7 +279,7 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
 
   public:
     template <typename FirstArg, typename... OtherArgs>
-    explicit DiffusionRelaxationRK2(FirstArg &first_arg, OtherArgs &&... other_args);
+    explicit DiffusionRelaxationRK2(FirstArg &first_arg, OtherArgs &&...other_args);
 
     virtual ~DiffusionRelaxationRK2(){};
 
@@ -296,7 +296,7 @@ class DiffusionBodyRelaxationComplex
 {
   public:
     template <typename FirstArg, typename... OtherArgs>
-    explicit DiffusionBodyRelaxationComplex(FirstArg &first_arg, OtherArgs &&... other_args)
+    explicit DiffusionBodyRelaxationComplex(FirstArg &first_arg, OtherArgs &&...other_args)
         : DiffusionRelaxationRK2<
               ComplexInteraction<DiffusionRelaxation<
                                      Inner<KernelGradientType>, ContactInteractionTypes<ContactKernelGradientType>...>,
