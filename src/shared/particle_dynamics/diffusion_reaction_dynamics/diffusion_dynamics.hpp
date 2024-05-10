@@ -226,7 +226,7 @@ template <typename... Args>
 DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&... args)
     : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
-          td::forward<ContactArgsType>(args)...),
+          std::forward<ContactArgsType>(args)...),
       n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     contact_convection_.resize(this->contact_particles_.size());
@@ -336,17 +336,12 @@ void SecondStageRK2<DiffusionRelaxationType>::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 template <class DiffusionRelaxationType>
-template <class BodyRelationType, class DiffusionType>
+template <typename FirstArg, typename... OtherArgs>
 DiffusionRelaxationRK2<DiffusionRelaxationType>::
-    DiffusionRelaxationRK2(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions)
-    : BaseDynamics<void>(body_relation.getSPHBody()),
-      rk2_1st_stage_(body_relation, diffusions), rk2_2nd_stage_(body_relation, diffusions) {}
-//=================================================================================================//
-template <class DiffusionRelaxationType>
-template <typename ConstructorArgsType>
-DiffusionRelaxationRK2<DiffusionRelaxationType>::
-    DiffusionRelaxationRK2(const ConstructorArgsType &args)
-    : DiffusionRelaxationRK2(args.body_relation_, std::get<0>(args.others_)) {}
+    DiffusionRelaxationRK2(FirstArg &first_arg, OtherArgs &&... other_args)
+    : BaseDynamics<void>(first_arg.getSPHBody()),
+      rk2_1st_stage_(first_arg, std::forward<OtherArgs>(other_args)...),
+      rk2_2nd_stage_(first_arg, std::forward<OtherArgs>(other_args)...) {}
 //=================================================================================================//
 template <class DiffusionRelaxationType>
 void DiffusionRelaxationRK2<DiffusionRelaxationType>::exec(Real dt)

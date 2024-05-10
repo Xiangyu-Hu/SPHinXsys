@@ -232,6 +232,7 @@ class DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>
 /**
  * @class FirstStageRK2
  * @brief The first stage of a 2nd-order runge-kutta integration scheme.
+ * A intermediate state for species is introduced here to achieve multi-step integration.
  */
 template <class DiffusionRelaxationType>
 class FirstStageRK2 : public DiffusionRelaxationType
@@ -268,7 +269,6 @@ class SecondStageRK2 : public DiffusionRelaxationType
 /**
  * @class DiffusionRelaxationRK2
  * @brief The 2nd-order runge-kutta integration scheme.
- * A intermediate state for species is introduced here to achieve multi-step integration.
  */
 template <class DiffusionRelaxationType>
 class DiffusionRelaxationRK2 : public BaseDynamics<void>
@@ -278,11 +278,8 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
     Dynamics1Level<SecondStageRK2<DiffusionRelaxationType>> rk2_2nd_stage_;
 
   public:
-    template <class BodyRelationType, class DiffusionType>
-    explicit DiffusionRelaxationRK2(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions);
-
-    template <typename ConstructorArgsType>
-    explicit DiffusionRelaxationRK2(const ConstructorArgsType &constructor_args);
+    template <typename FirstArg, typename... OtherArgs>
+    explicit DiffusionRelaxationRK2(FirstArg &first_arg, OtherArgs &&... other_args);
 
     virtual ~DiffusionRelaxationRK2(){};
 
