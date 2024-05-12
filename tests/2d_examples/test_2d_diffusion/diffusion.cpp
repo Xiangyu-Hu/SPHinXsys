@@ -55,12 +55,11 @@ class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelega
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-          pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-
         if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
         {
             phi_[index_i] = 1.0;
@@ -78,15 +77,8 @@ class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelega
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxation<Inner<DiffusionParticles, CorrectedKernelGradientInner>>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, BaseDiffusion>>;
 //----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
@@ -121,7 +113,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
+    DiffusionMaterial *diffusion_material = diffusion_body.defineParticlesAndMaterial<BaseParticles, DiffusionMaterial>();
     diffusion_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -144,7 +136,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
 
-    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, diffusion_material->AllDiffusions());
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 
     GetDiffusionTimeStepSize<DiffusionMaterial> get_time_step_size(diffusion_body);

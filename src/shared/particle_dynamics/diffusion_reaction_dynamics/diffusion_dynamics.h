@@ -60,8 +60,8 @@ class DiffusionRelaxation<DataDelegationType, DiffusionType>
       public DataDelegationType
 {
   protected:
-    StdLargeVec<Real> &Vol_;
     StdVec<DiffusionType *> &diffusions_;
+    StdLargeVec<Real> &Vol_;
     StdVec<StdLargeVec<Real> *> diffusion_species_;
     StdVec<StdLargeVec<Real> *> gradient_species_;
     StdVec<StdLargeVec<Real> *> diffusion_dt_;
@@ -230,16 +230,32 @@ class DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>
 };
 
 /**
+ * @class RungeKuttaStep
+ * @brief A general step for runge-kutta integration scheme.
+ * @details Am intermediate state for species is introduced here
+ * to achieve multi-step integration.
+ */
+template <class DiffusionRelaxationType>
+class RungeKuttaStep : public DiffusionRelaxationType
+{
+  protected:
+    StdVec<StdLargeVec<Real> *> diffusion_species_s_;
+
+  public:
+    template <typename... Args>
+    RungeKuttaStep(Args &&...args);
+
+    virtual ~RungeKuttaStep(){};
+};
+
+/**
  * @class FirstStageRK2
  * @brief The first stage of a 2nd-order runge-kutta integration scheme.
  * A intermediate state for species is introduced here to achieve multi-step integration.
  */
 template <class DiffusionRelaxationType>
-class FirstStageRK2 : public DiffusionRelaxationType
+class FirstStageRK2 : public RungeKuttaStep<DiffusionRelaxationType>
 {
-  protected:
-    StdVec<StdLargeVec<Real> *> diffusion_species_s_;
-
   public:
     template <typename... Args>
     FirstStageRK2(Args &&...args);
@@ -253,11 +269,8 @@ class FirstStageRK2 : public DiffusionRelaxationType
  * @brief The second stage of the 2nd-order Runge-Kutta scheme.
  */
 template <class DiffusionRelaxationType>
-class SecondStageRK2 : public DiffusionRelaxationType
+class SecondStageRK2 : public RungeKuttaStep<DiffusionRelaxationType>
 {
-  protected:
-    StdVec<StdLargeVec<Real> *> diffusion_species_s_;
-
   public:
     template <typename... Args>
     SecondStageRK2(Args &&...args);

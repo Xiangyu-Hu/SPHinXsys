@@ -32,12 +32,12 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
 {
     for (auto &diffusion : diffusions_)
     {
-        std::string &diffusion_species_name = diffusion->DiffusionSpeciesName();
-        diffusion_species_.push_back(this->particles_->template getVariableName<Real>(diffusion_species_name));
+        std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
+        diffusion_species_.push_back(this->particles_->template getVariableByName<Real>(diffusion_species_name));
         diffusion_dt_.push_back(this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate"));
 
-        std::string &gradient_species_name = diffusion->GradientSpeciesName();
-        gradient_species_.push_back(this->particles_->template getVariableName<Real>(gradient_species_name));
+        std::string gradient_species_name = diffusion->GradientSpeciesName();
+        gradient_species_.push_back(this->particles_->template getVariableByName<Real>(gradient_species_name));
     }
 }
 //=================================================================================================//
@@ -176,9 +176,9 @@ DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
         BaseParticles *contact_particles_k = this->contact_particles_[k];
         contact_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
 
-        for (size_t m = 0; m < this->diffusions_.size(); ++m)
+        for (auto &diffusion : this->diffusions_)
         {
-            std::string &diffusion_species_name = this->diffusion->DiffusionSpeciesName();
+            std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
             contact_diffusive_flux_[k].push_back(this->particles_->template getVariableName<Real>(diffusion_species_name + "Flux"));
         }
     }
@@ -235,9 +235,9 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
         contact_n_.push_back(contact_particles_k->template getVariableByName<Vecd>("NormalDirection"));
-        for (size_t m = 0; m < this->diffusions_.size(); ++m)
+        for (auto &diffusion : this->diffusions_)
         {
-            std::string &diffusion_species_name = this->diffusions_[m]->DiffusionSpeciesName();
+            std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
             contact_convection_[k].push_back(
                 contact_particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Convection"));
             contact_species_infinity_[k].push_back(
@@ -288,16 +288,21 @@ void DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
 //=================================================================================================//
 template <class DiffusionRelaxationType>
 template <typename... Args>
-FirstStageRK2<DiffusionRelaxationType>::FirstStageRK2(Args &&...args)
+RungeKuttaStep<DiffusionRelaxationType>::RungeKuttaStep(Args &&...args)
     : DiffusionRelaxationType(std::forward<Args>(args)...)
 {
     for (auto &diffusion : this->diffusions_)
     {
-        std::string &diffusion_species_name = diffusion->DiffusionSpeciesName();
+        std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
         diffusion_species_s_.push_back(
-            this->particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Step"));
+            this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "Intermediate"));
     }
 }
+//=================================================================================================//
+template <class DiffusionRelaxationType>
+template <typename... Args>
+FirstStageRK2<DiffusionRelaxationType>::FirstStageRK2(Args &&...args)
+    : RungeKuttaStep<DiffusionRelaxationType>(std::forward<Args>(args)...) {}
 //=================================================================================================//
 template <class DiffusionRelaxationType>
 void FirstStageRK2<DiffusionRelaxationType>::initialization(size_t index_i, Real dt)
@@ -306,30 +311,22 @@ void FirstStageRK2<DiffusionRelaxationType>::initialization(size_t index_i, Real
 
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        (*diffusion_species_s_[m])[index_i] = (*this->diffusion_species_[m])[index_i];
+        (*this->diffusion_species_s_[m])[index_i] = (*this->diffusion_species_[m])[index_i];
     }
 }
 //=================================================================================================//
 template <class DiffusionRelaxationType>
 template <typename... Args>
 SecondStageRK2<DiffusionRelaxationType>::SecondStageRK2(Args &&...args)
-    : DiffusionRelaxationType(std::forward<Args>(args)...)
-{
-    for (auto &diffusion : this->diffusions_)
-    {
-        std::string &diffusion_species_name = diffusion->DiffusionSpeciesName();
-        diffusion_species_s_.push_back(
-            this->particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Intermediate"));
-    }
-}
+    : RungeKuttaStep<DiffusionRelaxationType>(std::forward<Args>(args)...) {}
 //=================================================================================================//
 template <class DiffusionRelaxationType>
 void SecondStageRK2<DiffusionRelaxationType>::update(size_t index_i, Real dt)
 {
     DiffusionRelaxationType::update(index_i, dt);
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[index_i] = 0.5 * (*diffusion_species_s_[m])[index_i] +
+        (*this->diffusion_species_[m])[index_i] = 0.5 * (*this->diffusion_species_s_[m])[index_i] +
                                                   0.5 * (*this->diffusion_species_[m])[index_i];
     }
 }
