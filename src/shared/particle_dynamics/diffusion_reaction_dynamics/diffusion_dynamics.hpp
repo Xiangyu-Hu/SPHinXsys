@@ -25,7 +25,7 @@ GetDiffusionTimeStepSize<DiffusionMaterialType>::
 template <class DataDelegationType, class DiffusionType>
 template <class BodyRelationType>
 DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions)
+    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions)
     : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
       diffusions_(diffusions),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
@@ -117,10 +117,11 @@ DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
-        for (size_t m = 0; m < this->diffusions_.size(); ++m)
+        for (auto &diffusion : this->diffusions_)
         {
-            std::string &gradient_species_name = this->diffusion->GradientSpeciesName();
-            contact_gradient_species_[k].push_back(this->particles_->template getVariableName<Real>(gradient_species_name));
+            std::string gradient_species_name = diffusion->GradientSpeciesName();
+            contact_gradient_species_[k].push_back(
+                contact_particles_k->template registerSharedVariable<Real>(gradient_species_name));
         }
     }
 }
@@ -179,7 +180,8 @@ DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
         for (auto &diffusion : this->diffusions_)
         {
             std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
-            contact_diffusive_flux_[k].push_back(this->particles_->template getVariableName<Real>(diffusion_species_name + "Flux"));
+            contact_diffusive_flux_[k].push_back(
+                contact_particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Flux"));
         }
     }
 }
@@ -190,7 +192,7 @@ void DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
                                   Real surface_area_ij_Neumann,
                                   const StdVec<StdLargeVec<Real> *> &diffusive_flux_k)
 {
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
         (*this->diffusion_dt_[m])[particle_i] += surface_area_ij_Neumann * (*diffusive_flux_k[m])[particle_j];
     }
@@ -235,6 +237,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
         contact_n_.push_back(contact_particles_k->template getVariableByName<Vecd>("NormalDirection"));
+
         for (auto &diffusion : this->diffusions_)
         {
             std::string diffusion_species_name = diffusion->DiffusionSpeciesName();

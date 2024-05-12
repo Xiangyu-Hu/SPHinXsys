@@ -21,21 +21,19 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<Lattice>();
+    DiffusionMaterial *diffusion_material = diffusion_body.defineMaterial<DiffusionMaterial>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
-    wall_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_Dirichlet.generateParticles<Lattice>();
+    wall_Dirichlet.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
-    wall_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_Neumann.generateParticles<Lattice>();
+    wall_Neumann.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles(ParticleGeneratorTemperatureObserver(temperature_observer));
+    temperature_observer.generateParticles<BaseParticles, ObserverBody>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -52,8 +50,11 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann);
 
-    DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
-    GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
+    DiffusionBodyRelaxation temperature_relaxation(
+        ConstructorArgs(diffusion_body_inner, diffusion_material->AllDiffusions()),
+        ConstructorArgs(diffusion_body_contact_Dirichlet, diffusion_material->AllDiffusions()),
+        ConstructorArgs(diffusion_body_contact_Neumann, diffusion_material->AllDiffusions()));
+    GetDiffusionTimeStepSize<DiffusionMaterial> get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_Dirichlet);
     SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_Neumann);

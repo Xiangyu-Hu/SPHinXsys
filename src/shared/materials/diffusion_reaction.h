@@ -309,7 +309,7 @@ class DiffusionReaction : public BaseMaterialType
     StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
     std::map<std::string, size_t> AllSpeciesIndexMap() { return all_species_indexes_map_; };
     IndexVector &ReactiveSpeciesIndexes() { return reactive_species_indexes_; };
-    StdVec<BaseDiffusion *> &AllDiffusions() { return all_diffusions_; };
+    StdVec<BaseDiffusion *> AllDiffusions() { return all_diffusions_; };
     BaseReactionModel<NUM_REACTIVE_SPECIES> &ReactionModel() { return reaction_model_; };
 
     virtual void registerReloadLocalParameters(BaseParticles *base_particles) override

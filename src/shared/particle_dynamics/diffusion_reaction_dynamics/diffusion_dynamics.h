@@ -60,7 +60,7 @@ class DiffusionRelaxation<DataDelegationType, DiffusionType>
       public DataDelegationType
 {
   protected:
-    StdVec<DiffusionType *> &diffusions_;
+    StdVec<DiffusionType *> diffusions_;
     StdLargeVec<Real> &Vol_;
     StdVec<StdLargeVec<Real> *> diffusion_species_;
     StdVec<StdLargeVec<Real> *> gradient_species_;
@@ -68,7 +68,7 @@ class DiffusionRelaxation<DataDelegationType, DiffusionType>
 
   public:
     template <class BodyRelationType>
-    explicit DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions);
+    explicit DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions);
 
     template <typename BodyRelationType, typename FirstArg>
     explicit DiffusionRelaxation(ConstructorArgs<BodyRelationType, FirstArg> parameters)
@@ -309,7 +309,7 @@ class DiffusionBodyRelaxationComplex
 {
   public:
     template <typename FirstArg, typename... OtherArgs>
-    explicit DiffusionBodyRelaxationComplex(FirstArg &first_arg, OtherArgs &&...other_args)
+    explicit DiffusionBodyRelaxationComplex(FirstArg &&first_arg, OtherArgs &&...other_args)
         : DiffusionRelaxationRK2<
               ComplexInteraction<DiffusionRelaxation<
                                      Inner<KernelGradientType>, ContactInteractionTypes<ContactKernelGradientType>...>,
