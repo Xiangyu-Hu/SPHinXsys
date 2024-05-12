@@ -25,9 +25,11 @@ int main(int ac, char *av[])
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
+    wall_Dirichlet.defineMaterial<Solid>();
     wall_Dirichlet.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
+    wall_Neumann.defineMaterial<Solid>();
     wall_Neumann.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.

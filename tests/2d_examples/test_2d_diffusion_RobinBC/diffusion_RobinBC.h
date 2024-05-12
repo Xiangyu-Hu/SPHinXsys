@@ -31,6 +31,12 @@ Real right_temperature = 350.0;
 Real convection = 100.0;
 Real T_infinity = 400.0;
 //----------------------------------------------------------------------
+// Define extra classes which are used in the main program.
+// These classes are defined under the namespace of SPH.
+//----------------------------------------------------------------------
+namespace SPH
+{
+//----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
 std::vector<Vecd> createThermalDomain()
@@ -98,96 +104,89 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
     }
 };
-using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = initial_temperature;
+        phi_[index_i] = initial_temperature;
     };
+
+  protected:
+    StdLargeVec<Real> &phi_;
 };
 
-class DirichletWallBoundaryInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
+class DirichletWallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
-    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
+    explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = -0.0;
+        phi_[index_i] = -0.0;
 
         if (pos_[index_i][1] > H && pos_[index_i][0] > 0.3 * L && pos_[index_i][0] < 0.4 * L)
         {
-            all_species_[phi_][index_i] = left_temperature;
+            phi_[index_i] = left_temperature;
         }
         if (pos_[index_i][1] > H && pos_[index_i][0] > 0.6 * L && pos_[index_i][0] < 0.7 * L)
         {
-            all_species_[phi_][index_i] = right_temperature;
+            phi_[index_i] = right_temperature;
         }
     }
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 
-class RobinWallBoundaryInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
+class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-    StdLargeVec<Real> &convection_;
-    Real &T_infinity_;
-
   public:
-    explicit RobinWallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-          convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-          T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("T_infinity")))
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
+    explicit RobinWallBoundaryInitialCondition(SPHBody &sph_body)
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")),
+          phi_convection_(*(this->particles_->template getVariableByName<Real>("PhiConvection"))),
+          phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>("PhiInfinity"))){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = -0.0;
+        phi_[index_i] = -0.0;
 
         if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
         {
-            convection_[index_i] = convection;
-            T_infinity_ = T_infinity;
+            phi_convection_[index_i] = convection;
+            phi_infinity_ = T_infinity;
         }
     }
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_, &phi_convection_;
+    Real &phi_infinity_;
 };
 
 using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
-    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Dirichlet, Robin>;
+    BaseDiffusion, KernelGradientInner, KernelGradientContact, Dirichlet, Robin>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
+template <>
+class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
 {
   public:
-    explicit ParticleGeneratorTemperatureObserver(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 5;
@@ -202,4 +201,5 @@ class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
         }
     }
 };
+} // namespace SPH
 #endif // DIFFUSION_ROBIN_BC_H
