@@ -34,6 +34,30 @@
 
 namespace SPH
 {
+
+template <class DynamicsIdentifier, typename DataType>
+class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>,
+                           public GeneralDataDelegateSimple
+{
+  public:
+    ConstantConstraint(DynamicsIdentifier &identifier,
+                       const std::string &variable_name,
+                       DataType constrained_value)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          GeneralDataDelegateSimple(identifier.getSPHBody()),
+          constrained_variable_(*particles_->getVariableByName<DataType>(variable_name)),
+          constrained_value_(constrained_value){};
+    virtual ~ConstantConstraint(){};
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        constrained_variable_[index_i] = constrained_value_;
+    };
+
+  protected:
+    StdLargeVec<DataType> &constrained_variable_;
+    DataType constrained_value_;
+};
+
 class LevelSetShape;
 
 /**

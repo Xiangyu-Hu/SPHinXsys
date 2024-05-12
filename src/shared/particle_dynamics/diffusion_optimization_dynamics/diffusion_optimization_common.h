@@ -42,16 +42,18 @@ namespace SPH
  * @brief  Computing the average error on the (partly) optimization
  *         domain or any parameter only with positive values.
  */
-template <class DynamicsIdentifier, class ParticlesType>
+template <class DynamicsIdentifier>
 class ComputeTotalErrorOrPositiveParameter
-    : public SpeciesSummation<DynamicsIdentifier, ParticlesType>
+    : public BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>,
+      public GeneralDataDelegateSimple
 {
   protected:
     StdLargeVec<Real> &variable_;
 
   public:
     ComputeTotalErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : SpeciesSummation<DynamicsIdentifier, ParticlesType>(identifier, variable_name),
+        : BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>(identifier, variable_name),
+          GeneralDataDelegateSimple(identifier.getSPHBody()),
           variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
     virtual ~ComputeTotalErrorOrPositiveParameter(){};
 

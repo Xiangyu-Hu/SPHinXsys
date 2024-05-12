@@ -1,7 +1,7 @@
 /**
  * @file 	diffusion_RobinBC.cpp
  * @brief 	2D test of diffusion problem with Robin boundary condition.
- * @details This is the first case to implement global variables registed on particles.
+ * @details This is the first case to implement single-value variables registered on particles.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 #include "diffusion_RobinBC.h"

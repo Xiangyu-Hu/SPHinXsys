@@ -38,14 +38,14 @@ namespace SPH
  * @class VariableNorm
  * @brief  obtained the maximum norm of a variable
  */
-template <typename DataType, typename NormType>
-class VariableNorm : public LocalDynamicsReduce<NormType>,
+template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
+class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>,
                      public GeneralDataDelegateSimple
 {
   public:
-    VariableNorm(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<NormType>(sph_body),
-          GeneralDataDelegateSimple(sph_body),
+    VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
+          GeneralDataDelegateSimple(identifier.getSPHBody()),
           variable_(*particles_->getVariableByName<DataType>(variable_name)){};
     virtual ~VariableNorm(){};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
@@ -160,49 +160,49 @@ class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
  * @class QuantitySummation
  * @brief Compute the summation of  a particle variable in a body
  */
-template <typename VariableType>
-class QuantitySummation : public LocalDynamicsReduce<ReduceSum<VariableType>>,
+template <typename DataType, class DynamicsIdentifier>
+class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>,
                           public GeneralDataDelegateSimple
 {
-  protected:
-    StdLargeVec<VariableType> &variable_;
-
   public:
-    explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<ReduceSum<VariableType>>(sph_body),
-          GeneralDataDelegateSimple(sph_body),
-          variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+    explicit QuantitySummation(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>(identifier),
+          GeneralDataDelegateSimple(identifier.getSPHBody()),
+          variable_(*this->particles_->template getVariableByName<DataType>(variable_name))
     {
         this->quantity_name_ = "Total" + variable_name;
     };
     virtual ~QuantitySummation(){};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    DataType reduce(size_t index_i, Real dt = 0.0)
     {
         return variable_[index_i];
     };
+
+  protected:
+    StdLargeVec<DataType> &variable_;
 };
 
 /**
  * @class QuantityMoment
  * @brief Compute the moment of a body
  */
-template <typename VariableType>
-class QuantityMoment : public QuantitySummation<VariableType>
+template <typename DataType, class DynamicsIdentifier>
+class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
 {
   protected:
     StdLargeVec<Real> &mass_;
 
   public:
-    explicit QuantityMoment(SPHBody &sph_body, const std::string &variable_name)
-        : QuantitySummation<VariableType>(sph_body, variable_name),
+    explicit QuantityMoment(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : QuantitySummation<DataType, DynamicsIdentifier>(identifier, variable_name),
           mass_(*this->particles_->template getVariableByName<Real>("Mass"))
     {
         this->quantity_name_ = variable_name + "Moment";
     };
     virtual ~QuantityMoment(){};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    DataType reduce(size_t index_i, Real dt = 0.0)
     {
         return mass_[index_i] * this->variable_[index_i];
     };

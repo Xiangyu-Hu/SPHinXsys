@@ -31,12 +31,6 @@ Real right_temperature = 350.0;
 Real convection = 100.0;
 Real T_infinity = 400.0;
 //----------------------------------------------------------------------
-// Define extra classes which are used in the main program.
-// These classes are defined under the namespace of SPH.
-//----------------------------------------------------------------------
-namespace SPH
-{
-//----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
 std::vector<Vecd> createThermalDomain()
@@ -63,6 +57,12 @@ std::vector<Vecd> convection_region{
     Vecd(0.45 * L, -BW), Vecd(0.45 * L, 0), Vecd(0.55 * L, 0),
     Vecd(0.55 * L, -BW), Vecd(0.45 * L, -BW)};
 
+//----------------------------------------------------------------------
+// Define extra classes which are used in the main program.
+// These classes are defined under the namespace of SPH.
+//----------------------------------------------------------------------
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Define SPH bodies.
 //----------------------------------------------------------------------

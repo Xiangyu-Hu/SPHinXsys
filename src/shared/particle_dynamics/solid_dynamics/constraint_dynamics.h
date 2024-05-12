@@ -156,7 +156,7 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
     Real total_mass_;
     Matd correction_matrix_;
     Vecd velocity_correction_;
-    ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
+    ReduceDynamics<QuantityMoment<Vecd, SPHBody>> compute_total_momentum_;
 
   protected:
     virtual void setupDynamics(Real dt = 0.0) override
@@ -172,7 +172,7 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
     {
         for (int i = 0; i != Dimensions; ++i)
             correction_matrix_(i, i) = constrain_direction[i];
-        ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "Mass");
+        ReduceDynamics<QuantitySummation<Real, SPHBody>> compute_total_mass_(sph_body, "Mass");
         total_mass_ = compute_total_mass_.exec();
     }
     virtual ~ConstrainSolidBodyMassCenter(){};
