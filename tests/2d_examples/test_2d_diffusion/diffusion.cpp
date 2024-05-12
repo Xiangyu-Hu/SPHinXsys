@@ -20,6 +20,12 @@ Real bias_coeff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
 //----------------------------------------------------------------------
+// Define extra classes which are used in the main program.
+// These classes are defined under the namespace of SPH.
+//----------------------------------------------------------------------
+namespace SPH
+{
+//----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
 class DiffusionBlock : public MultiPolygonShape
@@ -82,10 +88,11 @@ using DiffusionBodyRelaxation =
 //----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
-class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
+template <>
+class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
 {
   public:
-    explicit ParticleGeneratorTemperatureObserver(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Observer>(sph_body)
     {
         size_t number_of_observation_points = 11;
@@ -99,6 +106,7 @@ class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
         }
     }
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -113,13 +121,13 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    DiffusionMaterial *diffusion_material = diffusion_body.defineParticlesAndMaterial<BaseParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<Lattice>();
+    DiffusionMaterial *diffusion_material = diffusion_body.defineMaterial<DiffusionMaterial>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles(ParticleGeneratorTemperatureObserver(temperature_observer));
+    temperature_observer.generateParticles<BaseParticles, ObserverBody>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

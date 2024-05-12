@@ -134,20 +134,12 @@ class SPHBody
         return level_set_shape;
     };
 
-    /** partial construct particles with an already constructed material */
-    template <class ParticleType = BaseParticles, class MaterialType = BaseMaterial>
-    void defineParticlesWithMaterial(MaterialType *material)
-    {
-        base_material_ = material;
-        base_particles_ = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, material);
-    };
-
     /** partial construct particles with material informaiton. note that particle data not initialized yet */
-    template <class ParticleType = BaseParticles, class MaterialType = BaseMaterial, typename... Args>
-    MaterialType *defineParticlesAndMaterial(Args &&...args)
+    template <class MaterialType = BaseMaterial, typename... Args>
+    MaterialType *defineMaterial(Args &&...args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        defineParticlesWithMaterial<ParticleType>(material);
+        base_material_ = material;
         return material;
     };
     //----------------------------------------------------------------------
@@ -155,21 +147,17 @@ class SPHBody
     // Initialize particle data using a particle generator for geometric data.
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
-    template <class ParticleGeneratorType> // for self-defined particle generator
-    void generateParticles(ParticleGeneratorType &&particle_generator)
+    template <class ParticleType, class... Parameters, typename... Args>
+    void generateParticles(Args &&...args)
     {
+        base_particles_ = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
+        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
     };
-    // Using predefined particle generator
-    template <class... Parameters, typename... Args>
-    void generateParticles(Args &&...args)
-    {
-        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
-        generateParticles(particle_generator);
-    };
+
     // Buffer or ghost particles can be generated together with real particles
     template <class... Parameters, class ReserveType, typename... Args>
     void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
