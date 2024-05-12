@@ -47,35 +47,33 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
         initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
     };
 };
-using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
 
         if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
         {
-            all_species_[phi_][index_i] = 1.0;
+            phi_[index_i] = 1.0;
         }
         if (pos_[index_i][0] >= 1.0)
         {
-            all_species_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
+            phi_[index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
         }
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.

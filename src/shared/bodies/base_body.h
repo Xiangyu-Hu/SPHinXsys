@@ -144,10 +144,11 @@ class SPHBody
 
     /** partial construct particles with material informaiton. note that particle data not initialized yet */
     template <class ParticleType = BaseParticles, class MaterialType = BaseMaterial, typename... Args>
-    void defineParticlesAndMaterial(Args &&...args)
+    MaterialType *defineParticlesAndMaterial(Args &&...args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
         defineParticlesWithMaterial<ParticleType>(material);
+        return material;
     };
     //----------------------------------------------------------------------
     // Particle generating methods
