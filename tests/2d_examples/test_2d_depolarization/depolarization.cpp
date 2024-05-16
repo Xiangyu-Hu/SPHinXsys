@@ -82,12 +82,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody muscle_body(sph_system, makeShared<MuscleBlock>("MuscleBlock"));
     SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    muscle_body.defineParticlesAndMaterial<ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-        muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
-    muscle_body.generateParticles<Lattice>();
+    muscle_body.defineMaterial<MonoFieldElectroPhysiology>(
+        muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(),
+        diffusion_coeff, bias_coeff, fiber_direction);
+    muscle_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<Observer>(observation_location);
+    voltage_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

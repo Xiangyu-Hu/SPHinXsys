@@ -36,10 +36,10 @@ namespace SPH
  * @class BaseReactionRelaxation
  * @brief Base class for computing the reaction process of all species
  */
-template <class ParticlesType>
+template <class ReactionModelType>
 class BaseReactionRelaxation
     : public LocalDynamics,
-      public DiffusionReactionSimpleData<ParticlesType>
+      public DiffusionReactionSimpleData<BaseParticles>
 {
   protected:
     struct UpdateAReactionSpecies
@@ -50,16 +50,17 @@ class BaseReactionRelaxation
     void advanceBackwardStep(size_t index_i, Real dt);
 
   private:
-    static constexpr int NumReactiveSpecies = ParticlesType::NumReactiveSpecies;
+    static constexpr int NumReactiveSpecies = ReactionModelType::NUM_REACTIVE_SPECIES;
+    typedef std::array<std::string, NumReactiveSpecies> ReactiveSpeciesNames;
     typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
     StdVec<StdLargeVec<Real> *> &reactive_species_;
-    BaseReactionModel<NumReactiveSpecies> &reaction_model_;
+    ReactionModelType &reaction_model_;
     UpdateAReactionSpecies updateAReactionSpecies;
     void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
     void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
 
   public:
-    explicit BaseReactionRelaxation(SPHBody &sph_body);
+    explicit BaseReactionRelaxation(SPHBody &sph_body, ReactionModelType &reaction_model);
     virtual ~BaseReactionRelaxation(){};
 };
 
@@ -67,13 +68,13 @@ class BaseReactionRelaxation
  * @class ReactionRelaxationForward
  * @brief Compute the reaction process of all species by forward splitting
  */
-template <class ParticlesType>
+template <class ReactionModelType>
 class ReactionRelaxationForward
-    : public BaseReactionRelaxation<ParticlesType>
+    : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
     ReactionRelaxationForward(SPHBody &sph_body)
-        : BaseReactionRelaxation<ParticlesType>(sph_body){};
+        : BaseReactionRelaxation<ReactionModelType>(sph_body){};
     virtual ~ReactionRelaxationForward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
 };
@@ -82,13 +83,13 @@ class ReactionRelaxationForward
  * @class ReactionRelaxationBackward
  * @brief Compute the reaction process of all species by backward splitting
  */
-template <class ParticlesType>
+template <class ReactionModelType>
 class ReactionRelaxationBackward
-    : public BaseReactionRelaxation<ParticlesType>
+    : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
     explicit ReactionRelaxationBackward(SPHBody &sph_body)
-        : BaseReactionRelaxation<ParticlesType>(sph_body){};
+        : BaseReactionRelaxation<ReactionModelType>(sph_body){};
     virtual ~ReactionRelaxationBackward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };
 };
