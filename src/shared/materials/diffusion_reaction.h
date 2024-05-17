@@ -53,6 +53,7 @@ class BaseDiffusion : public BaseMaterial
 
     std::string DiffusionSpeciesName() { return diffusion_species_name_; };
     std::string GradientSpeciesName() { return gradient_species_name_; };
+    Real getDiffusionTimeStepSize(Real smoothing_length);
     virtual Real getReferenceDiffusivity() = 0;
     virtual Real getDiffusionCoeffWithBoundary(size_t index_i) = 0;
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) = 0;
@@ -310,10 +311,10 @@ class DiffusionReaction : public BaseMaterialType
      */
     Real getDiffusionTimeStepSize(Real smoothing_length)
     {
-        Real diff_coeff_max = 0.0;
+        Real dt = MaxReal;
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
-            diff_coeff_max = SMAX(diff_coeff_max, all_diffusions_[k]->getReferenceDiffusivity());
-        return 0.5 * smoothing_length * smoothing_length / diff_coeff_max / Real(Dimensions);
+            dt = SMIN(dt, all_diffusions_[k]->getDiffusionTimeStepSize(smoothing_length));
+        return dt;
     };
 
     /** Initialize a diffusion material. */

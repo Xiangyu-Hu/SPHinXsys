@@ -16,6 +16,11 @@ BaseDiffusion::BaseDiffusion(const std::string &diffusion_species_name,
 BaseDiffusion::BaseDiffusion(const std::string &species_name)
     : BaseDiffusion(species_name, species_name) {}
 //=================================================================================================//
+Real BaseDiffusion::getDiffusionTimeStepSize(Real smoothing_length)
+{
+    return 0.5 * smoothing_length * smoothing_length / getReferenceDiffusivity() / Real(Dimensions);
+}
+//=================================================================================================//
 IsotropicDiffusion::IsotropicDiffusion(const std::string &diffusion_species_name,
                                        const std::string &gradient_species_name,
                                        Real diff_cf)
