@@ -167,7 +167,7 @@ struct InflowVelocity
         if (position[1] > half_channel_height)
         {
             std::cout << "Particles out of domain, wrong inlet velocity." << std::endl;
-            system("pause");
+            std::cin.get();
         }
         target_velocity[1] = 0.0;
         return target_velocity;
