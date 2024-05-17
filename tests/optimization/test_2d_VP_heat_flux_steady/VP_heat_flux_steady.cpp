@@ -155,10 +155,10 @@ class WallBoundaryInitialCondition
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
+class TemperatureObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 11;
@@ -188,18 +188,18 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
     diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     BodyRegionByParticle heat_flux_region(diffusion_body, makeShared<MultiPolygonShape>(createHeatFluxBoundary(), "HeatFluxRegion"));
     //----------------------------  ------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
+    temperature_observer.generateParticles(TemperatureObserverParticleGenerator(temperature_observer));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

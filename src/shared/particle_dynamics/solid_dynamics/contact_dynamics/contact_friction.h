@@ -63,6 +63,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallDat
         {
             StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
             StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+            StdLargeVec<Real>& Vol_k = *(wall_Vol_n_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             // forward sweep
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -70,7 +71,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallDat
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-                parameter_b[n] = eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+                parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
                 // only update particle i
                 Vecd vel_derivative = (vel_i - vel_k[index_j]);
@@ -97,6 +98,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallDat
     Real eta_; /**< friction coefficient */
     StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<Vecd> &vel_;
+    StdVec<StdLargeVec<Real> *> wall_Vol_n_;
     StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
 };
 

@@ -121,16 +121,16 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorLattice>();
+        ? water_block.generateParticles<Reload>(water_block.getName())
+        : water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<ParticleGeneratorReload>(wall_boundary.getName())
-        : wall_boundary.generateParticles<ParticleGeneratorLattice>();
+        ? wall_boundary.generateParticles<Reload>(wall_boundary.getName())
+        : wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -163,7 +163,7 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_inner);
         RelaxationStepLevelSetCorrectionComplex
-            relaxation_step_complex(ConstructorArgs(water_block_inner, "OuterBoundary"), water_wall_contact);
+            relaxation_step_complex(ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_wall_contact);
         /**
          * @brief 	Particle relaxation starts here.
          */

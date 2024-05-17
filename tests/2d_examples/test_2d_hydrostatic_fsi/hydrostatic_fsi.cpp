@@ -201,20 +201,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     SolidBody gate(sph_system, makeShared<Gate>("Gate"));
     gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    gate.generateParticles<ParticleGeneratorLattice>();
+    gate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
-    gate_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    gate_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -261,7 +261,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> gate_stress_relaxation_second_half(gate_inner);
     /**Constrain a solid body part.  */
     BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> gate_constraint(gate_constraint_part);
+    SimpleDynamics<FixBodyPartConstraint> gate_constraint(gate_constraint_part);
     /** Update the norm of elastic gate. */
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
     /** Compute the average velocity of gate. */

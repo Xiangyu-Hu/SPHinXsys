@@ -42,7 +42,8 @@ class SPHSystem;
 class FluidBody : public RealBody
 {
   public:
-    explicit FluidBody(SPHSystem &system, SharedPtr<Shape> initial_shape_ptr);
+    template <typename... Args>
+    FluidBody(Args &&...args) : RealBody(std::forward<Args>(args)...){};
     virtual ~FluidBody(){};
     virtual FluidBody *ThisObjectPtr() override { return this; };
 };

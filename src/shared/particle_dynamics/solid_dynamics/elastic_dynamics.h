@@ -32,9 +32,9 @@
 
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
+#include "base_general_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "base_general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 
@@ -86,7 +86,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
                              public ElasticSolidDataSimple
 {
   protected:
@@ -122,7 +122,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
         {
             size_t index_j = inner_neighborhood.j_[n];
 
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             deformation -= (pos_n_i - pos_[index_j]) * gradW_ijV_j.transpose();
         }
 
@@ -130,6 +130,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
     };
 
   protected:
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Matd> &B_, &F_;
 };
@@ -145,7 +146,7 @@ class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInne
     virtual ~BaseElasticIntegration(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Real> &rho_, &mass_, &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_;
     StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 };
@@ -197,10 +198,10 @@ class Integration1stHalf : public BaseIntegration1stHalf
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Matd numerical_stress_ij =
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
-            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
-                            (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
-                             numerical_dissipation_factor_ * weight * numerical_stress_ij) *
-                            e_ij;
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * 
+                     (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
+                      numerical_dissipation_factor_ * weight * numerical_stress_ij) *
+                     e_ij;
         }
 
         force_[index_i] = force;
@@ -281,7 +282,7 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
                                   (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
                                   (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
             force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
-                            inner_neighborhood.dW_ijV_j_[n] * inv_rho0_;
+                            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
         }
         force_[index_i] = force;
     };
@@ -315,7 +316,7 @@ class Integration2ndHalf : public BaseElasticIntegration
         {
             size_t index_j = inner_neighborhood.j_[n];
 
-            Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             deformation_gradient_change_rate -= (vel_n_i - vel_[index_j]) * gradW_ij.transpose();
         }
 

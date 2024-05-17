@@ -19,19 +19,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
-    structure.generateParticles<ParticleGeneratorLattice>();
+    structure.generateParticles<Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
-    observer.generateParticles<ParticleGeneratorObserver>(
+    observer.generateParticles<Observer>(
         StdVec<Vecd>{obs});
     //---------------------------------------------------------
     // PRESSURE PROBES
@@ -41,13 +41,13 @@ int main(int ac, char *av[])
     Real fp2y = 0.968;
     StdVec<Vecd> fp2l = {Vecd(fp2x, fp2y)};
     fp2.defineAdaptationRatios(1.15, 2.0);
-    fp2.generateParticles<ParticleGeneratorObserver>(fp2l);
+    fp2.generateParticles<Observer>(fp2l);
     ObserverBody fp3(sph_system, "FluidObserver3");
     Real fp3x = 12.466;
     Real fp3y = 1.013;
     StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y)};
     fp3.defineAdaptationRatios(1.15, 2.0);
-    fp3.generateParticles<ParticleGeneratorObserver>(fp3l);
+    fp3.generateParticles<Observer>(fp3l);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

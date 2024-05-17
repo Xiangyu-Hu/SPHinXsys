@@ -164,11 +164,11 @@ class DiffusionBodyRelaxation
 //----------------------------------------------------------------------
 //	an observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ParticleGeneratorObserver
+class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
 {
   public:
-    explicit TemperatureObserverParticleGenerator(SPHBody &sph_body)
-        : ParticleGeneratorObserver(sph_body)
+    explicit ParticleGeneratorTemperatureObserver(SPHBody &sph_body)
+        : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 11;
@@ -197,12 +197,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
     diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Observer body
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
+    ParticleGeneratorTemperatureObserver my_particle_generator(temperature_observer);
+    temperature_observer.generateParticles(my_particle_generator);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -29,9 +29,10 @@ int main(int ac, char *av[])
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorAdaptive>(refinement_region);
+        ? water_block.generateParticlesWithReserve<Reload>(inlet_particle_buffer, water_block.getName())
+        : water_block.generateParticles<Lattice, Adaptive>(refinement_region);
     water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
@@ -39,11 +40,11 @@ int main(int ac, char *av[])
     cylinder.defineBodyLevelSetShape();
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(cylinder.getName())
-        : cylinder.generateParticles<ParticleGeneratorLattice>();
+        ? cylinder.generateParticles<Reload>(cylinder.getName())
+        : cylinder.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ParticleGeneratorObserver>(observation_locations);
+    fluid_observer.generateParticles<Observer>(observation_locations);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -79,7 +80,7 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, "OuterBoundary"), water_contact);
+            ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
         SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -118,15 +119,11 @@ int main(int ac, char *av[])
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
-    BodyAlignedBoxByParticle emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
-    /** Emitter buffer inflow condition. */
-    BodyAlignedBoxByCell emitter_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer, 0.1);
-    BodyAlignedBoxByCell disposer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
+    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
     /** time-space method to detect surface particles. */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_contact);

@@ -15,7 +15,7 @@ ParticleGenerator<Network>::
     : ParticleGenerator<Base>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(*sph_body.initial_shape_),
+      grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(sph_body.getInitialShape()),
       cell_linked_list_(DynamicCast<RealBody>(this, sph_body).getCellLinkedList()),
       tree_(DynamicCast<TreeBody>(this, &sph_body))
 {
@@ -23,7 +23,7 @@ ParticleGenerator<Network>::
     Vecd end_direction = displacement / (displacement.norm() + TinyReal);
     /** Add initial particle to the first branch of the tree. */
     growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-    cell_linked_list_.InsertListDataEntry(0, pos_[0], segment_length_);
+    cell_linked_list_.InsertListDataEntry(0, pos_[0]);
 }
 //=================================================================================================//
 void ParticleGenerator<Network>::
@@ -157,7 +157,7 @@ bool ParticleGenerator<Network>::
 
         for (const size_t &particle_idx : new_branch->inner_particles_)
         {
-            cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx], segment_length_);
+            cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx]);
         }
     }
 

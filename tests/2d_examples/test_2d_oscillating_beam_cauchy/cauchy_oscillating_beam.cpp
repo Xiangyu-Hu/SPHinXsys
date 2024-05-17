@@ -108,11 +108,11 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    beam_observer.generateParticles<Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     // clamping a solid body part. This is softer than a direct constraint
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------

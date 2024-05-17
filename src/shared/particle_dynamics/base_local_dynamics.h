@@ -32,7 +32,6 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
-#include "particle_functors.h"
 #include "sph_data_containers.h"
 
 namespace SPH
@@ -77,28 +76,27 @@ using LocalDynamics = BaseLocalDynamics<SPHBody>;
  * @class BaseLocalDynamicsReduce
  * @brief The base class for all local particle dynamics for reducing.
  */
-template <typename ReturnType, typename Operation, class DynamicsIdentifier>
+template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
+    explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           quantity_name_("ReducedQuantity"){};
     virtual ~BaseLocalDynamicsReduce(){};
 
-    using ReduceReturnType = ReturnType;
-    ReturnType Reference() { return reference_; };
+    using ReturnType = decltype(Operation::reference_);
+    ReturnType Reference() { return operation_.reference_; };
     std::string QuantityName() { return quantity_name_; };
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
   protected:
-    ReturnType reference_;
     Operation operation_;
     std::string quantity_name_;
 };
-template <typename ReturnType, typename Operation>
-using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
+template <typename Operation>
+using LocalDynamicsReduce = BaseLocalDynamicsReduce<Operation, SPHBody>;
 
 /**
  * @class Average
@@ -109,10 +107,10 @@ class Average : public ReduceSumType
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    Average(DynamicsIdentifier &identifier, Args &&...args)
+    Average(DynamicsIdentifier &identifier, Args &&... args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
     virtual ~Average(){};
-    using ReturnType = typename ReduceSumType::ReduceReturnType;
+    using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
     {
@@ -124,6 +122,8 @@ class Average : public ReduceSumType
 /**
  * @class ConstructorArgs
  * @brief Class template argument deduction (CTAD) for constructor arguments.
+ * @details Note that the form "XXX" is not std::string type, so we need to use
+ * std::string("XXX") to convert it to std::string type.
  */
 template <typename BodyRelationType, typename... OtherArgs>
 struct ConstructorArgs
@@ -131,9 +131,8 @@ struct ConstructorArgs
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation),
-          others_(other_args...){};
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&... other_args)
+        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
 };
 
 /**
@@ -165,7 +164,7 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
-                                OtherParameterSets &&...other_parameter_sets)
+                                OtherParameterSets &&... other_parameter_sets)
         : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 

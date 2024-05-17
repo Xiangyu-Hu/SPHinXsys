@@ -88,8 +88,8 @@ int main(int ac, char *av[])
     soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? soil_block.generateParticles<ParticleGeneratorReload>(soil_block.getName())
-        : soil_block.generateParticles<ParticleGeneratorLattice>();
+        ? soil_block.generateParticles<Reload>(soil_block.getName())
+        : soil_block.generateParticles<Lattice>();
     soil_block.addBodyStateForRecording<Real>("Pressure");
     soil_block.addBodyStateForRecording<Real>("Density");
     soil_block.addBodyStateForRecording<Real>("VerticalStress");
@@ -97,7 +97,7 @@ int main(int ac, char *av[])
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.

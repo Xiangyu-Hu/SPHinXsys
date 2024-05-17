@@ -29,20 +29,32 @@
 #ifndef PARTICLE_FUNCTORS_H
 #define PARTICLE_FUNCTORS_H
 
-#include "base_particles.h"
+#include "base_particles.hpp"
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-// Particle scope functors
-//----------------------------------------------------------------------
-class ParticleScope // base class to indicate the concept of particle scope
+
+/** 
+ * @class WithinScope
+ * Base class introduce the concept of "within the scope". 
+ * The derived class should implement the operator bool(size_t...) 
+ * to indicate whether an indexed element is within the scope.
+ * Generally, the object of the derived class 
+ * should be named as "within_scope" or "within_scope_" (class member) 
+ * so that the code can be more readable.
+ */
+class WithinScope
 {
 };
-class AllParticles : public ParticleScope
+
+//----------------------------------------------------------------------
+// Particle scope functors
+//---------------------------------------------------------------------
+
+class AllParticles : public WithinScope
 {
   public:
-    explicit AllParticles(BaseParticles *base_particles) : ParticleScope(){};
+    explicit AllParticles(BaseParticles *base_particles) : WithinScope(){};
     bool operator()(size_t index_i)
     {
         return true;
@@ -50,13 +62,13 @@ class AllParticles : public ParticleScope
 };
 
 template <int INDICATOR>
-class IndicatedParticles : public ParticleScope
+class IndicatedParticles : public WithinScope
 {
     StdLargeVec<int> &indicator_;
 
   public:
     explicit IndicatedParticles(BaseParticles *base_particles)
-        : ParticleScope(),
+        : WithinScope(),
           indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
@@ -67,52 +79,20 @@ class IndicatedParticles : public ParticleScope
 using BulkParticles = IndicatedParticles<0>;
 
 template <int INDICATOR>
-class NotIndicatedParticles : public ParticleScope
+class NotIndicatedParticles : public WithinScope
 {
     StdLargeVec<int> &indicator_;
 
   public:
     explicit NotIndicatedParticles(BaseParticles *base_particles)
-        : ParticleScope(),
+        : WithinScope(),
           indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] != INDICATOR;
     };
 };
-//----------------------------------------------------------------------
-// Particle limiter functors
-//----------------------------------------------------------------------
-class Limiter // base class to indicate the concept of limiter
-{
-};
-class NoLimiter : public Limiter
-{
-  public:
-    NoLimiter(BaseParticles *base_particles) : Limiter(){};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
 
-class ZeroGradientLimiter : public Limiter
-{
-    Real h_ref_;
-    StdLargeVec<Vecd> &zero_gradient_residue_;
-
-  public:
-    ZeroGradientLimiter(BaseParticles *base_particles)
-        : Limiter(),
-          h_ref_(base_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength()),
-          zero_gradient_residue_(*base_particles->getVariableByName<Vecd>("ZeroGradientResidue")){};
-    virtual ~ZeroGradientLimiter(){};
-    Real operator()(size_t index_i)
-    {
-        Real error_scale = zero_gradient_residue_[index_i].squaredNorm() * h_ref_ * h_ref_;
-        return SMIN(100.0 * error_scale, 1.0);
-    };
-};
 //----------------------------------------------------------------------
 // Particle average functors
 //----------------------------------------------------------------------
@@ -260,33 +240,37 @@ class AdaptiveResolution
 template <class ReturnType>
 struct ReduceSum
 {
+    ReturnType reference_ = ZeroData<ReturnType>::value;
     ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
 };
 
 struct ReduceMax
 {
-    static constexpr Real reference_ = MinReal;
+    Real reference_ = MinReal;
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
 
 struct ReduceMin
 {
-    static constexpr Real reference_ = MaxReal;
+    Real reference_ = MaxReal;
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
 
 struct ReduceOR
 {
+    bool reference_ = false;
     bool operator()(bool x, bool y) const { return x || y; };
 };
 
 struct ReduceAND
 {
+    bool reference_ = true;
     bool operator()(bool x, bool y) const { return x && y; };
 };
 
 struct ReduceLowerBound
 {
+    Vecd reference_ = MaxReal * Vecd::Ones();
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
         Vecd lower_bound;
@@ -295,8 +279,10 @@ struct ReduceLowerBound
         return lower_bound;
     };
 };
+
 struct ReduceUpperBound
 {
+    Vecd reference_ = MinReal * Vecd::Ones();
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
         Vecd upper_bound;

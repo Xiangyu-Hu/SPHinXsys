@@ -91,7 +91,7 @@ class DiffusionBCs
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd displ = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displ / (displ.norm() + 1.0e-15);
 
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
@@ -142,7 +142,7 @@ class ComputeFiberAndSheetDirections
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from Levelset field. */
-        Vecd displ = sph_body_.initial_shape_->findNormalDirection(pos_[index_i]);
+        Vecd displ = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displ / (displ.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)
@@ -244,10 +244,10 @@ class ApplyStimulusCurrentSII
 /**
  * define observer particle generator.
  */
-class HeartObserverParticleGenerator : public ParticleGeneratorObserver
+class HeartObserverParticleGenerator : public ParticleGenerator<Observer>
 {
   public:
-    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGeneratorObserver(sph_body)
+    explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
@@ -281,7 +281,7 @@ int main(int ac, char *av[])
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
         herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
-        herat_model.generateParticles<ParticleGeneratorLattice>();
+        herat_model.generateParticles<Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
         using namespace relax_dynamics;
@@ -357,24 +357,25 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : physiology_heart.generateParticles<ParticleGeneratorLattice>();
+        ? physiology_heart.generateParticles<Reload>("HeartModel")
+        : physiology_heart.generateParticles<Lattice>();
 
     /** create a SPH body, material and particles */
     SolidBody mechanics_heart(sph_system, makeShared<Heart>("MechanicalHeart"));
     mechanics_heart.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<ParticleGeneratorReload>("HeartModel")
-        : mechanics_heart.generateParticles<ParticleGeneratorLattice>();
+        ? mechanics_heart.generateParticles<Reload>("HeartModel")
+        : mechanics_heart.generateParticles<Lattice>();
 
     //----------------------------------------------------------------------
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<HeartObserverParticleGenerator>();
+    voltage_observer.generateParticles(HeartObserverParticleGenerator(voltage_observer));
+
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
+    myocardium_observer.generateParticles(HeartObserverParticleGenerator(myocardium_observer));
     //----------------------------------------------------------------------
     //	SPHBody relation (topology) section
     //----------------------------------------------------------------------
@@ -417,7 +418,7 @@ int main(int ac, char *av[])
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(muscle_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(muscle_base);
     //----------------------------------------------------------------------
     //	SPH Output section
     //----------------------------------------------------------------------

@@ -75,7 +75,7 @@ class ViscousForce<DataDelegationType>
     virtual ~ViscousForce(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Real> &rho_, &mass_, &Vol_;
     StdLargeVec<Vecd> &vel_, &viscous_force_;
     Real smoothing_length_;
 };
@@ -150,6 +150,7 @@ class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<FluidContactD
   protected:
     StdVec<ViscosityType> contact_mu_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdVec<StdLargeVec<Real>*> wall_Vol_;
 };
 
 using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity>;
@@ -172,6 +173,7 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<AngularVecd> vorticity_;
 };

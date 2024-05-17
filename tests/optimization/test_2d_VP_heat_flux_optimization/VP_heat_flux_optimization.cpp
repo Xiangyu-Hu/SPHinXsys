@@ -180,9 +180,10 @@ class ImposeObjectiveFunction
     StdLargeVec<Real> &species_recovery_;
 
   public:
-    ImposeObjectiveFunction(SPHBody &sph_body) : DiffusionBasedMapping<DiffusionParticles>(sph_body),
-                                                 species_modified_((*particles_->getVariableByName<Real>("SpeciesModified"))),
-                                                 species_recovery_((*particles_->getVariableByName<Real>("SpeciesRecovery")))
+    ImposeObjectiveFunction(SPHBody &sph_body)
+        : DiffusionBasedMapping<DiffusionParticles>(sph_body),
+          species_modified_((*particles_->getVariableByName<Real>("SpeciesModified"))),
+          species_recovery_((*particles_->getVariableByName<Real>("SpeciesRecovery")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -210,11 +211,11 @@ TEST(test_optimization, test_problem4_optimized)
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
     diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<Lattice>();
 
     BodyRegionByParticle heat_flux_region(diffusion_body, makeShared<MultiPolygonShape>(createHeatFluxBoundary(), "HeatFluxRegion"));
     //----------------------------------------------------------------------

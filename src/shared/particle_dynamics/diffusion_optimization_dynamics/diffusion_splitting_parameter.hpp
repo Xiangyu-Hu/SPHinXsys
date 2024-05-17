@@ -25,13 +25,13 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<ParticlesType, Var
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        size_t &index_j = inner_neighborhood.j_[n];
-        Real &dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
-        Real &r_ij_ = inner_neighborhood.r_ij_[n];
+        size_t index_j = inner_neighborhood.j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+        Real r_ij = inner_neighborhood.r_ij_[n];
 
         VariableType variable_derivative = variable_i + this->variable_[index_j];
         Real phi_ij = this->species_modified_[index_i] - this->species_recovery_[index_j];
-        Real parameter_b = phi_ij * dW_ijV_j_ * dt / r_ij_;
+        Real parameter_b = phi_ij * dW_ijV_j * dt / r_ij;
 
         error_and_parameters.error_ -= variable_derivative * parameter_b;
         error_and_parameters.a_ += parameter_b;
@@ -58,12 +58,12 @@ void ParameterSplittingByPDEInner<ParticlesType, VariableType>::
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        size_t &index_j = inner_neighborhood.j_[n];
-        Real &dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
-        Real &r_ij_ = inner_neighborhood.r_ij_[n];
+        size_t index_j = inner_neighborhood.j_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
+        Real r_ij = inner_neighborhood.r_ij_[n];
 
         Real phi_ij = this->species_modified_[index_i] - this->species_recovery_[index_j];
-        Real parameter_b = phi_ij * dW_ijV_j_ * dt / r_ij_;
+        Real parameter_b = phi_ij * dW_ijV_j * dt / r_ij;
 
         this->parameter_recovery_[index_j] = this->variable_[index_j];
         this->variable_[index_j] += parameter_k * parameter_b;
@@ -139,6 +139,7 @@ ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, Variabl
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
+        boundary_Vol_.push_back(&this->contact_particles_[k]->Vol_);
         boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
         boundary_species_.push_back(&(this->contact_particles_[k]->all_species_));
         boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
@@ -157,6 +158,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
     {
         StdLargeVec<Real> &heat_flux_k = *(this->boundary_heat_flux_[k]);
         StdLargeVec<Vecd> &normal_vector_k = *(this->boundary_normal_vector_[k]);
+        StdLargeVec<Real>& Vol_k = *(this->boundary_Vol_[k]);
         StdVec<StdLargeVec<Real>> &species_k = *(boundary_species_[k]);
 
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -168,7 +170,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
             {
                 VariableType variable_derivative = variable_i;
                 Real phi_ij = 2 * (this->species_modified_[index_i] - species_k[this->phi_][index_j]);
-                Real parameter_b = 2.0 * phi_ij * contact_neighborhood.dW_ijV_j_[n] * dt / contact_neighborhood.r_ij_[n];
+                Real parameter_b = 2.0 * phi_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
                 error_and_parameters.error_ -= variable_derivative * parameter_b;
                 error_and_parameters.a_ += parameter_b;
@@ -177,7 +179,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
             if (heat_flux_k[index_j] != 0.0)
             {
                 Vecd n_ij = this->normal_vector_[index_i] - normal_vector_k[index_j];
-                error_and_parameters.error_ -= heat_flux_k[index_j] * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n].dot(n_ij) * dt;
+                error_and_parameters.error_ -= heat_flux_k[index_j] * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n].dot(n_ij) * dt;
             }
         }
     }

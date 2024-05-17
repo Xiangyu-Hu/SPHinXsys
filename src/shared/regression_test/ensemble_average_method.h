@@ -27,7 +27,9 @@
  * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef ENSEMBLE_AVERAGE_H
+#define ENSEMBLE_AVERAGE_H
+
 #include "regression_test_base.hpp"
 
 namespace SPH
@@ -63,7 +65,8 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
 
   public:
     template <typename... Args>
-    explicit RegressionTestEnsembleAverage(Args &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...)
+    explicit RegressionTestEnsembleAverage(Args &&...args)
+        : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...)
     {
         this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
     };
@@ -77,7 +80,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     void resultTest();              /** test the new result if it is converged within the range. */
 
     /* the interface for generating the priori converged result with M&V. */
-    void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, std::string filter = "false")
+    void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, const std::string &filter = "false")
     {
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
@@ -99,7 +102,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     };
 
     /** the interface for testing new result. */
-    void testResult(std::string filter = "false")
+    void testResult(const std::string &filter = "false")
     {
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
@@ -110,4 +113,5 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
         resultTest();
     };
 };
-}; // namespace SPH
+};     // namespace SPH
+#endif // ENSEMBLE_AVERAGE_H

@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
-    water_body.generateParticles<ParticleGeneratorLattice>();
+    water_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -115,8 +115,10 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
-    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_x(water_body.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_y(water_body.getSPHBodyBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, periodic_along_x);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);

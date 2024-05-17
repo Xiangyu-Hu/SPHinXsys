@@ -138,12 +138,12 @@ int main(int ac, char *av[])
     /** create a bar body. */
     SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
     bar_body.defineParticlesAndMaterial<BarParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    bar_body.generateParticles<BarParticleGenerator>();
+    bar_body.generateParticles(BarParticleGenerator(bar_body));
 
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
     bar_observer.defineParticlesAndMaterial();
-    bar_observer.generateParticles<ParticleGeneratorObserver>(observation_location);
+    bar_observer.generateParticles<Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

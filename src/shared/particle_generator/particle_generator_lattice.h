@@ -31,7 +31,7 @@
 #define PARTICLE_GENERATOR_LATTICE_H
 
 #include "base_particle_generator.h"
-
+#include "particle_generator_reserve.h"
 namespace SPH
 {
 
@@ -49,7 +49,7 @@ class GeneratingMethod<Lattice>
   protected:
     Real lattice_spacing_;      /**< Initial particle spacing. */
     BoundingBox domain_bounds_; /**< Domain bounds. */
-    Shape &initial_shape_;         /**< Geometry shape for body. */
+    Shape &initial_shape_;      /**< Geometry shape for body. */
 };
 
 template <>
@@ -61,7 +61,6 @@ class ParticleGenerator<Lattice>
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() override;
 };
-using ParticleGeneratorLattice = ParticleGenerator<Lattice>;
 
 template <> // For generating particles with adaptive resolution from lattice positions
 class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
@@ -76,10 +75,9 @@ class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
     ParticleRefinementByShape *particle_adaptation_;
     virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
-using ParticleGeneratorAdaptive = ParticleGenerator<Lattice, Adaptive>;
 
 template <> // For generating surface particles from lattice positions using reduced order approach
-class ParticleGenerator<Surface, Lattice, ReducedOrder>
+class ParticleGenerator<ThickSurface, Lattice>
     : public ParticleGenerator<Surface>, public GeneratingMethod<Lattice>
 {
   public:
@@ -95,6 +93,5 @@ class ParticleGenerator<Surface, Lattice, ReducedOrder>
     size_t all_cells_;                   /**< Number of cells enclosed by the volume. */
     size_t planned_number_of_particles_; /**< Number of particles in planned manner. */
 };
-using ParticleGeneratorThickSurface = ParticleGenerator<Surface, Lattice, ReducedOrder>;
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_LATTICE_H

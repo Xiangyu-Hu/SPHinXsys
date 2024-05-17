@@ -48,6 +48,7 @@ class LinearGradientCorrectionMatrix<DataDelegationType>
     virtual ~LinearGradientCorrectionMatrix(){};
 
   protected:
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
 };
 

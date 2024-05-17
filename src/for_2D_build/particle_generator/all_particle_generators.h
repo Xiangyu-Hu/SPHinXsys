@@ -31,5 +31,6 @@
 
 #include "particle_generator_lattice.h"
 #include "particle_generator_mesh.h"
+#include "particle_generator_reserve.h"
 
 #endif // ALL_PARTICLE_GENERATORS_2D_H

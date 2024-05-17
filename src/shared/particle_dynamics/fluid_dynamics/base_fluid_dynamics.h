@@ -68,20 +68,14 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
             wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
             wall_n_.push_back(&(this->contact_particles_[k]->n_));
             wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
-            wall_phi_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("SignedDistance"));
+            wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
         }
     };
     virtual ~InteractionWithWall(){};
 
   protected:
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_, wall_phi_;
-
-    Real ReflectiveFactor(Vecd distance_to_fluid, Vecd distance_from_surface)
-    {
-        Vecd distance_diff = distance_to_fluid + distance_from_surface;
-        return SMIN(2.0, 1.0 + distance_diff.dot(distance_from_surface) / distance_diff.squaredNorm());
-    };
+    StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
 };
 
 } // namespace fluid_dynamics

@@ -28,7 +28,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
     defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
-    generateParticles<ParticleGeneratorLattice>();
+    generateParticles<Lattice>();
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -111,7 +111,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
     SolidBody model(system, triangle_mesh_shape);
     model.defineBodyLevelSetShape()->cleanLevelSet();
     model.defineParticlesAndMaterial<SolidParticles, Solid>();
-    model.generateParticles<ParticleGeneratorLattice>();
+    model.generateParticles<Lattice>();
 
     if (particle_relaxation)
     {
@@ -503,7 +503,7 @@ void StructuralSimulation::initializeConstrainSolidBody()
     for (size_t i = 0; i < body_indices_fixed_constraint_.size(); i++)
     {
         int body_index = body_indices_fixed_constraint_[i];
-        fixed_constraint_body_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::FixBodyConstraint>>(*solid_body_list_[body_index]->getSolidBodyFromMesh()));
+        fixed_constraint_body_.emplace_back(makeShared<SimpleDynamics<FixBodyConstraint>>(*solid_body_list_[body_index]->getSolidBodyFromMesh()));
     }
 }
 
@@ -527,7 +527,7 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
         // create the triangle mesh of the box
         BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
-        fixed_constraint_region_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>(*bp));
+        fixed_constraint_region_.emplace_back(makeShared<SimpleDynamics<FixBodyPartConstraint>>(*bp));
     }
 }
 

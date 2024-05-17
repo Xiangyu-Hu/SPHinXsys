@@ -32,7 +32,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<ParticlesType, V
         // linear projection
         VariableType variable_derivative = (variable_i - this->variable_[index_j]);
         Real diff_coff_ij = this->all_diffusion_[this->phi_]->getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
-        Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ijV_j_[n] * dt / r_ij_;
+        Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * dt / r_ij_;
 
         error_and_parameters.error_ -= variable_derivative * parameter_b;
         error_and_parameters.a_ += parameter_b;
@@ -59,7 +59,7 @@ void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
         Vecd &e_ij_ = inner_neighborhood.e_ij_[n];
 
         Real diff_coff_ij = this->all_diffusion_[this->phi_]->getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
-        Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ijV_j_[n] * dt / r_ij_;
+        Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * dt / r_ij_;
         this->variable_[index_j] -= parameter_k * parameter_b;
     }
 }
@@ -83,6 +83,7 @@ TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, Varia
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
+        boundary_Vol_.push_back(&this->contact_particles_[k]->Vol_);
         boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
         boundary_variable_.push_back(this->contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
         boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
@@ -99,6 +100,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<Particles
     /* contact interaction. */
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
+        StdLargeVec<Real> &Vol_k = *(this->boundary_Vol_[k]);
         StdLargeVec<Real> &heat_flux_k = *(this->boundary_heat_flux_[k]);
         StdLargeVec<Vecd> &normal_vector_k = *(this->boundary_normal_vector_[k]);
         StdLargeVec<VariableType> &variable_k = *(this->boundary_variable_[k]);
@@ -113,14 +115,14 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<Particles
                 // linear projection
                 VariableType variable_derivative = 2 * (variable_i - variable_k[index_j]);
                 Real diff_coff_ij = this->all_diffusion_[this->phi_]->getDiffusionCoeffWithBoundary(index_i);
-                Real parameter_b = 2.0 * diff_coff_ij * contact_neighborhood.dW_ijV_j_[n] * dt / contact_neighborhood.r_ij_[n];
+                Real parameter_b = 2.0 * diff_coff_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
                 error_and_parameters.error_ -= variable_derivative * parameter_b;
                 error_and_parameters.a_ += parameter_b;
             }
 
             Vecd n_ij = this->normal_vector_[index_i] - normal_vector_k[index_j];
-            error_and_parameters.error_ -= heat_flux_k[index_j] * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n].dot(n_ij) * dt;
+            error_and_parameters.error_ -= heat_flux_k[index_j] * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n].dot(n_ij) * dt;
         }
     }
     return error_and_parameters;

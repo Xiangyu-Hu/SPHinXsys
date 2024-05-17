@@ -126,11 +126,8 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
  */
 template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class ReduceDynamics : public LocalDynamicsType,
-                       public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
-
+                       public BaseDynamics<typename LocalDynamicsType::ReturnType>
 {
-    using ReturnType = typename LocalDynamicsType::ReduceReturnType;
-
   public:
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
@@ -138,7 +135,7 @@ class ReduceDynamics : public LocalDynamicsType,
           BaseDynamics<ReturnType>(identifier.getSPHBody()){};
     virtual ~ReduceDynamics(){};
 
-    using ReduceReturnType = ReturnType;
+    using ReturnType = typename LocalDynamicsType::ReturnType;
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 
@@ -162,7 +159,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
 {
   public:
     template <typename... Args>
-    BaseInteractionDynamics(Args &&...args)
+    explicit BaseInteractionDynamics(Args &&...args)
         : LocalDynamicsType(std::forward<Args>(args)...),
           BaseDynamics<void>(this->getSPHBody()){};
     virtual ~BaseInteractionDynamics(){};
@@ -210,9 +207,9 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
     InteractionSplit(Args &&...args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
-          split_cell_lists_(real_body_.getSplitCellLists())
+          split_cell_lists_(*real_body_.getCellLinkedList().getSplitCellLists())
     {
-        real_body_.setUseSplitCellLists();
+        real_body_.getCellLinkedList().setUseSplitCellLists();
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_update<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionSplit requirements");

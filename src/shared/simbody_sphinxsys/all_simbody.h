@@ -34,4 +34,14 @@
 #include "type_wrapper.h"
 #include "xml_engine.h"
 
+#include "base_data_type.h"
+
+namespace SPH
+{
+template <>
+struct ZeroData<SimTK::SpatialVec>
+{
+    static inline SimTK::SpatialVec value = SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0));
+};
+} // namespace SPH
 #endif // ALL_SIMBODY_H
