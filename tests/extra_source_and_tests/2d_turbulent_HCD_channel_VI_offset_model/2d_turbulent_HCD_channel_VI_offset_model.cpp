@@ -229,7 +229,7 @@ int main(int ac, char *av[])
             {
                 //if (inner_itr == 8)
                 //{
-                //    system("pause");
+                //    std::cin.get();
                 //}
 
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
@@ -296,7 +296,7 @@ int main(int ac, char *av[])
         body_states_recording.writeToFile();
         num_output_file++;
         if (num_output_file == 440)
-            system("pause");
+            std::cin.get();
         //TickCount t3 = TickCount::now();
 
     }

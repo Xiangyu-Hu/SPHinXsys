@@ -22,7 +22,7 @@ namespace fluid_dynamics
 		//if (y_p_constant < 0.05 * dp_wall)
 		//{
 		//	std::cout << "y_p_j < 0.05 * wall_particle_spacing_" << std::endl;
-		//	system("pause");
+		//	std::cin.get();
 		//}
 		//y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
 		
@@ -45,12 +45,12 @@ namespace fluid_dynamics
 		{
 			std::cout << "u_star=" << dimensionless_velocity << std::endl;
 			std::cout << "y_star=" << y_star << std::endl;
-			system("pause");
+			std::cin.get();
 		}
 		//if (dimensionless_velocity<0.0)
 		//{
 		//	std::cout << "dimensionless_velocity<0.0" << dimensionless_velocity << std::endl;
-		//	system("pause");
+		//	std::cin.get();
 		//}
 
 		return dimensionless_velocity;
@@ -748,7 +748,7 @@ namespace fluid_dynamics
 			{
 				std::cout << "r_dmy_itfc_n_sum is almost zero" << std::endl;
 				std::cout << "count=" << count_average << std::endl;
-				system("pause");
+				std::cin.get();
 			}
 			//** Average the projection distances according to the kernel approx. *  
 			distance_to_dummy_interface_up_average_[index_i] = r_dmy_itfc_n_sum / ttl_weight;
@@ -763,7 +763,7 @@ namespace fluid_dynamics
 			if (distance_to_dummy_interface_levelset_[index_i] != static_cast<Real>(distance_to_dummy_interface_levelset_[index_i]))
 			{
 				std::cout << "bbb" << std::endl;
-				system("pause");
+				std::cin.get();
 			}
 		}
 	}
@@ -786,7 +786,7 @@ namespace fluid_dynamics
 			//	std::cout << "There is a particle too close to wall" << std::endl;
 			//	std::cout << "index_i=" << index_i << std::endl;
 			//	std::cout << "distance=" << distance << std::endl;
-			//	system("pause");
+			//	std::cin.get();
 			//}
 		}
 	}
@@ -867,7 +867,7 @@ namespace fluid_dynamics
 			//if (r_dummy_normal <= TinyReal)
 			//{
 				//std::cout << "r_dummy_normal <= TinyReal" << std::endl;
-				//system("pause");
+				//std::cin.get();
 			//}
 			Vecd e_i_nearest_tau = e_nearest_tau_[index_i];
 			Vecd e_i_nearest_n = e_nearest_normal_[index_i];
@@ -888,7 +888,7 @@ namespace fluid_dynamics
 			if (wall_Y_star_[index_i] != static_cast<Real>(wall_Y_star_[index_i]))
 			{
 				std::cout << "y* is not a real value, please check" << std::endl;
-				system("pause");
+				std::cin.get();
 			}
 				
 
@@ -912,7 +912,7 @@ namespace fluid_dynamics
 				std::cout << "velo_tan_mag / u_star =" << velo_tan_mag / u_star << std::endl;
 				std::cout << "velo_tan_mag =" << velo_tan_mag << std::endl;
 				std::cout << " u_star =" << u_star << std::endl;
-				system("pause");
+				std::cin.get();
 			}
 
 			//** friction velocity have the same direction of vel_i, if not, change its direction *
@@ -1084,7 +1084,7 @@ namespace fluid_dynamics
 				//if (num_in_cell_[i] == 0 && GlobalStaticVariables::physical_time_ > cutoff_time)
 				//{
 				//	std::cout << "There is a empaty monitoring cell, cell number=" << i << std::endl;
-				//	system("pause");
+				//	std::cin.get();
 				//}
 				num_in_cell_[i] == 0 ? plt_engine_.writeAQuantity(out_file, 0.0) :
 					plt_engine_.writeAQuantity(out_file, data_sto_[i][j] / num_in_cell_[i]);

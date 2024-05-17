@@ -23,7 +23,7 @@ Real DL5 = 1.0 + extend_out;
 Real DL = DL1 + DL2 + DL3 + DL4 + DL5;
 Real DH1 = DL2 / sqrt(3.0);
 
-Real num_fluid_cross_section = 160.0;
+Real num_fluid_cross_section = 80.0;
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
 //----------------------------------------------------------------------
@@ -201,7 +201,7 @@ struct InflowVelocity
         if (position[1] > half_channel_height)
         {
             std::cout << "Particles out of domain, wrong inlet velocity." << std::endl;
-            system("pause");
+            std::cin.get();
         }
         target_velocity[1] = 0.0;
         return target_velocity;
