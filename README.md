@@ -177,6 +177,7 @@ SPHinXsys is cross-platform can be compiled and used in Windows, Linux and McOS 
 
 For installation, program manual and tutorials, please check <https://www.sphinxsys.org/html/sphinx_index.html>.
 Please check the documentation of the code at <https://xiangyu-hu.github.io/SPHinXsys/>.
+For a docker image, check <https://hub.docker.com/repository/docker/toshev/sphinxsys/general>.
 
 ## Get involved to SPHinXsys
 
