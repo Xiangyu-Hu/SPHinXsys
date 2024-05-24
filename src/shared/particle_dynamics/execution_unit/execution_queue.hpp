@@ -38,7 +38,7 @@ namespace SPH::execution {
         }
 
     private:
-        ExecutionQueue() : work_group_size(32), sycl_queue() {}
+        ExecutionQueue() : work_group_size(128), sycl_queue() {}
 
         std::size_t work_group_size;
         std::unique_ptr<sycl::queue> sycl_queue;
