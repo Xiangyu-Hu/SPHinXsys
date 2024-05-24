@@ -101,18 +101,16 @@ struct TypeIdentity
  * @class MonoFieldElectroPhysiology
  * @brief material class for electro_physiology.
  */
-class MonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
+class MonoFieldElectroPhysiology
+    : public ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusion>
 {
   public:
-    template <class DiffusionType>
-    MonoFieldElectroPhysiology(SharedPtr<ElectroPhysiologyReaction> electro_physiology_reaction_ptr,
-                               TypeIdentity<DiffusionType> empty_object,
+    MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
                                Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-        : DiffusionReaction<Solid, 3>({"Voltage", "GateVariable", "ActiveContractionStress"},
-                                      electro_physiology_reaction_ptr)
+        : ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusion>(electro_physiology_reaction)
     {
         material_type_name_ = "MonoFieldElectroPhysiology";
-        initializeAnDiffusion<DiffusionType>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
+        addDiffusion("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
     };
     virtual ~MonoFieldElectroPhysiology(){};
 };

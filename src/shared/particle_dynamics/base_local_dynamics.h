@@ -66,7 +66,7 @@ class BaseLocalDynamics
     virtual ~BaseLocalDynamics(){};
     SPHBody &getSPHBody() { return sph_body_; };
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
   protected:
     DynamicsIdentifier &identifier_;
     SPHBody &sph_body_;
@@ -127,14 +127,30 @@ class Average : public ReduceSumType
  * @details Note that the form "XXX" is not std::string type, so we need to use
  * std::string("XXX") to convert it to std::string type.
  */
+
+template <typename... T>
+class ConstructorArgs;
+
 template <typename BodyRelationType, typename... OtherArgs>
-struct ConstructorArgs
+class ConstructorArgs<BodyRelationType, OtherArgs...>
 {
+  public:
     BodyRelationType &body_relation_;
-    std::tuple<OtherArgs...> others_;
+    std::tuple<OtherArgs &&...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
     ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&...other_args)
         : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
+};
+
+template <typename BodyRelationType, typename ModelType, typename... OtherArgs>
+class ConstructorArgs<BodyRelationType, ModelType, OtherArgs...>
+    : public ConstructorArgs<BodyRelationType, OtherArgs...>
+{
+  public:
+    ModelType &model_;
+    ConstructorArgs(BodyRelationType &body_relation, ModelType &model, OtherArgs &&...other_args)
+        : ConstructorArgs<BodyRelationType, OtherArgs...>(body_relation, std::forward<OtherArgs>(other_args)...),
+          model_(model){};
 };
 
 /**
@@ -152,7 +168,7 @@ class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
   public:
     ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0){};
+    void interaction(size_t index_i, Real dt = 0.0) {};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

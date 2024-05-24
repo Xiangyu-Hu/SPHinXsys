@@ -21,7 +21,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    DiffusionMaterial *diffusion_material = diffusion_body.defineMaterial<DiffusionMaterial>();
+    IsotropicDiffusion *diffusion = diffusion_body.defineMaterial<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
@@ -53,10 +53,10 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann);
 
     DiffusionBodyRelaxation temperature_relaxation(
-        ConstructorArgs(diffusion_body_inner, diffusion_material->AllDiffusions()),
-        ConstructorArgs(diffusion_body_contact_Dirichlet, diffusion_material->AllDiffusions()),
-        ConstructorArgs(diffusion_body_contact_Neumann, diffusion_material->AllDiffusions()));
-    GetDiffusionTimeStepSize<DiffusionMaterial> get_time_step_size(diffusion_body);
+        ConstructorArgs(diffusion_body_inner, diffusion),
+        ConstructorArgs(diffusion_body_contact_Dirichlet, diffusion),
+        ConstructorArgs(diffusion_body_contact_Neumann, diffusion));
+    GetDiffusionTimeStepSize<IsotropicDiffusion> get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_Dirichlet);
     SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_Neumann);

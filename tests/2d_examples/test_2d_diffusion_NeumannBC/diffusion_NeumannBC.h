@@ -94,17 +94,6 @@ class NeumannWallBoundary : public MultiPolygonShape
 };
 
 //----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    }
-};
-//----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
@@ -177,7 +166,7 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics, public General
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
-    BaseDiffusion, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
+    IsotropicDiffusion, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------

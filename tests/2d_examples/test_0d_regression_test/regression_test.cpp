@@ -101,17 +101,6 @@ MultiPolygon createOtherSideBoundary()
 namespace SPH
 {
 //----------------------------------------------------------------------
-//	Cases-dependent diffusion material
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
-    };
-};
-//----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
@@ -175,7 +164,7 @@ int main(int ac, char *av[])
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
-    DirectionalDiffusion *diffusion_material =
+    DirectionalDiffusion *diffusion =
         diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
@@ -198,9 +187,9 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
 
-    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, {diffusion_material});
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, *diffusion);
 
-    GetDiffusionTimeStepSize<DirectionalDiffusion> get_time_step_size(diffusion_body);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
     SimpleDynamics<ConstantConstraint<BodyRegionByParticle, Real>> left_boundary_condition(left_boundary, "Phi", high_temperature);
     BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));

@@ -43,17 +43,6 @@ class DiffusionBlock : public MultiPolygonShape
     }
 };
 //----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
-    };
-};
-//----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
@@ -121,7 +110,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    DiffusionMaterial *diffusion_material = diffusion_body.defineMaterial<DiffusionMaterial>();
+    DirectionalDiffusion *diffusion =
+        diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -144,10 +134,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
 
-    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, diffusion_material->AllDiffusions());
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, *diffusion);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 
-    GetDiffusionTimeStepSize<DiffusionMaterial> get_time_step_size(diffusion_body);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------

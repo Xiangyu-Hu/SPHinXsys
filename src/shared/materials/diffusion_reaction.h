@@ -221,86 +221,43 @@ class BaseReactionModel
     SpeciesNames species_names_;
     std::map<std::string, size_t> species_indexes_map_;
 };
-/** explicit specialization for empty reaction model */
-template <>
-inline BaseReactionModel<0>::BaseReactionModel() : reaction_model_("EmptyReactionModel"){};
-using NoReaction = BaseReactionModel<0>;
 
 /**
- * @class DiffusionReaction
- * @brief Complex material for diffusion or/and reactions.
+ * @class ReactionDiffusion
+ * @brief Complex material for reaction and diffusion.
  */
-template <class BaseMaterialType = BaseMaterial, int NUM_REACTIVE_SPECIES = 0>
-class DiffusionReaction : public BaseMaterialType
+template <class ReactionType, class DiffusionType>
+class ReactionDiffusion : public BaseMaterial
 {
   public:
-    static constexpr int NumReactiveSpecies = NUM_REACTIVE_SPECIES;
+    static constexpr int NumReactiveSpecies = ReactionType::NumSpecies;
 
   private:
-    UniquePtrsKeeper<BaseDiffusion> diffusion_ptr_keeper_;
-    SharedPtrKeeper<BaseReactionModel<NUM_REACTIVE_SPECIES>> reaction_ptr_keeper_;
+    UniquePtrsKeeper<DiffusionType> diffusion_ptrs_keeper_;
 
   protected:
-    typedef std::array<std::string, NUM_REACTIVE_SPECIES> ReactiveSpeciesNames;
-    StdVec<std::string> all_species_names_;
-    BaseReactionModel<NUM_REACTIVE_SPECIES> &reaction_model_;
-    std::map<std::string, size_t> all_species_indexes_map_;
-    StdVec<BaseDiffusion *> all_diffusions_;
-    IndexVector reactive_species_indexes_;
-    IndexVector diffusion_species_indexes_;
-    IndexVector gradient_species_indexes_;
+    ReactionType &reaction_model_;
+    StdVec<DiffusionType *> all_diffusions_;
 
   public:
     /** Constructor for material with diffusion and reaction. */
-    template <typename... MaterialArgs>
-    DiffusionReaction(const StdVec<std::string> &all_species_names,
-                      SharedPtr<BaseReactionModel<NUM_REACTIVE_SPECIES>> reaction_model_ptr,
-                      MaterialArgs &&... material_args)
-        : BaseMaterialType(std::forward<MaterialArgs>(material_args)...),
-          all_species_names_(all_species_names),
-          reaction_model_(reaction_ptr_keeper_.assignRef(reaction_model_ptr))
+    ReactionDiffusion(ReactionType &reaction_model)
+        : BaseMaterial(), reaction_model_(reaction_model)
     {
-        BaseMaterialType::material_type_name_ =
-            NUM_REACTIVE_SPECIES == 0 ? "Diffusion" : "DiffusionReaction";
-
-        for (size_t i = 0; i != all_species_names.size(); ++i)
-        {
-            all_species_indexes_map_.insert(make_pair(all_species_names[i], i));
-        }
-
-        for (size_t i = 0; i != NUM_REACTIVE_SPECIES; ++i)
-        {
-            const ReactiveSpeciesNames &reactive_species_names = reaction_model_.getSpeciesNames();
-            size_t reactive_species_index = all_species_indexes_map_[reactive_species_names[i]];
-            if (reactive_species_index != all_species_indexes_map_.size())
-            {
-                reactive_species_indexes_.push_back(reactive_species_index);
-            }
-            else
-            {
-                std::cout << "\n Error: reactive species '" << reactive_species_names[i] << "' not defined!" << std::endl;
-                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-                exit(1);
-            }
-        }
+        material_type_name_ = "ReactionDiffusion";
     };
-    virtual ~DiffusionReaction(){};
-    StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
-    std::map<std::string, size_t> AllSpeciesIndexMap() { return all_species_indexes_map_; };
-    IndexVector &ReactiveSpeciesIndexes() { return reactive_species_indexes_; };
-    StdVec<BaseDiffusion *> AllDiffusions() { return all_diffusions_; };
-    BaseReactionModel<NUM_REACTIVE_SPECIES> &ReactionModel() { return reaction_model_; };
+    virtual ~ReactionDiffusion(){};
+    StdVec<DiffusionType *> AllDiffusions() { return all_diffusions_; };
+    ReactionType &ReactionModel() { return reaction_model_; };
 
     virtual void registerReloadLocalParameters(BaseParticles *base_particles) override
     {
-        BaseMaterialType::registerReloadLocalParameters(base_particles);
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
             all_diffusions_[k]->registerReloadLocalParameters(base_particles);
     };
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override
     {
-        BaseMaterialType::initializeLocalParameters(base_particles);
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
             all_diffusions_[k]->initializeLocalParameters(base_particles);
     };
@@ -317,19 +274,17 @@ class DiffusionReaction : public BaseMaterialType
         return dt;
     };
 
-    /** Initialize a diffusion material. */
-    template <class DiffusionType, typename... Args>
-    void initializeAnDiffusion(const std::string &diffusion_species_name,
-                               const std::string &gradient_species_name, Args &&... args)
+    template <typename... Args>
+    void addDiffusion(const std::string &diffusion_species_name,
+                      const std::string &gradient_species_name, Args &&...args)
     {
-        size_t diffusion_species_index = all_species_indexes_map_[diffusion_species_name];
-        size_t gradient_species_index = all_species_indexes_map_[gradient_species_name];
+        auto species_names = reaction_model_.getSpeciesNames();
 
-        if (diffusion_species_index != all_species_indexes_map_.size() &&
-            gradient_species_index != all_species_indexes_map_.size())
+        if (std::find(species_names.begin(), species_names.end(), diffusion_species_name) != std::end(species_names) &&
+            std::find(species_names.begin(), species_names.end(), gradient_species_name) != std::end(species_names))
         {
             all_diffusions_.push_back(
-                diffusion_ptr_keeper_.createPtr<DiffusionType>(
+                diffusion_ptrs_keeper_.template createPtr<DiffusionType>(
                     diffusion_species_name, gradient_species_name, std::forward<Args>(args)...));
         }
         else
@@ -341,8 +296,6 @@ class DiffusionReaction : public BaseMaterialType
             exit(1);
         }
     };
-
-    virtual DiffusionReaction<BaseMaterialType, NUM_REACTIVE_SPECIES> *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
 #endif // DIFFUSION_REACTION_H
