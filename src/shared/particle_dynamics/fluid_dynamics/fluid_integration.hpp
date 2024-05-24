@@ -23,7 +23,7 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_),
-      device_kernel(inner_relation, particles_)
+      device_kernel(inner_relation, particles_, riemann_solver_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -84,9 +84,10 @@ Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_),
-      device_kernel(wall_contact_relation, particles_, wall_mass_device_.data(),
-                    wall_Vol_device_.data(), wall_vel_ave_device_.data(),
-                    wall_force_ave_device_.data(), wall_n_device_.data()) {}
+      device_kernel(wall_contact_relation, particles_, riemann_solver_,
+                    wall_mass_device_.data(), wall_Vol_device_.data(),
+                    wall_vel_ave_device_.data(), wall_force_ave_device_.data(),
+                    wall_n_device_.data()) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
 void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
@@ -165,7 +166,7 @@ Integration2ndHalf<Inner<>, RiemannSolverType>::
     Integration2ndHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
       mass_(particles_->mass_), Vol_(particles_->Vol_),
-      device_kernel(inner_relation, particles_) {}
+      device_kernel(inner_relation, particles_, riemann_solver_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void Integration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -204,9 +205,10 @@ Integration2ndHalf<Contact<Wall>, RiemannSolverType>::
     Integration2ndHalf(BaseContactRelation &wall_contact_relation)
     : BaseIntegrationWithWall(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_),
-      device_kernel(wall_contact_relation, particles_, wall_mass_device_.data(),
-                    wall_Vol_device_.data(), wall_vel_ave_device_.data(),
-                    wall_force_ave_device_.data(), wall_n_device_.data()) {}
+      device_kernel(wall_contact_relation, particles_, riemann_solver_,
+                    wall_mass_device_.data(), wall_Vol_device_.data(),
+                    wall_vel_ave_device_.data(), wall_force_ave_device_.data(),
+                    wall_n_device_.data()) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)

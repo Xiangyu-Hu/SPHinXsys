@@ -84,7 +84,7 @@ class BaseIntegrationKernel {
           force_prior_(particles->getDeviceVariableByName<DeviceVecd>("ForcePrior")) {}
 
   protected:
-    MaterialTypeKernel fluid_;
+    const MaterialTypeKernel fluid_;
     DeviceReal *rho_, *p_, *drho_dt_, *mass_, *Vol_;
     DeviceVecd *pos_, *vel_, *force_, *force_prior_;
 };
@@ -113,23 +113,24 @@ template<class RiemannSolverType, class MaterialType>
 class Integration1stHalfKernel<Inner<>, RiemannSolverType, MaterialType> : public BaseIntegrationKernel<MaterialType>
 {
   public:
-    Integration1stHalfKernel(BaseInnerRelation& inner_relation, BaseParticles* particles)
-        : BaseIntegrationKernel<MaterialType>(particles),
-          correction_(particles), riemann_solver_(this->fluid_, this->fluid_),
+    Integration1stHalfKernel(BaseInnerRelation& inner_relation, BaseParticles* particles,
+                             const RiemannSolverType &riemann_solver)
+        : BaseIntegrationKernel<MaterialType>(particles), correction_(particles),
+          riemann_solver_(*riemann_solver.device_kernel.get_ptr()),
           cell_linked_list_(inner_relation.getInnerCellLinkedListDevice()),
           inner_neighbor_builder_(inner_relation.getInnerNeighborBuilderDevice()) {}
 
-    void initialization(size_t index_i, Real dt = 0.0) {
-        this->rho_[index_i] += this->drho_dt_[index_i] * dt * 0.5;
+    void initialization(DeviceInt index_i, DeviceReal dt = 0.0) {
+        this->rho_[index_i] += this->drho_dt_[index_i] * dt * DeviceReal(0.5);
         this->p_[index_i] = this->fluid_.getPressure(this->rho_[index_i]);
-        this->pos_[index_i] += this->vel_[index_i] * dt * 0.5;
+        this->pos_[index_i] += this->vel_[index_i] * dt * DeviceReal(0.5);
     }
 
-    void update(size_t index_i, Real dt = 0.0) {
+    void update(DeviceInt index_i, DeviceReal dt = 0.0) {
         this->vel_[index_i] += (this->force_prior_[index_i] + this->force_[index_i]) / this->mass_[index_i] * dt;
     }
 
-    void interaction(size_t index_i, Real dt = 0.0) {
+    void interaction(DeviceInt index_i, DeviceReal dt = 0.0) {
         auto force = VecdZero<DeviceVecd>();
         DeviceReal rho_dissipation(0);
         const auto &pressure_i = this->p_[index_i];
@@ -152,10 +153,12 @@ class Integration1stHalfKernel<Inner<>, RiemannSolverType, MaterialType> : publi
     }
 
   protected:
-    RiemannSolverType riemann_solver_;
-    NoKernelCorrection correction_;
-    CellLinkedListKernel* cell_linked_list_;
-    NeighborBuilderInnerKernel* inner_neighbor_builder_;
+    using RiemannSolverTypeKernel = typename decltype(RiemannSolverType::device_kernel)::KernelType;
+
+    const RiemannSolverTypeKernel riemann_solver_;
+    const NoKernelCorrection correction_;
+    const CellLinkedListKernel* cell_linked_list_;
+    const NeighborBuilderInnerKernel* inner_neighbor_builder_;
 };
 
 
@@ -208,16 +211,16 @@ class Integration1stHalfKernel<Contact<Wall>, RiemannSolverType, MaterialType>
 {
   public:
     template<class ...BaseArgs>
-    Integration1stHalfKernel(const BaseContactRelation& contact_relation,
-                             BaseParticles* particles, BaseArgs&& ...args)
+    Integration1stHalfKernel(const BaseContactRelation& contact_relation, BaseParticles* particles,
+                             const RiemannSolverType& riemann_solver, BaseArgs&& ...args)
         : BaseIntegrationWithWallKernel<MaterialType>(particles, std::forward<BaseArgs>(args)...),
-          correction_(particles), riemann_solver_(this->fluid_, this->fluid_),
+          correction_(particles), riemann_solver_(*riemann_solver.device_kernel.get_ptr()),
           contact_bodies_size_(contact_relation.contact_bodies_.size()),
           contact_cell_linked_lists_(contact_relation.getContactCellLinkedListsDevice()),
           contact_neighbor_builders_(contact_relation.getContactNeighborBuilderDevice()),
           particles_position_(contact_relation.base_particles_.getDeviceVariableByName<DeviceVecd>("Position")) {}
 
-    void interaction(size_t index_i, Real dt = 0.0) {
+    void interaction(DeviceInt index_i, DeviceReal dt = 0.0) {
         DeviceVecd force = VecdZero<DeviceVecd>();
         DeviceReal rho_dissipation{0};
         const DeviceVecd &force_prior_i = this->force_prior_[index_i];
@@ -226,14 +229,14 @@ class Integration1stHalfKernel<Contact<Wall>, RiemannSolverType, MaterialType>
                          &pressure_i{this->p_[index_i]},
                          &rho_i{this->rho_[index_i]};
         const auto correction_i = correction_(index_i);
-        for (size_t k = 0; k < contact_bodies_size_; ++k)
+        for (auto k = 0; k < contact_bodies_size_; ++k)
         {
             const DeviceVecd* force_ave_k = this->wall_force_ave_[k];
             const DeviceReal* wall_mass_k = this->wall_mass_[k];
             const DeviceReal* wall_Vol_k = this->wall_Vol_[k];
             const auto& neighbor_builder = *contact_neighbor_builders_[k];
             contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
-                                                           [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
+                                                           [&](const DeviceVecd &pos_i, DeviceInt index_j, const DeviceVecd &pos_j)
                                                            {
                                                                if (neighbor_builder.isWithinCutoff(pos_i, pos_j))
                                                                {
@@ -253,12 +256,14 @@ class Integration1stHalfKernel<Contact<Wall>, RiemannSolverType, MaterialType>
     }
 
   protected:
-    NoKernelCorrection correction_;
-    RiemannSolverType riemann_solver_;
-    size_t contact_bodies_size_;
+    using RiemannSolverTypeKernel = typename decltype(RiemannSolverType::device_kernel)::KernelType;
+
+    const NoKernelCorrection correction_;
+    const RiemannSolverTypeKernel riemann_solver_;
+    const DeviceInt contact_bodies_size_;
     CellLinkedListKernel **contact_cell_linked_lists_;
     NeighborBuilderContactKernel **contact_neighbor_builders_;
-    DeviceVecd *particles_position_;
+    const DeviceVecd *particles_position_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -316,21 +321,22 @@ template<class RiemannSolverType, class MaterialType>
 class Integration2ndHalfKernel<Inner<>, RiemannSolverType, MaterialType> : public BaseIntegrationKernel<MaterialType>
 {
   public:
-    Integration2ndHalfKernel(BaseInnerRelation& inner_relation, BaseParticles* particles)
+    Integration2ndHalfKernel(BaseInnerRelation& inner_relation, BaseParticles* particles,
+                             const RiemannSolverType &riemann_solver)
         : BaseIntegrationKernel<MaterialType>(particles),
-          riemann_solver_(this->fluid_, this->fluid_),
+          riemann_solver_(*riemann_solver.device_kernel.get_ptr()),
           cell_linked_list_(inner_relation.getInnerCellLinkedListDevice()),
           inner_neighbor_builder_(inner_relation.getInnerNeighborBuilderDevice()) {}
 
-    void initialization(size_t index_i, Real dt = 0.0) {
-        this->pos_[index_i] += this->vel_[index_i] * dt * 0.5;
+    void initialization(DeviceInt index_i, DeviceReal dt = 0.0) {
+        this->pos_[index_i] += this->vel_[index_i] * dt * DeviceReal(0.5);
     }
 
-    void update(size_t index_i, Real dt = 0.0) {
-        this->rho_[index_i] += this->drho_dt_[index_i] * dt * 0.5;
+    void update(DeviceInt index_i, DeviceReal dt = 0.0) {
+        this->rho_[index_i] += this->drho_dt_[index_i] * dt * DeviceReal(0.5);
     }
 
-    void interaction(size_t index_i, Real dt = 0.0)
+    void interaction(DeviceInt index_i, DeviceReal dt = 0.0)
     {
         DeviceReal density_change_rate(0);
         auto p_dissipation = VecdZero<DeviceVecd>();
@@ -353,7 +359,9 @@ class Integration2ndHalfKernel<Inner<>, RiemannSolverType, MaterialType> : publi
     }
 
   protected:
-    RiemannSolverType riemann_solver_;
+    using RiemannSolverTypeKernel = typename decltype(RiemannSolverType::device_kernel)::KernelType;
+
+    const RiemannSolverTypeKernel riemann_solver_;
     CellLinkedListKernel* cell_linked_list_;
     NeighborBuilderInnerKernel* inner_neighbor_builder_;
 };
@@ -388,28 +396,28 @@ class Integration2ndHalfKernel<Contact<Wall>, RiemannSolverType, MaterialType>
 {
   public:
     template<class ...BaseArgs>
-    Integration2ndHalfKernel(const BaseContactRelation& contact_relation,
-                             BaseParticles* particles, BaseArgs&& ...args)
+    Integration2ndHalfKernel(const BaseContactRelation& contact_relation, BaseParticles* particles,
+                             const RiemannSolverType &riemann_solver, BaseArgs&& ...args)
         : BaseIntegrationWithWallKernel<MaterialType>(particles, std::forward<BaseArgs>(args)...),
-          riemann_solver_(this->fluid_, this->fluid_),
+          riemann_solver_(*riemann_solver.device_kernel.get_ptr()),
           contact_bodies_size_(contact_relation.contact_bodies_.size()),
           contact_cell_linked_lists_(contact_relation.getContactCellLinkedListsDevice()),
           contact_neighbor_builders_(contact_relation.getContactNeighborBuilderDevice()),
           particles_position_(contact_relation.base_particles_.getDeviceVariableByName<DeviceVecd>("Position")) {}
 
-    void interaction(size_t index_i, Real dt = 0.0) {
+    void interaction(DeviceInt index_i, DeviceReal dt = 0.0) {
         DeviceReal density_change_rate{0};
         auto p_dissipation = VecdZero<DeviceVecd>();
         const DeviceVecd vel_i = this->vel_[index_i];
         const DeviceReal mass_i = this->mass_[index_i];
-        for (size_t k = 0; k < contact_bodies_size_; ++k)
+        for (auto k = 0; k < contact_bodies_size_; ++k)
         {
             const DeviceReal *wall_Vol_k = this->wall_Vol_[k];
             const DeviceVecd *vel_ave_k = this->wall_vel_ave_[k];
             const DeviceVecd *n_k = this->wall_n_[k];
             const auto& neighbor_builder = *contact_neighbor_builders_[k];
             contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
-                                                           [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
+                                                           [&](const DeviceVecd &pos_i, DeviceInt index_j, const DeviceVecd &pos_j)
                                                            {
                                                                if (neighbor_builder.isWithinCutoff(pos_i, pos_j))
                                                                {
@@ -428,8 +436,10 @@ class Integration2ndHalfKernel<Contact<Wall>, RiemannSolverType, MaterialType>
     }
 
   protected:
-    RiemannSolverType riemann_solver_;
-    size_t contact_bodies_size_;
+    using RiemannSolverTypeKernel = typename decltype(RiemannSolverType::device_kernel)::KernelType;
+
+    const RiemannSolverTypeKernel riemann_solver_;
+    const DeviceInt contact_bodies_size_;
     CellLinkedListKernel **contact_cell_linked_lists_;
     NeighborBuilderContactKernel **contact_neighbor_builders_;
     DeviceVecd *particles_position_;

@@ -93,19 +93,19 @@ class CellLinkedListKernel {
     execution::ExecutionEvent UpdateCellLists(const BaseParticles &base_particles);
 
     template <typename FunctionOnEach>
-    void forEachNeighbor(size_t index_i, const DeviceVecd *self_position,
+    void forEachNeighbor(DeviceInt index_i, const DeviceVecd *self_position,
                          const FunctionOnEach &function) const
     {
         const DeviceVecd pos_i = self_position[index_i];
-        const size_t search_depth = 1;
+        const DeviceInt search_depth = 1;
         const auto target_cell_index = CellIndexFromPosition(pos_i, *mesh_lower_bound_,
                                                              *grid_spacing_, *all_grid_points_);
         mesh_for_each_array(
             VecdMax(DeviceArrayi{0}, DeviceArrayi{target_cell_index - search_depth}),
-            VecdMin(*all_cells_, DeviceArrayi{target_cell_index + search_depth + 1}),
+            VecdMin(*all_cells_, DeviceArrayi{target_cell_index + search_depth + DeviceInt{1}}),
             [&](DeviceArrayi&& cell_index) {
                 const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells_);
-                size_t index_j = index_head_list_[linear_cell_index];
+                DeviceInt index_j = index_head_list_[linear_cell_index];
                 // Cell list ends when index_j == 0, if index_j is already zero then cell is empty.
                 while(index_j--) {  // abbreviates while(index_j != 0) { index_j -= 1; ... }
                     function(pos_i, index_j, list_data_pos_[index_j]);
@@ -121,7 +121,7 @@ class CellLinkedListKernel {
     }
 
 
-    size_t* computingSequence(BaseParticles &baseParticles);
+    DeviceInt* computingSequence(BaseParticles &baseParticles);
 
     template<class Type, int Dim>
     static inline DeviceArrayi CellIndexFromPosition(const sycl::vec<Type,Dim> &position, const sycl::vec<Type,Dim>& mesh_lower_bound,
@@ -130,7 +130,7 @@ class CellLinkedListKernel {
         return sycl::min(
             sycl::max(
                 sycl::floor((position - mesh_lower_bound) / grid_spacing)
-                    .template convert<int, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
+                    .template convert<DeviceInt, sycl::rounding_mode::rtz>(), DeviceArrayi{0}),
             all_grid_points - DeviceArrayi{2});
     }
 
@@ -143,12 +143,12 @@ class CellLinkedListKernel {
         return VecdMin(VecdMax(pos_floor, DeviceArrayi{0}), DeviceArrayi{all_grid_points - DeviceArrayi{2}});
     }
 
-    static inline size_t transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArray2i &all_cells)
+    static inline DeviceInt transferCellIndexTo1D(const DeviceArray2i &cell_index, const DeviceArray2i &all_cells)
     {
         return cell_index[0] * all_cells[1] + cell_index[1];
     }
 
-    static inline size_t transferCellIndexTo1D(const DeviceArray3i &cell_index, const DeviceArray3i &all_cells)
+    static inline DeviceInt transferCellIndexTo1D(const DeviceArray3i &cell_index, const DeviceArray3i &all_cells)
     {
         return cell_index[0] * all_cells[1] * all_cells[2] +
                cell_index[1] * all_cells[2] +
@@ -156,16 +156,16 @@ class CellLinkedListKernel {
     }
 
   private:
-    size_t total_real_particles_;
+    DeviceInt total_real_particles_;
     DeviceVecd* list_data_pos_;
 
     DeviceVecd *mesh_lower_bound_;
     DeviceReal *grid_spacing_;
     DeviceArrayi *all_grid_points_, *all_cells_;
 
-    size_t* index_list_;
-    size_t* index_head_list_;
-    size_t index_head_list_size_;
+    DeviceInt* index_list_;
+    DeviceInt* index_head_list_;
+    DeviceInt index_head_list_size_;
 };
 
 

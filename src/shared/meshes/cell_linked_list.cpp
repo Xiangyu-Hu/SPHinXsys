@@ -39,7 +39,7 @@ CellLinkedListKernel::CellLinkedListKernel(const DeviceVecd &meshLowerBound, Dev
     : total_real_particles_(0), list_data_pos_(nullptr),  // will be initialized at first UpdateCellLists execution
       mesh_lower_bound_(allocateDeviceData<DeviceVecd>(1)), grid_spacing_(allocateDeviceData<DeviceReal>(1)),
       all_grid_points_(allocateDeviceData<DeviceArrayi>(1)), all_cells_(allocateDeviceData<DeviceArrayi>(1)),
-      index_list_(nullptr), index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(allCells))),
+      index_list_(nullptr), index_head_list_(allocateDeviceData<DeviceInt>(VecdFoldProduct(allCells))),
       index_head_list_size_(VecdFoldProduct(allCells))
 {
     copyDataToDevice(&meshLowerBound, mesh_lower_bound_, 1)
@@ -59,7 +59,7 @@ CellLinkedListKernel::~CellLinkedListKernel()
 execution::ExecutionEvent CellLinkedListKernel::clearCellLists()
 {
     // Only clear head list, since index list does not depend on its previous values
-    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, index_head_list_size_));
+    return std::move(copyDataToDevice(static_cast<DeviceInt>(0), index_head_list_, index_head_list_size_));
 }
 
 execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(const SPH::BaseParticles &base_particles)
@@ -68,7 +68,7 @@ execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(const SPH::BaseP
     {
         total_real_particles_ = base_particles.total_real_particles_;
         list_data_pos_ = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
-        index_list_ = allocateDeviceData<size_t>(total_real_particles_);
+        index_list_ = allocateDeviceData<DeviceInt>(total_real_particles_);
     }
     auto clear_event = clearCellLists();
     auto *pos_n = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
@@ -86,7 +86,7 @@ execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(const SPH::BaseP
                                      const auto cell_index = CellIndexFromPosition(pos_n[index_i], *mesh_lower_bound,
                                                                                    *grid_spacing, *all_grid_points);
                                      const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells);
-                                     sycl::atomic_ref<size_t, sycl::memory_order_relaxed, sycl::memory_scope_device,
+                                     sycl::atomic_ref<DeviceInt, sycl::memory_order_relaxed, sycl::memory_scope_device,
                                                       sycl::access::address_space::global_space>
                                          atomic_head_list(index_head_list[linear_cell_index]);
                                      /*
@@ -104,18 +104,18 @@ execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(const SPH::BaseP
                                  });
 }
 //=================================================================================================//
-size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
+DeviceInt *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
 {
     auto *pos = baseParticles.getDeviceVariableByName<DeviceVecd>("Position");
     auto *sequence = baseParticles.sequence_device_;
-    size_t total_real_particles = baseParticles.total_real_particles_;
+    DeviceInt total_real_particles = baseParticles.total_real_particles_;
     executionQueue.getQueue().submit(
                                  [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_,
                                   all_grid_points = all_grid_points_](sycl::handler &cgh)
                                  {
                                      cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item)
                                                       {
-                                                          size_t i = item.get_global_id();
+                                                          DeviceInt i = item.get_global_id();
                                                           if(i < total_real_particles)
                                                               sequence[i] = BaseMesh::transferMeshIndexToMortonOrder(
                                                                   CellIndexFromPosition(pos[i], *mesh_lower_bound,

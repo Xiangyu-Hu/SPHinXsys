@@ -44,10 +44,10 @@ class WeaklyCompressibleFluidKernel
     inline DeviceReal getPressure(DeviceReal rho) const { return p0_ * (rho / rho0_ - static_cast<DeviceReal>(1.0)); }
     inline DeviceReal getSoundSpeed(DeviceReal p = 0.0, DeviceReal rho = 1.0) const { return c0_; }
     inline DeviceReal ReferenceDensity() const { return rho0_; }
-    inline DeviceReal ReferenceSoundSpeed() { return c0_; };
+    inline DeviceReal ReferenceSoundSpeed() const { return c0_; };
 
   private:
-    DeviceReal p0_, c0_, rho0_;
+    const DeviceReal p0_, c0_, rho0_;
 };
 
 /**

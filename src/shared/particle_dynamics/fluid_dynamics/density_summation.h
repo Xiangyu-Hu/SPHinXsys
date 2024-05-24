@@ -107,7 +107,7 @@ class DensitySummationKernel<Inner<>> : public DensitySummationKernel<Inner<Base
     explicit DensitySummationKernel(Args &&...baseArgs)
         : DensitySummationKernel<Inner<Base>>(std::forward<Args>(baseArgs)...) {}
 
-    void interaction(size_t index_i, Real dt = 0.0) {
+    void interaction(DeviceInt index_i, DeviceReal dt = 0.0) {
         DeviceReal sigma = W0_;
         const auto &neighbor_builder = *inner_neighbor_builder_;
         cell_linked_list_->forEachInnerNeighbor(index_i, [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
@@ -118,7 +118,7 @@ class DensitySummationKernel<Inner<>> : public DensitySummationKernel<Inner<Base
         rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
     }
 
-    void update(size_t index_i, Real dt = 0.0) {
+    void update(DeviceInt index_i, DeviceReal dt = 0.0) {
         rho_[index_i] = rho_sum_[index_i];
         Vol_[index_i] = mass_[index_i] / rho_[index_i];
     }
@@ -171,16 +171,16 @@ class DensitySummationKernel<Contact<Base>> : public DensitySummationKernel<Base
           contact_bodies_size_(contact_relation.contact_bodies_.size()) {}
 
   protected:
-    DeviceReal ContactSummation(size_t index_i)
+    DeviceReal ContactSummation(DeviceInt index_i)
     {
         DeviceReal sigma{0.0};
-        for (size_t k = 0; k < contact_bodies_size_; ++k)
+        for (auto k = 0; k < contact_bodies_size_; ++k)
         {
             const DeviceReal* contact_mass_k = contact_mass_[k];
             const DeviceReal& contact_inv_rho0_k = contact_inv_rho0_[k];
             const auto& neighbor_builder = *contact_neighbor_builders_[k];
             contact_cell_linked_lists_[k]->forEachNeighbor(index_i, particles_position_,
-                                                           [&](const DeviceVecd &pos_i, size_t index_j, const DeviceVecd &pos_j)
+                                                           [&](const DeviceVecd &pos_i, DeviceInt index_j, const DeviceVecd &pos_j)
                                                            {
                                                                if(neighbor_builder.isWithinCutoff(pos_i, pos_j))
                                                                    sigma += neighbor_builder.W_ij(pos_i, pos_j) *
@@ -194,7 +194,7 @@ class DensitySummationKernel<Contact<Base>> : public DensitySummationKernel<Base
     DeviceVecd *particles_position_;
     CellLinkedListKernel **contact_cell_linked_lists_;
     NeighborBuilderContactKernel **contact_neighbor_builders_;
-    size_t contact_bodies_size_;
+    const DeviceInt contact_bodies_size_;
 };
 
 template <>

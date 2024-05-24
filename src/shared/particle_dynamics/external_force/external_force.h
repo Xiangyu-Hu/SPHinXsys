@@ -75,7 +75,7 @@ class Gravity
     template<class Vec,
               typename = std::enable_if_t<std::conjunction_v<std::is_same<Vec, DeviceVecd>>,
                                           std::is_same<is_device_type_different_from_host<DeviceVecd>, std::true_type>>>
-    DeviceVecd InducedAcceleration(const Vecd &position = VecdZero<DeviceVecd>()) const {
+    DeviceVecd InducedAcceleration(const Vec &position = VecdZero<DeviceVecd>()) const {
         return global_acceleration_device_;
     }
     template<class Vec,

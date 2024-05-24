@@ -93,6 +93,7 @@ using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 /** Device data types. */
 using DeviceReal = Real;
+using DeviceInt = u_int32_t;
 using DeviceVec2d = Vec2d;
 using DeviceVec3d = Vec3d;
 using DeviceArray2i = Array2i;

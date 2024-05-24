@@ -48,6 +48,23 @@ struct FluidStateOut
     FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p){};
 };
 
+class NoRiemannSolverKernel
+{
+  public:
+    NoRiemannSolverKernel(DeviceReal rho0c0_i, DeviceReal rho0c0_j, DeviceReal inv_rho0c0_sum)
+        : rho0c0_i_(rho0c0_i), rho0c0_j_(rho0c0_j), inv_rho0c0_sum_(inv_rho0c0_sum) {}
+
+    DeviceReal DissipativePJump(const DeviceReal &) const { return DeviceReal(0.0); }
+    DeviceReal DissipativeUJump(const DeviceReal &) const { return DeviceReal(0.0); }
+
+    DeviceReal AverageP(const DeviceReal &p_i, const DeviceReal &p_j)
+    {
+        return (p_i * rho0c0_j_ + p_j * rho0c0_i_) * inv_rho0c0_sum_;
+    };
+  protected:
+    DeviceReal rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
+};
+
 /**
  * @struct NoRiemannSolver
  * @brief  Central difference scheme without Riemann flux.
@@ -60,7 +77,8 @@ class NoRiemannSolver
         : rho0_i_(fluid_i.ReferenceDensity()), rho0_j_(fluid_j.ReferenceDensity()),
           c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
           rho0c0_i_(rho0_i_ * c0_i_), rho0c0_j_(rho0_j_ * c0_j_),
-          inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
+          inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)),
+          device_kernel(rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_) {};
     Real DissipativePJump(const Real &u_jump) const { return 0.0; }
     Real DissipativeUJump(const Real &p_jump) const { return 0.0; }
 
@@ -77,6 +95,32 @@ class NoRiemannSolver
     Real rho0_i_, rho0_j_;
     Real c0_i_, c0_j_;
     Real rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
+
+  public:
+    execution::DeviceImplementation<NoRiemannSolverKernel> device_kernel;
+};
+
+class AcousticRiemannSolverKernel : public NoRiemannSolverKernel
+{
+  public:
+    template<class... Args>
+    AcousticRiemannSolverKernel(DeviceReal inv_rho0c0_ave, DeviceReal rho0c0_geo_ave,
+                                DeviceReal inv_c_ave, DeviceReal limiter_coeff, Args&& ...baseArgs)
+        : NoRiemannSolverKernel(std::forward<Args>(baseArgs)...), inv_rho0c0_ave_(inv_rho0c0_ave),
+          rho0c0_geo_ave_(rho0c0_geo_ave), inv_c_ave_(inv_c_ave), limiter_coeff_(limiter_coeff) {}
+
+    DeviceReal DissipativePJump(const DeviceReal &u_jump) const {
+        return rho0c0_geo_ave_ * u_jump * sycl::min(limiter_coeff_ * sycl::max(u_jump * inv_c_ave_, DeviceReal(0)), DeviceReal(1));
+    }
+
+    DeviceReal DissipativeUJump(const DeviceReal &p_jump) const  {
+        return p_jump * inv_rho0c0_ave_;
+    }
+
+  protected:
+    DeviceReal inv_rho0c0_ave_, rho0c0_geo_ave_;
+    DeviceReal inv_c_ave_;
+    DeviceReal limiter_coeff_;
 };
 
 class AcousticRiemannSolver : public NoRiemannSolver
@@ -88,7 +132,9 @@ class AcousticRiemannSolver : public NoRiemannSolver
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
           inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_),
-          limiter_coeff_(limiter_coeff){};
+          limiter_coeff_(limiter_coeff),
+          device_kernel(inv_rho0c0_ave_, rho0c0_geo_ave_, inv_c_ave_, limiter_coeff_,
+                        rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_) {};
     Real DissipativePJump(const Real &u_jump) const {
         return rho0c0_geo_ave_ * u_jump * SMIN(limiter_coeff_ * SMAX(u_jump * inv_c_ave_, Real(0)), Real(1));
     }
@@ -101,6 +147,9 @@ class AcousticRiemannSolver : public NoRiemannSolver
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;
     Real inv_c_ave_;
     Real limiter_coeff_;
+
+  public:
+    execution::DeviceImplementation<AcousticRiemannSolverKernel> device_kernel;
 };
 
 class DissipativeRiemannSolver : public AcousticRiemannSolver
