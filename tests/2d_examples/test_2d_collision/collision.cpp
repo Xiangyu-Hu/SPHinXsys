@@ -90,26 +90,26 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
     free_ball.defineBodyLevelSetShape();
-    free_ball.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    free_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? free_ball.generateParticles<Reload>(free_ball.getName())
-        : free_ball.generateParticles<Lattice>();
+        ? free_ball.generateParticles<BaseParticles, Reload>(free_ball.getName())
+        : free_ball.generateParticles<BaseParticles, Lattice>();
 
     SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
     damping_ball.defineBodyLevelSetShape();
-    damping_ball.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    damping_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? damping_ball.generateParticles<Reload>(damping_ball.getName())
-        : damping_ball.generateParticles<Lattice>();
+        ? damping_ball.generateParticles<BaseParticles, Reload>(damping_ball.getName())
+        : damping_ball.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
-    free_ball_observer.generateParticles<Observer>(observation_location_1);
+    free_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_1);
     ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
-    damping_ball_observer.generateParticles<Observer>(observation_location_2);
+    damping_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_2);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

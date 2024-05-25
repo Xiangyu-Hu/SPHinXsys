@@ -56,23 +56,23 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.getName());
     }
     else
     {
         ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<Lattice>();
+        ball.generateParticles<BaseParticles, Lattice>();
     }
 
     SolidBody rigid_shell(sph_system, makeShared<ShellShape>("ShellShape"));
     rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    rigid_shell.defineParticlesAndMaterial<SurfaceParticles, Solid>();
+    rigid_shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        rigid_shell.generateParticles<Reload>(rigid_shell.getName());
+        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.getName());
     }
     else if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
@@ -83,11 +83,11 @@ int main(int ac, char *av[])
     {
         Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
         rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        rigid_shell.generateParticles<ThickSurface, Lattice>(thickness);
+        rigid_shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<Observer>(StdVec<Vecd>{ball_center});
+    ball_observer.generateParticles<BaseParticles, Observer>(StdVec<Vecd>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

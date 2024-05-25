@@ -21,30 +21,7 @@ int x_num = Total_PL / resolution_ref_large;         // particle number in x dir
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
-//----------------------------------------------------------------------
-//	particle generation considering the anisotropic resolution
-//----------------------------------------------------------------------
-class ParticleGeneratorAnisotropic : public ParticleGenerator<Base>
-{
-  public:
-    ParticleGeneratorAnisotropic(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
-
-    virtual void initializeGeometricVariables() override
-    {
-        // set particles directly
-        for (int i = 0; i < x_num; i++)
-        {
-            for (int j = 0; j < y_num; j++)
-            {
-                Real x = -SL + (i + 0.5) * resolution_ref_large;
-                Real y = -PH / 2 + (j + 0.5) * resolution_ref;
-                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
-            }
-        }
-    }
-};
-
-Real BW = resolution_ref * 4; // boundary width, at least three particles
+Real BW = resolution_ref * 4;                    // boundary width, at least three particles
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
@@ -75,6 +52,8 @@ std::vector<Vecd> beam_shape{
     Vecd(0.0, -PH / 2), Vecd(0.0, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(0.0, -PH / 2)};
 // Beam observer location
 StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Define the beam body
 //----------------------------------------------------------------------
@@ -85,6 +64,29 @@ class Beam : public MultiPolygonShape
     {
         multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
+    }
+};
+//----------------------------------------------------------------------
+//	particle generation considering the anisotropic resolution
+//----------------------------------------------------------------------
+template <>
+class ParticleGenerator<Beam> : public ParticleGenerator<Base>
+{
+  public:
+    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
+
+    virtual void initializeGeometricVariables() override
+    {
+        // set particles directly
+        for (int i = 0; i < x_num; i++)
+        {
+            for (int j = 0; j < y_num; j++)
+            {
+                Real x = -SL + (i + 0.5) * resolution_ref_large;
+                Real y = -PH / 2 + (j + 0.5) * resolution_ref;
+                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+            }
+        }
     }
 };
 //----------------------------------------------------------------------
@@ -177,7 +179,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
         B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
     }
 };
-
+} // namespace SPH
 //------------------------------------------------------------------------------
 // the main program
 //------------------------------------------------------------------------------
@@ -195,12 +197,12 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_body.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles(ParticleGeneratorAnisotropic(beam_body));
+    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.generateParticles<BaseParticles, Beam>();
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_observer.generateParticles<Observer>(observation_location);
+    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

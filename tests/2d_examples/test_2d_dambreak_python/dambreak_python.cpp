@@ -66,25 +66,26 @@ class PreSettingCase : public Parameter
     ObserverBody fluid_observer;
 
   public:
-    PreSettingCase() : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
-                       sph_system(system_domain_bounds, particle_spacing_ref),
-                       io_environment(sph_system),
-                       water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                                   Transform(water_block_translation), water_block_halfsize, "WaterBody")),
-                       wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
-                       observation_location({Vecd(DL, 0.2)}),
-                       fluid_observer(sph_system, "FluidObserver")
+    PreSettingCase()
+        : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
+          sph_system(system_domain_bounds, particle_spacing_ref),
+          io_environment(sph_system),
+          water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+                                      Transform(water_block_translation), water_block_halfsize, "WaterBody")),
+          wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
+          observation_location({Vecd(DL, 0.2)}),
+          fluid_observer(sph_system, "FluidObserver")
     {
         //----------------------------------------------------------------------
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
-        water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-        water_block.generateParticles<Lattice>();
+        water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+        water_block.generateParticles<BaseParticles, Lattice>();
 
-        wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
-        wall_boundary.generateParticles<Lattice>();
+        wall_boundary.defineMaterial<Solid>();
+        wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-        fluid_observer.generateParticles<Observer>(observation_location);
+        fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
     }
 };
 //----------------------------------------------------------------------
