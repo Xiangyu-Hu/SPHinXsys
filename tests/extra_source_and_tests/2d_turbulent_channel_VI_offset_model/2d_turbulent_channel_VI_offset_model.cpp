@@ -24,9 +24,15 @@ int main(int ac, char *av[])
     water_block.defineBodyLevelSetShape();
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     //water_block.generateParticles<ParticleGeneratorLattice>();
+    //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        //? water_block.generateParticles<Reload>(water_block.getName())
+        //: water_block.generateParticles<Lattice>();
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    //water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
+    //water_block.generateParticles<Lattice>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<ParticleGeneratorReload>(water_block.getName())
-        : water_block.generateParticles<ParticleGeneratorLattice>();
+        ? water_block.generateParticlesWithReserve<Reload>(inlet_particle_buffer, water_block.getName())
+        : water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
@@ -34,8 +40,8 @@ int main(int ac, char *av[])
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<ParticleGeneratorReload>( wall_boundary.getName())
-        : wall_boundary.generateParticles<ParticleGeneratorLattice>();
+        ? wall_boundary.generateParticles<Reload>( wall_boundary.getName())
+        : wall_boundary.generateParticles<Lattice>();
 
 
     /** topology */
@@ -118,7 +124,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     //InteractionDynamics<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
-
+    /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
@@ -144,10 +150,10 @@ int main(int ac, char *av[])
 
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
-    SimpleDynamics<GravityForce,SequencedPolicy> apply_gravity_force(water_block, time_dependent_acceleration);
+    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
 
     BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
     BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
     
@@ -254,7 +260,7 @@ int main(int ac, char *av[])
                 //std::cout << "num_output_file=" << num_output_file << std::endl;
                 //if (GlobalStaticVariables::physical_time_ >9.3)
                 //{
-                //    body_states_recording.writeToFile();
+                    //body_states_recording.writeToFile();
                 //}
                 
             }

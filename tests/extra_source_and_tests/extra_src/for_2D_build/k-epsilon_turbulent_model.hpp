@@ -47,7 +47,8 @@ namespace fluid_dynamics
 		mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
 		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 		particle_spacing_min_(base_relation.getSPHBody().sph_adaptation_->MinimumSpacing()),
-		rho_(this->particles_->rho_), vel_(this->particles_->vel_),dimension_(Vecd(0).size()){}
+		rho_(this->particles_->rho_), Vol_(this->particles_->Vol_),vel_(this->particles_->vel_),
+		dimension_(2){}
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
@@ -64,6 +65,7 @@ namespace fluid_dynamics
 	GetVelocityGradient<Base, DataDelegationType>::
 		GetVelocityGradient(BaseRelationType& base_relation) 
 		:LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+		Vol_(this->particles_->Vol_),
 		vel_(this->particles_->vel_), pos_(this->particles_->pos_),
 		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1")),
 		velocity_gradient_(*(this->particles_->template registerSharedVariable<Matd>("VelocityGradient"))),

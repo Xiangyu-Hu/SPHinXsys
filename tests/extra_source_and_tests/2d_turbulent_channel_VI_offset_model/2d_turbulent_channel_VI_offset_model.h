@@ -14,7 +14,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 120.0;                         /**< Channel length. */
-Real num_fluid_cross_section = 30.0;
+Real num_fluid_cross_section = 40.0;
 
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
@@ -167,6 +167,7 @@ struct InflowVelocity
         if (position[1] > half_channel_height)
         {
             std::cout << "Particles out of domain, wrong inlet velocity." << std::endl;
+            std::cout <<position[1]<<std::endl;
             std::cin.get();
         }
         target_velocity[1] = 0.0;

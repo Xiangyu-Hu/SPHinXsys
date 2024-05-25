@@ -104,7 +104,7 @@ namespace fluid_dynamics
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
 				//** Strong form *
 				velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
 				//** Weak form *
@@ -138,7 +138,7 @@ namespace fluid_dynamics
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
-					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+					Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
 
 					velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
 				}
@@ -147,7 +147,7 @@ namespace fluid_dynamics
 		}
 	}
 //=================================================================================================//
-	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values)
+	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values, int is_extr_visc_dissipa)
 		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
@@ -198,6 +198,9 @@ namespace fluid_dynamics
 		particles_->registerVariable(turbu_indicator_, "TurbulentIndicator");
 		particles_->registerSortableVariable<int>("TurbulentIndicator");
 		particles_->addVariableToWrite<int>("TurbulentIndicator");
+
+		particles_->registerVariable(is_extra_viscous_dissipation_, "TurbulentExtraViscousDissipation");
+		std::fill(is_extra_viscous_dissipation_.begin(), is_extra_viscous_dissipation_.end(), is_extr_visc_dissipa);
 	}
 	//=================================================================================================//
 	void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
@@ -224,7 +227,7 @@ namespace fluid_dynamics
 			Real mu_eff_j = turbu_mu_[index_j] / sigma_k_ + mu_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-			k_lap += 2.0 * mu_harmo * k_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
+			k_lap += 2.0 * mu_harmo * k_derivative * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
 		}
 		strain_rate = 0.5 * (velocity_gradient_[index_i].transpose() + velocity_gradient_[index_i]);
 
@@ -313,7 +316,7 @@ namespace fluid_dynamics
 			Real mu_eff_j = turbu_mu_[index_j] / sigma_E_ + mu_;
 			Real mu_harmo = 2 * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
 			epsilon_derivative = (turbu_epsilon_i - turbu_epsilon_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-			epsilon_lap += 2.0 * mu_harmo * epsilon_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
+			epsilon_lap += 2.0 * mu_harmo * epsilon_derivative * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
 		}
 
 		//epsilon_production = C_l_ * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
@@ -355,7 +358,7 @@ namespace fluid_dynamics
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+			Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n]* this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
 			//** strong form * 
 			//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 			//** weak form * 
@@ -387,8 +390,8 @@ namespace fluid_dynamics
 			Neighborhood& contact_neighborhood = (*FluidContactData::contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
-				//size_t index_j = contact_neighborhood.j_[n];
-				Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+				size_t index_j = contact_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
 				//** weak form * 
 				k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
 			}
@@ -404,7 +407,8 @@ namespace fluid_dynamics
 	TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation& inner_relation)
 		: TurbuViscousForce<FluidDataInner>(inner_relation), 
 		ForcePrior(&base_particles_, "ViscousForce"),
-		turbu_indicator_(*this->particles_->template getVariableByName<int>("TurbulentIndicator"))
+		turbu_indicator_(*this->particles_->template getVariableByName<int>("TurbulentIndicator")),
+		is_extra_viscous_dissipation_(*this->particles_->template getVariableByName<int>("TurbulentExtraViscousDissipation"))
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 		this->particles_->registerSortableVariable<Vecd>("ViscousAccInner");
@@ -445,7 +449,7 @@ namespace fluid_dynamics
 
 			//** Introduce dissipation *
 			Vecd shear_stress_eij_corrected = shear_stress_eij;
-			if (mu_harmo < dissipation_judge)
+			if (mu_harmo < dissipation_judge && is_extra_viscous_dissipation_[index_i] == 1)
 			{
 				shear_stress_eij_corrected = ((dissipation * vel_derivative).dot(e_ij)) * e_ij;
 				turbu_indicator_[index_i]++; //** For test *
@@ -453,7 +457,7 @@ namespace fluid_dynamics
 			shear_stress = (shear_stress - shear_stress_eij) + shear_stress_eij_corrected;
 			
 			
-			Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ijV_j_[n];
+			Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
 			force += force_j;
 		}
 		viscous_force_[index_i] = force / rho_[index_i];
@@ -527,7 +531,7 @@ namespace fluid_dynamics
 				
 				//** Transform local wall shear stress to global   *
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
-				Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+				Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
 
 				//force_j = force_j - (force_j.dot(e_j_n)) * e_j_n;
 
@@ -556,15 +560,15 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL)
-		: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max* U_max), FluidDataSimple(sph_body),
+		: LocalDynamicsReduce<ReduceMax>(sph_body), FluidDataSimple(sph_body),
 		vel_(particles_->vel_), 
 		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-		advectionCFL_(advectionCFL),
+		speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
 	{
 		Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
-		reference_ = SMAX(viscous_speed * viscous_speed, reference_);
+		speed_ref_turbu_ = SMAX(viscous_speed, speed_ref_turbu_);
 	}
 	//=================================================================================================//
 	Real TurbulentAdvectionTimeStepSize::reduce(size_t index_i, Real dt)
@@ -581,7 +585,7 @@ namespace fluid_dynamics
 	Real TurbulentAdvectionTimeStepSize::outputResult(Real reduced_value)
 	{
 		Real speed_max = sqrt(reduced_value);
-		return advectionCFL_ * smoothing_length_min_ / (speed_max + TinyReal);
+		return advectionCFL_ * smoothing_length_min_ / (SMAX(speed_max, speed_ref_turbu_) + TinyReal);
 	}
 //=================================================================================================//
 	InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell& body_part
@@ -630,8 +634,11 @@ namespace fluid_dynamics
 	JudgeIsNearWall::
 		JudgeIsNearWall(BaseInnerRelation& inner_relation,
 			BaseContactRelation& contact_relation, NearShapeSurface& near_surface)
-		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
-		pos_(particles_->pos_),level_set_shape_(&near_surface.getLevelSetShape()), dimension_(Vecd(0).size()),
+		: LocalDynamics(inner_relation.getSPHBody()), 
+		FSIContactData(contact_relation),
+		pos_(particles_->pos_),
+		level_set_shape_(&near_surface.getLevelSetShape()), 
+		dimension_(2),
 		fluid_particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
 		wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 	{

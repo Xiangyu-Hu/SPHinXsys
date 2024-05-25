@@ -90,6 +90,7 @@ namespace fluid_dynamics
 		explicit GetVelocityGradient(BaseRelationType& base_relation);
 		virtual ~GetVelocityGradient() {};
 	protected:
+		StdLargeVec<Real> &Vol_;
 		StdLargeVec<Vecd>& vel_, & pos_;
 		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
 
@@ -150,7 +151,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real> turbu_mu_;
 		
 		Real mu_, smoothing_length_, particle_spacing_min_;
-		StdLargeVec<Real>& rho_;
+		StdLargeVec<Real>& rho_,&Vol_;
 		StdLargeVec<Vecd>& vel_;
 		int dimension_;
 	};
@@ -162,7 +163,7 @@ namespace fluid_dynamics
 	class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, FluidDataInner>
 	{
 	public:
-		explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values);
+		explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values, int is_extr_visc_dissipa = 0);
 		virtual ~K_TurtbulentModelInner() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
@@ -179,6 +180,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& turbu_epsilon_;
 		StdLargeVec<Real>& turbu_epsilon_prior_;
 		StdLargeVec<Real>& turbu_mu_;
+        StdLargeVec<int> is_extra_viscous_dissipation_;
 
 		//** for test */
 		StdLargeVec<int>  turbu_indicator_;
@@ -303,6 +305,7 @@ namespace fluid_dynamics
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<int>  &turbu_indicator_;
+		StdLargeVec<int> &is_extra_viscous_dissipation_;
 	};
 
 	//** Wall part *
@@ -346,7 +349,7 @@ namespace fluid_dynamics
 	 * @class TurbulentAdvectionTimeStepSize
 	 * @brief Computing the turbulent advection time step size
 	 */
-	class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>,
+	class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<ReduceMax>,
 		public FluidDataSimple
 	{
 	public:
@@ -357,7 +360,7 @@ namespace fluid_dynamics
 	protected:
 		StdLargeVec<Vecd>& vel_;
 		Real smoothing_length_min_;
-		Real advectionCFL_;
+		Real speed_ref_turbu_, advectionCFL_;
 		StdLargeVec<Real>& turbu_mu_;
 		Fluid& fluid_;
 	};
