@@ -123,8 +123,8 @@ int main(int ac, char *av[])
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<Reload>(water_block.getName())
-        : water_block.generateParticles<Lattice>();
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        : water_block.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};

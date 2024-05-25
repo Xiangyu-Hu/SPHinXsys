@@ -201,15 +201,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody gate(sph_system, makeShared<Gate>("Gate"));
     gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    gate.generateParticles<Lattice>();
+    gate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------

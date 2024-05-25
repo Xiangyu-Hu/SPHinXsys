@@ -9,6 +9,8 @@
 #include <gtest/gtest.h>
 using namespace SPH;
 
+namespace SPH
+{
 class WaterBlock : public MultiPolygonShape
 {
   public:
@@ -20,15 +22,17 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	wall body shape definition.
 //----------------------------------------------------------------------
-class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
+class WallBoundary;
+template <>
+class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 {
     Real DH;
     Real DL;
     Real particle_spacing_gate;
 
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
-                                           Real particle_spacing_gate)
+    explicit ParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
+                               Real particle_spacing_gate)
         : ParticleGenerator<Surface>(sph_body),
           DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
     void initializeGeometricVariables() override
@@ -51,7 +55,9 @@ class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
 //----------------------------------------------------------------------
 //	gate body shape definition.
 //----------------------------------------------------------------------
-class GateParticleGenerator : public ParticleGenerator<Surface>
+class Gate;
+template <>
+class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
 {
     Real DL;
     Real BW;
@@ -59,7 +65,7 @@ class GateParticleGenerator : public ParticleGenerator<Surface>
     Real Gate_thickness;
 
   public:
-    explicit GateParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
         : ParticleGenerator<Surface>(sph_body),
           DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
     void initializeGeometricVariables() override
@@ -76,6 +82,7 @@ class GateParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spacing_ref)
 {
@@ -176,19 +183,17 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
     water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    wall_boundary.defineParticlesAndMaterial<SurfaceParticles, Solid>();
-    WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, DH, DL, particle_spacing_gate);
-    wall_boundary.generateParticles(wall_boundary_particle_generator);
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(DH, DL, particle_spacing_gate);
 
     SolidBody gate(sph_system, makeShared<DefaultShape>("Gate"));
     gate.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    GateParticleGenerator gate_particle_generator(gate, DL, BW, particle_spacing_gate, Gate_thickness);
-    gate.generateParticles(gate_particle_generator);
+    gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.generateParticles<SurfaceParticles, Gate>(DL, BW, particle_spacing_gate, Gate_thickness);
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------

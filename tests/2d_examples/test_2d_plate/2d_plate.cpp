@@ -38,10 +38,14 @@ Real time_to_full_external_force = 0.05;
 //----------------------------------------------------------------------
 //	Derived classes used in the case
 //----------------------------------------------------------------------
-class PlateParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -74,6 +78,7 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -88,8 +93,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles(PlateParticleGenerator(plate_body));
+    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
