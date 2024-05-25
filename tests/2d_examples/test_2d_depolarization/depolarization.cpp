@@ -49,23 +49,22 @@ class MuscleBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DepolarizationInitialCondition
-    : public electro_physiology::ElectroPhysiologyInitialCondition
+class DepolarizationInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t voltage_;
-
   public:
     explicit DepolarizationInitialCondition(SPHBody &sph_body)
-        : electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
-    {
-        voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
+        voltage_[index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &voltage_;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -81,10 +80,9 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody muscle_body(sph_system, makeShared<MuscleBlock>("MuscleBlock"));
-    SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    muscle_body.defineMaterial<MonoFieldElectroPhysiology>(
-        muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(),
-        diffusion_coeff, bias_coeff, fiber_direction);
+    AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
+    MonoFieldElectroPhysiology *mono_field_electro_physiology =
+        muscle_body.defineMaterial<MonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coeff, bias_coeff, fiber_direction);
     muscle_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
@@ -105,12 +103,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(muscle_body_inner_relation);
-    electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
+    GetDiffusionTimeStepSize get_time_step_size(muscle_body, *mono_field_electro_physiology);
     // Diffusion process for diffusion body.
-    electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation);
+    electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation, mono_field_electro_physiology->AllDiffusions());
     // Solvers for ODE system or reactions
-    electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(muscle_body);
-    electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(muscle_body);
+    electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(muscle_body, muscle_reaction_model);
+    electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(muscle_body, muscle_reaction_model);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

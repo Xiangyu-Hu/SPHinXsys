@@ -98,12 +98,12 @@ int main(int ac, char *av[])
     TransformShape<GeometricShapeBox> water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
-    water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
     water_body.generateParticlesWithReserve<Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineParticlesAndMaterial<BaseParticles, Solid>();
+    wall.defineMaterial<Solid>();
     wall.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

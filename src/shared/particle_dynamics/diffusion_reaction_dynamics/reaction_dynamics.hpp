@@ -18,10 +18,10 @@ BaseReactionRelaxation<ReactionModelType>::
       DiffusionReactionSimpleData<BaseParticles>(sph_body),
       reaction_model_(reaction_model)
 {
-    ReactiveSpeciesNames &reactive_species_names = reaction_model.getSpeciesNames();
-    for (auto &species_name : reactive_species_names)
+    ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
+    for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        reactive_species_.push_back(this->particles_->registerSharedVariable<Real>(*species_name));
+        reactive_species_.push_back(this->particles_->registerSharedVariable<Real>(species_names[k]));
     }
 }
 //=================================================================================================//

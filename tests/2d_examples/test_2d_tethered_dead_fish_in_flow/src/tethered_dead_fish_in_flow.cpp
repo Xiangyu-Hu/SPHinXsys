@@ -211,13 +211,13 @@ int main(int ac, char *av[])
      * @brief   Particles and body creation for water.
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
+    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<Lattice>();
     /**
      * @brief   Particles and body creation for fish.

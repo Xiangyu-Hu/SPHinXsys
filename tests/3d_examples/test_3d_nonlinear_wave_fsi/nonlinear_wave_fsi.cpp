@@ -19,7 +19,7 @@ int main(int ac, char *av[])
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
     structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
-    structure_fit.defineParticlesAndMaterial<BaseParticles, Solid>(StructureDensity);
+    structure_fit.defineMaterial<Solid>(StructureDensity);
     structure_fit.generateParticles<Lattice, Adaptive>();
     structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
@@ -75,15 +75,15 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
+    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineParticlesAndMaterial<BaseParticles, Solid>(StructureDensity);
+    structure.defineMaterial<Solid>(StructureDensity);
     structure.generateParticles<Reload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");

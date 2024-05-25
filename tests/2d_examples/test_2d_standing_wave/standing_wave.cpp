@@ -118,7 +118,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
     water_block.defineComponentLevelSetShape("OuterBoundary");
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<Reload>(water_block.getName())
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     wall_boundary.defineBodyLevelSetShape();
-    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
+    wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<Reload>(wall_boundary.getName())
         : wall_boundary.generateParticles<Lattice>();

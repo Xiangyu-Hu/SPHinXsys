@@ -18,15 +18,15 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
+    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineParticlesAndMaterial<BaseParticles, Solid>(rho_s);
+    structure.defineMaterial<Solid>(rho_s);
     structure.generateParticles<Lattice>();
 
     ObserverBody observer(sph_system, "Observer");

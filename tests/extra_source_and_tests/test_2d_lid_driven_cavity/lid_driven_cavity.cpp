@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     fluid.generateParticles<Lattice>();
 
     SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));
-    no_slip_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
+    no_slip_boundary.defineMaterial<Solid>();
     no_slip_boundary.generateParticles<Lattice>();
 
     ObserverBody observer_body(sph_system, makeShared<FluidFilling>("ObserverBody"));

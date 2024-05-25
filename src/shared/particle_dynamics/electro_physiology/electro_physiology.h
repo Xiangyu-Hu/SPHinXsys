@@ -118,7 +118,7 @@ class MonoFieldElectroPhysiology
 namespace electro_physiology
 {
 using ElectroPhysiologyDiffusionRelaxationInner =
-    DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, LocalDirectionalDiffusion>;
+    DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, DirectionalDiffusion>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
@@ -144,10 +144,10 @@ using ElectroPhysiologyDiffusionRelaxationComplex =
 
 /** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 using ElectroPhysiologyReactionRelaxationForward =
-    SimpleDynamics<ReactionRelaxationForward<BaseParticles>>;
+    SimpleDynamics<ReactionRelaxationForward<ElectroPhysiologyReaction>>;
 /** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 using ElectroPhysiologyReactionRelaxationBackward =
-    SimpleDynamics<ReactionRelaxationBackward<BaseParticles>>;
+    SimpleDynamics<ReactionRelaxationBackward<ElectroPhysiologyReaction>>;
 } // namespace electro_physiology
 } // namespace SPH
 #endif // ELECTRO_PHYSIOLOGY_H

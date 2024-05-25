@@ -79,11 +79,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     WaterBlock initial_water_block("WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<BaseParticles, Solid>();
+    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

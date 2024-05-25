@@ -35,7 +35,7 @@ int main(int ac, char *av[])
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 2.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineParticlesAndMaterial<BaseParticles, Solid>();
+    cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<Reload>(cylinder.getName())
         : cylinder.generateParticles<Lattice>();

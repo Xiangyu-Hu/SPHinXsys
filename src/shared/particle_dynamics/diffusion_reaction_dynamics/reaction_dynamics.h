@@ -50,10 +50,10 @@ class BaseReactionRelaxation
     void advanceBackwardStep(size_t index_i, Real dt);
 
   private:
-    static constexpr int NumReactiveSpecies = ReactionModelType::NUM_REACTIVE_SPECIES;
+    static constexpr int NumReactiveSpecies = ReactionModelType::NumSpecies;
     typedef std::array<std::string, NumReactiveSpecies> ReactiveSpeciesNames;
     typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
-    StdVec<StdLargeVec<Real> *> &reactive_species_;
+    StdVec<StdLargeVec<Real> *> reactive_species_;
     ReactionModelType &reaction_model_;
     UpdateAReactionSpecies updateAReactionSpecies;
     void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
@@ -73,8 +73,9 @@ class ReactionRelaxationForward
     : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
-    ReactionRelaxationForward(SPHBody &sph_body)
-        : BaseReactionRelaxation<ReactionModelType>(sph_body){};
+    template <typename... Args>
+    ReactionRelaxationForward(Args &&...args)
+        : BaseReactionRelaxation<ReactionModelType>(std::forward<Args>(args)...){};
     virtual ~ReactionRelaxationForward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
 };
@@ -88,8 +89,9 @@ class ReactionRelaxationBackward
     : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
-    explicit ReactionRelaxationBackward(SPHBody &sph_body)
-        : BaseReactionRelaxation<ReactionModelType>(sph_body){};
+    template <typename... Args>
+    ReactionRelaxationBackward(Args &&...args)
+        : BaseReactionRelaxation<ReactionModelType>(std::forward<Args>(args)...){};
     virtual ~ReactionRelaxationBackward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };
 };
