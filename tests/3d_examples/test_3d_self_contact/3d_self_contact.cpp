@@ -77,7 +77,7 @@ int main(int ac, char *av[])
         : coil.generateParticles<Lattice>();
 
     SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
-    stationary_plate.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    stationary_plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     stationary_plate.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     }
 
     SolidBody beam(sph_system, makeShared<Beam>("Beam"));
-    beam.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

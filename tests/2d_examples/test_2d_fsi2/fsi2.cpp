@@ -30,25 +30,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
     insert_body.defineAdaptationRatios(1.15, 2.0);
     insert_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    insert_body.defineParticlesAndMaterial<BaseParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    insert_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? insert_body.generateParticles<Reload>(insert_body.getName())
-        : insert_body.generateParticles<Lattice>();
+        ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.getName())
+        : insert_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
     beam_observer.generateParticles<BaseParticles, Observer>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles(ParticleGeneratorFluidObserver(fluid_observer));
+    fluid_observer.generateParticles<BaseParticles, FluidObserver>();
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

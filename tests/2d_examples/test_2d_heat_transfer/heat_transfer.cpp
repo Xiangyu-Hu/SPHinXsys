@@ -93,89 +93,61 @@ class ThermosolidBody : public MultiPolygonShape
     }
 };
 //----------------------------------------------------------------------
-//	Setup heat conduction material properties for diffusion fluid body
-//----------------------------------------------------------------------
-class ThermofluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid>
-{
-  public:
-    ThermofluidBodyMaterial()
-        : DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, SharedPtr<NoReaction>(), rho0_f, c_f, mu_f)
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    };
-};
-using DiffusionBaseParticles = DiffusionReactionParticles<BaseParticles, ThermofluidBodyMaterial>;
-//----------------------------------------------------------------------
-//	Setup heat conduction material properties for diffusion solid body
-//----------------------------------------------------------------------
-class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        // only default property is given, as no heat transfer within solid considered here.
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
-    };
-};
-using DiffusionSolidParticles = DiffusionReactionParticles<BaseParticles, ThermosolidBodyMaterial>;
-//----------------------------------------------------------------------
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
-class ThermosolidBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionSolidParticles>
+class ThermosolidBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionSolidParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
         if (-BW <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
         {
-            all_species_[phi_][index_i] = phi_lower_wall;
+            phi_[index_i] = phi_lower_wall;
         }
 
         if (DH <= pos_[index_i][1] && pos_[index_i][1] <= DH + BW)
         {
-            all_species_[phi_][index_i] = phi_upper_wall;
+            phi_[index_i] = phi_upper_wall;
         }
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
-class ThermofluidBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionBaseParticles>
+class ThermofluidBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionBaseParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
         if (0 <= pos_[index_i][1] && pos_[index_i][1] <= DH)
         {
-            all_species_[phi_][index_i] = phi_fluid_initial;
+            phi_[index_i] = phi_fluid_initial;
         }
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
 //----------------------------------------------------------------------
 using ThermalRelaxationComplex = DiffusionBodyRelaxationComplex<
-    DiffusionBaseParticles, DiffusionSolidParticles, KernelGradientInner, KernelGradientContact, Dirichlet>;
+    IsotropicDiffusion, KernelGradientInner, KernelGradientContact, Dirichlet>;
 //----------------------------------------------------------------------
 //	Inflow velocity
 //----------------------------------------------------------------------
@@ -218,12 +190,12 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
-    thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
-    thermofluid_body.generateParticles<Lattice>();
+    thermofluid_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    thermofluid_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
-    thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
-    thermosolid_body.generateParticles<Lattice>();
+    thermosolid_body.defineMaterial<Solid>();
+    thermosolid_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
     temperature_observer.generateParticles<BaseParticles, Observer>(observation_location);
@@ -271,15 +243,20 @@ int main(int ac, char *av[])
     BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
+    IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
+    GetDiffusionTimeStepSize get_thermal_time_step(thermofluid_body, diffusion);
+    ThermalRelaxationComplex thermal_relaxation_complex(
+        ConstructorArgs(fluid_body_inner, &diffusion),
+        ConstructorArgs(fluid_body_contact, &diffusion));
     SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
-    GetDiffusionTimeStepSize<DiffusionBaseParticles> get_thermal_time_step(thermofluid_body);
-    ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_body_contact);
 
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    thermofluid_body.addBodyStateForRecording<Real>("Phi");
+    thermosolid_body.addBodyStateForRecording<Real>("Phi");
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_fluid_phi("Phi", fluid_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);

@@ -33,10 +33,12 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
     {
         std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
         diffusion_species_.push_back(this->particles_->template registerSharedVariable<Real>(diffusion_species_name));
+        this->particles_->template addVariableToSort<Real>(diffusion_species_name);
         diffusion_dt_.push_back(this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate"));
 
         std::string gradient_species_name = diffusion->GradientSpeciesName();
         gradient_species_.push_back(this->particles_->template registerSharedVariable<Real>(gradient_species_name));
+        this->particles_->template addVariableToSort<Real>(gradient_species_name);
     }
 }
 //=================================================================================================//

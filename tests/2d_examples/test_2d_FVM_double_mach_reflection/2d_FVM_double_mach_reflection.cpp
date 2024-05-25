@@ -27,7 +27,7 @@ int main(int ac, char *av[])
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineMaterial<CompressibleFluid>(rho0_another, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
-    wave_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, ansys_mesh);
+    wave_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------

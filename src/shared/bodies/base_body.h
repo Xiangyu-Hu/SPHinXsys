@@ -159,10 +159,10 @@ class SPHBody
     };
 
     // Buffer or ghost particles can be generated together with real particles
-    template <class... Parameters, class ReserveType, typename... Args>
+    template <class ParticleType, class... Parameters, class ReserveType, typename... Args>
     void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
-        generateParticles<ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
+        generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
     template <typename DataType>
