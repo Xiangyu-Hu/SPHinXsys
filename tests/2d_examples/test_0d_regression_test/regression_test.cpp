@@ -187,7 +187,7 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
 
-    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, *diffusion);
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, diffusion);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));

@@ -127,30 +127,14 @@ class Average : public ReduceSumType
  * @details Note that the form "XXX" is not std::string type, so we need to use
  * std::string("XXX") to convert it to std::string type.
  */
-
-template <typename... T>
-class ConstructorArgs;
-
 template <typename BodyRelationType, typename... OtherArgs>
-class ConstructorArgs<BodyRelationType, OtherArgs...>
+struct ConstructorArgs
 {
-  public:
     BodyRelationType &body_relation_;
-    std::tuple<OtherArgs &&...> others_;
+    std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&...other_args)
-        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
-};
-
-template <typename BodyRelationType, typename ModelType, typename... OtherArgs>
-class ConstructorArgs<BodyRelationType, ModelType, OtherArgs...>
-    : public ConstructorArgs<BodyRelationType, OtherArgs...>
-{
-  public:
-    ModelType &model_;
-    ConstructorArgs(BodyRelationType &body_relation, ModelType &model, OtherArgs &&...other_args)
-        : ConstructorArgs<BodyRelationType, OtherArgs...>(body_relation, std::forward<OtherArgs>(other_args)...),
-          model_(model){};
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**

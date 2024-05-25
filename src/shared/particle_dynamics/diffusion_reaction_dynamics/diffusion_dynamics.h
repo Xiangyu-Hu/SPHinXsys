@@ -67,20 +67,20 @@ class DiffusionRelaxation<DataDelegationType, DiffusionType>
 
   public:
     template <class BodyRelationType>
-    explicit DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions);
+    explicit DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions);
 
     template <class BodyRelationType>
-    explicit DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType &diffusion);
+    explicit DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType *diffusion);
 
-    template <typename BodyRelationType, typename DiffusionModelType>
-    explicit DiffusionRelaxation(ConstructorArgs<BodyRelationType, DiffusionModelType> constructor_args)
-        : DiffusionRelaxation(constructor_args.body_relation_, constructor_args.model_){};
+    template <typename BodyRelationType, typename FirstArg>
+    explicit DiffusionRelaxation(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+        : DiffusionRelaxation(parameters.body_relation_, std::get<0>(parameters.others_)){};
 
     /** So that contact diffusion can be integrated independently without inner interaction. */
     void initialization(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
-    private:
+  private:
     void registerSpecies();
 };
 

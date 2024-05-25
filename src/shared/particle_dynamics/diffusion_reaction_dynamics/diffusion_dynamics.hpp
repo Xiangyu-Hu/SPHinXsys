@@ -24,30 +24,10 @@ GetDiffusionTimeStepSize<DiffusionType>::
 template <class DataDelegationType, class DiffusionType>
 template <class BodyRelationType>
 DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> &diffusions)
+    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions)
     : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
+      diffusions_(diffusions),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
-{
-    for (size_t m = 0; m < diffusions.size(); ++m)
-    {
-        diffusions_.push_back(diffusions[m]);
-    }
-    registerSpecies();
-}
-//=================================================================================================//
-template <class DataDelegationType, class DiffusionType>
-template <class BodyRelationType>
-DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType &diffusion)
-    : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
-      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
-{
-    diffusions_.push_back(&diffusion);
-    registerSpecies();
-}
-//=================================================================================================//
-template <class DataDelegationType, class DiffusionType>
-void DiffusionRelaxation<DataDelegationType, DiffusionType>::registerSpecies()
 {
     for (auto &diffusion : diffusions_)
     {
@@ -58,6 +38,17 @@ void DiffusionRelaxation<DataDelegationType, DiffusionType>::registerSpecies()
         std::string gradient_species_name = diffusion->GradientSpeciesName();
         gradient_species_.push_back(this->particles_->template registerSharedVariable<Real>(gradient_species_name));
     }
+}
+//=================================================================================================//
+template <class DataDelegationType, class DiffusionType>
+template <class BodyRelationType>
+DiffusionRelaxation<DataDelegationType, DiffusionType>::
+    DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType *diffusion)
+    : DiffusionRelaxation(body_relation, StdVec<DiffusionType *>{diffusion}) {}
+//=================================================================================================//
+template <class DataDelegationType, class DiffusionType>
+void DiffusionRelaxation<DataDelegationType, DiffusionType>::registerSpecies()
+{
 }
 //=================================================================================================//
 template <class DataDelegationType, class DiffusionType>

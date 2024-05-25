@@ -56,7 +56,7 @@ int main(int ac, char *av[])
         ConstructorArgs(diffusion_body_inner, diffusion),
         ConstructorArgs(diffusion_body_contact_Dirichlet, diffusion),
         ConstructorArgs(diffusion_body_contact_Neumann, diffusion));
-    GetDiffusionTimeStepSize<IsotropicDiffusion> get_time_step_size(diffusion_body);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_Dirichlet);
     SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_Neumann);
