@@ -92,7 +92,7 @@ int main(int ac, char *av[])
     plate_body.generateParticles(PlateParticleGenerator(plate_body));
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<Observer>(observation_location);
+    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

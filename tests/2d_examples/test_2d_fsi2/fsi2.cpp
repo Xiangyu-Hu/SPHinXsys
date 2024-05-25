@@ -46,7 +46,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
-    beam_observer.generateParticles<Observer>(beam_observation_location);
+    beam_observer.generateParticles<BaseParticles, Observer>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles(ParticleGeneratorFluidObserver(fluid_observer));
     //----------------------------------------------------------------------

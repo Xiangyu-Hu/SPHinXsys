@@ -171,8 +171,8 @@ int main(int ac, char *av[])
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     ObserverBody disp_observer_2(sph_system, "Observer2");
     disp_observer_2.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    disp_observer_1.generateParticles<Observer>(observer_position_1);
-    disp_observer_2.generateParticles<Observer>(observer_position_2);
+    disp_observer_1.generateParticles<BaseParticles, Observer>(observer_position_1);
+    disp_observer_2.generateParticles<BaseParticles, Observer>(observer_position_2);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<Lattice>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
-    cube_observer.generateParticles<Observer>(observation_location);
+    cube_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -192,7 +192,7 @@ int main(int ac, char *av[])
         : beam_body.generateParticles<Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.generateParticles<Observer>(observation_location);
+    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

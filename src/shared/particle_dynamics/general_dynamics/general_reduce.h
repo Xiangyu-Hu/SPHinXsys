@@ -160,7 +160,7 @@ class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
  * @class QuantitySummation
  * @brief Compute the summation of  a particle variable in a body
  */
-template <typename DataType, class DynamicsIdentifier>
+template <typename DataType, class DynamicsIdentifier = SPHBody>
 class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>,
                           public GeneralDataDelegateSimple
 {
