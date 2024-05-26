@@ -84,7 +84,7 @@ int main(int ac, char *av[])
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineMaterial<Solid>(StructureDensity);
-    structure.generateParticles<Reload>("Structure_Fit");
+    structure.generateParticles<BaseParticles, Reload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);

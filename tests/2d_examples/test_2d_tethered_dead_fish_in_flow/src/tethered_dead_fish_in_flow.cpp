@@ -228,7 +228,7 @@ int main(int ac, char *av[])
     fish_body.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<Reload>(fish_body.getName())
+        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
         : fish_body.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particle and body creation of fish observer.

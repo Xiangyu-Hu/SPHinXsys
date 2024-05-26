@@ -357,7 +357,7 @@ int main(int ac, char *av[])
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
         muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? physiology_heart.generateParticles<Reload>("HeartModel")
+        ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
 
     /** create a SPH body, material and particles */
@@ -365,7 +365,7 @@ int main(int ac, char *av[])
     mechanics_heart.defineParticlesAndMaterial<
         BaseParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? mechanics_heart.generateParticles<Reload>("HeartModel")
+        ? mechanics_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : mechanics_heart.generateParticles<BaseParticles, Lattice>();
 
     //----------------------------------------------------------------------

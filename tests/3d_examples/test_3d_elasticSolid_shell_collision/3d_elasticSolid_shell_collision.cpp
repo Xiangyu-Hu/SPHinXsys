@@ -77,7 +77,7 @@ int main(int ac, char *av[])
     ball.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.getName());
     }
     else
     {

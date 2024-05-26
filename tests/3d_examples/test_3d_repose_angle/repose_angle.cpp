@@ -88,7 +88,7 @@ int main(int ac, char *av[])
     soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     soil_block.defineParticlesAndMaterial<BaseParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? soil_block.generateParticles<Reload>(soil_block.getName())
+        ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())
         : soil_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
