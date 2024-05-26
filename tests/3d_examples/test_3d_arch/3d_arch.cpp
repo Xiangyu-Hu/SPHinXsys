@@ -43,11 +43,15 @@ Real Youngs_modulus = 210e6;                 /** Normalized Youngs Modulus. */
 Real poisson = 0.3;                          /** Poisson ratio. */
 Real physical_viscosity = 200.0 * thickness; /** physical damping, here we choose the same value as numerical viscosity. */
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGenerator<Surface>
+class Cylinder;
+template <>
+class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -130,6 +134,7 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
+} // namespace SPH
 
 /**
  *  The main program
@@ -145,7 +150,7 @@ int main(int ac, char *av[])
     /** create a cylinder body with shell particles and linear elasticity. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
+    cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
