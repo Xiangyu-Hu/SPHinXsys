@@ -29,6 +29,9 @@ Vec3d domain_upper_bound(15.0, 15.0, 26.0);
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+
+namespace SPH
+{
 /** Define the boundary geometry. */
 class BoundaryGeometry : public BodyPartByParticle
 {
@@ -51,10 +54,11 @@ class BoundaryGeometry : public BodyPartByParticle
     };
 };
 
-class LeafletParticleGenerator : public ParticleGenerator<Surface>
+class Leaflet;
+class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
 {
   public:
-    explicit LeafletParticleGenerator(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Surface>(sph_body), sph_body_(sph_body){};
     virtual void initializeGeometricVariables() override
     {
@@ -112,6 +116,7 @@ class LeafletParticleGenerator : public ParticleGenerator<Surface>
     }
     SPHBody &sph_body_;
 };
+} // namespace SPH
 
 //--------------------------------------------------------------------------
 //	Main program starts here.
@@ -128,9 +133,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    leaflet.defineParticlesAndMaterial<SurfaceParticles, Solid>();
-    LeafletParticleGenerator leaflet_particle_generator(leaflet);
-    leaflet.generateParticles(leaflet_particle_generator);
+    leaflet.defineMaterial<Solid>();
+    leaflet.generateParticles<SurfaceParticles, Leaflet>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

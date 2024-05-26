@@ -61,33 +61,23 @@ class WettingFluidBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
     }
 };
-class WettingFluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid>
-{
-  public:
-    WettingFluidBodyMaterial()
-        : DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, SharedPtr<NoReaction>(), rho0_f, c_f, mu_f)
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
-    };
-};
-using DiffusionFluidParticles = DiffusionReactionParticles<BaseParticles, WettingFluidBodyMaterial>;
-class WettingFluidBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionFluidParticles>
-{
-  protected:
-    size_t phi_;
 
+class WettingFluidBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+{
   public:
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionFluidParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = fluid_moisture;
+        phi_[index_i] = fluid_moisture;
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
 //	Definition for wall body
@@ -123,32 +113,22 @@ class WettingWallBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
     }
 };
-class WettingWallBodyMaterial : public DiffusionReaction<Solid>
+class WettingWallBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  public:
-    WettingWallBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
-    };
-};
-using DiffusionWallParticles = DiffusionReactionParticles<BaseParticles, WettingWallBodyMaterial>;
-class WettingWallBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionWallParticles>
-{
-  protected:
-    size_t phi_;
-
   public:
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionWallParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = wall_moisture;
+        phi_[index_i] = wall_moisture;
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
 //	Definition for cylinder body
@@ -161,39 +141,29 @@ class WettingCylinderBody : public MultiPolygonShape
         multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     }
 };
-class WettingCylinderBodyMaterial : public DiffusionReaction<Solid>
+class WettingCylinderBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  public:
-    WettingCylinderBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>(), rho0_s)
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    };
-};
-using DiffusionCylinderParticles = DiffusionReactionParticles<BaseParticles, WettingCylinderBodyMaterial>;
-class WettingCylinderBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionCylinderParticles>
-{
-  protected:
-    size_t phi_;
-
   public:
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionCylinderParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = cylinder_moisture;
+        phi_[index_i] = cylinder_moisture;
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 
 //----------------------------------------------------------------------
 //	The diffusion model of wetting
 //----------------------------------------------------------------------
 using CylinderFluidDiffusionDirichlet =
-    DiffusionRelaxationRK2<DiffusionRelaxation<Dirichlet<DiffusionCylinderParticles, DiffusionFluidParticles, KernelGradientContact>>>;
+    DiffusionRelaxationRK2<DiffusionRelaxation<Dirichlet<KernelGradientContact>, IsotropicDiffusion>>;
 //------------------------------------------------------------------------------
 // Constrained part for Simbody
 //------------------------------------------------------------------------------
@@ -220,17 +190,17 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
-    water_block.defineParticlesAndMaterial<DiffusionFluidParticles, WettingFluidBodyMaterial>();
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<DiffusionWallParticles, WettingWallBodyMaterial>();
+    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineParticlesAndMaterial<DiffusionCylinderParticles, WettingCylinderBodyMaterial>();
+    cylinder.defineMaterial<Solid>(rho0_s);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         : cylinder.generateParticles<BaseParticles, Lattice>();
@@ -306,6 +276,13 @@ int main(int ac, char *av[])
     //	Define the fluid dynamics used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+    IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
+    GetDiffusionTimeStepSize get_thermal_time_step(cylinder, diffusion);
+    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact, &diffusion);
+    SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
+    SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
+    SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
+
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
@@ -320,14 +297,6 @@ int main(int ac, char *av[])
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    //----------------------------------------------------------------------
-    //	Define the wetting diffusion dynamics used in the simulation.
-    //----------------------------------------------------------------------
-    SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
-    SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
-    SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
-    GetDiffusionTimeStepSize<DiffusionCylinderParticles> get_thermal_time_step(cylinder);
-    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------

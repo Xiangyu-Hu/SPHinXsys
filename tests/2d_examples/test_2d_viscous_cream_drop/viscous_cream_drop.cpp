@@ -93,8 +93,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody cream(sph_system, makeShared<Cream>("Cream"));
     cream.defineBodyLevelSetShape();
-    cream.defineParticlesAndMaterial<BaseParticles, ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
-                                                                         yield_stress, viscosity, Herschel_Bulkley_power);
+    cream.defineMaterial<ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
+                                              yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cream.generateParticles<BaseParticles, Reload>(cream.getName())
         : cream.generateParticles<BaseParticles, Lattice>();

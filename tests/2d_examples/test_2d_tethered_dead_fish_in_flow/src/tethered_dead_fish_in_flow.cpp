@@ -162,7 +162,7 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
  * Observer particle generator.
  */
 class FishObserver;
-template<>
+template <>
 class ParticleGenerator<FishObserver> : public ParticleGenerator<Observer>
 {
   public:
@@ -196,7 +196,7 @@ struct InflowVelocity
         return target_velocity;
     }
 };
-}
+} // namespace SPH
 
 /**
  * Main program starts here.
@@ -241,8 +241,7 @@ int main(int ac, char *av[])
      * @brief   Particle and body creation of fish observer.
      */
     ObserverBody fish_observer(system, "Observer");
-    FishObserverParticleGenerator fish_observer_particle_generator(fish_observer);
-    fish_observer.generateParticles(fish_observer_particle_generator);
+    fish_observer.generateParticles<BaseParticles, FishObserver>();
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation fish_body_inner(fish_body);
