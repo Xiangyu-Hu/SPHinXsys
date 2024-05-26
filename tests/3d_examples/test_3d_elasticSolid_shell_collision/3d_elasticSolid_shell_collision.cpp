@@ -74,7 +74,7 @@ int main(int ac, char *av[])
     shell.generateParticles(CylinderParticleGenerator(shell));
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
         ball.generateParticles<BaseParticles, Reload>(ball.getName());

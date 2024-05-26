@@ -104,6 +104,9 @@ std::vector<Vecd> createFishBlockingShape()
 
     return pnts_blocking_shape;
 }
+
+namespace SPH
+{
 /**
  * Water body shape defintion.
  */
@@ -158,10 +161,12 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 /**
  * Observer particle generator.
  */
-class FishObserverParticleGenerator : public ParticleGenerator<Observer>
+class FishObserver;
+template<>
+class ParticleGenerator<FishObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         positions_.push_back(Vecd(cx + resolution_ref, cy));
         positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
@@ -191,6 +196,8 @@ struct InflowVelocity
         return target_velocity;
     }
 };
+}
+
 /**
  * Main program starts here.
  */
@@ -225,7 +232,7 @@ int main(int ac, char *av[])
     SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape();
-    fish_body.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    fish_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
