@@ -133,7 +133,7 @@ int main(int ac, char *av[])
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
     fluid_block.defineParticlesAndMaterial<BaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
-    fluid_block.generateParticlesWithReserve<Lattice>(ghost_along_x);
+    fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();

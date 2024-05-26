@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     /** create a cylinder body with shell particles and linear elasticity. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
-    cylinder_body.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
 
     /** Define Observer. */

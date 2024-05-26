@@ -146,7 +146,7 @@ class PreSettingCase : public Parameter
         //----------------------------------------------------------------------
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
-        plate_body.defineParticlesAndMaterial<SurfaceParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+        plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
         plate_body.generateParticles(PlateParticleGenerator(plate_body));
 
         plate_observer.defineParticlesAndMaterial();
