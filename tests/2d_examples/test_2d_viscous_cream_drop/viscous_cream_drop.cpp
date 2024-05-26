@@ -97,7 +97,7 @@ int main(int ac, char *av[])
                                                                          yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cream.generateParticles<Reload>(cream.getName())
-        : cream.generateParticles<Lattice>();
+        : cream.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
     cream_observer.generateParticles<BaseParticles, Observer>(observation_location);

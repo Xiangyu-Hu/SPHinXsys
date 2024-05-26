@@ -121,7 +121,7 @@ int main(int ac, char *av[])
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
     beam_body.defineParticlesAndMaterial<BaseParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
-    beam_body.generateParticles<Lattice>();
+    beam_body.generateParticles<BaseParticles, Lattice>();
 
     // Define Observer
     ObserverBody beam_observer(sph_system, "BeamObserver");

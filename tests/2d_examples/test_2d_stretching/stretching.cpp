@@ -189,7 +189,7 @@ int main(int ac, char *av[])
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? beam_body.generateParticles<Reload>(beam_body.getName())
-        : beam_body.generateParticles<Lattice>();
+        : beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.generateParticles<BaseParticles, Observer>(observation_location);

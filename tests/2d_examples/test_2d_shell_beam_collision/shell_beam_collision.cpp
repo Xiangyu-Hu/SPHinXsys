@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 
     SolidBody beam(sph_system, makeShared<Beam>("Beam"));
     beam.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam.generateParticles<Lattice>();
+    beam.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

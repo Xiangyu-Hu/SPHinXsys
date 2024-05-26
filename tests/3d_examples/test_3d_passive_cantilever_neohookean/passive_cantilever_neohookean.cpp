@@ -69,7 +69,7 @@ int main(int ac, char *av[])
     /** create a Cantilever body, corresponding material, particles and reaction model. */
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    cantilever_body.generateParticles<Lattice>();
+    cantilever_body.generateParticles<BaseParticles, Lattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");
     cantilever_observer.generateParticles<BaseParticles, Observer>(observation_location);

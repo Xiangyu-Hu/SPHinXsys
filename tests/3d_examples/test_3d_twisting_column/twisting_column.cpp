@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineParticlesAndMaterial<BaseParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    column.generateParticles<Lattice>();
+    column.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};

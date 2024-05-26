@@ -133,14 +133,14 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<FluidFilling>("FluidBody"));
     fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
-    fluid.generateParticles<Lattice>();
+    fluid.generateParticles<BaseParticles, Lattice>();
 
     SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));
     no_slip_boundary.defineMaterial<Solid>();
-    no_slip_boundary.generateParticles<Lattice>();
+    no_slip_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer_body(sph_system, makeShared<FluidFilling>("ObserverBody"));
-    observer_body.generateParticles<Lattice>();
+    observer_body.generateParticles<BaseParticles, Lattice>();
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);

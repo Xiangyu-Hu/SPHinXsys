@@ -111,7 +111,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
     SolidBody model(system, triangle_mesh_shape);
     model.defineBodyLevelSetShape()->cleanLevelSet();
     model.defineMaterial<Solid>();
-    model.generateParticles<Lattice>();
+    model.generateParticles<BaseParticles, Lattice>();
 
     if (particle_relaxation)
     {

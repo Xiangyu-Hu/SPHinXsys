@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     SolidBody muscle_body(sph_system, muscle_body_shape);
     muscle_body.defineParticlesAndMaterial<
         BaseParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    muscle_body.generateParticles<Lattice>();
+    muscle_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

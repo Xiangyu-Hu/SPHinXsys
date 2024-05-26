@@ -82,7 +82,7 @@ int main(int ac, char *av[])
     else
     {
         ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<Lattice>();
+        ball.generateParticles<BaseParticles, Lattice>();
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");

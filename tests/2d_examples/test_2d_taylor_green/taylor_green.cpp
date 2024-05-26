@@ -78,7 +78,7 @@ int main(int ac, char *av[])
     // Using relaxed particle distribution if needed
     sph_system.ReloadParticles()
         ? water_block.generateParticles<Reload>(water_block.getName())
-        : water_block.generateParticles<Lattice>();
+        : water_block.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
