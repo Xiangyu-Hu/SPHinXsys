@@ -101,30 +101,33 @@ struct TypeIdentity
  * @class MonoFieldElectroPhysiology
  * @brief material class for electro_physiology.
  */
+template <class DirectionalDiffusionType>
 class MonoFieldElectroPhysiology
-    : public ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusion>
+    : public ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>
 {
   public:
     MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
                                Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-        : ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusion>(electro_physiology_reaction)
+        : ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>(electro_physiology_reaction)
     {
-        material_type_name_ = "MonoFieldElectroPhysiology";
-        addDiffusion("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
+        this->material_type_name_ = "MonoFieldElectroPhysiology";
+        this->addDiffusion("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
     };
     virtual ~MonoFieldElectroPhysiology(){};
 };
 
 namespace electro_physiology
 {
+template <class DirectionalDiffusionType>    
 using ElectroPhysiologyDiffusionRelaxationInner =
-    DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, DirectionalDiffusion>;
+    DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, DirectionalDiffusionType>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
  */
+template <class DirectionalDiffusionType>  
 using ElectroPhysiologyDiffusionInnerRK2 =
-    DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner>;
+    DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner<DirectionalDiffusionType>>;
 
 /**
  * @class ElectroPhysiologyDiffusionNetworkRK2

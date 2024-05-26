@@ -26,7 +26,7 @@ int main(int ac, char *av[])
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
     column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    column.defineParticlesAndMaterial<BaseParticles, HardeningPlasticSolid>(
+    column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? column.generateParticles<BaseParticles, Reload>(column.getName())
@@ -38,7 +38,8 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
-    my_observer.generateParticles(ColumnObserverParticleGenerator(my_observer));
+    StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
+    my_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /**body relation topology */
     InnerRelation column_inner(column);
