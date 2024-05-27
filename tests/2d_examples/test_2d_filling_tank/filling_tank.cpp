@@ -95,9 +95,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SharedPtr<Shape> water_inlet_shape_ptr =
-        makeShared<TransformShape<GeometricShapeBox>>(Transform(inlet_translation), inlet_halfsize);
-    FluidBody water_body(sph_system, water_inlet_shape_ptr, "WaterBody");
+    TransformShape<GeometricShapeBox> water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
+    FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);

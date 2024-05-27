@@ -248,27 +248,28 @@ class ParticleMergeWithPrescribedArea : public ParticleRefinementWithPrescribedA
     bool findMergeParticles(size_t index_i, StdVec<size_t> &merge_indices, Real search_size, Real search_distance);
     virtual void updateMergedParticleInformation(size_t merged_index, const StdVec<size_t> &merge_indices);
 
-    template <typename VariableType>
-    struct mergeParticleDataValue
+    struct MergeParticleDataValue
     {
-        void operator()(ParticleData &particle_data, size_t merged_index, const StdVec<size_t> &merge_indices, StdVec<Real> merge_mass)
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper,
+                        size_t merged_index, const StdVec<size_t> &merge_indices, StdVec<Real> merge_mass)
         {
             Real total_mass = 0.0;
             for (size_t k = 0; k != merge_indices.size(); ++k)
                 total_mass += merge_mass[k];
 
-            constexpr int type_index = DataTypeIndex<VariableType>::value;
-            for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
+            for (size_t i = 0; i != data_keeper.size(); ++i)
             {
-                VariableType particle_data_temp = ZeroData<VariableType>::value;
+                DataType particle_data_temp = ZeroData<DataType>::value;
                 for (size_t k = 0; k != merge_indices.size(); ++k)
-                    particle_data_temp += merge_mass[k] * (*std::get<type_index>(particle_data)[i])[merge_indices[k]];
+                    particle_data_temp += merge_mass[k] * (*data_keeper[i])[merge_indices[k]];
 
-                (*std::get<type_index>(particle_data)[i])[merged_index] = particle_data_temp / (total_mass + TinyReal);
+                (*data_keeper[i])[merged_index] = particle_data_temp / (total_mass + TinyReal);
             }
         };
     };
-    DataAssembleOperation<mergeParticleDataValue> merge_particle_value_;
+
+    OperationOnDataAssemble<ParticleData, MergeParticleDataValue> merge_particle_value_;
 };
 
 /**

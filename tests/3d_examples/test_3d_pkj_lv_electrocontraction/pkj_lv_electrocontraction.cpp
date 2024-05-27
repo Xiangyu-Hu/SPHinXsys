@@ -155,12 +155,10 @@ int main(int ac, char *av[])
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    auto voltage_observer_particle_generator = voltage_observer.makeSelfDefined<HeartObserverParticleGenerator>();
-    voltage_observer.generateParticles(voltage_observer_particle_generator);
+    voltage_observer.generateParticles(HeartObserverParticleGenerator(voltage_observer));
 
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    auto myocardium_observer_particle_generator = myocardium_observer.makeSelfDefined<HeartObserverParticleGenerator>();
-    myocardium_observer.generateParticles(myocardium_observer_particle_generator);
+    myocardium_observer.generateParticles(HeartObserverParticleGenerator(myocardium_observer));
 
     /** topology */
     InnerRelation physiology_heart_inner(physiology_heart);
@@ -215,7 +213,7 @@ int main(int ac, char *av[])
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(muscle_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(muscle_base);
     /**
      * Pre-simulation.
      */

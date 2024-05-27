@@ -91,11 +91,11 @@ class CouetteFlowInitialCondition
     }
 };
 
-class BoundaryVelocity : public solid_dynamics::MotionConstraint
+class BoundaryVelocity : public BodyPartMotionConstraint
 {
   public:
     explicit BoundaryVelocity(BodyPartByParticle &body_part)
-        : solid_dynamics::MotionConstraint(body_part) {}
+        : BodyPartMotionConstraint(body_part) {}
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -123,7 +123,7 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
     //----------------------------------------------------------------------

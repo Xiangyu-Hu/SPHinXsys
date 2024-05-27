@@ -108,8 +108,7 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    auto plate_particle_generator = plate_body.makeSelfDefined<PlateParticleGenerator>();
-    plate_body.generateParticles(plate_particle_generator);
+    plate_body.generateParticles(PlateParticleGenerator(plate_body));
     // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
@@ -143,9 +142,8 @@ int main(int ac, char *av[])
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-    SimpleDynamics<continuum_dynamics::FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(1.0, 1.0, 0.0));
-    SimpleDynamics<continuum_dynamics::ConstrainSolidBodyMassCenter>
-        constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));
+    SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(1.0, 1.0, 0.0));
+    SimpleDynamics<solid_dynamics::ConstrainSolidBodyMassCenter> constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));
     /** Output */
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);

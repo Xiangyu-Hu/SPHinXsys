@@ -61,11 +61,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    SolidBody myocardium_muscle_body(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                                     Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
-    myocardium_muscle_body.defineParticlesAndMaterial<
+    TransformShape<GeometricShapeBox> muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
+    SolidBody muscle_body(sph_system, muscle_body_shape);
+    muscle_body.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    myocardium_muscle_body.generateParticles<Lattice>();
+    muscle_body.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -74,18 +74,18 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation myocardium_muscle_body_inner(myocardium_muscle_body);
+    InnerRelation muscle_body_inner(muscle_body);
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(myocardium_muscle_body_inner);
-    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_muscle_body_inner);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(myocardium_muscle_body_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_muscle_body);
-    SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);
-    BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
-    SimpleDynamics<solid_dynamics::FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(muscle_body_inner);
+    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(muscle_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(muscle_body_inner);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(muscle_body);
+    SimpleDynamics<MyocardiumActivation> myocardium_activation(muscle_body);
+    BodyRegionByParticle holder(muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
+    SimpleDynamics<FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

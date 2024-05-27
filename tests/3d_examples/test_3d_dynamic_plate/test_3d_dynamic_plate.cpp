@@ -106,8 +106,7 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    auto plate_particle_generator = plate_body.makeSelfDefined<PlateParticleGenerator>();
-    plate_body.generateParticles(plate_particle_generator);
+    plate_body.generateParticles(PlateParticleGenerator(plate_body));
     plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
 
     /** Define Observer. */
@@ -140,7 +139,7 @@ int main(int ac, char *av[])
         stress_relaxation_second_half(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
+    SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);

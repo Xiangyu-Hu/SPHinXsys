@@ -79,9 +79,8 @@ DataType *BaseParticles::getSingleVariableByName(const std::string &variable_nam
     return nullptr;
 }
 //=================================================================================================//
-template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::
-    registerSharedVariable(const std::string &variable_name, const DataType &default_value)
+template <typename DataType, typename... Args>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&...args)
 {
 
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
@@ -91,7 +90,7 @@ StdLargeVec<DataType> *BaseParticles::
     {
         UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
-        registerVariable(*contained_data, variable_name, default_value);
+        registerVariable(*contained_data, variable_name, std::forward<Args>(args)...);
         return contained_data;
     }
     else
@@ -113,8 +112,6 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
 
     std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    return nullptr;
-
     return nullptr;
 }
 //=================================================================================================//
@@ -202,37 +199,57 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
-BaseParticles::resizeParticleData<DataType>::resizeParticleData(ParticleData &all_particle_data)
-    : all_particle_data_(all_particle_data) {}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::resizeParticleData<DataType>::
-operator()(size_t new_size) const
+void BaseParticles::ResizeParticles::
+operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    for (size_t i = 0; i != std::get<type_index>(all_particle_data_).size(); ++i)
-        std::get<type_index>(all_particle_data_)[i]->resize(new_size, ZeroData<DataType>::value);
+    for (size_t i = 0; i != data_keeper.size(); ++i)
+    {
+        data_keeper[i]->resize(new_size, ZeroData<DataType>::value);
+    }
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addParticleDataWithDefaultValue<DataType>::
-operator()(ParticleData &particle_data) const
+void BaseParticles::CopyParticleData::
+operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-
-    for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-        std::get<type_index>(particle_data)[i]->push_back(ZeroData<DataType>::value);
+    for (size_t i = 0; i != data_keeper.size(); ++i)
+    {
+        (*data_keeper[i])[index] = (*data_keeper[i])[another_index];
+    }
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::copyParticleData<DataType>::
-operator()(ParticleData &particle_data, size_t index, size_t another_index) const
+void BaseParticles::WriteAParticleVariableToXml::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data)
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
-
-    for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-        (*std::get<type_index>(particle_data)[i])[index] =
-            (*std::get<type_index>(particle_data)[i])[another_index];
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        StdLargeVec<DataType> &variable_data = *(std::get<type_index>(all_particle_data)[variables[i]->IndexInContainer()]);
+        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser_.setAttributeToElement(child, variables[i]->Name(), variable_data[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::ReadAParticleVariableFromXml::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data)
+{
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        StdLargeVec<DataType> &variable_data = *(std::get<type_index>(all_particle_data)[variables[i]->IndexInContainer()]);
+        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser_.queryAttributeValue(child, variables[i]->Name(), variable_data[index]);
+            index++;
+        }
+    }
 }
 //=================================================================================================//
 template <typename StreamType>
@@ -324,34 +341,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
         }
         output_stream << std::endl;
         output_stream << "    </DataArray>\n";
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void WriteAParticleVariableToXml::
-operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
-{
-    size_t index = 0;
-    for (auto child = xml_parser_.first_element_->FirstChildElement();
-         child;
-         child = child->NextSiblingElement())
-    {
-        xml_parser_.setAttributeToElement(child, variable_name, variable[index]);
-        index++;
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void ReadAParticleVariableFromXml::
-operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
-{
-    size_t index = 0;
-    for (auto child = xml_parser_.first_element_->FirstChildElement();
-         child;
-         child = child->NextSiblingElement())
-    {
-        xml_parser_.queryAttributeValue(child, variable_name, variable[index]);
-        index++;
     }
 }
 //=================================================================================================//

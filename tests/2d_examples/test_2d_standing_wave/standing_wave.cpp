@@ -163,7 +163,7 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_inner);
         RelaxationStepLevelSetCorrectionComplex
-            relaxation_step_complex(ConstructorArgs(water_block_inner, "OuterBoundary"), water_wall_contact);
+            relaxation_step_complex(ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_wall_contact);
         /**
          * @brief 	Particle relaxation starts here.
          */

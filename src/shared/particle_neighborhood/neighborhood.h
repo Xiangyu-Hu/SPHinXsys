@@ -52,11 +52,11 @@ class Neighborhood
     size_t current_size_;   /**< the current number of neighbors */
     size_t allocated_size_; /**< the limit of neighbors does not require memory allocation  */
 
-    StdLargeVec<size_t> j_;      /**< index of the neighbor particle. */
-    StdLargeVec<Real> W_ij_;     /**< kernel value or particle volume contribution */
+    StdLargeVec<size_t> j_;   /**< index of the neighbor particle. */
+    StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */
     StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
-    StdLargeVec<Real> r_ij_;     /**< distance between j and i. */
-    StdLargeVec<Vecd> e_ij_;     /**< unit vector pointing from j to i or inter-particle surface direction */
+    StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
+    StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
     Neighborhood() : current_size_(0), allocated_size_(0){};
     ~Neighborhood(){};
@@ -76,17 +76,15 @@ class NeighborBuilder
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
-    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t j_index, const Real &Vol_j);
-    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t j_index, const Real &Vol_j);
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
     //----------------------------------------------------------------------
     //	Below are for variable smoothing length.
     //----------------------------------------------------------------------
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
+                        const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
+                            const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     static Kernel *chooseKernel(SPHBody &body, SPHBody &target_body);
 
   public:

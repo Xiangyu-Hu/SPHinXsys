@@ -33,6 +33,7 @@
 #include "compressible_fluid.h"
 #include "fluid_body.h"
 #include "io_vtk.h"
+#include <Eigen/Dense>
 using namespace std;
 namespace SPH
 {
@@ -57,11 +58,9 @@ class ANSYSMesh
   protected:
     double min_distance_between_nodes_;
 
-    void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates);
-    void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec3d> &node_coordinates);
     void getDataFromMeshFile(const std::string &full_path);
     void getElementCenterCoordinates();
-    void computeMinimumDistanceBetweenNodes();
+    void getMinimumDistanceBetweenNodes();
 };
 
 /**
@@ -189,9 +188,20 @@ class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
     StdLargeVec<Vecd> &node_coordinates_;
-    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+    StdLargeVec<StdVec<size_t>>&elements_nodes_connection_;
 };
+class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
+{
+public:
+    BodyStatesRecordingInMeshToVtu(SPHBody& body, ANSYSMesh& ansys_mesh);
+    virtual ~BodyStatesRecordingInMeshToVtu() {};
 
+protected:
+    virtual void writeWithFileName(const std::string& sequence) override;
+    StdLargeVec<Vecd>& node_coordinates_;
+    StdLargeVec<StdVec<size_t>>& elements_nodes_connection_;
+    SPHBody& bounds_;
+};
 //----------------------------------------------------------------------
 //	BoundaryConditionSetupInFVM
 //----------------------------------------------------------------------
@@ -206,6 +216,9 @@ class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
     virtual void applyOutletBoundary(size_t ghost_index, size_t index_i){};
     virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
     virtual void applyFarFieldBoundary(size_t ghost_index){};
+    virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i) {};
+    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
+    virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i) {};
     // Common functionality for resetting boundary conditions
     void resetBoundaryConditions();
 

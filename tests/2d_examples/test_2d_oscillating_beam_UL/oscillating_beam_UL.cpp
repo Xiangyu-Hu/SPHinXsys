@@ -145,7 +145,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<continuum_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------

@@ -17,13 +17,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                          Transform(water_block_translation), water_block_halfsize, "Structure"));
+    TransformShape<GeometricShapeBox> water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody");
+    FluidBody water_block(sph_system, water_block_shape);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
     //----------------------------------------------------------------------
@@ -62,8 +62,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
-                                                        Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
+    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     //----------------------------------------------------------------------

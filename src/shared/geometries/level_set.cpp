@@ -1,5 +1,7 @@
 #include "level_set.h"
+
 #include "adaptation.h"
+#include "base_kernel.h"
 
 namespace SPH
 {

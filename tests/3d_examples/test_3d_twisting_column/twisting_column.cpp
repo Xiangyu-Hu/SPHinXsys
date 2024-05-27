@@ -108,8 +108,9 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
-    BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    BodyRegionByParticle holder(column, holder_shape);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

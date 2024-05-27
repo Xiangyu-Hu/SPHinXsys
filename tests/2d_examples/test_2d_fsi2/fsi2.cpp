@@ -32,7 +32,7 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<Lattice>();
 
@@ -48,8 +48,7 @@ int main(int ac, char *av[])
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
     beam_observer.generateParticles<Observer>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    auto fluid_observer_particle_generator = fluid_observer.makeSelfDefined<ParticleGeneratorFluidObserver>();
-    fluid_observer.generateParticles(fluid_observer_particle_generator);
+    fluid_observer.generateParticles(ParticleGeneratorFluidObserver(fluid_observer));
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -157,7 +156,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
     /** Constrain region of the inserted body. */
     BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
+    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     /** Update surface norm direction.*/
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
     //----------------------------------------------------------------------

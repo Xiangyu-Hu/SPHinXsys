@@ -89,5 +89,4 @@ class AlignedBoxShape : public TransformShape<GeometricShapeBox>
     Vecd getLowerPeriodic(int axis, const Vecd &probe_point);
 };
 } // namespace SPH
-
 #endif // COMPLEX_SHAPE_H
