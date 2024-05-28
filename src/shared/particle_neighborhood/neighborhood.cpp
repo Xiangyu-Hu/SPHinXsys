@@ -420,13 +420,11 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
     const Real distance = displacement.norm();
     const Real distance0 = (pos0_[index_i] - pos0_[index_j]).norm();
 
-    const Real Vol_j = std::get<2>(list_data_j);
-
     // only particles within 1*dp distance should have force
     if (distance < particle_distance_ && distance0 > kernel_->CutOffRadius())
     {
-        Real W_ijV_j_ttl = kernel_->W(distance, displacement) * Vol_j;
-        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement) * Vol_j;
+        Real W_ijV_j_ttl = kernel_->W(distance, displacement);
+        Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
         // correct normal direction, make sure it points from index i to index j
@@ -449,7 +447,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
             const Real factor_2 = 1 + counter * k2_j * particle_distance_;
             if (factor_1 <= 0 || factor_2 <= 0)
                 break;
-            const Real Vol_j_dummy = Vol_j * factor_1 * factor_2;
+            const Real Vol_j_dummy = factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
             W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
@@ -463,7 +461,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
         }
 
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
-        Real W_ij_corrected = W_ijV_j_ttl / Vol_j * particle_distance_ / thickness_[index_j];
+        Real W_ij_corrected = W_ijV_j_ttl * particle_distance_ / thickness_[index_j];
         // change surface mass and area to volumetric mass and volume
         Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_ * particle_distance_;
 
