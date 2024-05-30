@@ -49,10 +49,14 @@ class WallBoundary : public ComplexShape
 };
 
 //	define an observer particle generator
-class WaterObserverParticleGenerator : public ParticleGenerator<Observer>
+namespace SPH
+{
+class WaterObserver;
+template <>
+class ParticleGenerator<WaterObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit WaterObserverParticleGenerator(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Observer>(sph_body)
     {
         // add observation points
@@ -64,6 +68,7 @@ class WaterObserverParticleGenerator : public ParticleGenerator<Observer>
         positions_.push_back(Vecd(DL, 0.266, 0.5 * DW));
     }
 };
+} // namespace SPH
 
 // the main program with commandline options
 int main(int ac, char *av[])
@@ -87,7 +92,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles(WaterObserverParticleGenerator(fluid_observer));
+    fluid_observer.generateParticles<BaseParticles, WaterObserver>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
