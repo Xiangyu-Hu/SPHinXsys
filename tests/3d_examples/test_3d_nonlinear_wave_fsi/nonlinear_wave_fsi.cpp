@@ -20,7 +20,7 @@ int main(int ac, char *av[])
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
     structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineMaterial<Solid>(StructureDensity);
-    structure_fit.generateParticles<Lattice, Adaptive>();
+    structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>();
     structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     //----------------------------------------------------------------------

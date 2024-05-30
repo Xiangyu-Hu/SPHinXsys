@@ -32,14 +32,19 @@ Real gravity_g = 0.0;
 Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
 Real U_ref = 1.0; // Maximum velocity
+
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Complex shape for wall boundary, note that no partial overlap is allowed
 //	for the shapes in a complex shape.
 //----------------------------------------------------------------------
-class PlateParticleGenerator : public ParticleGenerator<Base>
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Base>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Base>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
@@ -98,9 +103,12 @@ class BeamInitialCondition
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        vel_[index_i][2] = sin(governing_vibration_integer_x * Pi * pos_[index_i][0] / PL) * sin(governing_vibration_integer_y * Pi * pos_[index_i][1] / PH);
+        vel_[index_i][2] = sin(governing_vibration_integer_x * Pi * pos_[index_i][0] / PL) *
+                           sin(governing_vibration_integer_y * Pi * pos_[index_i][1] / PH);
     };
 };
+} // namespace SPH
+
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -115,11 +123,10 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<BaseParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    plate_body.generateParticles(PlateParticleGenerator(plate_body));
+    plate_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    plate_body.generateParticles<BaseParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.defineParticlesAndMaterial();
     plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
