@@ -407,6 +407,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	SPH Output section
     //----------------------------------------------------------------------
+    physiology_heart.addBodyStateForRecording<Real>("Voltage");
+    physiology_heart.addBodyStateForRecording<Real>("GateVariable");
+    physiology_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
+    mechanics_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_voltage("Voltage", voltage_observer_contact);
@@ -486,7 +490,7 @@ int main(int ac, char *av[])
                     ite_backward++;
                 }
 
-                active_stress_interpolation.exec();
+                //                active_stress_interpolation.exec();
 
                 Real dt_s_sum = 0.0;
                 while (dt_s_sum < dt)
