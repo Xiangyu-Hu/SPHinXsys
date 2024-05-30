@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineBodyLevelSetShape();
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(10.0);
     //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     (false)
         ? water_block.generateParticlesWithReserve<Reload>(inlet_particle_buffer, water_block.getName())
@@ -159,7 +159,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
     
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
 
     /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
     SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(inlet_velcoity_buffer, characteristic_length, 0.8);
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -205,6 +205,7 @@ int main(int ac, char *av[])
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
+    //Real start_time_turbulence = 70.0;
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
