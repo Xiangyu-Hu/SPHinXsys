@@ -91,12 +91,6 @@ class AlievPanfilowModel : public ElectroPhysiologyReaction
     virtual ~AlievPanfilowModel(){};
 };
 
-// type trait for pass type template constructor
-// This is a C++17 replacement to the C++20 https://en.cppreference.com/w/cpp/types/type_identity.
-template <typename T>
-struct TypeIdentity
-{
-};
 /**
  * @class MonoFieldElectroPhysiology
  * @brief material class for electro_physiology.
@@ -106,26 +100,26 @@ class MonoFieldElectroPhysiology
     : public ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>
 {
   public:
-    MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-                               Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
+    template <typename... Args>
+    MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction, Args &&...args)
         : ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>(electro_physiology_reaction)
     {
         this->material_type_name_ = "MonoFieldElectroPhysiology";
-        this->addDiffusion("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
+        this->addDiffusion("Voltage", "Voltage", std::forward<Args>(args)...);
     };
     virtual ~MonoFieldElectroPhysiology(){};
 };
 
 namespace electro_physiology
 {
-template <class DirectionalDiffusionType>    
+template <class DirectionalDiffusionType>
 using ElectroPhysiologyDiffusionRelaxationInner =
     DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, DirectionalDiffusionType>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
  */
-template <class DirectionalDiffusionType>  
+template <class DirectionalDiffusionType>
 using ElectroPhysiologyDiffusionInnerRK2 =
     DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner<DirectionalDiffusionType>>;
 
@@ -139,9 +133,9 @@ using ElectroPhysiologyDiffusionNetworkRK2 =
 using DiffusionRelaxationWithDirichletContact =
     DiffusionRelaxation<Dirichlet<KernelGradientContact>, IsotropicDiffusion>;
 
-template <template <typename...> typename... ContactInteractionTypes>
+template <class DirectionalDiffusionType, template <typename...> typename... ContactInteractionTypes>
 using ElectroPhysiologyDiffusionRelaxationComplex =
-    DiffusionBodyRelaxationComplex<IsotropicDiffusion,
+    DiffusionBodyRelaxationComplex<DirectionalDiffusionType,
                                    KernelGradientInner, KernelGradientContact,
                                    ContactInteractionTypes...>;
 
