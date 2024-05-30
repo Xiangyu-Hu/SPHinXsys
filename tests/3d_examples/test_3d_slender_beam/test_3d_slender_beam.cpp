@@ -48,11 +48,15 @@ TEST(Beam, MaxDisplacement)
     std::cout << "displ_max: " << displ_max << std::endl;
 }
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class BarParticleGenerator : public ParticleGenerator<Line>
+class Bar;
+template <>
+class ParticleGenerator<Bar> : public ParticleGenerator<Line>
 {
   public:
-    explicit BarParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };
@@ -127,6 +131,8 @@ class TimeDependentExternalForce : public Gravity
                    : global_acceleration_;
     }
 };
+} // namespace SPH
+
 /**
  *  The main program
  */
@@ -137,12 +143,11 @@ int main(int ac, char *av[])
 
     /** create a bar body. */
     SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
-    bar_body.defineParticlesAndMaterial<LinearParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    bar_body.generateParticles(BarParticleGenerator(bar_body));
+    bar_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    bar_body.generateParticles<LinearParticles, Bar>();
 
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
-    bar_observer.defineParticlesAndMaterial();
     bar_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map

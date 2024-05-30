@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
     soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    soil_block.defineParticlesAndMaterial<BaseParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())
         : soil_block.generateParticles<BaseParticles, Lattice>();

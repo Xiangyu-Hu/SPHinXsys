@@ -13,7 +13,11 @@
 
 using namespace SPH;
 
-class ShellSphereParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class ShellSphere;
+template <>
+class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -21,8 +25,8 @@ class ShellSphereParticleGenerator : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ShellSphereParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
-                                          const Vec3d &center, Real particle_area, Real thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
+                               const Vec3d &center, Real particle_area, Real thickness)
         : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           center_(center),
@@ -38,6 +42,7 @@ class ShellSphereParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 template <typename VectorType>
 BoundingBox get_particles_bounding_box(const VectorType &pos_0)
@@ -110,7 +115,6 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     Real rho = 1e3 * pow(unit_mm, 3);
     Real E = 5e7 * pow(unit_mm, 2);
     Real mu = 0.3;
-    auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu); // NeoHookean always locks one particle with excessive strain
     Real physical_viscosity = 7e3;
     std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
     physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
@@ -137,9 +141,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineParticlesWithMaterial<SurfaceParticles>(material.get());
-    ShellSphereParticleGenerator shell_sphere_particle_generator(shell_body, obj_vertices, center, particle_area, thickness);
-    shell_body.generateParticles(shell_sphere_particle_generator);
+    shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
+    shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     // output
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");

@@ -45,7 +45,11 @@ void relax_shell(RealBody &plate_body, Real thickness)
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 }
 
-class ShellRoofParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class ShellRoof;
+template <>
+class ParticleGenerator<ShellRoof> : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -53,7 +57,7 @@ class ShellRoofParticleGenerator : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
         : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           center_(center),
@@ -71,6 +75,7 @@ class ShellRoofParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 template <typename VectorType>
 BoundingBox get_particles_bounding_box(const VectorType &pos_0)
@@ -200,13 +205,18 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-class CylinderParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Cylinder;
+template <>
+class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
     Real particle_number_;
 
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body, Real particle_number = 16) : ParticleGenerator<Surface>(sph_body),
-                                                                                       particle_number_(particle_number){};
+    explicit ParticleGenerator(SPHBody &sph_body, Real particle_number = 16)
+        : ParticleGenerator<Surface>(sph_body),
+          particle_number_(particle_number){};
     virtual void initializeGeometricVariables() override
     {
         // Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
@@ -233,6 +243,7 @@ class CylinderParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 struct return_data
 {
@@ -281,7 +292,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Real rho = 36.7347;
     Real E = 4.32e8;
     Real mu = 0.3;
-    auto material = makeShared<LinearElasticSolid>(rho, E, mu);
     Real physical_viscosity = 7e3 * thickness;
     std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
     // physical_viscosity = 2*get_physical_viscosity_general(rho, E, thickness);
@@ -309,17 +319,15 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineParticlesWithMaterial<SurfaceParticles>(material.get());
+    shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     if (cvt)
     {
-        ShellRoofParticleGenerator roof_particle_generator(shell_body, obj_vertices, center, particle_area, thickness);
-        shell_body.generateParticles(roof_particle_generator);
+        shell_body.generateParticles<SurfaceParticles, ShellRoof>(obj_vertices, center, particle_area, thickness);
     }
 
     else
     {
-        CylinderParticleGenerator cylinder_particle_generator(shell_body, particle_number);
-        shell_body.generateParticles(cylinder_particle_generator);
+        shell_body.generateParticles<SurfaceParticles, Cylinder>(particle_number);
     }
 
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
