@@ -24,14 +24,19 @@ const Real Re = 100;
 const Real U_f = Re * mu_f / rho0_f / diameter;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
+
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	User defined particle generators.
 //----------------------------------------------------------------------
-class ObserverAxialGenerator : public ParticleGenerator<Observer>
+class ObserverAxial;
+template <>
+class ParticleGenerator<ObserverAxial> : public ParticleGenerator<Observer>
 {
   public:
-    ObserverAxialGenerator(SPHBody &sph_body, double full_length,
-                           Vec3d translation = Vec3d(0.0, 0.0, 0.0))
+    ParticleGenerator(SPHBody &sph_body, double full_length,
+                      Vec3d translation = Vec3d(0.0, 0.0, 0.0))
         : ParticleGenerator<Observer>(sph_body)
     {
         int ny = 51;
@@ -44,12 +49,14 @@ class ObserverAxialGenerator : public ParticleGenerator<Observer>
     }
 };
 
-class ObserverRadialGenerator : public ParticleGenerator<Observer>
+class ObserverRadial;
+template <>
+class ParticleGenerator<ObserverRadial> : public ParticleGenerator<Observer>
 {
   public:
-    ObserverRadialGenerator(SPHBody &sph_body, double full_length, double diameter,
-                            int number_of_particles,
-                            Vec3d translation = Vec3d(0.0, 0.0, 0.0))
+    ParticleGenerator(SPHBody &sph_body, double full_length, double diameter,
+                      int number_of_particles,
+                      Vec3d translation = Vec3d(0.0, 0.0, 0.0))
         : ParticleGenerator<Observer>(sph_body)
     {
 
@@ -66,14 +73,16 @@ class ObserverRadialGenerator : public ParticleGenerator<Observer>
     }
 };
 
-class ShellBoundaryGenerator : public ParticleGenerator<Surface>
+class ShellBoundary;
+template <>
+class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
 {
     Real resolution_shell_;
     Real wall_thickness_;
     Real shell_thickness_;
 
   public:
-    explicit ShellBoundaryGenerator(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
         : ParticleGenerator<Surface>(sph_body),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
@@ -126,6 +135,7 @@ struct InflowVelocity
         return target_velocity;
     }
 };
+} // namespace SPH
 
 //----------------------------------------------------------------------
 //	Test case function
@@ -184,16 +194,13 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
 
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    shell_boundary.defineParticlesAndMaterial<SurfaceParticles, LinearElasticSolid>(1, 1e3, 0.45);
-    ShellBoundaryGenerator shell_boundary_particle_generator(shell_boundary, resolution_shell, wall_thickness, shell_thickness);
-    shell_boundary.generateParticles(shell_boundary_particle_generator);
+    shell_boundary.defineMaterial<LinearElasticSolid>(1, 1e3, 0.45);
+    shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
 
     ObserverBody observer_axial(system, "fluid_observer_axial");
-    ObserverAxialGenerator observer_axial_particle_generator(observer_axial, full_length);
-    observer_axial.generateParticles(observer_axial_particle_generator);
+    observer_axial.generateParticles<BaseParticles, ObserverAxial>(full_length);
     ObserverBody observer_radial(system, "fluid_observer_radial");
-    ObserverRadialGenerator observer_radial_particle_generator(observer_radial, full_length, diameter, number_of_particles);
-    observer_radial.generateParticles(observer_radial_particle_generator);
+    observer_radial.generateParticles<BaseParticles, ObserverRadial>(full_length, diameter, number_of_particles);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

@@ -48,11 +48,15 @@ TEST(Plate, MaxDisplacement)
     std::cout << "displ_max: " << displ_max << std::endl;
 }
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator<Surface>
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -125,6 +129,8 @@ class TimeDependentExternalForce : public Gravity
                    : global_acceleration_;
     }
 };
+} // namespace SPH
+
 /**
  *  The main program
  */
@@ -136,11 +142,10 @@ int main(int ac, char *av[])
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles(PlateParticleGenerator(plate_body));
+    plate_body.generateParticles<SurfaceParticles, Plate>();
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.defineParticlesAndMaterial();
     plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map
