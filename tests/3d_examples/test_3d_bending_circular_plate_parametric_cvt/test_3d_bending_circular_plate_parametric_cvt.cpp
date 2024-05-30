@@ -16,7 +16,11 @@ using namespace SPH;
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 
-class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class ShellCircle;
+template <>
+class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -24,7 +28,7 @@ class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
         : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           normal_(normal),
@@ -39,6 +43,7 @@ class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 template <typename VectorType>
 BoundingBox get_particles_bounding_box(const VectorType &pos_0)
@@ -192,7 +197,6 @@ return_data bending_circular_plate(Real dp_ratio)
     Real rho = 1; // unit rho, not specified in test case description
     Real E = 3e7 * psi_to_pa;
     Real mu = 0.3;
-    auto material = makeShared<LinearElasticSolid>(rho, E, mu);
     Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
@@ -233,9 +237,8 @@ return_data bending_circular_plate(Real dp_ratio)
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineParticlesWithMaterial<SurfaceParticles>(material.get());
-    ShellCircleParticleGenerator shell_particle_generator(shell_body, obj_vertices, sym_vec, particle_area, thickness);
-    shell_body.generateParticles(shell_particle_generator);
+    shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
+    shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
     shell_body.addDerivedBodyStateForRecording<Displacement>();
