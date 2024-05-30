@@ -1,7 +1,8 @@
 /**
- * @file 	heart_volume_change.cpp
- * @brief 	This is the case studying the electromechanics on a biventricular heart model in 3D, including the volume change of the ventricles.
- * @author 	John Benjamin, Chi Zhang and Xiangyu Hu
+ * @file heart_volume_change.cpp
+ * @brief This is the case studying the electromechanics on a bi-ventricular
+ * heart model in 3D, including the volume change of the ventricles.
+ * @author John Benjamin, Chi Zhang and Xiangyu Hu
  */
 #include "TriangleMeshDistance.h" // for mesh operations
 #include "sphinxsys.h"            // SPHinXsys Library.
@@ -63,14 +64,14 @@ class MeshData
 class MyocardiumSurfaces
 {
   public:
-    MyocardiumSurfaces(SolidBody &body, BaseParticles &particles)
-        : particles_(particles),
+    MyocardiumSurfaces(SolidBody &sph_body)
+        : particles_(sph_body.getBaseParticles()),
           pos0_(*particles_.registerSharedVariableFrom<Vecd>("InitialPosition", "Position")){};
     ~MyocardiumSurfaces() = default;
 
     // mesh_offset: max distance between myocardium and ventricle mesh
     // important to use different offsets as the RV wall is much thinner usually
-    // smoothing_length is used for dbscan
+    // smoothing_length is used for db-scan
     void init_surfaces(
         const MeshData &myocardium_mesh, const MeshData &lv_mesh, const MeshData &rv_mesh,
         Real lv_mesh_offset, Real rv_mesh_offset, Real smoothing_length);
@@ -95,8 +96,8 @@ class MyocardiumSurfaces
 class SurfaceOperationsVentricle
 {
   public:
-    SurfaceOperationsVentricle(BaseParticles &particles, const IndexVector &ids, InnerRelation &inner_relation)
-        : particles_(particles),
+    SurfaceOperationsVentricle(InnerRelation &inner_relation, const IndexVector &ids)
+        : particles_(inner_relation.getSPHBody().getBaseParticles()),
           vel_(*particles_.getVariableByName<Vecd>("Velocity")),
           n_(*particles_.getVariableByName<Vecd>("NormalDirection")),
           n0_(*particles_.registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),

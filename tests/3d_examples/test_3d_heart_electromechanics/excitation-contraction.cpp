@@ -107,7 +107,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public GeneralDataD
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &phi_;
     Real beta_epi_, beta_endo_;
-    Vecd center_line_vector; // parallel to the ventricular centerline and pointing  apex-to-base
+    Vecd center_line_vector_; // parallel to the ventricular centerline and pointing  apex-to-base
 
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
@@ -116,7 +116,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public GeneralDataD
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name))
     {
-        center_line_vector = Vecd(0.0, 1.0, 0.0);
+        center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
         beta_endo_ = (80.0 / 180.0) * M_PI;
     };
@@ -137,7 +137,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public GeneralDataD
             face_norm = -face_norm;
         }
         /** Compute the centerline's projection on the plane orthogonal to face norm. */
-        Vecd circumferential_direction = getCrossProduct(center_line_vector, face_norm);
+        Vecd circumferential_direction = getCrossProduct(center_line_vector_, face_norm);
         Vecd cd_norm = circumferential_direction / (circumferential_direction.norm() + 1.0e-15);
         /** The rotation angle is given by beta = (beta_epi - beta_endo) phi + beta_endo */
         Real beta = (beta_epi_ - beta_endo_) * phi_[index_i] + beta_endo_;
