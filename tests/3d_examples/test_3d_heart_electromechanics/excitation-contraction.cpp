@@ -490,7 +490,7 @@ int main(int ac, char *av[])
                     ite_backward++;
                 }
 
-                //                active_stress_interpolation.exec();
+                active_stress_interpolation.exec();
 
                 Real dt_s_sum = 0.0;
                 while (dt_s_sum < dt)
