@@ -84,10 +84,14 @@ class MovingGate : public ComplexShape
     }
 };
 //	define the elastic plate shape
-class PlateParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     void initializeGeometricVariables() override
     {
         Real y = -BW + 0.5 * resolution_shell;
@@ -104,6 +108,8 @@ class PlateParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
+
 // Define boundary geometry
 
 class BoundaryGeometry : public BodyPartByParticle
@@ -165,7 +171,7 @@ int main(int ac, char *av[])
     SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
-    plate.generateParticles(PlateParticleGenerator(plate));
+    plate.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody disp_observer_1(sph_system, "Observer1");
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
