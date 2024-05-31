@@ -169,7 +169,6 @@ TEST(test_optimization, test_problem1_non_optimized)
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------  ------------------------------------------
     //	Particle and body creation of temperature observers.
