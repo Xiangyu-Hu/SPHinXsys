@@ -39,9 +39,9 @@ namespace SPH
  * @class ParameterSplittingByPDEInner
  * @brief Modify the parameter inner by splitting operator based on PDEs.
  */
-template <class ParticlesType, typename VariableType>
+template <typename VariableType>
 class ParameterSplittingByPDEInner
-    : public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
+    : public OptimizationBySplittingAlgorithmBase<VariableType>
 {
   public:
     ParameterSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
@@ -57,10 +57,10 @@ class ParameterSplittingByPDEInner
  * @class ParameterSplittingByPDEWithBoundary
  * @brief Modify the parameter contact with the boundary by splitting operator based on PDEs.
  */
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
+template <typename VariableType>
 class ParameterSplittingByPDEWithBoundary
-    : public ParameterSplittingByPDEInner<ParticlesType, VariableType>,
-      public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
+    : public ParameterSplittingByPDEInner<VariableType>,
+      public DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 {
   public:
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
@@ -70,7 +70,7 @@ class ParameterSplittingByPDEWithBoundary
   protected:
     StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
     StdVec<StdLargeVec<Real> *> boundary_heat_flux_, boundary_Vol_;
-    StdVec<StdVec<StdLargeVec<Real>> *> boundary_species_;
+    StdVec<StdLargeVec<Real> *> boundary_species_;
     virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
 };
 
@@ -83,7 +83,7 @@ class UpdateParameterPDEResidual : public ParameterSplittingType
 {
   public:
     template <typename... Args>
-    UpdateParameterPDEResidual(Args &&...args);
+    UpdateParameterPDEResidual(Args &&... args);
     virtual ~UpdateParameterPDEResidual(){};
 
   protected:

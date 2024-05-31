@@ -18,7 +18,6 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1;
-std::array<std::string, 1> species_name_list{"Phi"};
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
@@ -59,6 +58,8 @@ std::vector<Vecd> heat_flux_boundary{
 //----------------------------------------------------------------------
 //	Define SPH bodies.
 //----------------------------------------------------------------------
+namespace SPH
+{
 class DiffusionBody : public MultiPolygonShape
 {
   public:
@@ -85,80 +86,65 @@ MultiPolygon createHeatFluxBoundary()
     return multi_polygon;
 }
 //----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    }
-};
-
-using DiffusionParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<BaseParticles, DiffusionMaterial>;
-//----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class DiffusionBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = 550.0 + 50.0 * rand_uniform(0.0, 1.0);
+        phi_[index_i] = 550.0 + 50.0 * rand_uniform(0.0, 1.0);
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 
-class WallBoundaryInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
+class WallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
-  protected:
-    size_t phi_;
-    StdLargeVec<Real> &heat_flux_;
-
   public:
-    explicit WallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-          heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux")))
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
+    explicit WallBoundaryInitialCondition(SPHBody &sph_body)
+        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")),
+          heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux"))) {}
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = -0.0;
-        if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.3 * L && pos_[index_i][0] < 0.4 * L)
+        phi_[index_i] = -0.0;
+        if (pos_[index_i][1] < 0.0 && pos_[index_i][0] > 0.3 * L && pos_[index_i][0] < 0.4 * L)
         {
-            all_species_[phi_][index_i] = left_temperature;
+            phi_[index_i] = left_temperature;
         }
-        if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.6 * L && pos_[index_i][0] < 0.7 * L)
+        if (pos_[index_i][1] < 0.0 && pos_[index_i][0] > 0.6 * L && pos_[index_i][0] < 0.7 * L)
         {
-            all_species_[phi_][index_i] = right_temperature;
+            phi_[index_i] = right_temperature;
         }
         if (pos_[index_i][1] > H && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
         {
             heat_flux_[index_i] = heat_flux;
         }
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_, &heat_flux_;
 };
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ParticleGenerator<Observer>
+class TemperatureObserver;
+template <>
+class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<Observer>
 {
   public:
-    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 11;
@@ -172,6 +158,8 @@ class TemperatureObserverParticleGenerator : public ParticleGenerator<Observer>
         }
     }
 };
+} // namespace SPH
+
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -187,19 +175,18 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
+    LocalIsotropicDiffusion *local_isotropic_diffusion =
+        diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
+    wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
-
-    BodyRegionByParticle heat_flux_region(diffusion_body, makeShared<MultiPolygonShape>(createHeatFluxBoundary(), "HeatFluxRegion"));
     //----------------------------  ------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles(TemperatureObserverParticleGenerator(temperature_observer));
+    temperature_observer.generateParticles<BaseParticles, TemperatureObserver>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -220,15 +207,16 @@ TEST(test_optimization, test_problem4_non_optimization)
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
-    InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
+    InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>
         temperature_splitting(diffusion_body_inner, diffusion_body_contact, "Phi");
-    GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *local_isotropic_diffusion);
     SimpleDynamics<DiffusionBodyInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition(wall_boundary);
 
-    ReduceDynamics<Average<SpeciesSummation<SPHBody, DiffusionParticles>>>
+    ReduceDynamics<Average<QuantitySummation<Real, SPHBody>>>
         calculate_averaged_temperature(diffusion_body, "Phi");
-    ReduceDynamics<Average<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>
+    BodyRegionByParticle heat_flux_region(diffusion_body, makeShared<MultiPolygonShape>(createHeatFluxBoundary(), "HeatFluxRegion"));
+    ReduceDynamics<Average<QuantitySummation<Real, BodyPartByParticle>>>
         calculate_boundary_averaged_temperature(heat_flux_region, "Phi");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.

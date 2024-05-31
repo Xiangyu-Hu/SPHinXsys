@@ -282,7 +282,7 @@ TEST(test_optimization, test_problem1_optimized)
         update_regularization_global_variation(diffusion_body_inner, "ThermalConductivity");
     ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
         total_averaged_thermal_diffusivity(diffusion_body, "ThermalConductivity");
-    SimpleDynamics<ThermalConductivityConstrain<DiffusionParticles>>
+    SimpleDynamics<ThermalConductivityConstraint<DiffusionParticles>>
         thermal_diffusivity_constrain(diffusion_body, "ThermalConductivity");
     ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
         calculate_temperature_global_residual(diffusion_body, "ResidualTGlobal");

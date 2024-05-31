@@ -11,14 +11,15 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>::
+template <typename VariableType>
+OptimizationBySplittingAlgorithmBase<VariableType>::
     OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<ParticlesType>(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
+      diffusion_(DynamicCast<LocalIsotropicDiffusion>(this, sph_body_.getBaseMaterial())),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       normal_vector_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
-      variable_(*(this->particles_->template getVariableByName<VariableType>(variable_name))),
+      variable_(*(this->particles_->template registerSharedVariable<VariableType>(variable_name))),
       heat_flux_(*(this->particles_->template registerSharedVariable<Real>("HeatFlux"))),
       heat_source_(*(this->particles_->template registerSharedVariable<Real>("HeatSource"))),
       splitting_index_(*(this->particles_->template registerSharedVariable<int>("SplittingIndex"))),
@@ -49,20 +50,17 @@ OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>::
     this->particles_->template addVariableToWrite<Real>("VariationGlobal");
     this->particles_->template addVariableToWrite<Real>("ResidualAfterSplitting");
     this->particles_->template addVariableToRestart<Real>("ThermalConductivity");
-
-    phi_ = this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    all_diffusion_ = this->particles_->diffusion_reaction_material_.AllDiffusions();
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-RegularizationByDiffusionAnalogy<ParticlesType, VariableType>::
+template <typename VariableType>
+RegularizationByDiffusionAnalogy<VariableType>::
     RegularizationByDiffusionAnalogy(BaseInnerRelation &inner_relation, const std::string &variable_name,
                                      Real initial_eta, Real variation)
-    : OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name),
+    : OptimizationBySplittingAlgorithmBase<VariableType>(inner_relation, variable_name),
       initial_eta_(initial_eta), maximum_variation_(variation), averaged_variation_(variation) {}
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-ErrorAndParameters<VariableType> RegularizationByDiffusionAnalogy<ParticlesType, VariableType>::
+template <typename VariableType>
+ErrorAndParameters<VariableType> RegularizationByDiffusionAnalogy<VariableType>::
     computeVariationAndParameters(size_t index_i, Real dt)
 {
     Real Vol_i = this->Vol_[index_i];
@@ -91,8 +89,8 @@ ErrorAndParameters<VariableType> RegularizationByDiffusionAnalogy<ParticlesType,
     return error_and_parameters;
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void RegularizationByDiffusionAnalogy<ParticlesType, VariableType>::
+template <typename VariableType>
+void RegularizationByDiffusionAnalogy<VariableType>::
     updateStatesByVariation(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters)
 {
     Real parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
@@ -127,21 +125,21 @@ void RegularizationByDiffusionAnalogy<ParticlesType, VariableType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void RegularizationByDiffusionAnalogy<ParticlesType, VariableType>::interaction(size_t index_i, Real dt)
+template <typename VariableType>
+void RegularizationByDiffusionAnalogy<VariableType>::interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<VariableType> error_and_parameters = computeVariationAndParameters(index_i, dt);
     updateStatesByVariation(index_i, dt, error_and_parameters);
     this->variation_local_[index_i] = error_and_parameters.error_ / dt / this->eta_regularization_[index_i];
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-UpdateRegularizationVariation<ParticlesType, VariableType>::
+template <typename VariableType>
+UpdateRegularizationVariation<VariableType>::
     UpdateRegularizationVariation(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
+    : OptimizationBySplittingAlgorithmBase<VariableType>(inner_relation, variable_name){};
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-ErrorAndParameters<VariableType> UpdateRegularizationVariation<ParticlesType, VariableType>::
+template <typename VariableType>
+ErrorAndParameters<VariableType> UpdateRegularizationVariation<VariableType>::
     computeVariationAndParameters(size_t index_i, Real dt)
 {
     Real Vol_i = this->Vol_[index_i];
@@ -167,8 +165,8 @@ ErrorAndParameters<VariableType> UpdateRegularizationVariation<ParticlesType, Va
     return error_and_parameters;
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void UpdateRegularizationVariation<ParticlesType, VariableType>::interaction(size_t index_i, Real dt)
+template <typename VariableType>
+void UpdateRegularizationVariation<VariableType>::interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<VariableType> error_and_parameters = this->computeVariationAndParameters(index_i, dt);
     this->variation_global_[index_i] = error_and_parameters.error_ / dt / this->eta_regularization_[index_i];

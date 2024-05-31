@@ -101,7 +101,7 @@ class MonoFieldElectroPhysiology
 {
   public:
     template <typename... Args>
-    MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction, Args &&...args)
+    MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction, Args &&... args)
         : ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>(electro_physiology_reaction)
     {
         this->material_type_name_ = "MonoFieldElectroPhysiology";

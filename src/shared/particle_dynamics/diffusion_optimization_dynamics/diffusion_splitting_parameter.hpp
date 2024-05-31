@@ -11,13 +11,13 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-ParameterSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+ParameterSplittingByPDEInner<VariableType>::
     ParameterSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
+    : OptimizationBySplittingAlgorithmBase<VariableType>(inner_relation, variable_name){};
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<VariableType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
     VariableType &variable_i = this->variable_[index_i];
@@ -42,8 +42,8 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<ParticlesType, Var
     return error_and_parameters;
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void ParameterSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+void ParameterSplittingByPDEInner<VariableType>::
     updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters)
 {
     Real parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
@@ -74,8 +74,8 @@ void ParameterSplittingByPDEInner<ParticlesType, VariableType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void ParameterSplittingByPDEInner<ParticlesType, VariableType>::interaction(size_t index_i, Real dt)
+template <typename VariableType>
+void ParameterSplittingByPDEInner<VariableType>::interaction(size_t index_i, Real dt)
 {
     /* With Pseudo Time Step */
     this->splitting_index_[index_i] = 0;
@@ -129,29 +129,29 @@ void ParameterSplittingByPDEInner<ParticlesType, VariableType>::interaction(size
     }
 };
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
-ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
+template <typename VariableType>
+ParameterSplittingByPDEWithBoundary<VariableType>::
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                         BaseContactRelation &contact_relation, const std::string &variable_name)
-    : ParameterSplittingByPDEInner<ParticlesType, VariableType>(inner_relation, variable_name),
-      DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(contact_relation)
+    : ParameterSplittingByPDEInner<VariableType>(inner_relation, variable_name),
+      DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>(contact_relation)
 {
-    boundary_heat_flux_.resize(this->contact_particles_.size());
+    const std::string &species_name = this->diffusion_.DiffusionSpeciesName();
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         boundary_Vol_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("VolumetricMeasure"));
         boundary_normal_vector_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-        boundary_species_.push_back(&(this->contact_particles_[k]->all_species_));
-        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
+        boundary_species_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>(species_name));
+        boundary_heat_flux_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux"));
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
-ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
+template <typename VariableType>
+ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<VariableType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<VariableType> error_and_parameters =
-        ParameterSplittingByPDEInner<ParticlesType, VariableType>::computeErrorAndParameters(index_i, dt);
+        ParameterSplittingByPDEInner<VariableType>::computeErrorAndParameters(index_i, dt);
 
     VariableType &variable_i = this->variable_[index_i];
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -159,17 +159,17 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
         StdLargeVec<Real> &heat_flux_k = *(this->boundary_heat_flux_[k]);
         StdLargeVec<Vecd> &normal_vector_k = *(this->boundary_normal_vector_[k]);
         StdLargeVec<Real> &Vol_k = *(this->boundary_Vol_[k]);
-        StdVec<StdLargeVec<Real>> &species_k = *(boundary_species_[k]);
+        StdLargeVec<Real> &species_k = *(boundary_species_[k]);
 
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t &index_j = contact_neighborhood.j_[n];
 
-            if (species_k[this->phi_][index_j] > 0.0)
+            if (species_k[index_j] > 0.0)
             {
                 VariableType variable_derivative = variable_i;
-                Real phi_ij = 2 * (this->species_modified_[index_i] - species_k[this->phi_][index_j]);
+                Real phi_ij = 2 * (this->species_modified_[index_i] - species_k[index_j]);
                 Real parameter_b = 2.0 * phi_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
                 error_and_parameters.error_ -= variable_derivative * parameter_b;
@@ -188,7 +188,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<ParticlesTy
 //=================================================================================================//
 template <typename ParameterSplittingType>
 template <typename... Args>
-UpdateParameterPDEResidual<ParameterSplittingType>::UpdateParameterPDEResidual(Args &&...args)
+UpdateParameterPDEResidual<ParameterSplittingType>::UpdateParameterPDEResidual(Args &&... args)
     : ParameterSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
 template <typename ParameterSplittingType>

@@ -39,9 +39,9 @@ namespace SPH
  * @class TemperatureSplittingByPDEInner
  * @brief The temperature on each particle will be modified innerly to satisfy the PDEs.
  */
-template <class ParticlesType, typename VariableType>
+template <typename VariableType>
 class TemperatureSplittingByPDEInner
-    : public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
+    : public OptimizationBySplittingAlgorithmBase<VariableType>
 {
   public:
     TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
@@ -57,10 +57,10 @@ class TemperatureSplittingByPDEInner
  * @class TemperatureSplittingByPDEWithBoundary
  * @brief The temperature on each particle will be modified with boundary to satisfy the PDEs.
  */
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
+template <typename VariableType>
 class TemperatureSplittingByPDEWithBoundary
-    : public TemperatureSplittingByPDEInner<ParticlesType, VariableType>,
-      public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
+    : public TemperatureSplittingByPDEInner<VariableType>,
+      public DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 {
   public:
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
@@ -84,7 +84,7 @@ class UpdateTemperaturePDEResidual : public TemperatureSplittingType
 {
   public:
     template <typename... Args>
-    UpdateTemperaturePDEResidual(Args &&...args);
+    UpdateTemperaturePDEResidual(Args &&... args);
     virtual ~UpdateTemperaturePDEResidual(){};
 
   protected:

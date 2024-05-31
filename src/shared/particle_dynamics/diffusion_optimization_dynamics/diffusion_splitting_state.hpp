@@ -11,13 +11,13 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+TemperatureSplittingByPDEInner<VariableType>::
     TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
+    : OptimizationBySplittingAlgorithmBase<VariableType>(inner_relation, variable_name){};
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<VariableType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
     VariableType &variable_i = this->variable_[index_i];
@@ -31,7 +31,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<ParticlesType, V
 
         // linear projection
         VariableType variable_derivative = (variable_i - this->variable_[index_j]);
-        Real diff_coff_ij = this->all_diffusion_[this->phi_]->getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
+        Real diff_coff_ij = this->diffusion_.getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
         Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * dt / r_ij_;
 
         error_and_parameters.error_ -= variable_derivative * parameter_b;
@@ -43,8 +43,8 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<ParticlesType, V
     return error_and_parameters;
 };
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+void TemperatureSplittingByPDEInner<VariableType>::
     updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters)
 {
     Real parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
@@ -58,14 +58,14 @@ void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
         Real &r_ij_ = inner_neighborhood.r_ij_[n];
         Vecd &e_ij_ = inner_neighborhood.e_ij_[n];
 
-        Real diff_coff_ij = this->all_diffusion_[this->phi_]->getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
+        Real diff_coff_ij = this->diffusion_.getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
         Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * dt / r_ij_;
         this->variable_[index_j] -= parameter_k * parameter_b;
     }
 }
 //=================================================================================================//
-template <class ParticlesType, typename VariableType>
-void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
+template <typename VariableType>
+void TemperatureSplittingByPDEInner<VariableType>::
     interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
@@ -73,28 +73,29 @@ void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
     this->residual_T_local_[index_i] = error_and_parameters.error_;
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
-TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
+template <typename VariableType>
+TemperatureSplittingByPDEWithBoundary<VariableType>::
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                           BaseContactRelation &contact_relation, const std::string &variable_name)
-    : TemperatureSplittingByPDEInner<ParticlesType, VariableType>(inner_relation, variable_name),
-      DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(contact_relation)
+    : TemperatureSplittingByPDEInner<VariableType>(inner_relation, variable_name),
+      DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>(contact_relation)
 {
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         boundary_Vol_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("VolumetricMeasure"));
         boundary_normal_vector_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-        boundary_variable_.push_back(this->contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
+        boundary_variable_.push_back(this->contact_particles_[k]->template registerSharedVariable<VariableType>(variable_name));
         boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
     }
 };
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
-ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
+template <typename VariableType>
+ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<VariableType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
-    ErrorAndParameters<VariableType> error_and_parameters = TemperatureSplittingByPDEInner<ParticlesType, VariableType>::computeErrorAndParameters(index_i, dt);
+    ErrorAndParameters<VariableType> error_and_parameters =
+        TemperatureSplittingByPDEInner<VariableType>::computeErrorAndParameters(index_i, dt);
 
     VariableType &variable_i = this->variable_[index_i];
     /* contact interaction. */
@@ -114,7 +115,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<Particles
             {
                 // linear projection
                 VariableType variable_derivative = 2 * (variable_i - variable_k[index_j]);
-                Real diff_coff_ij = this->all_diffusion_[this->phi_]->getDiffusionCoeffWithBoundary(index_i);
+                Real diff_coff_ij = this->diffusion_.getDiffusionCoeffWithBoundary(index_i);
                 Real parameter_b = 2.0 * diff_coff_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
                 error_and_parameters.error_ -= variable_derivative * parameter_b;
@@ -131,7 +132,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<Particles
 template <typename TemperatureSplittingType>
 template <typename... Args>
 UpdateTemperaturePDEResidual<TemperatureSplittingType>::
-    UpdateTemperaturePDEResidual(Args &&...args)
+    UpdateTemperaturePDEResidual(Args &&... args)
     : TemperatureSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
 template <typename TemperatureSplittingType>

@@ -67,10 +67,10 @@ class ComputeTotalErrorOrPositiveParameter
  * @class ComputeMaximumError
  * @brief Get and return the maximum residual among the whole domain
  */
-template <class DynamicsIdentifier, class ParticlesType>
+template <class DynamicsIdentifier>
 class ComputeMaximumError
     : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>,
-      public DiffusionReactionSimpleData<ParticlesType>
+      public DiffusionReactionSimpleData<BaseParticles>
 {
   protected:
     StdLargeVec<Real> &variable_;
@@ -78,7 +78,7 @@ class ComputeMaximumError
   public:
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
-          DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()),
+          DiffusionReactionSimpleData<BaseParticles>(identifier.getSPHBody()),
           variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
@@ -88,19 +88,19 @@ class ComputeMaximumError
 };
 
 /**
- * @class ThermalConductivityConstrain
+ * @class ThermalConductivityConstraint
  * @brief The thermal diffusivity on each particle will be corrected with
  *        the same ratio according to the total thermal diffusivity.
  */
-template <class ParticlesType>
-class ThermalConductivityConstrain
+template <class DynamicsIdentifier>
+class ThermalConductivityConstraint
     : public LocalDynamics,
-      public DiffusionReactionSimpleData<ParticlesType>
+      public DiffusionReactionSimpleData<BaseParticles>
 {
   public:
-    ThermalConductivityConstrain(SPHBody &diffusion_body, const std::string &variable_name,
-                                 Real initial_thermal_conductivity = 1);
-    virtual ~ThermalConductivityConstrain(){};
+    ThermalConductivityConstraint(DynamicsIdentifier &identifier, const std::string &variable_name,
+                                  Real initial_thermal_conductivity = 1);
+    virtual ~ThermalConductivityConstraint(){};
     void UpdateAverageParameter(Real new_average_thermal_diffusivity);
 
   protected:
