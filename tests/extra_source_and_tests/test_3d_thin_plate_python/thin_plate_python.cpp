@@ -40,11 +40,15 @@ class Parameter
     Real gravitational_acceleration = 0.009646;
 };
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator<Surface>, public Parameter
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Parameter
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -147,9 +151,8 @@ class PreSettingCase : public Parameter
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
         plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-        plate_body.generateParticles(PlateParticleGenerator(plate_body));
+        plate_body.generateParticles<SurfaceParticles, Plate>();
 
-        plate_observer.defineParticlesAndMaterial();
         plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
     }
 };
@@ -314,6 +317,7 @@ class Environment : public PreSettingCase
         return RUN_ALL_TESTS();
     }
 };
+} // namespace SPH
 
 PYBIND11_MODULE(test_3d_thin_plate_python, m)
 {

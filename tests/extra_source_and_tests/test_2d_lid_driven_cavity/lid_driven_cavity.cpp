@@ -126,13 +126,14 @@ int main(int ac, char *av[])
 {
     output_setup();
     //	Build up an SPHSystem
-    BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2), Vecd(width + boundary_width * 2, height + boundary_width * 2));
+    BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
+                                     Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<FluidFilling>("FluidBody"));
-    fluid.defineParticlesAndMaterial<BaseParticles, HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
+    fluid.defineMaterial<HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
     fluid.generateParticles<BaseParticles, Lattice>();
 
     SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));

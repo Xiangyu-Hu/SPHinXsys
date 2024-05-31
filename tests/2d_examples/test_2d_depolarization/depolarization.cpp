@@ -81,8 +81,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody muscle_body(sph_system, makeShared<MuscleBlock>("MuscleBlock"));
     AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    MonoFieldElectroPhysiology *mono_field_electro_physiology =
-        muscle_body.defineMaterial<MonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coeff, bias_coeff, fiber_direction);
+    MonoFieldElectroPhysiology<DirectionalDiffusion> *mono_field_electro_physiology =
+        muscle_body.defineMaterial<MonoFieldElectroPhysiology<DirectionalDiffusion>>(
+            muscle_reaction_model, diffusion_coeff, bias_coeff, fiber_direction);
     muscle_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
@@ -105,7 +106,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(muscle_body_inner_relation);
     GetDiffusionTimeStepSize get_time_step_size(muscle_body, *mono_field_electro_physiology);
     // Diffusion process for diffusion body.
-    electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation, mono_field_electro_physiology->AllDiffusions());
+    electro_physiology::ElectroPhysiologyDiffusionInnerRK2<DirectionalDiffusion>
+        diffusion_relaxation(muscle_body_inner_relation, mono_field_electro_physiology->AllDiffusions());
     // Solvers for ODE system or reactions
     electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(muscle_body, muscle_reaction_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(muscle_body, muscle_reaction_model);
