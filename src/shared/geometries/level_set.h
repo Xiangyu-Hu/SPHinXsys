@@ -74,12 +74,12 @@ class BaseLevelSet : public BaseMeshField
  * but within the data package, the data is grid-based.
  * Note that the level set data is initialized after the constructor.
  */
-class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
+class LevelSet : public MeshWithGridDataPackages<4>,
                  public BaseLevelSet
 {
   public:
-    typedef GridDataPackage<4, 1> LevelSetDataPackage;
-    ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
+    // typedef GridDataPackage<4, 1> LevelSetDataPackage;
+    // ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
     Real global_h_ratio_;
 
     /** This constructor only initialize far field. */
@@ -109,21 +109,22 @@ class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
     MeshVariable<Vecd> &kernel_gradient_;
     Kernel &kernel_;
 
-    void initializeDataForSingularPackage(LevelSetDataPackage *data_pkg, Real far_field_level_set);
-    void initializeBasicDataForAPackage(LevelSetDataPackage *data_pkg, Shape &shape);
-    void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg);
+    void initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set);
+    void initializeBasicDataForAPackage(const Arrayi &cell_index, const size_t package_index, Shape &shape);
+    void redistanceInterfaceForAPackage(const size_t package_index);
 
     void finishDataPackages();
     void reinitializeLevelSet();
     void markNearInterface(Real small_shift_factor);
     void redistanceInterface();
     void diffuseLevelSetSign();
-    void updateLevelSetGradient();
     void updateKernelIntegrals();
     bool isInnerPackage(const Arrayi &cell_index);
     void initializeDataInACell(const Arrayi &cell_index);
-    void initializeAddressesInACell(const Arrayi &cell_index);
     void tagACellIsInnerPackage(const Arrayi &cell_index);
+    void initializeIndexMesh();
+    void initializeNeighbourhood();
+    void updateLevelSetGradient();
 
     // upwind algorithm choosing candidate difference by the sign
     Real upwindDifference(Real sign, Real df_p, Real df_n);

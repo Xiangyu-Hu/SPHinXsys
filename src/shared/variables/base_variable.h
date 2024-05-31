@@ -31,6 +31,8 @@
 #define BASE_VARIABLES_H
 
 #include "base_data_package.h"
+#include <cstring>
+#include <stdio.h>
 
 namespace SPH
 {
@@ -71,6 +73,32 @@ class DiscreteVariable : public BaseVariable
 
   private:
     size_t index_in_container_;
+};
+
+template <typename DataType>
+class MeshVariable : public BaseVariable
+{
+  public:
+    using PackageData = PackageDataMatrix<DataType, 4>;
+    MeshVariable(const std::string &name, size_t index)
+        : BaseVariable(name),
+          index_in_container_(index){ data_field_ = new PackageData[2]; };
+    virtual ~MeshVariable(){ delete[] data_field_; };
+
+    size_t IndexInContainer() const { return index_in_container_; };
+    // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
+    PackageData* DataField(){ return data_field_; };
+    void allocateAllMeshVariableData(const size_t size){ 
+      PackageData* temp = new PackageData[size];
+      std::memcpy(temp, data_field_, 2 * sizeof(PackageData));
+      // delete[] temp;
+      delete[] data_field_;
+      data_field_ = temp;
+    }
+
+  private:
+    size_t index_in_container_;
+    PackageData* data_field_;
 };
 
 template <typename DataType, template <typename VariableDataType> class VariableType>
