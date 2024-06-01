@@ -69,9 +69,6 @@ class ANSYSMesh
  */
 class BaseInnerRelationInFVM : public BaseInnerRelation
 {
-  protected:
-    virtual void resetNeighborhoodCurrentSize() override;
-
   public:
     RealBody *real_body_;
     StdLargeVec<Vecd> &node_coordinates_;
@@ -79,6 +76,10 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 
     explicit BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
     virtual ~BaseInnerRelationInFVM(){};
+
+  protected:
+    StdLargeVec<Real> &Vol_;
+    virtual void resetNeighborhoodCurrentSize() override;
 };
 
 /**
@@ -188,19 +189,19 @@ class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
     StdLargeVec<Vecd> &node_coordinates_;
-    StdLargeVec<StdVec<size_t>>&elements_nodes_connection_;
+    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
 };
 class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
 {
-public:
-    BodyStatesRecordingInMeshToVtu(SPHBody& body, ANSYSMesh& ansys_mesh);
-    virtual ~BodyStatesRecordingInMeshToVtu() {};
+  public:
+    BodyStatesRecordingInMeshToVtu(SPHBody &body, ANSYSMesh &ansys_mesh);
+    virtual ~BodyStatesRecordingInMeshToVtu(){};
 
-protected:
-    virtual void writeWithFileName(const std::string& sequence) override;
-    StdLargeVec<Vecd>& node_coordinates_;
-    StdLargeVec<StdVec<size_t>>& elements_nodes_connection_;
-    SPHBody& bounds_;
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override;
+    StdLargeVec<Vecd> &node_coordinates_;
+    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+    SPHBody &bounds_;
 };
 //----------------------------------------------------------------------
 //	BoundaryConditionSetupInFVM
@@ -210,12 +211,12 @@ class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
   public:
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation);
     virtual ~BoundaryConditionSetupInFVM(){};
-    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
-    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i){};
-    virtual void applyGivenValueInletFlow(size_t ghost_index){};
-    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i){};
-    virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
-    virtual void applyFarFieldBoundary(size_t ghost_index){};
+    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
+    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) {};
+    virtual void applyGivenValueInletFlow(size_t ghost_index) {};
+    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i) {};
+    virtual void applyTopBoundary(size_t ghost_index, size_t index_i) {};
+    virtual void applyFarFieldBoundary(size_t ghost_index) {};
     virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i) {};
     virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
     virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i) {};
