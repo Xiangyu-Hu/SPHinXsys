@@ -152,7 +152,6 @@ class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDa
     void update(size_t index_i, Real dt)
     {
         phi_[index_i] = -0.0;
-
         if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
         {
             phi_convection_[index_i] = convection;

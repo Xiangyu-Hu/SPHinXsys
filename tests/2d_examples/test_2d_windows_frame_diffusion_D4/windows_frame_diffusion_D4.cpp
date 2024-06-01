@@ -1,6 +1,6 @@
 /*
  * @file 	windows_frame_diffusion_D4.cpp
- * @brief 	Heat diffusion of windows frame based on international standard ISO 10077-2:2012, 
+ * @brief 	Heat diffusion of windows frame based on international standard ISO 10077-2:2012,
  *          Application 4: Wood frame section and insulation panel.
  * @details https://www.comsol.de/model/glazing-influence-on-thermal-performances-of-a-window-16075
  * @author 	Haotian Ji, Dong Wu, Chi Zhang and Xiangyu Hu
@@ -23,21 +23,19 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createOverallStructureBody(), "DiffusionBody"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<Lattice>();
+    LocalIsotropicDiffusion *frame_diffusion = diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", wood_cond);
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody boundary_Robin_in(sph_system, makeShared<MultiPolygonShape>(createInternalAirBody(), "InternalConvectionBoundary"));
-    boundary_Robin_in.defineParticlesAndMaterial<WallParticles, WallMaterial>();
-    boundary_Robin_in.generateParticles<Lattice>();
+    boundary_Robin_in.generateParticles<BaseParticles, Lattice>();
 
     SolidBody boundary_Robin_ex(sph_system, makeShared<MultiPolygonShape>(createExternalAirBody(), "ExternalConvectionBoundary"));
-    boundary_Robin_ex.defineParticlesAndMaterial<WallParticles, WallMaterial>();
-    boundary_Robin_ex.generateParticles<Lattice>();
+    boundary_Robin_ex.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles(ParticleGeneratorTemperatureObserver(temperature_observer));
+    temperature_observer.generateParticles<BaseParticles, TemperatureObserver>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -56,7 +54,8 @@ int main(int ac, char *av[])
     RobinFluxCalculation heat_flux_calculation_in(contact_Robin_in);
     RobinFluxCalculation heat_flux_calculation_ex(contact_Robin_ex);
 
-    GetDiffusionTimeStepSize<WallParticles> get_time_step_size(boundary_Robin_in);
+    LocalIsotropicDiffusion maximum_thermal_diffusivity("Phi", "Phi", epdm_cond);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, maximum_thermal_diffusivity);
 
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_in(boundary_Robin_in);
@@ -71,8 +70,7 @@ int main(int ac, char *av[])
     BodyRegionByParticle ac_body1(diffusion_body, makeShared<MultiPolygonShape>(createACBody1()));
     BodyRegionByParticle ac_body2(diffusion_body, makeShared<MultiPolygonShape>(createACBody2()));
     BodyRegionByParticle ac_open_body1(diffusion_body, makeShared<MultiPolygonShape>(createACOpenBody1()));
-    BodyRegionByParticle decreased_convection_body(boundary_Robin_in, makeShared<MultiPolygonShape>
-        (createDecreasedInternalConvectionBody()));
+    BodyRegionByParticle decreased_convection_body(boundary_Robin_in, makeShared<MultiPolygonShape>(createDecreasedInternalConvectionBody()));
 
     // Diffusion coefficient initialization
     SimpleDynamics<ThermalConductivityInitialization> epdm_conductivity_initial_condition(epdm_body, epdm_cond);
@@ -81,8 +79,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ThermalConductivityInitialization> ac2_conductivity_initial_condition(ac_body2, ac2_cond);
     SimpleDynamics<ThermalConductivityInitialization> acopen1_conductivity_initial_condition(ac_open_body1, acopen1_cond);
 
-    SimpleDynamics<LocalConvectionInitialization> decreased_convection_initial_condition
-    (decreased_convection_body, convection_i_decreased);
+    SimpleDynamics<LocalConvectionInitialization> decreased_convection_initial_condition(decreased_convection_body, convection_i_decreased);
     SimpleDynamics<LocalHeatTransferConvection> decreased_ht_convection(decreased_convection_body, convection_i_decreased);
 
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
@@ -106,11 +103,11 @@ int main(int ac, char *av[])
     setup_diffusion_initial_condition.exec();
     setup_boundary_condition_Robin_in.exec();
     setup_boundary_condition_Robin_ex.exec();
- 
+
     setup_heat_transfer_initial_condition_in.exec();
     setup_heat_transfer_initial_condition_ex.exec();
 
-    //thermal conductivity initialization
+    // thermal conductivity initialization
     epdm_conductivity_initial_condition.exec();
     panel_conductivity_initial_condition.exec();
     ac1_conductivity_initial_condition.exec();
@@ -133,7 +130,7 @@ int main(int ac, char *av[])
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     int ite = 0;
-    Real T0 = 0.02;//for steady state
+    Real T0 = 0.02; // for steady state
     Real End_Time = T0;
     Real Observe_time = 0.01 * End_Time;
     Real Output_Time = 0.1 * End_Time;
@@ -170,7 +167,7 @@ int main(int ac, char *av[])
 
                 temperature_relaxation.exec(dt);
                 /*heat_flux_calculation_ex.exec(dt);*/
-                heat_flux_calculation_in.exec(dt);//Absolute value of Heat flux _in and _ex are identical
+                heat_flux_calculation_in.exec(dt); // Absolute value of Heat flux _in and _ex are identical
 
                 ite++;
                 dt = get_time_step_size.exec();
@@ -197,14 +194,14 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 
-     if (sph_system.GenerateRegressionData())
-     {
-         write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
-     }
-     else if (sph_system.RestartStep() == 0)
-     {
-         write_solid_temperature.testResult();
-     }
-    
+    if (sph_system.GenerateRegressionData())
+    {
+        write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_solid_temperature.testResult();
+    }
+
     return 0;
 }

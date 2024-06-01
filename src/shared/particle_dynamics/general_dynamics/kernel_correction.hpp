@@ -8,10 +8,12 @@ namespace SPH
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-LinearGradientCorrectionMatrix<DataDelegationType>::LinearGradientCorrectionMatrix(BaseRelationType &base_relation)
+LinearGradientCorrectionMatrix<DataDelegationType>::
+LinearGradientCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      B_(*this->particles_->template registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
+      B_(*this->particles_->template registerSharedVariable<Matd>(
+        "LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>

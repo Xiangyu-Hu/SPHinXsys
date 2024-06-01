@@ -27,7 +27,7 @@ TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTyp
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
-      h_ratio_(this->particles_), limiter_(this->particles_)
+      h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_)
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
                   "Limiter is not the base of LimiterType!");

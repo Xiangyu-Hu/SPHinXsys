@@ -9,13 +9,13 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
     ANSYSMesh read_mesh_data(mesh_fullpath);
     //----------------------------------------------------------------------
-   //	Build up the environment of a SPHSystem.
-   //----------------------------------------------------------------------
+    //	Build up the environment of a SPHSystem.
+    //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, read_mesh_data.MinMeshEdge());
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
@@ -23,9 +23,9 @@ int main(int ac, char* av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody air_block(sph_system, makeShared<AirBody>("AirBody"));
-    air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
-    air_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, read_mesh_data);
+    air_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
     air_block.addBodyStateForRecording<Real>("Density");
     air_block.addBodyStateForRecording<Real>("Pressure");
     SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
@@ -38,8 +38,8 @@ int main(int ac, char* av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-        /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
-    the value is larger, the numerical dissipation larger*/
+    /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
+     * the value is larger, the numerical dissipation larger. */
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(air_block_inner, 500.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(air_block_inner, 8000.0);
     /** Boundary conditions set up */
@@ -89,12 +89,12 @@ int main(int ac, char* av[])
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                    << GlobalStaticVariables::physical_time_
-                    << "	dt = " << dt << "\n";
+                     << GlobalStaticVariables::physical_time_
+                     << "	dt = " << dt << "\n";
                 write_maximum_speed.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
-            //write_real_body_states.writeToFile();
+            // write_real_body_states.writeToFile();
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();

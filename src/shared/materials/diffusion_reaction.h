@@ -90,6 +90,7 @@ class IsotropicDiffusion : public BaseDiffusion
 /**
  * @class LocalIsotropicDiffusion
  * @brief diffusion coefficient is locally different (k is not uniformly distributed).
+ * TODO: The difference between algebraic and geometric average should be identified.
  */
 class LocalIsotropicDiffusion : public IsotropicDiffusion
 {
