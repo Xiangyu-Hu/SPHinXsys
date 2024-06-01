@@ -22,9 +22,10 @@
  * ------------------------------------------------------------------------- */
 
 /**
- * @file 	diffusion_optimization_common.h
- * @brief 	This is the method for updating, calculating error, observed parameters.
- * @author   Bo Zhang and Xiangyu Hu
+ * @file diffusion_optimization_common.h
+ * @brief This is the method for updating, calculating error, observed parameters.
+ * TODO: The methods can be replaced by the general reduce methods in the future.
+ * @author Bo Zhang and Xiangyu Hu
  */
 
 #ifndef DIFFUSION_OPTIMIZATION_COMMON_H

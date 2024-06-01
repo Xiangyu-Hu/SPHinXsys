@@ -66,8 +66,8 @@ class OptimizationBySplittingAlgorithmBase
 
 /**
  * @class RegularizationByDiffusion
- * @brief Regularize the optimized parameter by diffusion analogy method 
- *        after each splitting step, which could smooth the distribution 
+ * @brief Regularize the optimized parameter by diffusion analogy method
+ *        after each splitting step, which could smooth the distribution
  *        and avoid some local optimal solution.
  */
 template <typename VariableType>
@@ -79,6 +79,7 @@ class RegularizationByDiffusionAnalogy
                                      Real initial_eta = 1, Real variation = 1);
     virtual ~RegularizationByDiffusionAnalogy(){};
 
+    // TODO: One should use setupDynamics for the following.
     void UpdateCurrentEta(Real initial_eta) { initial_eta_ = initial_eta; }
     void UpdateMaximumVariation(Real maximum_variation) { maximum_variation_ = maximum_variation; }
     void UpdateAverageVariation(Real averaged_variation) { averaged_variation_ = averaged_variation; }
@@ -92,7 +93,7 @@ class RegularizationByDiffusionAnalogy
 
 /**
  * @class UpdateRegularizationVariation
- * @brief The global variation of parameter can be updated after the process 
+ * @brief The global variation of parameter can be updated after the process
  *        of splitting which is an essential parameter for optimization schedule.
  */
 template <typename VariableType>
@@ -109,4 +110,4 @@ class UpdateRegularizationVariation
     virtual void interaction(size_t index_i, Real dt = 0.0) override;
 };
 } // namespace SPH
-#endif //DIFFUSION_SPLITTING_BASE_H
+#endif // DIFFUSION_SPLITTING_BASE_H
