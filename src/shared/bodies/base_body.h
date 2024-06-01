@@ -134,12 +134,17 @@ class SPHBody
         return level_set_shape;
     };
 
-    /** partial construct particles with material informaiton. note that particle data not initialized yet */
+    template <class MaterialType>
+    void assignMaterial(MaterialType *material)
+    {
+        base_material_ = material;
+    };
+
     template <class MaterialType = BaseMaterial, typename... Args>
     MaterialType *defineMaterial(Args &&...args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        base_material_ = material;
+        assignMaterial(material);
         return material;
     };
     //----------------------------------------------------------------------

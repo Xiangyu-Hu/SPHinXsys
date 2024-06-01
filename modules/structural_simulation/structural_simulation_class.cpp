@@ -27,8 +27,8 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
-    defineParticlesWithMaterial<BaseParticles>(material_model.get());
-    generateParticles<Lattice>();
+    assignMaterial(material_model.get());
+    generateParticles<BaseParticles, Lattice>();
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(

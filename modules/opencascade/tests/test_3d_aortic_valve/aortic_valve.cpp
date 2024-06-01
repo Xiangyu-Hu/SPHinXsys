@@ -55,6 +55,7 @@ class BoundaryGeometry : public BodyPartByParticle
 };
 
 class Leaflet;
+template <>
 class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
 {
   public:
