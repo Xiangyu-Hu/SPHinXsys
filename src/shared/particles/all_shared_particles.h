@@ -30,7 +30,6 @@
 #define ALL_SHARED_PARTICLES_H
 
 #include "base_particles.hpp"
-#include "diffusion_reaction_particles.h"
 #include "observer_particles.h"
 #include "surface_particles.h"
 

@@ -31,7 +31,6 @@
 
 #include "all_particle_dynamics.h"
 #include "diffusion_reaction.h"
-#include "diffusion_reaction_particles.h"
 
 namespace SPH
 {
