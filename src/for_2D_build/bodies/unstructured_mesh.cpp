@@ -1,5 +1,6 @@
 
 #include "unstructured_mesh.h"
+#include "mesh_helper.h"
 
 namespace SPH
 {
@@ -8,47 +9,7 @@ ANSYSMesh::ANSYSMesh(const std::string &full_path)
 {
     getDataFromMeshFile(full_path);
     getElementCenterCoordinates();
-    computeMinimumDistanceBetweenNodes();
-}
-//=================================================================================================//
-void ANSYSMesh::readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates)
-{
-    size_t divide_position = text_line.find_first_of(" ");
-    std::string x_part = text_line;
-    std::string y_part = text_line;
-    std::string x_coordinate_string = x_part.erase(divide_position);
-    std::string y_coordinate_string = y_part.erase(0, divide_position);
-
-    Vec2d coordinate = Vec2d::Zero();
-    std::istringstream stream_x, stream_y;
-    stream_x.str(x_coordinate_string);
-    stream_y.str(y_coordinate_string);
-    stream_x >> coordinate[0];
-    stream_y >> coordinate[1];
-    node_coordinates.push_back(coordinate);
-}
-//=================================================================================================//
-void ANSYSMesh::readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec3d> &node_coordinates)
-{
-    size_t first_divide_position = text_line.find_first_of(" ");
-    size_t last_divide_position = text_line.find_last_of(" ");
-    string x_part = text_line;
-    string y_part = text_line;
-    string z_part = text_line;
-    string x_coordinate_string = x_part.erase(first_divide_position);
-    string y_coordinate_string = y_part.erase(last_divide_position);
-    y_coordinate_string = y_coordinate_string.erase(0, first_divide_position);
-    string z_coordinate_string = z_part.erase(0, last_divide_position);
-
-    Vec3d coordinate = Vec3d::Zero();
-    istringstream stream_x, stream_y, stream_z;
-    stream_x.str(x_coordinate_string);
-    stream_y.str(y_coordinate_string);
-    stream_z.str(z_coordinate_string);
-    stream_x >> coordinate[0];
-    stream_y >> coordinate[1];
-    stream_z >> coordinate[2];
-    node_coordinates.push_back(coordinate);
+    getMinimumDistanceBetweenNodes();
 }
 //=================================================================================================//
 void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
@@ -62,18 +23,8 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
     }
     string text_line;
     /*--- Read the dimension of the problem ---*/
-    int dimension(0);
-    while (getline(mesh_file, text_line))
-    {
-        text_line.erase(0, 1);
-        text_line.erase(1);
-        istringstream value(text_line);
-        if (text_line.find("2", 0) != string::npos)
-        {
-            dimension = atoi(text_line.c_str());
-            break;
-        }
-    }
+    size_t dimension(0);
+    MeshFileHelpers::meshDimension(mesh_file, dimension, text_line);
     /*--- Check dimension ---*/
     if (dimension != Dimensions)
     {
@@ -82,305 +33,56 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
     }
     /*--- Read the total number node points ---*/
     size_t number_of_points(0);
-    while (getline(mesh_file, text_line))
-    {
-        text_line.erase(0, 1);
-        string text1(text_line);
-        text_line.erase(3);
-        string text2(text_line);
-        text_line.erase(2);
-        if (atoi(text_line.c_str()) == 10 && text1.find("))", 0) != string::npos)
-        {
-            text1.erase(0, 8);
-            Real last_position = text1.find_last_of(")");
-            text1.erase(last_position - 5);
-            number_of_points = stoi(text1, nullptr, 16);
-            break;
-        }
-    };
+    MeshFileHelpers::numberofNodes(mesh_file, number_of_points, text_line);
+   
     /*--- Read the node coordinates ---*/
-    while (getline(mesh_file, text_line))
-    {
-        if (text_line.find("(", 0) == string::npos && text_line.find("))", 0) == string::npos)
-        {
-            if (text_line.find(" ", 0) != string::npos)
-            {
-                readNodeCoordinate(text_line, node_coordinates_);
-            }
-        }
-        if (text_line.find("))", 0) != string::npos)
-        {
-            break;
-        }
-    }
+    MeshFileHelpers::nodeCoordinates(mesh_file, node_coordinates_, text_line, dimension);
     /*--- Check number of node points ---*/
     if (node_coordinates_.size() != number_of_points)
     {
         cout << "Error:Total number of node points does not match data!" << endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     }
-    /*--- Read the total number of elements ---*/
-    size_t number_of_elements(0);
-    while (getline(mesh_file, text_line))
-    {
-        text_line.erase(0, 1);
-        string text1(text_line);
-        text_line.erase(3);
-        string text2(text_line);
-        text_line.erase(2);
-        if (atoi(text_line.c_str()) == 12)
-        {
-            text1.erase(0, 8);
-            Real last_position = text1.find_last_of(")");
-            text1.erase(last_position - 5);
-            number_of_elements = stoi(text1, nullptr, 16);
-            break;
-        }
-    };
-    /*--- Initialize mesh topology ---*/
-    /** mesh_topology_
-     * {[(neighbor_cell_index, bc_type, node1_of_face, node2_of_face), (....), (.....)], []..... }.
-     * {inner_neighbor1, inner_neighbor2, ..... }.
-     */
-    size_t mesh_type = 3;
-    mesh_topology_.resize(number_of_elements + 1);
-    for (std::size_t a = 0; a != number_of_elements + 1; ++a)
-    {
-        mesh_topology_[a].resize(mesh_type);
-        for (std::size_t b = 0; b != mesh_topology_[a].size(); ++b)
-        {
-            mesh_topology_[a][b].resize(dimension + 2);
-            for (std::size_t c = 0; c != mesh_topology_[a][b].size(); ++c)
-            {
-                mesh_topology_[a][b][c] = MaxSize_t;
-            }
-        }
-    }
-    /*--- Initialize the number of elements ---*/
-    elements_nodes_connection_.resize(number_of_elements + 1);
-    mesh_topology_.resize(number_of_elements + 1);
-    for (std::size_t element = 0; element != number_of_elements + 1; ++element)
-    {
-        elements_nodes_connection_[element].resize(3);
-        for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
-        {
-            elements_nodes_connection_[element][node] = MaxSize_t;
-        }
-    }
-
-    /*--- Read the elements of the problem ---*/
-    /** boundary condition types
-     * bc-type==2, interior boundary condition.
-     * bc-type==3, wall boundary condition.
-     * bc-type==9, pressure-far-field boundary condition.
-     * Note that Cell0 means boundary condition.
-     * mesh_type==3, unstructured mesh.
-     * mesh_type==4, structured mesh.
-     * mesh_topology_
-     * {[(neighbor_cell_index, bc_type, node1_of_face, node2_of_face), (....), (.....)], []..... }.
-     * {inner_neighbor1, inner_neighbor2, ..... }.
-     */
-    /*--- find the elements lines ---*/
     size_t boundary_type(0);
+    size_t number_of_elements(0);
+    size_t mesh_type = 3;
+    /*--- Read the total number of elements ---*/
+    MeshFileHelpers::numberofElements(mesh_file, number_of_elements, text_line);
+   
+    /*Preparing and initializing the data structure of mesh topology and element node connection*/
+    MeshFileHelpers::dataStruct(mesh_topology_, elements_nodes_connection_, number_of_elements, mesh_type, dimension);
+
     while (getline(mesh_file, text_line))
     {
         if (text_line.find("(13", 0) != string::npos && text_line.find(")(", 0) != string::npos)
         {
             /*--- find the type of boundary condition ---*/
-            size_t position = text_line.find(")", 0);
-            text_line = text_line.erase(0, position - 4);
-            text_line = text_line.erase(2);
-            boundary_type = stoi(text_line, nullptr, 16);
+            boundary_type = MeshFileHelpers::findBoundaryType(text_line, boundary_type);
             types_of_boundary_condition_.push_back(boundary_type);
             while (getline(mesh_file, text_line))
             {
                 if (text_line.find(")", 0) == string::npos)
                 {
-                    /*--- find the node1 between two cells ---*/
-                    string node1_string_copy = text_line;
-                    size_t first_divide_position = text_line.find_first_of(" ", 0);
-                    string node1_index_string = node1_string_copy.erase(first_divide_position);
-                    size_t node1_index_decimal = stoi(node1_index_string, nullptr, 16) - 1;
-
-                    /*--- find the node2 between two cells---*/
-                    string node2_string = text_line;
-                    node2_string = node2_string.erase(0, first_divide_position + 1);
-                    size_t second_divide_position = node2_string.find_first_of(" ", 0);
-                    node2_string.erase(second_divide_position);
-                    size_t node2_index_decimal = stoi(node2_string, nullptr, 16) - 1;
-                    Vecd nodes = Vecd(node1_index_decimal, node2_index_decimal);
-
-                    /*--- find the cell1---*/
-                    string cell1_string = text_line;
-                    cell1_string = cell1_string.erase(0, first_divide_position + 1);
-                    cell1_string = cell1_string.erase(0, second_divide_position + 1);
-                    size_t third_divide_position = cell1_string.find_first_of(" ", 0);
-                    cell1_string.erase(third_divide_position);
-                    size_t cell1_index_decimal = stoi(cell1_string, nullptr, 16);
-
-                    /*--- find the cell2---*/
-                    string cell2_string = text_line;
-                    cell2_string = cell2_string.erase(0, first_divide_position + 1);
-                    cell2_string = cell2_string.erase(0, second_divide_position + 1);
-                    cell2_string.erase(0, third_divide_position + 1);
-                    size_t cell2_index_decimal = stoi(cell2_string, nullptr, 16);
-                    Vecd cells = Vecd(cell1_index_decimal, cell2_index_decimal);
-
+                    Vecd nodes = MeshFileHelpers::nodeIndex(text_line);
+                    Vec2d cells = MeshFileHelpers::cellIndex(text_line);
                     /*--- build up all topology---*/
                     bool check_neighbor_cell1 = 1;
                     bool check_neighbor_cell2 = 0;
                     for (int cell1_cell2 = 0; cell1_cell2 != cells.size(); ++cell1_cell2)
                     {
-                        while (true)
-                        {
                             if (mesh_type == 3)
                             {
                                 if (cells[check_neighbor_cell2] != 0)
                                 {
-                                    /*--- build up connection with element and nodes only---*/
-                                    for (int node = 0; node != nodes.size(); ++node)
-                                    {
-                                        if (elements_nodes_connection_[cells[check_neighbor_cell2]][0] != nodes[node] && elements_nodes_connection_[cells[check_neighbor_cell2]][1] != nodes[node] && elements_nodes_connection_[cells[check_neighbor_cell2]][2] != nodes[node])
-                                        {
-                                            if (elements_nodes_connection_[cells[check_neighbor_cell2]][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && (elements_nodes_connection_[cells[check_neighbor_cell2]][1] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1)) && elements_nodes_connection_[cells[check_neighbor_cell2]][2] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                            {
-                                                elements_nodes_connection_[cells[check_neighbor_cell2]][2] = nodes[node];
-                                            }
-                                            if (elements_nodes_connection_[cells[check_neighbor_cell2]][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && elements_nodes_connection_[cells[check_neighbor_cell2]][1] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                            {
-                                                elements_nodes_connection_[cells[check_neighbor_cell2]][1] = nodes[node];
-                                            }
-                                            if (elements_nodes_connection_[cells[check_neighbor_cell2]][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                            {
-                                                elements_nodes_connection_[cells[check_neighbor_cell2]][0] = nodes[node];
-                                            }
-                                        }
-                                        else
-                                            continue;
-                                    }
-                                    /*--- build up all connection data with element and neighbor and nodes---*/
-                                    if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][1][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][2][0] != cells[check_neighbor_cell1])
-                                    {
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            /*--- inner neighbor index---*/
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][0] = cells[check_neighbor_cell1];
-                                            /*--- boundary type---*/
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][1] = boundary_type;
-                                            /*--- nodes of a face---*/
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][3] = nodes[1];
-
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][0] = cells[check_neighbor_cell1];
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][1] = boundary_type;
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][3] = nodes[1];
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][2][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][0] = cells[check_neighbor_cell1];
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][1] = boundary_type;
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][3] = nodes[1];
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                    }
-                                    if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][1][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(0) && mesh_topology_[cells[check_neighbor_cell2]][2][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                    {
-                                        mesh_topology_[cells[check_neighbor_cell2]][2][0] = cells[check_neighbor_cell1];
-                                        mesh_topology_[cells[check_neighbor_cell2]][2][1] = boundary_type;
-                                        mesh_topology_[cells[check_neighbor_cell2]][2][2] = nodes[0];
-                                        mesh_topology_[cells[check_neighbor_cell2]][2][3] = nodes[1];
-                                        check_neighbor_cell1 = false;
-                                        check_neighbor_cell2 = true;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        check_neighbor_cell1 = false;
-                                        check_neighbor_cell2 = true;
-                                        break;
-                                    }
+                                    MeshFileHelpers::updateElementsNodesConnection(elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2);
+                                    MeshFileHelpers::updateCellLists(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2, boundary_type);
+                                    MeshFileHelpers::updateBoundaryCellLists(mesh_topology_, elements_nodes_connection_, nodes, cells, check_neighbor_cell1, check_neighbor_cell2, boundary_type);    
                                 }
                                 if (cells[check_neighbor_cell2] == 0)
                                 {
                                     break;
                                 }
                             }
-                            if (mesh_type == 4)
-                            {
-                                if (cells[check_neighbor_cell2] != 0)
-                                {
-                                    if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][1][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][2][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][3][0] != cells[check_neighbor_cell1])
-                                    {
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            /*--- inner neighbor index---*/
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][0] = cells[check_neighbor_cell1];
-                                            /*--- boundary type---*/
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][1] = boundary_type;
-                                            /*--- nodes of a face---*/
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][0][3] = nodes[1];
-
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][0] = cells[check_neighbor_cell1];
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][1] = boundary_type;
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][1][3] = nodes[1];
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][2][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][0] = cells[check_neighbor_cell1];
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][1] = boundary_type;
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][2][3] = nodes[1];
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                        if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][2][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][3][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
-                                        {
-                                            mesh_topology_[cells[check_neighbor_cell2]][3][0] = cells[check_neighbor_cell1];
-                                            mesh_topology_[cells[check_neighbor_cell2]][3][1] = boundary_type;
-                                            mesh_topology_[cells[check_neighbor_cell2]][3][2] = nodes[0];
-                                            mesh_topology_[cells[check_neighbor_cell2]][3][3] = nodes[1];
-                                            check_neighbor_cell1 = false;
-                                            check_neighbor_cell2 = true;
-                                            break;
-                                        }
-                                        // if it is three dimension
-                                    }
-                                    else
-                                    {
-                                        check_neighbor_cell1 = false;
-                                        check_neighbor_cell2 = true;
-                                        break;
-                                    }
-                                }
-                                if (cells[check_neighbor_cell2] == 0)
-                                    break;
-                            }
-                        }
                     }
                 }
                 else
@@ -402,50 +104,19 @@ void ANSYSMesh::getElementCenterCoordinates()
     for (std::size_t element = 1; element != elements_nodes_connection_.size(); ++element)
     {
         Vecd center_coordinate = Vecd::Zero();
-        for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
-        {
-            center_coordinate += node_coordinates_[elements_nodes_connection_[element][node]] / 3.0;
-        }
-        elements_centroids_[element] = center_coordinate;
-
-        // calculating each volume of element
-        // get nodes position
-        Vecd node1_coordinate = node_coordinates_[elements_nodes_connection_[element][0]];
-        Vecd node2_coordinate = node_coordinates_[elements_nodes_connection_[element][1]];
-        Vecd node3_coordinate = node_coordinates_[elements_nodes_connection_[element][2]];
-        // get each line length
-        Real first_side_length = (node1_coordinate - node2_coordinate).norm();
-        Real second_side_length = (node1_coordinate - node3_coordinate).norm();
-        Real third_side_length = (node2_coordinate - node3_coordinate).norm();
-        // half perimeter
-        Real half_perimeter = (first_side_length + second_side_length + third_side_length) / 2.0;
-        // get element volume
-        Real element_volume =
-            pow(half_perimeter * (half_perimeter - first_side_length) * (half_perimeter - second_side_length) * (half_perimeter - third_side_length), 0.5);
-        elements_volumes_[element] = element_volume;
+        MeshFileHelpers::cellCenterCoordinates(elements_nodes_connection_, element, node_coordinates_, elements_centroids_, center_coordinate);
+        MeshFileHelpers::elementVolume(elements_nodes_connection_, element, node_coordinates_, elements_volumes_);
     }
     elements_volumes_.erase(elements_volumes_.begin());
     elements_centroids_.erase(elements_centroids_.begin());
     elements_nodes_connection_.erase(elements_nodes_connection_.begin());
 }
 //=================================================================================================//
-void ANSYSMesh::computeMinimumDistanceBetweenNodes()
+void ANSYSMesh::getMinimumDistanceBetweenNodes()
 {
     vector<Real> all_data_of_distance_between_nodes;
     all_data_of_distance_between_nodes.resize(0);
-    for (size_t element_index = 0; element_index != elements_volumes_.size(); ++element_index)
-    {
-        for (std::size_t neighbor = 0; neighbor != mesh_topology_[element_index].size(); ++neighbor)
-        {
-            size_t interface_node1_index = mesh_topology_[element_index][neighbor][2];
-            size_t interface_node2_index = mesh_topology_[element_index][neighbor][3];
-            Vecd node1_position = node_coordinates_[interface_node1_index];
-            Vecd node2_position = node_coordinates_[interface_node2_index];
-            Vecd interface_area_vector = node1_position - node2_position;
-            Real interface_area_size = interface_area_vector.norm();
-            all_data_of_distance_between_nodes.push_back(interface_area_size);
-        }
-    }
+    MeshFileHelpers::minimumdistance(all_data_of_distance_between_nodes, elements_volumes_, mesh_topology_, node_coordinates_);
     auto min_distance_iter = std::min_element(all_data_of_distance_between_nodes.begin(), all_data_of_distance_between_nodes.end());
     if (min_distance_iter != all_data_of_distance_between_nodes.end())
     {
@@ -545,8 +216,8 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                     {
                         r_ij = (particle_position - pos_[index_j]).dot(normal_vector);
                     }
-                    // boundary_type == 3 means fluid particle with wall boundary
-                    if ((boundary_type == 3) | (boundary_type == 4) | (boundary_type == 9) | (boundary_type == 10) | (boundary_type == 36))
+                    //this refer to the different types of wall boundary condtions
+                    if ((boundary_type == 3) | (boundary_type == 4) | (boundary_type == 5) | (boundary_type == 7) | (boundary_type == 9) | (boundary_type == 10) | (boundary_type == 36))
                     {
                         r_ij = node1_to_center_direction.dot(normal_vector) * 2.0;
                     }
@@ -622,7 +293,6 @@ void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
                 new_element.push_back(sub_element3);
                 // Add the new element to mesh_topology_
                 mesh_topology_.push_back(new_element);
-                // mesh_topology_[ghost_particle_index][0][0].push_back(size_t(0);
                 // creating the boundary files with ghost particle index
                 each_boundary_type_with_all_ghosts_index_[boundary_type].push_back(ghost_particle_index);
                 // creating the boundary files with contact real particle index
@@ -681,6 +351,7 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
             {
                 Vec3d particle_position = upgradeToVec3d(node_coordinates_[node]);
                 out_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << "\n";
+                
             }
 
             out_file << "</DataArray>\n";
@@ -763,17 +434,24 @@ void BoundaryConditionSetupInFVM::resetBoundaryConditions()
                     applyNonSlipWallBoundary(ghost_index, index_i);
                     applyReflectiveWallBoundary(ghost_index, index_i, e_ij);
                     break;
-                case 10:
-                    applyGivenValueInletFlow(ghost_index);
-                    break;
-                case 36:
-                    applyOutletBoundary(ghost_index, index_i);
-                    break;
                 case 4:
                     applyTopBoundary(ghost_index, index_i);
                     break;
+                case 5:
+                    applyPressureOutletBC(ghost_index, index_i);
+                    break; 
+                case 7:
+                    applySymmetryBoundary(ghost_index, index_i, e_ij);
+                    break;
                 case 9:
                     applyFarFieldBoundary(ghost_index);
+                    break;
+                case 10:
+                    applyGivenValueInletFlow(ghost_index);
+                    applyVelocityInletFlow(ghost_index, index_i);
+                    break;
+                case 36:
+                    applyOutletBoundary(ghost_index, index_i);
                     break;
                 }
             }

@@ -7,16 +7,16 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class DataDelegationType, class KernelCorrectionType, class ParticleScopeType>
+template <class DataDelegationType, class KernelCorrectionType, class ParticleScope>
 template <class BaseRelationType>
-TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScopeType>::
+TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       zero_gradient_residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroGradientResidue")),
-      kernel_correction_(this->particles_), checkWithinScope(this->particles_)
+      kernel_correction_(this->particles_), within_scope_(this->particles_)
 {
-    static_assert(std::is_base_of<ParticleScope, ParticleScopeType>::value,
-                  "ParticleScope is not the base of ParticleScopeType!");
+    static_assert(std::is_base_of<WithinScope, ParticleScope>::value,
+                  "WithinScope is not the base of ParticleScope!");
 }
 //=================================================================================================//
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
@@ -37,7 +37,7 @@ template <class ResolutionType, class LimiterType, typename... CommonControlType
 void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
-    if (this->checkWithinScope(index_i))
+    if (this->within_scope_(index_i))
     {
         Vecd inconsistency = Vecd::Zero();
         const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
@@ -56,11 +56,12 @@ template <class ResolutionType, class LimiterType, typename... CommonControlType
 void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
     update(size_t index_i, Real dt)
 {
-    if (this->checkWithinScope(index_i))
+    if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        pos_[index_i] += correction_scaling_ * limiter_(index_i) * this->zero_gradient_residue_[index_i] *
-                         inv_h_ratio * inv_h_ratio;
+        Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
+        pos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
+                         this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
 //=================================================================================================//
@@ -79,7 +80,7 @@ template <typename... CommonControlTypes>
 void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
-    if (this->checkWithinScope(index_i))
+    if (this->within_scope_(index_i))
     {
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -115,7 +116,7 @@ template <class KernelCorrectionType, typename... CommonControlTypes>
 void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
-    if (this->checkWithinScope(index_i))
+    if (this->within_scope_(index_i))
     {
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
