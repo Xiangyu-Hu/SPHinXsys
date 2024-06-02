@@ -131,6 +131,7 @@ class MeshWithGridDataPackages : public Mesh
         deleteIndexDataMatrix();
         deleteMetaDataMatrix();
         delete[] neighbourhood_;
+        delete[] meta_data_cell_;
     };
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     virtual Real DataSpacing() override { return data_spacing_; };
@@ -145,6 +146,7 @@ class MeshWithGridDataPackages : public Mesh
     using MetaData = std::pair<int, size_t>;                /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<MetaData> meta_data_mesh_;
     Neighbourhood* neighbourhood_;
+    std::pair<Arrayi, int> *meta_data_cell_;
     template <typename DataType>
     using PackageData = PackageDataMatrix<DataType, pkg_size>;
     using NeighbourIndex = std::pair<size_t, Arrayi>;
