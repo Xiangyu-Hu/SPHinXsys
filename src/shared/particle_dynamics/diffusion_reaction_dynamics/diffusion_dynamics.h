@@ -158,6 +158,10 @@ class DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
   protected:
     StdVec<ContactKernelGradientType> contact_kernel_gradients_;
     StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdVec<StdLargeVec<Real> *>> contact_transfer_;
+
+    void resetContactTransfer(size_t index_i);
+    void accumulateDiffusionRate(size_t index_i);
 
   public:
     template <typename... Args>
@@ -222,9 +226,11 @@ class DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>
     StdVec<StdLargeVec<Vecd> *> contact_n_;
 
   protected:
-    void getDiffusionChangeRateRobin(
+    void getTransferRateRobin(
         size_t particle_i, size_t particle_j, Real surface_area_ij_Robin,
-        StdVec<StdLargeVec<Real> *> &convection_k, StdVec<Real *> &species_infinity_k);
+        StdVec<StdLargeVec<Real> *> &transfer_k,
+        StdVec<StdLargeVec<Real> *> &convection_k,
+        StdVec<Real *> &species_infinity_k);
 
   public:
     template <typename... Args>

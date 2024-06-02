@@ -73,6 +73,8 @@ int main(int ac, char *av[])
     // ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", temperature_observer_contact);
+    ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
+        write_heat_transfer_to_robin_boundary(diffusion_body, "PhiTransferFromRobinWallBoundary");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -92,7 +94,7 @@ int main(int ac, char *av[])
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     int ite = 0;
-    Real T0 = 1;
+    Real T0 = 1.0;
     Real End_Time = T0;
     Real Observe_time = 0.01 * End_Time;
     Real Output_Time = 0.1 * End_Time;
@@ -138,6 +140,7 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
         write_solid_temperature.writeToFile(ite);
+        write_heat_transfer_to_robin_boundary.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
