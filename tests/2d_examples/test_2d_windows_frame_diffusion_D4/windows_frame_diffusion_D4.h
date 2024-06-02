@@ -313,6 +313,7 @@ class LocalQuantityDefinition
           DiffusionReactionSimpleData<BaseParticles>(identifier.getSPHBody()){};
     virtual ~LocalQuantityDefinition(){};
 };
+
 class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByParticle>
 {
   public:
@@ -330,6 +331,7 @@ class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByPart
     StdLargeVec<Real> &thermal_conductivity;
     Real local_diff;
 };
+
 class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
   public:
@@ -345,6 +347,7 @@ class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelega
   protected:
     StdLargeVec<Real> &phi_;
 };
+
 class RobinBoundaryDefinition : public LocalDynamics, public GeneralDataDelegateSimple
 {
   public:
@@ -394,6 +397,7 @@ class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParti
     StdLargeVec<Real> &phi_convection_;
     Real local_convection_;
 };
+
 using DiffusionBodyRelaxation =
     DiffusionBodyRelaxationComplex<BaseDiffusion, KernelGradientInner, KernelGradientContact, Robin>;
 //----------------------------------------------------------------------

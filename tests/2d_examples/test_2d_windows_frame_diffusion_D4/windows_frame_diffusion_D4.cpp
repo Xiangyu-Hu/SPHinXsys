@@ -58,7 +58,6 @@ int main(int ac, char *av[])
     BodyRegionByParticle ac_body1(diffusion_body, makeShared<MultiPolygonShape>(createACBody1()));
     BodyRegionByParticle ac_body2(diffusion_body, makeShared<MultiPolygonShape>(createACBody2()));
     BodyRegionByParticle ac_open_body1(diffusion_body, makeShared<MultiPolygonShape>(createACOpenBody1()));
-
     // Define diffusion coefficient
     SimpleDynamics<LocalDiffusivityDefinition> epdm_diffusivity(epdm_body, epdm_cond);
     SimpleDynamics<LocalDiffusivityDefinition> panel_diffusivity(panel_body, pane_cond);
