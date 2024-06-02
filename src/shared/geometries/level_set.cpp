@@ -48,10 +48,26 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
 //=================================================================================================//
 void LevelSet::updateLevelSetGradient()
 {
-    package_parallel_for([&](size_t package_index)
-                         {
-                              computeGradient(phi_, phi_gradient_, package_index);
-                         });
+    package_parallel_for(
+        [&](size_t package_index)
+        {
+            computeGradient(phi_, phi_gradient_, package_index);
+        });
+}
+//=================================================================================================//
+void LevelSet::updateKernelIntegrals()
+{
+    package_parallel_for(
+        [&](size_t package_index)
+        {
+            Arrayi cell_index = meta_data_cell_[package_index].first;
+            assignByPosition(
+                kernel_weight_, cell_index, [&](const Vecd &position) -> Real
+                { return computeKernelIntegral(position); });
+            assignByPosition(
+                kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
+                { return computeKernelGradientIntegral(position); });
+        });
 }
 //=================================================================================================//
 Vecd LevelSet::probeNormalDirection(const Vecd &position)
@@ -87,6 +103,19 @@ Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
     return probeMesh(kernel_gradient_, position);
+}
+//=================================================================================================//
+void LevelSet::redistanceInterface()
+{
+    package_parallel_for(
+        [&](size_t package_index)
+        {
+            std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+            if (metadata.second == 1)
+            {
+                redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
+            }
+        });
 }
 //=================================================================================================//
 void LevelSet::cleanInterface(Real small_shift_factor)

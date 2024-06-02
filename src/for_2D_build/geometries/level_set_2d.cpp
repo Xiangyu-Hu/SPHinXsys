@@ -52,15 +52,20 @@ void LevelSet::finishDataPackages()
     initializeIndexMesh();
     initializeNeighbourhood();
     resizeMeshVariableData();
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          Arrayi cell_index = Arrayi(i, j);
-                          if(isInnerDataPackage(cell_index))
-                          {
-                              initializeBasicDataForAPackage(Arrayi(i, j), PackageIndexFromCellIndex(cell_index), shape_);
-                          }
-                      });
+    // mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+    //                   [&](size_t i, size_t j)
+    //                   {
+    //                       Arrayi cell_index = Arrayi(i, j);
+    //                       if(isInnerDataPackage(cell_index))
+    //                       {
+    //                           initializeBasicDataForAPackage(Arrayi(i, j), PackageIndexFromCellIndex(cell_index), shape_);
+    //                       }
+    //                   });
+    package_parallel_for(
+        [&](size_t package_index)
+        {
+            initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
+        });
 
     updateLevelSetGradient();
     updateKernelIntegrals();
@@ -95,22 +100,20 @@ void LevelSet::finishDataPackages()
 //     }
 // }
 //=================================================================================================//
-void LevelSet::updateKernelIntegrals()
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          Arrayi cell_index = Arrayi(i, j);
-                          if (isInnerDataPackage(cell_index)){
-                              assignByPosition(
-                                  kernel_weight_, cell_index, [&](const Vecd &position) -> Real
-                                  { return computeKernelIntegral(position); });
-                              assignByPosition(
-                                  kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
-                                  { return computeKernelGradientIntegral(position); });
-                          }
-                      });
-}
+// void LevelSet::updateKernelIntegrals()
+// {
+//     package_parallel_for(
+//         [&](size_t package_index)
+//         {
+//             Arrayi cell_index = meta_data_cell_[package_index].first;
+//             assignByPosition(
+//                 kernel_weight_, cell_index, [&](const Vecd &position) -> Real
+//                 { return computeKernelIntegral(position); });
+//             assignByPosition(
+//                 kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
+//                 { return computeKernelGradientIntegral(position); });
+//         });
+// }
 //=================================================================================================//
 void LevelSet::initializeIndexMesh()
 {
@@ -128,6 +131,7 @@ void LevelSet::initializeIndexMesh()
 void LevelSet::initializeNeighbourhood()
 {
     neighbourhood_ = new Neighbourhood[num_grid_pkgs_];
+    meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
         [&](size_t i, size_t j)
         {
@@ -135,6 +139,9 @@ void LevelSet::initializeNeighbourhood()
             if (isInnerDataPackage(cell_index))
             {
                 Neighbourhood &current = neighbourhood_[PackageIndexFromCellIndex(cell_index)];
+                std::pair<Arrayi, int> &metadata = meta_data_cell_[PackageIndexFromCellIndex(cell_index)];
+                metadata.first = cell_index;
+                metadata.second = isCoreDataPackage(cell_index) ? 1 : 0;
                 for(int l = -1; l < 2; l++)
                   for(int m = -1; m < 2; m++)
                     {
@@ -163,35 +170,36 @@ bool LevelSet::isInnerPackage(const Arrayi &cell_index)
 //=================================================================================================//
 void LevelSet::diffuseLevelSetSign()
 {
-    package_parallel_for([&](size_t package_index)
-            {
-                auto phi_data = phi_.DataField();
-                auto near_interface_id_data = near_interface_id_.DataField();
-                auto &neighbourhood = neighbourhood_[package_index];
+    package_parallel_for(
+        [&](size_t package_index)
+        {
+            auto phi_data = phi_.DataField();
+            auto near_interface_id_data = near_interface_id_.DataField();
+            auto &neighbourhood = neighbourhood_[package_index];
 
-                for_each_cell_data(
-                    [&](int i, int j)
+            for_each_cell_data(
+                [&](int i, int j)
+                {
+                    // near interface cells are not considered
+                    if (abs(near_interface_id_data[package_index][i][j]) > 1)
                     {
-                        // near interface cells are not considered
-                        if (abs(near_interface_id_data[package_index][i][j]) > 1)
-                        {
-                            mesh_find_if2d<-1, 2>(
-                                [&](int l, int m) -> bool
+                        mesh_find_if2d<-1, 2>(
+                            [&](int l, int m) -> bool
+                            {
+                                NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i+l, j+m), neighbourhood);
+                                int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
+                                bool is_found = abs(near_interface_id) == 1;
+                                if (is_found)
                                 {
-                                    NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i+l, j+m), neighbourhood);
-                                    int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
-                                    bool is_found = abs(near_interface_id) == 1;
-                                    if (is_found)
-                                    {
-                                        Real phi_0 = phi_data[package_index][i][j];
-                                        near_interface_id_data[package_index][i][j] = near_interface_id;
-                                        phi_data[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-                                    }
-                                    return is_found;
-                                });
-                        }
-                    });
-            });
+                                    Real phi_0 = phi_data[package_index][i][j];
+                                    near_interface_id_data[package_index][i][j] = near_interface_id;
+                                    phi_data[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+                                }
+                                return is_found;
+                            });
+                    }
+                });
+        });
 }
 //=============================================================================================//
 void LevelSet::reinitializeLevelSet()
@@ -202,7 +210,8 @@ void LevelSet::reinitializeLevelSet()
     //         Arrayi cell_index = Arrayi(i, j);
     //         if (isInnerDataPackage(cell_index)){
     //             size_t package_index = PackageIndexFromCellIndex(cell_index);
-    package_parallel_for([&](size_t package_index)
+    package_parallel_for(
+        [&](size_t package_index)
         {
             auto phi_data = phi_.DataField();
             auto &phi_addrs = phi_data[package_index];
@@ -241,7 +250,8 @@ void LevelSet::markNearInterface(Real small_shift_factor)
     //         Arrayi cell_index = Arrayi(i, j);
     //         if (isInnerDataPackage(cell_index)){
     //             size_t package_index = PackageIndexFromCellIndex(cell_index);
-    package_parallel_for([&](size_t package_index)
+    package_parallel_for(
+        [&](size_t package_index)
         {
             auto &phi_addrs = phi_.DataField()[package_index];
             auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
@@ -304,18 +314,18 @@ void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const si
         });
 }
 //=================================================================================================//
-void LevelSet::redistanceInterface()
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-        [&](size_t i, size_t j)
-        {
-            Arrayi cell_index = Arrayi(i, j);
-            if (isCoreDataPackage(cell_index))
-            {
-                redistanceInterfaceForAPackage(PackageIndexFromCellIndex(cell_index));
-            }
-        });
-}
+// void LevelSet::redistanceInterface()
+// {
+//     package_parallel_for(
+//         [&](size_t package_index)
+//         {
+//             std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+//             if (metadata.second == 1)
+//             {
+//                 redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
+//             }
+//         });
+// }
 //=================================================================================================//
 void LevelSet::redistanceInterfaceForAPackage(const size_t package_index)
 {
