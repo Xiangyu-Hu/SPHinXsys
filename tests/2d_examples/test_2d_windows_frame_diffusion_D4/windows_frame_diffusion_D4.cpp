@@ -42,27 +42,15 @@ int main(int ac, char *av[])
     //	Basically the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation inner_relation(diffusion_body);
-    ContactRelation contact_Robin_in(diffusion_body, {&boundary_Robin_in});
-    ContactRelation contact_Robin_ex(diffusion_body, {&boundary_Robin_ex});
+    ContactRelation contact_Robin(diffusion_body, {&boundary_Robin_in, &boundary_Robin_ex});
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    DiffusionBodyRelaxation temperature_relaxation(inner_relation, contact_Robin_in, contact_Robin_ex);
-
-    RobinFluxCalculation heat_flux_calculation_in(contact_Robin_in);
-    RobinFluxCalculation heat_flux_calculation_ex(contact_Robin_ex);
-
-    LocalIsotropicDiffusion maximum_thermal_diffusivity("Phi", "Phi", epdm_cond);
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, maximum_thermal_diffusivity);
-
-    SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_in(boundary_Robin_in);
-    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_ex(boundary_Robin_ex);
-
-    SimpleDynamics<InternalHeatTransferInitialCondition> setup_heat_transfer_initial_condition_in(boundary_Robin_in);
-    SimpleDynamics<ExternalHeatTransferInitialCondition> setup_heat_transfer_initial_condition_ex(boundary_Robin_ex);
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_in(boundary_Robin_in);
+    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_ex(boundary_Robin_ex);
 
     // Overall Body definition
     BodyRegionByParticle epdm_body(diffusion_body, makeShared<MultiPolygonShape>(createEPDMBody()));
@@ -70,7 +58,6 @@ int main(int ac, char *av[])
     BodyRegionByParticle ac_body1(diffusion_body, makeShared<MultiPolygonShape>(createACBody1()));
     BodyRegionByParticle ac_body2(diffusion_body, makeShared<MultiPolygonShape>(createACBody2()));
     BodyRegionByParticle ac_open_body1(diffusion_body, makeShared<MultiPolygonShape>(createACOpenBody1()));
-    BodyRegionByParticle decreased_convection_body(boundary_Robin_in, makeShared<MultiPolygonShape>(createDecreasedInternalConvectionBody()));
 
     // Diffusion coefficient initialization
     SimpleDynamics<ThermalConductivityInitialization> epdm_conductivity_initial_condition(epdm_body, epdm_cond);
@@ -79,18 +66,28 @@ int main(int ac, char *av[])
     SimpleDynamics<ThermalConductivityInitialization> ac2_conductivity_initial_condition(ac_body2, ac2_cond);
     SimpleDynamics<ThermalConductivityInitialization> acopen1_conductivity_initial_condition(ac_open_body1, acopen1_cond);
 
-    SimpleDynamics<LocalConvectionInitialization> decreased_convection_initial_condition(decreased_convection_body, convection_i_decreased);
-    SimpleDynamics<LocalHeatTransferConvection> decreased_ht_convection(decreased_convection_body, convection_i_decreased);
+    DiffusionBodyRelaxation temperature_relaxation(
+        ConstructorArgs(inner_relation, frame_diffusion),
+        ConstructorArgs(contact_Robin, frame_diffusion));
 
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_in(boundary_Robin_in);
-    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_ex(boundary_Robin_ex);
+    LocalIsotropicDiffusion maximum_thermal_diffusivity("Phi", "Phi", epdm_cond);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, maximum_thermal_diffusivity);
+
+    SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
+
+    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_in(boundary_Robin_in);
+    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_ex(boundary_Robin_ex);
+
+    BodyRegionByParticle decreased_convection_body(boundary_Robin_in, makeShared<MultiPolygonShape>(createDecreasedInternalConvectionBody()));
+    SimpleDynamics<LocalConvectionInitialization> decreased_convection_initial_condition(decreased_convection_body, convection_i_decreased);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    ReducedQuantityRecording<QuantitySummation<Real>> write_heat_flux(diffusion_body, "HT_Flux");
-    ReducedQuantityRecording<QuantitySummation<Real>> write_diffusion_changing_rate(diffusion_body, "PhiChangeRate");
+    ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
+        write_heat_transfer_from_internal_boundary(diffusion_body, "PhiTransferFromInternalConvectionBoundary");
+    ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
+        write_heat_transfer_from_external_boundary(diffusion_body, "PhiTransferFromExternalConvectionBoundary");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------
@@ -103,9 +100,7 @@ int main(int ac, char *av[])
     setup_diffusion_initial_condition.exec();
     setup_boundary_condition_Robin_in.exec();
     setup_boundary_condition_Robin_ex.exec();
-
-    setup_heat_transfer_initial_condition_in.exec();
-    setup_heat_transfer_initial_condition_ex.exec();
+    decreased_convection_initial_condition.exec();
 
     // thermal conductivity initialization
     epdm_conductivity_initial_condition.exec();
@@ -114,18 +109,9 @@ int main(int ac, char *av[])
     ac2_conductivity_initial_condition.exec();
     acopen1_conductivity_initial_condition.exec();
 
-    decreased_convection_initial_condition.exec();
-    decreased_ht_convection.exec();
-
     diffusion_body_normal_direction.exec();
     Robin_normal_direction_in.exec();
     Robin_normal_direction_ex.exec();
-
-    diffusion_body.addBodyStateForRecording<Real>("HT_Flux");
-    diffusion_body.addBodyStateForRecording<Real>("ThermalConductivity");
-
-    boundary_Robin_in.addBodyStateForRecording<Real>("Convection");
-    boundary_Robin_in.addBodyStateForRecording<Real>("HT_Convection");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -145,8 +131,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_states.writeToFile();
     write_solid_temperature.writeToFile();
-    write_diffusion_changing_rate.writeToFile();
-    write_heat_flux.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -166,8 +150,6 @@ int main(int ac, char *av[])
                 }
 
                 temperature_relaxation.exec(dt);
-                /*heat_flux_calculation_ex.exec(dt);*/
-                heat_flux_calculation_in.exec(dt); // Absolute value of Heat flux _in and _ex are identical
 
                 ite++;
                 dt = get_time_step_size.exec();
@@ -180,8 +162,8 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
         write_solid_temperature.writeToFile(ite);
-        write_diffusion_changing_rate.writeToFile(ite);
-        write_heat_flux.writeToFile(ite);
+        write_heat_transfer_from_internal_boundary.writeToFile(ite);
+        write_heat_transfer_from_external_boundary.writeToFile(ite);
 
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

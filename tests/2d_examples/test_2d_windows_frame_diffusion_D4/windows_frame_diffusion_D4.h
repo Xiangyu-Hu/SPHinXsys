@@ -330,40 +330,6 @@ class ThermalConductivityInitialization : public LocalQuantityDefinition<BodyPar
     StdLargeVec<Real> &thermal_conductivity;
     Real local_diff;
 };
-class LocalConvectionInitialization : public LocalQuantityDefinition<BodyPartByParticle>
-{
-  public:
-    explicit LocalConvectionInitialization(BodyPartByParticle &body_part, Real local_convection)
-        : LocalQuantityDefinition<BodyPartByParticle>(body_part),
-          convection_(*particles_->template getVariableByName<Real>("Convection")),
-          local_convection(local_convection){};
-
-    void update(size_t index_i, Real dt)
-    {
-        convection_[index_i] = local_convection;
-    };
-
-  protected:
-    StdLargeVec<Real> &convection_;
-    Real local_convection;
-};
-class LocalHeatTransferConvection : public LocalQuantityDefinition<BodyPartByParticle>
-{
-  public:
-    explicit LocalHeatTransferConvection(BodyPartByParticle &body_part, Real local_ht_convection)
-        : LocalQuantityDefinition<BodyPartByParticle>(body_part),
-          ht_convection_(*particles_->getVariableByName<Real>("HT_Convection")),
-          local_ht_convection(local_ht_convection){};
-
-    void update(size_t index_i, Real dt)
-    {
-        ht_convection_[index_i] = local_ht_convection;
-    };
-
-  protected:
-    StdLargeVec<Real> &ht_convection_;
-    Real local_ht_convection;
-};
 class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
 {
   public:
@@ -386,8 +352,8 @@ class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDa
         : LocalDynamics(diffusion_body), GeneralDataDelegateSimple(diffusion_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-          T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("T_infinity"))){};
+          phi_convection_(*(this->particles_->template getVariableByName<Real>("PhiConvection"))),
+          phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>("PhiInfinity"))){};
 
     void update(size_t index_i, Real dt)
     {
@@ -395,125 +361,41 @@ class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDa
 
         if (pos_[index_i][1] >= 0.051)
         {
-            convection_[index_i] = convection_i;
-            T_infinity_ = T_infinity_i;
+            phi_convection_[index_i] = convection_i;
+            phi_infinity_ = T_infinity_i;
         }
         if (pos_[index_i][1] <= 0.023)
         {
-            convection_[index_i] = convection_e;
-            T_infinity_ = T_infinity_e;
+            phi_convection_[index_i] = convection_e;
+            phi_infinity_ = T_infinity_e;
         }
     };
 
   protected:
     StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_, &convection_;
-    Real &T_infinity_;
+    StdLargeVec<Real> &phi_, &phi_convection_;
+    Real &phi_infinity_;
 };
-class ExternalHeatTransferInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+
+class LocalConvectionInitialization : public LocalQuantityDefinition<BodyPartByParticle>
 {
   public:
-    explicit ExternalHeatTransferInitialCondition(SolidBody &diffusion_body)
-        : LocalDynamics(diffusion_body), GeneralDataDelegateSimple(diffusion_body),
-          ht_convection_(*(this->particles_->template getVariableByName<Real>("HT_Convection"))),
-          ht_T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("HT_T_infinity"))){};
+    explicit LocalConvectionInitialization(BodyPartByParticle &body_part, Real local_convection)
+        : LocalQuantityDefinition<BodyPartByParticle>(body_part),
+          phi_convection_(*particles_->template getVariableByName<Real>("PhiConvection")),
+          local_convection_(local_convection){};
 
     void update(size_t index_i, Real dt)
     {
-        ht_convection_[index_i] = convection_e;
-        ht_T_infinity_ = T_infinity_e;
+        phi_convection_[index_i] = local_convection_;
     };
 
   protected:
-    StdLargeVec<Real> &ht_convection_;
-    Real &ht_T_infinity_;
+    StdLargeVec<Real> &phi_convection_;
+    Real local_convection_;
 };
-
-class InternalHeatTransferInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
-{
-  public:
-    explicit InternalHeatTransferInitialCondition(SolidBody &diffusion_body)
-        : LocalDynamics(diffusion_body), GeneralDataDelegateSimple(diffusion_body),
-          ht_convection_(*(this->particles_->template getVariableByName<Real>("HT_Convection"))),
-          ht_T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("HT_T_infinity"))){};
-
-    void update(size_t index_i, Real dt)
-    {
-        ht_convection_[index_i] = convection_i;
-        ht_T_infinity_ = T_infinity_i;
-    };
-
-  protected:
-    StdLargeVec<Real> &ht_convection_;
-    Real &ht_T_infinity_;
-};
-
-template <typename... ControlTypes>
-class RobinFlux; /*Calculate heat transfer flux of Robin boundary condition*/
-
-template <class ContactKernelGradientType, class DiffusionType>
-class DiffusionRelaxation<RobinFlux<ContactKernelGradientType>, DiffusionType>
-    : public DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
-{
-    StdLargeVec<Vecd> &n_;
-    StdLargeVec<Real> &ht_flux_;
-    StdVec<StdLargeVec<Vecd> *> ht_n_;
-    StdVec<Real *> ht_T_infinity_;
-    StdVec<StdLargeVec<Real> *> ht_convection_; // ht for heat transfer
-
-  public:
-    template <typename... Args>
-    explicit DiffusionRelaxation(Args &&...args)
-        : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(std::forward<Args>(args)...),
-          n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
-          ht_flux_(*this->particles_->template registerSharedVariable<Real>("HT_Flux"))
-    {
-        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-        {
-            ht_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-            ht_convection_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("HT_Convection"));
-            ht_T_infinity_.push_back(this->contact_particles_[k]->template registerSingleVariable<Real>("HT_T_infinity"));
-        }
-    };
-    virtual ~DiffusionRelaxation(){};
-
-    void update(size_t index_i, Real dt)
-    {
-        for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-        {
-            for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-            {
-                Real ht_flux = 0.0;
-
-                StdLargeVec<Vecd> &n_k = *(ht_n_[k]);
-                StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-                StdLargeVec<Real> &ht_convection_k = *(ht_convection_[k]);
-                Real &ht_T_infinity_k = *(ht_T_infinity_[k]);
-
-                Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-                for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = contact_neighborhood.j_[n];
-                    Real dW_ijV_j_ = contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
-                    Vecd &e_ij = contact_neighborhood.e_ij_[n];
-
-                    const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
-                    Vecd n_ij = n_[index_i] - n_k[index_j];
-                    Real area_ij_Robin = grad_ijV_j.dot(n_ij);
-
-                    Real phi_ij = ht_T_infinity_k - (*this->diffusion_species_[m])[index_i];
-                    ht_flux += ht_convection_k[index_j] * phi_ij * area_ij_Robin * Vol_k[index_j];
-                }
-                ht_flux_[index_i] = ht_flux;
-            }
-        }
-    };
-};
-
 using DiffusionBodyRelaxation =
-    DiffusionBodyRelaxationComplex<BaseDiffusion, KernelGradientInner, KernelGradientContact, Robin, Robin>;
-
-using RobinFluxCalculation = DiffusionRelaxation<RobinFlux<KernelGradientContact>, BaseDiffusion>;
+    DiffusionBodyRelaxationComplex<BaseDiffusion, KernelGradientInner, KernelGradientContact, Robin>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
