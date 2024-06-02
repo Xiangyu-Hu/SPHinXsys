@@ -370,29 +370,9 @@ MultiPolygon createACOpenBody1()
 
     return multi_polygon;
 }
-//----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<LocalIsotropicDiffusion>("Phi", "Phi", pvc_cond);
-    }
-};
 
-class WallMaterial : public DiffusionReaction<Solid>
+namespace SPH
 {
-  public:
-    WallMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", poly_cond);
-        // polyamide conductivity is the largest, we use it to define the time step.
-    }
-};
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<SolidParticles, WallMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
@@ -653,4 +633,5 @@ class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
         }
     }
 };
+}
 #endif // WINDOWS_FRAME_DIFFUSION_D7_H

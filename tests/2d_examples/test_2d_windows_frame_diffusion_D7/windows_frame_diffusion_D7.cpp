@@ -23,15 +23,13 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createOverallStructureBody(), "DiffusionBody"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<Lattice>();
+    LocalIsotropicDiffusion *frame_diffusion = diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", pvc_cond);
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody boundary_Robin_in(sph_system, makeShared<MultiPolygonShape>(createInternalAirBody(), "InternalConvectionBoundary"));
-    boundary_Robin_in.defineParticlesAndMaterial<WallParticles, WallMaterial>();
     boundary_Robin_in.generateParticles<Lattice>();
 
     SolidBody boundary_Robin_ex(sph_system, makeShared<MultiPolygonShape>(createExternalAirBody(), "ExternalConvectionBoundary"));
-    boundary_Robin_ex.defineParticlesAndMaterial<WallParticles, WallMaterial>();
     boundary_Robin_ex.generateParticles<Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
