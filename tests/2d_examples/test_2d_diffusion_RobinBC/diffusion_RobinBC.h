@@ -139,10 +139,10 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics, public Gener
     StdLargeVec<Real> &phi_;
 };
 
-class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class RobinBoundaryDefinition : public LocalDynamics, public GeneralDataDelegateSimple
 {
   public:
-    explicit RobinWallBoundaryInitialCondition(SPHBody &sph_body)
+    explicit RobinBoundaryDefinition(SPHBody &sph_body)
         : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),

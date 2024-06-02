@@ -52,19 +52,19 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_in(boundary_Robin_in);
     SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_ex(boundary_Robin_ex);
 
-    // Overall Body definition
+    // Define body regions
     BodyRegionByParticle epdm_body(diffusion_body, makeShared<MultiPolygonShape>(createEPDMBody()));
     BodyRegionByParticle panel_body(diffusion_body, makeShared<MultiPolygonShape>(createPanelBody()));
     BodyRegionByParticle ac_body1(diffusion_body, makeShared<MultiPolygonShape>(createACBody1()));
     BodyRegionByParticle ac_body2(diffusion_body, makeShared<MultiPolygonShape>(createACBody2()));
     BodyRegionByParticle ac_open_body1(diffusion_body, makeShared<MultiPolygonShape>(createACOpenBody1()));
 
-    // Diffusion coefficient initialization
-    SimpleDynamics<ThermalConductivityInitialization> epdm_conductivity_initial_condition(epdm_body, epdm_cond);
-    SimpleDynamics<ThermalConductivityInitialization> panel_conductivity_initial_condition(panel_body, pane_cond);
-    SimpleDynamics<ThermalConductivityInitialization> ac1_conductivity_initial_condition(ac_body1, ac1_cond);
-    SimpleDynamics<ThermalConductivityInitialization> ac2_conductivity_initial_condition(ac_body2, ac2_cond);
-    SimpleDynamics<ThermalConductivityInitialization> acopen1_conductivity_initial_condition(ac_open_body1, acopen1_cond);
+    // Define diffusion coefficient
+    SimpleDynamics<LocalDiffusivityDefinition> epdm_diffusivity(epdm_body, epdm_cond);
+    SimpleDynamics<LocalDiffusivityDefinition> panel_diffusivity(panel_body, pane_cond);
+    SimpleDynamics<LocalDiffusivityDefinition> ac1_diffusivity(ac_body1, ac1_cond);
+    SimpleDynamics<LocalDiffusivityDefinition> ac2_diffusivity(ac_body2, ac2_cond);
+    SimpleDynamics<LocalDiffusivityDefinition> ac1_open_diffusivity(ac_open_body1, ac1_open_cond);
 
     DiffusionBodyRelaxation temperature_relaxation(
         ConstructorArgs(inner_relation, frame_diffusion),
@@ -74,12 +74,10 @@ int main(int ac, char *av[])
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, maximum_thermal_diffusivity);
 
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-
-    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_in(boundary_Robin_in);
-    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin_ex(boundary_Robin_ex);
-
+    SimpleDynamics<RobinBoundaryDefinition> robin_boundary_condition_in(boundary_Robin_in);
+    SimpleDynamics<RobinBoundaryDefinition> robin_boundary_condition_ex(boundary_Robin_ex);
     BodyRegionByParticle decreased_convection_body(boundary_Robin_in, makeShared<MultiPolygonShape>(createDecreasedInternalConvectionBody()));
-    SimpleDynamics<LocalConvectionInitialization> decreased_convection_initial_condition(decreased_convection_body, convection_i_decreased);
+    SimpleDynamics<LocalConvectionDefinition> decreased_convection_initial_condition(decreased_convection_body, convection_i_decreased);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -98,16 +96,16 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
 
     setup_diffusion_initial_condition.exec();
-    setup_boundary_condition_Robin_in.exec();
-    setup_boundary_condition_Robin_ex.exec();
+    robin_boundary_condition_in.exec();
+    robin_boundary_condition_ex.exec();
     decreased_convection_initial_condition.exec();
 
     // thermal conductivity initialization
-    epdm_conductivity_initial_condition.exec();
-    panel_conductivity_initial_condition.exec();
-    ac1_conductivity_initial_condition.exec();
-    ac2_conductivity_initial_condition.exec();
-    acopen1_conductivity_initial_condition.exec();
+    epdm_diffusivity.exec();
+    panel_diffusivity.exec();
+    ac1_diffusivity.exec();
+    ac2_diffusivity.exec();
+    ac1_open_diffusivity.exec();
 
     diffusion_body_normal_direction.exec();
     Robin_normal_direction_in.exec();

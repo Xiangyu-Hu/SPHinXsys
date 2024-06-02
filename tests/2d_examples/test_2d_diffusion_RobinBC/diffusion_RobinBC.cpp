@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
-    SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin(wall_boundary_Robin);
+    SimpleDynamics<RobinBoundaryDefinition> setup_boundary_condition_Robin(wall_boundary_Robin);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

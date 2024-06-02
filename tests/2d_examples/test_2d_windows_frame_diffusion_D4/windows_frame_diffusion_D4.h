@@ -68,7 +68,7 @@ Real ac1_cond = getACConductivity(b1, d1, A1);
 Real ac2_cond = getACConductivity(b2, d2, A2);
 
 // slightly ventilated air conductivity
-Real acopen1_cond = 2 * getACConductivity(ob1, od1, oA1);
+Real ac1_open_cond = 2 * getACConductivity(ob1, od1, oA1);
 //----------------------------------------------------------------------
 //	Initial and boundary condition parameters.
 //----------------------------------------------------------------------
@@ -313,10 +313,10 @@ class LocalQuantityDefinition
           DiffusionReactionSimpleData<BaseParticles>(identifier.getSPHBody()){};
     virtual ~LocalQuantityDefinition(){};
 };
-class ThermalConductivityInitialization : public LocalQuantityDefinition<BodyPartByParticle>
+class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByParticle>
 {
   public:
-    explicit ThermalConductivityInitialization(BodyPartByParticle &body_part, Real local_diff)
+    explicit LocalDiffusivityDefinition(BodyPartByParticle &body_part, Real local_diff)
         : LocalQuantityDefinition<BodyPartByParticle>(body_part),
           thermal_conductivity(*particles_->getVariableByName<Real>("ThermalConductivity")),
           local_diff(local_diff){};
@@ -345,10 +345,10 @@ class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelega
   protected:
     StdLargeVec<Real> &phi_;
 };
-class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class RobinBoundaryDefinition : public LocalDynamics, public GeneralDataDelegateSimple
 {
   public:
-    explicit RobinWallBoundaryInitialCondition(SolidBody &diffusion_body)
+    explicit RobinBoundaryDefinition(SolidBody &diffusion_body)
         : LocalDynamics(diffusion_body), GeneralDataDelegateSimple(diffusion_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
@@ -377,10 +377,10 @@ class RobinWallBoundaryInitialCondition : public LocalDynamics, public GeneralDa
     Real &phi_infinity_;
 };
 
-class LocalConvectionInitialization : public LocalQuantityDefinition<BodyPartByParticle>
+class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParticle>
 {
   public:
-    explicit LocalConvectionInitialization(BodyPartByParticle &body_part, Real local_convection)
+    explicit LocalConvectionDefinition(BodyPartByParticle &body_part, Real local_convection)
         : LocalQuantityDefinition<BodyPartByParticle>(body_part),
           phi_convection_(*particles_->template getVariableByName<Real>("PhiConvection")),
           local_convection_(local_convection){};
