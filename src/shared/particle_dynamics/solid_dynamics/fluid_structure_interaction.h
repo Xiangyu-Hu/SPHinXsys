@@ -112,10 +112,10 @@ class PressureForceFromFluid : public BaseForceFromFluid
 class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_temp_, &pos_;
+    StdLargeVec<Vecd> &pos_, &pos_temp_;
 
   public:
-    explicit InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp);
+    explicit InitializeDisplacement(SPHBody &sph_body);
     virtual ~InitializeDisplacement(){};
 
     void update(size_t index_i, Real dt = 0.0);
@@ -130,10 +130,10 @@ class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimp
 class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public ElasticSolidDataSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &acc_ave_;
+    StdLargeVec<Vecd> &pos_, &pos_temp_, &vel_ave_, &acc_ave_;
 
   public:
-    explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp);
+    explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body);
     virtual ~UpdateAverageVelocityAndAcceleration(){};
 
     void update(size_t index_i, Real dt = 0.0);
@@ -147,9 +147,6 @@ class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public Elasti
  */
 class AverageVelocityAndAcceleration
 {
-  protected:
-    StdLargeVec<Vecd> pos_temp_;
-
   public:
     SimpleDynamics<InitializeDisplacement> initialize_displacement_;
     SimpleDynamics<UpdateAverageVelocityAndAcceleration> update_averages_;

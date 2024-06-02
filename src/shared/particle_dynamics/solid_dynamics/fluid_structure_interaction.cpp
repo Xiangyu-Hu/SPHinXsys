@@ -57,9 +57,10 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 InitializeDisplacement::
-    InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
+    InitializeDisplacement(SPHBody &sph_body)
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp), pos_(*base_particles_.getVariableByName<Vecd>("Position")) {}
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_temp_(*base_particles_.registerSharedVariable<Vecd>("TemporaryPosition")) {}
 //=================================================================================================//
 void InitializeDisplacement::update(size_t index_i, Real dt)
 {
@@ -67,9 +68,10 @@ void InitializeDisplacement::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 UpdateAverageVelocityAndAcceleration::
-    UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
+    UpdateAverageVelocityAndAcceleration(SPHBody &sph_body)
     : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp), pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_temp_(*base_particles_.getVariableByName<Vecd>("TemporaryPosition")),
       vel_ave_(*particles_->getVariableByName<Vecd>("AverageVelocity")),
       acc_ave_(*particles_->getVariableByName<Vecd>("AverageAcceleration")) {}
 //=================================================================================================//
@@ -82,11 +84,8 @@ void UpdateAverageVelocityAndAcceleration::update(size_t index_i, Real dt)
 //=================================================================================================//
 AverageVelocityAndAcceleration::
     AverageVelocityAndAcceleration(SolidBody &solid_body)
-    : initialize_displacement_(solid_body, pos_temp_),
-      update_averages_(solid_body, pos_temp_)
-{
-    solid_body.getBaseParticles().registerVariable(pos_temp_, "TemporaryPosition");
-}
+    : initialize_displacement_(solid_body),
+      update_averages_(solid_body) {}
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
