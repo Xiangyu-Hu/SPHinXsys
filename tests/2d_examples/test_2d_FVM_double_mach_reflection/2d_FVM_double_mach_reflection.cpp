@@ -5,7 +5,6 @@
  * @author 	Zhentong Wang and Xiangyu Hu
  */
 #include "2d_FVM_double_mach_reflection.h"
-#include "sphinxsys.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -92,9 +91,9 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
-                cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                     << GlobalStaticVariables::physical_time_
-                     << "	dt = " << dt << "\n";
+                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                          << GlobalStaticVariables::physical_time_
+                          << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
         }
@@ -106,7 +105,7 @@ int main(int ac, char *av[])
     TickCount t4 = TickCount::now();
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     if (sph_system.GenerateRegressionData())
     {

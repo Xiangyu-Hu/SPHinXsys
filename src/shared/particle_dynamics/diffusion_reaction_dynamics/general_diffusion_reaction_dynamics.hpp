@@ -16,7 +16,7 @@ DiffusionReactionInitialCondition<ParticlesType>::
     DiffusionReactionInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       DiffusionReactionSimpleData<ParticlesType>(sph_body),
-      pos_(*this->base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
       all_species_(this->particles_->all_species_) {}
 //=================================================================================================//
 } // namespace SPH

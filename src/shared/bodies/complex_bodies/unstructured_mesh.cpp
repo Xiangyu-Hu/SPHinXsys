@@ -1,6 +1,7 @@
 
 #include "unstructured_mesh.h"
-#include "mesh_helper.h"
+
+#include "base_particle_dynamics.h"
 
 namespace SPH
 {

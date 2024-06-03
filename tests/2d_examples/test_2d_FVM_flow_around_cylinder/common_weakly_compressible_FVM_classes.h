@@ -28,7 +28,8 @@
 
 #ifndef COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
 #define COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
-#include "unstructured_mesh.h"
+
+#include "sphinxsys.h"
 
 namespace SPH
 {
@@ -77,7 +78,7 @@ class BaseForceFromFluidInFVM : public LocalDynamics, public fluid_dynamics::Flu
 class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
 {
   public:
-    explicit ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index);
+    explicit ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index);
     virtual ~ViscousForceFromFluidInFVM(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -85,7 +86,7 @@ class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
     Fluid &fluid_;
     StdLargeVec<Vecd> &vel_;
     Real mu_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
+    StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;
 };
 
 /**
@@ -100,7 +101,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
     using RiemannSolverType = typename EulerianIntegration2ndHalfType::RiemannSolver;
 
   public:
-    explicit PressureForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    explicit PressureForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index)
         : BaseForceFromFluidInFVM(inner_relation),
           fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
           vel_(*particles_->getVariableByName<Vecd>("Velocity")),
@@ -115,7 +116,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<Real> &p_, &rho_;
     RiemannSolverType riemann_solver_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
+    StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;
     virtual ~PressureForceFromFluidInFVM(){};
 
     void interaction(size_t index_i, Real dt = 0.0)

@@ -148,8 +148,8 @@ PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf
       mass_(*particles_->getVariableByName<Real>("Mass")),
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio())
 {
-    this->particles_->addVariableToSort<Real>("AccDeviatoricPlasticStrain");
-    this->particles_->addVariableToSort<Real>("VerticalStress");
+    particles_->addVariableToSort<Real>("AccDeviatoricPlasticStrain");
+    particles_->addVariableToSort<Real>("VerticalStress");
 }
 //=================================================================================================//
 template <class RiemannSolverType>

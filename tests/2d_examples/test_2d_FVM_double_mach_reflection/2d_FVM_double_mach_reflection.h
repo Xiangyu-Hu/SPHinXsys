@@ -9,7 +9,7 @@
 #define FVM_DOUBLE_MACH_REFLECTION_H
 #include "common_compressible_FVM_classes.h" // classes for compressible fluid only in FVM.
 using namespace SPH;
-using namespace std;
+
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

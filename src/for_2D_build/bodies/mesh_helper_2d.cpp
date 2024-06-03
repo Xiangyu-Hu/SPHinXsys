@@ -1,15 +1,17 @@
 #include "mesh_helper.h"
+
+#include "base_particle_dynamics.h"
 namespace SPH
 {
 //=================================================================================================//
-void MeshFileHelpers::meshDimension(ifstream &mesh_file, size_t &dimension, string &text_line)
+void MeshFileHelpers::meshDimension(std::ifstream &mesh_file, size_t &dimension, std::string &text_line)
 {
     while (getline(mesh_file, text_line))
     {
         text_line.erase(0, 1);
         text_line.erase(1);
-        istringstream value(text_line);
-        if (text_line.find("2", 0) != string::npos)
+        std::istringstream value(text_line);
+        if (text_line.find("2", 0) != std::string::npos)
         {
             dimension = atoi(text_line.c_str());
             break;
@@ -17,16 +19,16 @@ void MeshFileHelpers::meshDimension(ifstream &mesh_file, size_t &dimension, stri
     }
 }
 //=================================================================================================//
-void MeshFileHelpers::numberOfNodes(ifstream &mesh_file, size_t &number_of_points, string &text_line)
+void MeshFileHelpers::numberOfNodes(std::ifstream &mesh_file, size_t &number_of_points, std::string &text_line)
 {
     while (getline(mesh_file, text_line))
     {
         text_line.erase(0, 1);
-        string text1(text_line);
+        std::string text1(text_line);
         text_line.erase(3);
-        string text2(text_line);
+        std::string text2(text_line);
         text_line.erase(2);
-        if (atoi(text_line.c_str()) == 10 && text1.find("))", 0) != string::npos)
+        if (atoi(text_line.c_str()) == 10 && text1.find("))", 0) != std::string::npos)
         {
             text1.erase(0, 8);
             Real last_position = text1.find_last_of(")");
@@ -37,14 +39,14 @@ void MeshFileHelpers::numberOfNodes(ifstream &mesh_file, size_t &number_of_point
     }
 }
 //=================================================================================================//
-void MeshFileHelpers::nodeCoordinates(ifstream &mesh_file, StdLargeVec<Vecd> &node_coordinates_,
-                                      string &text_line, size_t &dimension)
+void MeshFileHelpers::nodeCoordinates(std::ifstream &mesh_file, StdLargeVec<Vecd> &node_coordinates_,
+                                      std::string &text_line, size_t &dimension)
 {
     while (getline(mesh_file, text_line))
     {
-        if (text_line.find("(", 0) == string::npos && text_line.find("))", 0) == string::npos)
+        if (text_line.find("(", 0) == std::string::npos && text_line.find("))", 0) == std::string::npos)
         {
-            if (text_line.find(" ", 0) != string::npos)
+            if (text_line.find(" ", 0) != std::string::npos)
             {
                 size_t divide_position = text_line.find_first_of(" ");
                 std::string x_part = text_line;
@@ -61,21 +63,21 @@ void MeshFileHelpers::nodeCoordinates(ifstream &mesh_file, StdLargeVec<Vecd> &no
                 node_coordinates_.push_back(coordinate);
             }
         }
-        if (text_line.find("))", 0) != string::npos)
+        if (text_line.find("))", 0) != std::string::npos)
         {
             break;
         }
     }
 }
 //=================================================================================================//
-void MeshFileHelpers::numberOfElements(ifstream &mesh_file, size_t &number_of_elements, string &text_line)
+void MeshFileHelpers::numberOfElements(std::ifstream &mesh_file, size_t &number_of_elements, std::string &text_line)
 {
     while (getline(mesh_file, text_line))
     {
         text_line.erase(0, 1);
-        string text1(text_line);
+        std::string text1(text_line);
         text_line.erase(3);
-        string text2(text_line);
+        std::string text2(text_line);
         text_line.erase(2);
         if (atoi(text_line.c_str()) == 12)
         {
@@ -94,7 +96,7 @@ void MeshFileHelpers::numberOfElements(ifstream &mesh_file, size_t &number_of_el
  * {inner_neighbor1, inner_neighbor2, ..... }.
  */
 /*--- Initialize the number of elements ---*/
-void MeshFileHelpers::dataStruct(vector<vector<vector<size_t>>> &mesh_topology_,
+void MeshFileHelpers::dataStruct(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
                                  StdLargeVec<StdVec<size_t>> &elements_nodes_connection_,
                                  size_t number_of_elements, size_t mesh_type, size_t dimension)
 {
@@ -125,7 +127,7 @@ void MeshFileHelpers::dataStruct(vector<vector<vector<size_t>>> &mesh_topology_,
     }
 }
 //=================================================================================================//
-size_t MeshFileHelpers::findBoundaryType(string &text_line, size_t boundary_type)
+size_t MeshFileHelpers::findBoundaryType(std::string &text_line, size_t boundary_type)
 {
     /*--- Read the elements of the problem (13 (id f1 f2 type 0) (---*/
     /*--- Read the elements of the problem ---*/
@@ -144,20 +146,20 @@ size_t MeshFileHelpers::findBoundaryType(string &text_line, size_t boundary_type
     size_t position = text_line.find(")", 0);
     text_line = text_line.erase(0, position - 4);
     text_line = text_line.erase(2);
-    boundary_type = stoi(text_line, nullptr, 16);
+    boundary_type = std::stoi(text_line, nullptr, 16);
     return boundary_type;
 }
 //=================================================================================================//
-Vecd MeshFileHelpers::nodeIndex(string &text_line)
+Vecd MeshFileHelpers::nodeIndex(std::string &text_line)
 {
     /*--- find the node1 between two cells ---*/
-    string node1_string_copy = text_line;
+    std::string node1_string_copy = text_line;
     size_t first_divide_position = text_line.find_first_of(" ", 0);
-    string node1_index_string = node1_string_copy.erase(first_divide_position);
+    std::string node1_index_string = node1_string_copy.erase(first_divide_position);
     size_t node1_index_decimal = stoi(node1_index_string, nullptr, 16) - 1;
 
     /*--- find the node2 between two cells---*/
-    string node2_string = text_line;
+    std::string node2_string = text_line;
     node2_string = node2_string.erase(0, first_divide_position + 1);
     size_t second_divide_position = node2_string.find_first_of(" ", 0);
     node2_string.erase(second_divide_position);
@@ -166,21 +168,21 @@ Vecd MeshFileHelpers::nodeIndex(string &text_line)
     return nodes;
 }
 //=================================================================================================//
-Vec2d MeshFileHelpers::cellIndex(string &text_line)
+Vec2d MeshFileHelpers::cellIndex(std::string &text_line)
 {
 
     /*--- find the cell1---*/
-    string cell1_string = text_line;
+    std::string cell1_string = text_line;
     size_t first_divide_position = text_line.find_first_of(" ", 0);
     cell1_string = cell1_string.erase(0, first_divide_position + 1);
     size_t second_divide_position = cell1_string.find_first_of(" ", 0);
     cell1_string = cell1_string.erase(0, second_divide_position + 1);
     size_t third_divide_position = cell1_string.find_first_of(" ", 0);
     cell1_string.erase(third_divide_position);
-    size_t cell1_index_decimal = stoi(cell1_string, nullptr, 16);
+    size_t cell1_index_decimal = std::stoi(cell1_string, nullptr, 16);
 
     /*--- find the cell2---*/
-    string cell2_string = text_line;
+    std::string cell2_string = text_line;
     cell2_string = cell2_string.erase(0, first_divide_position + 1);
     cell2_string = cell2_string.erase(0, second_divide_position + 1);
     cell2_string.erase(0, third_divide_position + 1);
@@ -222,7 +224,7 @@ void MeshFileHelpers::updateElementsNodesConnection(StdLargeVec<StdVec<size_t>> 
     }
 }
 //=================================================================================================//
-void MeshFileHelpers::updateCellLists(vector<vector<vector<size_t>>> &mesh_topology_,
+void MeshFileHelpers::updateCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
                                       StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, Vecd nodes,
                                       Vec2d cells, bool &check_neighbor_cell1, bool &check_neighbor_cell2, size_t boundary_type)
 {
@@ -271,7 +273,7 @@ void MeshFileHelpers::updateCellLists(vector<vector<vector<size_t>>> &mesh_topol
     }
 }
 //=================================================================================================//
-void MeshFileHelpers::updateBoundaryCellLists(vector<vector<vector<size_t>>> &mesh_topology_,
+void MeshFileHelpers::updateBoundaryCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
                                               StdLargeVec<StdVec<size_t>> &elements_nodes_connection_,
                                               Vecd nodes, Vec2d cells, bool &check_neighbor_cell1, bool &check_neighbor_cell2, size_t boundary_type)
 {
@@ -327,8 +329,8 @@ void MeshFileHelpers::elementVolume(StdLargeVec<StdVec<size_t>> &elements_nodes_
     elements_volumes_[element] = element_volume;
 }
 //=================================================================================================//
-void MeshFileHelpers::minimumDistance(vector<Real> &all_data_of_distance_between_nodes,
-                                      StdLargeVec<Real> &elements_volumes_, vector<vector<vector<size_t>>> &mesh_topology_,
+void MeshFileHelpers::minimumDistance(StdVec<Real> &all_data_of_distance_between_nodes,
+                                      StdLargeVec<Real> &elements_volumes_, StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
                                       StdLargeVec<Vecd> &node_coordinates_)
 {
 

@@ -33,6 +33,7 @@
 #include "all_surface_indication.h"
 #include "base_general_dynamics.h"
 #include "force_prior.h"
+#include "fvm_ghost_boundary.h"
 #include "general_constraint.h"
 #include "general_geometric.h"
 #include "general_interpolation.h"

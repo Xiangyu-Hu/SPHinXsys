@@ -17,7 +17,7 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       p_(*this->particles_->template registerSharedVariable<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
-      pos_(*this->base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
       vel_(*this->particles_->template registerSharedVariable<Vecd>("Velocity")),
       force_(*this->particles_->template registerSharedVariable<Vecd>("Force")),
       force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior")) {}

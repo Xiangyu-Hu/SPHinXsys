@@ -20,18 +20,48 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
-/** @file io_all.h
-This is the header file that user code should include to pick up all
-io class used in SPHinXsys. **/
+/**
+ * @file 	io_vtk_fvm.h
+ * @brief Classes for input and output with vtk (Paraview) for FVM unstructured mesh.
+ * @author Xiangyu Hu
+ */
 
-#ifndef IO_ALL_H
-#define IO_ALL_H
+#ifndef IO_VTK_FVM_H
+#define IO_VTK_FVM_H
 
-#include "io_base.h"
-#include "io_observation.h"
-#include "io_plt.h"
-#include "io_simbody.h"
 #include "io_vtk.h"
-#include "io_vtk_fvm.h"
+#include "unstructured_mesh.h"
 
-#endif // IO_ALL_H
+namespace SPH
+{
+/**
+ * @class BodyStatesRecordingInMeshToVtp
+ * @brief  Write files for bodies
+ * the output file is VTK XML format in FVMcan visualized by ParaView the data type vtkPolyData
+ */
+class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingInMeshToVtp(SPHBody &body, ANSYSMesh &ansys_mesh);
+    virtual ~BodyStatesRecordingInMeshToVtp(){};
+
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override; // TODO: to be implemented in 3d
+    StdLargeVec<Vecd> &node_coordinates_;
+    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+};
+
+class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingInMeshToVtu(SPHBody &body, ANSYSMesh &ansys_mesh);
+    virtual ~BodyStatesRecordingInMeshToVtu(){};
+
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override; // TODO: to be implemented in 2d
+    StdLargeVec<Vecd> &node_coordinates_;
+    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+    SPHBody &bounds_;
+};
+} // namespace SPH
+#endif // IO_VTK_FVM_H

@@ -83,8 +83,8 @@ DampingBySplittingComplex<VariableType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
-        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
+        contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->template getVariableByName<Real>("Mass"));
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -163,7 +163,7 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
 {
     for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -260,8 +260,8 @@ DampingPairwiseComplex<VariableType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
-        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
+        contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->template getVariableByName<Real>("Mass"));
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -323,7 +323,7 @@ DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
 {
     for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -379,7 +379,7 @@ DampingPairwiseFromWall<VariableType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }

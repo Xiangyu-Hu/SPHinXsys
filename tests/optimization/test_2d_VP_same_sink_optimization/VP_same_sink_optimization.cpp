@@ -474,7 +474,7 @@ TEST(test_optimization, test_problem1_optimized)
         ite_loop++;
         std::cout << "This is the " << ite_loop << " iteration loop and the averaged temperature is " << opt_averaged_temperature
                   << " and the learning rate is " << learning_rate_alpha
-                  << " and the regularization is " << current_eta_regularization << endl;
+                  << " and the regularization is " << current_eta_regularization << std::endl;
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;

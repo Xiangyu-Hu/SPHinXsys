@@ -6,11 +6,11 @@
 
 #ifndef TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
 #define TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
+
 #include "common_weakly_compressible_FVM_classes.h"
-#include "unstructured_mesh.h"
 
 using namespace SPH;
-using namespace std;
+
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -103,7 +103,7 @@ class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
         p_[ghost_index] = 100.0 / 117.6655;
         rho_[ghost_index] = rho_[index_i];
     }
-    void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij)
+    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override
     {
         vel_[ghost_index] = (vel_[index_i] - 2 * e_ij.dot(vel_[index_i]) * e_ij);
         rho_[ghost_index] = rho_[index_i];

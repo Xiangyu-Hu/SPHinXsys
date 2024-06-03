@@ -18,12 +18,12 @@ PressureForceFromFluid<FluidIntegration2ndHalfType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_rho_n_.push_back(contact_particles_[k]->getVariableByName<Real>("Density"));
-        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
-        contact_vel_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_rho_n_.push_back(contact_particles_[k]->template getVariableByName<Real>("Density"));
+        contact_mass_.push_back(contact_particles_[k]->template getVariableByName<Real>("Mass"));
+        contact_vel_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
+        contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
-        contact_force_prior_.push_back(contact_particles_[k]->getVariableByName<Vecd>("ForcePrior"));
+        contact_force_prior_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("ForcePrior"));
         riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
     }
 }

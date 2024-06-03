@@ -1,7 +1,6 @@
 
 #include "common_weakly_compressible_FVM_classes.h"
 
-using namespace std;
 namespace SPH
 {
 namespace fluid_dynamics
@@ -25,7 +24,7 @@ BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relati
     : LocalDynamics(inner_relation.getSPHBody()), fluid_dynamics::FluidDataInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")){};
 //=================================================================================================//
-ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
+ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index)
     : BaseForceFromFluidInFVM(inner_relation),
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),

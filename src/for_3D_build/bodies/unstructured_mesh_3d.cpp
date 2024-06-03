@@ -1,6 +1,7 @@
-
 #include "mesh_helper.h"
 #include "unstructured_mesh.h"
+
+#include "base_particle_dynamics.h"
 namespace SPH
 {
 //=================================================================================================//
@@ -14,21 +15,21 @@ ANSYSMesh::ANSYSMesh(const std::string &full_path)
 void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
 {
     Real ICEM = 0;
-    ifstream mesh_file; /*!< \brief File object for the Ansys ASCII mesh file. */
+    std::ifstream mesh_file; /*!< \brief File object for the Ansys ASCII mesh file. */
     mesh_file.open(full_path);
     if (mesh_file.fail())
     {
-        cout << "Error:Check if the file exists." << endl;
+        std::cout << "Error:Check if the file exists." << std::endl;
     }
-    string text_line;
+    std::string text_line;
     /*Check mesh file generation software*/
     (getline(mesh_file, text_line));
     text_line.erase(0, 4);
-    istringstream value(text_line);
-    if (text_line.find("Created by", 0) != string::npos)
+    std::istringstream value(text_line);
+    if (text_line.find("Created by", 0) != std::string::npos)
     {
         ICEM = 1;
-        cout << "Reading 3D ICEM mesh." << endl;
+        std::cout << "Reading 3D ICEM mesh." << std::endl;
     }
 
     if (ICEM == 1)
@@ -54,13 +55,13 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
         /*--- find the elements lines ---*/
         while (getline(mesh_file, text_line))
         {
-            if (text_line.find("(13", 0) != string::npos && text_line.find(")(", 0) != string::npos)
+            if (text_line.find("(13", 0) != std::string::npos && text_line.find(")(", 0) != std::string::npos)
             {
                 boundary_type = MeshFileHelpers::findBoundaryType(text_line, boundary_type);
                 types_of_boundary_condition_.push_back(boundary_type);
                 while (getline(mesh_file, text_line))
                 {
-                    if (text_line.find(")", 0) == string::npos)
+                    if (text_line.find(")", 0) == std::string::npos)
                     {
                         Vecd nodes = MeshFileHelpers::nodeIndex(text_line);
                         Vec2d cells = MeshFileHelpers::cellIndex(text_line);
@@ -89,16 +90,16 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
                         break;
                 }
             }
-            if (text_line.find("Zone Sections", 0) != string::npos)
+            if (text_line.find("Zone Sections", 0) != std::string::npos)
                 break;
-            if (text_line.find(")") != string::npos)
+            if (text_line.find(")") != std::string::npos)
                 continue;
         }
         mesh_topology_.erase(mesh_topology_.begin());
     }
     else /*This section is for mesh files created from fluent*/
     {
-        cout << "Reading 3D Fluent mesh." << endl;
+        std::cout << "Reading 3D Fluent mesh." << std::endl;
         size_t dimension(0);
         MeshFileHelpers::meshDimension(mesh_file, dimension, text_line);
 
@@ -117,14 +118,14 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
         while (getline(mesh_file, text_line))
         {
 
-            if (text_line.find("(13", 0) != string::npos && text_line.find(") (", 0) != string::npos)
+            if (text_line.find("(13", 0) != std::string::npos && text_line.find(") (", 0) != std::string::npos)
             {
                 boundary_type = MeshFileHelpers::findBoundaryType(text_line, boundary_type);
                 types_of_boundary_condition_.push_back(boundary_type);
                 while (getline(mesh_file, text_line))
                 {
 
-                    if (text_line.find(")", 0) == string::npos)
+                    if (text_line.find(")", 0) == std::string::npos)
                     {
                         Vecd nodes = MeshFileHelpers::nodeIndex(text_line);
                         Vec2d cells = MeshFileHelpers::cellIndex(text_line);
@@ -154,9 +155,9 @@ void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
                         break;
                 }
             }
-            if (text_line.find("(12", 0) != string::npos && text_line.find("))", 0) != string::npos)
+            if (text_line.find("(12", 0) != std::string::npos && text_line.find("))", 0) != std::string::npos)
                 break;
-            if (text_line.find(")") != string::npos)
+            if (text_line.find(")") != std::string::npos)
                 continue;
         }
         mesh_topology_.erase(mesh_topology_.begin());
@@ -182,7 +183,7 @@ void ANSYSMesh::getElementCenterCoordinates()
 
 void ANSYSMesh::getMinimumDistanceBetweenNodes()
 {
-    vector<Real> all_data_of_distance_between_nodes;
+    StdVec<Real> all_data_of_distance_between_nodes;
     all_data_of_distance_between_nodes.resize(0);
     MeshFileHelpers::minimumDistance(all_data_of_distance_between_nodes, elements_volumes_, mesh_topology_, node_coordinates_);
     auto min_distance_iter = std::min_element(all_data_of_distance_between_nodes.begin(), all_data_of_distance_between_nodes.end());
@@ -192,7 +193,7 @@ void ANSYSMesh::getMinimumDistanceBetweenNodes()
     }
     else
     {
-        cout << "The array of all distance between nodes is empty " << endl;
+        std::cout << "The array of all distance between nodes is empty " << std::endl;
     }
 }
 //=================================================================================================//
@@ -295,203 +296,6 @@ void InnerRelationInFVM::updateConfiguration()
     searchNeighborsByParticles(base_particles_.total_real_particles_,
                                base_particles_, inner_configuration_,
                                get_particle_index_, get_inner_neighbor_);
-}
-//=================================================================================================//
-GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
-                                             Ghost<ReserveSizeFactor> &ghost_boundary)
-    : GeneralDataDelegateSimple(real_body),
-      ghost_boundary_(ghost_boundary),
-      node_coordinates_(ansys_mesh.node_coordinates_),
-      mesh_topology_(ansys_mesh.mesh_topology_),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      ghost_bound_(ghost_boundary.GhostBound())
-{
-    ghost_boundary.checkParticlesReserved();
-    each_boundary_type_with_all_ghosts_index_.resize(50);
-    each_boundary_type_with_all_ghosts_eij_.resize(50);
-    each_boundary_type_contact_real_index_.resize(50);
-    addGhostParticleAndSetInConfiguration();
-}
-//=================================================================================================//
-void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
-{
-    ghost_bound_.second = ghost_bound_.first;
-
-    for (size_t index_i = 0; index_i != particles_->total_real_particles_; ++index_i)
-    {
-        for (size_t neighbor_index = 0; neighbor_index != mesh_topology_[index_i].size(); ++neighbor_index)
-        {
-            size_t boundary_type = mesh_topology_[index_i][neighbor_index][1];
-            if (mesh_topology_[index_i][neighbor_index][1] != 2)
-            {
-                mutex_create_ghost_particle_.lock();
-                size_t ghost_particle_index = ghost_bound_.second;
-                ghost_bound_.second++;
-                ghost_boundary_.checkWithinGhostSize(ghost_bound_);
-
-                particles_->updateGhostParticle(ghost_particle_index, index_i);
-                size_t node1_index = mesh_topology_[index_i][neighbor_index][2];
-                size_t node2_index = mesh_topology_[index_i][neighbor_index][3];
-                size_t node3_index = mesh_topology_[index_i][neighbor_index][4];
-                Vecd node1_position = node_coordinates_[node1_index];
-                Vecd node2_position = node_coordinates_[node2_index];
-                Vecd node3_position = node_coordinates_[node3_index];
-                Vecd ghost_particle_position = (1.0 / 3.0) * (node1_position + node2_position + node3_position);
-
-                mesh_topology_[index_i][neighbor_index][0] = ghost_particle_index + 1;
-                pos_[ghost_particle_index] = ghost_particle_position;
-                mutex_create_ghost_particle_.unlock();
-
-                mesh_topology_.resize(ghost_particle_index);
-                std::vector<std::vector<size_t>> new_element;
-
-                // Add (corresponding_index_i,boundary_type,node1_index,node2_index, node3_index) to the new element
-                std::vector<size_t> sub_element1 = {index_i + 1, boundary_type, node1_index, node2_index, node3_index};
-                new_element.push_back(sub_element1);
-
-                // Add (corresponding_index_i,boundary_type,node1_index,node2_index, node3_index) to the new element
-                std::vector<size_t> sub_element2 = {index_i + 1, boundary_type, node1_index, node2_index, node3_index};
-                new_element.push_back(sub_element2);
-
-                // Add (corresponding_index_i,boundary_type,node1_index,node2_index, node3_index) to the new element
-                std::vector<size_t> sub_element3 = {index_i + 1, boundary_type, node1_index, node2_index, node3_index};
-                new_element.push_back(sub_element3);
-
-                // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
-                std::vector<size_t> sub_element4 = {index_i + 1, boundary_type, node1_index, node2_index, node3_index};
-                new_element.push_back(sub_element4);
-
-                // Add the new element to all_needed_data_from_mesh_file_
-                mesh_topology_.push_back(new_element);
-                // all_needed_data_from_mesh_file_[ghost_particle_index][0][0].push_back(size_t(0);
-
-                // creating the boundary files with ghost particle index
-                each_boundary_type_with_all_ghosts_index_[boundary_type].push_back(ghost_particle_index);
-
-                // creating the boundary files with contact real particle index
-                each_boundary_type_contact_real_index_[boundary_type].push_back(index_i);
-
-                // creating the boundary files with ghost eij
-                Vecd interface_area_vector1 = node2_position - node1_position;
-                Vecd interface_area_vector2 = node3_position - node1_position;
-                Vecd normal_vector = interface_area_vector1.cross(interface_area_vector2);
-                Real magnitude = normal_vector.norm();
-                // Real interface_area_size = interface_area_vector.norm();
-                Vecd normalized_normal_vector = normal_vector / magnitude;
-                // judge the direction
-                Vecd particle_position = pos_[index_i];
-                Vecd node1_to_center_direction = particle_position - node1_position;
-                if (node1_to_center_direction.dot(normalized_normal_vector) < 0)
-                {
-                    normalized_normal_vector = -normalized_normal_vector;
-                };
-                each_boundary_type_with_all_ghosts_eij_[boundary_type].push_back(normalized_normal_vector);
-            }
-        }
-    }
-};
-//=================================================================================================//
-BodyStatesRecordingInMeshToVtu::BodyStatesRecordingInMeshToVtu(SPHBody &body, ANSYSMesh &ansys_mesh)
-    : BodyStatesRecording(body), node_coordinates_(ansys_mesh.node_coordinates_),
-      elements_nodes_connection_(ansys_mesh.elements_nodes_connection_), bounds_(body){};
-//=================================================================================================//
-void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string &sequence)
-{
-    for (SPHBody *body : bodies_)
-    {
-        if (body->checkNewlyUpdated() && state_recording_)
-        {
-            std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtu";
-            if (fs::exists(filefullpath))
-            {
-                fs::remove(filefullpath);
-            }
-            std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
-
-            MeshFileHelpers::vtuFileHeader(out_file);
-            Real range_max = 0.0;
-            MeshFileHelpers::vtuFileNodeCoordinates(out_file, node_coordinates_, elements_nodes_connection_, bounds_, range_max);
-
-            MeshFileHelpers::vtuFileInformationKey(out_file, range_max);
-
-            MeshFileHelpers::vtuFileCellConnectivity(out_file, elements_nodes_connection_, node_coordinates_);
-
-            MeshFileHelpers::vtuFileOffsets(out_file, elements_nodes_connection_);
-
-            MeshFileHelpers::vtuFileTypeOfCell(out_file, elements_nodes_connection_);
-
-            // write Particle data to vtu file
-            out_file << "<CellData>\n";
-            body->writeParticlesToVtuFile(out_file);
-            out_file << "</CellData>\n";
-            // Write VTU file footer
-            out_file << "</Piece>\n";
-            out_file << "</UnstructuredGrid>\n";
-            out_file << "</VTKFile>\n";
-            out_file.close();
-        }
-        body->setNotNewlyUpdated();
-    }
-}
-//=================================================================================================//
-BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation,
-                                                         GhostCreationFromMesh &ghost_creation)
-    : fluid_dynamics::FluidDataInner(inner_relation),
-      rho_(*particles_->getVariableByName<Real>("Density")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
-      p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-      ghost_bound_(ghost_creation.ghost_bound_),
-      each_boundary_type_with_all_ghosts_index_(ghost_creation.each_boundary_type_with_all_ghosts_index_),
-      each_boundary_type_with_all_ghosts_eij_(ghost_creation.each_boundary_type_with_all_ghosts_eij_),
-      each_boundary_type_contact_real_index_(ghost_creation.each_boundary_type_contact_real_index_){};
-//=================================================================================================//
-void BoundaryConditionSetupInFVM::resetBoundaryConditions()
-{
-    for (size_t boundary_type = 0; boundary_type < each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
-    {
-        if (!each_boundary_type_with_all_ghosts_index_[boundary_type].empty())
-        {
-            for (size_t ghost_number = 0; ghost_number != each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
-            {
-                size_t ghost_index = each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
-                size_t index_i = each_boundary_type_contact_real_index_[boundary_type][ghost_number];
-                Vecd e_ij = each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
-
-                // Dispatch the appropriate boundary condition
-                switch (boundary_type)
-                {
-                case 3: // this refer to the different types of wall boundary conditions
-                    applyNonSlipWallBoundary(ghost_index, index_i);
-                    applyReflectiveWallBoundary(ghost_index, index_i, e_ij);
-                    break;
-                case 4:
-                    applyTopBoundary(ghost_index, index_i);
-                    break;
-                case 5:
-                    applyPressureOutletBC(ghost_index, index_i);
-                    break;
-                case 7:
-                    applySymmetryBoundary(ghost_index, index_i, e_ij);
-                    break;
-                case 9:
-                    applyFarFieldBoundary(ghost_index);
-                    break;
-                case 10:
-                    applyGivenValueInletFlow(ghost_index);
-                    applyVelocityInletFlow(ghost_index, index_i);
-                    break;
-                case 36:
-                    applyOutletBoundary(ghost_index, index_i);
-                    break;
-                }
-            }
-        }
-    }
 }
 //=================================================================================================//
 } // namespace SPH
