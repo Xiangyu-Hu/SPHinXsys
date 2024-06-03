@@ -28,21 +28,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
     }
     size_t package_index = PackageIndexFromCellIndex(cell_index_on_mesh_);
     auto &data = mesh_variable.DataField()[package_index];
-    // auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]][cell_index_on_mesh_[2]]
-                    //  ->getPackageData(mesh_variable);
     return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
-{
-    Allocate3dArray(data_pkg_idx_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
-{
-    Delete3dArray(data_pkg_idx_, all_cells_);
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -150,12 +136,11 @@ void MeshWithGridDataPackages<PKG_SIZE>::
 {
     size_t package_index = PackageIndexFromCellIndex(cell_index);
     auto &pkg_data = mesh_variable.DataField()[package_index];
-    // auto &pkg_data = getPackageData(mesh_variable);
     for (int i = 0; i != pkg_size; ++i)
         for (int j = 0; j != pkg_size; ++j)
             for (int k = 0; k != pkg_size; ++k)
             {
-                Vec3d position = DataPositionFromIndex(cell_index, Vec3d(i, j));
+                Vec3d position = GridPositionFromLocalGridIndex(cell_index, Arrayi(i, j));
                 pkg_data[i][j][k] = function_by_position(position);
             }
 }
@@ -244,17 +229,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
                           mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
                           mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
     return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-template <typename FunctionOnData>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    package_parallel_for(const FunctionOnData &function)
-{
-    for(int i = 2; i < num_grid_pkgs_; i++){
-        size_t package_index = neighbourhood_[i][1][1][1];
-        function(package_index);
-    }
 }
 //=================================================================================================//
 } // namespace SPH

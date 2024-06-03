@@ -62,52 +62,6 @@ void LevelSet::finishDataPackages()
     updateKernelIntegrals();
 }
 //=================================================================================================//
-// void LevelSet::initializeDataInACell(const Arrayi &cell_index)
-// {
-//     Vecd cell_position = CellPositionFromIndex(cell_index);
-//     Real signed_distance = shape_.findSignedDistance(cell_position);
-//     Vecd normal_direction = shape_.findNormalDirection(cell_position);
-//     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-//     if (measure < grid_spacing_)
-//     {
-//         assignCore(cell_index);
-//     }
-//     else
-//     {
-//         size_t package_index = shape_.checkContain(cell_position) ? 0 : 1;
-//         assignSingular(cell_index);
-//         assignDataPackageIndex(cell_index, package_index);
-//     }
-// }
-// //=================================================================================================//
-// void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
-// {
-//     if (isInnerPackage(cell_index))
-//     {
-//         if (!isCoreDataPackage(cell_index))
-//         {
-//             assignInner(cell_index);
-//         }
-//     }
-// }
-//=================================================================================================//
-// void LevelSet::updateKernelIntegrals()
-// {
-//     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-//                       [&](size_t i, size_t j, size_t k)
-//                       {
-//                           Arrayi cell_index = Arrayi(i, j, k);
-//                           if (isInnerPackage(cell_index)){
-//                               assignByPosition(
-//                                   kernel_weight_, cell_index, [&](const Vecd &position) -> Real
-//                                   { return computeKernelIntegral(position); });
-//                               assignByPosition(
-//                                   kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
-//                                   { return computeKernelGradientIntegral(position); });
-//                           }
-//                       });
-// }
-//=================================================================================================//
 void LevelSet::initializeIndexMesh()
 {
     mesh_for(MeshRange(Arrayi::Zero(), all_cells_),
@@ -164,7 +118,8 @@ bool LevelSet::isInnerPackage(const Arrayi &cell_index)
 //=================================================================================================//
 void LevelSet::diffuseLevelSetSign()
 {
-    package_parallel_for([&](size_t package_index)
+    package_parallel_for(
+        [&](size_t package_index)
         {
             auto phi_data = phi_.DataField();
             auto near_interface_id_data = near_interface_id_.DataField();
@@ -232,7 +187,8 @@ void LevelSet::markNearInterface(Real small_shift_factor)
 {
     Real small_shift = small_shift_factor * data_spacing_;
 
-    package_parallel_for([&](size_t package_index)
+    package_parallel_for(
+        [&](size_t package_index)
         {
             auto &phi_addrs = phi_.DataField()[package_index];
             auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
@@ -288,24 +244,11 @@ void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const si
     for_each_cell_data(
         [&](int i, int j, int k)
         {
-            Vec3d position = DataPositionFromIndex(cell_index, Vec3d(i, j, k));
+            Vec3d position = GridPositionFromLocalGridIndex(cell_index, Array3i(i, j, k));
             phi[i][j][k] = shape.findSignedDistance(position);
             near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
         });
 }
-//=================================================================================================//
-// void LevelSet::redistanceInterface()
-// {
-//     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-//         [&](size_t i, size_t j, size_t k)
-//         {
-//             Arrayi cell_index = Arrayi(i, j, k);
-//             if (isCoreDataPackage(cell_index))
-//             {
-//                 redistanceInterfaceForAPackage(PackageIndexFromCellIndex(cell_index));
-//             }
-//         });
-// }
 //=================================================================================================//
 void LevelSet::redistanceInterfaceForAPackage(const size_t package_index)
 {

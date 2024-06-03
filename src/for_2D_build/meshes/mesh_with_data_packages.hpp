@@ -33,18 +33,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
-{
-    Allocate2dArray(data_pkg_idx_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
-{
-    Delete2dArray(data_pkg_idx_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::allocateMetaDataMatrix()
 {
     Allocate2dArray(meta_data_mesh_, all_cells_);
@@ -151,7 +139,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::
     for (int i = 0; i != pkg_size; ++i)
         for (int j = 0; j != pkg_size; ++j)
         {
-            Vec2d position = DataPositionFromIndex(cell_index, Vec2d(i, j));
+            Vec2d position = GridPositionFromLocalGridIndex(cell_index, Arrayi(i, j));
             pkg_data[i][j] = function_by_position(position);
         }
 }
@@ -226,28 +214,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
                         mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
 
     return bilinear;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-template <typename FunctionOnData>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    package_parallel_for(const FunctionOnData &function)
-{
-    // for(size_t i = 2; i < num_grid_pkgs_; i++){
-    //     // size_t package_index = neighbourhood_[i][1][1];
-    //     // printf("now parallel for package %zu\n", package_index);
-    //     function(i);
-    // }
-    parallel_for(
-        IndexRange(2, num_grid_pkgs_),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                function(i);
-            }
-        },
-        ap);
 }
 //=================================================================================================//
 } // namespace SPH

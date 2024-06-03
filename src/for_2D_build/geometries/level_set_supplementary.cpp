@@ -52,15 +52,6 @@ void LevelSet::finishDataPackages()
     initializeIndexMesh();
     initializeNeighbourhood();
     resizeMeshVariableData();
-    // mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-    //                   [&](size_t i, size_t j)
-    //                   {
-    //                       Arrayi cell_index = Arrayi(i, j);
-    //                       if(isInnerDataPackage(cell_index))
-    //                       {
-    //                           initializeBasicDataForAPackage(Arrayi(i, j), PackageIndexFromCellIndex(cell_index), shape_);
-    //                       }
-    //                   });
     package_parallel_for(
         [&](size_t package_index)
         {
@@ -70,50 +61,6 @@ void LevelSet::finishDataPackages()
     updateLevelSetGradient();
     updateKernelIntegrals();
 }
-//=================================================================================================//
-// void LevelSet::initializeDataInACell(const Arrayi &cell_index)
-// {
-//     Vecd cell_position = CellPositionFromIndex(cell_index);
-//     Real signed_distance = shape_.findSignedDistance(cell_position);
-//     Vecd normal_direction = shape_.findNormalDirection(cell_position);
-//     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-//     if (measure < grid_spacing_)
-//     {
-//         assignCore(cell_index);
-//     }
-//     else
-//     {
-//         size_t package_index = shape_.checkContain(cell_position) ? 0 : 1;
-//         assignSingular(cell_index);
-//         assignDataPackageIndex(cell_index, package_index);
-//     }
-// }
-// //=================================================================================================//
-// void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
-// {
-//     if (isInnerPackage(cell_index))
-//     {
-//         if (!isCoreDataPackage(cell_index))
-//         {
-//             assignInner(cell_index);
-//         }
-//     }
-// }
-//=================================================================================================//
-// void LevelSet::updateKernelIntegrals()
-// {
-//     package_parallel_for(
-//         [&](size_t package_index)
-//         {
-//             Arrayi cell_index = meta_data_cell_[package_index].first;
-//             assignByPosition(
-//                 kernel_weight_, cell_index, [&](const Vecd &position) -> Real
-//                 { return computeKernelIntegral(position); });
-//             assignByPosition(
-//                 kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
-//                 { return computeKernelGradientIntegral(position); });
-//         });
-// }
 //=================================================================================================//
 void LevelSet::initializeIndexMesh()
 {
@@ -204,12 +151,6 @@ void LevelSet::diffuseLevelSetSign()
 //=============================================================================================//
 void LevelSet::reinitializeLevelSet()
 {
-    // mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-    //     [&](size_t i, size_t j)
-    //     {
-    //         Arrayi cell_index = Arrayi(i, j);
-    //         if (isInnerDataPackage(cell_index)){
-    //             size_t package_index = PackageIndexFromCellIndex(cell_index);
     package_parallel_for(
         [&](size_t package_index)
         {
@@ -244,12 +185,6 @@ void LevelSet::markNearInterface(Real small_shift_factor)
 {
     Real small_shift = small_shift_factor * data_spacing_;
 
-    // mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-    //     [&](size_t i, size_t j)
-    //     {
-    //         Arrayi cell_index = Arrayi(i, j);
-    //         if (isInnerDataPackage(cell_index)){
-    //             size_t package_index = PackageIndexFromCellIndex(cell_index);
     package_parallel_for(
         [&](size_t package_index)
         {
@@ -308,24 +243,11 @@ void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const si
     for_each_cell_data(
         [&](int i, int j)
         {
-            Vec2d position = DataPositionFromIndex(cell_index, Vec2d(i, j));
+            Vec2d position = GridPositionFromLocalGridIndex(cell_index, Array2i(i, j));
             phi[i][j] = shape.findSignedDistance(position);
             near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
         });
 }
-//=================================================================================================//
-// void LevelSet::redistanceInterface()
-// {
-//     package_parallel_for(
-//         [&](size_t package_index)
-//         {
-//             std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-//             if (metadata.second == 1)
-//             {
-//                 redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
-//             }
-//         });
-// }
 //=================================================================================================//
 void LevelSet::redistanceInterfaceForAPackage(const size_t package_index)
 {
