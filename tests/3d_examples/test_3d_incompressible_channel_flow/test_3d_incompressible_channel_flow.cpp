@@ -26,9 +26,6 @@ int main(int ac, char *av[])
     air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     air_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
-    air_block.addBodyStateForRecording<Real>("Density");
-    air_block.addBodyStateForRecording<Real>("Pressure");
-    SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
     GhostCreationFromMesh ghost_creation(air_block, read_mesh_data, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -38,16 +35,19 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
      * the value is larger, the numerical dissipation larger. */
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(air_block_inner, 500.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(air_block_inner, 8000.0);
-    /** Boundary conditions set up */
-    InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(air_block, read_mesh_data.MinMeshEdge(), 0.6);
+    /** Boundary conditions set up */
+    InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     //----------------------------------------------------------------------
     // Visualization in FVM with date in cell.
+    air_block.addBodyStateForRecording<Real>("Density");
+    air_block.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(air_block);
 
