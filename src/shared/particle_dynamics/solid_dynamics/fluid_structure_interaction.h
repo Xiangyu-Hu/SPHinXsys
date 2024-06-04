@@ -39,7 +39,7 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
+typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
 typedef DataDelegateContact<BaseParticles, BaseParticles> DataDelegateContact;
 
 /**

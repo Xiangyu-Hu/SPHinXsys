@@ -41,14 +41,14 @@ namespace SPH
 //----------------------------------------------------------------------
 //		for general solid dynamics variables
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
+typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
 
 /**
  * @class Displacement
  * @brief computing displacement from current and initial particle position
  */
 class Displacement : public BaseDerivedVariable<Vecd>,
-                     public SolidDataSimple,
+                     public DataDelegateSimple,
                      public LocalDynamics
 {
   public:
@@ -64,7 +64,7 @@ class Displacement : public BaseDerivedVariable<Vecd>,
  * @class OffsetInitialPosition
  * @brief offset initial particle position
  */
-class OffsetInitialPosition : public SolidDataSimple,
+class OffsetInitialPosition : public DataDelegateSimple,
                               public LocalDynamics
 {
   public:
@@ -81,7 +81,7 @@ class OffsetInitialPosition : public SolidDataSimple,
  * @class TranslationAndRotation
  * @brief transformation on particle position and rotation
  */
-class TranslationAndRotation : public SolidDataSimple,
+class TranslationAndRotation : public DataDelegateSimple,
                                public LocalDynamics
 {
   public:

@@ -7,7 +7,7 @@ namespace solid_dynamics
 //=================================================================================================//
 RepulsionForce<Contact<Inner<>>>::
     RepulsionForce(SelfSurfaceContactRelation &self_contact_relation)
-    : RepulsionForce<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionForce"),
+    : RepulsionForce<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionForce"),
       ForcePrior(&base_particles_, "SelfRepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       self_repulsion_density_(*particles_->getVariableByName<Real>("SelfRepulsionDensity")),

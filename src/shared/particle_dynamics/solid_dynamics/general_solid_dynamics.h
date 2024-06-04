@@ -41,11 +41,7 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-//----------------------------------------------------------------------
-//		for general solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
-typedef DataDelegateInner<BaseParticles> SolidDataInner;
+
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // GENERAL_SOLID_DYNAMICS_H

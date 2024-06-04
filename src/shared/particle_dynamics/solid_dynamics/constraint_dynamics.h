@@ -45,8 +45,8 @@ namespace solid_dynamics
 //----------------------------------------------------------------------
 //		for general solid dynamics
 //----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
-typedef DataDelegateInner<BaseParticles> SolidDataInner;
+typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
+typedef DataDelegateInner<BaseParticles> DataDelegateInner;
 
 /**@class SpringConstrain
  * @brief Constrain with a spring for each constrained particles to its original position.
@@ -251,7 +251,7 @@ using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
 template <class DynamicsIdentifier>
 class TotalForceForSimBody
     : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
-      public SolidDataSimple
+      public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &force_, &force_prior_, &pos_;
@@ -266,7 +266,7 @@ class TotalForceForSimBody
                          SimTK::MobilizedBody &mobod,
                          SimTK::RungeKuttaMersonIntegrator &integ)
         : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
-          SolidDataSimple(identifier.getSPHBody()),
+          DataDelegateSimple(identifier.getSPHBody()),
           force_(*particles_->registerSharedVariable<Vecd>("Force")),
           force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
           pos_(*particles_->getVariableByName<Vecd>("Position")),

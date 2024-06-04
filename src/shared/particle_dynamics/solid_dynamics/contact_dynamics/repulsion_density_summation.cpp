@@ -7,7 +7,7 @@ namespace solid_dynamics
 //=================================================================================================//
 RepulsionDensitySummation<Inner<>>::
     RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
-    : RepulsionDensitySummation<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionDensity"),
+    : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionDensity"),
       mass_(*particles_->getVariableByName<Real>("Mass"))
 {
     Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();

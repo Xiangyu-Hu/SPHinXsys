@@ -59,7 +59,7 @@ class RepulsionForce<Base, DataDelegationType>
 };
 
 template <>
-class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, SolidDataInner>, public ForcePrior
+class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegateInner>, public ForcePrior
 {
   public:
     explicit RepulsionForce(SelfSurfaceContactRelation &self_contact_relation);

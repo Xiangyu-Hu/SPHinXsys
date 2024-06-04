@@ -58,7 +58,7 @@ class RepulsionDensitySummation<Base, DataDelegationType>
 };
 
 template <>
-class RepulsionDensitySummation<Inner<>> : public RepulsionDensitySummation<Base, SolidDataInner>
+class RepulsionDensitySummation<Inner<>> : public RepulsionDensitySummation<Base, DataDelegateInner>
 {
   public:
     explicit RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
