@@ -127,11 +127,11 @@ class BaseDataDelegateInner : public BaseDataDelegateType
     BaseInnerRelation &inner_relation_;
 
   public:
-    explicit DataDelegateInner(BaseInnerRelation &inner_relation)
-        : DataDelegateSimple(inner_relation.getSPHBody()),
+    explicit BaseDataDelegateInner(BaseInnerRelation &inner_relation)
+        : BaseDataDelegateType(inner_relation.getSPHBody()),
           inner_relation_(inner_relation),
           inner_configuration_(inner_relation.inner_configuration_){};
-    virtual ~DataDelegateInner(){};
+    virtual ~BaseDataDelegateInner(){};
     BaseInnerRelation &getBodyRelation() { return inner_relation_; };
 
   protected:
@@ -151,6 +151,8 @@ class BaseDataDelegateContact : public BaseDataDelegateType
 
   public:
     explicit BaseDataDelegateContact(BaseContactRelation &contact_relation)
+        : BaseDataDelegateType(contact_relation.getSPHBody()),
+          contact_relation_(contact_relation)
     {
         RealBodyVector contact_sph_bodies = contact_relation.contact_bodies_;
         for (size_t i = 0; i != contact_sph_bodies.size(); ++i)

@@ -16,7 +16,7 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
       mass_(*particles_->getVariableByName<Real>("Mass")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
       smeared_surface_(*particles_->getVariableByName<int>("SmearedSurface")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))

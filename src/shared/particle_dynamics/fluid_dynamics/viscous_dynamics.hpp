@@ -21,7 +21,7 @@ ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
 template <class ViscosityType>
 ViscousForce<Inner<>, ViscosityType>::ViscousForce(BaseInnerRelation &inner_relation)
     : ViscousForce<DataDelegateInner>(inner_relation),
-      ForcePrior(&base_particles_, "ViscousForce"), mu_(&base_particles_)
+      ForcePrior(particles_, "ViscousForce"), mu_(particles_)
 {
     static_assert(std::is_base_of<ParticleAverage, ViscosityType>::value,
                   "ParticleAverage is not the base of ViscosityType!");
@@ -96,7 +96,7 @@ template <typename ViscosityType>
 ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::
     ViscousForce(BaseContactRelation &wall_contact_relation)
     : BaseViscousForceWithWall(wall_contact_relation),
-      mu_(&base_particles_),
+      mu_(particles_),
       distance_from_wall_(*this->particles_->template registerSharedVariable<Vecd>("DistanceFromWall")){};
 //=================================================================================================//
 template <typename ViscosityType>

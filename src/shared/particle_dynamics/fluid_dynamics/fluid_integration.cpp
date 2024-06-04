@@ -8,7 +8,7 @@ namespace fluid_dynamics
 FluidInitialCondition::
     FluidInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")) {}
 //=================================================================================================//
 ContinuumVolumeUpdate::ContinuumVolumeUpdate(SPHBody &sph_body)

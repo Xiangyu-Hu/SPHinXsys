@@ -6,10 +6,11 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
-    : BaseLocalDynamics<BodyPartByCell>(body_part), DataDelegateSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByCell>(body_part),
+      DataDelegateSimple(body_part.getSPHBody()),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")){};
 //=================================================================================================//
 FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
@@ -33,10 +34,11 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 //=================================================================================================//
 EmitterInflowCondition::
     EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
-    : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), DataDelegateSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
+      DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       sorted_id_(particles_->sorted_id_),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       rho_(*particles_->getVariableByName<Real>("Density")),
@@ -60,10 +62,11 @@ void EmitterInflowCondition ::update(size_t unsorted_index_i, Real dt)
 //=================================================================================================//
 EmitterInflowInjection::
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis)
-    : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), DataDelegateSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
+      DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       sorted_id_(particles_->sorted_id_),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),
       buffer_(buffer), axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
@@ -93,8 +96,9 @@ void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
 //=================================================================================================//
 DisposerOutflowDeletion::
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
-    : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), DataDelegateSimple(sph_body_),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+    : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+      DataDelegateSimple(aligned_box_part.getSPHBody()),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
 //=================================================================================================//
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)

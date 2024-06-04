@@ -7,7 +7,7 @@ namespace continuum_dynamics
 {
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       stress_tensor_3D_(*particles_->registerSharedVariable<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
@@ -15,7 +15,7 @@ ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inne
     : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(body_.sph_adaptation_->ReferenceSmoothingLength()),
       acc_shear_(*particles_->registerSharedVariable<Vecd>("AccelerationByShear"))
 {
     particles_->addVariableToSort<Vecd>("AccelerationByShear");
@@ -98,7 +98,7 @@ void ShearStressRelaxation::update(size_t index_i, Real dt)
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(body_.sph_adaptation_->ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
 //====================================================================================//
 void StressDiffusion::interaction(size_t index_i, Real dt)
