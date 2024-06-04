@@ -17,7 +17,7 @@ VelocityGradient<DataDelegationType>::VelocityGradient(BaseRelationType &base_re
 //=================================================================================================//
 template <class KernelCorrectionType>
 VelocityGradient<Inner<KernelCorrectionType>>::VelocityGradient(BaseInnerRelation &inner_relation)
-    : VelocityGradient<FluidDataInner>(inner_relation),
+    : VelocityGradient<DataDelegateInner>(inner_relation),
       kernel_correction_(particles_) {}
 //=================================================================================================//
 template <class KernelCorrectionType>

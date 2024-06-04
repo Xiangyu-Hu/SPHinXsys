@@ -41,7 +41,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
+class FluidInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit FluidInitialCondition(SPHBody &sph_body);
@@ -51,7 +51,7 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
     StdLargeVec<Vecd> &pos_, &vel_;
 };
 
-class ContinuumVolumeUpdate : public LocalDynamics, public FluidDataSimple
+class ContinuumVolumeUpdate : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ContinuumVolumeUpdate(SPHBody &sph_body);
@@ -85,7 +85,7 @@ class Integration1stHalf;
 
 template <class RiemannSolverType, class KernelCorrectionType>
 class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
-    : public BaseIntegration<FluidDataInner>
+    : public BaseIntegration<DataDelegateInner>
 {
   public:
     explicit Integration1stHalf(BaseInnerRelation &inner_relation);
@@ -122,7 +122,7 @@ class Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
 
 template <class RiemannSolverType, class KernelCorrectionType>
 class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
-    : public BaseIntegration<FluidContactData>
+    : public BaseIntegration<DataDelegateContact>
 {
   public:
     explicit Integration1stHalf(BaseContactRelation &contact_relation);
@@ -152,7 +152,7 @@ class Integration2ndHalf;
 
 template <class RiemannSolverType>
 class Integration2ndHalf<Inner<>, RiemannSolverType>
-    : public BaseIntegration<FluidDataInner>
+    : public BaseIntegration<DataDelegateInner>
 {
   public:
     typedef RiemannSolverType RiemannSolver;
@@ -186,7 +186,7 @@ class Integration2ndHalf<Contact<Wall>, RiemannSolverType>
 
 template <class RiemannSolverType>
 class Integration2ndHalf<Contact<>, RiemannSolverType>
-    : public BaseIntegration<FluidContactData>
+    : public BaseIntegration<DataDelegateContact>
 {
   public:
     explicit Integration2ndHalf(BaseContactRelation &contact_relation);

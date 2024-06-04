@@ -82,7 +82,7 @@ class ViscousForce<DataDelegationType>
 
 template <typename ViscosityType>
 class ViscousForce<Inner<>, ViscosityType>
-    : public ViscousForce<FluidDataInner>, public ForcePrior
+    : public ViscousForce<DataDelegateInner>, public ForcePrior
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);
@@ -96,11 +96,11 @@ using ViscousForceInner = ViscousForce<Inner<>, FixedViscosity>;
 
 template <typename ViscosityType>
 class ViscousForce<Inner<AngularConservative>, ViscosityType>
-    : public ViscousForce<FluidDataInner>, public ForcePrior
+    : public ViscousForce<DataDelegateInner>, public ForcePrior
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation)
-        : ViscousForce<FluidDataInner>(inner_relation),
+        : ViscousForce<DataDelegateInner>(inner_relation),
           ForcePrior(&base_particles_, "ViscousForce"),
           mu_(&base_particles_){};
     virtual ~ViscousForce(){};
@@ -140,7 +140,7 @@ class ViscousForce<Contact<Wall, AngularConservative>, ViscosityType> : public B
 };
 
 template <typename ViscosityType>
-class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<FluidContactData>
+class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<DataDelegateContact>
 {
   public:
     explicit ViscousForce(BaseContactRelation &contact_relation);
@@ -164,7 +164,7 @@ using NonNewtonianViscousForceWithWall =
  * @class VorticityInner
  * @brief  compute vorticity in the fluid field
  */
-class VorticityInner : public LocalDynamics, public FluidDataInner
+class VorticityInner : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit VorticityInner(BaseInnerRelation &inner_relation);

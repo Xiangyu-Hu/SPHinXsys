@@ -16,7 +16,7 @@ void DensitySummationPressure<Inner<>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 DensitySummationPressure<Contact<Base>>::DensitySummationPressure(BaseContactRelation &contact_relation)
-    : DensitySummationPressure<Base, FluidContactData>(contact_relation)
+    : DensitySummationPressure<Base, DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {

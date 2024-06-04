@@ -22,7 +22,7 @@ TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, Part
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
 TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
-    : TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>(inner_relation),
+    : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
@@ -68,7 +68,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
 template <typename... CommonControlTypes>
 TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation)
-    : TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>(contact_relation)
+    : TransportVelocityCorrection<Base, DataDelegateContact, CommonControlTypes...>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
@@ -102,7 +102,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
 template <class KernelCorrectionType, typename... CommonControlTypes>
 TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation)
-    : TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>(
+    : TransportVelocityCorrection<Base, DataDelegateContact, KernelCorrectionType, CommonControlTypes...>(
           contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

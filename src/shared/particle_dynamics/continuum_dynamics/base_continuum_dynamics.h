@@ -34,17 +34,17 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateContact<BaseParticles, BaseParticles> FSIContactData;
+typedef DataDelegateContact<BaseParticles, BaseParticles> DataDelegateContact;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process
  */
 template <template <typename...> class BaseInteractionType>
-class InteractionWithWall : public BaseInteractionType<FSIContactData>
+class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
 {
   public:
     explicit InteractionWithWall(BaseContactRelation &wall_contact_relation)
-        : BaseInteractionType<FSIContactData>(wall_contact_relation)
+        : BaseInteractionType<DataDelegateContact>(wall_contact_relation)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {

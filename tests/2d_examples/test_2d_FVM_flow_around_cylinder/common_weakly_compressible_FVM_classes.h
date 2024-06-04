@@ -57,9 +57,9 @@ class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
 /**
  * @class BaseForceFromFluidInFVM
  * @brief Base class for computing the forces from the fluid.
- * Note that In FVM , we need FluidDataInner class to calculate force between solid and fluid.
+ * Note that In FVM , we need DataDelegateInner class to calculate force between solid and fluid.
  */
-class BaseForceFromFluidInFVM : public LocalDynamics, public fluid_dynamics::FluidDataInner
+class BaseForceFromFluidInFVM : public LocalDynamics, public fluid_dynamics::DataDelegateInner
 {
   public:
     explicit BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation);

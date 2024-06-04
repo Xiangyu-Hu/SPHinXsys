@@ -40,13 +40,13 @@ namespace SPH
 namespace solid_dynamics
 {
 typedef DataDelegateSimple<BaseParticles> SolidDataSimple;
-typedef DataDelegateContact<BaseParticles, BaseParticles> FSIContactData;
+typedef DataDelegateContact<BaseParticles, BaseParticles> DataDelegateContact;
 
 /**
  * @class BaseForceFromFluid
  * @brief Base class for computing the forces from the fluid
  */
-class BaseForceFromFluid : public LocalDynamics, public FSIContactData, public ForcePrior
+class BaseForceFromFluid : public LocalDynamics, public DataDelegateContact, public ForcePrior
 {
   public:
     explicit BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name);

@@ -6,7 +6,7 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 NearWallDistance::NearWallDistance(BaseContactRelation &wall_contact_relation)
-    : LocalDynamics(wall_contact_relation.getSPHBody()), FSIContactData(wall_contact_relation),
+    : LocalDynamics(wall_contact_relation.getSPHBody()), DataDelegateContact(wall_contact_relation),
       spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing()),
       distance_default_(100.0 * spacing_ref_),
       pos_(*base_particles_.getVariableByName<Vecd>("Position"))

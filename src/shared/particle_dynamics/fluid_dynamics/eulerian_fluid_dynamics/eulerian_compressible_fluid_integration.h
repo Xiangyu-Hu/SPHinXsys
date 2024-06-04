@@ -41,7 +41,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
+class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
 {
   public:
     explicit BaseIntegrationInCompressible(BaseInnerRelation &inner_relation);

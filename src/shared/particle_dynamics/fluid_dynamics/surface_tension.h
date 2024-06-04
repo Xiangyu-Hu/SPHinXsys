@@ -38,7 +38,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class SurfaceTensionStress : public LocalDynamics, public FluidContactData
+class SurfaceTensionStress : public LocalDynamics, public DataDelegateContact
 {
   public:
     explicit SurfaceTensionStress(BaseContactRelation &contact_relation, StdVec<Real> contact_surface_tension);
@@ -72,7 +72,7 @@ class SurfaceStressForce<DataDelegationType>
 
 template <>
 class SurfaceStressForce<Inner<>>
-    : public SurfaceStressForce<FluidDataInner>, public ForcePrior
+    : public SurfaceStressForce<DataDelegateInner>, public ForcePrior
 {
   public:
     SurfaceStressForce(BaseInnerRelation &inner_relation);
@@ -81,7 +81,7 @@ class SurfaceStressForce<Inner<>>
 };
 
 template <>
-class SurfaceStressForce<Contact<>> : public SurfaceStressForce<FluidContactData>
+class SurfaceStressForce<Contact<>> : public SurfaceStressForce<DataDelegateContact>
 {
   public:
     explicit SurfaceStressForce(BaseContactRelation &contact_relation);

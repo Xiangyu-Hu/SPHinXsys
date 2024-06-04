@@ -45,7 +45,7 @@ void DensitySummation<Inner<Adaptive>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 DensitySummation<Contact<Base>>::DensitySummation(BaseContactRelation &contact_relation)
-    : DensitySummation<Base, FluidContactData>(contact_relation)
+    : DensitySummation<Base, DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {

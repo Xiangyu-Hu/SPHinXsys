@@ -25,7 +25,7 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
 template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration<FluidDataInner>(inner_relation),
+    : BaseIntegration<DataDelegateInner>(inner_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -127,7 +127,7 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
 template <class RiemannSolverType, class KernelCorrectionType>
 Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &contact_relation)
-    : BaseIntegration<FluidContactData>(contact_relation),
+    : BaseIntegration<DataDelegateContact>(contact_relation),
       correction_(this->particles_)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -171,7 +171,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
 template <class RiemannSolverType>
 Integration2ndHalf<Inner<>, RiemannSolverType>::
     Integration2ndHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration<FluidDataInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
+    : BaseIntegration<DataDelegateInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
@@ -243,7 +243,7 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
 template <class RiemannSolverType>
 Integration2ndHalf<Contact<>, RiemannSolverType>::
     Integration2ndHalf(BaseContactRelation &contact_relation)
-    : BaseIntegration<FluidContactData>(contact_relation)
+    : BaseIntegration<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
