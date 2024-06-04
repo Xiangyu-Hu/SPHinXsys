@@ -41,18 +41,12 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-//----------------------------------------------------------------------
-//		for elastic solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> ElasticSolidDataSimple;
-typedef DataDelegateInner<BaseParticles> ElasticSolidDataInner;
-
 /**
  * @class ElasticDynamicsInitialCondition
  * @brief  set initial condition for a solid body with different material
  * This is a abstract class to be override for case specific initial conditions.
  */
-class ElasticDynamicsInitialCondition : public LocalDynamics, public ElasticSolidDataSimple
+class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
@@ -66,7 +60,7 @@ class ElasticDynamicsInitialCondition : public LocalDynamics, public ElasticSoli
  * @class UpdateElasticNormalDirection
  * @brief update particle normal directions for elastic solid
  */
-class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDataSimple
+class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &n_, &n0_;
@@ -87,7 +81,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
  * computing time step size
  */
 class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                             public ElasticSolidDataSimple
+                             public DataDelegateSimple
 {
   protected:
     Real CFL_;
@@ -107,7 +101,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
  * @class DeformationGradientBySummation
  * @brief computing deformation gradient tensor by summation
  */
-class DeformationGradientBySummation : public LocalDynamics, public ElasticSolidDataInner
+class DeformationGradientBySummation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
@@ -140,7 +134,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
  * @class BaseElasticIntegration
  * @brief base class for elastic relaxation
  */
-class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInner
+class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);

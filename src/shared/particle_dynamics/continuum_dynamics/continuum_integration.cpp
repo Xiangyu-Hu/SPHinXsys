@@ -6,13 +6,13 @@ namespace SPH
 namespace continuum_dynamics
 {
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
-    : LocalDynamics(sph_body), PlasticContinuumDataSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       stress_tensor_3D_(*particles_->registerSharedVariable<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
 ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
-    : fluid_dynamics::BaseIntegration<ContinuumDataInner>(inner_relation),
+    : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
@@ -39,7 +39,7 @@ void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShearStressRelaxation::ShearStressRelaxation(BaseInnerRelation &inner_relation)
-    : fluid_dynamics::BaseIntegration<ContinuumDataInner>(inner_relation),
+    : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       shear_stress_(*particles_->registerSharedVariable<Matd>("ShearStress")),
       shear_stress_rate_(*particles_->registerSharedVariable<Matd>("ShearStressRate")),
@@ -96,7 +96,7 @@ void ShearStressRelaxation::update(size_t index_i, Real dt)
 }
 //====================================================================================//
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
-    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
+    : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}

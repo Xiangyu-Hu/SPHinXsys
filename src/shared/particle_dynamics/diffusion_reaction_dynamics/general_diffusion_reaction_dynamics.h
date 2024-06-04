@@ -34,56 +34,6 @@
 
 namespace SPH
 {
-template <class ParticlesType>
-using DiffusionReactionSimpleData = DataDelegateSimple<ParticlesType>;
-
-template <class ParticlesType>
-using DiffusionReactionInnerData = DataDelegateInner<ParticlesType>;
-
-template <class ParticlesType, class ContactParticlesType>
-using DiffusionReactionContactData =
-    DataDelegateContact<ParticlesType, ContactParticlesType>;
-
-/**
- * @class DiffusionReactionInitialCondition
- * @brief Pure abstract class for initial conditions
- */
-template <class ParticlesType>
-class DiffusionReactionInitialCondition
-    : public LocalDynamics,
-      public DiffusionReactionSimpleData<ParticlesType>
-{
-  public:
-    explicit DiffusionReactionInitialCondition(SPHBody &sph_body);
-    virtual ~DiffusionReactionInitialCondition(){};
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    StdVec<StdLargeVec<Real>> &all_species_;
-};
-
-/**
- * @class DiffusionBasedMapping
- * @brief Mapping inside of body according to diffusion.
- * This is a abstract class to be override for case specific implementation
- */
-template <class ParticlesType>
-class DiffusionBasedMapping
-    : public LocalDynamics,
-      public DiffusionReactionSimpleData<ParticlesType>
-{
-  public:
-    explicit DiffusionBasedMapping(SPHBody &sph_body)
-        : LocalDynamics(sph_body),
-          DiffusionReactionSimpleData<ParticlesType>(sph_body),
-          pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
-          all_species_(this->particles_->all_species_){};
-    virtual ~DiffusionBasedMapping(){};
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    StdVec<StdLargeVec<Real>> &all_species_;
-};
 
 } // namespace SPH
 #endif // GENERAL_DIFFUSION_REACTION_DYNAMICS_H

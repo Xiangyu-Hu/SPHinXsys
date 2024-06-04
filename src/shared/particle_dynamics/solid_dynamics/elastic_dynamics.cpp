@@ -11,7 +11,7 @@ namespace solid_dynamics
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      ElasticSolidDataSimple(sph_body), CFL_(CFL),
+      DataDelegateSimple(sph_body), CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
@@ -31,13 +31,13 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      ElasticSolidDataSimple(sph_body),
+      DataDelegateSimple(sph_body),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")) {}
 //=================================================================================================//
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      ElasticSolidDataSimple(sph_body),
+      DataDelegateSimple(sph_body),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(*particles_->getVariableByName<Real>("SignedDistance")),
@@ -55,7 +55,7 @@ void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 //=================================================================================================//
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
@@ -63,7 +63,7 @@ DeformationGradientBySummation::
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),

@@ -206,7 +206,7 @@ class SplitWithMinimumDensityErrorWithWall : public SplitWithMinimumDensityError
  * @brief merging particle for a body in prescribed area.
  */
 class ParticleMergeWithPrescribedArea : public ParticleRefinementWithPrescribedArea,
-                                        public DataDelegateInner<BaseParticles, DataDelegateEmptyBase>
+                                        public DataDelegateInnerOnly
 {
   public:
     ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region);

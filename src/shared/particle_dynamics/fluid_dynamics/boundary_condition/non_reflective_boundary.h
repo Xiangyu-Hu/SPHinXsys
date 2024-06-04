@@ -36,7 +36,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegateInner<BaseParticles>
+class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegateInner
 {
   public:
     NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation);

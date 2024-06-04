@@ -36,8 +36,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-typedef DataDelegateContact<BaseParticles, BaseParticles> ContactDynamicsData;
-typedef DataDelegateContact<BaseParticles, BaseParticles> ContactWithWallData;
 
 template <typename... InteractionTypes>
 class RepulsionDensitySummation;
@@ -72,7 +70,7 @@ class RepulsionDensitySummation<Inner<>> : public RepulsionDensitySummation<Base
 using SelfContactDensitySummation = RepulsionDensitySummation<Inner<>>;
 
 template <>
-class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Base, ContactDynamicsData>
+class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Base, DataDelegateContact>
 {
   public:
     explicit RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
@@ -90,7 +88,7 @@ using ContactDensitySummation = RepulsionDensitySummation<Contact<>>;
  * @brief Computing the contact density due to shell contact using a
  * 		 surface integral being solved by Gauss-Legendre quadrature integration.
  */
-class ShellContactDensity : public RepulsionDensitySummation<Base, ContactDynamicsData>
+class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateContact>
 {
   public:
     explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);

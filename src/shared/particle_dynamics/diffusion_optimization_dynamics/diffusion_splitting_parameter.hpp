@@ -134,7 +134,7 @@ ParameterSplittingByPDEWithBoundary<VariableType>::
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                         BaseContactRelation &contact_relation, const std::string &variable_name)
     : ParameterSplittingByPDEInner<VariableType>(inner_relation, variable_name),
-      DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>(contact_relation)
+      DataDelegateContactOnly(contact_relation)
 {
     const std::string &species_name = this->diffusion_.DiffusionSpeciesName();
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -188,7 +188,7 @@ ErrorAndParameters<VariableType> ParameterSplittingByPDEWithBoundary<VariableTyp
 //=================================================================================================//
 template <typename ParameterSplittingType>
 template <typename... Args>
-UpdateParameterPDEResidual<ParameterSplittingType>::UpdateParameterPDEResidual(Args &&... args)
+UpdateParameterPDEResidual<ParameterSplittingType>::UpdateParameterPDEResidual(Args &&...args)
     : ParameterSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
 template <typename ParameterSplittingType>

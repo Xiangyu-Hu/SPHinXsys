@@ -77,7 +77,7 @@ template <class KernelGradientType, class DiffusionType>
 template <typename... Args>
 DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&...args)
-    : DiffusionRelaxation<DataDelegateInner<BaseParticles>, DiffusionType>(std::forward<Args>(args)...),
+    : DiffusionRelaxation<DataDelegateInner, DiffusionType>(std::forward<Args>(args)...),
       kernel_gradient_(this->particles_) {}
 //=================================================================================================//
 template <class KernelGradientType, class DiffusionType>
@@ -110,7 +110,7 @@ template <class ContactKernelGradientType, class DiffusionType>
 template <typename... Args>
 DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&...args)
-    : DiffusionRelaxation<DataDelegateContact<BaseParticles, BaseParticles>, DiffusionType>(
+    : DiffusionRelaxation<DataDelegateContact, DiffusionType>(
           std::forward<Args>(args)...)
 {
     contact_transfer_.resize(this->contact_particles_.size());

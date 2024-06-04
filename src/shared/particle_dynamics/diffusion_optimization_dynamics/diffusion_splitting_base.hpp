@@ -14,7 +14,7 @@ namespace SPH
 template <typename VariableType>
 OptimizationBySplittingAlgorithmBase<VariableType>::
     OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       diffusion_(DynamicCast<LocalIsotropicDiffusion>(this, sph_body_.getBaseMaterial())),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),

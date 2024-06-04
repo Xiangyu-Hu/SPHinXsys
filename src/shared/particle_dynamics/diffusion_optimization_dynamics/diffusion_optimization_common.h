@@ -71,7 +71,7 @@ class ComputeTotalErrorOrPositiveParameter
 template <class DynamicsIdentifier>
 class ComputeMaximumError
     : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>,
-      public DiffusionReactionSimpleData<BaseParticles>
+      public DataDelegateSimple
 {
   protected:
     StdLargeVec<Real> &variable_;
@@ -79,7 +79,7 @@ class ComputeMaximumError
   public:
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
-          DiffusionReactionSimpleData<BaseParticles>(identifier.getSPHBody()),
+          DataDelegateSimple(identifier.getSPHBody()),
           variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
@@ -96,7 +96,7 @@ class ComputeMaximumError
 template <class DynamicsIdentifier>
 class ThermalConductivityConstraint
     : public LocalDynamics,
-      public DiffusionReactionSimpleData<BaseParticles>
+      public DataDelegateSimple
 {
   public:
     ThermalConductivityConstraint(DynamicsIdentifier &identifier, const std::string &variable_name,

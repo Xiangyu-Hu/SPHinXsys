@@ -379,12 +379,12 @@ namespace SPH
 template <class DynamicsIdentifier>
 class LocalQuantityDefinition
     : public BaseLocalDynamics<DynamicsIdentifier>,
-      public DiffusionReactionSimpleData<BaseParticles>
+      public DataDelegateSimple
 {
   public:
     LocalQuantityDefinition(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          DiffusionReactionSimpleData<BaseParticles>(identifier.getSPHBody()){};
+          DataDelegateSimple(identifier.getSPHBody()){};
     virtual ~LocalQuantityDefinition(){};
 };
 

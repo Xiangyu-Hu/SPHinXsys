@@ -41,14 +41,11 @@ namespace SPH
 {
 namespace thin_structure_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> ShellDataSimple;
-typedef DataDelegateInner<BaseParticles> ShellDataInner;
-
 /**
  * @class UpdateShellNormalDirection
  * @brief update particle normal directions for shell
  */
-class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
+class UpdateShellNormalDirection : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &n_;
@@ -67,7 +64,7 @@ class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
  * @brief Computing the acoustic time step size for shell
  */
 class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                                  public ShellDataSimple
+                                  public DataDelegateSimple
 {
   protected:
     Real CFL_;
@@ -88,7 +85,7 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
  * @class ShellCorrectConfiguration
  * @brief obtain the corrected initial configuration in strong form
  */
-class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
+class ShellCorrectConfiguration : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ShellCorrectConfiguration(BaseInnerRelation &inner_relation);
@@ -124,7 +121,7 @@ class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
  * @brief computing deformation gradient tensor for shell
  * TODO: need a test case for this.
  */
-class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInner
+class ShellDeformationGradientTensor : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ShellDeformationGradientTensor(BaseInnerRelation &inner_relation);
@@ -162,7 +159,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInn
  * @class BaseShellRelaxation
  * @brief abstract class for preparing shell relaxation
  */
-class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
+class BaseShellRelaxation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseShellRelaxation(BaseInnerRelation &inner_relation);
@@ -306,7 +303,7 @@ class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 /**@class ConstrainShellBodyRegion
  * @brief Fix the position and angle of a shell body part.
  */
-class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
+class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     ConstrainShellBodyRegion(BodyPartByParticle &body_part);
@@ -322,7 +319,7 @@ class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, p
  * The axis must be 0 or 1.
  * Note that the average values for FSI are prescribed also.
  */
-class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
+class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
@@ -341,7 +338,7 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
  * @class DistributingPointForcesToShell
  * @brief Distribute a series of point forces to its contact shell bodies.
  */
-class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSimple
+class DistributingPointForcesToShell : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
@@ -368,7 +365,7 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
  * @class ShellCurvature
  * @brief  Update shell curvature during deformation
  */
-class ShellCurvature : public LocalDynamics, public ShellDataInner
+class ShellCurvature : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ShellCurvature(BaseInnerRelation &inner_relation);
@@ -395,7 +392,7 @@ class ShellCurvature : public LocalDynamics, public ShellDataInner
  * @class AverageShellCurvature
  * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
  */
-class AverageShellCurvature : public LocalDynamics, public ShellDataInner
+class AverageShellCurvature : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit AverageShellCurvature(BaseInnerRelation &inner_relation);

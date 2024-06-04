@@ -42,12 +42,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-//----------------------------------------------------------------------
-//		for general solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> DataDelegateInner;
-
 template <class DynamicsIdentifier>
 class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public ForcePrior
 {

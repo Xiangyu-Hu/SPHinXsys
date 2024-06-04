@@ -7,7 +7,7 @@ namespace solid_dynamics
 //=================================================================================================//
 PairwiseFrictionFromWall::
     PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta)
-    : LocalDynamics(contact_relation.getSPHBody()), ContactWithWallData(contact_relation),
+    : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
       eta_(eta), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity"))

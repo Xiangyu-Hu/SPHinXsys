@@ -38,11 +38,6 @@
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-//		for general solid dynamics variables
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
-
 /**
  * @class Displacement
  * @brief computing displacement from current and initial particle position
@@ -94,13 +89,8 @@ class TranslationAndRotation : public DataDelegateSimple,
     StdLargeVec<Vecd> &pos_, &pos0_;
 };
 
-//----------------------------------------------------------------------
-//		for general elastic solid dynamics variables
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> ElasticSolidDataSimple;
-
 class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
-                            public ElasticSolidDataSimple,
+                            public DataDelegateSimple,
                             public LocalDynamics
 {
   public:
@@ -117,7 +107,7 @@ class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
  * @brief computing von_Mises_stress
  */
 class VonMisesStress : public BaseDerivedVariable<Real>,
-                       public ElasticSolidDataSimple,
+                       public DataDelegateSimple,
                        public LocalDynamics
 {
   public:
@@ -137,7 +127,7 @@ class VonMisesStress : public BaseDerivedVariable<Real>,
  * @brief computing von Mises strain
  */
 class VonMisesStrain : public BaseDerivedVariable<Real>,
-                       public ElasticSolidDataSimple,
+                       public DataDelegateSimple,
                        public LocalDynamics
 {
   public:
@@ -154,7 +144,7 @@ class VonMisesStrain : public BaseDerivedVariable<Real>,
  * @brief update von Mises strain
  */
 class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
-                              public ElasticSolidDataSimple,
+                              public DataDelegateSimple,
                               public LocalDynamics
 {
   public:
@@ -168,16 +158,12 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
     StdLargeVec<Matd> &F_;
 };
 
-//----------------------------------------------------------------------
-//		for general shell dynamics variables
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> ShellSolidDataSimple;
 /**
  * @class MidSurfaceVonMisesStress
  * @brief computing mid-surface von Mises stress of shells
  */
 class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
-                                 public ShellSolidDataSimple,
+                                 public DataDelegateSimple,
                                  public LocalDynamics
 {
   public:

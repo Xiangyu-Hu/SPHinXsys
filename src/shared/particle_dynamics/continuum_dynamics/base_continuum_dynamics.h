@@ -34,7 +34,6 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateContact<BaseParticles, BaseParticles> DataDelegateContact;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process

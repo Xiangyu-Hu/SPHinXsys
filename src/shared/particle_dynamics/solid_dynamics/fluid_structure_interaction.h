@@ -39,9 +39,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
-typedef DataDelegateContact<BaseParticles, BaseParticles> DataDelegateContact;
-
 /**
  * @class BaseForceFromFluid
  * @brief Base class for computing the forces from the fluid
@@ -109,7 +106,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
  * This class is for FSI applications to achieve smaller solid dynamics
  * time step size compared to the fluid dynamics
  */
-class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimple
+class InitializeDisplacement : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &pos_, &pos_temp_;
@@ -127,7 +124,7 @@ class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimp
  * This class is for FSI applications to achieve smaller solid dynamics
  * time step size compared to the fluid dynamics
  */
-class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public ElasticSolidDataSimple
+class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &pos_, &pos_temp_, &vel_ave_, &acc_ave_;

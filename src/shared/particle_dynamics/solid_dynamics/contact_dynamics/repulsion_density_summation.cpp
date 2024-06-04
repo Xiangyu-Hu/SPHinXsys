@@ -28,7 +28,7 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RepulsionDensitySummation<Contact<>>::
     RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionDensity"),
+    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 {
@@ -70,7 +70,7 @@ void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 };
 //=================================================================================================//
 ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionDensity"),
+    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
       particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())

@@ -60,7 +60,7 @@ class ParameterSplittingByPDEInner
 template <typename VariableType>
 class ParameterSplittingByPDEWithBoundary
     : public ParameterSplittingByPDEInner<VariableType>,
-      public DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
+      public DataDelegateContactOnly
 {
   public:
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,

@@ -78,7 +78,7 @@ TemperatureSplittingByPDEWithBoundary<VariableType>::
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                           BaseContactRelation &contact_relation, const std::string &variable_name)
     : TemperatureSplittingByPDEInner<VariableType>(inner_relation, variable_name),
-      DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>(contact_relation)
+      DataDelegateContactOnly(contact_relation)
 {
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -132,7 +132,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<VariableT
 template <typename TemperatureSplittingType>
 template <typename... Args>
 UpdateTemperaturePDEResidual<TemperatureSplittingType>::
-    UpdateTemperaturePDEResidual(Args &&... args)
+    UpdateTemperaturePDEResidual(Args &&...args)
     : TemperatureSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
 template <typename TemperatureSplittingType>

@@ -460,7 +460,7 @@ void SplitWithMinimumDensityErrorInner::update(size_t index_i, Real dt)
 ParticleMergeWithPrescribedArea::
     ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
     : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
-      DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
+      DataDelegateInnerOnly(inner_relation),
       all_particle_data_(particles_->getAllParticleData()), vel_n_(*particles_->getVariableByName<Vecd>("Velocity")),
       merge_particle_value_(all_particle_data_)
 {

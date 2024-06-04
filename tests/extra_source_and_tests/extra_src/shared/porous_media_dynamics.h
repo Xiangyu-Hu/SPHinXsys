@@ -38,19 +38,13 @@ namespace SPH
 {
 namespace multi_species_continuum
 {
-//----------------------------------------------------------------------
-//		for porous elastic solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> PorousMediaSolidDataSimple;
-typedef DataDelegateInner<BaseParticles> PorousMediaSolidDataInner;
-
 /**
  * @class GetSaturationTimeStepSize
  * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
  */
 class GetSaturationTimeStepSize
     : public LocalDynamicsReduce<ReduceMin>,
-      public PorousMediaSolidDataSimple
+      public DataDelegateSimple
 {
   protected:
     PorousMediaSolid &porous_solid_;
@@ -71,7 +65,7 @@ class GetSaturationTimeStepSize
 /**@class MomentumConstraint
  * @brief MomentumConstraint with zero momentum.
  */
-class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>, public PorousMediaSolidDataSimple
+class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     explicit MomentumConstraint(BodyPartByParticle &body_part);
@@ -87,7 +81,7 @@ class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>, public 
  * @class BasePorousStressRelaxation
  * @brief base class for porous media relaxation
  */
-class BasePorousMediaRelaxation : public LocalDynamics, public PorousMediaSolidDataInner
+class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BasePorousMediaRelaxation(BaseInnerRelation &inner_relation);
@@ -193,12 +187,12 @@ class PorousMediaStressRelaxationSecondHalf
  * @class PorousMediaSaturationDynamicsInitialCondition
  * @brief Set initial condition  in porous media.
  */
-class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<BodyPartByParticle>, public PorousMediaSolidDataSimple
+class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          PorousMediaSolidDataSimple(body_part.getSPHBody()),
+          DataDelegateSimple(body_part.getSPHBody()),
           fluid_mass_(*particles_->getVariableByName<Real>("FluidMass")),
           fluid_saturation_(*particles_->getVariableByName<Real>("FluidSaturation")),
           total_mass_(*particles_->getVariableByName<Real>("TotalMass")),

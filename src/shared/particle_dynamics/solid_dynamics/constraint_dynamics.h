@@ -42,12 +42,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-//----------------------------------------------------------------------
-//		for general solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> DataDelegateInner;
-
 /**@class SpringConstrain
  * @brief Constrain with a spring for each constrained particles to its original position.
  * //TODO: a test case is required for this class.

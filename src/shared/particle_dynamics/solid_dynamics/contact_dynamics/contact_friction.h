@@ -44,7 +44,7 @@ namespace solid_dynamics
  * Note that, currently, this class works only when the contact
  * bodies have the same resolution.
  */
-class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
+class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContact
 {
   public:
     PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta);
@@ -63,7 +63,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallDat
         {
             StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
             StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-            StdLargeVec<Real>& Vol_k = *(wall_Vol_n_[k]);
+            StdLargeVec<Real> &Vol_k = *(wall_Vol_n_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             // forward sweep
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

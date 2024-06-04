@@ -48,7 +48,7 @@ namespace multi_species_continuum
  */
 
 template <typename VariableType>
-class PorousMediaDampingPairwiseInner : public LocalDynamics, public PorousMediaSolidDataInner
+class PorousMediaDampingPairwiseInner : public LocalDynamics, public DataDelegateInner
 {
   public:
     PorousMediaDampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);

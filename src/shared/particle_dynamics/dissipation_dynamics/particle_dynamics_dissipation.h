@@ -37,12 +37,6 @@ namespace SPH
 {
 class BaseParticles;
 
-typedef DataDelegateInner<BaseParticles> DissipationDataInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-    DissipationDataContact;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-    DissipationDataWithWall;
-
 template <typename VariableType>
 struct ErrorAndParameters
 {
@@ -60,7 +54,7 @@ struct ErrorAndParameters
  * because the splitting partition only works in this case.
  */
 template <typename VariableType>
-class DampingBySplittingInner : public LocalDynamics, public DissipationDataInner
+class DampingBySplittingInner : public LocalDynamics, public DataDelegateInner
 {
   protected:
   public:
@@ -79,7 +73,7 @@ class DampingBySplittingInner : public LocalDynamics, public DissipationDataInne
 };
 
 template <typename VariableType>
-class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, public DissipationDataContact
+class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, public DataDelegateContactOnly
 {
   public:
     DampingBySplittingComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
@@ -98,7 +92,7 @@ class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, 
 template <typename VariableType,
           template <typename BaseVariableType>
           class BaseDampingBySplittingType>
-class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableType>, public DissipationDataWithWall
+class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableType>, public DataDelegateContactOnly
 {
   public:
     DampingBySplittingWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
@@ -122,7 +116,7 @@ class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableTyp
  * because the splitting partition only works in this case.
  */
 template <typename VariableType>
-class DampingPairwiseInner : public LocalDynamics, public DissipationDataInner
+class DampingPairwiseInner : public LocalDynamics, public DataDelegateInner
 {
   public:
     DampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
@@ -137,7 +131,7 @@ class DampingPairwiseInner : public LocalDynamics, public DissipationDataInner
 };
 
 template <typename VariableType>
-class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public DissipationDataContact
+class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public DataDelegateContactOnly
 {
   public:
     DampingPairwiseComplex(BaseInnerRelation &inner_relation,
@@ -159,7 +153,7 @@ class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public
 template <typename VariableType,
           template <typename BaseVariableType> class BaseDampingPairwiseType>
 class DampingPairwiseWithWall : public BaseDampingPairwiseType<VariableType>,
-                                public DissipationDataWithWall
+                                public DataDelegateContactOnly
 {
   public:
     DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
@@ -180,7 +174,7 @@ class DampingPairwiseWithWall : public BaseDampingPairwiseType<VariableType>,
  */
 template <typename VariableType>
 class DampingPairwiseFromWall : public LocalDynamics,
-                                public DataDelegateContact<BaseParticles, BaseParticles>
+                                public DataDelegateContact
 {
   public:
     DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);

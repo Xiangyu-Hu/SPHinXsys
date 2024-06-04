@@ -10,13 +10,13 @@ namespace multi_species_continuum
 //=================================================================================================//
 GetSaturationTimeStepSize::GetSaturationTimeStepSize(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      PorousMediaSolidDataSimple(sph_body),
+      DataDelegateSimple(sph_body),
       porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
-      PorousMediaSolidDataInner(inner_relation),
+      DataDelegateInner(inner_relation),
       porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
@@ -31,7 +31,7 @@ BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_re
 }
 //=================================================================================================//
 MomentumConstraint::MomentumConstraint(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), PorousMediaSolidDataSimple(body_part.getSPHBody()),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
       total_momentum_(*particles_->getVariableByName<Vecd>("TotalMomentum")) {}
 //=================================================================================================//
 PorousMediaStressRelaxationFirstHalf::

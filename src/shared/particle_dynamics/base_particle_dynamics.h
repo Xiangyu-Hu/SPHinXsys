@@ -121,7 +121,8 @@ class DataDelegateSimple
  * @class DataDelegateInner
  * @brief prepare data for inner particle dynamics
  */
-class DataDelegateInner : public DataDelegateSimple
+template <class BaseDataDelegateType>
+class BaseDataDelegateInner : public BaseDataDelegateType
 {
     BaseInnerRelation &inner_relation_;
 
@@ -137,7 +138,8 @@ class DataDelegateInner : public DataDelegateSimple
     /** inner configuration of the designated body */
     ParticleConfiguration &inner_configuration_;
 };
-
+using DataDelegateInner = BaseDataDelegateInner<DataDelegateSimple>;
+using DataDelegateInnerOnly = BaseDataDelegateInner<DataDelegateEmptyBase>;
 /**
  * @class DataDelegateContact
  * @brief prepare data for contact particle dynamics

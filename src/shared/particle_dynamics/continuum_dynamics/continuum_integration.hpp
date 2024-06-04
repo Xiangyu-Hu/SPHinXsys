@@ -43,7 +43,7 @@ BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationT
 template <class RiemannSolverType>
 PlasticIntegration1stHalf<Inner<>, RiemannSolverType>::
     PlasticIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
+    : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       riemann_solver_(plastic_continuum_, plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -140,7 +140,7 @@ Vecd PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::computeNonCons
 //=================================================================================================//
 template <class RiemannSolverType>
 PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation)
-    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
+    : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       acc_deviatoric_plastic_strain_(*particles_->registerSharedVariable<Real>("AccDeviatoricPlasticStrain")),
       vertical_stress_(*particles_->registerSharedVariable<Real>("VerticalStress")),

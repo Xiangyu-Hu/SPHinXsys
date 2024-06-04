@@ -8,7 +8,7 @@ namespace thin_structure_dynamics
 {
 //=================================================================================================//
 UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
-    : LocalDynamics(sph_body), ShellDataSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
@@ -21,7 +21,7 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 //=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      ShellDataSimple(sph_body), CFL_(CFL),
+      DataDelegateSimple(sph_body), CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
@@ -52,7 +52,7 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 ShellCorrectConfiguration::
     ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
@@ -60,7 +60,7 @@ ShellCorrectConfiguration::
 //=================================================================================================//
 ShellDeformationGradientTensor::
     ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       pseudo_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
@@ -71,7 +71,7 @@ ShellDeformationGradientTensor::
       transformation_matrix0_(*particles_->getVariableByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       thickness_(*particles_->getVariableByName<Real>("Thickness")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
@@ -225,7 +225,7 @@ void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainShellBodyRegion::
     ConstrainShellBodyRegion(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(sph_body_),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")) {}
 //=================================================================================================//
@@ -236,7 +236,7 @@ void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(sph_body_),
       axis_(axis), pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
@@ -261,7 +261,7 @@ DistributingPointForcesToShell::
     DistributingPointForcesToShell(SPHBody &sph_body, std::vector<Vecd> point_forces,
                                    std::vector<Vecd> reference_positions, Real time_to_full_external_force,
                                    Real particle_spacing_ref, Real h_spacing_ratio)
-    : LocalDynamics(sph_body), ShellDataSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
@@ -325,7 +325,7 @@ void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
@@ -375,7 +375,7 @@ void ShellCurvature::update(size_t index_i, Real)
 }
 //=================================================================================================//
 AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       k1_ave_(*particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),

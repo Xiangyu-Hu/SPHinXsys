@@ -60,7 +60,7 @@ class TemperatureSplittingByPDEInner
 template <typename VariableType>
 class TemperatureSplittingByPDEWithBoundary
     : public TemperatureSplittingByPDEInner<VariableType>,
-      public DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
+      public DataDelegateContactOnly
 {
   public:
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
@@ -84,7 +84,7 @@ class UpdateTemperaturePDEResidual : public TemperatureSplittingType
 {
   public:
     template <typename... Args>
-    UpdateTemperaturePDEResidual(Args &&... args);
+    UpdateTemperaturePDEResidual(Args &&...args);
     virtual ~UpdateTemperaturePDEResidual(){};
 
   protected:

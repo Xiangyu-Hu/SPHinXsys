@@ -39,7 +39,7 @@ namespace SPH
 template <class ReactionModelType>
 class BaseReactionRelaxation
     : public LocalDynamics,
-      public DiffusionReactionSimpleData<BaseParticles>
+      public DataDelegateSimple
 {
   protected:
     struct UpdateAReactionSpecies

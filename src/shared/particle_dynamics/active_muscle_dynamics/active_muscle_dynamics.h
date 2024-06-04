@@ -38,14 +38,12 @@ namespace SPH
 {
 namespace active_muscle_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> ElasticSolidDataSimple;
-
 /**
  * @class MuscleActivation
  * @brief  impose cases specific muscle activation
  * This is a abstract class to be override for case specific activation
  */
-class MuscleActivation : public LocalDynamics, public ElasticSolidDataSimple
+class MuscleActivation : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit MuscleActivation(SPHBody &sph_body);

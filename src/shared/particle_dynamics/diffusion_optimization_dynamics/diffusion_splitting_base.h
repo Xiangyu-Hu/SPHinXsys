@@ -42,7 +42,7 @@ namespace SPH
 template <typename VariableType>
 class OptimizationBySplittingAlgorithmBase
     : public LocalDynamics,
-      public DataDelegateInner<BaseParticles>
+      public DataDelegateInner
 {
   public:
     explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &variable_name);

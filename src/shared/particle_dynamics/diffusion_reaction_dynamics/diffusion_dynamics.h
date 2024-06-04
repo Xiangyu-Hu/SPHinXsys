@@ -113,7 +113,7 @@ class CorrectedKernelGradientInner
  */
 template <class KernelGradientType, class DiffusionType>
 class DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>
-    : public DiffusionRelaxation<DataDelegateInner<BaseParticles>, DiffusionType>
+    : public DiffusionRelaxation<DataDelegateInner, DiffusionType>
 {
   protected:
     KernelGradientType kernel_gradient_;
@@ -153,7 +153,7 @@ class CorrectedKernelGradientContact
 
 template <class ContactKernelGradientType, class DiffusionType>
 class DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
-    : public DiffusionRelaxation<DataDelegateContact<BaseParticles, BaseParticles>, DiffusionType>
+    : public DiffusionRelaxation<DataDelegateContact, DiffusionType>
 {
   protected:
     StdVec<ContactKernelGradientType> contact_kernel_gradients_;
