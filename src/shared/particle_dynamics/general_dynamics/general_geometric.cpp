@@ -47,7 +47,7 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
 //=============================================================================================//
 NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      initial_shape_(body_.getInitialShape()),
+      initial_shape_(sph_body_.getInitialShape()),
       pos_(*particles_->getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),

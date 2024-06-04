@@ -58,8 +58,10 @@ class BidirectionalBuffer
     {
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, int axis)
-            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), DataDelegateSimple(sph_body_),
-              pos_(*base_particles_.getVariableByName<Vecd>("Position")), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
+            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              DataDelegateSimple(aligned_box_part.getSPHBody()),
+              pos_(*particles_->getVariableByName<Vecd>("Position")),
+              aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
@@ -83,8 +85,10 @@ class BidirectionalBuffer
       public:
         Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   int axis, TargetPressure &target_pressure)
-            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), DataDelegateSimple(sph_body_),
-              axis_(axis), particle_buffer_(particle_buffer), aligned_box_(aligned_box_part.aligned_box_),
+            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              DataDelegateSimple(aligned_box_part.getSPHBody()),
+              axis_(axis), particle_buffer_(particle_buffer),
+              aligned_box_(aligned_box_part.aligned_box_),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
               pos_n_(*particles_->getVariableByName<Vecd>("Position")),
               rho_n_(*particles_->getVariableByName<Real>("Density")),

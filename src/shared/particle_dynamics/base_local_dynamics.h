@@ -62,7 +62,6 @@ class BaseLocalDynamics
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier){};
     virtual ~BaseLocalDynamics(){};
-    SPHBody &getSPHBody() { return identifier_.getSPHBody(); };
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
   protected:

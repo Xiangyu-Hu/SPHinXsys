@@ -99,9 +99,9 @@ BarStressRelaxationFirstHalf::
     BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                  int number_of_gaussian_points, bool hourglass_control)
     : BaseBarRelaxation(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, body_.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
-      smoothing_length_(body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(*particles_->getVariableByName<Real>("Density")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
@@ -345,8 +345,8 @@ DistributingPointForcesToBar::
 //=================================================================================================//
 void DistributingPointForcesToBar::getWeight()
 {
-    Kernel *kernel_ = body_.sph_adaptation_->getKernel();
-    Real reference_smoothing_length = body_.sph_adaptation_->ReferenceSmoothingLength();
+    Kernel *kernel_ = sph_body_.sph_adaptation_->getKernel();
+    Real reference_smoothing_length = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
     Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
     Real h_ratio = reference_smoothing_length / smoothing_length;
     Real cutoff_radius_sqr = pow(2.0 * smoothing_length, 2);

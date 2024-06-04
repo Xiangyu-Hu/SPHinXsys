@@ -19,7 +19,7 @@ BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_re
       DataDelegateInner(inner_relation),
       porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
       F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),

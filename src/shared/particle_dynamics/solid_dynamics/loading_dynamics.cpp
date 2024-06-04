@@ -10,8 +10,8 @@ namespace solid_dynamics
 //=================================================================================================//
 SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
-    : LoadingForce(sph_body, "SpringDamperConstraintForce"), DataDelegateSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+    : LoadingForce(sph_body, "SpringDamperConstraintForce"),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mass_(*particles_->getVariableByName<Real>("Mass"))
@@ -52,8 +52,8 @@ void SpringDamperConstraintParticleWise::update(size_t index_i, Real dt)
 SpringNormalOnSurfaceParticles::
     SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
                                    Vecd source_point, Real stiffness, Real damping_ratio)
-    : LoadingForce(sph_body, "NormalSpringForceOnSurface"), DataDelegateSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+    : LoadingForce(sph_body, "NormalSpringForceOnSurface"),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
@@ -122,8 +122,8 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 //=================================================================================================//
 SpringOnSurfaceParticles::
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
-    : LoadingForce(sph_body, "SpringForceOnSurface"), DataDelegateSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+    : LoadingForce(sph_body, "SpringForceOnSurface"),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
@@ -162,8 +162,8 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
 //=================================================================================================//
 ExternalForceInBoundingBox::
     ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
-    : LoadingForce(sph_body, "ExternalForceInBoundingBox"), DataDelegateSimple(sph_body),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+    : LoadingForce(sph_body, "ExternalForceInBoundingBox"),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       bounding_box_(bounding_box), acceleration_(acceleration) {}
 //=================================================================================================//
@@ -179,7 +179,6 @@ void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
 ForceInBodyRegion::
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
-      DataDelegateSimple(sph_body_),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time)
@@ -201,7 +200,6 @@ SurfacePressureFromSource::
     SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
                               StdVec<std::array<Real, 2>> pressure_over_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
-      DataDelegateSimple(sph_body_),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
@@ -209,7 +207,7 @@ SurfacePressureFromSource::
       pressure_over_time_(pressure_over_time),
       apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
-    BodySurface surface_layer(sph_body_);
+    BodySurface surface_layer(body_part.getSPHBody());
 
     for (size_t particle_i : surface_layer.body_part_particles_)
     {
@@ -266,7 +264,7 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PressureForceOnShell::PressureForceOnShell(SPHBody &sph_body, Real pressure)
-    : LoadingForce(sph_body, "PressureForceOnShell"), DataDelegateSimple(sph_body),
+    : LoadingForce(sph_body, "PressureForceOnShell"),
       pressure_(pressure),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")) {}

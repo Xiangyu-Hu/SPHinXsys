@@ -106,14 +106,14 @@ class DataDelegateSimple
 {
   public:
     explicit DataDelegateSimple(SPHBody &sph_body)
-        : body_(sph_body),
+        : sph_body_(sph_body),
           particles_(&sph_body.getBaseParticles()){};
     virtual ~DataDelegateSimple(){};
-    SPHBody &getBody() { return body_; };
+    SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };
 
   protected:
-    SPHBody &body_;
+    SPHBody &sph_body_;
     BaseParticles *particles_;
 };
 

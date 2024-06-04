@@ -41,13 +41,11 @@ class Beam : public ComplexShape
 };
 
 /* define load*/
-class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>,
-                     public solid_dynamics::DataDelegateSimple
+class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
 {
   public:
     PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
         : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
-          solid_dynamics::DataDelegateSimple(sph_body_),
           mass_n_(*particles_->getVariableByName<Real>("Mass")),
           Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
           F_(*particles_->getVariableByName<Matd>("DeformationGradient")),

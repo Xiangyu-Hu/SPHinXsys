@@ -198,7 +198,7 @@ class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<B
           total_mass_(*particles_->getVariableByName<Real>("TotalMass")),
           rho_n_(*particles_->getVariableByName<Real>("Density")),
           Vol_update_(*particles_->getVariableByName<Real>("UpdateVolume")),
-          pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
+          pos_(*particles_->getVariableByName<Vecd>("Position")){};
 
     virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
 

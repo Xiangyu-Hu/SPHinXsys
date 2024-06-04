@@ -43,13 +43,14 @@ namespace SPH
 namespace solid_dynamics
 {
 template <class DynamicsIdentifier>
-class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public ForcePrior
+class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public DataDelegateSimple, public ForcePrior
 {
   public:
     BaseLoadingForce(DynamicsIdentifier &identifier, const std::string &loading_force_name)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          ForcePrior(&this->base_particles_, loading_force_name),
-          loading_force_(*this->base_particles_.template getVariableByName<Vecd>(loading_force_name)){};
+          DataDelegateSimple(identifier.getSPHBody()),
+          ForcePrior(this->particles_, loading_force_name),
+          loading_force_(*particles_->getVariableByName<Vecd>(loading_force_name)){};
     virtual ~BaseLoadingForce(){};
 
   protected:
@@ -64,7 +65,7 @@ using LoadingForce = BaseLoadingForce<SPHBody>;
  * The damping force is calculated based on the particle's current velocity.
  * Only for 3D applications
  */
-class SpringDamperConstraintParticleWise : public LoadingForce, public DataDelegateSimple
+class SpringDamperConstraintParticleWise : public LoadingForce
 {
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_, &vel_;
@@ -91,7 +92,7 @@ class SpringDamperConstraintParticleWise : public LoadingForce, public DataDeleg
  * Only for 3D applications
  * Only for uniform surface particle size.
  */
-class SpringNormalOnSurfaceParticles : public LoadingForce, public DataDelegateSimple
+class SpringNormalOnSurfaceParticles : public LoadingForce
 {
   public:
     SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
@@ -120,7 +121,7 @@ class SpringNormalOnSurfaceParticles : public LoadingForce, public DataDelegateS
  * BodyPartByParticle define the ody part that the spring is applied to.
  * Only for uniform surface particle size.
  */
-class SpringOnSurfaceParticles : public LoadingForce, public DataDelegateSimple
+class SpringOnSurfaceParticles : public LoadingForce
 {
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_, &vel_;
@@ -139,7 +140,7 @@ class SpringOnSurfaceParticles : public LoadingForce, public DataDelegateSimple
  * @class ExternalForceInBoundingBox
  * @brief Adds acceleration to the part of the body that's inside a bounding box
  */
-class ExternalForceInBoundingBox : public LoadingForce, public DataDelegateSimple
+class ExternalForceInBoundingBox : public LoadingForce
 {
   protected:
     StdLargeVec<Vecd> &pos_;
@@ -158,7 +159,7 @@ class ExternalForceInBoundingBox : public LoadingForce, public DataDelegateSimpl
  * @class ForceInBodyRegion
  * @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
  */
-class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>, public DataDelegateSimple
+class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>
 {
   public:
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time);
@@ -176,7 +177,7 @@ class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>, public Da
  * @class SurfacePressureFromSource
  * @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
  */
-class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>, public DataDelegateSimple
+class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
 {
   public:
     SurfacePressureFromSource(BodyPartByParticle &body_part,
@@ -193,7 +194,7 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>, p
     Real getPressure();
 };
 
-class PressureForceOnShell : public LoadingForce, public DataDelegateSimple
+class PressureForceOnShell : public LoadingForce
 {
   protected:
     Real pressure_;

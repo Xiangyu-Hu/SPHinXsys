@@ -7,12 +7,12 @@ namespace relax_dynamics
 //=================================================================================================//
 RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
     : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(body_.getInitialShape()){};
+      relax_shape_(sph_body_.getInitialShape()){};
 //=================================================================================================//
 RelaxationResidue<Inner<>>::
     RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
     : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(*DynamicCast<ComplexShape>(this, body_.getInitialShape())
+      relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape())
                         .getSubShapeByName(sub_shape_name)) {}
 //=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)

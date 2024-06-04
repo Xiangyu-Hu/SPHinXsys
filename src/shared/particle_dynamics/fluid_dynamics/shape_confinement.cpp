@@ -8,8 +8,8 @@ namespace fluid_dynamics
 StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_surface),
       DataDelegateSimple(near_surface.getSPHBody()),
-      rho0_(body_.base_material_->ReferenceDensity()),
-      inv_sigma0_(1.0 / body_.sph_adaptation_->LatticeNumberDensity()),
+      rho0_(sph_body_.base_material_->ReferenceDensity()),
+      inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")),
       pos_(*particles_->getVariableByName<Vecd>("Position")),
