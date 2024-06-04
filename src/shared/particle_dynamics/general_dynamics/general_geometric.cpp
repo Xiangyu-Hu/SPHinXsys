@@ -7,7 +7,7 @@ namespace SPH
 NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       initial_shape_(sph_body.getInitialShape()),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
@@ -29,7 +29,7 @@ NormalDirectionFromSubShapeAndOp::
       shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.getInitialShape()).getSubShapeAndOpByName(shape_name)),
       shape_(shape_and_op_->first),
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),
@@ -47,8 +47,8 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
 //=============================================================================================//
 NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      initial_shape_(sph_body_.getInitialShape()),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      initial_shape_(body_.getInitialShape()),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(*particles_->registerSharedVariable<Real>("SignedDistance")),

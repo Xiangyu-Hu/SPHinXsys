@@ -7,12 +7,12 @@ namespace relax_dynamics
 //=================================================================================================//
 RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
     : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(sph_body_.getInitialShape()){};
+      relax_shape_(body_.getInitialShape()){};
 //=================================================================================================//
 RelaxationResidue<Inner<>>::
     RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
     : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape())
+      relax_shape_(*DynamicCast<ComplexShape>(this, body_.getInitialShape())
                         .getSubShapeByName(sub_shape_name)) {}
 //=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
@@ -69,7 +69,7 @@ Real RelaxationScaling::outputResult(Real reduced_value)
 PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       sph_adaptation_(sph_body.sph_adaptation_),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 void PositionRelaxation::update(size_t index_i, Real dt_square)
@@ -82,7 +82,7 @@ UpdateSmoothingLengthRatioByShape::
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       target_shape_(target_shape),
       particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}

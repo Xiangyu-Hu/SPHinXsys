@@ -7,10 +7,10 @@ namespace relax_dynamics
 //=================================================================================================//
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part), DataDelegateSimple(body_part.getSPHBody()),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
-      constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
-      particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      constrained_distance_(0.5 * body_.sph_adaptation_->MinimumSpacing()),
+      particle_spacing_ref_(body_.sph_adaptation_->MinimumSpacing()),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, &body_.getInitialShape())) {}
 //=================================================================================================//
 void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 {
@@ -82,7 +82,7 @@ void ShellNormalDirectionPrediction::correctNormalDirection()
 ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
     : DataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {
     particles_->registerVariable(n_temp_, "PreviousNormalDirection", [&](size_t i) -> Vecd

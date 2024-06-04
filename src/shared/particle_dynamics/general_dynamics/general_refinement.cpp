@@ -8,9 +8,9 @@ namespace SPH
 ComputeDensityErrorInner::ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
-      rho0_(sph_body_.base_material_->ReferenceDensity()),
+      rho0_(body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       rho_(*particles_->getVariableByName<Real>("Density")),
@@ -305,9 +305,9 @@ ParticleRefinementWithPrescribedArea::
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       refinement_region_bounds_(refinement_region.getBounds()),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
-      inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
+      inv_rho0_(1.0 / body_.base_material_->ReferenceDensity()),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
@@ -414,7 +414,7 @@ void ParticleSplitWithPrescribedArea::
     mass_[index_new] = 0.5 * mass_[index_center];
     Vol_[index_new] = mass_[index_new] * inv_rho0_;
     Real particle_spacing_j = pow(Vol_[index_new], 1.0 / (Real)Dimensions);
-    h_ratio_[index_new] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
+    h_ratio_[index_new] = body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
     pos_[index_new] = pos_split;
 }
 //=================================================================================================//
@@ -554,7 +554,7 @@ void ParticleMergeWithPrescribedArea::
     mass_[merged_index] = total_mass;
     Vol_[merged_index] = mass_[merged_index] * inv_rho0_;
     Real particle_spacing = pow(Vol_[merged_index], 1.0 / (Real)Dimensions);
-    h_ratio_[merged_index] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing;
+    h_ratio_[merged_index] = body_.sph_adaptation_->ReferenceSpacing() / particle_spacing;
 }
 //=================================================================================================//
 void MergeWithMinimumDensityErrorInner::setupDynamics(Real dt)
@@ -640,7 +640,7 @@ void MergeWithMinimumDensityErrorInner::updateNewlyMergingParticle(size_t index_
         mass_[new_indices[n]] = 0.5 * mass_[index_center];
         Vol_[new_indices[n]] = mass_[new_indices[n]] * inv_rho0_;
         Real particle_spacing_j = pow(Vol_[new_indices[n]], 1.0 / (Real)Dimensions);
-        h_ratio_[new_indices[n]] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
+        h_ratio_[new_indices[n]] = body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
     }
     pos_[new_indices[0]] = pos_split;
     pos_[new_indices[1]] = 2.0 * pos_[index_center] - pos_[new_indices[0]];
