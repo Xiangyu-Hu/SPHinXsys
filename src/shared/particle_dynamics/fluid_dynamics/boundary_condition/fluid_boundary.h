@@ -194,6 +194,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
 
   protected:
     Fluid &fluid_;
+    StdLargeVec<size_t> &sorted_id_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     /** inflow pressure condition */
@@ -203,7 +204,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
     Transform &updated_transform_, old_transform_;
 
     /** no transform by default */
-    virtual void updateTransform(){};
+    virtual void updateTransform() {};
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
 };
 
@@ -224,6 +225,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
   protected:
     std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
     Fluid &fluid_;
+    StdLargeVec<size_t> &sorted_id_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &rho_, &p_;
     ParticleBuffer<Base> &buffer_;

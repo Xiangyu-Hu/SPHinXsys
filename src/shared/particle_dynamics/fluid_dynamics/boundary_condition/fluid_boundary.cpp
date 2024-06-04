@@ -35,6 +35,7 @@ EmitterInflowCondition::
     EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      sorted_id_(particles_->sorted_id_),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
@@ -61,6 +62,7 @@ EmitterInflowInjection::
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      sorted_id_(particles_->sorted_id_),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       rho_(*particles_->getVariableByName<Real>("Density")),
       p_(*particles_->getVariableByName<Real>("Pressure")),

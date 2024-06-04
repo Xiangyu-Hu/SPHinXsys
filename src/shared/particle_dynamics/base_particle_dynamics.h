@@ -107,16 +107,12 @@ class DataDelegateSimple
 {
   public:
     explicit DataDelegateSimple(SPHBody &sph_body)
-        : particles_(DynamicCast<ParticlesType>(this, &sph_body.getBaseParticles())),
-          sorted_id_(sph_body.getBaseParticles().sorted_id_),
-          unsorted_id_(sph_body.getBaseParticles().unsorted_id_){};
+        : particles_(DynamicCast<ParticlesType>(this, &sph_body.getBaseParticles())){};
     virtual ~DataDelegateSimple(){};
     ParticlesType *getParticles() { return particles_; };
 
   protected:
     ParticlesType *particles_;
-    StdLargeVec<size_t> &sorted_id_;
-    StdLargeVec<size_t> &unsorted_id_;
 };
 
 /**
