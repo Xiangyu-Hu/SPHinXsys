@@ -7,7 +7,7 @@ namespace SPH
 //=================================================================================================//
 GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
                                              Ghost<ReserveSizeFactor> &ghost_boundary)
-    : GeneralDataDelegateSimple(real_body),
+    : DataDelegateSimple(real_body),
       ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh.node_coordinates_),
       mesh_topology_(ansys_mesh.mesh_topology_),
@@ -24,7 +24,7 @@ GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ans
 //=================================================================================================//
 BoundaryConditionSetupInFVM::
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
-    : GeneralDataDelegateInner(inner_relation),
+    : DataDelegateInner(inner_relation),
       rho_(*particles_->getVariableByName<Real>("Density")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),

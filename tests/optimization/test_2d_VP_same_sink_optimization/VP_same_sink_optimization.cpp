@@ -76,11 +76,11 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
           heat_source_(*(particles_->registerSharedVariable<Real>("HeatSource"))){};
@@ -96,11 +96,11 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public GeneralDataDe
     StdLargeVec<Real> &phi_, &heat_source_;
 };
 
-class ThermalConductivityRandomInitialization : public LocalDynamics, public GeneralDataDelegateSimple
+class ThermalConductivityRandomInitialization : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ThermalConductivityRandomInitialization(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           thermal_conductivity(*(particles_->getVariableByName<Real>("ThermalConductivity"))){};
     void update(size_t index_i, Real dt)
     {
@@ -111,11 +111,11 @@ class ThermalConductivityRandomInitialization : public LocalDynamics, public Gen
     StdLargeVec<Real> &thermal_conductivity;
 };
 
-class WallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -139,11 +139,11 @@ class WallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDel
 //----------------------------------------------------------------------
 //  Impose constraints on the objective function
 //----------------------------------------------------------------------
-class ImposeObjectiveFunction : public LocalDynamics, public GeneralDataDelegateSimple
+class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
           species_modified_(*particles_->getVariableByName<Real>("SpeciesModified")),
           species_recovery_(*particles_->getVariableByName<Real>("SpeciesRecovery")){};
@@ -158,11 +158,11 @@ class ImposeObjectiveFunction : public LocalDynamics, public GeneralDataDelegate
     StdLargeVec<Real> &phi_, &species_modified_, &species_recovery_;
 };
 
-class StoreGlobalPDEResidual : public LocalDynamics, public GeneralDataDelegateSimple
+class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit StoreGlobalPDEResidual(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           residual_T_local_(*particles_->getVariableByName<Real>("ResidualTLocal")),
           residual_T_global_(*particles_->getVariableByName<Real>("ResidualTGlobal")){};
 

@@ -6,7 +6,7 @@ namespace relax_dynamics
 {
 //=================================================================================================//
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
-    : BaseLocalDynamics<BodyPartByCell>(body_part), RelaxDataDelegateSimple(body_part.getSPHBody()),
+    : BaseLocalDynamics<BodyPartByCell>(body_part), DataDelegateSimple(body_part.getSPHBody()),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
       particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
@@ -80,7 +80,7 @@ void ShellNormalDirectionPrediction::correctNormalDirection()
 }
 //=================================================================================================//
 ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
-    : RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
+    : DataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
@@ -97,7 +97,7 @@ void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Re
 //=================================================================================================//
 ShellNormalDirectionPrediction::PredictionConvergenceCheck::
     PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
-    : LocalDynamicsReduce<ReduceAND>(sph_body), RelaxDataDelegateSimple(sph_body),
+    : LocalDynamicsReduce<ReduceAND>(sph_body), DataDelegateSimple(sph_body),
       convergence_criterion_(convergence_criterion),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
       n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) {}
@@ -109,7 +109,7 @@ bool ShellNormalDirectionPrediction::PredictionConvergenceCheck::reduce(size_t i
 //=================================================================================================//
 ShellNormalDirectionPrediction::ConsistencyCorrection::
     ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion)
-    : LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       consistency_criterion_(consistency_criterion),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {
@@ -151,7 +151,7 @@ void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t i
 //=================================================================================================//
 ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::ConsistencyUpdatedCheck(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceAND>(sph_body),
-      RelaxDataDelegateSimple(sph_body),
+      DataDelegateSimple(sph_body),
       updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) {}
 //=================================================================================================//
 bool ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)

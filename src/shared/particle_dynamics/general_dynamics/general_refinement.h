@@ -40,7 +40,7 @@ class ParticleSplitAndMerge;
  * @class ComputeDensityErrorInner
  * @brief compute error of particle splitting and merging
  */
-class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegateInner
+class ComputeDensityErrorInner : public LocalDynamics, public DataDelegateInner
 {
   public:
     ComputeDensityErrorInner(BaseInnerRelation &inner_relation);
@@ -81,11 +81,11 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
  * @class ComputeDensityErrorWithWall
  * @brief compute error of particle splitting and merging
  */
-class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public GeneralDataDelegateContactOnly
+class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public DataDelegateContactOnly
 {
   public:
     ComputeDensityErrorWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : ComputeDensityErrorInner(inner_relation), GeneralDataDelegateContactOnly(contact_relation)
+        : ComputeDensityErrorInner(inner_relation), DataDelegateContactOnly(contact_relation)
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
@@ -107,7 +107,7 @@ class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public Gene
  * @class ParticleRefinementWithPrescribedArea
  * @brief particle split in prescribed area.
  */
-class ParticleRefinementWithPrescribedArea : public LocalDynamics, public GeneralDataDelegateSimple
+class ParticleRefinementWithPrescribedArea : public LocalDynamics, public DataDelegateSimple
 {
   public:
     ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region);

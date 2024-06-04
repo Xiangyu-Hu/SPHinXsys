@@ -96,7 +96,7 @@ class CompositeSolid : public ElasticSolid
  */
 class MaterialIdInitialization
     : public LocalDynamics,
-      public GeneralDataDelegateSimple
+      public DataDelegateSimple
 {
   public:
     explicit MaterialIdInitialization(SPHBody &sph_body);

@@ -100,12 +100,12 @@ class Heart : public ComplexShape
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 /** Imposing diffusion boundary condition */
-class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public GeneralDataDelegateSimple
+class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          GeneralDataDelegateSimple(body_part.getSPHBody()),
+          DataDelegateSimple(body_part.getSPHBody()),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
@@ -135,7 +135,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public Genera
 };
 
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberAndSheetDirections : public LocalDynamics, public GeneralDataDelegateSimple
+class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
@@ -146,7 +146,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public GeneralDataD
 
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name))
@@ -209,11 +209,11 @@ class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public GeneralDataDelegateSimple
+class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
@@ -254,11 +254,11 @@ class ParticleGenerator<HeartObserver> : public ParticleGenerator<Observer>
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentToPKJ : public LocalDynamics, public GeneralDataDelegateSimple
+class ApplyStimulusCurrentToPKJ : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 

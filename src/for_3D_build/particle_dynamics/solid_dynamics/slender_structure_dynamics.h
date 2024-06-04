@@ -41,15 +41,12 @@ namespace SPH
 {
 namespace slender_structure_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> BarDataSimple;
-typedef DataDelegateInner<BaseParticles> BarDataInner;
-
 /**
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
 class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                                public BarDataSimple
+                                public DataDelegateSimple
 {
   protected:
     Real CFL_;
@@ -73,7 +70,7 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
  * @class BarCorrectConfiguration
  * @brief obtain the corrected initial configuration in strong form
  */
-class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
+class BarCorrectConfiguration : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BarCorrectConfiguration(BaseInnerRelation &inner_relation);
@@ -109,7 +106,7 @@ class BarCorrectConfiguration : public LocalDynamics, public BarDataInner
  * @brief computing deformation gradient tensor for bar
  * TODO: need a test case for this.
  */
-class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
+class BarDeformationGradientTensor : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BarDeformationGradientTensor(BaseInnerRelation &inner_relation);
@@ -155,7 +152,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public BarDataInner
  * @class BaseBarRelaxation
  * @brief abstract class for preparing bar relaxation
  */
-class BaseBarRelaxation : public LocalDynamics, public BarDataInner
+class BaseBarRelaxation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseBarRelaxation(BaseInnerRelation &inner_relation);
@@ -237,7 +234,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
-    const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
+    const Real inv_W0_ = 1.0 / body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;
 
     Real gpt = sqrt(3.0 / 5.0);
@@ -312,7 +309,7 @@ class BarStressRelaxationSecondHalf : public BaseBarRelaxation
 /**@class ConstrainBarBodyRegion
  * @brief Fix the position and angle of a bar body part.
  */
-class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public BarDataSimple
+class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     ConstrainBarBodyRegion(BodyPartByParticle &body_part);
@@ -328,7 +325,7 @@ class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, pub
  * The axis must be 0 or 1.
  * Note that the average values for FSI are prescribed also.
  */
-class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public BarDataSimple
+class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
@@ -347,7 +344,7 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
  * @class DistributingPointForcesToBar
  * @brief Distribute a series of point forces to its contact Bar bodies.
  */
-class DistributingPointForcesToBar : public LocalDynamics, public BarDataSimple
+class DistributingPointForcesToBar : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;

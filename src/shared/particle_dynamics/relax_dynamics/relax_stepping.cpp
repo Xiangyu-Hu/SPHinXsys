@@ -6,12 +6,12 @@ namespace relax_dynamics
 {
 //=================================================================================================//
 RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
-    : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
+    : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
       relax_shape_(sph_body_.getInitialShape()){};
 //=================================================================================================//
 RelaxationResidue<Inner<>>::
     RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
-    : RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),
+    : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
       relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape())
                         .getSubShapeByName(sub_shape_name)) {}
 //=================================================================================================//
@@ -52,7 +52,7 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      RelaxDataDelegateSimple(sph_body),
+      DataDelegateSimple(sph_body),
       residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")),
       h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -67,7 +67,7 @@ Real RelaxationScaling::outputResult(Real reduced_value)
 }
 //=================================================================================================//
 PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
-    : LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       sph_adaptation_(sph_body.sph_adaptation_),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),
       residue_(*particles_->getVariableByName<Vecd>("ZeroOrderResidue")) {}
@@ -79,7 +79,7 @@ void PositionRelaxation::update(size_t index_i, Real dt_square)
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape)
-    : LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       pos_(*base_particles_.getVariableByName<Vecd>("Position")),

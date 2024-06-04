@@ -39,7 +39,7 @@ namespace SPH
  * @class BaseGhostCreation
  * @brief Base class for the ghost particle
  */
-class GhostCreationFromMesh : public GeneralDataDelegateSimple
+class GhostCreationFromMesh : public DataDelegateSimple
 {
   public:
     GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
@@ -65,7 +65,7 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
 //----------------------------------------------------------------------
 //	BoundaryConditionSetupInFVM
 //----------------------------------------------------------------------
-class BoundaryConditionSetupInFVM : public GeneralDataDelegateInner
+class BoundaryConditionSetupInFVM : public DataDelegateInner
 {
   public:
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation);

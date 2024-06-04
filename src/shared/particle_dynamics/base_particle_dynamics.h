@@ -102,32 +102,32 @@ class DataDelegateEmptyBase
  * @class DataDelegateSimple
  * @brief prepare data for simple particle dynamics.
  */
-template <class ParticlesType = BaseParticles>
 class DataDelegateSimple
 {
   public:
     explicit DataDelegateSimple(SPHBody &sph_body)
-        : particles_(DynamicCast<ParticlesType>(this, &sph_body.getBaseParticles())){};
+        : body_(sph_body),
+          particles_(&sph_body.getBaseParticles()){};
     virtual ~DataDelegateSimple(){};
-    ParticlesType *getParticles() { return particles_; };
+    SPHBody &getBody() { return body_; };
+    BaseParticles *getParticles() { return particles_; };
 
   protected:
-    ParticlesType *particles_;
+    SPHBody &body_;
+    BaseParticles *particles_;
 };
 
 /**
  * @class DataDelegateInner
  * @brief prepare data for inner particle dynamics
  */
-template <class ParticlesType = BaseParticles,
-          class BaseDataDelegateType = DataDelegateSimple<ParticlesType>>
-class DataDelegateInner : public BaseDataDelegateType
+class DataDelegateInner : public DataDelegateSimple
 {
     BaseInnerRelation &inner_relation_;
 
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
-        : BaseDataDelegateType(inner_relation.getSPHBody()),
+        : DataDelegateSimple(inner_relation.getSPHBody()),
           inner_relation_(inner_relation),
           inner_configuration_(inner_relation.inner_configuration_){};
     virtual ~DataDelegateInner(){};
@@ -142,24 +142,32 @@ class DataDelegateInner : public BaseDataDelegateType
  * @class DataDelegateContact
  * @brief prepare data for contact particle dynamics
  */
-template <class ParticlesType = BaseParticles,
-          class ContactParticlesType = BaseParticles,
-          class BaseDataDelegateType = DataDelegateSimple<ParticlesType>>
-class DataDelegateContact : public BaseDataDelegateType
+template <class BaseDataDelegateType>
+class BaseDataDelegateContact : public BaseDataDelegateType
 {
     BaseContactRelation &contact_relation_;
 
   public:
-    explicit DataDelegateContact(BaseContactRelation &contact_relation);
-    virtual ~DataDelegateContact(){};
-    void addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation);
+    explicit BaseDataDelegateContact(BaseContactRelation &contact_relation)
+    {
+        RealBodyVector contact_sph_bodies = contact_relation.contact_bodies_;
+        for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
+        {
+            contact_bodies_.push_back(contact_sph_bodies[i]);
+            contact_particles_.push_back(&contact_sph_bodies[i]->getBaseParticles());
+            contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
+        }
+    };
+    virtual ~BaseDataDelegateContact(){};
     BaseContactRelation &getBodyRelation() { return contact_relation_; };
 
   protected:
     SPHBodyVector contact_bodies_;
-    StdVec<ContactParticlesType *> contact_particles_;
+    StdVec<BaseParticles *> contact_particles_;
     /** Configurations for particle interaction between bodies. */
     StdVec<ParticleConfiguration *> contact_configuration_;
 };
+using DataDelegateContact = BaseDataDelegateContact<DataDelegateSimple>;
+using DataDelegateContactOnly = BaseDataDelegateContact<DataDelegateEmptyBase>;
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

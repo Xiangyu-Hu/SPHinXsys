@@ -37,14 +37,14 @@ namespace SPH
 
 template <class DynamicsIdentifier, typename DataType>
 class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>,
-                           public GeneralDataDelegateSimple
+                           public DataDelegateSimple
 {
   public:
     ConstantConstraint(DynamicsIdentifier &identifier,
                        const std::string &variable_name,
                        DataType constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          GeneralDataDelegateSimple(identifier.getSPHBody()),
+          DataDelegateSimple(identifier.getSPHBody()),
           constrained_variable_(*particles_->getVariableByName<DataType>(variable_name)),
           constrained_value_(constrained_value){};
     virtual ~ConstantConstraint(){};
@@ -67,7 +67,7 @@ class LevelSetShape;
  * r = r + phi * norm (vector distance to face)
  */
 class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                             public GeneralDataDelegateSimple
+                             public DataDelegateSimple
 {
   public:
     ShapeSurfaceBounding(NearShapeSurface &body_part);
@@ -89,12 +89,12 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
  * 			and before updating particle position.
  */
 template <class DynamicsIdentifier>
-class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public GeneralDataDelegateSimple
+class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public DataDelegateSimple
 {
   public:
     explicit MotionConstraint(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          GeneralDataDelegateSimple(identifier.getSPHBody()),
+          DataDelegateSimple(identifier.getSPHBody()),
           pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
           pos0_(*this->particles_->template registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
           vel_(*this->particles_->template registerSharedVariable<Vecd>("Velocity")){};

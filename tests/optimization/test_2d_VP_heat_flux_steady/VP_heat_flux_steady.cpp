@@ -88,11 +88,11 @@ MultiPolygon createHeatFluxBoundary()
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -106,11 +106,11 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public GeneralDataDe
     StdLargeVec<Real> &phi_;
 };
 
-class WallBoundaryInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
           heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux"))) {}

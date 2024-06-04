@@ -332,11 +332,11 @@ class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByPart
     Real local_diff;
 };
 
-class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -348,11 +348,11 @@ class DiffusionInitialCondition : public LocalDynamics, public GeneralDataDelega
     StdLargeVec<Real> &phi_;
 };
 
-class RobinBoundaryDefinition : public LocalDynamics, public GeneralDataDelegateSimple
+class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit RobinBoundaryDefinition(SolidBody &diffusion_body)
-        : LocalDynamics(diffusion_body), GeneralDataDelegateSimple(diffusion_body),
+        : LocalDynamics(diffusion_body), DataDelegateSimple(diffusion_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
           phi_convection_(*(this->particles_->template getVariableByName<Real>("PhiConvection"))),

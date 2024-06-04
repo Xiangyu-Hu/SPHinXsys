@@ -48,7 +48,7 @@ void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 }
 //=================================================================================================//
 MaterialIdInitialization::MaterialIdInitialization(SPHBody &sph_body)
-    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       material_id_(*particles_->getVariableByName<int>("MaterialID")),
       pos_(*particles_->getVariableByName<Vecd>("Position")){};
 //=================================================================================================//

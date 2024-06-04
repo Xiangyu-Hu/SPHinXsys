@@ -60,7 +60,7 @@ class RelaxationResidue<Base, DataDelegationType>
 
 template <>
 class RelaxationResidue<Inner<>>
-    : public RelaxationResidue<Base, RelaxDataDelegateInner>
+    : public RelaxationResidue<Base, DataDelegateInner>
 {
   public:
     explicit RelaxationResidue(BaseInnerRelation &inner_relation);
@@ -115,7 +115,7 @@ class RelaxationResidue<Contact<>>
  * @brief Obtain the scale for a particle relaxation step
  */
 class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>,
-                          public RelaxDataDelegateSimple
+                          public DataDelegateSimple
 {
   public:
     explicit RelaxationScaling(SPHBody &sph_body);
@@ -133,7 +133,7 @@ class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>,
  * @brief update the particle position for a relaxation step
  */
 class PositionRelaxation : public LocalDynamics,
-                           public RelaxDataDelegateSimple
+                           public DataDelegateSimple
 {
   protected:
     SPHAdaptation *sph_adaptation_;
@@ -146,7 +146,7 @@ class PositionRelaxation : public LocalDynamics,
 };
 
 class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
-                                          public RelaxDataDelegateSimple
+                                          public DataDelegateSimple
 {
   protected:
     StdLargeVec<Real> &h_ratio_, &Vol_;

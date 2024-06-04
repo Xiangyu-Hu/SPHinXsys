@@ -52,7 +52,7 @@ class NablaWV<DataDelegationType>
 
 template <>
 class NablaWV<Inner<>>
-    : public NablaWV<GeneralDataDelegateInner>
+    : public NablaWV<DataDelegateInner>
 {
   public:
     explicit NablaWV(BaseInnerRelation &inner_relation);
@@ -65,11 +65,11 @@ class NablaWV<Inner<>>
 
 template <>
 class NablaWV<Contact<>>
-    : public NablaWV<GeneralDataDelegateContact>
+    : public NablaWV<DataDelegateContact>
 {
   public:
     explicit NablaWV(BaseContactRelation &contact_relation)
-        : NablaWV<GeneralDataDelegateContact>(contact_relation)
+        : NablaWV<DataDelegateContact>(contact_relation)
     {
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {

@@ -46,7 +46,7 @@ namespace SPH
 template <class DynamicsIdentifier>
 class ComputeTotalErrorOrPositiveParameter
     : public BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>,
-      public GeneralDataDelegateSimple
+      public DataDelegateSimple
 {
   protected:
     StdLargeVec<Real> &variable_;
@@ -54,7 +54,7 @@ class ComputeTotalErrorOrPositiveParameter
   public:
     ComputeTotalErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>(identifier),
-          GeneralDataDelegateSimple(identifier.getSPHBody()),
+          DataDelegateSimple(identifier.getSPHBody()),
           variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
     virtual ~ComputeTotalErrorOrPositiveParameter(){};
 

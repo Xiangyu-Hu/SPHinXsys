@@ -4,7 +4,7 @@ namespace SPH
 {
 //=================================================================================================//
 SmearedSurfaceIndication::SmearedSurfaceIndication(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
       smeared_surface_(*particles_->registerSharedVariable<int>("SmearedSurface")) {}
 //=================================================================================================//

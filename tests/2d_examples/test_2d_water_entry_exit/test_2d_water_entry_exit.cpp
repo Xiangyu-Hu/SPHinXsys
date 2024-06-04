@@ -62,11 +62,11 @@ class WettingFluidBody : public MultiPolygonShape
     }
 };
 
-class WettingFluidBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class WettingFluidBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -113,11 +113,11 @@ class WettingWallBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
     }
 };
-class WettingWallBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class WettingWallBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -141,11 +141,11 @@ class WettingCylinderBody : public MultiPolygonShape
         multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     }
 };
-class WettingCylinderBodyInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class WettingCylinderBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 

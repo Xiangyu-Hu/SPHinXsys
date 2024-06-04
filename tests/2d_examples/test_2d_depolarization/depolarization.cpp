@@ -49,11 +49,11 @@ class MuscleBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DepolarizationInitialCondition : public LocalDynamics, public GeneralDataDelegateSimple
+class DepolarizationInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit DepolarizationInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(*particles_->getVariableByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 

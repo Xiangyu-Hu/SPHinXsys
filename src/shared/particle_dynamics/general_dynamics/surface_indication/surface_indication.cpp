@@ -5,7 +5,7 @@ namespace SPH
 //=================================================================================================//
 FreeSurfaceIndication<Inner<>>::
     FreeSurfaceIndication(BaseInnerRelation &inner_relation)
-    : FreeSurfaceIndication<GeneralDataDelegateInner>(inner_relation),
+    : FreeSurfaceIndication<DataDelegateInner>(inner_relation),
       smoothing_length_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void FreeSurfaceIndication<Inner<>>::interaction(size_t index_i, Real dt)
@@ -101,7 +101,7 @@ void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 FreeSurfaceIndication<Contact<NonWetting>>::FreeSurfaceIndication(BaseContactRelation &contact_relation)
-    : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation)
+    : FreeSurfaceIndication<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

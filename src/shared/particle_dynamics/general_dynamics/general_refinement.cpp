@@ -6,7 +6,7 @@ namespace SPH
 {
 //=================================================================================================//
 ComputeDensityErrorInner::ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
       rho0_(sph_body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
@@ -302,7 +302,7 @@ Real ComputeDensityErrorWithWall::
 //=================================================================================================//
 ParticleRefinementWithPrescribedArea::
     ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region)
-    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       refinement_region_bounds_(refinement_region.getBounds()),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
       inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),

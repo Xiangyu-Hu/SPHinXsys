@@ -128,12 +128,12 @@ MultiPolygon createBeamConstrainShape()
 //	calculate correction matrix B to keep the accuracy
 //----------------------------------------------------------------------
 
-class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralDataDelegateInner
+class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegateInner
 {
   public:
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
-          GeneralDataDelegateInner(inner_relation),
+          DataDelegateInner(inner_relation),
           beta_(beta), alpha_(alpha), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
           B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
           pos_(*base_particles_.getVariableByName<Vecd>("Position"))

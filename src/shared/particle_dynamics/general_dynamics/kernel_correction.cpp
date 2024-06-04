@@ -26,7 +26,7 @@ void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 //=================================================================================================//
 LinearGradientCorrectionMatrix<Contact<>>::
     LinearGradientCorrectionMatrix(BaseContactRelation &contact_relation)
-    : LinearGradientCorrectionMatrix<GeneralDataDelegateContact>(contact_relation)
+    : LinearGradientCorrectionMatrix<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -55,7 +55,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
 //=================================================================================================//
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
-    : KernelGradientCorrection<GeneralDataDelegateInner>(inner_relation),
+    : KernelGradientCorrection<DataDelegateInner>(inner_relation),
       average_correction_matrix_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
@@ -66,7 +66,7 @@ void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 KernelGradientCorrection<Contact<>>::
     KernelGradientCorrection(BaseContactRelation &contact_relation)
-    : KernelGradientCorrection<GeneralDataDelegateContact>(contact_relation)
+    : KernelGradientCorrection<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

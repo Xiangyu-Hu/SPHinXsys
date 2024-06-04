@@ -60,7 +60,7 @@ class FreeSurfaceIndication<DataDelegationType>
 
 template <>
 class FreeSurfaceIndication<Inner<>>
-    : public FreeSurfaceIndication<GeneralDataDelegateInner>
+    : public FreeSurfaceIndication<DataDelegateInner>
 {
   public:
     explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
@@ -91,11 +91,11 @@ using SpatialTemporalFreeSurfaceIndicationInner = FreeSurfaceIndication<Inner<Sp
 
 template <>
 class FreeSurfaceIndication<Contact<>>
-    : public FreeSurfaceIndication<GeneralDataDelegateContact>
+    : public FreeSurfaceIndication<DataDelegateContact>
 {
   public:
     explicit FreeSurfaceIndication(BaseContactRelation &contact_relation)
-        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation)
+        : FreeSurfaceIndication<DataDelegateContact>(contact_relation)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
@@ -120,7 +120,7 @@ class NonWetting;
 
 template <>
 class FreeSurfaceIndication<Contact<NonWetting>>
-    : public FreeSurfaceIndication<GeneralDataDelegateContact>
+    : public FreeSurfaceIndication<DataDelegateContact>
 {
   public:
     FreeSurfaceIndication(BaseContactRelation &contact_relation);

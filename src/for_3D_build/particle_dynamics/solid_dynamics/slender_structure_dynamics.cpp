@@ -8,8 +8,8 @@ namespace slender_structure_dynamics
 //=================================================================================================//
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      BarDataSimple(sph_body), CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      DataDelegateSimple(sph_body), CFL_(CFL),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       force_(*particles_->getVariableByName<Vecd>("Force")),
       angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
@@ -43,7 +43,7 @@ Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 BarCorrectConfiguration::
     BarCorrectConfiguration(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
@@ -51,9 +51,9 @@ BarCorrectConfiguration::
 //=================================================================================================//
 BarDeformationGradientTensor::
     BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       pseudo_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
@@ -65,11 +65,11 @@ BarDeformationGradientTensor::
       F_b_bending_(*particles_->registerSharedVariable<Matd>("BinormalBending")) {}
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       thickness_(*particles_->getVariableByName<Real>("Thickness")),
       width_(*particles_->getVariableByName<Real>("Width")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(*particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
@@ -99,9 +99,9 @@ BarStressRelaxationFirstHalf::
     BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                  int number_of_gaussian_points, bool hourglass_control)
     : BaseBarRelaxation(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(*particles_->getVariableByName<Real>("Density")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
@@ -290,7 +290,7 @@ void BarStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainBarBodyRegion::
     ConstrainBarBodyRegion(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
       angular_b_vel_(*particles_->getVariableByName<Vecd>("BinormalAngularVelocity")) {}
@@ -303,7 +303,7 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), BarDataSimple(sph_body_),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
       axis_(axis), pos_(*particles_->getVariableByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
@@ -324,7 +324,7 @@ DistributingPointForcesToBar::
     DistributingPointForcesToBar(SPHBody &sph_body, std::vector<Vecd> point_forces,
                                  std::vector<Vecd> reference_positions, Real time_to_full_external_force,
                                  Real particle_spacing_ref, Real h_spacing_ratio)
-    : LocalDynamics(sph_body), BarDataSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
@@ -345,8 +345,8 @@ DistributingPointForcesToBar::
 //=================================================================================================//
 void DistributingPointForcesToBar::getWeight()
 {
-    Kernel *kernel_ = sph_body_.sph_adaptation_->getKernel();
-    Real reference_smoothing_length = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
+    Kernel *kernel_ = body_.sph_adaptation_->getKernel();
+    Real reference_smoothing_length = body_.sph_adaptation_->ReferenceSmoothingLength();
     Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
     Real h_ratio = reference_smoothing_length / smoothing_length;
     Real cutoff_radius_sqr = pow(2.0 * smoothing_length, 2);
