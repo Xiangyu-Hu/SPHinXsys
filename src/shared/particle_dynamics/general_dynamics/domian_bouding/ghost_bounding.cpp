@@ -42,7 +42,7 @@ PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
       upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
       cell_linked_list_(real_body.getCellLinkedList()),
-      Vol_(base_particles_.VolumetricMeasures()) {}
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::setupDynamics(Real dt)
 {
@@ -71,7 +71,7 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkLow
         particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
     {
         mutex_create_ghost_particle_.lock();
-        base_particles_.updateGhostParticle(lower_ghost_bound_.second, index_i);
+        particles_->updateGhostParticle(lower_ghost_bound_.second, index_i);
         pos_[lower_ghost_bound_.second] = particle_position + periodic_translation_;
         /** insert ghost particle to cell linked list */
         cell_linked_list_.InsertListDataEntry(lower_ghost_bound_.second, pos_[lower_ghost_bound_.second]);
@@ -88,7 +88,7 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkUpp
         particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
     {
         mutex_create_ghost_particle_.lock();
-        base_particles_.updateGhostParticle(upper_ghost_bound_.second, index_i);
+        particles_->updateGhostParticle(upper_ghost_bound_.second, index_i);
         pos_[upper_ghost_bound_.second] = particle_position - periodic_translation_;
         /** insert ghost particle to cell linked list */
         cell_linked_list_.InsertListDataEntry(upper_ghost_bound_.second, pos_[upper_ghost_bound_.second]);
@@ -105,17 +105,17 @@ PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::
       ghost_boundary_(ghost_boundary),
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
       upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
-      sorted_id_(base_particles_.sorted_id_) {}
+      sorted_id_(particles_->sorted_id_) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 {
-    base_particles_.copyFromAnotherParticle(index_i, sorted_id_[index_i]);
+    particles_->copyFromAnotherParticle(index_i, sorted_id_[index_i]);
     pos_[index_i] += periodic_translation_;
 }
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 {
-    base_particles_.copyFromAnotherParticle(index_i, sorted_id_[index_i]);
+    particles_->copyFromAnotherParticle(index_i, sorted_id_[index_i]);
     pos_[index_i] -= periodic_translation_;
 }
 //=================================================================================================//
