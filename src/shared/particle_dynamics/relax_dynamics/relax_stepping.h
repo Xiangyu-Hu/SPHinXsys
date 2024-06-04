@@ -92,11 +92,11 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 
 template <>
 class RelaxationResidue<Contact<>>
-    : public RelaxationResidue<Base, RelaxDataDelegateContact>
+    : public RelaxationResidue<Base, DataDelegateContact>
 {
   public:
     explicit RelaxationResidue(BaseContactRelation &contact_relation)
-        : RelaxationResidue<Base, RelaxDataDelegateContact>(contact_relation)
+        : RelaxationResidue<Base, DataDelegateContact>(contact_relation)
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {

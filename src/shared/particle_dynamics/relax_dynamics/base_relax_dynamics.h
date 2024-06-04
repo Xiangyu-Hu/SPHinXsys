@@ -42,10 +42,6 @@ class LevelSetCorrection;
 
 namespace relax_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> DataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> DataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> DataDelegateContact;
-
 /**
  * @class RandomizeParticlePosition
  * @brief Randomize the initial particle position
