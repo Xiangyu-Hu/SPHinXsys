@@ -8,10 +8,10 @@ namespace solid_dynamics
 RepulsionForce<Contact<Inner<>>>::
     RepulsionForce(BaseInnerRelation &self_contact_relation)
     : RepulsionForce<Base, SolidDataInner>(self_contact_relation, "SelfRepulsionForce"),
-    ForcePrior(&base_particles_, "SelfRepulsionForce"), solid_(particles_->solid_),
-    self_repulsion_density_(*particles_->getVariableByName<Real>("SelfRepulsionDensity")),
-    vel_(particles_->vel_),
-    contact_impedance_(solid_.ReferenceDensity()* sqrt(solid_.ContactStiffness())) {}
+      ForcePrior(&base_particles_, "SelfRepulsionForce"), solid_(particles_->solid_),
+      self_repulsion_density_(*particles_->getVariableByName<Real>("SelfRepulsionDensity")),
+      vel_(particles_->vel_),
+      contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())) {}
 //=================================================================================================//
 void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
 {
@@ -27,19 +27,22 @@ void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
         // force to mimic pressure
         force -= 2.0 * (p_star + impedance_p) * e_ij * inner_neighborhood.dW_ij_[n] * Vol_[index_j];
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(&base_particles_, "RepulsionForce"), solid_(particles_->solid_),
-      repulsion_density_(*particles_->getVariableByName<Real>("RepulsionDensity"))
+RepulsionForce<Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation,
+                                          const std::string &force_name,
+                                          const std::string &density_name,
+                                          const std::string &contact_density_name)
+    : RepulsionForce<Base, ContactDynamicsData>(solid_body_contact_relation, force_name),
+      ForcePrior(&base_particles_, force_name), solid_(particles_->solid_),
+      repulsion_density_(*particles_->getVariableByName<Real>(density_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&contact_particles_[k]->solid_);
         contact_Vol_.push_back(&contact_particles_[k]->Vol_);
-        contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("RepulsionDensity"));
+        contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>(contact_density_name));
     }
 }
 //=================================================================================================//
@@ -50,7 +53,7 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Solid *solid_k = contact_solids_[k];
 
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -64,13 +67,15 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
             force -= 2.0 * p_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Contact<Wall>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, ContactWithWallData>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(&base_particles_, "RepulsionForce"), solid_(particles_->solid_),
-      repulsion_density_(*particles_->getVariableByName<Real>("RepulsionDensity")) 
+RepulsionForce<Contact<Wall>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation,
+                                              const std::string &force_name,
+                                              const std::string &density_name)
+    : RepulsionForce<Base, ContactWithWallData>(solid_body_contact_relation, force_name),
+      ForcePrior(&base_particles_, force_name), solid_(particles_->solid_),
+      repulsion_density_(*particles_->getVariableByName<Real>(density_name))
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
@@ -85,7 +90,7 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -93,21 +98,23 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             Vecd e_ij = contact_neighborhood.e_ij_[n];
 
             // force due to pressure
-            force -= 2.0 * p_i * e_ij * contact_neighborhood.dW_ij_[n] *Vol_k[index_j];
+            force -= 2.0 * p_i * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Wall, Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, ContactDynamicsData>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(&base_particles_, "RepulsionForce")
+RepulsionForce<Wall, Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation,
+                                                const std::string &force_name,
+                                                const std::string &contact_density_name)
+    : RepulsionForce<Base, ContactDynamicsData>(solid_body_contact_relation, force_name),
+      ForcePrior(&base_particles_, force_name)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&contact_particles_[k]->solid_);
         contact_Vol_.push_back(&contact_particles_[k]->Vol_);
-        contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("RepulsionDensity"));
+        contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>(contact_density_name));
     }
 }
 //=================================================================================================//
@@ -116,7 +123,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
         Solid *solid_k = contact_solids_[k];
 
@@ -131,13 +138,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
             force -= 2.0 * p_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
-}
-//=================================================================================================//
-void ShellContactForce::interaction(size_t index_i, Real dt)
-{
-    ContactForce::interaction(index_i, dt);
-    repulsion_force_[index_i] *= particles_->getSPHBody().getSPHBodyResolutionRef();
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
 } // namespace solid_dynamics

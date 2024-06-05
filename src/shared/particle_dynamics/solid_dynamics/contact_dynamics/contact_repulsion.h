@@ -78,7 +78,10 @@ template <>
 class RepulsionForce<Contact<>> : public RepulsionForce<Base, ContactDynamicsData>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation,
+                            const std::string &force_name = "RepulsionForce",
+                            const std::string &density_name = "RepulsionDensity",
+                            const std::string &contact_density_name = "RepulsionDensity");
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -94,14 +97,16 @@ template <> // Computing the repulsion force from a rigid wall.
 class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, ContactWithWallData>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation,
+                            const std::string &force_name = "RepulsionForce",
+                            const std::string &density_name = "RepulsionDensity");
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
 };
 using ContactForceFromWall = RepulsionForce<Contact<Wall>>;
 
@@ -110,7 +115,9 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, ContactDynam
                                         public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation,
+                            const std::string &force_name = "RepulsionForce",
+                            const std::string &contact_density_name = "RepulsionDensity");
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -119,13 +126,6 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, ContactDynam
     StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 };
 using ContactForceToWall = RepulsionForce<Wall, Contact<>>;
-
-class ShellContactForce : public RepulsionForce<Contact<>>
-{
-  public:
-    using RepulsionForce::RepulsionForce;
-    void interaction(size_t index_i, Real dt = 0.0);
-};
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // CONTACT_REPULSION_H
