@@ -71,7 +71,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
-    Vec3d particle(0);
+    Vec3d particle =  Vec3d::Zero();
     unsigned int count = 0;
     Real value = 0;
 
@@ -106,7 +106,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     Real unit_mm = 1e-3;
     Real radius = 50 * scale;   // 50 mm
     Real thickness = 1 * scale; // 1 mm
-    Vec3d center(0);
+    Vec3d center = Vec3d::Zero();
     // resolution
     Real dp = dp_ratio * thickness;
     Real total_area = 0.5 * 4 * Pi * radius * radius;
@@ -149,7 +149,6 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     shell_body.addDerivedBodyStateForRecording<Displacement>();
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.writeToFile(0);
-
     // methods
     InnerRelation shell_body_inner(shell_body);
 
@@ -166,10 +165,11 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
+    StdLargeVec<Vec3d> &position = *shell_particles->getVariableByName<Vec3d>("Position");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < shell_body.getBaseParticles().ParticlePositions().size(); ++i)
-            if (shell_body.getBaseParticles().ParticlePositions()[i][2] < 0.67 * dp)
+        for (size_t i = 0; i < position.size(); ++i)
+            if (position[i][2] < 0.67 * dp)
                 ids.push_back(i);
         return ids;
     }();
@@ -188,12 +188,11 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     corrected_configuration.exec();
     apply_constant_gravity.exec();
 
-    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     {     // tests on initialization
         { // checking particle distances - avoid bugs of reading file
             Real min_rij = MaxReal;
             Real max_rij = 0;
-            for (size_t i = 0; i < pos0_.size(); ++i)
+            for (size_t i = 0; i < position.size(); ++i)
             {
                 Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -211,7 +210,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         }
 
         // test volume
-        StdLargeVec<Real> &Vol_ = shell_particles->VolumetricMeasures();
+        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableByName<Real>("VolumetricMeasure");
         StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
         Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;

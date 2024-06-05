@@ -104,7 +104,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
-    Vec3d particle(0);
+    Vec3d particle = Vec3d::Zero();
     unsigned int count = 0;
     Real value = 0;
 
