@@ -51,6 +51,8 @@ Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector,
 
 /** get the rotation from pseudo-normal for finite deformation. */
 Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
+/** get the rotation from pseudo-binormal for finite deformation. */
+Vec3d getRotationFromPseudoNormalForFiniteDeformation_b(const Vec3d &dpseudo_b_n_d2t, const Vec3d &rotation_b, const Vec3d &angular_b_vel, Real dt);
 
 /** get the rotation from pseudo-normal for small deformation. */
 Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_b_n_d2t, const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
