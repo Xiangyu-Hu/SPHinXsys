@@ -223,18 +223,13 @@ class SurfaceContactRelationFromShell : public SurfaceContactRelation
  * @class SurfaceContactRelationFromShellToShell
  * @brief The relation between a shell body and its contact shell bodies
  */
-class SurfaceContactRelationFromShellToShell : public SurfaceContactRelationFromShell
+class SurfaceContactRelationFromShellToShell : public SurfaceContactRelationToShell
 {
   public:
     SurfaceContactRelationFromShellToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections);
     SurfaceContactRelationFromShellToShell(SelfSurfaceContactRelation &solid_body_relation_self_contact,
                                            const RealBodyVector &contact_bodies, const StdVec<bool> &normal_corrections)
         : SurfaceContactRelationFromShellToShell(*solid_body_relation_self_contact.real_body_, contact_bodies, normal_corrections){};
-    void updateConfiguration() override;
-
-  private:
-    UniquePtrsKeeper<NeighborBuilderSurfaceContactToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
-    StdVec<NeighborBuilderSurfaceContactToShell *> get_shell_contact_neighbors_;
 };
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H
