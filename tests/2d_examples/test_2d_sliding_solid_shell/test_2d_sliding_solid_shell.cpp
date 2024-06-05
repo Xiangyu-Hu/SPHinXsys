@@ -16,7 +16,7 @@ const Real angle = 10.0 * M_PI / 180.0; /**< angle of the slope. */
 const Real Lx = DL * cos(angle);
 const Real Ly = DL * sin(angle);
 const Real resolution_ref = L / 20.0; /**< reference particle spacing. */
-const Real resolution_shell = 0.5 * resolution_ref;
+const Real resolution_shell = resolution_ref;
 const Real thickness_shell = resolution_ref;
 const Real BW = resolution_ref * 4; /**< wall width for BCs. */
 /** Domain bounds of the system. */
@@ -90,8 +90,7 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    auto wall_particle_generator = wall_boundary.makeSelfDefined<WallBoundaryParticleGenerator>();
-    wall_boundary.generateParticles(wall_particle_generator);
+    wall_boundary.generateParticles(WallBoundaryParticleGenerator(wall_boundary));
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
     cube_observer.generateParticles<Observer>(observation_location);
@@ -125,15 +124,15 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> free_cube_update_contact_density(free_cube_contact);
-    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> free_cube_update_contact_density(free_cube_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact, "RepulsionForce", "RepulsionDensityToShell");
     /** Damping*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    free_cube.addBodyStateForRecording<Real>("RepulsionDensity");
+    free_cube.addBodyStateForRecording<Real>("RepulsionDensityToShell");
     free_cube.addBodyStateForRecording<Vecd>("RepulsionForce");
     wall_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     /** Output the body states. */
