@@ -221,25 +221,36 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 };
 
 /**
+ * @class BaseNeighborBuilderToShell
+ * @brief A base neighbor builder functor for solid/shell or fluid/shell contact relation.
+ */
+class BaseNeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
+{
+  public:
+    BaseNeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+
+  protected:
+    void update_neighbors(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i,
+                          const ListData &list_data_j,
+                          Real radius, Real offset_W_ij);
+
+  private:
+    Real direction_corrector_;
+};
+
+/**
  * @class NeighborBuilderContactToShell
  * @brief A contact neighbor builder functor for contact relation from fluid to shell.
  */
-class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
+class NeighborBuilderContactToShell : public BaseNeighborBuilderContactToShell
 {
   public:
     NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
     {
-        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius());
-    }
-
-  private:
-    Real direction_corrector_;
-
-  protected:
-    void update_neighbors(Neighborhood &neighborhood,
-                          const Vecd &pos_i, size_t index_i, const ListData &list_data_j, Real radius);
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius(), 0.0);
+    };
 };
 
 /**
@@ -286,24 +297,27 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
     StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
     StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
     StdLargeVec<Vecd> &pos0_;
+    Real offset_W_ij_;
 };
 
 /**
  * @class NeighborBuilderSurfaceContactToShell
  * @brief A solid contact neighbor builder functor between solid and a shell
  */
-class NeighborBuilderSurfaceContactToShell : public NeighborBuilderContactToShell
+class NeighborBuilderSurfaceContactToShell : public BaseNeighborBuilderContactToShell
 {
   public:
     NeighborBuilderSurfaceContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
     {
-        update_neighbors(neighborhood, pos_i, index_i, list_data_j, particle_distance_ave_);
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius(), 0.0);
     }
 
   private:
     Real particle_distance_ave_;
+    Real direction_corrector_;
+    Real offset_W_ij_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

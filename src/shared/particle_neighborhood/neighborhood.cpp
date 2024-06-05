@@ -249,19 +249,15 @@ void BaseNeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborh
     neighborhood.e_ij_[current_size] = e_ij;
 }
 //=================================================================================================//
-NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
+BaseNeighborBuilderContactToShell::BaseNeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactShell(contact_body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    Real fluid_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
-    Real shell_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
-    if (fluid_reference_spacing < shell_reference_spacing)
-        throw std::runtime_error("NeighborBuilderContactToShell: fluid spacing should be larger or equal than shell spacing...");
-    kernel_ = body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
-void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
-                                                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j, Real radius)
+void BaseNeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
+                                                         const Vecd &pos_i, size_t index_i, const ListData &list_data_j,
+                                                         Real radius, Real offset_W_ij)
 {
     size_t index_j = list_data_j.first;
 
@@ -271,7 +267,7 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
 
     if (distance < radius)
     {
-        Real W_ijV_j_ttl = kernel_->W(distance, displacement);
+        Real W_ijV_j_ttl = std::max(kernel_->W(distance, displacement) - offset_W_ij, 0.0);
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
@@ -298,7 +294,7 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
             const Real Vol_j_dummy = factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
-            W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
+            W_ijV_j_ttl += std::max(kernel_->W(distance_dummy, displacement_dummy) - offset_W_ij, 0.0) * Vol_j_dummy;
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
@@ -319,15 +315,21 @@ void NeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborhood,
     }
 };
 //=================================================================================================//
+NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
+    : BaseNeighborBuilderContactToShell(body, contact_body, normal_correction)
+{
+    Real fluid_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
+    Real shell_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
+    if (fluid_reference_spacing < shell_reference_spacing)
+        throw std::runtime_error("NeighborBuilderContactToShell: fluid spacing should be larger or equal than shell spacing...");
+    kernel_ = body.sph_adaptation_->getKernel();
+}
+//=================================================================================================//
 NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactShell(body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
-    Real shell_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
-    Real fluid_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
-    if (fluid_reference_spacing < shell_reference_spacing)
-        throw std::runtime_error("NeighborBuilderContactFromShell: fluid spacing should be larger or equal than shell spacing...");
-    kernel_ = contact_body.sph_adaptation_->getKernel();
+    kernel_ = NeighborBuilder::chooseKernel(body, contact_body);
 }
 //=================================================================================================//
 void NeighborBuilderContactFromShell::operator()(Neighborhood &neighborhood,
@@ -408,22 +410,23 @@ NeighborBuilderShellSelfContact::
     // create a unreduced kernel for shell self contact
     Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(smoothing_length);
+    offset_W_ij_ = 0;
 }
 //=================================================================================================//
 void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
                                                  const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 {
-    size_t index_j = std::get<0>(list_data_j);
+    size_t index_j = list_data_j.first;
 
-    const Vecd pos_j = std::get<1>(list_data_j);
+    const Vecd pos_j = list_data_j.second;
     const Vecd displacement = pos_i - pos_j;
     const Real distance = displacement.norm();
     const Real distance0 = (pos0_[index_i] - pos0_[index_j]).norm();
 
     // only particles within 1*dp distance should have force
-    if (distance < particle_distance_ && distance0 > kernel_->CutOffRadius())
+    if (distance < kernel_->CutOffRadius() && distance0 > kernel_->CutOffRadius())
     {
-        Real W_ijV_j_ttl = kernel_->W(distance, displacement);
+        Real W_ijV_j_ttl = std::max(kernel_->W(distance, displacement) - offset_W_ij_, 0.0);
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
@@ -440,7 +443,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
 
         int counter = 0;
         // only add particles within 1*dp distance
-        while (direction_corrector != 0 && distance_dummy < particle_distance_)
+        while (direction_corrector != 0 && distance_dummy < kernel_->CutOffRadius())
         {
             counter++;
             const Real factor_1 = 1 + counter * k1_j * particle_distance_;
@@ -450,7 +453,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
             const Real Vol_j_dummy = factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
-            W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
+            W_ijV_j_ttl += std::max(kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy - offset_W_ij_, 0.0);
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
@@ -463,7 +466,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
         Vecd e_ij_corrected = dW_ijV_j_e_ij_ttl / dW_ijV_j_ttl;
         Real W_ij_corrected = W_ijV_j_ttl * particle_distance_ / thickness_[index_j];
         // change surface mass and area to volumetric mass and volume
-        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_ * particle_distance_;
+        Real dW_ijV_j_corrected = dW_ijV_j_ttl * particle_distance_;
 
         // create new neighborhood
         neighborhood.current_size_ >= neighborhood.allocated_size_
@@ -474,12 +477,14 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
 };
 //=================================================================================================//
 NeighborBuilderSurfaceContactToShell::NeighborBuilderSurfaceContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
-    : NeighborBuilderContactToShell(body, contact_body, normal_correction),
-      particle_distance_ave_(0.5 * (particle_distance_ + body.getSPHBodyResolutionRef()))
+    : BaseNeighborBuilderContactToShell(body, contact_body, normal_correction),
+      particle_distance_ave_(0.5 * (body.getSPHBodyResolutionRef() + contact_body.getSPHBodyResolutionRef())),
+      direction_corrector_(normal_correction ? -1 : 1)
 {
     Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
     Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
+    offset_W_ij_ = 0;
 }
 //=================================================================================================//
 } // namespace SPH
