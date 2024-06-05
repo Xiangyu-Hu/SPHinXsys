@@ -116,13 +116,23 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, ContactDynami
  * @class ShellSelfContactDensityUsingDummyParticles
  * @brief Computing the contact density due to shell contact using dummy particle.
  */
-class ShellSelfContactDensityUsingDummyParticles : public RepulsionDensitySummation<Inner<>>
+class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, SolidDataInner>
 {
   public:
-    explicit ShellSelfContactDensityUsingDummyParticles(ShellSelfContactRelation &self_contact_relation);
+    explicit ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation);
+    void interaction(size_t index_i, Real dt = 0.0);
+};
 
-  private:
-    UniquePtrKeeper<Kernel> kernel_keeper_;
+/**
+ * @class ContactDensitySummationToShell
+ * @brief Computing the contact density due to shell contact
+ */
+class ContactDensitySummationToShell : public RepulsionDensitySummation<Base, ContactDynamicsData>
+{
+  public:
+    explicit ContactDensitySummationToShell(SurfaceContactRelationToShell &solid_body_contact_relation);
+    ~ContactDensitySummationToShell() override = default;
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics
 } // namespace SPH
