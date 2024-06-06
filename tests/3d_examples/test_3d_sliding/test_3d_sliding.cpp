@@ -1,0 +1,247 @@
+/**
+ * @file 	Three ring impact.cpp
+ * @brief 	This is the case file for the test of dynamic contacts between shell and solid.
+ * @author  Weiyi Kong, Xiangyu Hu
+ */
+
+#include "sphinxsys.h"
+using namespace SPH;
+
+class WallParticleGenerator : public ParticleGenerator<Surface>
+{
+    const Vec3d center_;
+    const Real length_;
+    const Real width_;
+    const Real dp_;
+
+  public:
+    WallParticleGenerator(SPHBody &sph_body, const Vec3d &center, Real length, Real width, Real dp)
+        : ParticleGenerator<Surface>(sph_body),
+          center_(center),
+          length_(length),
+          width_(width),
+          dp_(dp){};
+    void initializeGeometricVariables() override
+    {
+        Real x = center_.x() - 0.5 * length_;
+        while (x < center_.x() + 0.5 * length_)
+        {
+            Real z = -0.5 * width_;
+            while (z < 0.5 * width_)
+            {
+                initializePositionAndVolumetricMeasure(Vec3d(x, center_.y(), z), dp_ * dp_);
+                initializeSurfaceProperties(Vec3d::UnitY(), dp_);
+                z += dp_;
+            }
+            x += dp_;
+        }
+    }
+};
+
+Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
+{
+    // the physical viscosity is defined in the paper of prof. Hu
+    // https://arxiv.org/pdf/2103.08932.pdf
+    // physical_viscosity = (beta / 4) * sqrt(rho * Young's modulus) * L
+    // beta: shape constant (0.4 for beam)
+    return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
+}
+
+BoundingBox union_bounding_box(const BoundingBox &a, const BoundingBox &b)
+{
+    BoundingBox out = a;
+    out.first_[0] = std::min(a.first_[0], b.first_[0]);
+    out.first_[1] = std::min(a.first_[1], b.first_[1]);
+    out.first_[2] = std::min(a.first_[2], b.first_[2]);
+    out.second_[0] = std::max(a.second_[0], b.second_[0]);
+    out.second_[1] = std::max(a.second_[1], b.second_[1]);
+    out.second_[2] = std::max(a.second_[2], b.second_[2]);
+    return out;
+}
+
+void block_sliding(
+    int resolution_factor_cube,
+    int resolution_factor_slope)
+{
+    // Global parameters
+    const Real end_time = 3.0;
+    const Real scale = 1.0;
+
+    // geometry
+    const Real cube_length = 1.0 * scale;
+    const Real slope_length = 20.0 * scale;
+    const Real slope_width = 2.0 * scale;
+    const Real slope_angle = 30.0 / 180.0 * Pi;
+    Eigen::AngleAxisd rotation(slope_angle, Vec3d::UnitZ());
+    auto rotation_inverse = rotation.inverse();
+
+    // resolutions
+    const Real resolution_cube = cube_length / (resolution_factor_cube * 5.0);
+    const Real resolution_slope = cube_length / (resolution_factor_slope * 5.0);
+
+    // Material properties
+    const Real rho0_s = 2e3;
+    const Real Youngs_modulus = 1e7;
+    const Real poisson = 0.45;
+
+    // Import meshes
+    auto cube_translation = Vec3d(0.5 * cube_length + 2 * resolution_cube, 0.5 * cube_length, 0.0);
+    auto mesh_cube = std::make_shared<TriangleMeshShapeBrick>(0.5 * cube_length * Vec3d::Ones(), 5, cube_translation, "Cube");
+    auto slope_translation = Vec3d(0.5 * slope_length, -(1.15 * (resolution_cube + resolution_slope) - 0.5 * resolution_cube), 0);
+    auto mesh_slope = std::make_shared<TriangleMeshShapeBrick>(0.5 * Vec3d(slope_length, resolution_slope, slope_width), 5, slope_translation, "Slope");
+
+    // Material models
+    SaintVenantKirchhoffSolid material_cube(rho0_s, Youngs_modulus, poisson);
+
+    // System bounding box
+    BoundingBox bb_system = union_bounding_box(mesh_cube->getBounds(), mesh_slope->getBounds());
+
+    // System
+    SPHSystem system(bb_system, resolution_cube);
+    IOEnvironment io_environment(system);
+
+    // Create objects
+    SolidBody cube_body(system, mesh_cube);
+    cube_body.defineParticlesWithMaterial<ElasticSolidParticles>(&material_cube);
+    cube_body.generateParticles<Lattice>();
+    auto particles_cube = dynamic_cast<ElasticSolidParticles *>(&cube_body.getBaseParticles());
+
+    SolidBody slope_body(system, mesh_slope);
+    slope_body.defineAdaptationRatios(1.15, resolution_cube / resolution_slope);
+    slope_body.defineParticlesWithMaterial<ShellParticles>(&material_cube);
+    slope_body.generateParticles(WallParticleGenerator(slope_body, slope_translation, slope_length, slope_width, resolution_slope));
+
+    // Inner relation
+    InnerRelation cube_inner(cube_body);
+
+    // Methods
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(cube_inner);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(cube_inner);
+    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cube_inner);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+        velocity_damping(0.5, cube_inner, "Velocity", get_physical_viscosity_general(rho0_s, Youngs_modulus, resolution_cube));
+
+    // Contact relation
+    SurfaceContactRelationToShell contact_cube_to_slope(cube_body, {&slope_body}, {true});
+    // Contact density
+    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> contact_density(contact_cube_to_slope);
+    // Contact Force
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope, "SolidRepulsionForceToShell", "RepulsionDensityToShell");
+
+    // gravity
+    const Real g = 9.81;
+    Gravity gravity(rotation * (-g * Vec3d::UnitY()));
+    SimpleDynamics<GravityForce> constant_gravity(cube_body, gravity);
+
+    // analytical solution
+    // Real sin_theta = sin(slope_angle);
+    // Real cos_theta = cos(slope_angle);
+    // // analytical displacement under gravity
+    // auto get_analytical_displacement = [&](Real time)
+    // {
+    //     Real a = 0.5 * g * sin_theta * time * time;
+    //     Real u_x = a * cos_theta;
+    //     Real u_y = a * sin_theta;
+    //     return Vec3d(u_x, u_y, 0);
+    // };
+
+    // Output
+    cube_body.addBodyStateForRecording<Real>("RepulsionDensityToShell");
+    cube_body.addBodyStateForRecording<Vecd>("SolidRepulsionForceToShell");
+    BodyStatesRecordingToVtp vtp_output(system.real_bodies_);
+    vtp_output.writeToFile(0);
+
+    // Observer
+    StdLargeVec<Vecd> rotated_disp;
+    particles_cube->registerVariable(rotated_disp, "RotatedDisplacement");
+    auto update_disp = [&]()
+    {
+        particle_for(
+            execution::ParallelPolicy(),
+            IndexRange(0, particles_cube->total_real_particles_),
+            [&](size_t index_i)
+            {
+                rotated_disp[index_i] = rotation_inverse * particles_cube->displacement(index_i);
+            });
+    };
+    ObserverBody cube_observer(system, "CubeObserver");
+    cube_observer.generateParticles<Observer>(StdVec<Vecd>{cube_translation});
+    ContactRelation cube_observer_contact(cube_observer, {&cube_body});
+    ObservedQuantityRecording<Vecd>
+        write_cube_displacement("RotatedDisplacement", cube_observer_contact);
+
+    // initialize
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
+    corrected_configuration.exec();
+    constant_gravity.exec();
+
+    // simulation
+    GlobalStaticVariables::physical_time_ = 0.0;
+    int ite = 0;
+    int ite_output = 0;
+    Real output_period = end_time / 20.0;
+    Real dt = 0.0;
+    TickCount t1 = TickCount::now();
+    const Real dt_ref = computing_time_step_size.exec();
+    auto run_simulation = [&]()
+    {
+        while (GlobalStaticVariables::physical_time_ < end_time)
+        {
+            Real integral_time = 0.0;
+            while (integral_time < output_period)
+            {
+                if (ite % 1000 == 0)
+                {
+                    std::cout << "N=" << ite << " Time: "
+                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << dt << "\n";
+                }
+
+                contact_density.exec();
+                contact_force.exec();
+
+                dt = computing_time_step_size.exec();
+                if (dt < dt_ref / 1e2)
+                    throw std::runtime_error("time step decreased too much");
+
+                stress_relaxation_first_half.exec(dt);
+                velocity_damping.exec(dt);
+                stress_relaxation_second_half.exec(dt);
+
+                cube_body.updateCellLinkedList();
+                contact_cube_to_slope.updateConfiguration();
+
+                ++ite;
+                integral_time += dt;
+                GlobalStaticVariables::physical_time_ += dt;
+            }
+
+            ite_output++;
+            update_disp();
+            write_cube_displacement.writeToFile(ite);
+            vtp_output.writeToFile(ite_output);
+        }
+        TimeInterval tt = TickCount::now() - t1;
+        std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+    };
+
+    try
+    {
+        run_simulation();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+        vtp_output.writeToFile(ite_output + 1);
+        exit(0);
+    }
+}
+//------------------------------------------------------------------------------
+// the main program
+//------------------------------------------------------------------------------
+int main(int ac, char *av[])
+{
+    block_sliding(2, 2);
+}

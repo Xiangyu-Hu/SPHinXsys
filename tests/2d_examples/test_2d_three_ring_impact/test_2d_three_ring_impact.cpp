@@ -1,7 +1,7 @@
 /**
  * @file 	Three ring impact.cpp
  * @brief 	This is the case file for the test of dynamic contacts between shell and solid.
- * @author   Xiangyu Hu
+ * @author  Weiyi Kong, Xiangyu Hu
  */
 
 #include "sphinxsys.h"

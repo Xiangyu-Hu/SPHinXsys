@@ -58,8 +58,6 @@ class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
         {
             initializePositionAndVolumetricMeasure(Vec2d(x, y), resolution_shell);
             initializeSurfaceProperties(Vec2d(-sin(angle), -cos(angle)), thickness_shell);
-            // initializePositionAndVolumetricMeasure(Vec2d(x, y) - Vecd(sin(angle), cos(angle)) * resolution_shell, resolution_shell);
-            // initializeSurfaceProperties(Vec2d(sin(angle), cos(angle)), thickness_shell);
             x += resolution_shell * cos(angle);
             y -= resolution_shell * sin(angle);
         }
