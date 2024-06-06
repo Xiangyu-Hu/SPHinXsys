@@ -9,7 +9,7 @@
 #define FVM_DOUBLE_MACH_REFLECTION_H
 #include "common_compressible_FVM_classes.h" // classes for compressible fluid only in FVM.
 using namespace SPH;
-using namespace std;
+
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -61,24 +61,13 @@ class WaveBody : public ComplexShape
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class DMFInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
+class DMFInitialCondition : public fluid_dynamics::CompressibleFluidInitialCondition
 {
   public:
     explicit DMFInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_),
-          p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-        particles_->registerVariable(E_, "TotalEnergy");
-        particles_->registerVariable(dE_dt_, "TotalEnergyChangeRate");
-        particles_->registerVariable(dE_dt_prior_, "OtherEnergyChangeRate");
-        gamma_ = heat_capacity_ratio;
-    };
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
     virtual ~DMFInitialCondition(){};
+
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - 1.0 / 6.0))
@@ -107,11 +96,7 @@ class DMFInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-    StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
-    Real gamma_;
+    Real gamma_ = heat_capacity_ratio;
 };
 
 //----------------------------------------------------------------------

@@ -51,7 +51,7 @@
 #define PARTICLE_DYNAMICS_ALGORITHMS_H
 
 #include "base_local_dynamics.h"
-#include "base_particle_dynamics.hpp"
+#include "base_particle_dynamics.h"
 #include "particle_iterators.h"
 
 #include <type_traits>

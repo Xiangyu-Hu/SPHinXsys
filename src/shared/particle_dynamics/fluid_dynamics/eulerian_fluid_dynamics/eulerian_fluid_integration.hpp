@@ -15,12 +15,12 @@ EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &b
       mom_(*this->particles_->template registerSharedVariable<Vecd>("Momentum")),
       dmom_dt_(*this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
       dmass_dt_(*this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
-      Vol_(this->particles_->Vol_) {}
+      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::
     EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : EulerianIntegration<FluidDataInner>(inner_relation),
+    : EulerianIntegration<DataDelegateInner>(inner_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -87,7 +87,7 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
 template <class RiemannSolverType>
 EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : EulerianIntegration<FluidDataInner>(inner_relation),
+    : EulerianIntegration<DataDelegateInner>(inner_relation),
       riemann_solver_(this->fluid_, this->fluid_, limiter_parameter) {}
 //=================================================================================================//
 template <class RiemannSolverType>

@@ -9,7 +9,7 @@ namespace SPH
 template <typename VariableType>
 ParticleSmoothing<VariableType>::
     ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
       smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
 {
@@ -40,7 +40,7 @@ void ParticleSmoothing<VariableType>::update(size_t index_i, Real dt)
 template <typename VariableType>
 ParticleSnapshotAverage<VariableType>::
     ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name)
-    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       target_variable_(*particles_->template getVariableByName<VariableType>(variable_name))
 {
     std::string averaged_variable_name = "Averaged" + variable_name;
@@ -49,16 +49,15 @@ ParticleSnapshotAverage<VariableType>::
 }
 //=================================================================================================//
 template <typename VariableType>
-void ParticleSnapshotAverage<VariableType>::setupDynamics(Real dt) 
+void ParticleSnapshotAverage<VariableType>::setupDynamics(Real dt)
 {
-    number_of_snapshot_ ++;
+    number_of_snapshot_++;
 }
 //=================================================================================================//
 template <typename VariableType>
-void ParticleSnapshotAverage<VariableType>::update(size_t index_i, Real dt) 
+void ParticleSnapshotAverage<VariableType>::update(size_t index_i, Real dt)
 {
-    averaged_variable_[index_i] += (target_variable_[index_i] - averaged_variable_[index_i]) 
-    / Real(number_of_snapshot_);
+    averaged_variable_[index_i] += (target_variable_[index_i] - averaged_variable_[index_i]) / Real(number_of_snapshot_);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -49,7 +49,7 @@ namespace relax_dynamics
  * there will be no level set field.
  */
 class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                                public RelaxDataDelegateSimple
+                                public DataDelegateSimple
 {
   public:
     explicit ShellMidSurfaceBounding(NearShapeSurface &body_part);
@@ -82,7 +82,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
+    class NormalPrediction : public DataDelegateSimple, public LocalDynamics
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
@@ -95,7 +95,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     };
 
     class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>,
-                                       public RelaxDataDelegateSimple
+                                       public DataDelegateSimple
     {
       protected:
         const Real convergence_criterion_;
@@ -108,7 +108,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         bool reduce(size_t index_i, Real dt = 0.0);
     };
 
-    class ConsistencyCorrection : public LocalDynamics, public RelaxDataDelegateInner
+    class ConsistencyCorrection : public LocalDynamics, public DataDelegateInner
     {
       public:
         explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
@@ -124,7 +124,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     };
 
     class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>,
-                                    public RelaxDataDelegateSimple
+                                    public DataDelegateSimple
     {
       protected:
         StdLargeVec<int> &updated_indicator_;

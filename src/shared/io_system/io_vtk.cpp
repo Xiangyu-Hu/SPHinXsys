@@ -40,7 +40,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 out_file << "    ";
                 for (size_t i = 0; i != total_real_particles; ++i)
                 {
-                    Vec3d particle_position = upgradeToVec3d(base_particles.pos_[i]);
+                    Vec3d particle_position = upgradeToVec3d(base_particles.ParticlePositions()[i]);
                     out_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
                 }
                 out_file << std::endl;

@@ -11,8 +11,9 @@ DampingBySplittingInner<VariableType>::
     DampingBySplittingInner(BaseInnerRelation &inner_relation,
                             const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
-      DissipationDataInner(inner_relation), eta_(eta),
-      Vol_(particles_->Vol_), mass_(particles_->mass_),
+      DataDelegateInner(inner_relation), eta_(eta),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
 //=================================================================================================//
 template <typename VariableType>
@@ -78,12 +79,12 @@ DampingBySplittingComplex<VariableType>::
     DampingBySplittingComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
                               const std::string &variable_name, Real eta)
     : DampingBySplittingInner<VariableType>(inner_relation, variable_name, eta),
-      DissipationDataContact(contact_relation)
+      DataDelegateContactOnly(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+        contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->template getVariableByName<Real>("Mass"));
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -158,11 +159,11 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
     DampingBySplittingWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation,
                                const std::string &variable_name, Real eta)
     : BaseDampingBySplittingType<VariableType>(inner_relation, variable_name, eta),
-      DissipationDataWithWall(contact_relation)
+      DataDelegateContactOnly(contact_relation)
 {
-    for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
+    for (size_t k = 0; k != DataDelegateContactOnly::contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -183,7 +184,7 @@ DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
     {
         StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
         StdLargeVec<VariableType> &Vol_k = *(this->wall_Vol_[k]);
-        Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
+        Neighborhood &contact_neighborhood = (*DataDelegateContactOnly::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
@@ -205,8 +206,9 @@ DampingPairwiseInner<VariableType>::
     DampingPairwiseInner(BaseInnerRelation &inner_relation,
                          const std::string &variable_name, Real eta)
     : LocalDynamics(inner_relation.getSPHBody()),
-      DissipationDataInner(inner_relation),
-      Vol_(particles_->Vol_), mass_(particles_->mass_),
+      DataDelegateInner(inner_relation),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name)),
       eta_(eta) {}
 //=================================================================================================//
@@ -254,12 +256,12 @@ DampingPairwiseComplex<VariableType>::
                            BaseContactRelation &contact_relation,
                            const std::string &variable_name, Real eta)
     : DampingPairwiseInner<VariableType>(inner_relation, variable_name, eta),
-      DissipationDataContact(contact_relation)
+      DataDelegateContactOnly(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+        contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->template getVariableByName<Real>("Mass"));
         contact_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -317,11 +319,11 @@ DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
     DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
                             BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
     : BaseDampingPairwiseType<VariableType>(inner_relation, variable_name, eta),
-      DissipationDataWithWall(contact_relation)
+      DataDelegateContactOnly(contact_relation)
 {
-    for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
+    for (size_t k = 0; k != DataDelegateContactOnly::contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }
@@ -343,8 +345,8 @@ void DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
-        StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
-        Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
+        StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
+        Neighborhood &contact_neighborhood = (*DataDelegateContactOnly::contact_configuration_[k])[index_i];
         // forward sweep
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -370,13 +372,14 @@ template <typename VariableType>
 DampingPairwiseFromWall<VariableType>::
     DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
     : LocalDynamics(contact_relation.getSPHBody()),
-      DataDelegateContact<BaseParticles, SolidParticles>(contact_relation),
-      eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
+      DataDelegateContact(contact_relation),
+      eta_(eta), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       variable_(*particles_->getVariableByName<VariableType>(variable_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
     }
 }

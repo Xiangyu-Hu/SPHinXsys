@@ -100,6 +100,28 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
 }
 //=================================================================================================//
 template <typename DataType>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(const std::string &new_name, const std::string &old_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
+
+    if (variable != nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        StdLargeVec<DataType> *old_data = std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
+        return registerSharedVariable<DataType>(new_name, [&](size_t index)
+                                                { return (*old_data)[index]; });
+    }
+    else
+    {
+        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    return nullptr;
+}
+//=================================================================================================//
+template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
@@ -109,14 +131,19 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
         constexpr int type_index = DataTypeIndex<DataType>::value;
         return std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
     }
+    else
+    {
+        std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
 
-    std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     return nullptr;
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std::string &variable_name)
+DiscreteVariable<DataType> *BaseParticles::
+    addVariableToList(ParticleVariables &variable_set, const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
 
@@ -128,6 +155,7 @@ void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             std::get<type_index>(variable_set).push_back(variable);
+            return variable;
         }
     }
     else
@@ -135,6 +163,20 @@ void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std
         std::cout << "\n Error: the variable '" << variable_name << "' to write is not particle data!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
+    }
+    return nullptr;
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::addVariableToSort(const std::string &variable_name)
+{
+    DiscreteVariable<DataType> *new_sortable =
+        addVariableToList<DataType>(sortable_variables_, variable_name);
+    if (new_sortable != nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        StdLargeVec<DataType> *variable_data = std::get<type_index>(all_particle_data_)[new_sortable->IndexInContainer()];
+        std::get<type_index>(sortable_data_).push_back(variable_data);
     }
 }
 //=================================================================================================//
@@ -145,10 +187,10 @@ void BaseParticles::addVariableToWrite(const std::string &variable_name)
 }
 //=================================================================================================//
 template <class DerivedVariableMethod, class... Ts>
-void BaseParticles::addDerivedVariableToWrite(Ts &&...args)
+void BaseParticles::addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...args)
 {
     SimpleDynamics<DerivedVariableMethod> *derived_data =
-        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
+        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body, std::forward<Ts>(args)...);
     derived_variables_.push_back(derived_data);
     using DerivedDataType = typename DerivedVariableMethod::DerivedDataType;
     addVariableToList<DerivedDataType>(variables_to_write_, derived_data->variable_name_);
@@ -164,31 +206,6 @@ template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &variable_name)
 {
     addVariableToList<DataType>(variables_to_reload_, variable_name);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::registerSortableVariable(const std::string &variable_name)
-{
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
-
-    if (variable != nullptr)
-    {
-        DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(sortable_variables_, variable_name);
-
-        if (listed_variable == nullptr)
-        {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            std::get<type_index>(sortable_variables_).push_back(variable);
-            StdLargeVec<DataType> *variable_data = std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
-            std::get<type_index>(sortable_data_).push_back(variable_data);
-        }
-    }
-    else
-    {
-        std::cout << "\n Error: the variable '" << variable_name << "' to write is not particle data!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
 }
 //=================================================================================================//
 template <typename SequenceMethod>

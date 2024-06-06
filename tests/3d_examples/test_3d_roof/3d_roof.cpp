@@ -48,11 +48,15 @@ TEST(Plate, MaxDisplacement)
     std::cout << "displ_max: " << displ_max << std::endl;
 }
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGenerator<Surface>
+class Cylinder;
+template <>
+class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -85,7 +89,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height + 0.5 * particle_spacing_ref)
+        if (base_particles_.ParticlePositions()[index_i][1] < 0.0 || base_particles_.ParticlePositions()[index_i][1] > height + 0.5 * particle_spacing_ref)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -108,6 +112,8 @@ class TimeDependentExternalForce : public Gravity
                    : global_acceleration_;
     }
 };
+} // namespace SPH
+
 /**
  *  The main program
  */
@@ -118,11 +124,11 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     /** Create a Cylinder body. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
-    cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
+    cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<Observer>(observation_location);
+    cylinder_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -134,20 +140,16 @@ int main(int ac, char *av[])
     /** Common particle dynamics. */
     TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, gravitational_acceleration));
     SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
-
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(cylinder_body_inner);
+    /** stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
+
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    /** stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(cylinder_body_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(cylinder_body_inner);
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>

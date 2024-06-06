@@ -31,6 +31,8 @@
 #define FLUID_BOUNDARY_H
 
 #include "base_fluid_dynamics.h"
+#include "particle_reserve.h"
+
 #include <mutex>
 
 namespace SPH
@@ -41,7 +43,7 @@ namespace fluid_dynamics
  * @class BaseFlowBoundaryCondition
  * @brief Base class for all boundary conditions.
  */
-class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
 {
   public:
     BaseFlowBoundaryCondition(BodyPartByCell &body_part);
@@ -120,7 +122,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
  *          i.e. x direction in local frame.
  */
 template <typename TargetVelocity>
-class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimple
+class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     Transform transform_;
@@ -132,9 +134,11 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimpl
 
   public:
     explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transform &transform = Transform())
-        : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
-          rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_), vel_(particles_->vel_),
+          rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
           indicator_(*particles_->getVariableByName<int>("Indicator")),
           target_velocity(*this){};
     virtual ~FreeStreamVelocityCorrection(){};
@@ -179,7 +183,7 @@ class DampingBoundaryCondition : public BaseFlowBoundaryCondition
  * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
  * The body part region is required to have parallel lower- and upper-bound surfaces.
  */
-class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, public FluidDataSimple
+class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     explicit EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part);
@@ -190,6 +194,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
 
   protected:
     Fluid &fluid_;
+    StdLargeVec<size_t> &sorted_id_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     /** inflow pressure condition */
@@ -199,7 +204,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
     Transform &updated_transform_, old_transform_;
 
     /** no transform by default */
-    virtual void updateTransform(){};
+    virtual void updateTransform() {};
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
 };
 
@@ -209,7 +214,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
  * Note that the axis is at the local coordinate and upper bound direction is
  * the local positive direction.
  */
-class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public FluidDataSimple
+class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis);
@@ -220,6 +225,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
   protected:
     std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
     Fluid &fluid_;
+    StdLargeVec<size_t> &sorted_id_;
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &rho_, &p_;
     ParticleBuffer<Base> &buffer_;
@@ -231,7 +237,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
  * @class DisposerOutflowDeletion
  * @brief Delete particles who ruing out the computational domain.
  */
-class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
 {
   public:
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis);

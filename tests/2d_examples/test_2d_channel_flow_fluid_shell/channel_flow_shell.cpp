@@ -23,9 +23,12 @@ const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Define case dependent geometries
 //----------------------------------------------------------------------
+namespace SPH
+{
 class WaterBlock : public MultiPolygonShape
 {
   public:
+    class FluidAxialObserver;
     explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
@@ -33,7 +36,9 @@ class WaterBlock : public MultiPolygonShape
 };
 
 /** Particle generator and constraint boundary for shell baffle. */
-class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
+class WallBoundary;
+template <>
+class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 {
     Real DL_sponge_;
     Real BW_;
@@ -41,7 +46,7 @@ class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
     Real wall_thickness_;
 
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
         : ParticleGenerator<Surface>(sph_body), DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
           resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
     void initializeGeometricVariables() override
@@ -93,10 +98,12 @@ struct InflowVelocity
 };
 
 /** fluid observer particle generator */
-class FluidAxialObserverParticleGenerator : public ParticleGenerator<Observer>
+class FluidAxialObserver;
+template <>
+class ParticleGenerator<FluidAxialObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit FluidAxialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref)
+    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref)
         : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
@@ -112,10 +119,13 @@ class FluidAxialObserverParticleGenerator : public ParticleGenerator<Observer>
         }
     }
 };
-class FluidRadialObserverParticleGenerator : public ParticleGenerator<Observer>
+
+class FluidRadialObserver;
+template <>
+class ParticleGenerator<FluidRadialObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit FluidRadialObserverParticleGenerator(SPHBody &sph_body, Real resolution_ref)
+    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref)
         : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
@@ -131,6 +141,7 @@ class FluidRadialObserverParticleGenerator : public ParticleGenerator<Observer>
         }
     }
 };
+} // namespace SPH
 
 void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 {
@@ -166,21 +177,18 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<Lattice>();
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0); // dummy material parameters
-    WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, resolution_ref, wall_thickness);
-    wall_boundary.generateParticles(wall_boundary_particle_generator);
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(resolution_ref, wall_thickness);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    FluidAxialObserverParticleGenerator fluid_axial_observer_particle_generator(fluid_axial_observer, resolution_ref);
-    fluid_axial_observer.generateParticles(fluid_axial_observer_particle_generator);
+    fluid_axial_observer.generateParticles<BaseParticles, FluidAxialObserver>(resolution_ref);
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    FluidRadialObserverParticleGenerator fluid_radial_observer_particle_generator(fluid_radial_observer, resolution_ref);
-    fluid_radial_observer.generateParticles(fluid_radial_observer_particle_generator);
+    fluid_radial_observer.generateParticles<BaseParticles, FluidRadialObserver>(resolution_ref);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -203,16 +211,16 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    /** Pressure relaxation using verlet time stepping. */
+    /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, 1.5 * U_f);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** Pressure relaxation using verlet time stepping. */
-    /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
@@ -329,7 +337,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     /**
-     * @brief 	Gtest strat from here.
+     * @brief 	Gtest start from here.
      */
     /* Define analytical solution of the inflow velocity.*/
     std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)
@@ -337,20 +345,20 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
         Real y = 2 * pos[1] / DH - 1;
         return Vec2d(1.5 * U_f * (1 - y * y), 0);
     };
-    /* Compare all simulation to the anayltical solution. */
+    /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    for (size_t i = 0; i < fluid_axial_observer.getBaseParticles().pos_.size(); i++)
+    StdLargeVec<Vecd> &pos_axial = fluid_axial_observer.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_axial = *fluid_axial_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    for (size_t i = 0; i < pos_axial.size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(fluid_axial_observer.getBaseParticles().pos_[i])[1],
-                    fluid_axial_observer.getBaseParticles().vel_[i][1],
-                    U_f * 5e-2);
+        EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_f * 5e-2);
     }
     // Radial direction
-    for (size_t i = 0; i < fluid_radial_observer.getBaseParticles().pos_.size(); i++)
+    StdLargeVec<Vecd> &pos_radial = fluid_radial_observer.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_radial = *fluid_radial_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    for (size_t i = 0; i < pos_radial.size(); i++)
     {
-        EXPECT_NEAR(inflow_velocity(fluid_radial_observer.getBaseParticles().pos_[i])[1],
-                    fluid_radial_observer.getBaseParticles().vel_[i][1],
-                    U_f * 5e-2);
+        EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_f * 5e-2);
     }
 }
 

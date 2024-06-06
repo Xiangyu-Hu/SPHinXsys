@@ -54,13 +54,13 @@ class LinearGradientCorrectionMatrix<DataDelegationType>
 
 template <>
 class LinearGradientCorrectionMatrix<Inner<>>
-    : public LinearGradientCorrectionMatrix<GeneralDataDelegateInner>
+    : public LinearGradientCorrectionMatrix<DataDelegateInner>
 {
     Real alpha_;
 
   public:
     explicit LinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
-        : LinearGradientCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
+        : LinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
     explicit LinearGradientCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : LinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
@@ -72,7 +72,7 @@ using LinearGradientCorrectionMatrixInner = LinearGradientCorrectionMatrix<Inner
 
 template <>
 class LinearGradientCorrectionMatrix<Contact<>>
-    : public LinearGradientCorrectionMatrix<GeneralDataDelegateContact>
+    : public LinearGradientCorrectionMatrix<DataDelegateContact>
 {
   public:
     explicit LinearGradientCorrectionMatrix(BaseContactRelation &contact_relation);
@@ -105,7 +105,7 @@ class KernelGradientCorrection<DataDelegationType>
 
 template <>
 class KernelGradientCorrection<Inner<>>
-    : public KernelGradientCorrection<GeneralDataDelegateInner>
+    : public KernelGradientCorrection<DataDelegateInner>
 {
     PairAverageVariable<Matd> average_correction_matrix_;
 
@@ -118,7 +118,7 @@ using KernelGradientCorrectionInner = KernelGradientCorrection<Inner<>>;
 
 template <>
 class KernelGradientCorrection<Contact<>>
-    : public KernelGradientCorrection<GeneralDataDelegateContact>
+    : public KernelGradientCorrection<DataDelegateContact>
 {
     StdVec<PairAverageVariable<Matd>> contact_average_correction_matrix_;
 

@@ -45,13 +45,13 @@ void DensitySummation<Inner<Adaptive>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 DensitySummation<Contact<Base>>::DensitySummation(BaseContactRelation &contact_relation)
-    : DensitySummation<Base, FluidContactData>(contact_relation)
+    : DensitySummation<Base, DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
         contact_inv_rho0_.push_back(1.0 / rho0_k);
-        contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
     }
 }
 //=================================================================================================//

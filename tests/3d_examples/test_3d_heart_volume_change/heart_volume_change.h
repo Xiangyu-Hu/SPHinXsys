@@ -1,7 +1,8 @@
 /**
- * @file 	heart_volume_change.cpp
- * @brief 	This is the case studying the electromechanics on a biventricular heart model in 3D, including the volume change of the ventricles.
- * @author 	John Benjamin, Chi Zhang and Xiangyu Hu
+ * @file heart_volume_change.cpp
+ * @brief This is the case studying the electromechanics on a bi-ventricular
+ * heart model in 3D, including the volume change of the ventricles.
+ * @author John Benjamin, Chi Zhang and Xiangyu Hu
  */
 #include "TriangleMeshDistance.h" // for mesh operations
 #include "sphinxsys.h"            // SPHinXsys Library.
@@ -63,12 +64,14 @@ class MeshData
 class MyocardiumSurfaces
 {
   public:
-    MyocardiumSurfaces(SolidBody &body, ElasticSolidParticles &particles) : particles_(particles){};
+    MyocardiumSurfaces(SolidBody &sph_body)
+        : particles_(sph_body.getBaseParticles()),
+          pos0_(*particles_.registerSharedVariableFrom<Vecd>("InitialPosition", "Position")){};
     ~MyocardiumSurfaces() = default;
 
     // mesh_offset: max distance between myocardium and ventricle mesh
     // important to use different offsets as the RV wall is much thinner usually
-    // smoothing_length is used for dbscan
+    // smoothing_length is used for db-scan
     void init_surfaces(
         const MeshData &myocardium_mesh, const MeshData &lv_mesh, const MeshData &rv_mesh,
         Real lv_mesh_offset, Real rv_mesh_offset, Real smoothing_length);
@@ -82,7 +85,8 @@ class MyocardiumSurfaces
     inline const IndexVector &get_pericardium_ids() const { return pericardium_ids_; }
 
   private:
-    ElasticSolidParticles &particles_;
+    BaseParticles &particles_;
+    StdLargeVec<Vecd> &pos0_;
     IndexVector myo_surface_ids_; // full myocardium surface
     IndexVector lv_ids_;
     IndexVector rv_ids_;
@@ -92,9 +96,14 @@ class MyocardiumSurfaces
 class SurfaceOperationsVentricle
 {
   public:
-    SurfaceOperationsVentricle(ElasticSolidParticles &particles, const IndexVector &ids, InnerRelation &inner_relation) : particles_(particles), ids_(ids),
-                                                                                                                          srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
-                                                                                                                          Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)
+    SurfaceOperationsVentricle(InnerRelation &inner_relation, const IndexVector &ids)
+        : particles_(inner_relation.getSPHBody().getBaseParticles()),
+          vel_(*particles_.getVariableByName<Vecd>("Velocity")),
+          n_(*particles_.getVariableByName<Vecd>("NormalDirection")),
+          n0_(*particles_.registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+          F_(*particles_.getVariableByName<Matd>("DeformationGradient")),
+          ids_(ids), srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
+          Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)
     {
         std::cout << "SurfaceOperationsVentricle number of particles: " << ids_.size() << std::endl;
         init_srf_area(inner_relation);
@@ -122,7 +131,9 @@ class SurfaceOperationsVentricle
     // called in constructor
     void init_srf_area(InnerRelation &inner_relation);
 
-    ElasticSolidParticles &particles_;
+    BaseParticles &particles_;
+    StdLargeVec<Vecd> &vel_, &n_, &n0_;
+    StdLargeVec<Matd> &F_;
     // ids_, srf_area_0_, srf_area_n_ maintain particle correspondence
     const IndexVector &ids_;  // ids of srf particles of interest
     StdVec<Real> srf_area_0_; // initial surface area

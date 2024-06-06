@@ -1,4 +1,5 @@
-#include "solid_particles.h"
+#include "base_data_package.h"
+
 #include <gtest/gtest.h>
 
 using namespace SPH;

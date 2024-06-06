@@ -54,15 +54,17 @@ class BidirectionalBuffer
   protected:
     TargetPressure target_pressure_;
 
-    class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+    class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
     {
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, int axis)
-            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
-              pos_(particles_->pos_), aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
+            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              DataDelegateSimple(aligned_box_part.getSPHBody()),
+              pos_(*particles_->getVariableByName<Vecd>("Position")),
+              aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
-            particles_->registerSortableVariable<int>("BufferParticleIndicator");
+            particles_->addVariableToSort<int>("BufferParticleIndicator");
         };
         virtual ~TagBufferParticles(){};
 
@@ -78,15 +80,19 @@ class BidirectionalBuffer
         StdLargeVec<int> &buffer_particle_indicator_;
     };
 
-    class Injection : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+    class Injection : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
     {
       public:
         Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   int axis, TargetPressure &target_pressure)
-            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
-              axis_(axis), particle_buffer_(particle_buffer), aligned_box_(aligned_box_part.aligned_box_),
+            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              DataDelegateSimple(aligned_box_part.getSPHBody()),
+              axis_(axis), particle_buffer_(particle_buffer),
+              aligned_box_(aligned_box_part.aligned_box_),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-              pos_n_(particles_->pos_), rho_n_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+              pos_n_(*particles_->getVariableByName<Vecd>("Position")),
+              rho_n_(*particles_->getVariableByName<Real>("Density")),
+              p_(*particles_->getVariableByName<Real>("Pressure")),
               previous_surface_indicator_(*particles_->getVariableByName<int>("PreviousSurfaceIndicator")),
               buffer_particle_indicator_(*particles_->getVariableByName<int>("BufferParticleIndicator")),
               target_pressure_(target_pressure)

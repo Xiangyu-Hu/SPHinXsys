@@ -53,11 +53,11 @@ class DensitySummationPressure<Base, DataDelegationType>
 };
 
 template <>
-class DensitySummationPressure<Inner<Base>> : public DensitySummationPressure<Base, FluidDataInner>
+class DensitySummationPressure<Inner<Base>> : public DensitySummationPressure<Base, DataDelegateInner>
 {
   public:
     explicit DensitySummationPressure(BaseInnerRelation &inner_relation)
-        : DensitySummationPressure<Base, FluidDataInner>(inner_relation){};
+        : DensitySummationPressure<Base, DataDelegateInner>(inner_relation){};
     virtual ~DensitySummationPressure(){};
 
   protected:
@@ -84,7 +84,7 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
 };
 
 template <>
-class DensitySummationPressure<Contact<Base>> : public DensitySummationPressure<Base, FluidContactData>
+class DensitySummationPressure<Contact<Base>> : public DensitySummationPressure<Base, DataDelegateContact>
 {
   public:
     explicit DensitySummationPressure(BaseContactRelation &contact_relation);

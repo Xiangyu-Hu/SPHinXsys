@@ -102,7 +102,10 @@ class ElasticSolid : public Solid
     virtual Real VolumetricKirchhoff(Real J) = 0;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() = 0;
-
+    /** Get  average velocity when interacting with fluid. */
+    virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles) override;
+    /** Get  average acceleration when interacting with fluid. */
+    virtual StdLargeVec<Vecd> *AverageAcceleration(BaseParticles *base_particles) override;
     virtual ElasticSolid *ThisObjectPtr() override { return this; };
 };
 

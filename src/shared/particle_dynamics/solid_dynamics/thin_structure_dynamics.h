@@ -35,42 +35,22 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "solid_body.h"
-#include "solid_particles.h"
 #include "thin_structure_math.h"
 
 namespace SPH
 {
 namespace thin_structure_dynamics
 {
-typedef DataDelegateSimple<ShellParticles> ShellDataSimple;
-typedef DataDelegateInner<ShellParticles> ShellDataInner;
-
-/**
- * @class ShellDynamicsInitialCondition
- * @brief  set initial condition for shell particles
- * This is a abstract class to be override for case specific initial conditions.
- */
-class ShellDynamicsInitialCondition : public LocalDynamics, public ShellDataSimple
-{
-  public:
-    explicit ShellDynamicsInitialCondition(SPHBody &sph_body);
-    virtual ~ShellDynamicsInitialCondition(){};
-
-  protected:
-    StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
-    StdLargeVec<Matd> &transformation_matrix_;
-};
-
 /**
  * @class UpdateShellNormalDirection
  * @brief update particle normal directions for shell
  */
-class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
+class UpdateShellNormalDirection : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &n_;
     StdLargeVec<Matd> &F_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
 
   public:
     explicit UpdateShellNormalDirection(SPHBody &sph_body);
@@ -84,10 +64,11 @@ class UpdateShellNormalDirection : public LocalDynamics, public ShellDataSimple
  * @brief Computing the acoustic time step size for shell
  */
 class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                                  public ShellDataSimple
+                                  public DataDelegateSimple
 {
   protected:
     Real CFL_;
+    ElasticSolid &elastic_solid_;
     StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
     StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
@@ -104,7 +85,7 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
  * @class ShellCorrectConfiguration
  * @brief obtain the corrected initial configuration in strong form
  */
-class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
+class ShellCorrectConfiguration : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ShellCorrectConfiguration(BaseInnerRelation &inner_relation);
@@ -123,7 +104,7 @@ class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
             global_configuration += r_ji * gradW_ijV_j.transpose();
         }
         Matd local_configuration =
-            transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
+            transformation_matrix0_[index_i] * global_configuration * transformation_matrix0_[index_i].transpose();
         /** correction matrix is obtained from local configuration. */
         B_[index_i] = getCorrectionMatrix(local_configuration);
     };
@@ -132,7 +113,7 @@ class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &n0_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
 };
 
 /**
@@ -140,7 +121,7 @@ class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
  * @brief computing deformation gradient tensor for shell
  * TODO: need a test case for this.
  */
-class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInner
+class ShellDeformationGradientTensor : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ShellDeformationGradientTensor(BaseInnerRelation &inner_relation);
@@ -150,7 +131,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInn
     {
         const Vecd &pseudo_n_i = pseudo_n_[index_i];
         const Vecd &pos_n_i = pos_[index_i];
-        const Matd &transformation_matrix_i = transformation_matrix_[index_i];
+        const Matd &transformation_matrix_i = transformation_matrix0_[index_i];
 
         Matd deformation_part_one = Matd::Zero();
         Matd deformation_part_two = Matd::Zero();
@@ -171,26 +152,26 @@ class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInn
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
     StdLargeVec<Matd> &B_, &F_, &F_bending_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
 };
 
 /**
  * @class BaseShellRelaxation
  * @brief abstract class for preparing shell relaxation
  */
-class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
+class BaseShellRelaxation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseShellRelaxation(BaseInnerRelation &inner_relation);
     virtual ~BaseShellRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &thickness_, &mass_, &Vol_;
+    StdLargeVec<Real> &thickness_, &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
+    StdLargeVec<Matd> &transformation_matrix0_; // Transformation matrix from global to local coordinates
     StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
-    StdLargeVec<Matd> &transformation_matrix_;
 };
 
 /**
@@ -225,9 +206,9 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                 Real r_ij = inner_neighborhood.r_ij_[n];
                 Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
                 Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i],
-                                                      transformation_matrix_[index_i].transpose() * F_[index_i] * transformation_matrix_[index_i],
+                                                      transformation_matrix0_[index_i].transpose() * F_[index_i] * transformation_matrix0_[index_i],
                                                       pos_[index_j],
-                                                      transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
+                                                      transformation_matrix0_[index_i].transpose() * F_[index_j] * transformation_matrix0_[index_i]);
                 Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
                 force += mass_[index_i] * hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
                          inner_neighborhood.dW_ij_[n] * Vol_[index_j] * limiter_pos;
@@ -235,9 +216,9 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
                 Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
                 Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
                 Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_variation_i,
-                                                           transformation_matrix_[index_i].transpose() * F_bending_[index_i] * transformation_matrix_[index_i],
+                                                           transformation_matrix0_[index_i].transpose() * F_bending_[index_i] * transformation_matrix0_[index_i],
                                                            pseudo_n_variation_j,
-                                                           transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
+                                                           transformation_matrix0_[index_j].transpose() * F_bending_[index_j] * transformation_matrix0_[index_j]);
                 Real limiter_pseudo_n = SMIN(2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i - pseudo_n_variation_j).norm() + Eps), 1.0);
                 pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
                                               inner_neighborhood.dW_ij_[n] * Vol_[index_j] * pow(thickness_[index_i], 2) * limiter_pseudo_n;
@@ -251,7 +232,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 3);
 
         /** the relation between pseudo-normal and rotations */
-        Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
+        Vecd local_dpseudo_n_d2t = transformation_matrix0_[index_i] * dpseudo_n_d2t_[index_i];
         dangular_vel_dt_[index_i] = getRotationFromPseudoNormal(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
     };
 
@@ -259,10 +240,13 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 
   protected:
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
-    StdLargeVec<Vecd> &global_shear_stress_;
     Real rho0_, inv_rho0_;
-    Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
+    Real smoothing_length_;
+    Matd numerical_damping_scaling_matrix_;
+    StdLargeVec<Real> &rho_, &mass_;
+    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
+    StdLargeVec<Vecd> &global_shear_stress_;
+    Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
     const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;
@@ -295,7 +279,7 @@ class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
     {
         const Vecd &vel_n_i = vel_[index_i];
         const Vecd &dpseudo_n_dt_i = dpseudo_n_dt_[index_i];
-        const Matd &transformation_matrix_i = transformation_matrix_[index_i];
+        const Matd &transformation_matrix_i = transformation_matrix0_[index_i];
 
         Matd deformation_gradient_change_rate_part_one = Matd::Zero();
         Matd deformation_gradient_change_rate_part_two = Matd::Zero();
@@ -319,7 +303,7 @@ class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 /**@class ConstrainShellBodyRegion
  * @brief Fix the position and angle of a shell body part.
  */
-class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
+class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     ConstrainShellBodyRegion(BodyPartByParticle &body_part);
@@ -335,7 +319,7 @@ class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, p
  * The axis must be 0 or 1.
  * Note that the average values for FSI are prescribed also.
  */
-class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
+class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
     ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
@@ -354,13 +338,13 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
  * @class DistributingPointForcesToShell
  * @brief Distribute a series of point forces to its contact shell bodies.
  */
-class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSimple
+class DistributingPointForcesToShell : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
     Real time_to_full_external_force_;
     Real particle_spacing_ref_, h_spacing_ratio_;
-    StdLargeVec<Vecd> &pos0_, &force_prior_;
+    StdLargeVec<Vecd> &pos_, &force_prior_;
     StdLargeVec<Real> &thickness_;
     std::vector<StdLargeVec<Real>> weight_;
     std::vector<Real> sum_of_weight_;
@@ -381,7 +365,7 @@ class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSim
  * @class ShellCurvature
  * @brief  Update shell curvature during deformation
  */
-class ShellCurvature : public LocalDynamics, public ShellDataInner
+class ShellCurvature : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ShellCurvature(BaseInnerRelation &inner_relation);
@@ -393,7 +377,7 @@ class ShellCurvature : public LocalDynamics, public ShellDataInner
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &n0_;
     StdLargeVec<Matd> &B_;
-    StdLargeVec<Matd> &transformation_matrix_;
+    StdLargeVec<Matd> &transformation_matrix0_;
     StdLargeVec<Vecd> &n_;
     StdLargeVec<Matd> &F_;
     StdLargeVec<Matd> &F_bending_;
@@ -408,7 +392,7 @@ class ShellCurvature : public LocalDynamics, public ShellDataInner
  * @class AverageShellCurvature
  * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
  */
-class AverageShellCurvature : public LocalDynamics, public ShellDataInner
+class AverageShellCurvature : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit AverageShellCurvature(BaseInnerRelation &inner_relation);

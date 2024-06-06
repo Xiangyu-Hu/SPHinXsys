@@ -7,8 +7,10 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
-    : LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
-      ForcePrior(&base_particles_, force_name), Vol_(particles_->Vol_),
+    : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
+      ForcePrior(particles_, force_name),
+      solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       force_from_fluid_(*particles_->getVariableByName<Vecd>(force_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -19,12 +21,12 @@ BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, co
 //=================================================================================================//
 ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid"),
-      vel_ave_(*particles_->AverageVelocity())
+      vel_ave_(*solid_.AverageVelocity(particles_))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_vel_.push_back(&(contact_particles_[k]->vel_));
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        contact_vel_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Velocity"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
         mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
         smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
     }
@@ -32,9 +34,6 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
 //=================================================================================================//
 void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
 {
-    Real Vol_i = Vol_[index_i];
-    const Vecd &vel_ave_i = vel_ave_[index_i];
-
     Vecd force = Vecd::Zero();
     /** Contact interaction. */
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -48,20 +47,20 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
 
-            Vecd vel_derivative = 2.0 * (vel_ave_i - vel_n_k[index_j]) /
+            Vecd vel_derivative = 2.0 * (vel_ave_[index_i] - vel_n_k[index_j]) /
                                   (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
-
-            force += 2.0 * mu_k * vel_derivative * Vol_i * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
+            force += 2.0 * mu_k * vel_derivative * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
 
-    force_from_fluid_[index_i] = force;
+    force_from_fluid_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 InitializeDisplacement::
-    InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
-    : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp), pos_(particles_->pos_) {}
+    InitializeDisplacement(SPHBody &sph_body)
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_temp_(*particles_->registerSharedVariable<Vecd>("TemporaryPosition")) {}
 //=================================================================================================//
 void InitializeDisplacement::update(size_t index_i, Real dt)
 {
@@ -69,26 +68,24 @@ void InitializeDisplacement::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 UpdateAverageVelocityAndAcceleration::
-    UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
-    : LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
-      pos_temp_(pos_temp), pos_(particles_->pos_),
-      vel_ave_(particles_->vel_ave_),
-      force_ave_(particles_->force_ave_), mass_(particles_->mass_) {}
+    UpdateAverageVelocityAndAcceleration(SPHBody &sph_body)
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_temp_(*particles_->getVariableByName<Vecd>("TemporaryPosition")),
+      vel_ave_(*particles_->getVariableByName<Vecd>("AverageVelocity")),
+      acc_ave_(*particles_->getVariableByName<Vecd>("AverageAcceleration")) {}
 //=================================================================================================//
 void UpdateAverageVelocityAndAcceleration::update(size_t index_i, Real dt)
 {
     Vecd updated_vel_ave = (pos_[index_i] - pos_temp_[index_i]) / (dt + Eps);
-    force_ave_[index_i] = mass_[index_i] * (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
+    acc_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
     vel_ave_[index_i] = updated_vel_ave;
 }
 //=================================================================================================//
 AverageVelocityAndAcceleration::
     AverageVelocityAndAcceleration(SolidBody &solid_body)
-    : initialize_displacement_(solid_body, pos_temp_),
-      update_averages_(solid_body, pos_temp_)
-{
-    solid_body.getBaseParticles().registerVariable(pos_temp_, "TemporaryPosition");
-}
+    : initialize_displacement_(solid_body),
+      update_averages_(solid_body) {}
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

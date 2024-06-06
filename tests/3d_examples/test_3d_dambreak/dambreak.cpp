@@ -49,10 +49,14 @@ class WallBoundary : public ComplexShape
 };
 
 //	define an observer particle generator
-class WaterObserverParticleGenerator : public ParticleGenerator<Observer>
+namespace SPH
+{
+class WaterObserver;
+template <>
+class ParticleGenerator<WaterObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit WaterObserverParticleGenerator(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Observer>(sph_body)
     {
         // add observation points
@@ -64,6 +68,7 @@ class WaterObserverParticleGenerator : public ParticleGenerator<Observer>
         positions_.push_back(Vecd(DL, 0.266, 0.5 * DW));
     }
 };
+} // namespace SPH
 
 // the main program with commandline options
 int main(int ac, char *av[])
@@ -79,16 +84,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     WaterBlock initial_water_block("WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<Lattice>();
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles(WaterObserverParticleGenerator(fluid_observer));
+    fluid_observer.generateParticles<BaseParticles, WaterObserver>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -112,16 +116,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_wall_contact);
+
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
+    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
     BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
