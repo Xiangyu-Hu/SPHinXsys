@@ -116,7 +116,7 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
+    SimpleDynamics<solid_dynamics::DistributingPointForces>
         apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");

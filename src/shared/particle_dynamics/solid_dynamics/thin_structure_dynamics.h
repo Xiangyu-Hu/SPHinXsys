@@ -335,33 +335,6 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
 };
 
 /**
- * @class DistributingPointForcesToShell
- * @brief Distribute a series of point forces to its contact shell bodies.
- */
-class DistributingPointForcesToShell : public LocalDynamics, public DataDelegateSimple
-{
-  protected:
-    std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
-    Real time_to_full_external_force_;
-    Real particle_spacing_ref_, h_spacing_ratio_;
-    StdLargeVec<Vecd> &pos_, &force_prior_;
-    StdLargeVec<Real> &thickness_;
-    std::vector<StdLargeVec<Real>> weight_;
-    std::vector<Real> sum_of_weight_;
-
-    void getWeight();
-
-  public:
-    DistributingPointForcesToShell(SPHBody &sph_body, std::vector<Vecd> point_forces,
-                                   std::vector<Vecd> reference_positions, Real time_to_full_external_force,
-                                   Real particle_spacing_ref, Real h_spacing_ratio = 1.6);
-    virtual ~DistributingPointForcesToShell(){};
-
-    virtual void setupDynamics(Real dt = 0.0) override;
-    void update(size_t index_i, Real dt = 0.0);
-};
-
-/**
  * @class ShellCurvature
  * @brief  Update shell curvature during deformation
  */
