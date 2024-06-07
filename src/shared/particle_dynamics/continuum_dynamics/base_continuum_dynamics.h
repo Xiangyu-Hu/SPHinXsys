@@ -29,38 +29,36 @@
 #define BASE_CONTINUUM_DYNAMICS_H
 
 #include "base_fluid_dynamics.h"
-#include "continuum_particles.h"
 
 namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateContact<PlasticContinuumParticles, SolidParticles> FSIContactData;
 /**
-         * @class InteractionWithWall
-         * @brief Base class adding interaction with wall to general relaxation process
-         */
+ * @class InteractionWithWall
+ * @brief Base class adding interaction with wall to general relaxation process
+ */
 template <template <typename...> class BaseInteractionType>
-class InteractionWithWall : public BaseInteractionType<FSIContactData>
+class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
 {
   public:
     explicit InteractionWithWall(BaseContactRelation &wall_contact_relation)
-        : BaseInteractionType<FSIContactData>(wall_contact_relation)
+        : BaseInteractionType<DataDelegateContact>(wall_contact_relation)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
-            wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
-            wall_n_.push_back(&(this->contact_particles_[k]->n_));
-            wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
-            wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+            Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
+            wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
+            wall_acc_ave_.push_back(solid_material.AverageAcceleration(this->contact_particles_[k]));
+            wall_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
+            wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~InteractionWithWall(){};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
+    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<StdLargeVec<Real> *> wall_Vol_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

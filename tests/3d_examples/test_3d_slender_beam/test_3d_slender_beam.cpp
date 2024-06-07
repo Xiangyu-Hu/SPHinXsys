@@ -48,11 +48,15 @@ TEST(Beam, MaxDisplacement)
     std::cout << "displ_max: " << displ_max << std::endl;
 }
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class BarParticleGenerator : public ParticleGenerator<Line>
+class Bar;
+template <>
+class ParticleGenerator<Bar> : public ParticleGenerator<Line>
 {
   public:
-    explicit BarParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };
@@ -85,7 +89,7 @@ class BoundaryGeometryParallelToXAxis : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH)
+        if (base_particles_.ParticlePositions()[index_i][1] < 0.0 || base_particles_.ParticlePositions()[index_i][1] > PH)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -105,7 +109,7 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
+        if (base_particles_.ParticlePositions()[index_i][0] < 0.0 || base_particles_.ParticlePositions()[index_i][0] > PL)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -127,6 +131,8 @@ class TimeDependentExternalForce : public Gravity
                    : global_acceleration_;
     }
 };
+} // namespace SPH
+
 /**
  *  The main program
  */
@@ -137,13 +143,12 @@ int main(int ac, char *av[])
 
     /** create a bar body. */
     SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
-    bar_body.defineParticlesAndMaterial<BarParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    bar_body.generateParticles(BarParticleGenerator(bar_body));
+    bar_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    bar_body.generateParticles<LinearParticles, Bar>();
 
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
-    bar_observer.defineParticlesAndMaterial();
-    bar_observer.generateParticles<Observer>(observation_location);
+    bar_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -155,19 +160,16 @@ int main(int ac, char *av[])
     /** Common particle dynamics. */
     TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
     SimpleDynamics<GravityForce> apply_time_dependent_external_force(bar_body, time_dependent_external_force);
+    InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration> corrected_configuration(bar_body_inner);
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration>
-        corrected_configuration(bar_body_inner);
+    /** active-passive stress relaxation. */
+    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationFirstHalf> stress_relaxation_first_half(bar_body_inner);
+    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationSecondHalf> stress_relaxation_second_half(bar_body_inner);
+
     /** Time step size calculation. */
     ReduceDynamics<slender_structure_dynamics::BarAcousticTimeStepSize> computing_time_step_size(bar_body);
-    /** active-passive stress relaxation. */
-    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationFirstHalf>
-        stress_relaxation_first_half(bar_body_inner);
-    Dynamics1Level<slender_structure_dynamics::BarStressRelaxationSecondHalf>
-        stress_relaxation_second_half(bar_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometryParallelToXAxis boundary_geometry_x(bar_body, "BoundaryGeometryParallelToXAxis");
     SimpleDynamics<slender_structure_dynamics::ConstrainBarBodyRegionAlongAxis>
@@ -180,7 +182,7 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         bar_rotation_damping(0.5, bar_body_inner, "AngularVelocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
-        bar_rotation_b_damping(0.5, bar_body_inner, "AngularVelocity_b", physical_viscosity);
+        bar_rotation_b_damping(0.5, bar_body_inner, "BinormalAngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);

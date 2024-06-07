@@ -48,7 +48,7 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
 void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     clearCellLists();
-    StdLargeVec<Vecd> &pos_n = base_particles.pos_;
+    StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
     size_t total_real_particles = base_particles.total_real_particles_;
     parallel_for(
         IndexRange(0, total_real_particles),
@@ -71,7 +71,7 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 //=================================================================================================//
 StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.pos_;
+    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
@@ -117,7 +117,7 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     for (size_t level = 0; level != total_levels_; ++level)
         mesh_levels_[level]->clearCellLists();
 
-    StdLargeVec<Vecd> &pos_n = base_particles.pos_;
+    StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
     size_t total_real_particles = base_particles.total_real_particles_;
     // rebuild the corresponding particle list.
     parallel_for(
@@ -139,7 +139,7 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 //=================================================================================================//
 StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.pos_;
+    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
     StdLargeVec<size_t> &sequence = base_particles.sequence_;
     size_t total_real_particles = base_particles.total_real_particles_;
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),

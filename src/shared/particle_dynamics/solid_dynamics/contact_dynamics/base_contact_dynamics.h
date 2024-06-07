@@ -36,8 +36,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-typedef DataDelegateContact<SolidParticles, SolidParticles> ContactDynamicsData;
-typedef DataDelegateContact<SolidParticles, SolidParticles> ContactWithWallData;
 
 } // namespace solid_dynamics
 } // namespace SPH

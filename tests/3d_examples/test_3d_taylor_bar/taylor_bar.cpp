@@ -26,20 +26,20 @@ int main(int ac, char *av[])
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
     column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
+    column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? column.generateParticles<Reload>(column.getName())
-        : column.generateParticles<Lattice>();
-    column.addBodyStateForRecording<Vecd>("NormalDirection");
+        ? column.generateParticles<BaseParticles, Reload>(column.getName())
+        : column.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
-    wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall.generateParticles<Lattice>();
+    wall.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall.generateParticles<BaseParticles, Lattice>();
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
-    my_observer.generateParticles(ColumnObserverParticleGenerator(my_observer));
+    StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
+    my_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /**body relation topology */
     InnerRelation column_inner(column);
@@ -87,12 +87,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	All numerical methods will be used in this case.
     //----------------------------------------------------------------------
+    SimpleDynamics<InitialCondition> initial_condition(column);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
+
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-    SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
+
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.2);
     //----------------------------------------------------------------------
     //	Output

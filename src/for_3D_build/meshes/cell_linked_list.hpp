@@ -23,7 +23,7 @@ void CellLinkedList::searchNeighborsByParticles(
     DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation)
 {
-    StdLargeVec<Vecd> &pos = dynamics_range.getBaseParticles().pos_;
+    StdLargeVec<Vecd> &pos = dynamics_range.getBaseParticles().ParticlePositions();
     particle_for(execution::ParallelPolicy(), dynamics_range.LoopRange(),
                  [&](size_t index_i)
                  {

@@ -97,6 +97,9 @@ std::vector<Vecd> createInnerWallShape()
 /** inflow buffer parameters */
 Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
+
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Define case dependent geometries
 //----------------------------------------------------------------------
@@ -164,10 +167,12 @@ struct InflowVelocity
     }
 };
 /** fluid observer particle generator */
-class ParticleGeneratorFluidObserver : public ParticleGenerator<Observer>
+class FluidObserver;
+template <>
+class ParticleGenerator<FluidObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit ParticleGeneratorFluidObserver(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         /** A line of measuring points at the entrance of the channel. */
         size_t number_observation_points = 21;
@@ -181,4 +186,5 @@ class ParticleGeneratorFluidObserver : public ParticleGenerator<Observer>
         }
     }
 };
+} // namespace SPH
 #endif // FSI2_CASE_H

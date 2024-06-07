@@ -84,12 +84,12 @@ int main(int ac, char *av[])
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
-    column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    column.generateParticles<Lattice>();
+    column.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    column.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
-    my_observer.generateParticles<Observer>(observation_location);
+    my_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -102,12 +102,14 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SimpleDynamics<InitialCondition> initial_condition(column);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
-    /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
+
+    /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
+    SimpleDynamics<InitialCondition> initial_condition(column);
+
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(column, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);

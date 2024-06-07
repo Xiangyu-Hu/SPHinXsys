@@ -26,12 +26,12 @@ void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 //=================================================================================================//
 LinearGradientCorrectionMatrix<Contact<>>::
     LinearGradientCorrectionMatrix(BaseContactRelation &contact_relation)
-    : LinearGradientCorrectionMatrix<GeneralDataDelegateContact>(contact_relation)
+    : LinearGradientCorrectionMatrix<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -40,7 +40,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -55,7 +55,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
 //=================================================================================================//
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
-    : KernelGradientCorrection<GeneralDataDelegateInner>(inner_relation),
+    : KernelGradientCorrection<DataDelegateInner>(inner_relation),
       average_correction_matrix_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
@@ -66,7 +66,7 @@ void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 KernelGradientCorrection<Contact<>>::
     KernelGradientCorrection(BaseContactRelation &contact_relation)
-    : KernelGradientCorrection<GeneralDataDelegateContact>(contact_relation)
+    : KernelGradientCorrection<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

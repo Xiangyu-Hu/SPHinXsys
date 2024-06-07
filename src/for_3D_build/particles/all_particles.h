@@ -30,6 +30,6 @@
 #define ALL_PARTICLES_3D_H
 
 #include "all_shared_particles.h"
-#include "beam_particles.h"
+#include "linear_particles.h"
 
 #endif // ALL_PARTICLES_3D_H

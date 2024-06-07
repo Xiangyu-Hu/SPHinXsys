@@ -9,6 +9,8 @@
 #include <gtest/gtest.h>
 using namespace SPH;
 
+namespace SPH
+{
 class WaterBlock : public MultiPolygonShape
 {
   public:
@@ -20,15 +22,17 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	wall body shape definition.
 //----------------------------------------------------------------------
-class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
+class WallBoundary;
+template <>
+class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 {
     Real DH;
     Real DL;
     Real particle_spacing_gate;
 
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
-                                           Real particle_spacing_gate)
+    explicit ParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
+                               Real particle_spacing_gate)
         : ParticleGenerator<Surface>(sph_body),
           DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
     void initializeGeometricVariables() override
@@ -51,7 +55,9 @@ class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
 //----------------------------------------------------------------------
 //	gate body shape definition.
 //----------------------------------------------------------------------
-class GateParticleGenerator : public ParticleGenerator<Surface>
+class Gate;
+template <>
+class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
 {
     Real DL;
     Real BW;
@@ -59,7 +65,7 @@ class GateParticleGenerator : public ParticleGenerator<Surface>
     Real Gate_thickness;
 
   public:
-    explicit GateParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
         : ParticleGenerator<Surface>(sph_body),
           DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
     void initializeGeometricVariables() override
@@ -76,6 +82,7 @@ class GateParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spacing_ref)
 {
@@ -175,26 +182,24 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
     water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<Lattice>();
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1, 1, 0);
-    WallBoundaryParticleGenerator wall_boundary_particle_generator(wall_boundary, DH, DL, particle_spacing_gate);
-    wall_boundary.generateParticles(wall_boundary_particle_generator);
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(DH, DL, particle_spacing_gate);
 
     SolidBody gate(sph_system, makeShared<DefaultShape>("Gate"));
     gate.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    GateParticleGenerator gate_particle_generator(gate, DL, BW, particle_spacing_gate, Gate_thickness);
-    gate.generateParticles(gate_particle_generator);
+    gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.generateParticles<SurfaceParticles, Gate>(DL, BW, particle_spacing_gate, Gate_thickness);
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
     gate_observer.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate_observer.generateParticles<Observer>(observation_location);
+    gate_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -218,40 +223,45 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    // For typical fluid-structure interaction, we first define structure dynamics,
+    // Then fluid dynamics and the corresponding coupling dynamics.
+    // The coupling with multi-body dynamics will be introduced at last.
+    //----------------------------------------------------------------------
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> gate_corrected_configuration(gate_inner);
+
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
+
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> gate_computing_time_step_size(gate);
+    BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
+    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> gate_constraint(gate_constraint_part);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> gate_update_normal(gate);
+    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> gate_curvature(shell_curvature_inner);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> gate_rotation_damping(0.2, gate_inner, "AngularVelocity", physical_viscosity);
+    //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
-    /** Evaluation of fluid density by summation approach. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
+
     /** Compute time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** Pressure relaxation using verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
         fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> gate_corrected_configuration(gate_inner);
-    /** Compute time step size of elastic solid. */
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> gate_computing_time_step_size(gate);
-    /** Stress relaxation stepping for the elastic gate. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner, 3, true);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
-    /**Constrain a solid body part.  */
-    BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> gate_constraint(gate_constraint_part);
-    /** Update the norm of elastic gate. */
-    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> gate_update_normal(gate);
-    /** Curvature calculation for elastic gate. */
-    SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> gate_curvature(shell_curvature_inner);
-    /**Damping.  */
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        gate_rotation_damping(0.2, gate_inner, "AngularVelocity", physical_viscosity);
+
     //----------------------------------------------------------------------
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------
@@ -266,6 +276,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     gate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     gate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
+    gate.addDerivedBodyStateForRecording<Displacement>();
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
     /** Output the observed displacement of gate center. */

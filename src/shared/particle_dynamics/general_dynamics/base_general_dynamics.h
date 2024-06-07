@@ -38,9 +38,6 @@
 
 namespace SPH
 {
-typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateContact;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> GeneralDataDelegateContactOnly;
+
 } // namespace SPH
 #endif // BASE_GENERAL_DYNAMICS_H

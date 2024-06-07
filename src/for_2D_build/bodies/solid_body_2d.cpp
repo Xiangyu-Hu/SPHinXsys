@@ -1,5 +1,6 @@
 #include "solid_body.h"
-#include "solid_particles.h"
+
+#include "base_particles.hpp"
 
 namespace SPH
 {
@@ -11,8 +12,8 @@ void SolidBodyPartForSimbody::setMassProperties()
     for (size_t i = 0; i < body_part_particles_.size(); ++i)
     {
         size_t index_i = body_part_particles_[i];
-        Real particle_volume = solid_particles_->Vol_[index_i];
-        mass_center += particle_volume * solid_particles_->pos0_[index_i];
+        Real particle_volume = Vol_[index_i];
+        mass_center += particle_volume * pos_[index_i];
         body_part_volume += particle_volume;
     }
 
@@ -26,8 +27,8 @@ void SolidBodyPartForSimbody::setMassProperties()
     for (size_t i = 0; i < body_part_particles_.size(); ++i)
     {
         size_t index_i = body_part_particles_[i];
-        Vecd particle_position = solid_particles_->pos0_[index_i];
-        Real particle_volume = solid_particles_->Vol_[index_i];
+        Vecd particle_position = pos_[index_i];
+        Real particle_volume = Vol_[index_i];
 
         Real r_x = (particle_position[1] - mass_center[1]);
         Ix += particle_volume * r_x * r_x;
@@ -40,7 +41,7 @@ void SolidBodyPartForSimbody::setMassProperties()
     Iz /= body_part_volume;
 
     body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-        body_part_volume * solid_body_density_, SimTKVec3(0), SimTK::UnitInertia(Ix, Iy, Iz));
+        body_part_volume * rho0_, SimTKVec3(0), SimTK::UnitInertia(Ix, Iy, Iz));
 }
 //=================================================================================================//
 } // namespace SPH

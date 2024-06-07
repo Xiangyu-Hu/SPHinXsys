@@ -20,10 +20,14 @@ Fluid::Fluid(Real rho0, Real c0, Real mu)
     material_type_name_ = "Fluid";
 }
 //=================================================================================================//
-void Fluid::initializeLocalParameters(BaseParticles *base_particles)
+StdLargeVec<Vecd> *Solid::AverageVelocity(BaseParticles *base_particles)
 {
-    BaseMaterial::initializeLocalParameters(base_particles);
-    base_particles->registerSharedVariable<Real>("Pressure", getPressure(rho0_));
+    return base_particles->registerSharedVariable<Vecd>("Velocity");
+}
+//=================================================================================================//
+StdLargeVec<Vecd> *Solid::AverageAcceleration(BaseParticles *base_particles)
+{
+    return base_particles->registerSharedVariable<Vecd>("Acceleration");
 }
 //=================================================================================================//
 } // namespace SPH

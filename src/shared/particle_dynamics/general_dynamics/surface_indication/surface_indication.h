@@ -28,6 +28,8 @@
  * However, some other applications may use this function,
  * such as transport velocity formulation,
  * for masking some function which is only applicable for the bulk of the fluid body.
+ * Currently, indicator used 0 for bulk, 1 for free surface indicator,
+ * other to be defined.
  * @author	Xiangyu Hu
  */
 
@@ -58,7 +60,7 @@ class FreeSurfaceIndication<DataDelegationType>
 
 template <>
 class FreeSurfaceIndication<Inner<>>
-    : public FreeSurfaceIndication<GeneralDataDelegateInner>
+    : public FreeSurfaceIndication<DataDelegateInner>
 {
   public:
     explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
@@ -89,22 +91,22 @@ using SpatialTemporalFreeSurfaceIndicationInner = FreeSurfaceIndication<Inner<Sp
 
 template <>
 class FreeSurfaceIndication<Contact<>>
-    : public FreeSurfaceIndication<GeneralDataDelegateContact>
+    : public FreeSurfaceIndication<DataDelegateContact>
 {
   public:
     explicit FreeSurfaceIndication(BaseContactRelation &contact_relation)
-        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation)
+        : FreeSurfaceIndication<DataDelegateContact>(contact_relation)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
+            contact_Vol_.push_back(this->contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~FreeSurfaceIndication(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
-protected:
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
 };
 
 /**
@@ -118,7 +120,7 @@ class NonWetting;
 
 template <>
 class FreeSurfaceIndication<Contact<NonWetting>>
-    : public FreeSurfaceIndication<GeneralDataDelegateContact>
+    : public FreeSurfaceIndication<DataDelegateContact>
 {
   public:
     FreeSurfaceIndication(BaseContactRelation &contact_relation);

@@ -21,30 +21,7 @@ int x_num = Total_PL / resolution_ref_large;         // particle number in x dir
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
-//----------------------------------------------------------------------
-//	particle generation considering the anisotropic resolution
-//----------------------------------------------------------------------
-class ParticleGeneratorAnisotropic : public ParticleGenerator<Base>
-{
-  public:
-    ParticleGeneratorAnisotropic(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
-
-    virtual void initializeGeometricVariables() override
-    {
-        // set particles directly
-        for (int i = 0; i < x_num; i++)
-        {
-            for (int j = 0; j < y_num; j++)
-            {
-                Real x = -SL + (i + 0.5) * resolution_ref_large;
-                Real y = -PH / 2 + (j + 0.5) * resolution_ref;
-                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
-            }
-        }
-    }
-};
-
-Real BW = resolution_ref * 4; // boundary width, at least three particles
+Real BW = resolution_ref * 4;                    // boundary width, at least three particles
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
@@ -75,6 +52,8 @@ std::vector<Vecd> beam_shape{
     Vecd(0.0, -PH / 2), Vecd(0.0, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(0.0, -PH / 2)};
 // Beam observer location
 StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Define the beam body
 //----------------------------------------------------------------------
@@ -88,6 +67,29 @@ class Beam : public MultiPolygonShape
     }
 };
 //----------------------------------------------------------------------
+//	particle generation considering the anisotropic resolution
+//----------------------------------------------------------------------
+template <>
+class ParticleGenerator<Beam> : public ParticleGenerator<Base>
+{
+  public:
+    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
+
+    virtual void initializeGeometricVariables() override
+    {
+        // set particles directly
+        for (int i = 0; i < x_num; i++)
+        {
+            for (int j = 0; j < y_num; j++)
+            {
+                Real x = -SL + (i + 0.5) * resolution_ref_large;
+                Real y = -PH / 2 + (j + 0.5) * resolution_ref;
+                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+            }
+        }
+    }
+};
+//----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
 class BeamInitialCondition
@@ -95,7 +97,8 @@ class BeamInitialCondition
 {
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
 
     void update(size_t index_i, Real dt)
     {
@@ -103,10 +106,13 @@ class BeamInitialCondition
         Real x = pos_[index_i][0] / PL;
         if (x > 0.0)
         {
-            vel_[index_i][1] = vf * particles_->elastic_solid_.ReferenceSoundSpeed() *
+            vel_[index_i][1] = vf * elastic_solid_.ReferenceSoundSpeed() *
                                (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
         }
     };
+
+  protected:
+    ElasticSolid &elastic_solid_;
 };
 //----------------------------------------------------------------------
 //	define the beam base which will be constrained.
@@ -122,15 +128,15 @@ MultiPolygon createBeamConstrainShape()
 //	calculate correction matrix B to keep the accuracy
 //----------------------------------------------------------------------
 
-class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralDataDelegateInner
+class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegateInner
 {
   public:
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
-          GeneralDataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha), Vol_(particles_->Vol_),
-          B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-          pos_(particles_->pos_)
+          DataDelegateInner(inner_relation),
+          beta_(beta), alpha_(alpha), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+          B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+          pos_(*particles_->getVariableByName<Vecd>("Position"))
     {
         particles_->registerVariable(show_neighbor_, "ShowingNeighbor", Real(0.0));
     }
@@ -173,7 +179,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralData
         B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
     }
 };
-
+} // namespace SPH
 //------------------------------------------------------------------------------
 // the main program
 //------------------------------------------------------------------------------
@@ -191,12 +197,12 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles(ParticleGeneratorAnisotropic(beam_body));
+    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.generateParticles<BaseParticles, Beam>();
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_observer.generateParticles<Observer>(observation_location);
+    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -204,25 +210,28 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
-    //-----------------------------------------------------------------------------
-    // this section define all numerical methods will be used in this case
-    //-----------------------------------------------------------------------------
-    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    // corrected strong configuration
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
     InteractionWithUpdate<AnisotropicCorrectConfiguration> beam_corrected_configuration(beam_body_inner);
-    beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
-    // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    // clamping a solid body part.
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
+    beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
     BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);

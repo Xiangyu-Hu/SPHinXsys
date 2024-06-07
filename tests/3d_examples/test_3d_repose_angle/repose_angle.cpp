@@ -86,19 +86,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
     soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? soil_block.generateParticles<Reload>(soil_block.getName())
-        : soil_block.generateParticles<Lattice>();
-    soil_block.addBodyStateForRecording<Real>("Pressure");
-    soil_block.addBodyStateForRecording<Real>("Density");
-    soil_block.addBodyStateForRecording<Real>("VerticalStress");
-    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
+        ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())
+        : soil_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -159,19 +154,25 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SimpleDynamics<SoilInitialCondition> soil_initial_condition(soil_block);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
-    InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<SoilInitialCondition> soil_initial_condition(soil_block);
+
     Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
     Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
+    InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
+
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
+    soil_block.addBodyStateForRecording<Real>("Pressure");
+    soil_block.addBodyStateForRecording<Real>("Density");
+    soil_block.addBodyStateForRecording<Real>("VerticalStress");
+    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
     RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_soil_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------

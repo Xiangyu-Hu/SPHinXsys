@@ -16,7 +16,11 @@ using namespace SPH;
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 
-class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class ShellCircle;
+template <>
+class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -24,7 +28,7 @@ class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
         : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           normal_(normal),
@@ -39,6 +43,7 @@ class ShellCircleParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 template <typename VectorType>
 BoundingBox get_particles_bounding_box(const VectorType &pos_0)
@@ -67,7 +72,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
         throw std::runtime_error("read_obj_vertices: file doesn't exist: " + file_name);
 
     StdVec<Vec3d> pos_0;
-    Vec3d particle(0);
+    Vec3d particle = Vec3d::Zero();
     unsigned int count = 0;
     Real value = 0;
 
@@ -88,18 +93,19 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 
 template <typename VariableType>
 VariableType interpolate_observer(
-    ShellParticles &particles,
+    SurfaceParticles &particles,
     const IndexVector &neighbor_ids,
     const Vec3d &observer_pos_0,
     std::function<VariableType(size_t)> get_variable_value)
 {
     Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
     Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    StdLargeVec<Vecd> &pos0_ = *particles.registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     VariableType variable_sum = VariableType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
     {
-        Real distance = (particles.pos0_[id] - observer_pos_0).norm();
+        Real distance = (pos0_[id] - observer_pos_0).norm();
         Real kernel = kernel_ptr->W_3D(distance / smoothing_length);
         kernel_sum += kernel;
         variable_sum += kernel * (get_variable_value(id));
@@ -120,8 +126,9 @@ struct observer_point_shell
     Mat3d pk2_stress;
     Mat3d cauchy_stress;
 
-    void interpolate(ShellParticles &particles)
+    void interpolate(SurfaceParticles &particles)
     {
+        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                             { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
         displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
@@ -135,7 +142,7 @@ struct observer_point_shell
         pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                                  {
 			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
-			return particles.elastic_solid_.StressPK2(F, id); });
+			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
     }
 
@@ -190,7 +197,6 @@ return_data bending_circular_plate(Real dp_ratio)
     Real rho = 1; // unit rho, not specified in test case description
     Real E = 3e7 * psi_to_pa;
     Real mu = 0.3;
-    auto material = makeShared<LinearElasticSolid>(rho, E, mu);
     Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
@@ -231,42 +237,28 @@ return_data bending_circular_plate(Real dp_ratio)
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-    ShellCircleParticleGenerator shell_particle_generator(shell_body, obj_vertices, sym_vec, particle_area, thickness);
-    shell_body.generateParticles(shell_particle_generator);
-    auto shell_particles = dynamic_cast<ShellParticles *>(&shell_body.getBaseParticles());
-    // output
+    shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
+    shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
+    auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.writeToFile(0);
-    // observer point
-    point_center.neighbor_ids = [&]() { // full neighborhood
-        IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
-        {
-            if ((shell_particles->pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
-                ids.push_back(i);
-        }
-        return ids;
-    }();
-    EXPECT_FALSE(point_center.neighbor_ids.empty());
-    point_center.interpolate(*shell_particles);
+    shell_body.addDerivedBodyStateForRecording<Displacement>();
 
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
     SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
+
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-            if (shell_body.getBaseParticles().pos_[i].norm() > radius - dp / 2)
+        for (size_t i = 0; i < shell_body.getBaseParticles().ParticlePositions().size(); ++i)
+            if (shell_body.getBaseParticles().ParticlePositions()[i].norm() > radius - dp / 2)
                 ids.push_back(i);
         return ids;
     }();
@@ -284,10 +276,29 @@ return_data bending_circular_plate(Real dp_ratio)
     corrected_configuration.exec();
     constant_gravity_force.exec();
 
+    // output
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.writeToFile(0);
+    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    // observer point
+    point_center.neighbor_ids = [&]() { // full neighborhood
+        IndexVector ids;
+        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+
+        for (size_t i = 0; i < pos0_.size(); ++i)
+        {
+            if ((pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
+                ids.push_back(i);
+        }
+        return ids;
+    }();
+    EXPECT_FALSE(point_center.neighbor_ids.empty());
+    point_center.interpolate(*shell_particles);
+
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file
         Real min_rij = MaxReal;
-        for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
+        for (size_t index_i = 0; index_i < pos0_.size(); ++index_i)
         {
             Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -297,9 +308,11 @@ return_data bending_circular_plate(Real dp_ratio)
         EXPECT_GT(min_rij, dp / 2);
 
         // test volume
-        Real total_volume = std::accumulate(shell_particles->Vol_.begin(), shell_particles->Vol_.end(), 0.0);
+        StdLargeVec<Real> &Vol_ = shell_particles->VolumetricMeasures();
+        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+        Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
-        Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
+        Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
         EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
@@ -355,7 +368,7 @@ return_data bending_circular_plate(Real dp_ratio)
                 // shell_body.updateCellLinkedList();
 
                 { // checking if any position has become nan
-                    for (const auto &pos : shell_body.getBaseParticles().pos_)
+                    for (const auto &pos : shell_body.getBaseParticles().ParticlePositions())
                         if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
                             throw std::runtime_error("position has become nan");
                 }
@@ -373,7 +386,7 @@ return_data bending_circular_plate(Real dp_ratio)
         vtp_output.writeToFile(ite);
     }
     { // output data
-        std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+        std::cout << "max displacement: " << maximum_displace_norm.exec() << std::endl;
         point_center.interpolate(*shell_particles);
         point_center.write_data();
     }

@@ -50,9 +50,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
     imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(sph_system);
-    // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    imported_model.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-    imported_model.generateParticles<ThickSurface, Lattice>(thickness);
+    imported_model.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
     imported_model.addBodyStateForRecording<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.

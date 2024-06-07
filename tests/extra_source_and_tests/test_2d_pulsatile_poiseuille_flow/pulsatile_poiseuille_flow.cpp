@@ -14,24 +14,19 @@
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
 #include "sphinxsys.h"
-
-/**
- * @brief Namespace cite here.
- */
 using namespace SPH;
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real DL = 0.004;                                             /**< Channel length. */
 Real DH = 0.001;                                             /**< Channel height. */
 Real resolution_ref = DH / 20.0;                             /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-/**
- * @brief Material properties of the fluid.
- */
+//----------------------------------------------------------------------
+//	Material parameters.
+//----------------------------------------------------------------------
 Real Inlet_pressure = 0.1;
 Real Outlet_pressure = 0.0;
 Real rho0_f = 1000.0;
@@ -39,17 +34,16 @@ Real Re = 50.0;
 Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
 Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
 Real c_f = 10.0 * U_f;
-/**
- * @brief buffer parameters.
- */
+//----------------------------------------------------------------------
+//	Geometric shapes used in this case.
+//----------------------------------------------------------------------
 Vec2d bidirectional_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
 Vec2d right_bidirectional_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * DH);
 Vec2d normal = Vec2d(1.0, 0.0);
-
-/**
- * @brief 	Pressure boundary definition.
- */
+//----------------------------------------------------------------------
+//	Pressure boundary definition.
+//----------------------------------------------------------------------
 struct LeftInflowPressure
 {
     template <class BoundaryConditionType>
@@ -65,6 +59,9 @@ struct LeftInflowPressure
     }
 };
 
+//----------------------------------------------------------------------
+//	inflow velocity definition.
+//----------------------------------------------------------------------
 struct RightInflowPressure
 {
     template <class BoundaryConditionType>
@@ -77,9 +74,10 @@ struct RightInflowPressure
         return pressure;
     }
 };
-/**
- * @brief 	Fluid body definition.
- */
+
+//----------------------------------------------------------------------
+//	Fluid body definition.
+//----------------------------------------------------------------------
 class WaterBlock : public MultiPolygonShape
 {
   public:
@@ -94,9 +92,10 @@ class WaterBlock : public MultiPolygonShape
         multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
     }
 };
-/**
- * @brief 	Wall boundary body definition.
- */
+
+//----------------------------------------------------------------------
+//	Wall boundary body definition.
+//----------------------------------------------------------------------
 class WallBoundary : public MultiPolygonShape
 {
   public:
@@ -119,128 +118,132 @@ class WallBoundary : public MultiPolygonShape
         multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
     }
 };
-
-/**
- * @brief 	Main program starts here.
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    /**
-     * @brief Build up -- a SPHSystem --
-     */
+    //----------------------------------------------------------------------
+    //	Build up an SPHSystem and IO environment.
+    //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setGenerateRegressionData(false);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    /**
-     * @brief Material property, particles and body creation of fluid.
-     */
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
-    water_block.generateParticlesWithReserve<Lattice>(in_outlet_particle_buffer);
+    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
-    /**
-     * @brief 	Particle and body creation of wall boundary.
-     */
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
-    velocity_observer.generateParticles<Observer>(observer_location);
-    /** topology */
+    velocity_observer.generateParticles<BaseParticles, Observer>(observer_location);
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation water_block_contact(water_block, {&wall_boundary});
     ContactRelation velocity_observer_contact(velocity_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
-    /**
-     * @brief 	Define all numerical methods which are used in this case.
-     */
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    /** delete outflow particles */
-    BodyAlignedBoxByCell left_disposer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+
+    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+
+    AlignedBoxShape left_disposer_shape(Transform(Rotation2d(Pi), Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize);
+    BodyAlignedBoxByCell left_disposer(water_block, left_disposer_shape);
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer, xAxis);
-    BodyAlignedBoxByCell right_disposer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+
+    AlignedBoxShape right_disposer_shape(Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize);
+    BodyAlignedBoxByCell right_disposer(water_block, right_disposer_shape);
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer, xAxis);
-    /** surface particle identification */
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
-        boundary_indicator(water_block_inner, water_block_contact);
-    /** bidirectional buffer */
-    BodyAlignedBoxByCell left_emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+
+    AlignedBoxShape left_emitter_shape(Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize);
+    BodyAlignedBoxByCell left_emitter(water_block, left_emitter_shape);
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure, SequencedPolicy> left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
-    BodyAlignedBoxByCell right_emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+
+    AlignedBoxShape right_emitter_shape(Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize);
+    BodyAlignedBoxByCell right_emitter(water_block, right_emitter_shape);
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure, SequencedPolicy> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis);
 
-    /** output parameters */
+    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
+    SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("BufferParticleIndicator");
-    /** density correction in pressure-driven flow */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
-    /** zeroth order consistency */
-    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
-    /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** momentum equation. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    /** mass equation. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
-    /** pressure boundary condition. */
-    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
-    SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
-    /** Computing viscous acceleration. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
-    /** Impose transport velocity. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
-        transport_velocity_correction(water_block_inner, water_block_contact);
-
-    /**
-     * @brief Output.
-     */
-    /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_centerline_velocity("Velocity", velocity_observer_contact);
-    /**
-     * @brief Setup geometry and initial conditions.
-     */
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     boundary_indicator.exec();
     left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
     wall_boundary_normal_direction.exec();
-
-    /**
-     * @brief 	Basic parameters.
-     */
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 10.0;   /**< End time. */
     Real Output_Time = 0.1; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
-    /** statistics for computing CPU time. */
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;
     TimeInterval interval_computing_pressure_relaxation;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
-
-    /** Output the start states of bodies. */
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
     body_states_recording.writeToFile();
     write_centerline_velocity.writeToFile(number_of_iterations);
-    /**
-     * @brief 	Main loop starts here.
-     */
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;

@@ -21,50 +21,47 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	solid_particles.h
- * @brief 	This is the derived class of base particles.
- * @author	Chi ZHang, Dong Wu and Xiangyu Hu
+ * @file 	io_vtk_fvm.h
+ * @brief Classes for input and output with vtk (Paraview) for FVM unstructured mesh.
+ * @author Xiangyu Hu
  */
 
-#ifndef POROUS_SOLID_PARTICLES_H
-#define POROUS_SOLID_PARTICLES_H
+#ifndef IO_VTK_FVM_H
+#define IO_VTK_FVM_H
 
-#include "solid_particles.h"
-#include "porous_media_solid.h"
- 
+#include "io_vtk.h"
+#include "unstructured_mesh.h"
+
 namespace SPH
 {
-namespace multi_species_continuum
-{	
- 
 /**
- * @class PorousMediaParticles
- * @brief A group of particles with elastic body particle data.
+ * @class BodyStatesRecordingInMeshToVtp
+ * @brief  Write files for bodies
+ * the output file is VTK XML format in FVMcan visualized by ParaView the data type vtkPolyData
  */
-	class PorousMediaParticles : public ElasticSolidParticles
-	{
-	public:
-		PorousMediaParticles(SPHBody &body, PorousMediaSolid *porous_solid);
-		PorousMediaSolid &porous_solid_;
-		virtual ~PorousMediaParticles() {};
+class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingInMeshToVtp(SPHBody &body, ANSYSMesh &ansys_mesh);
+    virtual ~BodyStatesRecordingInMeshToVtp(){};
 
-		StdLargeVec<Vecd> fluid_velocity_;       /**< fluid velocity */
-		StdLargeVec<Vecd> relative_fluid_flux_;  /**<   fluid flux through the boundary of solid unit */
-		StdLargeVec<Real> fluid_saturation_;     /**< fluid content quantity in solid */
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override; // TODO: to be implemented in 3d
+    StdLargeVec<Vecd> &node_coordinates_;
+    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+};
 
+class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingInMeshToVtu(SPHBody &body, ANSYSMesh &ansys_mesh);
+    virtual ~BodyStatesRecordingInMeshToVtu(){};
 
-		StdLargeVec<Real> Vol_update_;             /**< solid volume */
-		StdLargeVec<Real> dfluid_mass_dt_;         /**<  fluid mass time gradient in solid */
-		StdLargeVec<Real> fluid_mass_;             /**< fluid mass in solid */
-		StdLargeVec<Real> total_mass_;             /**< total mass containing fluid mass and solid mass */
-		StdLargeVec<Vecd> total_momentum_;         /**< total momentum consists of fluid momentum and solid momentum */
-		StdLargeVec<Vecd> dtotal_momentum_dt_;   /**< total momentum time gradient */
-		StdLargeVec<Matd> outer_fluid_velocity_relative_fluid_flux_;  /**< outer product of fluid veolcity and fluid flux */
-		StdLargeVec<Matd>  Stress_;                            /**< Cauchy stress on solid */
- 
-		virtual void initializeOtherVariables() override;
-		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
-	};
-}
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override; // TODO: to be implemented in 2d
+    StdLargeVec<Vecd> &node_coordinates_;
+    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+    SPHBody &bounds_;
+};
 } // namespace SPH
-#endif // POROUS_SOLID_PARTICLES_H
+#endif // IO_VTK_FVM_H

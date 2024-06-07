@@ -43,11 +43,15 @@ Real Youngs_modulus = 210e6;                 /** Normalized Youngs Modulus. */
 Real poisson = 0.3;                          /** Poisson ratio. */
 Real physical_viscosity = 200.0 * thickness; /** physical damping, here we choose the same value as numerical viscosity. */
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGenerator<Surface>
+class Cylinder;
+template <>
+class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -83,7 +87,7 @@ class DisControlGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
+        Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.ParticlePositions()[index_i];
         if (pos_before_rotation[0] < 0.5 * particle_spacing_ref && pos_before_rotation[0] > -0.5 * particle_spacing_ref)
         {
             body_part_particles_.push_back(index_i);
@@ -97,7 +101,7 @@ class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRe
   public:
     ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(particles_->vel_){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")){};
     virtual ~ControlDisplacement(){};
 
   protected:
@@ -124,12 +128,13 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi))
+        if (base_particles_.ParticlePositions()[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi))
         {
             body_part_particles_.push_back(index_i);
         }
     };
 };
+} // namespace SPH
 
 /**
  *  The main program
@@ -144,12 +149,12 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     /** create a cylinder body with shell particles and linear elasticity. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
-    cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
+    cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<Observer>(observation_location);
+    cylinder_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -161,18 +166,15 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(cylinder_body_inner);
-    /** Time step size calculation. */
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    /** stress relaxation. */
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
+
+    /** the main shell dynamics model. */
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
-    /** Control the displacement. */
+
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
     DisControlGeometry dis_control_geometry(cylinder_body, "DisControlGeometry");
     SimpleDynamics<ControlDisplacement> dis_control(dis_control_geometry);
-    /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>

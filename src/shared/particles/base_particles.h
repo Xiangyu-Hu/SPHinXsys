@@ -91,16 +91,6 @@ class BaseParticles
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~BaseParticles(){};
-
-    StdLargeVec<Vecd> pos_;         /**< Position */
-    StdLargeVec<Vecd> vel_;         /**< Velocity */
-    StdLargeVec<Vecd> force_;       /**< Force induced by pressure- or stress */
-    StdLargeVec<Vecd> force_prior_; /**< Other, such as gravity and viscous, forces computed before force_ */
-
-    StdLargeVec<Real> Vol_;      /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;      /**< Density */
-    StdLargeVec<Real> mass_;     /**< Mass*/
-    StdLargeVec<int> indicator_; /**< particle indicator: 0 for bulk, 1 for free surface indicator, other to be defined */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     //----------------------------------------------------------------------
@@ -133,6 +123,8 @@ class BaseParticles
     template <typename DataType, typename... Args>
     StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
+    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
+    template <typename DataType>
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
     ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
 
@@ -145,7 +137,7 @@ class BaseParticles
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
     template <typename DataType>
-    void addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
+    DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
     template <typename DataType>
     void addVariableToWrite(const std::string &variable_name);
     template <typename DataType>
@@ -156,7 +148,7 @@ class BaseParticles
     inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
 
     template <class DerivedVariableMethod, class... Ts>
-    void addDerivedVariableToWrite(Ts &&...);
+    void addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...);
     void computeDerivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting
@@ -169,7 +161,7 @@ class BaseParticles
     ParticleSorting particle_sorting_;
 
     template <typename DataType>
-    void registerSortableVariable(const std::string &variable_name);
+    void addVariableToSort(const std::string &variable_name);
     template <typename SequenceMethod>
     void sortParticles(SequenceMethod &sequence_method);
     //----------------------------------------------------------------------
@@ -189,10 +181,17 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
+    StdLargeVec<Vecd> &ParticlePositions() { return pos_; }
+    StdLargeVec<Real> &VolumetricMeasures() { return Vol_; }
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
+    StdLargeVec<Vecd> pos_;  /**< Position */
+    StdLargeVec<Real> Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> rho_;  /**< Density */
+    StdLargeVec<Real> mass_; /**< Mass*/
+
     SPHBody &sph_body_;
     std::string body_name_;
     BaseMaterial &base_material_;

@@ -68,7 +68,8 @@ class BeamInitialCondition
 {
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
 
     void update(size_t index_i, Real dt)
     {
@@ -76,10 +77,13 @@ class BeamInitialCondition
         Real x = pos_[index_i][0] / PL;
         if (x > 0.0)
         {
-            vel_[index_i][1] = vf * particles_->elastic_solid_.ReferenceSoundSpeed() *
+            vel_[index_i][1] = vf * elastic_solid_.ReferenceSoundSpeed() *
                                (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
         }
     };
+
+  protected:
+    ElasticSolid &elastic_solid_;
 };
 //----------------------------------------------------------------------
 //	define the beam base which will be constrained.
@@ -107,12 +111,12 @@ int main(int ac, char *av[])
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<Lattice>();
+    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<Observer>(observation_location);
+    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -126,15 +130,13 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
-    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    // corrected strong configuration
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
-    // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::Integration1stHalfCauchy> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    // clamping a solid body part. This is softer than a direct constraint
+
+    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
@@ -142,8 +144,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", beam_observer_contact);
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------

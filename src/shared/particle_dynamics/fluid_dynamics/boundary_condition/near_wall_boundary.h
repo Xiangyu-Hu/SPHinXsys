@@ -39,7 +39,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class NearWallDistance : public LocalDynamics, public FSIContactData
+class NearWallDistance : public LocalDynamics, public DataDelegateContact
 {
   public:
     explicit NearWallDistance(BaseContactRelation &wall_contact_relation);

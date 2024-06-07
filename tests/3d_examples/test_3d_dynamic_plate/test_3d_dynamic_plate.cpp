@@ -38,10 +38,14 @@ Real time_to_full_external_force = 0.0;
 Real gravitational_acceleration = 0.0;
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -72,8 +76,8 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][1] < 0.0 ||
-            base_particles_.pos_[index_i][0] > PL || base_particles_.pos_[index_i][1] > PH)
+        if (base_particles_.ParticlePositions()[index_i][0] < 0.0 || base_particles_.ParticlePositions()[index_i][1] < 0.0 ||
+            base_particles_.ParticlePositions()[index_i][0] > PL || base_particles_.ParticlePositions()[index_i][1] > PH)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -95,6 +99,8 @@ class TimeDependentExternalForce : public Gravity
                    : global_acceleration_;
     }
 };
+} // namespace SPH
+
 /**
  *  The main program
  */
@@ -105,14 +111,12 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles(PlateParticleGenerator(plate_body));
-    plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
+    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.generateParticles<SurfaceParticles, Plate>();
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<Observer>(observation_location);
+    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -127,21 +131,20 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(plate_body_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
+
+    /** active-passive stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
+
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    /** active-passive stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(plate_body_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
     SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
     IOEnvironment io_environment(sph_system);
+    plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact);

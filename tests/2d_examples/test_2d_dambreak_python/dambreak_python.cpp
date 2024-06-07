@@ -66,26 +66,26 @@ class PreSettingCase : public Parameter
     ObserverBody fluid_observer;
 
   public:
-    PreSettingCase() : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
-                       sph_system(system_domain_bounds, particle_spacing_ref),
-                       io_environment(sph_system),
-                       water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                                   Transform(water_block_translation), water_block_halfsize, "WaterBody")),
-                       wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
-                       observation_location({Vecd(DL, 0.2)}),
-                       fluid_observer(sph_system, "FluidObserver")
+    PreSettingCase()
+        : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
+          sph_system(system_domain_bounds, particle_spacing_ref),
+          io_environment(sph_system),
+          water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+                                      Transform(water_block_translation), water_block_halfsize, "WaterBody")),
+          wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
+          observation_location({Vecd(DL, 0.2)}),
+          fluid_observer(sph_system, "FluidObserver")
     {
         //----------------------------------------------------------------------
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
-        water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-        water_block.generateParticles<Lattice>();
+        water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+        water_block.generateParticles<BaseParticles, Lattice>();
 
-        wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-        wall_boundary.generateParticles<Lattice>();
-        wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+        wall_boundary.defineMaterial<Solid>();
+        wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-        fluid_observer.generateParticles<Observer>(observation_location);
+        fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
     }
 };
 //----------------------------------------------------------------------
@@ -110,12 +110,14 @@ class Environment : public PreSettingCase
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+    Gravity gravity;
+    SimpleDynamics<GravityForce> constant_gravity;
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
+
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation;
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation;
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation;
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
-    Gravity gravity;
-    SimpleDynamics<GravityForce> constant_gravity;
+
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step;
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step;
     //----------------------------------------------------------------------
@@ -152,12 +154,12 @@ class Environment : public PreSettingCase
           water_wall_contact(water_block, {&wall_boundary}),
           water_block_complex(water_block_inner, water_wall_contact),
           fluid_observer_contact(fluid_observer, {&water_block}),
+          gravity(Vecd(0.0, -gravity_g)),
+          constant_gravity(water_block, gravity),
+          wall_boundary_normal_direction(wall_boundary),
           fluid_pressure_relaxation(water_block_inner, water_wall_contact),
           fluid_density_relaxation(water_block_inner, water_wall_contact),
           fluid_density_by_summation(water_block_inner, water_wall_contact),
-          wall_boundary_normal_direction(wall_boundary),
-          gravity(Vecd(0.0, -gravity_g)),
-          constant_gravity(water_block, gravity),
           fluid_advection_time_step(water_block, U_ref),
           fluid_acoustic_time_step(water_block),
           body_states_recording(sph_system.real_bodies_),

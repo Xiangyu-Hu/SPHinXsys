@@ -4,18 +4,18 @@
  * @author 	Yash Mandaokar, Zhentong Wang and Xiangyu Hu
  */
 #include "test_3d_incompressible_channel_flow.h"
-#include "sphinxsys.h"
+
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
     ANSYSMesh read_mesh_data(mesh_fullpath);
     //----------------------------------------------------------------------
-   //	Build up the environment of a SPHSystem.
-   //----------------------------------------------------------------------
+    //	Build up the environment of a SPHSystem.
+    //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, read_mesh_data.MinMeshEdge());
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
@@ -23,12 +23,9 @@ int main(int ac, char* av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody air_block(sph_system, makeShared<AirBody>("AirBody"));
-    air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
-    air_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, read_mesh_data);
-    air_block.addBodyStateForRecording<Real>("Density");
-    air_block.addBodyStateForRecording<Real>("Pressure");
-    SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
+    air_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
     GhostCreationFromMesh ghost_creation(air_block, read_mesh_data, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -38,16 +35,19 @@ int main(int ac, char* av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-        /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
-    the value is larger, the numerical dissipation larger*/
+    SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
+    /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
+     * the value is larger, the numerical dissipation larger. */
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(air_block_inner, 500.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(air_block_inner, 8000.0);
-    /** Boundary conditions set up */
-    InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(air_block, read_mesh_data.MinMeshEdge(), 0.6);
+    /** Boundary conditions set up */
+    InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     //----------------------------------------------------------------------
     // Visualization in FVM with date in cell.
+    air_block.addBodyStateForRecording<Real>("Density");
+    air_block.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(air_block);
 
@@ -88,13 +88,13 @@ int main(int ac, char* av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
-                cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                    << GlobalStaticVariables::physical_time_
-                    << "	dt = " << dt << "\n";
+                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                          << GlobalStaticVariables::physical_time_
+                          << "	dt = " << dt << "\n";
                 write_maximum_speed.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
-            //write_real_body_states.writeToFile();
+            // write_real_body_states.writeToFile();
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();
@@ -104,6 +104,6 @@ int main(int ac, char* av[])
     TickCount t4 = TickCount::now();
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     return 0;
 }

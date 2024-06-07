@@ -40,11 +40,15 @@ class Parameter
     Real gravitational_acceleration = 0.009646;
 };
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator<Surface>, public Parameter
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Parameter
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -75,7 +79,7 @@ class BoundaryGeometryParallelToXAxis : public BodyPartByParticle, public Parame
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH)
+        if (base_particles_.ParticlePositions()[index_i][1] < 0.0 || base_particles_.ParticlePositions()[index_i][1] > PH)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -95,7 +99,7 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle, public Parame
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
+        if (base_particles_.ParticlePositions()[index_i][0] < 0.0 || base_particles_.ParticlePositions()[index_i][0] > PL)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -146,11 +150,10 @@ class PreSettingCase : public Parameter
         //----------------------------------------------------------------------
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
-        plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-        plate_body.generateParticles(PlateParticleGenerator(plate_body));
+        plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+        plate_body.generateParticles<SurfaceParticles, Plate>();
 
-        plate_observer.defineParticlesAndMaterial();
-        plate_observer.generateParticles<Observer>(observation_location);
+        plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
     }
 };
 Real observed_quantity_0 = 0.0;
@@ -181,16 +184,13 @@ class Environment : public PreSettingCase
     /**
      * This section define all numerical methods will be used in this case.
      */
+    /** active-passive stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half;
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half;
     /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration;
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration;
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size;
-    /** active-passive stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half;
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half;
     /** Constrain the Boundary. */
     BoundaryGeometryParallelToXAxis boundary_geometry_x;
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
@@ -218,10 +218,10 @@ class Environment : public PreSettingCase
                                                     plate_observer_contact(plate_observer, {&plate_body}),
                                                     time_dependent_external_force(Vec3d(0.0, 0.0, q * loading_factor / (PT * rho0_s) - gravitational_acceleration)),
                                                     apply_time_dependent_external_force(plate_body, time_dependent_external_force),
-                                                    corrected_configuration(plate_body_inner),
-                                                    computing_time_step_size(plate_body),
                                                     stress_relaxation_first_half(plate_body_inner),
                                                     stress_relaxation_second_half(plate_body_inner),
+                                                    corrected_configuration(plate_body_inner),
+                                                    computing_time_step_size(plate_body),
                                                     boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis"),
                                                     constrain_holder_x(boundary_geometry_x, 0),
                                                     boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis"),
@@ -317,6 +317,7 @@ class Environment : public PreSettingCase
         return RUN_ALL_TESTS();
     }
 };
+} // namespace SPH
 
 PYBIND11_MODULE(test_3d_thin_plate_python, m)
 {

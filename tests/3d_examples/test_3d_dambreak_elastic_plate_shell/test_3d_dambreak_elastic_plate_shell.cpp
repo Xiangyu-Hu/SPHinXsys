@@ -84,10 +84,14 @@ class MovingGate : public ComplexShape
     }
 };
 //	define the elastic plate shape
-class PlateParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     void initializeGeometricVariables() override
     {
         Real y = -BW + 0.5 * resolution_shell;
@@ -104,6 +108,8 @@ class PlateParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
+
 // Define boundary geometry
 
 class BoundaryGeometry : public BodyPartByParticle
@@ -119,10 +125,23 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i].y() <= 0)
+        if (base_particles_.ParticlePositions()[index_i].y() <= 0)
         {
             body_part_particles_.push_back(index_i);
         }
+    };
+};
+
+class GateMotionConstraint : public MotionConstraint<SPHBody>
+{
+  public:
+    GateMotionConstraint(SPHBody &body) : MotionConstraint<SPHBody>(body){};
+    virtual ~GateMotionConstraint(){};
+    void update(size_t index_i, Real dt)
+    {
+        Real run_time = GlobalStaticVariables::physical_time_;
+        Real h_g = -285.115 * run_time * run_time * run_time + 72.305 * run_time * run_time + 0.1463 * run_time;
+        pos_[index_i][1] = pos0_[index_i][1] + h_g;
     };
 };
 
@@ -139,30 +158,28 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<Lattice>();
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<Lattice>();
-    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody gate(sph_system, makeShared<MovingGate>("Gate"));
-    gate.defineParticlesAndMaterial<SolidParticles, Solid>();
-    gate.generateParticles<Lattice>();
-    gate.addBodyStateForRecording<Vec3d>("NormalDirection");
+    gate.defineMaterial<Solid>();
+    gate.generateParticles<BaseParticles, Lattice>();
 
     SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    plate.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
-    plate.generateParticles(PlateParticleGenerator(plate));
+    plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
+    plate.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody disp_observer_1(sph_system, "Observer1");
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     ObserverBody disp_observer_2(sph_system, "Observer2");
     disp_observer_2.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    disp_observer_1.generateParticles<Observer>(observer_position_1);
-    disp_observer_2.generateParticles<Observer>(observer_position_2);
+    disp_observer_1.generateParticles<BaseParticles, Observer>(observer_position_1);
+    disp_observer_2.generateParticles<BaseParticles, Observer>(observer_position_2);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -193,37 +210,30 @@ int main(int ac, char *av[])
     // solid
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
-    auto update_gate_position = [&](Real run_time)
-    {
-        const auto &pos0 = *gate.getBaseParticles().getVariableByName<Vecd>("InitialPosition");
-        Real h_g = -285.115 * run_time * run_time * run_time + 72.305 * run_time * run_time + 0.1463 * run_time;
-        particle_for(
-            par,
-            IndexRange(0, gate.getBaseParticles().total_real_particles_),
-            [&](size_t index_i)
-            {
-                gate.getBaseParticles().pos_[index_i][1] = pos0[index_i][1] + h_g;
-            });
-    };
-    // fluid
-    Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>> update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>> viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
+    SimpleDynamics<GateMotionConstraint> update_gate_position(gate);
     // Shell
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> plate_time_step_size(plate);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> plate_corrected_configuration(plate_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> plate_stress_relaxation_first(plate_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> plate_stress_relaxation_second(plate_inner);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> plate_time_step_size(plate);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> plate_average_curvature(plate_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> plate_update_normal(plate);
     /** constraint and damping */
     BoundaryGeometry plate_boundary_geometry(plate, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> plate_constraint(plate_boundary_geometry);
+    // fluid
+    Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>>
+        pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>>
+        density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>>
+        update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>>
+        viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
     // FSI
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_plate(plate_water_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_plate(plate_water_contact);
@@ -236,6 +246,9 @@ int main(int ac, char *av[])
     plate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     plate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
     plate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
+    plate.addDerivedBodyStateForRecording<Displacement>();
+    gate.addBodyStateForRecording<Vec3d>("NormalDirection");
+    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
     BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);
@@ -330,7 +343,7 @@ int main(int ac, char *av[])
 
             if (GlobalStaticVariables::physical_time_ < gate_moving_time)
             {
-                update_gate_position(GlobalStaticVariables::physical_time_);
+                update_gate_position.exec();
                 gate.updateCellLinkedList();
             }
             if (GlobalStaticVariables::physical_time_ > contact_time)

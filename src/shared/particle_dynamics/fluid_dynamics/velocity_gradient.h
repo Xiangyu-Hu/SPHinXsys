@@ -56,7 +56,7 @@ class VelocityGradient<DataDelegationType>
 
 template <class KernelCorrectionType>
 class VelocityGradient<Inner<KernelCorrectionType>>
-    : public VelocityGradient<FluidDataInner>
+    : public VelocityGradient<DataDelegateInner>
 {
   public:
     explicit VelocityGradient(BaseInnerRelation &inner_relation);

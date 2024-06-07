@@ -1,19 +1,25 @@
 #include "continuum_integration.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
 namespace continuum_dynamics
 {
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
-    : LocalDynamics(sph_body), PlasticContinuumDataSimple(sph_body),
-      pos_(particles_->pos_), vel_(particles_->vel_), stress_tensor_3D_(particles_->stress_tensor_3D_) {}
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
+      stress_tensor_3D_(*particles_->registerSharedVariable<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
 ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
-    : fluid_dynamics::BaseIntegration<ContinuumDataInner>(inner_relation),
+    : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()), shear_stress_(particles_->shear_stress_),
-      acc_shear_(particles_->acc_shear_) {}
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      acc_shear_(*particles_->registerSharedVariable<Vecd>("AccelerationByShear"))
+{
+    particles_->addVariableToSort<Vecd>("AccelerationByShear");
+}
 //=================================================================================================//
 void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
 {
@@ -32,15 +38,27 @@ void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
     acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
 }
 //=================================================================================================//
-ShearStressRelaxation ::
-    ShearStressRelaxation(BaseInnerRelation &inner_relation)
-    : fluid_dynamics::BaseIntegration<ContinuumDataInner>(inner_relation),
+ShearStressRelaxation::ShearStressRelaxation(BaseInnerRelation &inner_relation)
+    : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
-      shear_stress_(particles_->shear_stress_), shear_stress_rate_(particles_->shear_stress_rate_),
-      velocity_gradient_(particles_->velocity_gradient_), strain_tensor_(particles_->strain_tensor_),
-      strain_tensor_rate_(particles_->strain_tensor_rate_), von_mises_stress_(particles_->von_mises_stress_),
-      von_mises_strain_(particles_->von_mises_strain_), Vol_(particles_->Vol_),
-      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")) {}
+      shear_stress_(*particles_->registerSharedVariable<Matd>("ShearStress")),
+      shear_stress_rate_(*particles_->registerSharedVariable<Matd>("ShearStressRate")),
+      velocity_gradient_(*particles_->registerSharedVariable<Matd>("VelocityGradient")),
+      strain_tensor_(*particles_->registerSharedVariable<Matd>("StrainTensor")),
+      strain_tensor_rate_(*particles_->registerSharedVariable<Matd>("StrainTensorRate")),
+      von_mises_stress_(*particles_->registerSharedVariable<Real>("VonMisesStress")),
+      von_mises_strain_(*particles_->registerSharedVariable<Real>("VonMisesStrain")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
+{
+    particles_->addVariableToSort<Matd>("ShearStress");
+    particles_->addVariableToSort<Matd>("ShearStressRate");
+    particles_->addVariableToSort<Real>("VonMisesStress");
+    particles_->addVariableToSort<Real>("VonMisesStrain");
+    particles_->addVariableToSort<Matd>("VelocityGradient");
+    particles_->addVariableToSort<Matd>("StrainTensor");
+    particles_->addVariableToSort<Matd>("StrainTensorRate");
+}
 //====================================================================================//
 void ShearStressRelaxation::initialization(size_t index_i, Real dt)
 {
@@ -78,7 +96,7 @@ void ShearStressRelaxation::update(size_t index_i, Real dt)
 }
 //====================================================================================//
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
-    : BasePlasticIntegration<PlasticContinuumDataInner>(inner_relation),
+    : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
