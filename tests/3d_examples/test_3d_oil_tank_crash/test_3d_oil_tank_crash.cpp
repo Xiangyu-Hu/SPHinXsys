@@ -257,7 +257,7 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> tank_average_curvature(tank_curvature_inner);
 
     // truck
-    auto update_truck_position = [&](double dt)
+    auto update_truck_position = [&](Real dt)
     {
         particle_for(
             execution::ParallelPolicy(),
