@@ -139,6 +139,7 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
 /**
  * @class CorrectInterpolationKernelWeights
  * @brief  correct kernel weights for interpolation between general bodies
+ * TODO: this formulation is not correct, need to be fixed.
  */
 class CorrectInterpolationKernelWeights : public LocalDynamics,
                                           public InterpolationContactData
@@ -174,13 +175,11 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
         // Add the kernel weight correction to W_ij_ of neighboring particles.
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
-                size_t index_j = contact_neighborhood.j_[n];
                 contact_neighborhood.W_ij_[n] -= normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]) *
-                                                 contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
+                                                 contact_neighborhood.dW_ij_[n];
             }
         }
     };
