@@ -182,7 +182,7 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     const Real rho0_f = 700.0;
     const Real mu_f = 0.1;
     const Real gravity_g = 9.8;
-    const Real U_f = std::max(2.0 * sqrt(gravity_g * oil_height), velocity_truck.norm());
+    const Real U_f = std::max(Real(2.0 * sqrt(gravity_g * oil_height)), velocity_truck.norm());
     const Real c_f = 10.0 * U_f;
 
     // Import meshes
