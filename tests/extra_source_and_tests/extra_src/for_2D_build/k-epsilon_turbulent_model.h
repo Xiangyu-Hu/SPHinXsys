@@ -186,10 +186,6 @@ namespace fluid_dynamics
 		StdLargeVec<int>  turbu_indicator_;
 		StdLargeVec<Real>  k_diffusion_, vel_x_;
 	};
-
-
-
-
 //=================================================================================================//
 	/**
 	 * @class E_TurtbulentModelInner
@@ -216,6 +212,42 @@ namespace fluid_dynamics
 		StdLargeVec<int>& is_near_wall_P1_;
 	};
 //=================================================================================================//
+	/**
+	 * @class kOmegaSST_TurtbulentModelInner
+	 * @brief  kOmegaSST_TurtbulentModelInner
+	 */
+	class kOmegaSST_kTransportEquationInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	{
+	public:
+		explicit kOmegaSST_kTransportEquationInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values);
+		virtual ~kOmegaSST_kTransportEquationInner() {};
+
+		inline void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
+		void update_prior_turbulent_value();
+	protected:
+
+	};
+//=================================================================================================//
+	/**
+	 * @class kOmegaSST_TurtbulentModelInner
+	 * @brief  kOmegaSST_TurtbulentModelInner
+	 */
+	class kOmegaSST_omegaTransportEquationInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	{
+	public:
+		explicit kOmegaSST_omegaTransportEquationInner(BaseInnerRelation& inner_relation);
+		virtual ~kOmegaSST_omegaTransportEquationInner() {};
+
+		inline void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
+		void update_prior_turbulent_value();
+	protected:
+
+	};
+//=================================================================================================//
+
+
 	template <typename... InteractionTypes>
 	class TKEnergyForce;
 
