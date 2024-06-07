@@ -81,7 +81,6 @@ public:
 protected:
     PlasticSolid& plastic_solid_;
     StdLargeVec<Matd> scaling_matrix_, inverse_F_;
-    Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 };
 } // namespace solid_dynamics
 } // namespace SPH
