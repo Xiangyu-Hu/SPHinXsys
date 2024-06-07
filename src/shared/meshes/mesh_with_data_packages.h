@@ -232,6 +232,12 @@ class MeshWithGridDataPackages : public Mesh
     template <class DataType>
     DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi cell_index, const Vecd &position);
 
+    /** return the position of the lower bound data in a cell. */
+    Vecd DataLowerBoundInCell(const Arrayi &cell_index)
+    {
+        return CellLowerCorner(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
+    }
+
     /** return the grid index from its position and the index of the cell it belongs to. */
     Arrayi DataIndexFromPosition(const Arrayi cell_index, const Vecd &position)
     {
@@ -243,7 +249,7 @@ class MeshWithGridDataPackages : public Mesh
     /** return the position of data from its local grid index and the index of the cell it belongs to. */
     Vecd DataPositionFromIndex(const Arrayi cell_index, const Arrayi data_index)
     {
-        return CellLowerCorner(cell_index) + (data_index.cast<Real>().matrix() + 0.5 * Vecd::Ones()) * data_spacing_;
+        return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
     }
 
     /** Iterator on a collection of mesh data packages. parallel computing. */

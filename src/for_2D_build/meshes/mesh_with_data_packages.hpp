@@ -196,17 +196,17 @@ template <class DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
     probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi cell_index, const Vecd &position)
 {
-    Arrayi grid_idx = DataIndexFromPosition(cell_index, position);
-    Vecd grid_pos = DataPositionFromIndex(cell_index, grid_idx);
-    Vecd alpha = (position - grid_pos) / grid_spacing_;
+    Arrayi data_index = DataIndexFromPosition(cell_index, position);
+    Vecd data_position = DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / data_spacing_;
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = neighborhood_[package_index];
     auto mesh_variable_data = mesh_variable.DataField();
-    NeighbourIndex neighbour_index_1 = NeighbourIndexShift(Arrayi(grid_idx[0], grid_idx[1]), neighborhood);
-    NeighbourIndex neighbour_index_2 = NeighbourIndexShift(Arrayi(grid_idx[0] + 1, grid_idx[1]), neighborhood);
-    NeighbourIndex neighbour_index_3 = NeighbourIndexShift(Arrayi(grid_idx[0], grid_idx[1] + 1), neighborhood);
-    NeighbourIndex neighbour_index_4 = NeighbourIndexShift(Arrayi(grid_idx[0] + 1, grid_idx[1] + 1), neighborhood);
+    NeighbourIndex neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
+    NeighbourIndex neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
+    NeighbourIndex neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);
+    NeighbourIndex neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1), neighborhood);
 
     DataType bilinear = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +
                         mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]] * alpha[0] * beta[1] +
