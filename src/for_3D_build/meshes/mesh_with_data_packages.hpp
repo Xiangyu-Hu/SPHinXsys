@@ -48,9 +48,9 @@ template <class DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
     probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position)
 {
-    Arrayi grid_index = CellIndexFromPosition(position);
-    size_t package_index = PackageIndexFromCellIndex(grid_index);
-    return isInnerDataPackage(grid_index) ? probeDataPackage<DataType>(mesh_variable, package_index, grid_index, position)
+    Arrayi cell_index = CellIndexFromPosition(position);
+    size_t package_index = PackageIndexFromCellIndex(cell_index);
+    return isInnerDataPackage(cell_index) ? probeDataPackage<DataType>(mesh_variable, package_index, cell_index, position)
                                           : mesh_variable.DataField()[package_index][0][0][0];
 }
 //=================================================================================================//
@@ -140,7 +140,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::
         for (int j = 0; j != pkg_size; ++j)
             for (int k = 0; k != pkg_size; ++k)
             {
-                Vec3d position = GridPositionFromLocalGridIndex(cell_index, Arrayi(i, j));
+                Vec3d position = DataPositionFromIndex(cell_index, Arrayi(i, j));
                 pkg_data[i][j][k] = function_by_position(position);
             }
 }
@@ -202,8 +202,8 @@ template <class DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
     probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi cell_index, const Vecd &position)
 {
-    Arrayi grid_idx = LocalGridIndexFromPosition(cell_index, position);
-    Vecd grid_pos = GridPositionFromLocalGridIndex(cell_index, grid_idx);
+    Arrayi grid_idx = DataIndexFromPosition(cell_index, position);
+    Vecd grid_pos = DataPositionFromIndex(cell_index, grid_idx);
     Vecd alpha = (position - grid_pos) / grid_spacing_;
     Vecd beta = Vecd::Ones() - alpha;
 

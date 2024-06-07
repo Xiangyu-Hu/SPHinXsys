@@ -120,7 +120,7 @@ class MeshWithGridDataPackages : public Mesh
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           data_spacing_(data_spacing),
-          global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->all_cells_ * pkg_size)
+          global_mesh_(mesh_lower_bound_, data_spacing, all_cells_ * pkg_size + Arrayi::Ones())
     {
         allocateMetaDataMatrix();
     };
@@ -232,25 +232,18 @@ class MeshWithGridDataPackages : public Mesh
     template <class DataType>
     DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi cell_index, const Vecd &position);
 
-    /** return the lower grid position of the cell_index mesh. */
-    Vecd CellMeshLowerBound(const Arrayi cell_index)
-    {
-        return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_ + 0.5 * Vecd::Ones() * data_spacing_;
-    }
     /** return the grid index from its position and the index of the cell it belongs to. */
-    Arrayi LocalGridIndexFromPosition(const Arrayi cell_index, const Vecd &position)
+    Arrayi DataIndexFromPosition(const Arrayi cell_index, const Vecd &position)
     {
-        Vecd cell_mesh_lower_bound = CellMeshLowerBound(cell_index);
-        return floor((position - cell_mesh_lower_bound).array() / data_spacing_)
+        return floor((position - CellLowerCorner(cell_index)).array() / data_spacing_)
             .template cast<int>()
             .max(Arrayi::Zero())
             .min((pkg_size - 1) * Arrayi::Ones());
     }
-    /** return the grid position from its local grid index and the index of the cell it belongs to. */
-    Vecd GridPositionFromLocalGridIndex(const Arrayi cell_index, const Arrayi grid_index)
+    /** return the position of data from its local grid index and the index of the cell it belongs to. */
+    Vecd DataPositionFromIndex(const Arrayi cell_index, const Arrayi data_index)
     {
-        Vecd cell_mesh_lower_bound = CellMeshLowerBound(cell_index);
-        return cell_mesh_lower_bound + grid_index.cast<Real>().matrix() * data_spacing_;
+        return CellLowerCorner(cell_index) + (data_index.cast<Real>().matrix() + 0.5 * Vecd::Ones()) * data_spacing_;
     }
 
     /** Iterator on a collection of mesh data packages. parallel computing. */

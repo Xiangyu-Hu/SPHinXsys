@@ -249,7 +249,7 @@ void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const si
     for_each_cell_data(
         [&](int i, int j, int k)
         {
-            Vec3d position = GridPositionFromLocalGridIndex(cell_index, Array3i(i, j, k));
+            Vec3d position = DataPositionFromIndex(cell_index, Array3i(i, j, k));
             phi[i][j][k] = shape.findSignedDistance(position);
             near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
         });
