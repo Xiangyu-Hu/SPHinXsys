@@ -123,7 +123,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     void initializeDataInACell(const Arrayi &cell_index);
     void tagACellIsInnerPackage(const Arrayi &cell_index);
     void initializeIndexMesh();
-    void initializeNeighbourhood();
+    void initializeCellNeighborhood();
     void updateLevelSetGradient();
 
     // upwind algorithm choosing candidate difference by the sign

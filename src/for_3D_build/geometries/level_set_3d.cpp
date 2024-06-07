@@ -50,7 +50,7 @@ void LevelSet::finishDataPackages()
                       });
 
     initializeIndexMesh();
-    initializeNeighbourhood();
+    initializeCellNeighborhood();
     resizeMeshVariableData();
 
     Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
@@ -80,7 +80,7 @@ void LevelSet::initializeIndexMesh()
              });
 }
 //=================================================================================================//
-void LevelSet::initializeNeighbourhood()
+void LevelSet::initializeCellNeighborhood()
 {
     neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
     meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
