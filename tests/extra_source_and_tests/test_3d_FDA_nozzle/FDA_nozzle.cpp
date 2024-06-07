@@ -169,8 +169,7 @@ struct FDA_nozzle_parameters
     // fluid flle path
     fs::path fluid_file_path = "./input/FDA_nozzle_fluid.stl";
     // wall flle path
-    // fs::path wall_file_path = "./input/FDA_nozzle_wall.stl";
-    fs::path wall_file_path = "./input/FDA_nozzle_wall_refined.stl"; // based on number of particles = 20. the thickness = (0.004/20)*4
+    fs::path wall_file_path;
     // total length of fluid
     double fluid_length = 200 * scale; // defined in mesh file
     double outlet_pressure = 0;
@@ -292,15 +291,13 @@ struct InflowVelocity
     }
 };
 
-void FDA_nozzle(FDA_nozzle_parameters &params, const double Re = 500)
+void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500)
 {
 
     const double scale = params.scale;
-    const double mu_dynamic = params.mu_f / params.rho0_f;          // dynamics viscosity of fluid
-    const double U_thoat = Re * mu_dynamic / params.thoat_diameter; // Re = (V * D)/ mu_dynamic
-    U_f = U_thoat * params.throat_area / params.inlet_area;         // avg velocity at inlet
     inlet_diameter = params.inlet_diameter;
-    const double Q_f = U_f * params.inlet_area;
+    const double Q_f = params.Q_f;
+    U_f = Q_f / params.inlet_area;
     const double U_max = Q_f / params.throat_area * 2; // U max suppose to happend at throat
     const double c_f = 10 * U_max;                     // Speed of sound
 
@@ -366,6 +363,10 @@ void FDA_nozzle(FDA_nozzle_parameters &params, const double Re = 500)
 
     // SYSTEM
     SPHSystem sph_system(wall_shape->getBounds(), resolution_ref);
+    /** Tag for run particle relaxation for the initial body fitted distribution. */
+    sph_system.setRunParticleRelaxation(false);
+    /** handle command line arguments. */
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     IOEnvironment in_output(sph_system);
 
@@ -401,8 +402,7 @@ void FDA_nozzle(FDA_nozzle_parameters &params, const double Re = 500)
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    bool run_wall_relaxation = true;
-    if (run_wall_relaxation)
+    if (sph_system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -600,8 +600,8 @@ void FDA_nozzle(FDA_nozzle_parameters &params, const double Re = 500)
             right_emitter_inflow_injection.tag_buffer_particles.exec();
         }
         TickCount t2 = TickCount::now();
-        body_states_recording.writeToFile();
         axial_velocity_observer_contact.updateConfiguration();
+        body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -623,7 +623,10 @@ int main(int argc, char *argv[])
 {
     const double Re = 500;
     FDA_nozzle_parameters params;
-    params.number_of_particles = 20;
-    FDA_nozzle(params, Re);
+    params.number_of_particles = 5;
+    std::stringstream wall_file;
+    wall_file << "./input/FDA_nozzle_wall_N" << params.number_of_particles << ".stl";
+    params.wall_file_path = wall_file.str();
+    FDA_nozzle(argc, argv, params, Re);
     return 0;
 }
