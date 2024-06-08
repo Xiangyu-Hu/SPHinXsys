@@ -241,7 +241,7 @@ class MeshWithGridDataPackages : public Mesh
     /** return the grid index from its position and the index of the cell it belongs to. */
     Arrayi DataIndexFromPosition(const Arrayi cell_index, const Vecd &position)
     {
-        return floor((position - CellLowerCorner(cell_index)).array() / data_spacing_)
+        return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
             .template cast<int>()
             .max(Arrayi::Zero())
             .min((pkg_size - 1) * Arrayi::Ones());
