@@ -83,7 +83,7 @@ void LevelSet::initializeIndexMesh()
 //=================================================================================================//
 void LevelSet::initializeCellNeighborhood()
 {
-    neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
+    cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
     meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
                       [&](size_t i, size_t j, size_t k)
@@ -91,7 +91,7 @@ void LevelSet::initializeCellNeighborhood()
                           Arrayi cell_index = Arrayi(i, j, k);
                           if (isInnerDataPackage(cell_index))
                           {
-                              CellNeighborhood &current = neighborhood_[PackageIndexFromCellIndex(cell_index)];
+                              CellNeighborhood &current = cell_neighborhood_[PackageIndexFromCellIndex(cell_index)];
                               std::pair<Arrayi, int> &metadata = meta_data_cell_[PackageIndexFromCellIndex(cell_index)];
                               metadata.first = cell_index;
                               metadata.second = isCoreDataPackage(cell_index) ? 1 : 0;
@@ -129,7 +129,7 @@ void LevelSet::diffuseLevelSetSign()
         {
             auto phi_data = phi_.DataField();
             auto near_interface_id_data = near_interface_id_.DataField();
-            auto &neighborhood = neighborhood_[package_index];
+            auto &neighborhood = cell_neighborhood_[package_index];
 
             for_each_cell_data(
                 [&](int i, int j, int k)
@@ -164,7 +164,7 @@ void LevelSet::reinitializeLevelSet()
             auto phi_data = phi_.DataField();
             auto &phi_addrs = phi_data[package_index];
             auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
-            auto &neighborhood = neighborhood_[package_index];
+            auto &neighborhood = cell_neighborhood_[package_index];
 
             for_each_cell_data(
                 [&](int i, int j, int k)
@@ -198,7 +198,7 @@ void LevelSet::markNearInterface(Real small_shift_factor)
         {
             auto &phi_addrs = phi_.DataField()[package_index];
             auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
-            auto neighborhood = neighborhood_[package_index];
+            auto neighborhood = cell_neighborhood_[package_index];
 
             // corner averages, note that the first row and first column are not used
             PackageTemporaryData<Real> corner_averages;
@@ -260,7 +260,7 @@ void LevelSet::redistanceInterfaceForAPackage(const size_t package_index)
 {
     auto phi_data = phi_.DataField();
     auto near_interface_id_data = near_interface_id_.DataField();
-    auto &neighborhood = neighborhood_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
 
     for_each_cell_data(
         [&](int i, int j, int k)

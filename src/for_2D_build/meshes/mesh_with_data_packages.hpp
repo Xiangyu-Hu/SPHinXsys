@@ -131,7 +131,7 @@ template <int PKG_SIZE>
 template <typename DataType, typename FunctionByPosition>
 void MeshWithGridDataPackages<PKG_SIZE>::
     assignByPosition(MeshVariable<DataType> &mesh_variable,
-                     const Arrayi cell_index,
+                     const Arrayi &cell_index,
                      const FunctionByPosition &function_by_position)
 {
     size_t package_index = PackageIndexFromCellIndex(cell_index);
@@ -154,7 +154,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::
     auto in_variable_data = in_variable.DataField();
     auto out_variable_data = out_variable.DataField();
 
-    auto &neighborhood = neighborhood_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
     auto &pkg_data = out_variable_data[package_index];
 
     for_each_cell_data(
@@ -194,14 +194,14 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 template <int PKG_SIZE>
 template <class DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
-    probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi cell_index, const Vecd &position)
+    probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position)
 {
     Arrayi data_index = DataIndexFromPosition(cell_index, position);
     Vecd data_position = DataPositionFromIndex(cell_index, data_index);
     Vecd alpha = (position - data_position) / data_spacing_;
     Vecd beta = Vecd::Ones() - alpha;
 
-    auto &neighborhood = neighborhood_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
     auto mesh_variable_data = mesh_variable.DataField();
     NeighbourIndex neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
     NeighbourIndex neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);

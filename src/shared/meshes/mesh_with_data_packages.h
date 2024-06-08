@@ -127,7 +127,7 @@ class MeshWithGridDataPackages : public Mesh
     virtual ~MeshWithGridDataPackages()
     {
         deleteMetaDataMatrix();
-        delete[] neighborhood_;
+        delete[] cell_neighborhood_;
         delete[] meta_data_cell_;
     };
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
@@ -141,7 +141,7 @@ class MeshWithGridDataPackages : public Mesh
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
     using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<MetaData> meta_data_mesh_;         /**< metadata for all cells. */
-    CellNeighborhood *neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
     template <typename DataType>
@@ -216,7 +216,7 @@ class MeshWithGridDataPackages : public Mesh
     /** assign value to data package according to the position of data */
     template <typename DataType, typename FunctionByPosition>
     void assignByPosition(MeshVariable<DataType> &mesh_variable,
-                          const Arrayi cell_index,
+                          const Arrayi &cell_index,
                           const FunctionByPosition &function_by_position);
     /** compute gradient transform within data package at `package_index` */
     template <typename InDataType, typename OutDataType>
@@ -230,7 +230,7 @@ class MeshWithGridDataPackages : public Mesh
                            CellNeighborhood &neighborhood);
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
-    DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi cell_index, const Vecd &position);
+    DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position);
 
     /** return the position of the lower bound data in a cell. */
     Vecd DataLowerBoundInCell(const Arrayi &cell_index)
@@ -239,7 +239,7 @@ class MeshWithGridDataPackages : public Mesh
     }
 
     /** return the grid index from its position and the index of the cell it belongs to. */
-    Arrayi DataIndexFromPosition(const Arrayi cell_index, const Vecd &position)
+    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
     {
         return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
             .template cast<int>()
@@ -247,7 +247,7 @@ class MeshWithGridDataPackages : public Mesh
             .min((pkg_size - 1) * Arrayi::Ones());
     }
     /** return the position of data from its local grid index and the index of the cell it belongs to. */
-    Vecd DataPositionFromIndex(const Arrayi cell_index, const Arrayi data_index)
+    Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
     {
         return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
     }
