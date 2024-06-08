@@ -75,7 +75,8 @@ void LevelSet::initializeIndexMesh()
                  Arrayi cell_index = Arrayi(i, j);
                  if (isInnerDataPackage(cell_index))
                  {
-                     assignDataPackageIndex(Arrayi(i, j), num_grid_pkgs_++);
+                     assignDataPackageIndex(Arrayi(i, j), num_grid_pkgs_);
+                     num_grid_pkgs_++;
                  }
              });
 }

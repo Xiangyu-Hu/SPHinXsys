@@ -90,7 +90,7 @@ class MeshVariable : public BaseVariable
     PackageData *DataField() { return data_field_; };
     void allocateAllMeshVariableData(const size_t size)
     {
-        data_field_ = new PackageData[size + 2];
+        data_field_ = new PackageData[size];
     }
 
   private:
@@ -105,14 +105,15 @@ VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<Variable
     constexpr int type_index = DataTypeIndex<DataType>::value;
     auto &variables = std::get<type_index>(assemble);
     auto result = std::find_if(variables.begin(), variables.end(),
-                               [&](auto &variable) -> bool { return variable->Name() == name; });
+                               [&](auto &variable) -> bool
+                               { return variable->Name() == name; });
 
     return result != variables.end() ? *result : nullptr;
 };
 
 template <typename DataType, template <typename VariableDataType> class VariableType, typename... Args>
 VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<VariableType> &assemble,
-                                              DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&... args)
+                                              DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&...args)
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
     UniquePtrsKeeper<VariableType<DataType>> &variable_ptrs = std::get<type_index>(ptr_assemble);
