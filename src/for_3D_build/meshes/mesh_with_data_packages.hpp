@@ -120,9 +120,9 @@ std::pair<size_t, Arrayi> MeshWithGridDataPackages<PKG_SIZE>::
     NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
 {
     std::pair<size_t, Arrayi> result;
-    Arrayi neighbour_index = (shift_index + pkg_size * Arrayi::Ones()) / pkg_size;
+    Arrayi neighbour_index = (shift_index + pkg_size * Arrayi::Ones()) / pkg_size - Arrayi::Ones();
     result.first = neighbour[neighbour_index[0]][neighbour_index[1]][neighbour_index[2]];
-    result.second = (shift_index + pkg_size * Arrayi::Ones()) - neighbour_index * pkg_size;
+    result.second = shift_index - neighbour_index * pkg_size;
 
     return result;
 }
