@@ -132,7 +132,7 @@ class ReduceDynamics : public LocalDynamicsType,
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(identifier.getSPHBody()){};
+          BaseDynamics<typename LocalDynamicsType::ReturnType>(identifier.getSPHBody()){};
     virtual ~ReduceDynamics(){};
 
     using ReturnType = typename LocalDynamicsType::ReturnType;
