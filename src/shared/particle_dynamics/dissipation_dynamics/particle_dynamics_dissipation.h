@@ -22,9 +22,12 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	particle_dynamics_dissipation.h
- * @brief 	Here are the classes for damping the magnitude of
- * 			any variables.
- * 			Note that, currently, these classes works only in single resolution.
+ * @brief A quantity damping by operator splitting schemes.
+ * These methods modify the quantity directly.
+ * Note that, if periodic boundary condition is applied,
+ * the parallelized version of the method requires the one using ghost particles
+ * because the splitting partition only works in this case.
+ * Note that, currently, these classes works only in single resolution.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -35,8 +38,6 @@
 
 namespace SPH
 {
-class BaseParticles;
-
 template <typename VariableType>
 struct ErrorAndParameters
 {
@@ -45,14 +46,47 @@ struct ErrorAndParameters
     ErrorAndParameters() : error_(ZeroData<VariableType>::value), a_(0), c_(0){};
 };
 
-/**
- * @class DampingBySplittingAlgorithm
- * @brief A quantity damping by splitting scheme
- * this method modifies the quantity directly.
- * Note that, if periodic boundary condition is applied,
- * the parallelized version of the method requires the one using ghost particles
- * because the splitting partition only works in this case.
- */
+class MomentumDamping
+{
+  public:
+    typedef Vecd VariableType;
+    MomentumDamping(BaseParticles *particles, Real eta, Real rho0);
+    virtual ~MomentumDamping(){};
+
+    Real Coefficient(size_t index_i) { return eta_; };
+    Real Capacity(size_t index_i) { return rho0_; };
+    StdLargeVec<Vecd> *getVariable() { return &vel_; };
+
+  protected:
+    Real eta_;  /**< viscosity */
+    Real rho0_; /**< density */
+    StdLargeVec<Vecd> &vel_;
+};
+
+template <typename... InteractionTypes>
+class DampingBySplitting;
+
+template <typename DampingType, class DataDelegationType>
+class DampingBySplitting<Base, DampingType, DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class BaseRelationType, typename... Args>
+    explicit DampingBySplitting(BaseRelationType &base_relation, Args &&...args);
+    template <typename BodyRelationType, typename... Args, size_t... Is>
+    DampingBySplitting(ConstructorArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
+        : DampingBySplitting(parameters.body_relation_, std::get<Is>(parameters.others_)...){};
+    template <class BaseRelationType, typename... Args>
+    explicit DampingBySplitting(ConstructorArgs<BodyRelationType, Args...> parameters)
+        : DampingBySplitting(parameters, std::make_index_sequence<std::tuple_size_v<decltype(parameters.others_)>>{}){};
+    virtual ~DampingBySplitting(){};
+
+  protected:
+    DampingType damping_;
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<typename DampingType::VariableType> &variable_;
+};
+
 template <typename VariableType>
 class DampingBySplittingInner : public LocalDynamics, public DataDelegateInner
 {

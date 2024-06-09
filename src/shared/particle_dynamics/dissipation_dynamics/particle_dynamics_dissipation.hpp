@@ -6,6 +6,16 @@
 namespace SPH
 {
 //=================================================================================================//
+template <typename VariableType, class DataDelegationType>
+template <class BaseRelationType>
+DampingBySplitting<Base, VariableType, DataDelegationType>::
+    DampingBySplitting(BaseRelationType &base_relation, const std::string &variable_name, Real eta)
+    : LocalDynamics(base_relation.getSPHBody()),
+      DataDelegationType(base_relation), eta_(eta),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
+//=================================================================================================//
 template <typename VariableType>
 DampingBySplittingInner<VariableType>::
     DampingBySplittingInner(BaseInnerRelation &inner_relation,
@@ -14,7 +24,9 @@ DampingBySplittingInner<VariableType>::
       DataDelegateInner(inner_relation), eta_(eta),
       Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
       mass_(*particles_->getVariableByName<Real>("Mass")),
-      variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
+      variable_(*particles_->getVariableByName<VariableType>(variable_name))
+{
+}
 //=================================================================================================//
 template <typename VariableType>
 ErrorAndParameters<VariableType>
