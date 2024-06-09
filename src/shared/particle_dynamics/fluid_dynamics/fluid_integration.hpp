@@ -121,7 +121,7 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
         }
     }
     force_[index_i] += force * Vol_[index_i];
-    drho_dt_[index_i] = rho_dissipation * mass_[index_i] / Vol_[index_i];
+    drho_dt_[index_i] += rho_dissipation * mass_[index_i] / Vol_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
