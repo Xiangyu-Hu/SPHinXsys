@@ -35,7 +35,7 @@
 namespace SPH
 {
 class LevelSetShape;
-
+class ComplexLevelSetShape;
 /**
  * @class ShapeSurfaceBounding
  * @brief constrain surface particles by
@@ -56,6 +56,19 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     Real constrained_distance_;
 };
 
+class ComplexShapeBounding : public BaseLocalDynamics<SPHBody>,
+                             public GeneralDataDelegateSimple
+{
+public:
+    ComplexShapeBounding(SPHBody& sph_body ,ComplexShape& complex_shape);
+    virtual ~ComplexShapeBounding() {};
+    void update(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdLargeVec<Vecd> &pos_;
+    StdVec<LevelSetShape *> level_set_shapes_;
+    Real constrained_distance_;
+};
 /**
  * @class	MotionConstraint
  * @brief	Base class for constraining with prescribed motion.

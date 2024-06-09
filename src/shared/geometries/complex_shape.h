@@ -34,10 +34,12 @@
 #include "geometric_shape.h"
 #include "level_set_shape.h"
 #include "transform_shape.h"
+#include "mapping_shape.h"
 
 namespace SPH
 {
 class LevelSetShape;
+
 
 class ComplexShape : public BinaryShapes
 {
@@ -55,6 +57,59 @@ class ComplexShape : public BinaryShapes
         sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
         return level_set_shape;
     };
+
+
+    StdVec<LevelSetShape*> initializeComponentLevelSetShapesByAdaptation(SharedPtr<SPHAdaptation> sph_adaptation, SPHSystem& sph_system)
+	{
+		for (size_t i = 0; i != sub_shapes_and_ops_.size(); ++i)
+		{
+ 
+            ShapeBooleanOps operation_string = sub_shapes_and_ops_[i].second;
+            switch (operation_string)
+            {
+            case ShapeBooleanOps::add:
+            {
+                LevelSetShape* level_set_shape_add = sub_shape_ptrs_keeper_[i].createPtr<LevelSetShape>(
+                    *sub_shapes_and_ops_[i].first, sph_adaptation);
+                //level_set_shape->writeLevelSet(sph_system);
+                level_set_shapes_.push_back(level_set_shape_add);
+                break;
+            }
+            case ShapeBooleanOps::sub:
+            {
+                //InverseShape<MultiPolygonShape> inversed_sub_shape(sub_shapes_and_ops_[i].first->getName());
+                /*LevelSetShape* level_set_shape = sub_shape_ptrs_keeper_[i].createPtr<LevelSetShape>(
+                    makeShared<InverseShape<MultiPolygonShape>>(sub_shapes_and_ops_[i].first->getName()), sph_adaptation)*/;
+                /*LevelSetShape* level_set_shape = sub_shape_ptrs_keeper_[i].createPtr<LevelSetShape>(
+                    inversed_sub_shape, sph_adaptation);*/
+                 LevelSetShape* level_set_shape_sub = sub_shape_ptrs_keeper_[i].createPtr<LevelSetShape>(
+                        *sub_shapes_and_ops_[i].first, sph_adaptation);
+                level_set_shapes_.push_back(level_set_shape_sub);
+                break;
+            }
+            /* default:
+             {
+                 std::cout << "\n FAILURE: the boolean operation is not applicable!" << std::endl;
+                 std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                 throw;
+             }*/
+            };
+			//level_set_shape->writeLevelSet(sph_system);
+			
+		};
+		return level_set_shapes_;
+	};
+
+    void addAnLevelSetShape( LevelSetShape* shape)
+    {
+        level_set_shapes_.push_back(shape);
+    };
+
+	StdVec<LevelSetShape*> getLevelSetShapes() { return level_set_shapes_; };
+	
+    protected:
+		StdVec<LevelSetShape*> level_set_shapes_;
+
 };
 
 using DefaultShape = ComplexShape;

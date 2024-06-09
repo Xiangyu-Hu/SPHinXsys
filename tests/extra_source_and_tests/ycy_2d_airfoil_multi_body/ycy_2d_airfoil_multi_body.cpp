@@ -9,6 +9,7 @@
 
 #include "sphinxsys.h"
 
+
 using namespace SPH;
 
 std::string airfoil_flap_front = "./input/airfoil_flap_front.dat";
@@ -71,6 +72,21 @@ class WaterBlock : public ComplexShape
         subtract<MultiPolygonShape>(airfoil);
     }
 };
+
+class WaterShape : public ComplexShape
+{
+  public:
+    explicit WaterShape(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        MultiPolygon outer_boundary(createWaterBlockShape());
+        add<MultiPolygonShape>(outer_boundary, "OuterBoundaryShape");
+        //MultiPolygon airfoil;
+        //airfoil.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
+        //airfoil.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
+        //airfoil.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
+        //subtract<MultiPolygonShape>(airfoil, "airfoilshape");
+    }
+};
 //----------------------------------------------------------------------
 //	The main program
 //----------------------------------------------------------------------
@@ -81,7 +97,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    BOOLEAN complex_relaxation(true);
+    BOOLEAN complex_relaxation(false);
+    BOOLEAN geometry_boolean_operation(false);
+    //SPHAdaptation sph_adaptation(resolution_ref);
+    InverseShape<ImportModel> inversed_airfoil("InversedAirfoil");
+    LevelSetShape inversed_airfoil_level_set(inversed_airfoil, makeShared<SPHAdaptation>(resolution_ref));
+    inversed_airfoil_level_set.cleanLevelSet();
+    WaterShape water_shape("WaterShape");
+    water_shape.initializeComponentLevelSetShapesByAdaptation(makeShared<SPHAdaptation>(resolution_ref),sph_system);
+    water_shape.addAnLevelSetShape(&inversed_airfoil_level_set);
+    for (size_t i = 0; i != water_shape.getLevelSetShapes().size(); i++)
+    {
+        water_shape.getLevelSetShapes()[i]->writeLevelSet(sph_system);
+    };
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -114,15 +142,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt airfoil_recording_to_vtp(airfoil);
+    BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
 
-    BodyStatesRecordingToPlt water_recording_to_vtp(water);
+    BodyStatesRecordingToVtp water_recording_to_vtp(water);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    if (complex_relaxation == 0)
+    if (complex_relaxation == 0 && geometry_boolean_operation == 0)
     {
       using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
@@ -163,6 +191,40 @@ int main(int ac, char *av[])
         return 0;
     }
     
+    if (complex_relaxation == 0 && geometry_boolean_operation == 1)
+    {
+      using namespace relax_dynamics;
+
+        SimpleDynamics<RandomizeParticlePosition> random_water_particles(water);
+        RelaxationStepWithComplexBounding relaxation_step_inner_water(water_inner, water_shape);
+
+        random_water_particles.exec(0.25);
+        relaxation_step_inner_water.SurfaceBounding().exec();
+        water.updateCellLinkedList();
+        //----------------------------------------------------------------------
+        //	First output before the simulation.
+        //----------------------------------------------------------------------
+        cell_linked_list_recording.writeToFile();
+        water_recording_to_vtp.writeToFile();
+        //----------------------------------------------------------------------
+        //	Particle relaxation time stepping start here.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            relaxation_step_inner_water.exec();
+            ite_p += 1;
+            if (ite_p % 100 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+                water_recording_to_vtp.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process finish !" << std::endl;
+
+        return 0;
+    }
+
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     //water_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);

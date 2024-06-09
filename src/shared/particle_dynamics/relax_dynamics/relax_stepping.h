@@ -32,6 +32,7 @@
 
 #include "base_relax_dynamics.h"
 #include "general_constraint.h"
+#include "all_geometries.h"
 
 namespace SPH
 {
@@ -88,6 +89,20 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
   protected:
     StdLargeVec<Vecd> &pos_;
     LevelSetShape &level_set_shape_;
+};
+
+template<>
+class RelaxationResidue<Inner<ComplexShapeBounding>> : public RelaxationResidue<Base, RelaxDataDelegateInner>
+{
+public:
+    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
+    RelaxationResidue(BaseInnerRelation &inner_relation, ComplexShape &complex_bounding_shapes);
+    virtual ~RelaxationResidue(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+     
+protected:
+    StdLargeVec<Vecd> &pos_;
+    ComplexShape&  complex_bounding_shapes_;
 };
 
 template <>
@@ -180,6 +195,23 @@ class RelaxationStep : public BaseDynamics<void>
     SimpleDynamics<PositionRelaxation> position_relaxation_;
     NearShapeSurface near_shape_surface_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
+};
+
+class RelaxationStepWithComplexBounding : public BaseDynamics<void>
+{
+public:
+    RelaxationStepWithComplexBounding(BaseInnerRelation& inner_relation, ComplexShape& bounding_shapes);
+    virtual~RelaxationStepWithComplexBounding() {};
+    SimpleDynamics<ComplexShapeBounding> &SurfaceBounding() { return surface_bounding_; };
+    virtual void exec(Real dt = 0.0) override;
+protected:
+    RealBody &real_body_;
+    StdVec<SPHRelation *> &body_relations_;
+    InteractionDynamics<RelaxationResidue<Inner<ComplexShapeBounding>>> relaxation_residue_;
+    ReduceDynamics<RelaxationScaling> relaxation_scaling_;
+    SimpleDynamics<PositionRelaxation> position_relaxation_;
+    ComplexShape& near_shape_surface_;
+    SimpleDynamics<ComplexShapeBounding> surface_bounding_;
 };
 
 using RelaxationStepInner = RelaxationStep<RelaxationResidue<Inner<>>>;

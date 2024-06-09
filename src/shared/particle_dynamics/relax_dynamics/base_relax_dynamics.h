@@ -40,6 +40,8 @@ namespace SPH
 {
 class LevelSetCorrection;
 
+class ComplexShapeBounding;
+
 namespace relax_dynamics
 {
 typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;

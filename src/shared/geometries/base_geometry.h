@@ -127,6 +127,7 @@ class BinaryShapes : public Shape
     Shape *getSubShapeByName(const std::string &name);
     SubShapeAndOp *getSubShapeAndOpByName(const std::string &name);
     size_t getSubShapeIndexByName(const std::string &name);
+    StdVec<SubShapeAndOp>* getSubShapeAndOp() { return &sub_shapes_and_ops_; };
 
   protected:
     UniquePtrsKeeper<Shape> sub_shape_ptrs_keeper_;

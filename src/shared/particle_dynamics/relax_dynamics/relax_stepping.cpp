@@ -27,6 +27,28 @@ void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
     residue_[index_i] = residue;
 };
 //=================================================================================================//
+RelaxationResidue<Inner<ComplexShapeBounding>>::
+    RelaxationResidue(BaseInnerRelation& inner_relation, ComplexShape &complex_bounding_shapes)
+    :RelaxationResidue<Base, RelaxDataDelegateInner>(inner_relation),pos_(particles_->pos_),
+    complex_bounding_shapes_(complex_bounding_shapes)
+{};
+//=================================================================================================//
+void RelaxationResidue<Inner<ComplexShapeBounding>>::interaction(size_t index_i, Real dt)
+{
+    Vecd residue = Vecd::Zero();
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        residue -= 2.0 * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+    }
+    residue_[index_i] = residue;
+    for (size_t i = 0; i != complex_bounding_shapes_.getLevelSetShapes().size(); ++i)
+    {
+       residue_[index_i] -=  2.0 * complex_bounding_shapes_.getLevelSetShapes()[i]->computeKernelGradientIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));   
+    };
+}
+//=================================================================================================//
 void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
     RelaxationResidue<Inner<>>::interaction(index_i, dt);
@@ -94,5 +116,27 @@ void UpdateSmoothingLengthRatioByShape::update(size_t index_i, Real dt_square)
     Vol_[index_i] = pow(local_spacing, Dimensions);
 }
 //=================================================================================================//
+RelaxationStepWithComplexBounding::RelaxationStepWithComplexBounding(BaseInnerRelation& inner_relation, ComplexShape& bounding_shapes)
+    :BaseDynamics<void>(inner_relation.getSPHBody()),real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
+      body_relations_(real_body_.getBodyRelations()),
+      relaxation_residue_(inner_relation, bounding_shapes),
+      relaxation_scaling_(real_body_),
+      position_relaxation_(real_body_),
+      near_shape_surface_(bounding_shapes),
+      surface_bounding_(real_body_, near_shape_surface_) 
+{}
+//=================================================================================================//
+void RelaxationStepWithComplexBounding::exec(Real dt)
+{
+    real_body_.updateCellLinkedList();
+    for (size_t k = 0; k != body_relations_.size(); ++k)
+    {
+        body_relations_[k]->updateConfiguration();
+    }
+    relaxation_residue_.exec();
+    Real scaling = relaxation_scaling_.exec();
+    position_relaxation_.exec(scaling);
+    surface_bounding_.exec();
+}
 } // namespace relax_dynamics
 } // namespace SPH
