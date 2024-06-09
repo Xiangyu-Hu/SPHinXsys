@@ -90,7 +90,11 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
     {
         UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
-        registerVariable(*contained_data, variable_name, std::forward<Args>(args)...);
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
+        size_t new_variable_index = std::get<type_index>(all_particle_data_).size() - 1;
+        addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name, new_variable_index);
+
         return contained_data;
     }
     else

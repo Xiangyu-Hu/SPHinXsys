@@ -65,14 +65,14 @@ template <typename DataType>
 class DiscreteVariable : public BaseVariable
 {
   public:
-    DiscreteVariable(const std::string &name, size_t index)
-        : BaseVariable(name), index_in_container_(index){};
+    DiscreteVariable(const std::string &name, size_t size)
+        : BaseVariable(name) { data_field_.resize(size); };
     virtual ~DiscreteVariable(){};
 
-    size_t IndexInContainer() const { return index_in_container_; };
+    StdLargeVec<DataType> *DataField() const { return &data_field_; };
 
   private:
-    size_t index_in_container_;
+    StdLargeVec<DataType> data_field_;
 };
 
 template <typename DataType>
