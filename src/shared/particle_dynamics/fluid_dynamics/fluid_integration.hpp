@@ -88,7 +88,7 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
-    drho_dt_[index_i] = rho_dissipation * mass_[index_i] / Vol_[index_i];
+    drho_dt_[index_i] = rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -121,7 +121,7 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
         }
     }
     force_[index_i] += force * Vol_[index_i];
-    drho_dt_[index_i] += rho_dissipation * mass_[index_i] / Vol_[index_i];
+    drho_dt_[index_i] += rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -165,7 +165,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
         }
     }
     this->force_[index_i] += force * this->Vol_[index_i];
-    this->drho_dt_[index_i] += rho_dissipation * this->mass_[index_i] / this->Vol_[index_i];
+    this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -203,7 +203,7 @@ void Integration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t index_i,
         density_change_rate += u_jump * dW_ijV_j;
         p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
     }
-    drho_dt_[index_i] += density_change_rate * mass_[index_i] / Vol_[index_i];
+    drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] = p_dissipation * Vol_[index_i];
 };
 //=================================================================================================//
@@ -236,7 +236,7 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
             p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }
     }
-    drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->Vol_[index_i];
+    drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
     force_[index_i] += p_dissipation * this->Vol_[index_i];
 }
 //=================================================================================================//
@@ -277,7 +277,7 @@ void Integration2ndHalf<Contact<>, RiemannSolverType>::interaction(size_t index_
             p_dissipation += riemann_solver_k.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
         }
     }
-    this->drho_dt_[index_i] += density_change_rate * this->mass_[index_i] / this->Vol_[index_i];
+    this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
     this->force_[index_i] += p_dissipation * this->Vol_[index_i];
 }
 //=================================================================================================//

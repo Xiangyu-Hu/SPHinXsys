@@ -112,7 +112,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
-    //sph_system.setGenerateRegressionData(true);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -271,7 +270,7 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            Real advection_dt = fluid_advection_time_step.exec();
+            Real advection_dt = 0.3 * fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
             corrected_configuration_fluid.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

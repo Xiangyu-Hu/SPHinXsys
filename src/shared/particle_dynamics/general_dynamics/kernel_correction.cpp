@@ -20,7 +20,7 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
 //=================================================================================================//
 void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
-    Real det_sqr = SMAX(alpha_ - B_[index_i].determinant(), 0.0);
+    Real det_sqr = SMAX(alpha_ - B_[index_i].determinant(), Real(0));
     Matd inverse = B_[index_i].inverse();
     Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
     Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
