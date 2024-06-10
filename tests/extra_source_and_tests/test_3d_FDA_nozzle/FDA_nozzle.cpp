@@ -15,6 +15,7 @@
 #include <sphinxsys.h>
 
 #include <numbers>
+#include <string>
 using namespace SPH;
 
 constexpr Real Pi = Real(M_PI);
@@ -174,7 +175,7 @@ struct FDA_nozzle_parameters
     double fluid_length = 200 * scale; // defined in mesh file
     double outlet_pressure = 0;
     // end time
-    double end_time = 15.0;
+    double end_time = 5.0;
 };
 
 void setup_directory(const std::string &path)
@@ -291,8 +292,94 @@ struct InflowVelocity
     }
 };
 
+class ObserverRadial : public ObserverBody
+{
+  public:
+    ObserverRadial(SPHSystem &sph_system, std::string name, double x, double diameter) : ObserverBody(sph_system, name) // Assuming the observer has a predefined shape or characteristic name.
+    {
+        this->generateParticles<Observer>(ObserverRadialGenerator(x, diameter));
+    }
+};
+
+class RadialObserverContainer
+{
+
+  private:
+    SPHSystem &sph_system_;
+    std::vector<std::unique_ptr<ObserverRadial>> observers_;
+    std::vector<std::unique_ptr<ContactRelation>> contact_relations_;
+    std::vector<std::unique_ptr<ObservingAQuantity<Vec3d>>> observing_quantities_;
+    std::vector<double> z_;
+
+  public:
+    RadialObserverContainer(SPHSystem &sph_system) : sph_system_(sph_system)
+    {
+    }
+    const std::vector<double> get_position() { return z_; }
+
+    void add_radial_observer(double x, double diameter, FluidBody &fluid_body, SolidBody &wall_body)
+    {
+        // record the position into vector
+        z_.emplace_back(x);
+
+        auto observer_radial =
+            std::make_unique<ObserverRadial>(sph_system_, "ObserverRadial_" + std::to_string(x), x, diameter);
+        observers_.push_back(std::move(observer_radial));
+
+        // Convert SPHBody pointers to RealBody pointers
+        std::vector<RealBody *> real_body_ptrs;
+        real_body_ptrs.push_back(static_cast<RealBody *>(&fluid_body));
+        real_body_ptrs.push_back(static_cast<RealBody *>(&wall_body));
+
+        // Now use std::make_unique with the correct type
+        contact_relations_.emplace_back(std::make_unique<ContactRelation>(*observers_.back(), real_body_ptrs));
+
+        auto observer_contact = contact_relations_.back().get(); // Assuming this is a correct type derivation or has access to BaseContactRelation
+        auto observing_velocity = std::make_unique<ObservingAQuantity<Vec3d>>(*observer_contact, "Velocity");
+        observing_quantities_.push_back(std::move(observing_velocity));
+    }
+
+    ObserverBody *get_observer(size_t index)
+    {
+        if (index < observers_.size())
+            return observers_[index].get();
+        return nullptr;
+    }
+
+    ContactRelation *get_contact_relation(size_t index)
+    {
+        if (index < contact_relations_.size())
+            return contact_relations_[index].get();
+        return nullptr;
+    }
+
+    void update_configureations()
+    {
+        for (auto &contact : contact_relations_)
+        {
+            contact->updateConfiguration(); // Call the update function for each contact relation
+        }
+    }
+
+    ObservingAQuantity<Vec3d> *get_observing_quantity(size_t index)
+    {
+        if (index < observing_quantities_.size())
+            return observing_quantities_[index].get();
+        return nullptr;
+    }
+
+    void update_observing_quantities()
+    {
+        for (auto &quantity : observing_quantities_)
+        {
+            quantity->exec(); // Execute the observing function for each quantity
+        }
+    }
+};
+
 void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500)
 {
+    GlobalStaticVariables::physical_time_ = 0;
 
     const double scale = params.scale;
     inlet_diameter = params.inlet_diameter;
@@ -364,11 +451,12 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     // SYSTEM
     SPHSystem sph_system(wall_shape->getBounds(), resolution_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(false);
+    sph_system.setRunParticleRelaxation(true);
     /** handle command line arguments. */
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     IOEnvironment in_output(sph_system);
+    in_output.output_folder_ += std::to_string(params.number_of_particles);
 
     setup_directory(in_output.output_folder_);
 
@@ -410,7 +498,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         // Write the particle reload files.
-        ReloadParticleIO write_particle_reload_files(wall_boundary);
+        // ReloadParticleIO write_particle_reload_files(wall_boundary);
         // A  Physics relaxation step.
         RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
         //----------------------------------------------------------------------
@@ -435,7 +523,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
         // Output particles position for reload.
-        write_particle_reload_files.writeToFile(0);
+        // write_particle_reload_files.writeToFile(0);
     }
 
     ObserverBody observer_axial(sph_system, "fluid_observer_axial");
@@ -445,6 +533,12 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     InnerRelation water_block_inner(water_block);
     ContactRelation water_block_contact(water_block, {&wall_boundary});
     ContactRelation axial_velocity_observer_contact(observer_axial, {&water_block});
+    RadialObserverContainer observer_radial_container(sph_system);
+    for (auto &pos : radiao_observer_X)
+    {
+        observer_radial_container.add_radial_observer(
+            pos, params.inlet_diameter, water_block, wall_boundary);
+    }
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
 
     /**
@@ -603,6 +697,8 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         }
         TickCount t2 = TickCount::now();
         axial_velocity_observer_contact.updateConfiguration();
+        observer_radial_container.update_configureations();
+        observer_radial_container.update_observing_quantities();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
@@ -625,10 +721,18 @@ int main(int argc, char *argv[])
 {
     const double Re = 500;
     FDA_nozzle_parameters params;
-    params.number_of_particles = 5;
-    std::stringstream wall_file;
-    wall_file << "./input/FDA_nozzle_wall_N" << params.number_of_particles << ".stl";
-    params.wall_file_path = wall_file.str();
-    FDA_nozzle(argc, argv, params, Re);
+    std::vector<int> number_of_particles = {5, 10, 15, 20}; // Create a vector with desired particle counts
+
+    for (int particles : number_of_particles) // Loop through each number of particles
+    {
+        params.number_of_particles = particles;
+        {
+            std::stringstream wall_file;
+            wall_file << "./input/FDA_nozzle_wall_N" << params.number_of_particles << ".stl";
+            params.wall_file_path = wall_file.str();
+        }
+        FDA_nozzle(argc, argv, params, Re); // Call the function with current settings
+    }
+
     return 0;
 }
