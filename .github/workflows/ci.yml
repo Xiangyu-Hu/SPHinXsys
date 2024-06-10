@@ -9,7 +9,12 @@ on:
     branches: [master]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
+    inputs:
+      windows_test_debug_enabled:
+        type: boolean
+        description: "Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)"
+        required: false
+        default: false
 env:
   VCPKG_VERSION: "2023.10.19"
   CTEST_PARALLEL_LEVEL: "1"
@@ -353,6 +358,11 @@ jobs:
 
       - name: Unzip build folder
         run: 7z.exe x build.7z -oC:\
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_test_debug_enabled }}
 
       - name: Test with the first try
         id: first-try
