@@ -44,14 +44,14 @@ class ShellTankParticleGenerator : public ParticleGenerator<Surface>
     }
 };
 
-void relax_solid(RealBody &body, InnerRelation &inner)
+void relax_body(RealBody &body, InnerRelation &inner)
 {
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepInner relaxation_step_inner(inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -149,6 +149,15 @@ BoundingBox union_bounding_box(const BoundingBox &a, const BoundingBox &b)
     return out;
 }
 
+Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
+{
+    // the physical viscosity is defined in the paper of prof. Hu
+    // https://arxiv.org/pdf/2103.08932.pdf
+    // physical_viscosity = (beta / 4) * sqrt(rho * Young's modulus) * L
+    // beta: shape constant (0.4 for beam)
+    return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
+}
+
 void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oil, bool fsi_on)
 {
     // main geometric parameters
@@ -170,13 +179,14 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
 
     // velocity
     const Vec3d velocity_truck = 20 * Vec3d::UnitZ(); // 20 m/s
-    const Real impact_start_time = 0;
+    const Real impact_start_time = 0.05;
     const Real end_time = impact_start_time + 0.05;
 
     // material
     const Real rho0_s = 7850.0;
     const Real poisson = 0.28;
     const Real Youngs_modulus = 206e9;
+    const Real physical_viscosity = get_physical_viscosity_general(rho0_s, Youngs_modulus, tank_thickness);
     SaintVenantKirchhoffSolid material_tank(rho0_s, Youngs_modulus, poisson);
 
     const Real rho0_f = 700.0;
@@ -228,6 +238,7 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
 
     // oil
     FluidBody oil_block(system, mesh_oil);
+    oil_block.defineBodyLevelSetShape();
     oil_block.defineAdaptationRatios(1.15, res_tank / res_oil);
     oil_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     oil_block.generateParticles<Lattice>();
@@ -238,7 +249,8 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     InnerRelation oil_block_inner(oil_block);
 
     // relax
-    relax_solid(truck_body, truck_inner);
+    relax_body(oil_block, oil_block_inner);
+    relax_body(truck_body, truck_inner);
     particles_truck->pos0_ = particles_truck->pos_;
 
     // fluid-shell contact
@@ -255,6 +267,10 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_tank(tank_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal_tank(tank_body);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> tank_average_curvature(tank_curvature_inner);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+        velocity_damping(0.2, tank_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+        rotation_damping(0.2, tank_inner, "AngularVelocity", physical_viscosity);
 
     // truck
     auto update_truck_position = [&](Real dt)
@@ -389,6 +405,9 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
                             throw std::runtime_error("time step decreased too much");
 
                         stress_relaxation_first_half_tank.exec(dt_s);
+                        fix_bc();
+                        velocity_damping.exec(dt_s);
+                        rotation_damping.exec(dt_s);
                         fix_bc();
                         stress_relaxation_second_half_tank.exec(dt_s);
 
