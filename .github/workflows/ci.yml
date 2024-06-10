@@ -360,7 +360,7 @@ jobs:
         run: 7z.exe x build.7z -oC:\
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
-      - name: Setup tmate session
+      - name: Setup tmate session for debugging in workflow_dispatch mode
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_test_debug_enabled }}
 
