@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_VERSION: "2023.10.19"
+  VCPKG_VERSION: "2024.05.24"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
