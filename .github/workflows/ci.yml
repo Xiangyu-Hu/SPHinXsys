@@ -318,8 +318,6 @@ jobs:
           choco install code
           code tunnel --accept-server-license-terms
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
-        with:
-          timeout: "300000" # optional, default: 30000
 
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
