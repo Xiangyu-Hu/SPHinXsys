@@ -317,6 +317,8 @@ jobs:
         shell: pwsh
         run: |
           choco install vscode --refreshenv
+          echo $PATH
+          ls 'C:\Program Files\Microsoft VS Code\bin'
           code tunnel --accept-server-license-terms
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
