@@ -12,12 +12,12 @@ on:
     inputs:
       windows_build_debug_enabled:
         type: boolean
-        description: "Run the windows build with tmate debugging enabled"
+        description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
       windows_test_debug_enabled:
         type: boolean
-        description: "Run the windows test with tmate debugging enabled"
+        description: "Run the windows test with VS Code Sever debugging enabled"
         required: false
         default: false
 env:
