@@ -260,6 +260,11 @@ jobs:
 
   Windows-build:
     runs-on: windows-latest
+    # make sure these permissions are set so that
+    # VS Code can connect to the machine
+    permissions:
+      actions: read
+      contents: read
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
@@ -310,10 +315,13 @@ jobs:
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
 
-      # Enable tmate debugging of manually-triggered workflows if the input option was provided
-      - name: Setup tmate session for windows build debugging in workflow_dispatch mode
-        uses: mxschmitt/action-tmate@v3
+      # Enable VS code server debugging of manually-triggered workflows if the input option was provided
+      - name: 🐛 Debug Build
+        uses: stateful/vscode-server-action@v1
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
+        with:
+          machineName: "windows_build_debug" # optional, default: GitHub workflow run ID
+          timeout: "300000" # optional, default: 30000
 
       - name: Zip build folder
         run: 7z.exe a C:\build.7z "C:\build"
