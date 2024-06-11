@@ -105,17 +105,18 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts);
  */
 class SPHRelation
 {
-  protected:
-    SPHBody &sph_body_;
-
   public:
-    BaseParticles &base_particles_;
     SPHBody &getSPHBody() { return sph_body_; };
     explicit SPHRelation(SPHBody &sph_body);
     virtual ~SPHRelation(){};
 
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void updateConfiguration() = 0;
+
+  protected:
+    SPHBody &sph_body_;
+    BaseParticles &base_particles_;
+    StdLargeVec<Vecd> &pos_;
 };
 
 /**

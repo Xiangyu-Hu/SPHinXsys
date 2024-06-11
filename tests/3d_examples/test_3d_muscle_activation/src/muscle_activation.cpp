@@ -63,9 +63,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox> muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
     SolidBody muscle_body(sph_system, muscle_body_shape);
-    muscle_body.defineParticlesAndMaterial<
-        ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    muscle_body.generateParticles<Lattice>();
+    muscle_body.defineMaterial<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+    muscle_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -79,9 +78,11 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(muscle_body_inner);
+
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(muscle_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(muscle_body_inner);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(muscle_body_inner);
+
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(muscle_body);
     BodyRegionByParticle holder(muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));

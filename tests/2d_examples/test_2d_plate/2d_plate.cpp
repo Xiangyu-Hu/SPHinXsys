@@ -38,10 +38,14 @@ Real time_to_full_external_force = 0.05;
 //----------------------------------------------------------------------
 //	Derived classes used in the case
 //----------------------------------------------------------------------
-class PlateParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -68,12 +72,13 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
+        if (base_particles_.ParticlePositions()[index_i][0] < 0.0 || base_particles_.ParticlePositions()[index_i][0] > PL)
         {
             body_part_particles_.push_back(index_i);
         }
     };
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -83,17 +88,16 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles(PlateParticleGenerator(plate_body));
-    plate_body.addBodyStateForRecording<Vecd>("ForcePrior");
+    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<Observer>(observation_location);
+    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -107,13 +111,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
-    /** Time step size. */
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    /** stress relaxation. */
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
+
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
     SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
         apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
     /** Constrain the Boundary. */
@@ -126,7 +128,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
+    plate_body.addBodyStateForRecording<Vecd>("ForcePrior");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact); // TODO: using ensemble better

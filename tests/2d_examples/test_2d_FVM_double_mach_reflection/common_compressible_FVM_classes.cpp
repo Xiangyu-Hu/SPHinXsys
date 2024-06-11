@@ -5,10 +5,13 @@ namespace SPH
 //=================================================================================================//
 CompressibleAcousticTimeStepSizeInFVM::
     CompressibleAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL)
-    : AcousticTimeStepSize(sph_body), rho_(particles_->rho_),
-      p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
+    : AcousticTimeStepSize(sph_body),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       min_distance_between_nodes_(min_distance_between_nodes),
-      compressible_fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), acousticCFL_(acousticCFL){};
+      compressible_fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      acousticCFL_(acousticCFL){};
 //=================================================================================================//
 Real CompressibleAcousticTimeStepSizeInFVM::reduce(size_t index_i, Real dt)
 {

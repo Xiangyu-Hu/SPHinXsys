@@ -27,8 +27,8 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
-    defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
-    generateParticles<Lattice>();
+    assignMaterial(material_model.get());
+    generateParticles<BaseParticles, Lattice>();
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -110,8 +110,8 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
     SPHSystem system(bb, resolution);
     SolidBody model(system, triangle_mesh_shape);
     model.defineBodyLevelSetShape()->cleanLevelSet();
-    model.defineParticlesAndMaterial<SolidParticles, Solid>();
-    model.generateParticles<Lattice>();
+    model.defineMaterial<Solid>();
+    model.generateParticles<BaseParticles, Lattice>();
 
     if (particle_relaxation)
     {
@@ -120,7 +120,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
         relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
 
-    return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().pos_, model.getBaseParticles().Vol_);
+    return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)
@@ -215,12 +215,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       translation_solid_body_part_tuple_(input.translation_solid_body_part_tuple_),
 
       // iterators
-      iteration_(0),
-
-      // data storage
-      von_mises_stress_max_({}),
-      von_mises_stress_particles_({})
-
+      iteration_(0)
 {
     // scaling of translation and resolution
     scaleTranslationAndResolution();
@@ -906,12 +901,7 @@ void StructuralSimulation::runSimulation(Real end_time)
             runSimulationStep(dt, integration_time);
         }
         TickCount t2 = TickCount::now();
-        // record data for test
-        von_mises_stress_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressMax());
-        von_mises_stress_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressVector());
 
-        von_mises_strain_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainMax());
-        von_mises_strain_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainVector());
         // write data to file
         write_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -957,12 +947,12 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 
 Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
-    StdLargeVec<Vecd> &pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos0_;
-    StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_;
+    StdLargeVec<Vecd> &pos = solid_body_list_[body_index].get()->getElasticSolidParticles()->ParticlePositions();
+    StdLargeVec<Vecd> &pos0 = *solid_body_list_[body_index].get()->getElasticSolidParticles()->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     Real displ_max = 0;
-    for (size_t i = 0; i < pos_0.size(); i++)
+    for (size_t i = 0; i < pos0.size(); i++)
     {
-        Real displ = (pos_n[i] - pos_0[i]).norm();
+        Real displ = (pos[i] - pos0[i]).norm();
         if (displ > displ_max)
             displ_max = displ;
     }

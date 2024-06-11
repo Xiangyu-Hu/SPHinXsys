@@ -5,7 +5,7 @@ namespace SPH
 //=================================================================================================//
 FreeSurfaceIndication<Inner<>>::
     FreeSurfaceIndication(BaseInnerRelation &inner_relation)
-    : FreeSurfaceIndication<GeneralDataDelegateInner>(inner_relation),
+    : FreeSurfaceIndication<DataDelegateInner>(inner_relation),
       smoothing_length_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void FreeSurfaceIndication<Inner<>>::interaction(size_t index_i, Real dt)
@@ -49,7 +49,7 @@ FreeSurfaceIndication<Inner<SpatialTemporal>>::
     : FreeSurfaceIndication<Inner<>>(inner_relation)
 {
     particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
-    particles_->registerSortableVariable<int>("PreviousSurfaceIndicator");
+    particles_->addVariableToSort<int>("PreviousSurfaceIndicator");
 }
 //=================================================================================================//
 void FreeSurfaceIndication<Inner<SpatialTemporal>>::interaction(size_t index_i, Real dt)
@@ -89,7 +89,7 @@ void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
     Real pos_div = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -101,12 +101,12 @@ void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 FreeSurfaceIndication<Contact<NonWetting>>::FreeSurfaceIndication(BaseContactRelation &contact_relation)
-    : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation)
+    : FreeSurfaceIndication<DataDelegateContact>(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_phi_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Phi"));
-        contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -116,7 +116,7 @@ void FreeSurfaceIndication<Contact<NonWetting>>::interaction(size_t index_i, Rea
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &wetting_k = *(contact_phi_[k]);
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

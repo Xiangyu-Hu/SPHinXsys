@@ -56,23 +56,23 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.getName());
     }
     else
     {
         ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<Lattice>();
+        ball.generateParticles<BaseParticles, Lattice>();
     }
 
     SolidBody rigid_shell(sph_system, makeShared<ShellShape>("ShellShape"));
     rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    rigid_shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
+    rigid_shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        rigid_shell.generateParticles<Reload>(rigid_shell.getName());
+        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.getName());
     }
     else if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
@@ -83,11 +83,11 @@ int main(int ac, char *av[])
     {
         Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
         rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        rigid_shell.generateParticles<ThickSurface, Lattice>(thickness);
+        rigid_shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<Observer>(StdVec<Vecd>{ball_center});
+    ball_observer.generateParticles<BaseParticles, Observer>(StdVec<Vecd>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -159,17 +159,24 @@ int main(int ac, char *av[])
     SurfaceContactRelation ball_contact(ball, {&rigid_shell});
     ContactRelation ball_observer_contact(ball_observer, {&ball});
     //----------------------------------------------------------------------
-    //	Define the numerical methods used in the simulation.
-    //	Note that there may be data dependence on the constructors of these methods.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity constant_gravity(gravity);
     SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
+
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
     InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

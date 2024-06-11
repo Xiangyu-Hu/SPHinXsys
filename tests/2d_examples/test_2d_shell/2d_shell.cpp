@@ -33,11 +33,16 @@ Real physical_viscosity = 2000.0; /** physical damping, here we choose the same 
 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10000.0;
+
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGenerator<Surface>
+class Cylinder;
+template <>
+class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -68,7 +73,8 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_.pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
+        if (base_particles_.ParticlePositions()[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) ||
+            base_particles_.ParticlePositions()[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
         {
             body_part_particles_.push_back(index_i);
         }
@@ -88,6 +94,7 @@ class TimeDependentExternalForce : public Gravity
         return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
     }
 };
+} // namespace SPH
 /**
  *  The main program
  */
@@ -99,13 +106,12 @@ int main(int ac, char *av[])
 
     /** Create a Cylinder body. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
-    cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    cylinder_body.generateParticles(CylinderParticleGenerator(cylinder_body));
-    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
+    cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<Observer>(observation_location);
+    cylinder_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -113,23 +119,17 @@ int main(int ac, char *av[])
      */
     InnerRelation cylinder_body_inner(cylinder_body);
     ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
-
-    TimeDependentExternalForce time_dependent_external_force(Vec2d(0.0, gravitational_acceleration));
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(cylinder_body_inner);
-    /** Time step size calculation. */
+    TimeDependentExternalForce time_dependent_external_force(Vec2d(0.0, gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
+    /** The main shell dynamics model: stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
+
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    /** stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(cylinder_body_inner, 3, true);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(cylinder_body_inner);
-    /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fixed_free_rotate_shell_boundary(boundary_geometry);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
@@ -138,6 +138,7 @@ int main(int ac, char *av[])
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
+    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_max_displacement("Position", cylinder_observer_contact);

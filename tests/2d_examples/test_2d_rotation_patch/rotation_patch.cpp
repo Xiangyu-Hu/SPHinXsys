@@ -60,7 +60,8 @@ class InitialVelocity
     InitialVelocity(SPHBody &sph_body)
         : fluid_dynamics::FluidInitialCondition(sph_body),
           fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())),
-          p_(*fluid_particles_->getVariableByName<Real>("Pressure")), rho_(fluid_particles_->rho_){};
+          p_(*fluid_particles_->getVariableByName<Real>("Pressure")),
+          rho_(*fluid_particles_->getVariableByName<Real>("Density")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -119,23 +120,30 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<Reload>(water_block.getName())
-        : water_block.generateParticles<Lattice>();
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        : water_block.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};
-    fluid_observer.generateParticles<Observer>(observation_location);
-    //-------------------------------------------------------------------------------------------------------------------------------------------
+    fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
     InnerRelation water_body_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
-    //	Define the numerical methods used in the simulation.
-    //	Note that there may be data dependence on the sequence of constructions.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    SimpleDynamics<InitialVelocity> initial_condition(water_block);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationInner> free_surface_indicator(water_body_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionInnerRiemann> fluid_pressure_relaxation_correct(water_body_inner);
@@ -144,14 +152,14 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionInner<NoLimiter, BulkParticles>> transport_velocity_correction(water_body_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    /** We can output a method-specific particle data for debug */
-    water_block.addBodyStateForRecording<Real>("DensitySummation");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Matd>("LinearGradientCorrectionMatrix");
+    SimpleDynamics<InitialVelocity> initial_condition(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
+    water_block.addBodyStateForRecording<Real>("DensitySummation");
+    water_block.addBodyStateForRecording<int>("Indicator");
+    water_block.addBodyStateForRecording<Matd>("LinearGradientCorrectionMatrix");
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>

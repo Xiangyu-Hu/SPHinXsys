@@ -56,11 +56,11 @@ class DensitySummation<Base, DataDelegationType>
 };
 
 template <>
-class DensitySummation<Inner<Base>> : public DensitySummation<Base, FluidDataInner>
+class DensitySummation<Inner<Base>> : public DensitySummation<Base, DataDelegateInner>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation)
-        : DensitySummation<Base, FluidDataInner>(inner_relation){};
+        : DensitySummation<Base, DataDelegateInner>(inner_relation){};
     virtual ~DensitySummation(){};
 };
 
@@ -92,7 +92,7 @@ class DensitySummation<Inner<Adaptive>> : public DensitySummation<Inner<Base>>
 };
 
 template <>
-class DensitySummation<Contact<Base>> : public DensitySummation<Base, FluidContactData>
+class DensitySummation<Contact<Base>> : public DensitySummation<Base, DataDelegateContact>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation);

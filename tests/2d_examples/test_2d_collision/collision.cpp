@@ -90,26 +90,26 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
     free_ball.defineBodyLevelSetShape();
-    free_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    free_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? free_ball.generateParticles<Reload>(free_ball.getName())
-        : free_ball.generateParticles<Lattice>();
+        ? free_ball.generateParticles<BaseParticles, Reload>(free_ball.getName())
+        : free_ball.generateParticles<BaseParticles, Lattice>();
 
     SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
     damping_ball.defineBodyLevelSetShape();
-    damping_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    damping_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? damping_ball.generateParticles<Reload>(damping_ball.getName())
-        : damping_ball.generateParticles<Lattice>();
+        ? damping_ball.generateParticles<BaseParticles, Reload>(damping_ball.getName())
+        : damping_ball.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
-    free_ball_observer.generateParticles<Observer>(observation_location_1);
+    free_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_1);
     ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
-    damping_ball_observer.generateParticles<Observer>(observation_location_2);
+    damping_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_2);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -174,16 +174,20 @@ int main(int ac, char *av[])
     ContactRelation free_ball_observer_contact(free_ball_observer, {&free_ball});
     ContactRelation damping_all_observer_contact(damping_ball_observer, {&damping_ball});
     //----------------------------------------------------------------------
-    //	Define the main numerical methods used in the simulation.
-    //	Note that there may be data dependence on the constructors of these methods.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
     SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
+
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_ball_stress_relaxation_first_half(free_ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
@@ -197,6 +201,9 @@ int main(int ac, char *av[])
     /** Damping for one ball */
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

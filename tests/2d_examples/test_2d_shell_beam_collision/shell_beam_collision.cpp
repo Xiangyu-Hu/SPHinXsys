@@ -92,16 +92,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<Shell>("Shell"));
     shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
+    shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        shell.generateParticles<Reload>(shell.getName());
+        shell.generateParticles<SurfaceParticles, Reload>(shell.getName());
     }
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<ThickSurface, Lattice>(thickness);
+        shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -111,8 +110,8 @@ int main(int ac, char *av[])
     }
 
     SolidBody beam(sph_system, makeShared<Beam>("Beam"));
-    beam.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam.generateParticles<Lattice>();
+    beam.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -182,21 +181,19 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Define external force.*/
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
-    /** stress relaxation for the walls. */
+
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
     InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
     BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
-    /** Damping with the solid body*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -228,10 +225,8 @@ int main(int ac, char *av[])
     integ.setAllowInterpolation(false);
     integ.initialize(state);
     /** Coupling between SimBody and SPH.*/
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_shell(shell_multibody, MBsystem, shellMBody, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_shell(shell_multibody, MBsystem, shellMBody, integ);
+    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_shell(shell_multibody, MBsystem, shellMBody, integ);
+    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_shell(shell_multibody, MBsystem, shellMBody, integ);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

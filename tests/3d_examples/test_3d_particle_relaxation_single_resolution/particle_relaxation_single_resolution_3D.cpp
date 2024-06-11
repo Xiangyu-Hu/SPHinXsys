@@ -68,8 +68,7 @@ int main(int ac, char *av[])
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
     imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-    imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<Lattice>();
+    imported_model.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

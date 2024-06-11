@@ -38,7 +38,7 @@ namespace SPH
  * @brief computing smoothed variable field by averaging with neighbors
  */
 template <typename VariableType>
-class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
+class ParticleSmoothing : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name);
@@ -56,7 +56,7 @@ class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
  * @brief TBD.
  */
 template <typename VariableType>
-class ParticleSnapshotAverage : public LocalDynamics, public GeneralDataDelegateSimple
+class ParticleSnapshotAverage : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name);

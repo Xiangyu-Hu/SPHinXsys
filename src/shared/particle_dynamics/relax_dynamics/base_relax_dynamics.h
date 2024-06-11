@@ -42,17 +42,13 @@ class LevelSetCorrection;
 
 namespace relax_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> RelaxDataDelegateContact;
-
 /**
  * @class RandomizeParticlePosition
  * @brief Randomize the initial particle position
  */
 class RandomizeParticlePosition
     : public LocalDynamics,
-      public RelaxDataDelegateSimple
+      public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &pos_;

@@ -48,7 +48,7 @@ class ForcePrior
 
 class GravityForce
     : public LocalDynamics,
-      public GeneralDataDelegateSimple,
+      public DataDelegateSimple,
       public ForcePrior
 {
   protected:

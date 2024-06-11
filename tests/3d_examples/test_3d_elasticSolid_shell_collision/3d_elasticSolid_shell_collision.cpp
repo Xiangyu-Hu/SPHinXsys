@@ -28,11 +28,15 @@ Real Youngs_modulus = 2.0e4;
 Real poisson = 0.45;
 Real physical_viscosity = 1.0e6;
 //----------------------------------------------------------------------
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGenerator<Surface>
+class Cylinder;
+template <>
+class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -50,6 +54,7 @@ class CylinderParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -70,23 +75,23 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
-    shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    shell.generateParticles(CylinderParticleGenerator(shell));
+    shell.defineMaterial<Solid>();
+    shell.generateParticles<SurfaceParticles, Cylinder>();
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.getName());
     }
     else
     {
         ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<Lattice>();
+        ball.generateParticles<BaseParticles, Lattice>();
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<Observer>(StdVec<Vec3d>{ball_center});
+    ball_observer.generateParticles<BaseParticles, Observer>(StdVec<Vec3d>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -147,7 +152,6 @@ int main(int ac, char *av[])
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
@@ -156,6 +160,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
     DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
         ball_friction(0.1, ball_contact, physical_viscosity);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

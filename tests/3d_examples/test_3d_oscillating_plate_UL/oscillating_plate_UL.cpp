@@ -6,9 +6,9 @@
  */
 #include "sphinxsys.h"
 using namespace SPH;
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real PL = 0.4;                                          /** Length of the square plate. */
 Real PH = 0.4;                                          /** Width of the square plate. */
 Real PT = 0.01;                                         /** Thickness of the square plate. */
@@ -18,11 +18,11 @@ int particle_number_PL = PL / particle_spacing_ref;
 int particle_number_PH = PH / particle_spacing_ref;
 int BWD = 1;
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -PT / 2), Vec3d(PL + BW, PH + BW, PT / 2));
-// Observer location
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.5 * PH, 0.0), Vecd(-BW, -BW, 0.0)};
-/** For material properties of the solid. */
+//----------------------------------------------------------------------
+//	Material parameters.
+//----------------------------------------------------------------------
 Real rho0_s = 1000.0;          /** Normalized density. */
 Real Youngs_modulus = 100.0e6; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;            /** Poisson ratio. */
@@ -32,11 +32,19 @@ Real gravity_g = 0.0;
 Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
 Real U_ref = 1.0; // Maximum velocity
-/** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGenerator<Base>
+
+namespace SPH
+{
+//----------------------------------------------------------------------
+//	Complex shape for wall boundary, note that no partial overlap is allowed
+//	for the shapes in a complex shape.
+//----------------------------------------------------------------------
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Base>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Base>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
@@ -72,9 +80,12 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if ((base_particles_.pos_[index_i][2] < 0.5 * particle_spacing_ref) &&
-            (base_particles_.pos_[index_i][2] > -0.5 * particle_spacing_ref) &&
-            (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL || base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH))
+        if ((base_particles_.ParticlePositions()[index_i][2] < 0.5 * particle_spacing_ref) &&
+            (base_particles_.ParticlePositions()[index_i][2] > -0.5 * particle_spacing_ref) &&
+            (base_particles_.ParticlePositions()[index_i][0] < 0.0 ||
+             base_particles_.ParticlePositions()[index_i][0] > PL ||
+             base_particles_.ParticlePositions()[index_i][1] < 0.0 ||
+             base_particles_.ParticlePositions()[index_i][1] > PH))
         {
             body_part_particles_.push_back(index_i);
         }
@@ -92,97 +103,112 @@ class BeamInitialCondition
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        vel_[index_i][2] = sin(governing_vibration_integer_x * Pi * pos_[index_i][0] / PL) * sin(governing_vibration_integer_y * Pi * pos_[index_i][1] / PH);
+        vel_[index_i][2] = sin(governing_vibration_integer_x * Pi * pos_[index_i][0] / PL) *
+                           sin(governing_vibration_integer_y * Pi * pos_[index_i][1] / PH);
     };
 };
+} // namespace SPH
 
-/**
- *  The main program
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    /** Setup the system. */
+    //----------------------------------------------------------------------
+    //	Build up an SPHSystem and IO environment.
+    //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-
-    /** create a plate body. */
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    plate_body.generateParticles(PlateParticleGenerator(plate_body));
-    // plate_body.addBodyStateForRecording<Real>("VolumetricStress");
+    plate_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    plate_body.generateParticles<BaseParticles, Plate>();
+
+    ObserverBody plate_observer(sph_system, "PlateObserver");
+    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
+    InnerRelation plate_body_inner(plate_body);
+    ContactRelation plate_observer_contact(plate_observer, {&plate_body});
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the geometric models or simple objects without data dependencies,
+    // such as gravity, should be initiated first.
+    // Then the major physical particle dynamics model should be introduced.
+    // Finally, the auxillary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    SimpleDynamics<BeamInitialCondition> initial_velocity(plate_body);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(plate_body_inner);
+
+    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> plate_shear_acceleration(plate_body_inner);
+    Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
+    Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_ref, 0.2);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
+    BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
+    SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(1.0, 1.0, 0.0));
+    SimpleDynamics<solid_dynamics::ConstrainSolidBodyMassCenter> constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
     plate_body.addBodyStateForRecording<Real>("VonMisesStress");
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
     plate_body.addBodyStateForRecording<Real>("Pressure");
     plate_body.addBodyStateForRecording<Real>("Density");
-
-    /** Define Observer. */
-    ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<Observer>(observation_location);
-
-    /** Set body contact map
-     *  The contact map gives the data connections between the bodies
-     *  basically the the range of bodies to build neighbor particle lists
-     */
-    InnerRelation plate_body_inner(plate_body);
-    ContactRelation plate_observer_contact(plate_observer, {&plate_body});
-    /**
-     * This section define all numerical methods will be used in this case.
-     */
-    SimpleDynamics<BeamInitialCondition> initial_velocity(plate_body);
-    /** Time step size calculation. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_ref, 0.2);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
-    /** stress relaxation. */
-    Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
-    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> plate_shear_acceleration(plate_body_inner);
-    /** Corrected configuration. */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(plate_body_inner);
-    Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
-    /** Constrain the Boundary. */
-    BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-    SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(1.0, 1.0, 0.0));
-    SimpleDynamics<solid_dynamics::ConstrainSolidBodyMassCenter> constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));
-    /** Output */
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     RestartIO restart_io(sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(plate_body);
-
-    /** Apply initial condition. */
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     initial_velocity.exec();
     constrain_holder.exec();
     corrected_configuration.exec();
-
-    /**
-     * @brief The time stepping starts here.
-     */
+    //----------------------------------------------------------------------
+    //	Load restart file if necessary.
+    //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
     }
     GlobalStaticVariables::physical_time_ = 0.0;
-    /** first output. */
-    write_states.writeToFile(0);
-    write_plate_displacement.writeToFile(0);
-    write_kinetic_energy.writeToFile(0);
-    // write_elastic_strain_energy.writeToFile(0);
-
-    /** Setup physical parameters. */
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 500;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 0.02;
     Real output_period = end_time / 50.0;
-    /** Statistics for computing time. */
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
-    /**
-     * Main loop
-     */
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_states.writeToFile(0);
+    write_plate_displacement.writeToFile(0);
+    write_kinetic_energy.writeToFile(0);
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;

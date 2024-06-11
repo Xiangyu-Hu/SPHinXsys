@@ -71,14 +71,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody coil(sph_system, makeShared<Coil>("Coil"));
     coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    coil.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? coil.generateParticles<Reload>(coil.getName())
-        : coil.generateParticles<Lattice>();
+        ? coil.generateParticles<BaseParticles, Reload>(coil.getName())
+        : coil.generateParticles<BaseParticles, Lattice>();
 
     SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
-    stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    stationary_plate.generateParticles<Lattice>();
+    stationary_plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    stationary_plate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -140,8 +140,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
-    // Time step size
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+
     // stress relaxation.
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(coil_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
@@ -150,6 +149,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+
     // Damping the velocity field for quasi-static solution
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);

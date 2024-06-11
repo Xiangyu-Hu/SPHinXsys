@@ -116,6 +116,13 @@ struct ZeroData<int>
 {
     static inline int value = 0;
 };
+
+template <typename DataType>
+struct IdentityMatrix
+{
+    static inline DataType value = DataType::Identity();
+};
+
 /** Type trait for data type index. */
 template <typename T>
 struct DataTypeIndex
