@@ -314,7 +314,9 @@ jobs:
 
       # Enable VS code server debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Debug Build
-        uses: stateful/vscode-server-action@v1
+        run: |
+          choco install code
+          code tunnel --accept-server-license-terms
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
         with:
           timeout: "300000" # optional, default: 30000
