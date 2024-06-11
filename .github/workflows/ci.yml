@@ -301,6 +301,14 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@v1
 
+      # Enable VS code server debugging of manually-triggered workflows if the input option was provided
+      - name: 🐛 Debug Build
+        uses: stateful/vscode-server-action@v1
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
+        with:
+          machineName: "windows_build_debug" # optional, default: GitHub workflow run ID
+          timeout: "300000" # optional, default: 30000
+
       - name: Generate buildsystem
         run: |
           cmake.exe -G Ninja `
@@ -314,14 +322,6 @@ jobs:
 
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
-
-      # Enable VS code server debugging of manually-triggered workflows if the input option was provided
-      - name: 🐛 Debug Build
-        uses: stateful/vscode-server-action@v1
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
-        with:
-          machineName: "windows_build_debug" # optional, default: GitHub workflow run ID
-          timeout: "300000" # optional, default: 30000
 
       - name: Zip build folder
         run: 7z.exe a C:\build.7z "C:\build"
