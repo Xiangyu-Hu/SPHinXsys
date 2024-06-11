@@ -314,7 +314,9 @@ jobs:
 
       # Enable VS code server debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Install VS code
-        run: choco install vscode
+        run: |
+          choco install vscode
+          set PATH=%PATH%;C:\Program Files\Microsoft VS Code\
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: VS Code Server
