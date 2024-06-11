@@ -316,7 +316,7 @@ jobs:
       - name: 🐛 Debug Build
         run: |
           choco install vscode
-          code tunnel --accept-server-license-terms
+          code.exe tunnel --accept-server-license-terms
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Build
