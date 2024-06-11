@@ -316,11 +316,10 @@ jobs:
       - name: 🐛 Install VS code
         run: |
           choco install vscode
-          set PATH=%PATH%;C:\Program Files\Microsoft VS Code\
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: VS Code Server
-        run: code.exe tunnel --accept-server-license-terms
+        run: C:\Program Files\Microsoft VS Code\code.exe tunnel --accept-server-license-terms
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Build
