@@ -314,9 +314,9 @@ jobs:
 
       # Enable VS code server debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Debug Build
-        run: |
-          choco install vscode
-          code.exe tunnel --accept-server-license-terms
+        run: choco install vscode
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
+        run:  code.exe tunnel --accept-server-license-terms
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Build
