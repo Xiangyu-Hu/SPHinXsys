@@ -19,7 +19,7 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                       /**< Reference density of fluid. */
+Real rho0_f = 2.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity. */
 Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
