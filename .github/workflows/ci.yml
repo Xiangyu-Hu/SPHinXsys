@@ -314,6 +314,7 @@ jobs:
 
       # Enable VS code server debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Install VS code
+        shell: pwsh
         run: |
           choco install vscode --refreshenv
           code tunnel --accept-server-license-terms
