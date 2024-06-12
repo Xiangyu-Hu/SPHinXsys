@@ -24,7 +24,7 @@ env:
 jobs:
   ###############################################################################
   Linux-float:
-    if: ${{ ! github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -90,7 +90,7 @@ jobs:
 
   ###############################################################################
   Linux-build:
-    if: ${{ ! github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -166,7 +166,7 @@ jobs:
           retention-days: 1
 
   Linux-test:
-    if: ${{ ! github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: Linux-build
     runs-on: ubuntu-22.04
     env:
@@ -258,7 +258,7 @@ jobs:
   ###############################################################################
 
   Windows-build:
-    if: ${{ ! github.event_name == 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
     runs-on: windows-latest
     # make sure these permissions are set so that
     # VS Code can connect to the machine
@@ -336,7 +336,7 @@ jobs:
           retention-days: 1
 
   Windows-test:
-    if: ${{ ! github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: Windows-build
     runs-on: windows-latest
     env:
@@ -420,7 +420,7 @@ jobs:
   ###############################################################################
 
   macOS-build:
-    if: ${{ ! github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: macos-12
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
@@ -487,7 +487,7 @@ jobs:
           retention-days: 1
 
   macOS-test:
-    if: ${{ ! github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
     runs-on: macos-12
     env:
