@@ -319,7 +319,7 @@ jobs:
           choco install vscode --refreshenv
           cd 'C:\Program Files\Microsoft VS Code\bin'
           ls
-          .\code-tunnel.exe --accept-server-license-terms
+          .\code-tunnel.exe
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Build
