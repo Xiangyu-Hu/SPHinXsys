@@ -15,11 +15,7 @@ on:
         description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
-      windows_test_debug_enabled:
-        type: boolean
-        description: "Run the windows test with VS Code Sever debugging enabled"
-        required: false
-        default: false
+
 env:
   VCPKG_VERSION: "2023.10.19"
   CTEST_PARALLEL_LEVEL: "1"
@@ -28,6 +24,7 @@ env:
 jobs:
   ###############################################################################
   Linux-float:
+    if: ${{ ! github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -93,6 +90,7 @@ jobs:
 
   ###############################################################################
   Linux-build:
+    if: ${{ ! github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -168,6 +166,7 @@ jobs:
           retention-days: 1
 
   Linux-test:
+    if: ${{ ! github.event_name == 'workflow_dispatch' }}
     needs: Linux-build
     runs-on: ubuntu-22.04
     env:
@@ -259,6 +258,7 @@ jobs:
   ###############################################################################
 
   Windows-build:
+    if: ${{ ! github.event_name == 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
     runs-on: windows-latest
     # make sure these permissions are set so that
     # VS Code can connect to the machine
@@ -314,7 +314,7 @@ jobs:
             -B C:\build
 
       # Enable VS code server debugging of manually-triggered workflows if the input option was provided
-      - name: 🐛 Install VS code
+      - name: 🐛 Install VS Code and initialize VS Code Server for debug
         shell: pwsh
         run: |
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
@@ -336,6 +336,7 @@ jobs:
           retention-days: 1
 
   Windows-test:
+    if: ${{ ! github.event_name == 'workflow_dispatch' }}
     needs: Windows-build
     runs-on: windows-latest
     env:
@@ -379,11 +380,6 @@ jobs:
       - name: Unzip build folder
         run: 7z.exe x build.7z -oC:\
 
-      # Enable tmate debugging of manually-triggered workflows if the input option was provided
-      - name: Setup tmate session for debugging in workflow_dispatch mode
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_test_debug_enabled }}
-
       - name: Test with the first try
         id: first-try
         run: |
@@ -424,6 +420,7 @@ jobs:
   ###############################################################################
 
   macOS-build:
+    if: ${{ ! github.event_name == 'workflow_dispatch' }}
     runs-on: macos-12
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
@@ -490,6 +487,7 @@ jobs:
           retention-days: 1
 
   macOS-test:
+    if: ${{ ! github.event_name == 'workflow_dispatch' }}
     needs: macOS-build
     runs-on: macos-12
     env:
