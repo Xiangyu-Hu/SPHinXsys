@@ -145,7 +145,7 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationInner> free_surface_indicator(water_body_inner);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.5);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionInnerRiemann> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> fluid_density_relaxation(water_body_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInnerFreeStream> update_density_by_summation(water_body_inner);

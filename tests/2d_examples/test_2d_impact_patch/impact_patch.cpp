@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.5);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationInner> free_surface_indicator(water_body_inner);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionInnerRiemann> fluid_pressure_relaxation_correct(water_body_inner);
