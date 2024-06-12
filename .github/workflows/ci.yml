@@ -277,6 +277,7 @@ jobs:
           choco install ccache
           choco install ninja
           choco install 7zip
+          choco install wget
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -316,10 +317,8 @@ jobs:
       - name: 🐛 Install VS code
         shell: pwsh
         run: |
-          choco install vscode --refreshenv
-          cd 'C:\Program Files\Microsoft VS Code\bin'
-          ls
-          .\code-tunnel.exe
+          wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
+          7z.exe x stable
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Build
