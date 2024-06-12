@@ -314,7 +314,7 @@ jobs:
             -B C:\build
 
       # Enable VS code server debugging of manually-triggered workflows if the input option was provided
-      - name: 🐛 Install VS Code and initialize VS Code Server for debug
+      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
         shell: pwsh
         run: |
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
