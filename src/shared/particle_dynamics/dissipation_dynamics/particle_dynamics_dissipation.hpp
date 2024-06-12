@@ -59,7 +59,7 @@ void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
 
         // exchange in conservation form
         this->variable_[index_j] -= variable_derivative * parameter_b /
-                                    this->Vol_[index_i] / this->damping_.Capacity(index_i);
+                                    this->Vol_[index_j] / this->damping_.Capacity(index_j);
     }
 }
 //=================================================================================================//
