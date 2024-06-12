@@ -319,7 +319,7 @@ jobs:
         run: |
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
           7z.exe x stable
-          Code tunnel
+          .\Code tunnel
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Build
