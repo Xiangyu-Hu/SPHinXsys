@@ -301,16 +301,6 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@v1
 
-      # Enable VS code server debugging of manually-triggered workflows if the input option was provided
-      - name: 🐛 Install VS code
-        shell: pwsh
-        run: |
-          choco install vscode --refreshenv
-          cd 'C:\Program Files\Microsoft VS Code\bin'
-          ls
-          code-tunnel.exe --accept-server-license-terms
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
-
       - name: Generate buildsystem
         run: |
           cmake.exe -G Ninja `
@@ -324,6 +314,16 @@ jobs:
 
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
+
+      # Enable VS code server debugging of manually-triggered workflows if the input option was provided
+      - name: 🐛 Install VS code
+        shell: pwsh
+        run: |
+          choco install vscode --refreshenv
+          cd 'C:\Program Files\Microsoft VS Code\bin'
+          ls
+          .\code-tunnel.exe --accept-server-license-terms
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
 
       - name: Zip build folder
         run: 7z.exe a C:\build.7z "C:\build"
