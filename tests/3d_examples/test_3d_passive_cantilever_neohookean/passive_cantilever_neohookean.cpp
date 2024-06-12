@@ -96,8 +96,8 @@ int main(int ac, char *av[])
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
-        muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+        muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity, rho0_s);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
