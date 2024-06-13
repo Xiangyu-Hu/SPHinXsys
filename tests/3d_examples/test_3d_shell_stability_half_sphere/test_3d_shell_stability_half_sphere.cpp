@@ -71,7 +71,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
-    Vec3d particle =  Vec3d::Zero();
+    Vec3d particle = Vec3d::Zero();
     unsigned int count = 0;
     Real value = 0;
 
@@ -177,10 +177,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
 
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
-        shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
-        shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+        shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity, rho);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+        shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity, rho);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();

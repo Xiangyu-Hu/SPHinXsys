@@ -54,7 +54,7 @@ void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
                            this->Vol_[index_i] * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         // predicted quantity at particle j
-        VariableType variable_j = this->variable_[index_j] - this->parameter_k * parameter_b;
+        VariableType variable_j = this->variable_[index_j] - parameter_k * parameter_b;
         VariableType variable_derivative = (this->variable_[index_i] - variable_j);
 
         // exchange in conservation form
@@ -74,10 +74,7 @@ template <class DampingAlgorithmType>
 template <typename... Args>
 DampingWithRandomChoice<DampingAlgorithmType>::
     DampingWithRandomChoice(Real random_ratio, Args &&...args)
-    : DampingAlgorithmType(std::forward<Args>(args)...), random_ratio_(random_ratio)
-{
-    this->eta_ /= random_ratio;
-}
+    : DampingAlgorithmType(std::forward<Args>(args)...), random_ratio_(random_ratio) {}
 //=================================================================================================//
 template <class DampingAlgorithmType>
 bool DampingWithRandomChoice<DampingAlgorithmType>::RandomChoice()
@@ -89,7 +86,7 @@ template <class DampingAlgorithmType>
 void DampingWithRandomChoice<DampingAlgorithmType>::exec(Real dt)
 {
     if (RandomChoice())
-        DampingAlgorithmType::exec(dt);
+        DampingAlgorithmType::exec(dt / random_ratio_);
 }
 //=================================================================================================//
 } // namespace SPH

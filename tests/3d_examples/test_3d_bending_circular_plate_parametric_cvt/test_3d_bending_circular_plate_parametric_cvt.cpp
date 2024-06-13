@@ -197,7 +197,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real rho = 1; // unit rho, not specified in test case description
     Real E = 3e7 * psi_to_pa;
     Real mu = 0.3;
-    Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
+    Real physical_viscosity = 7e4 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
     Vec3d gravity = -pressure / (thickness * rho) * sym_vec; // force/mass simplified by area
@@ -265,10 +265,10 @@ return_data bending_circular_plate(Real dp_ratio)
     constrained_edges.body_part_particles_ = constrained_edge_ids;
 
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
-        shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
-        shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+        shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity, rho);
+    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+        shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity, rho);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
