@@ -153,9 +153,9 @@ int main(int ac, char *av[])
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
-        cylinder_position_damping(0.3, cylinder_body_inner, "Velocity", physical_viscosity, rho0_s);
+        cylinder_position_damping(0.3, cylinder_body_inner, "Velocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
-        cylinder_rotation_damping(0.3, cylinder_body_inner, "AngularVelocity", physical_viscosity, rho0_s);
+        cylinder_rotation_damping(0.3, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);

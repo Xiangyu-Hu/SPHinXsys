@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
-        muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity, rho0_s);
+        muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);

@@ -13,6 +13,7 @@ DampingBySplitting<DampingType, VariableType, DataDelegationType>::
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       damping_(this->particles_, std::forward<Args>(args)...),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       variable_(*this->particles_->template getVariableByName<VariableType>(variable_name)) {}
 //=================================================================================================//
 template <typename VariableType, typename DampingType>
@@ -26,14 +27,14 @@ ErrorAndParameters<VariableType> DampingBySplitting<Inner<>, VariableType, Dampi
         size_t index_j = inner_neighborhood.j_[n];
         // linear projection
         VariableType variable_derivative = (this->variable_[index_i] - this->variable_[index_j]);
-        Real parameter_b = 2.0 * this->damping_.Coefficient(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
+        Real parameter_b = 2.0 * this->damping_.DampingCoefficient(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
                            this->Vol_[index_i] * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         error_and_parameters.error_ -= variable_derivative * parameter_b;
         error_and_parameters.a_ += parameter_b;
         error_and_parameters.c_ += parameter_b * parameter_b;
     }
-    error_and_parameters.a_ -= this->Vol_[index_i] * this->damping_.Capacity(index_i);
+    error_and_parameters.a_ -= this->mass_[index_i] * this->damping_.SpecificCapacity(index_i);
     return error_and_parameters;
 }
 //=================================================================================================//
@@ -50,7 +51,7 @@ void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
     {
         size_t index_j = inner_neighborhood.j_[n];
 
-        Real parameter_b = 2.0 * this->damping_.Coefficient(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
+        Real parameter_b = 2.0 * this->damping_.DampingCoefficient(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
                            this->Vol_[index_i] * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         // predicted quantity at particle j
@@ -59,7 +60,7 @@ void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
 
         // exchange in conservation form
         this->variable_[index_j] -= variable_derivative * parameter_b /
-                                    this->Vol_[index_j] / this->damping_.Capacity(index_j);
+                                    this->mass_[index_j] / this->damping_.SpecificCapacity(index_j);
     }
 }
 //=================================================================================================//

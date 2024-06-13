@@ -49,13 +49,13 @@ struct ErrorAndParameters
 class FixedDamping
 {
   public:
-    FixedDamping(BaseParticles *particles, Real eta, Real kappa)
+    FixedDamping(BaseParticles *particles, Real eta, Real kappa = 1.0)
         : eta_(particles->registerSingleVariable<Real>("DampingCoefficient", eta)),
-          kappa_(particles->registerSingleVariable<Real>("Capacity", kappa)){};
+          kappa_(particles->registerSingleVariable<Real>("SpecificCapacity", kappa)){};
     virtual ~FixedDamping(){};
 
-    Real &Coefficient(size_t index_i, size_t index_j) { return *eta_; };
-    Real &Capacity(size_t index_i) { return *kappa_; };
+    Real &DampingCoefficient(size_t index_i, size_t index_j) { return *eta_; };
+    Real &SpecificCapacity(size_t index_i) { return *kappa_; };
 
   protected:
     Real *eta_;
@@ -82,7 +82,7 @@ class DampingBySplitting<DampingType, VariableType, DataDelegationType>
 
   protected:
     DampingType damping_;
-    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<VariableType> &variable_;
 };
 
