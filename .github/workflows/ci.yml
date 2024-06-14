@@ -10,12 +10,16 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
+      linux_test_debug_enabled:
+        type: boolean
+        description: "Run the linux test with VS Code Sever debugging enabled"
+        required: false
+        default: false
       windows_build_debug_enabled:
         type: boolean
         description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
-
 env:
   VCPKG_VERSION: "2023.10.19"
   CTEST_PARALLEL_LEVEL: "1"
@@ -166,9 +170,14 @@ jobs:
           retention-days: 1
 
   Linux-test:
-    if: ${{ github.event_name != 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
     needs: Linux-build
     runs-on: ubuntu-22.04
+    # make sure these permissions are set so that
+    # VS Code can connect to the machine
+    permissions:
+      actions: read
+      contents: read
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -254,6 +263,10 @@ jobs:
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
+
+      - name: 🐛 If failed in dispatch work flow, initialize VS Code Server for debug
+        uses: stateful/vscode-server-action@v1
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
 
   ###############################################################################
 
