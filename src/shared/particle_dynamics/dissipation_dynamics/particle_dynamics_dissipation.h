@@ -38,23 +38,30 @@
 
 namespace SPH
 {
+/* Base class to indicate the concept of operator splitting */
+class OperatorSplitting
+{
+};
+
 template <typename VariableType>
 struct ErrorAndParameters
 {
     VariableType error_;
     Real a_, c_;
-    ErrorAndParameters() : error_(ZeroData<VariableType>::value), a_(0), c_(0){};
+    ErrorAndParameters()
+        : error_(ZeroData<VariableType>::value),
+          a_(0), c_(0){};
 };
 
-class FixedDamping
+class FixedDampingRate
 {
   public:
-    FixedDamping(BaseParticles *particles, Real eta, Real kappa = 1.0)
-        : eta_(particles->registerSingleVariable<Real>("DampingCoefficient", eta)),
+    FixedDampingRate(BaseParticles *particles, Real eta, Real kappa = 1.0)
+        : eta_(particles->registerSingleVariable<Real>("DampingRate", eta)),
           kappa_(particles->registerSingleVariable<Real>("SpecificCapacity", kappa)){};
-    virtual ~FixedDamping(){};
+    virtual ~FixedDampingRate(){};
 
-    Real &DampingCoefficient(size_t index_i, size_t index_j) { return *eta_; };
+    Real &DampingRate(size_t index_i, size_t index_j) { return *eta_; };
     Real &SpecificCapacity(size_t index_i) { return *kappa_; };
 
   protected:
@@ -63,38 +70,39 @@ class FixedDamping
 };
 
 template <typename... InteractionTypes>
-class DampingBySplitting;
+class Damping;
 
-template <typename VariableType, typename DampingType, class DataDelegationType>
-class DampingBySplitting<DampingType, VariableType, DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+template <typename VariableType, typename DampingRateType, class DataDelegationType>
+class Damping<Base, DampingRateType, VariableType, DataDelegationType>
+    : public LocalDynamics, public DataDelegationType, public OperatorSplitting
 {
   public:
     template <class BaseRelationType, typename... Args>
-    explicit DampingBySplitting(BaseRelationType &base_relation, const std::string &variable_name, Args &&...args);
+    explicit Damping(BaseRelationType &base_relation, const std::string &variable_name, Args &&...args);
     template <typename BodyRelationType, typename... Args, size_t... Is>
-    DampingBySplitting(ConstructorArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
-        : DampingBySplitting(parameters.body_relation_, std::get<Is>(parameters.others_)...){};
+    Damping(ConstructorArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
+        : Damping(parameters.body_relation_, std::get<Is>(parameters.others_)...){};
     template <class BodyRelationType, typename... Args>
-    explicit DampingBySplitting(ConstructorArgs<BodyRelationType, Args...> parameters)
-        : DampingBySplitting(parameters, std::make_index_sequence<std::tuple_size_v<decltype(parameters.others_)>>{}){};
-    virtual ~DampingBySplitting(){};
+    explicit Damping(ConstructorArgs<BodyRelationType, Args...> parameters)
+        : Damping(parameters, std::make_index_sequence<std::tuple_size_v<decltype(parameters.others_)>>{}){};
+    virtual ~Damping(){};
 
   protected:
-    DampingType damping_;
+    DampingRateType damping_;
     StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<VariableType> &variable_;
 };
 
-template <typename VariableType, typename DampingType>
-class DampingBySplitting<Inner<>, VariableType, DampingType>
-    : public DampingBySplitting<DampingType, VariableType, DataDelegateInner>
+class Projection;
+template <typename VariableType, typename DampingRateType>
+class Damping<Inner<Projection>, VariableType, DampingRateType>
+    : public Damping<Base, DampingRateType, VariableType, DataDelegateInner>
 {
   public:
     template <typename... Args>
-    DampingBySplitting(Args &&...args)
-        : DampingBySplitting<DampingType, VariableType, DataDelegateInner>(std::forward<Args>(args)...){};
-    virtual ~DampingBySplitting(){};
+    Damping(Args &&...args)
+        : Damping<Base, DampingRateType, VariableType, DataDelegateInner>(std::forward<Args>(args)...){};
+    virtual ~Damping(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
 
@@ -102,8 +110,8 @@ class DampingBySplitting<Inner<>, VariableType, DampingType>
     ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
     void updateStates(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
 };
-template <typename VariableType, typename DampingType>
-using DampingBySplittingInner = DampingBySplitting<Inner<>, VariableType, DampingType>;
+template <typename VariableType, typename DampingRateType>
+using DampingProjectionInner = Damping<Inner<Projection>, VariableType, DampingRateType>;
 
 /**
  * @class DampingWithRandomChoice

@@ -265,9 +265,9 @@ return_data bending_circular_plate(Real dp_ratio)
     constrained_edges.body_part_particles_ = constrained_edge_ids;
 
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d, FixedDamping>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
 
     /** Apply initial condition. */

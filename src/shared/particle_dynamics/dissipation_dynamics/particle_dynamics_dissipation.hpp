@@ -6,18 +6,18 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename VariableType, typename DampingType, class DataDelegationType>
+template <typename VariableType, typename DampingRateType, class DataDelegationType>
 template <class BaseRelationType, typename... Args>
-DampingBySplitting<DampingType, VariableType, DataDelegationType>::
-    DampingBySplitting(BaseRelationType &base_relation, const std::string &variable_name, Args &&...args)
-    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+Damping<Base, DampingRateType, VariableType, DataDelegationType>::
+    Damping(BaseRelationType &base_relation, const std::string &variable_name, Args &&...args)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation), OperatorSplitting(),
       damping_(this->particles_, std::forward<Args>(args)...),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       mass_(*this->particles_->template getVariableByName<Real>("Mass")),
       variable_(*this->particles_->template getVariableByName<VariableType>(variable_name)) {}
 //=================================================================================================//
-template <typename VariableType, typename DampingType>
-ErrorAndParameters<VariableType> DampingBySplitting<Inner<>, VariableType, DampingType>::
+template <typename VariableType, typename DampingRateType>
+ErrorAndParameters<VariableType> Damping<Inner<Projection>, VariableType, DampingRateType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<VariableType> error_and_parameters;
@@ -27,7 +27,7 @@ ErrorAndParameters<VariableType> DampingBySplitting<Inner<>, VariableType, Dampi
         size_t index_j = inner_neighborhood.j_[n];
         // linear projection
         VariableType variable_derivative = (this->variable_[index_i] - this->variable_[index_j]);
-        Real parameter_b = 2.0 * this->damping_.DampingCoefficient(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
+        Real parameter_b = 2.0 * this->damping_.DampingRate(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
                            this->Vol_[index_i] * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         error_and_parameters.error_ -= variable_derivative * parameter_b;
@@ -38,8 +38,8 @@ ErrorAndParameters<VariableType> DampingBySplitting<Inner<>, VariableType, Dampi
     return error_and_parameters;
 }
 //=================================================================================================//
-template <typename VariableType, typename DampingType>
-void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
+template <typename VariableType, typename DampingRateType>
+void Damping<Inner<Projection>, VariableType, DampingRateType>::updateStates(
     size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters)
 {
     Real parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
@@ -51,7 +51,7 @@ void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
     {
         size_t index_j = inner_neighborhood.j_[n];
 
-        Real parameter_b = 2.0 * this->damping_.DampingCoefficient(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
+        Real parameter_b = 2.0 * this->damping_.DampingRate(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
                            this->Vol_[index_i] * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
         // predicted quantity at particle j
@@ -64,8 +64,8 @@ void DampingBySplitting<Inner<>, VariableType, DampingType>::updateStates(
     }
 }
 //=================================================================================================//
-template <typename VariableType, typename DampingType>
-void DampingBySplitting<Inner<>, VariableType, DampingType>::interaction(size_t index_i, Real dt)
+template <typename VariableType, typename DampingRateType>
+void Damping<Inner<Projection>, VariableType, DampingRateType>::interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
     updateStates(index_i, dt, error_and_parameters);
