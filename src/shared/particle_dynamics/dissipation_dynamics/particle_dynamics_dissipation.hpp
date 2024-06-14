@@ -71,6 +71,44 @@ void Damping<Inner<Projection>, VariableType, DampingRateType>::interaction(size
     updateStates(index_i, dt, error_and_parameters);
 }
 //=================================================================================================//
+template <typename VariableType, typename DampingRateType>
+void Damping<Inner<Pairwise>, VariableType, DampingRateType>::interaction(size_t index_i, Real dt)
+{
+    Real Vol_i = this->Vol_[index_i];
+    Real capacity_i = this->mass_[index_i] * this->damping_.SpecificCapacity(index_i);
+
+    Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n) // forward sweep
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Real capacity_j = this->mass_[index_j] * this->damping_.SpecificCapacity(index_j);
+
+        VariableType variable_derivative = (this->variable_[index_i] - this->variable_[index_j]);
+        Real parameter_b = this->damping_.DampingRate(index_i, index_j) * inner_neighborhood.dW_ij_[n] *
+                           Vol_i * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+
+        VariableType increment = parameter_b * variable_derivative /
+                                 (capacity_i * capacity_j - parameter_b * (capacity_i + capacity_j));
+        this->variable_[index_i] += increment * capacity_j;
+        this->variable_[index_j] -= increment * capacity_i;
+    }
+
+    for (size_t n = inner_neighborhood.current_size_; n != 0; --n) // backward sweep
+    {
+        size_t index_j = inner_neighborhood.j_[n - 1];
+        Real capacity_j = this->mass_[index_j] * this->damping_.SpecificCapacity(index_j);
+
+        VariableType variable_derivative = (this->variable_[index_i] - this->variable_[index_j]);
+        Real parameter_b = this->damping_.DampingRate(index_i, index_j) * inner_neighborhood.dW_ij_[n - 1] *
+                           Vol_i * this->Vol_[index_j] * dt / inner_neighborhood.r_ij_[n - 1];
+        VariableType increment = parameter_b * variable_derivative /
+                                 (capacity_i * capacity_j - parameter_b * (capacity_i + capacity_j));
+
+        this->variable_[index_i] += increment * capacity_j;
+        this->variable_[index_j] -= increment * capacity_i;
+    }
+}
+//=================================================================================================//
 template <class DampingAlgorithmType>
 template <typename... Args>
 DampingWithRandomChoice<DampingAlgorithmType>::

@@ -113,6 +113,21 @@ class Damping<Inner<Projection>, VariableType, DampingRateType>
 template <typename VariableType, typename DampingRateType>
 using DampingProjectionInner = Damping<Inner<Projection>, VariableType, DampingRateType>;
 
+class Pairwise;
+template <typename VariableType, typename DampingRateType>
+class Damping<Inner<Pairwise>, VariableType, DampingRateType>
+    : public Damping<Base, DampingRateType, VariableType, DataDelegateInner>
+{
+  public:
+    template <typename... Args>
+    Damping(Args &&...args)
+        : Damping<Base, DampingRateType, VariableType, DataDelegateInner>(std::forward<Args>(args)...){};
+    virtual ~Damping(){};
+
+    inline void interaction(size_t index_i, Real dt = 0.0);
+};
+template <typename VariableType, typename DampingRateType>
+using DampingPairwiseInner = Damping<Inner<Pairwise>, VariableType, DampingRateType>;
 /**
  * @class DampingWithRandomChoice
  * @brief A random choice method for obtaining static equilibrium state
