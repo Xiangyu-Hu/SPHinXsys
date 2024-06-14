@@ -255,34 +255,10 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
         std::cout << "Total time for computation: " << tt.seconds() << " seconds." << std::endl;
     };
 
-    StdLargeVec<Vec2d> contact_force_ave(aorta.getBaseParticles().total_real_particles_);
-    auto reset_contact_force_ave = [&]()
-    {
-        particle_for(
-            execution::ParallelPolicy(),
-            IndexRange(0, aorta.getBaseParticles().total_real_particles_),
-            [&](size_t index_i)
-            { contact_force_ave[index_i] = Vec2d::Zero(); });
-    };
-    auto contact_force_ave_accumulate = [&](double dt)
-    {
-        const auto &contact_force = *aorta.getBaseParticles().getVariableByName<Vec2d>("RepulsionForce");
-        particle_for(
-            execution::ParallelPolicy(),
-            IndexRange(0, aorta.getBaseParticles().total_real_particles_),
-            [&](size_t index_i)
-            { contact_force_ave[index_i] += contact_force[index_i] * dt; });
-    };
-    auto contact_force_ave_compute = [&](double dt_sum)
-    {
-        particle_for(
-            execution::ParallelPolicy(),
-            IndexRange(0, aorta.getBaseParticles().total_real_particles_),
-            [&](size_t index_i)
-            { contact_force_ave[index_i] /= dt_sum; });
-    };
     auto run_dual_simulation = [&]()
     {
+        StdLargeVec<Vec2d> contact_force_ave(aorta.getBaseParticles().total_real_particles_);
+
         output_iteration = 0;
         const Real dt_aorta_ref = aorta_algs.get_time_step_size();
         const Real dt_catheter_ref = catheter_algs.get_time_step_size();
@@ -308,13 +284,15 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
 
                 aorta_algs.exec_all(dt_aorta);
 
-                reset_contact_force_ave();
+                std::fill(contact_force_ave.begin(), contact_force_ave.end(), Vec2d::Zero());
                 Real dt_catheter_sum = 0.0;
                 while (dt_catheter_sum < dt_aorta)
                 {
                     catheter_contact.exec();
                     aorta_contact.exec();
-                    contact_force_ave_accumulate(dt_catheter);
+                    const auto &contact_force = *aorta.getBaseParticles().getVariableByName<Vec2d>("RepulsionForce");
+                    std::transform(contact_force.begin(), contact_force.end(), contact_force_ave.begin(), [&](const Vec2d &f)
+                                   { return f * dt_catheter; });
 
                     const Real dt_catheter_temp = catheter_algs.get_time_step_size();
                     if (dt_catheter_temp < dt_catheter_ref / 1e2)
@@ -328,7 +306,10 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
 
                     dt_catheter_sum += dt_catheter;
                 }
-                contact_force_ave_compute(dt_catheter_sum);
+                std::transform(contact_force_ave.begin(), contact_force_ave.end(),
+                               contact_force_ave.begin(),
+                               [&](const Vec2d &f)
+                               { return f / dt_catheter_sum; });
 
                 // timestepping
                 ++ite;
