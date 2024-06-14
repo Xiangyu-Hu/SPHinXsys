@@ -84,7 +84,7 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        force -= (p_[index_i] * correction_(index_i) + p_[index_j] * correction_(index_j)) * dW_ijV_j * e_ij;
+        force -= (p_[index_i] * correction_(index_j) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
@@ -159,7 +159,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
             Real dW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
-            force -= riemann_solver_k.AverageP(this->p_[index_i] * correction_(index_i), p_k[index_j] * correction_k(index_j)) *
+            force -= riemann_solver_k.AverageP(this->p_[index_i] * correction_(index_j), p_k[index_j] * correction_k(index_i)) *
                      2.0 * e_ij * dW_ijV_j;
             rho_dissipation += riemann_solver_k.DissipativeUJump(this->p_[index_i] - p_k[index_j]) * dW_ijV_j;
         }

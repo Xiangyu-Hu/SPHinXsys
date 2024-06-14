@@ -10,7 +10,8 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_i] * inner_neighborhood.e_ij_[n];
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
         Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
         local_configuration -= r_ji * gradW_ij.transpose();
     }
@@ -19,9 +20,11 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
 //=================================================================================================//
 void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
+    Real det_sqr = SMAX(alpha_ - B_[index_i].determinant(), Real(0));
     Matd inverse = B_[index_i].inverse();
-    Real weight = alpha_ / (B_[index_i].determinant() + alpha_);
-    B_[index_i] = weight * Matd::Identity() + (1.0 - weight) * inverse;
+    Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
+    Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
+    B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
 }
 //=================================================================================================//
 LinearGradientCorrectionMatrix<Contact<>>::
