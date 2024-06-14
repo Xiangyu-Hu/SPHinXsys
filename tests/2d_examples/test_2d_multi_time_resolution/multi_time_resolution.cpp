@@ -291,8 +291,8 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
                     catheter_contact.exec();
                     aorta_contact.exec();
                     const auto &contact_force = *aorta.getBaseParticles().getVariableByName<Vec2d>("RepulsionForce");
-                    std::transform(contact_force.begin(), contact_force.end(), contact_force_ave.begin(), [&](const Vec2d &f)
-                                   { return f * dt_catheter; });
+                    std::transform(contact_force_ave.begin(), contact_force_ave.end(), contact_force.begin(), contact_force_ave.begin(), [&](const Vec2d &f1, const Vec2d &f2)
+                                   { return f1 + f2 * dt_catheter; });
 
                     const Real dt_catheter_temp = catheter_algs.get_time_step_size();
                     if (dt_catheter_temp < dt_catheter_ref / 1e2)
