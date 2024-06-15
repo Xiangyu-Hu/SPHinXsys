@@ -88,7 +88,7 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), 
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
           pos_(*particles_->getVariableByName<Vecd>("Position")){};
 
     virtual ~LeftStretchSolidBodyRegion(){};
@@ -108,7 +108,7 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), 
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
           pos_(*particles_->getVariableByName<Vecd>("Position")){};
 
     virtual ~RightStretchSolidBodyRegion(){};
@@ -265,7 +265,7 @@ int main(int ac, char *av[])
     BodyRegionByParticle beam_constrain(beam_body, makeShared<MultiPolygonShape>(createConstrainBeamShape()));
     SimpleDynamics<ConstrainXVelocity> constrain_beam_end(beam_constrain);
     InteractionDynamics<solid_dynamics::DeformationGradientBySummation> beam_deformation_gradient_tensor(beam_body_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------

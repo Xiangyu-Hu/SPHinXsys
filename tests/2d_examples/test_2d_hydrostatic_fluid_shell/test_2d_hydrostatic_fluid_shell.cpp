@@ -244,8 +244,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> gate_constraint(gate_constraint_part);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> gate_update_normal(gate);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> gate_curvature(shell_curvature_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> gate_rotation_damping(0.2, gate_inner, "AngularVelocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> gate_rotation_damping(0.2, gate_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
@@ -259,9 +259,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
-        fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
-
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
+        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
     //----------------------------------------------------------------------
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------

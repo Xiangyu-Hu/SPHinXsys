@@ -121,9 +121,9 @@ int main(int ac, char *av[])
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_rotation_damping(0.2, plate_body_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
