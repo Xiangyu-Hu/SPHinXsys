@@ -56,17 +56,19 @@ struct ErrorAndParameters
 class FixedDampingRate
 {
   public:
-    FixedDampingRate(BaseParticles *particles, Real eta, Real kappa = 1.0)
-        : eta_(particles->registerSingleVariable<Real>("DampingRate", eta)),
-          kappa_(particles->registerSingleVariable<Real>("SpecificCapacity", kappa)){};
+    FixedDampingRate(BaseParticles *particles, Real eta, Real c = 1.0)
+        : damping_rate_(particles->registerSingleVariable<Real>("DampingRate", eta)),
+          specific_capacity_(particles->registerSingleVariable<Real>("SpecificCapacity", c)),
+          mass_(particles->getVariableByName<Real>("Mass")){};
     virtual ~FixedDampingRate(){};
 
-    Real &DampingRate(size_t index_i, size_t index_j) { return *eta_; };
-    Real &SpecificCapacity(size_t index_i) { return *kappa_; };
+    Real DampingRate(size_t i, size_t j) { return *damping_rate_; };
+    Real Capacity(size_t i) { return (*specific_capacity_) * (*mass_)[i]; };
 
   protected:
-    Real *eta_;
-    Real *kappa_;
+    Real *damping_rate_;
+    Real *specific_capacity_;
+    StdLargeVec<Real> *mass_;
 };
 
 template <typename... InteractionTypes>
@@ -89,7 +91,7 @@ class Damping<Base, DampingRateType, VariableType, DataDelegationType>
 
   protected:
     DampingRateType damping_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    StdLargeVec<Real> &Vol_;
     StdLargeVec<VariableType> &variable_;
 };
 
