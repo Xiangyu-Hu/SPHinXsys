@@ -16,18 +16,6 @@ Damping<Base, VariableType, DampingRateType, DataDelegationType>::
       variable_(*this->particles_->template getVariableByName<VariableType>(variable_name)) {}
 //=================================================================================================//
 template <typename VariableType, typename DampingRateType>
-template <typename... Args>
-Damping<Contact<Base>, VariableType, DampingRateType>::Damping(Args &&...args)
-    : Damping<Base, VariableType, DampingRateType, DataDelegateContact>(std::forward<Args>(args)...)
-{
-    for (auto &particles : this->contact_particles_)
-    {
-        contact_Vol_.push_back(particles->template getVariableByName<Real>("VolumetricMeasure"));
-        contact_variable_.push_back(particles->template getVariableByName<VariableType>(this->variable_name_));
-    }
-};
-//=================================================================================================//
-template <typename VariableType, typename DampingRateType>
 ErrorAndParameters<VariableType> Damping<Inner<Projection>, VariableType, DampingRateType>::
     computeErrorAndParameters(size_t index_i, Real dt)
 {
@@ -79,6 +67,62 @@ void Damping<Inner<Projection>, VariableType, DampingRateType>::interaction(size
 {
     ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
     updateStates(index_i, dt, error_and_parameters);
+}
+//=================================================================================================//
+template <class BaseDampingType>
+template <typename... Args>
+Damping<Contact<Projection, Boundary>, BaseDampingType>::
+    Damping(BaseContactRelation &contact_relation, Args &&...args)
+    : BaseDampingType(std::forward<Args>(args)...),
+      DataDelegateContactOnly(contact_relation)
+{
+    for (size_t k = 0; k < this->contact_particles_.size(); ++k)
+    {
+        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_variable_.push_back(this->contact_particles_[k]->template getVariableByName<VariableType>(this->variable_name_));
+    }
+}
+//=================================================================================================//
+template <class BaseDampingType>
+ErrorAndParameters<typename BaseDampingType::DampingVariable>
+Damping<Contact<Projection, Boundary>, BaseDampingType>::computeErrorAndParameters(size_t index_i, Real dt)
+{
+    using VariableType = typename BaseDampingType::DampingVariable;
+    ErrorAndParameters<VariableType> error_and_parameters =
+        BaseDampingType::computeErrorAndParameters(index_i, dt);
+
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
+        StdLargeVec<VariableType> &Vol_k = *(this->contact_Vol_[k]);
+        Neighborhood &contact_neighborhood = (*DataDelegateContactOnly::contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+
+            // linear projection
+            VariableType variable_derivative = (this->variable_[index_i] - variable_k[index_j]);
+            Real parameter_b = 2.0 * this->damping_.DampingRate(index_i) * contact_neighborhood.dW_ij_[n] *
+                               this->Vol_[index_i] * this->Vol_[index_j] * dt / contact_neighborhood.r_ij_[n];
+
+            error_and_parameters.error_ -= variable_derivative * parameter_b;
+            error_and_parameters.a_ += parameter_b;
+            error_and_parameters.c_ += parameter_b * parameter_b;
+        }
+    }
+    return error_and_parameters;
+}
+//=================================================================================================//
+template <typename VariableType, typename DampingRateType>
+template <typename... Args>
+Damping<Contact<Pairwise>, VariableType, DampingRateType>::Damping(Args &&...args)
+    : Damping<Base, VariableType, DampingRateType, DataDelegateContact>(std::forward<Args>(args)...)
+{
+    for (auto &particles : this->contact_particles_)
+    {
+        contact_Vol_.push_back(particles->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_variable_.push_back(particles->template getVariableByName<VariableType>(this->variable_name_));
+    }
 }
 //=================================================================================================//
 template <typename VariableType, typename DampingRateType>

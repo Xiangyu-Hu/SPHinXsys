@@ -63,6 +63,7 @@ class FixedDampingRate
     virtual ~FixedDampingRate(){};
 
     Real DampingRate(size_t i, size_t j) { return *damping_rate_; };
+    Real DampingRate(size_t i) { return *damping_rate_; };
     Real Capacity(size_t i) { return (*specific_capacity_) * (*mass_)[i]; };
 
   protected:
@@ -90,30 +91,19 @@ class Damping<Base, VariableType, DampingRateType, DataDelegationType>
     virtual ~Damping(){};
 
   protected:
+    typedef VariableType DampingVariable;
     std::string variable_name_;
     DampingRateType damping_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<VariableType> &variable_;
 };
 
-template <typename VariableType, typename DampingRateType>
-class Damping<Contact<Base>, VariableType, DampingRateType>
-    : public Damping<Base, VariableType, DampingRateType, DataDelegateContact>
-{
-  public:
-    template <typename... Args>
-    Damping(Args &&...args);
-    virtual ~Damping(){};
-
-  protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<VariableType> *> contact_variable_;
-};
-
 /**
  * @class Projection
  * @brief projection-based operator splitting method solving small system
  * around each particle using linear projection.
+ * Note that here inner interaction and that with boundary are derived from the inner interaction.
+ * This is because the error and parameters are computed based on both.
  */
 class Projection;
 template <typename VariableType, typename DampingRateType>
@@ -134,6 +124,24 @@ class Damping<Inner<Projection>, VariableType, DampingRateType>
 template <typename VariableType, typename DampingRateType>
 using DampingProjectionInner = Damping<Inner<Projection>, VariableType, DampingRateType>;
 
+template <class BaseDampingType>
+class Damping<Contact<Projection, Boundary>, BaseDampingType>
+    : public BaseDampingType, public DataDelegateContactOnly
+{
+  public:
+    template <typename... Args>
+    Damping(BaseContactRelation &contact_relation, Args &&...args);
+    virtual ~Damping(){};
+
+  protected:
+    using VariableType = typename BaseDampingType::DampingVariable;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<VariableType> *> contact_variable_;
+    ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+};
+template <typename VariableType, typename DampingRateType>
+using DampingProjectionWithBoundary =
+    Damping<Contact<Projection, Boundary>, DampingProjectionInner<VariableType, DampingRateType>>;
 /**
  * @class Pairwise
  * @brief Pairwise-based operator splitting method solving for each pair of particles.
@@ -154,13 +162,26 @@ template <typename VariableType, typename DampingRateType>
 using DampingPairwiseInner = Damping<Inner<Pairwise>, VariableType, DampingRateType>;
 
 template <typename VariableType, typename DampingRateType>
+class Damping<Contact<Pairwise>, VariableType, DampingRateType>
+    : public Damping<Base, VariableType, DampingRateType, DataDelegateContact>
+{
+  public:
+    template <typename... Args>
+    Damping(Args &&...args);
+    virtual ~Damping(){};
+
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<VariableType> *> contact_variable_;
+};
+template <typename VariableType, typename DampingRateType>
 class Damping<Contact<Pairwise, Wall>, VariableType, DampingRateType>
-    : public Damping<Contact<Base>, VariableType, DampingRateType>
+    : public Damping<Contact<Pairwise>, VariableType, DampingRateType>
 {
   public:
     template <typename... Args>
     Damping(Args &&...args)
-        : Damping<Contact<Base>, VariableType, DampingRateType>(std::forward<Args>(args)...){};
+        : Damping<Contact<Pairwise>, VariableType, DampingRateType>(std::forward<Args>(args)...){};
     virtual ~Damping(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
