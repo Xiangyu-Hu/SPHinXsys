@@ -8,12 +8,24 @@ namespace SPH
 //=================================================================================================//
 template <typename VariableType, typename DampingRateType, class DataDelegationType>
 template <class BaseRelationType, typename... Args>
-Damping<Base, DampingRateType, VariableType, DataDelegationType>::
+Damping<Base, VariableType, DampingRateType, DataDelegationType>::
     Damping(BaseRelationType &base_relation, const std::string &variable_name, Args &&...args)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation), OperatorSplitting(),
-      damping_(this->particles_, std::forward<Args>(args)...),
+      variable_name_(variable_name), damping_(this->particles_, std::forward<Args>(args)...),
       Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       variable_(*this->particles_->template getVariableByName<VariableType>(variable_name)) {}
+//=================================================================================================//
+template <typename VariableType, typename DampingRateType>
+template <typename... Args>
+Damping<Contact<Base>, VariableType, DampingRateType>::Damping(Args &&...args)
+    : Damping<Base, VariableType, DampingRateType, DataDelegateContact>(std::forward<Args>(args)...)
+{
+    for (auto &particles : this->contact_particles_)
+    {
+        contact_Vol_.push_back(particles->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_variable_.push_back(particles->template getVariableByName<VariableType>(this->variable_name_));
+    }
+};
 //=================================================================================================//
 template <typename VariableType, typename DampingRateType>
 ErrorAndParameters<VariableType> Damping<Inner<Projection>, VariableType, DampingRateType>::
@@ -107,11 +119,50 @@ void Damping<Inner<Pairwise>, VariableType, DampingRateType>::interaction(size_t
     }
 }
 //=================================================================================================//
+template <typename VariableType, typename DampingRateType>
+void Damping<Contact<Pairwise, Wall>, VariableType, DampingRateType>::interaction(size_t index_i, Real dt)
+{
+
+    Real Vol_i = this->Vol_[index_i];
+    Real capacity_i = this->damping_.Capacity(index_i);
+
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
+        StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n) // forward sweep
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Real parameter_b = this->damping_.DampingRate(index_i, index_j) * contact_neighborhood.dW_ij_[n] *
+                               Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+
+            // only update particle i
+            this->variable_[index_i] += parameter_b * (this->variable_[index_i] - variable_k[index_j]) /
+                                        (capacity_i - 2.0 * parameter_b);
+        }
+
+        for (size_t n = contact_neighborhood.current_size_; n != 0; --n) // backward sweep
+        {
+            size_t index_j = contact_neighborhood.j_[n - 1];
+            Real parameter_b = this->damping_.DampingRate(index_i, index_j) * contact_neighborhood.dW_ij_[n - 1] *
+                               Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n - 1];
+
+            // only update particle i
+            this->variable_[index_i] += parameter_b * (this->variable_[index_i] - variable_k[index_j]) /
+                                        (capacity_i - 2.0 * parameter_b);
+        }
+    }
+}
+//=================================================================================================//
 template <class DampingAlgorithmType>
 template <typename... Args>
 DampingWithRandomChoice<DampingAlgorithmType>::
     DampingWithRandomChoice(Real random_ratio, Args &&...args)
-    : DampingAlgorithmType(std::forward<Args>(args)...), random_ratio_(random_ratio) {}
+    : DampingAlgorithmType(std::forward<Args>(args)...), random_ratio_(random_ratio)
+{
+}
 //=================================================================================================//
 template <class DampingAlgorithmType>
 bool DampingWithRandomChoice<DampingAlgorithmType>::RandomChoice()

@@ -265,8 +265,8 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
-        fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
+        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);

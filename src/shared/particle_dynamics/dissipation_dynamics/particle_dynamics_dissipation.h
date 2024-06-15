@@ -75,7 +75,7 @@ template <typename... InteractionTypes>
 class Damping;
 
 template <typename VariableType, typename DampingRateType, class DataDelegationType>
-class Damping<Base, DampingRateType, VariableType, DataDelegationType>
+class Damping<Base, VariableType, DampingRateType, DataDelegationType>
     : public LocalDynamics, public DataDelegationType, public OperatorSplitting
 {
   public:
@@ -90,23 +90,42 @@ class Damping<Base, DampingRateType, VariableType, DataDelegationType>
     virtual ~Damping(){};
 
   protected:
+    std::string variable_name_;
     DampingRateType damping_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<VariableType> &variable_;
 };
 
+template <typename VariableType, typename DampingRateType>
+class Damping<Contact<Base>, VariableType, DampingRateType>
+    : public Damping<Base, VariableType, DampingRateType, DataDelegateContact>
+{
+  public:
+    template <typename... Args>
+    Damping(Args &&...args);
+    virtual ~Damping(){};
+
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<VariableType> *> contact_variable_;
+};
+
+/**
+ * @class Projection
+ * @brief projection-based operator splitting method solving small system
+ * around each particle using linear projection.
+ */
 class Projection;
 template <typename VariableType, typename DampingRateType>
 class Damping<Inner<Projection>, VariableType, DampingRateType>
-    : public Damping<Base, DampingRateType, VariableType, DataDelegateInner>
+    : public Damping<Base, VariableType, DampingRateType, DataDelegateInner>
 {
   public:
     template <typename... Args>
     Damping(Args &&...args)
-        : Damping<Base, DampingRateType, VariableType, DataDelegateInner>(std::forward<Args>(args)...){};
+        : Damping<Base, VariableType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
     virtual ~Damping(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
@@ -115,21 +134,43 @@ class Damping<Inner<Projection>, VariableType, DampingRateType>
 template <typename VariableType, typename DampingRateType>
 using DampingProjectionInner = Damping<Inner<Projection>, VariableType, DampingRateType>;
 
+/**
+ * @class Pairwise
+ * @brief Pairwise-based operator splitting method solving for each pair of particles.
+ */
 class Pairwise;
 template <typename VariableType, typename DampingRateType>
 class Damping<Inner<Pairwise>, VariableType, DampingRateType>
-    : public Damping<Base, DampingRateType, VariableType, DataDelegateInner>
+    : public Damping<Base, VariableType, DampingRateType, DataDelegateInner>
 {
   public:
     template <typename... Args>
     Damping(Args &&...args)
-        : Damping<Base, DampingRateType, VariableType, DataDelegateInner>(std::forward<Args>(args)...){};
+        : Damping<Base, VariableType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
     virtual ~Damping(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 template <typename VariableType, typename DampingRateType>
 using DampingPairwiseInner = Damping<Inner<Pairwise>, VariableType, DampingRateType>;
+
+template <typename VariableType, typename DampingRateType>
+class Damping<Contact<Pairwise, Wall>, VariableType, DampingRateType>
+    : public Damping<Contact<Base>, VariableType, DampingRateType>
+{
+  public:
+    template <typename... Args>
+    Damping(Args &&...args)
+        : Damping<Contact<Base>, VariableType, DampingRateType>(std::forward<Args>(args)...){};
+    virtual ~Damping(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+template <typename VariableType, typename DampingRateType>
+using DampingPairwiseContactWall = Damping<Contact<Pairwise, Wall>, VariableType, DampingRateType>;
+
+template <typename VariableType, typename DampingRateType>
+using DampingPairwiseWithWall = ComplexInteraction<Damping<Inner<Pairwise>, Contact<Pairwise, Wall>>,
+                                                   VariableType, DampingRateType>;
+
 /**
  * @class DampingWithRandomChoice
  * @brief A random choice method for obtaining static equilibrium state
