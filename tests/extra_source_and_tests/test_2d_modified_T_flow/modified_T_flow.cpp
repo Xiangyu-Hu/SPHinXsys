@@ -4,6 +4,7 @@
 * @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D. 
 * @author Xiangyu Hu,Shuoguo Zhang
 */
+
 #include "bidirectional_buffer.h"
 #include "density_correciton.h"
 #include "density_correciton.hpp"
