@@ -39,18 +39,12 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
       phi_gradient_(*registerMeshVariable<Vecd>("LevelsetGradient")),
       kernel_weight_(*registerMeshVariable<Real>("KernelWeight")),
       kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
-      kernel_(*sph_adaptation.getKernel())
-{
-    Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-    initializeDataForSingularPackage(0, -far_field_distance);
-    initializeDataForSingularPackage(1, far_field_distance);
-}
+      kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
 void LevelSet::updateLevelSetGradient()
 {
     package_parallel_for(
-        [&](size_t package_index)
-        {
+        [&](size_t package_index) {
             computeGradient(phi_, phi_gradient_, package_index);
         });
 }
@@ -58,15 +52,12 @@ void LevelSet::updateLevelSetGradient()
 void LevelSet::updateKernelIntegrals()
 {
     package_parallel_for(
-        [&](size_t package_index)
-        {
+        [&](size_t package_index) {
             Arrayi cell_index = meta_data_cell_[package_index].first;
             assignByPosition(
-                kernel_weight_, cell_index, [&](const Vecd &position) -> Real
-                { return computeKernelIntegral(position); });
+                kernel_weight_, cell_index, [&](const Vecd &position) -> Real { return computeKernelIntegral(position); });
             assignByPosition(
-                kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
-                { return computeKernelGradientIntegral(position); });
+                kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd { return computeKernelGradientIntegral(position); });
         });
 }
 //=================================================================================================//
@@ -108,8 +99,7 @@ Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 void LevelSet::redistanceInterface()
 {
     package_parallel_for(
-        [&](size_t package_index)
-        {
+        [&](size_t package_index) {
             std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
             if (metadata.second == 1)
             {

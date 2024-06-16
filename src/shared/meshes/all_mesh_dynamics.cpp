@@ -21,47 +21,49 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 3D for SPHinXsys.
+ * @file 	base_relax_dynamics.h
+ * @brief 	This is the classes of particle relaxation in order to produce body fitted
+ * 			initial particle distribution.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef DATA_TYPE_3D_H
-#define DATA_TYPE_3D_H
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
+#include "all_mesh_dynamics.h"
+
+#include "all_body_relations.h"
+#include "all_particle_dynamics.h"
+#include "base_kernel.h"
+#include "base_particles.hpp"
+#include "cell_linked_list.h"
 
 namespace SPH
 {
-using Arrayi = Array3i;
-using Vecd = Vec3d;
-using Matd = Mat3d;
-using AlignedBox = AlignedBox3d;
-using AngularVecd = Vec3d;
-using Rotation = Rotation3d;
-using BoundingBox = BaseBoundingBox<Vec3d>;
-using Transform = BaseTransform<Rotation3d, Vec3d>;
-using CellNeighborhood = std::array<std::array<std::array<int, 3>, 3>, 3>;
-
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<std::array<DataType, array_size>, array_size>, array_size>;
-
-template <class DataType>
-using MeshDataMatrix = DataType ***;
-
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(1.33 * M_PI * 27);
-constexpr int Dimensions = 3;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1, 0, 0}, // 0 row
-    {0, 1, 0}, // 1 row
-    {0, 0, 0}, // 2 row
-};
-/** initial local normal, only works for thin structure dynamics. */
-const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
-const Vecd local_pseudo_b_n_0 = Vecd(0.0, 1.0, 0.0);
-
-const Vecd ZeroVecd = Vec3d::Zero();
+//=================================================================================================//
+// void DefineShapeOnMeshWithGridDataPackages::exec()
+// {
+//     initialize_data_in_a_cell.exec();
+//     tag_a_cell_is_inner_package.exec();
+//     initialize_index_mesh.exec();
+//     initialize_cell_neighborhood.exec();
+//     mesh_data_.resizeMeshVariableData();
+// }
+//=================================================================================================//
+// void CleanInterface::exec()
+// {
+//     mark_near_interface.exec();
+//     redistance_interface.exec();
+//     reinitialize_level_set.exec();
+//     update_level_set_gradient.exec();
+//     update_kernel_integrals.exec();
+// }
+//=================================================================================================//
+// void CorrectTopology::exec()
+// {
+//     mark_near_interface.exec();
+//     for (size_t i = 0; i != 10; ++i)
+//         diffuse_level_set_sign.exec();
+//     update_level_set_gradient.exec();
+//     update_kernel_integrals.exec();
+// }
+//=================================================================================================//
 } // namespace SPH
-#endif // DATA_TYPE_3D_H
+//=================================================================================================//

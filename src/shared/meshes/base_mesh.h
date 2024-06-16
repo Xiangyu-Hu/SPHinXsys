@@ -82,6 +82,8 @@ class BaseMesh
     Arrayi CellIndexFromPosition(const Vecd &position);
     /** Given the cell index, return the cell position. */
     Vecd CellPositionFromIndex(const Arrayi &cell_index);
+    /** Given the cell index, return the position of its lower corner. */
+    Vecd CellLowerCorner(const Arrayi &cell_index);
     /** Given the index, return the grid position. */
     Vecd GridPositionFromIndex(const Arrayi &grid_index);
     /** Transfer 1D int to mesh index.  */

@@ -28,9 +28,14 @@ Arrayi BaseMesh::CellIndexFromPosition(const Vecd &position)
         .min(all_grid_points_ - 2 * Arrayi::Ones());
 }
 //=================================================================================================//
+Vecd BaseMesh::CellLowerCorner(const Arrayi &cell_index)
+{
+    return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_;
+}
+//=================================================================================================//
 Vecd BaseMesh::CellPositionFromIndex(const Arrayi &cell_index)
 {
-    return mesh_lower_bound_ + (cell_index.cast<Real>().matrix() + 0.5 * Vecd::Ones()) * grid_spacing_;
+    return CellLowerCorner(cell_index) + 0.5 * Vecd::Ones() * grid_spacing_;
 }
 //=================================================================================================//
 Vecd BaseMesh::GridPositionFromIndex(const Arrayi &grid_index)
