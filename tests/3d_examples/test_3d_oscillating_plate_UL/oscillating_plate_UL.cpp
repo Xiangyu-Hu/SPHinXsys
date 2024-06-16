@@ -166,8 +166,8 @@ int main(int ac, char *av[])
     plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
     plate_body.addBodyStateForRecording<Real>("Pressure");
     plate_body.addBodyStateForRecording<Real>("Density");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(plate_body);
     //----------------------------------------------------------------------

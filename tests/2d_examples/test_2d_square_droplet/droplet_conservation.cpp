@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     air_block.addBodyStateForRecording<Vecd>("ForcePrior");
     air_block.addBodyStateForRecording<Real>("Density");
     air_block.addBodyStateForRecording<Real>("Pressure");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_water_kinetic_energy(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

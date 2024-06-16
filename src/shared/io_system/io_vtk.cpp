@@ -141,13 +141,13 @@ const VtuStringData &BodyStatesRecordingToVtpString::GetVtuData() const
 }
 //=============================================================================================//
 WriteToVtpIfVelocityOutOfBound::
-    WriteToVtpIfVelocityOutOfBound(SPHBodyVector bodies, Real velocity_bound)
-    : BodyStatesRecordingToVtp(bodies), out_of_bound_(false)
+    WriteToVtpIfVelocityOutOfBound(SPHSystem &sph_system, Real velocity_bound)
+    : BodyStatesRecordingToVtp(sph_system), out_of_bound_(false)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         check_bodies_.push_back(
-            check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies[i], velocity_bound));
+            check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies_[i], velocity_bound));
     }
 }
 //=============================================================================================//

@@ -229,7 +229,7 @@ class Environment : public PreSettingCase
                                                     plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
                                                     plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),
                                                     io_environment(system),
-                                                    write_states(system.real_bodies_),
+                                                    write_states(system),
                                                     write_plate_max_displacement("Position", plate_observer_contact)
     {
         if (loading_factor == 200.0)

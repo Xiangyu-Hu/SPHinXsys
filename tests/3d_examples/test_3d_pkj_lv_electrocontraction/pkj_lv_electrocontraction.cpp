@@ -205,7 +205,7 @@ int main(int ac, char *av[])
     physiology_heart.addBodyStateForRecording<Real>("GateVariable");
     physiology_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
     mechanics_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
     ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
     /**

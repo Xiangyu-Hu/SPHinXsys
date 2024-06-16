@@ -242,9 +242,9 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp({&cylinder});
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp(cylinder);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files({&cylinder});
+        ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
         RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
@@ -353,8 +353,8 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("Indicator");
     cylinder.addBodyStateForRecording<Real>("Density");
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------

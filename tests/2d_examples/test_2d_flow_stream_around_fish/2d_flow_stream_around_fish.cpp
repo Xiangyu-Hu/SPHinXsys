@@ -62,7 +62,7 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
         BodyStatesRecordingToVtp write_fish_body(fish_body);
-        ReloadParticleIO write_particle_reload_files({&fish_body});
+        ReloadParticleIO write_particle_reload_files(fish_body);
         RelaxationStepInner relaxation_step_inner(fish_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -149,8 +149,8 @@ int main(int ac, char *av[])
     fish_body.addBodyStateForRecording<Real>("Density");
     fish_body.addBodyStateForRecording<int>("MaterialID");
     fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    RestartIO restart_io(sph_system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     //----------------------------------------------------------------------

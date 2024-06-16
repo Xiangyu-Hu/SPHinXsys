@@ -165,7 +165,7 @@ int main(int ac, char *av[])
 
     /** Output */
     beam_body.addDerivedBodyStateForRecording<VonMisesStress>();
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */

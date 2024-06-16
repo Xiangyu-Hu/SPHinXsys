@@ -220,8 +220,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system.real_bodies_);
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
+    BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system);
+    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", gate_observer_contact);
     // TODO: observing position is not as good observing displacement.

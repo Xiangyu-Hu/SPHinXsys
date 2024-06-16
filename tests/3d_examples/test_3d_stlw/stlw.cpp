@@ -69,7 +69,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     /** WaveProbes. */
     TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(translation_FS_gauge), FS_gauge);
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);

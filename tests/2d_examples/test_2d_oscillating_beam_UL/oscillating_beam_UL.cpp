@@ -151,7 +151,7 @@ int main(int ac, char *av[])
     beam_body.addBodyStateForRecording<Real>("VonMisesStrain");
     beam_body.addBodyStateForRecording<Real>("Pressure");
     beam_body.addBodyStateForRecording<Real>("Density");
-    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(sph_system);
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
         write_beam_kinetic_energy(beam_body);

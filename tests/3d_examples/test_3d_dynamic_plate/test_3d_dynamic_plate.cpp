@@ -145,7 +145,7 @@ int main(int ac, char *av[])
     /** Output */
     IOEnvironment io_environment(sph_system);
     plate_body.addBodyStateForRecording<Vec3d>("ForcePrior");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact);
 

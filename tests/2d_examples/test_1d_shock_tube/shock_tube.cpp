@@ -116,7 +116,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     wave_body.addBodyStateForRecording<Real>("TotalEnergy");
     wave_body.addBodyStateForRecording<Real>("Density");
-    BodyStatesRecordingToPlt body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToPlt body_states_recording(sph_system);
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(wave_body);
     //----------------------------------------------------------------------

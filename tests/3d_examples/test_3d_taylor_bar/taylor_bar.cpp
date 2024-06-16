@@ -46,7 +46,7 @@ int main(int ac, char *av[])
     ContactRelation my_observer_contact(my_observer, {&column});
     SurfaceContactRelation column_wall_contact(column, {&wall});
     /**define simple data file input and outputs functions. */
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
 
     if (sph_system.RunParticleRelaxation())
     {

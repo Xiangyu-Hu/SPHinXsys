@@ -81,7 +81,7 @@ class BodyStatesRecording : public BaseIO
 {
 
   public:
-    BodyStatesRecording(SPHBodyVector bodies);
+    BodyStatesRecording(SPHSystem &sph_system);
     BodyStatesRecording(SPHBody &body);
     virtual ~BodyStatesRecording(){};
     /** write with filename indicated by physical time */
@@ -109,7 +109,7 @@ class RestartIO : public BaseIO
     Real readRestartTime(size_t restart_step);
 
   public:
-    RestartIO(SPHBodyVector bodies);
+    RestartIO(SPHSystem &sph_system);
     virtual ~RestartIO(){};
 
     virtual void writeToFile(size_t iteration_step = 0) override;

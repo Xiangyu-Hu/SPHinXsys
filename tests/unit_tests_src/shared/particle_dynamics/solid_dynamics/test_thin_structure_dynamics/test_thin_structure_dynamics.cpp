@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
     plate_body.addDerivedBodyStateForRecording<VonMisesStrain>();
     StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
-    BodyStatesRecordingToVtp write_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();

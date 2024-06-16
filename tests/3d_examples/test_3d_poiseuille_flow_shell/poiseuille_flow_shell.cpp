@@ -259,7 +259,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     water_block.addBodyStateForRecording<Real>("Pressure");
     shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
-    BodyStatesRecordingToVtp body_states_recording(system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(system);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", observer_contact_axial);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial("Velocity", observer_contact_radial);
     //----------------------------------------------------------------------

@@ -129,7 +129,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_water_block_states(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------

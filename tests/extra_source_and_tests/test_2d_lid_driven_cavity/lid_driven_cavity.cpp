@@ -175,7 +175,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     fluid.addBodyStateForRecording<Real>("Pressure");
     no_slip_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_fluid_states(sph_system);
     observer_body.addBodyStateForRecording<Real>("VariableViscosity");
     BodyStatesRecordingToVtp write_observation_states(observer_body);
 

@@ -160,8 +160,8 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Real>("DensitySummation");
     water_block.addBodyStateForRecording<int>("Indicator");
     water_block.addBodyStateForRecording<Matd>("LinearGradientCorrectionMatrix");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
         write_water_kinetic_energy(water_block);
     ObservedQuantityRecording<Real> write_recorded_water_pressure("Pressure", fluid_observer_contact);

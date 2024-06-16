@@ -115,8 +115,8 @@ int main(int ac, char *av[])
     soil_block.addBodyStateForRecording<Real>("VerticalStress");
     soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
     wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------

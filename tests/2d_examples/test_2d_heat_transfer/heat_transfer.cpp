@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     thermofluid_body.addBodyStateForRecording<Real>("Phi");
     thermosolid_body.addBodyStateForRecording<Real>("Phi");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_fluid_phi("Phi", fluid_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------

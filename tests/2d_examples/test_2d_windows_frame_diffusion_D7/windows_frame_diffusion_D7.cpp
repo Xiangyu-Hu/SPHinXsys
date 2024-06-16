@@ -92,7 +92,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
         write_heat_transfer_from_internal_boundary(diffusion_body, "PhiTransferFromInternalConvectionBoundary");
     ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>

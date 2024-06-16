@@ -223,7 +223,7 @@ class RealBody : public SPHBody
         : SPHBody(std::forward<Args>(args)...),
           iteration_count_(1), cell_linked_list_created_(false)
     {
-        this->getSPHSystem().real_bodies_.push_back(this);
+        this->getSPHSystem().addRealBody(this);
     };
     virtual ~RealBody(){};
     BaseCellLinkedList &getCellLinkedList();

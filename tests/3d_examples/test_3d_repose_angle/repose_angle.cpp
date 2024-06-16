@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -173,7 +173,7 @@ int main(int ac, char *av[])
     soil_block.addBodyStateForRecording<Real>("Density");
     soil_block.addBodyStateForRecording<Real>("VerticalStress");
     soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
-    RestartIO restart_io(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_soil_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

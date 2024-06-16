@@ -249,7 +249,7 @@ int main(int ac, char *av[])
     plate.addDerivedBodyStateForRecording<Displacement>();
     gate.addBodyStateForRecording<Vec3d>("NormalDirection");
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_water_block_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);
     //----------------------------------------------------------------------
