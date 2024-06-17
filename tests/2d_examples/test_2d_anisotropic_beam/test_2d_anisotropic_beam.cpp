@@ -231,8 +231,8 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
-    beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
-    BodyStatesRecordingToVtp write_beam_states(system);
+    BodyStatesRecordingToVtp write_beam_states(beam_body);
+    write_beam_states.addVariableRecording<Real>(beam_body, "ShowingNeighbor");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
