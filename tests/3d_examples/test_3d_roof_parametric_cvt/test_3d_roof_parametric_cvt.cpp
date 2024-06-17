@@ -339,8 +339,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
       // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
       // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
-    shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    shell_body.addDerivedBodyStateForRecording<Displacement>();
 
     // methods
     InnerRelation shell_body_inner(shell_body);
@@ -352,7 +350,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
@@ -377,9 +374,12 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     corrected_configuration.exec();
     apply_constant_gravity.exec();
 
-    // output
+    // file and screen outputs
     BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addVariableRecording<Vecd>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body, "Displacement");
     vtp_output.writeToFile(0);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
 
     StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer points A & B

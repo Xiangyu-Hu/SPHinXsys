@@ -21,7 +21,6 @@ int main(int ac, char *av[])
     structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineMaterial<Solid>(StructureDensity);
     structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>();
-    structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -258,8 +257,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>

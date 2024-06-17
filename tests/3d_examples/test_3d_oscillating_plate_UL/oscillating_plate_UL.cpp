@@ -162,11 +162,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    plate_body.addBodyStateForRecording<Real>("VonMisesStress");
-    plate_body.addBodyStateForRecording<Real>("VonMisesStrain");
-    plate_body.addBodyStateForRecording<Real>("Pressure");
-    plate_body.addBodyStateForRecording<Real>("Density");
     BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addVariableRecording<Real>(plate_body, "VonMisesStress");
+    write_states.addVariableRecording<Real>(plate_body, "VonMisesStress");
+    write_states.addVariableRecording<Real>(plate_body, "Pressure");
+    write_states.addVariableRecording<Real>(plate_body, "Density");
     RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(plate_body);

@@ -98,7 +98,7 @@ class BodyStatesRecording : public BaseIO
         else
         {
             std::cout << "\n Error: the body:" << sph_body.getName()
-                      << " is not in the RealBody list" << std::endl;
+                      << " is not in the recording list" << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
@@ -118,7 +118,7 @@ class BodyStatesRecording : public BaseIO
         else
         {
             std::cout << "\n Error: the body:" << sph_body.getName()
-                      << " is not in the RealBody list" << std::endl;
+                      << " is not in the recording body list" << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
