@@ -139,11 +139,11 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
         ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
         ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
-        shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
+        write_relaxed_particles.addVariableRecording<int>(shell, "UpdatedIndicator");
         MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload_files(shell);
         //----------------------------------------------------------------------

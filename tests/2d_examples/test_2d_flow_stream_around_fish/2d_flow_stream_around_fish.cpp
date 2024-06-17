@@ -144,12 +144,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    fish_body.addBodyStateForRecording<Real>("Density");
-    fish_body.addBodyStateForRecording<int>("MaterialID");
-    fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
+    write_real_body_states.addVariableRecording<int>(water_block, "Indicator");
+    write_real_body_states.addVariableRecording<int>(fish_body, "MaterialID");
+    write_real_body_states.addVariableRecording<Matd>(fish_body, "ActiveStrain");
     RestartIO restart_io(sph_system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");

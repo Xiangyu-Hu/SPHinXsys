@@ -348,12 +348,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    cylinder.addBodyStateForRecording<Real>("Density");
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");          // output for debug
+    body_states_recording.addVariableRecording<Real>(water_block, "Density");           // output for debug
+    body_states_recording.addVariableRecording<int>(water_block, "Indicator");          // output for debug
+    body_states_recording.addVariableRecording<Vecd>(wall_boundary, "NormalDirection"); // output for debug
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
