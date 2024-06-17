@@ -88,11 +88,51 @@ class BodyStatesRecording : public BaseIO
     void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
 
+    template <typename DataType>
+    void addVariableRecording(SPHBody &sph_body, const std::string &name)
+    {
+        if (isBodyIncluded(&sph_body))
+        {
+            sph_body.getBaseParticles().addVariableToWrite<DataType>(name);
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the RealBody list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
+
+    template <typename DerivedVariableMethod,
+              typename DynamicsIdentifier, typename... Args>
+    void addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        SPHBody &sph_body = identifier.getSPHBody();
+        if (isBodyIncluded(&sph_body))
+        {
+            derived_variables_.push_back(
+                derived_variables_keeper_.createPtr<DerivedVariableMethod>(
+                    identifier, std::forward<Args>(args)...));
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the RealBody list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
+
   protected:
     SPHBodyVector bodies_;
+    StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
-
+    bool isBodyIncluded(SPHBody *sph_body);
     virtual void writeWithFileName(const std::string &sequence) = 0;
+
+  private:
+    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 };
 
 /**

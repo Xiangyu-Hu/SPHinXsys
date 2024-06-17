@@ -22,10 +22,10 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file base_particles.h
- * @brief This is the base class of SPH particles containing data 
- * and operation for all types of particles. 
+ * @brief This is the base class of SPH particles containing data
+ * and operation for all types of particles.
  * Note that there is no class of single particle.
- * TODO: It seems that I need to transfer the IO related functions to the IO classes. 
+ * TODO: It seems that I need to transfer the IO related functions to the IO classes.
  * TODO: Sorting related functions and data should be transferred to the sorting classes.
  * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
@@ -48,8 +48,6 @@ namespace SPH
 class SPHBody;
 class BaseMaterial;
 class BodySurface;
-template <class ReturnType>
-class BaseDynamics;
 
 /**
  * @class BaseParticles
@@ -78,8 +76,8 @@ class BaseDynamics;
  * These variables are created of after particles are generated.
  * The second is for the local, dynamics-method-related variables, which are defined in specific methods,
  * and are only used by the relevant methods. Generally, a discrete variable is defined
- * and the corresponding data can use or redefined (with no change to the data) by other methods 
- * using the function getVariableByName. 
+ * and the corresponding data can use or redefined (with no change to the data) by other methods
+ * using the function getVariableByName.
  */
 class BaseParticles
 {
@@ -87,7 +85,6 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
     DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -122,7 +119,7 @@ class BaseParticles
     void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
                           const InitializationFunction &initialization);
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&... args);
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
@@ -147,10 +144,6 @@ class BaseParticles
     template <typename DataType>
     void addVariableToReload(const std::string &variable_name);
     inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
-
-    template <class DerivedVariableMethod, class... Ts>
-    void addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...);
-    void computeDerivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting
     //----------------------------------------------------------------------
@@ -204,7 +197,6 @@ class BaseParticles
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
-    StdVec<BaseDynamics<void> *> derived_variables_;
 
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
@@ -251,24 +243,6 @@ class BaseParticles
   protected:
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
-};
-
-/**
- * @class BaseDerivedVariable
- * @brief TODO: this need to be transferred to IO classes
- */
-template <typename DataType>
-class BaseDerivedVariable
-{
-  public:
-    using DerivedDataType = DataType;
-    std::string variable_name_;
-
-    BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name);
-    virtual ~BaseDerivedVariable(){};
-
-  protected:
-    StdLargeVec<DataType> derived_variable_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H

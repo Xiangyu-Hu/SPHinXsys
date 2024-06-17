@@ -8,7 +8,6 @@
 #define BASE_PARTICLES_HPP
 
 #include "base_particles.h"
-#include "particle_dynamics_algorithms.h"
 
 //=====================================================================================================//
 namespace SPH
@@ -186,16 +185,6 @@ void BaseParticles::addVariableToWrite(const std::string &variable_name)
     addVariableToList<DataType>(variables_to_write_, variable_name);
 }
 //=================================================================================================//
-template <class DerivedVariableMethod, class... Ts>
-void BaseParticles::addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...args)
-{
-    SimpleDynamics<DerivedVariableMethod> *derived_data =
-        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body, std::forward<Ts>(args)...);
-    derived_variables_.push_back(derived_data);
-    using DerivedDataType = typename DerivedVariableMethod::DerivedDataType;
-    addVariableToList<DerivedDataType>(variables_to_write_, derived_data->variable_name_);
-}
-//=================================================================================================//
 template <typename DataType>
 void BaseParticles::addVariableToRestart(const std::string &variable_name)
 {
@@ -360,14 +349,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
         output_stream << "    </DataArray>\n";
     }
 }
-//=================================================================================================//
-template <typename DataType>
-BaseDerivedVariable<DataType>::
-    BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name)
-    : variable_name_(variable_name)
-{
-    sph_body.getBaseParticles().registerVariable(derived_variable_, variable_name_);
-};
 //=================================================================================================//
 } // namespace SPH
 #endif // BASE_PARTICLES_HPP

@@ -15,7 +15,6 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
         if (body->checkNewlyUpdated())
         {
             BaseParticles &base_particles = body->getBaseParticles();
-            base_particles.computeDerivedVariables();
 
             if (state_recording_)
             {
@@ -89,9 +88,6 @@ void BodyStatesRecordingToVtpString::writeWithFileName(const std::string &sequen
     {
         if (body->checkNewlyUpdated())
         {
-            BaseParticles &base_particles = body->getBaseParticles();
-            base_particles.computeDerivedVariables();
-
             if (state_recording_)
             {
                 const auto &vtuName = body->getName() + "_" + sequence + ".vtu";

@@ -30,6 +30,10 @@ BodyStatesRecording::BodyStatesRecording(SPHBody &body)
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
     writeWithFileName(convertPhysicalTimeToString(GlobalStaticVariables::physical_time_));
 }
 //=============================================================================================//
@@ -37,6 +41,14 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
 {
     writeWithFileName(padValueWithZeros(iteration_step));
 };
+//=============================================================================================/
+bool BodyStatesRecording::isBodyIncluded(SPHBody *sph_body)
+{
+    auto result = std::find_if(bodies_.begin(), bodies_.end(),
+                               [&](auto &body) -> bool
+                               { return body == sph_body; });
+    return result != bodies_.end() ? true : false;
+}
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
