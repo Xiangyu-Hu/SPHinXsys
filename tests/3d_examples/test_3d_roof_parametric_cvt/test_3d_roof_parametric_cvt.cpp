@@ -377,7 +377,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // file and screen outputs
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.addVariableRecording<Vecd>(shell_body, "NormalDirection");
-    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body, "Displacement");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
     vtp_output.writeToFile(0);
     ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
 

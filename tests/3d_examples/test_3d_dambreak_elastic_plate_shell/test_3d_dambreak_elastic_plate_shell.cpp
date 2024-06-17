@@ -281,7 +281,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_water_block_states.writeToFile(0);
+    write_real_body_states.writeToFile(0);
     write_displacement_1.writeToFile(0);
     write_displacement_2.writeToFile(0);
     //----------------------------------------------------------------------
@@ -365,7 +365,7 @@ int main(int ac, char *av[])
             gate.setNewlyUpdated();
         if (GlobalStaticVariables::physical_time_ <= contact_time)
             plate.setNewlyUpdated();
-        write_water_block_states.writeToFile();
+        write_real_body_states.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
