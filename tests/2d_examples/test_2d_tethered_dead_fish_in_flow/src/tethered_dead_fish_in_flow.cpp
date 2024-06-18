@@ -264,7 +264,7 @@ int main(int ac, char *av[])
         /** Write the body state to Vtp file. */
         BodyStatesRecordingToVtp write_fish_body(fish_body);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files({&fish_body});
+        ReloadParticleIO write_particle_reload_files(fish_body);
 
         /** A  Physics relaxation step. */
         RelaxationStepInner relaxation_step_inner(fish_body_inner);
@@ -409,7 +409,7 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
         constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
-    BodyStatesRecordingToVtp write_real_body_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
     /**

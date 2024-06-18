@@ -145,8 +145,8 @@ int main(int ac, char *av[])
     //	File output and regression check.
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    water_body.addBodyStateForRecording<int>("Indicator"); // with particle sort, the output may not reflect the correct indication.
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addVariableRecording<int>(water_body, "Indicator");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_body, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------

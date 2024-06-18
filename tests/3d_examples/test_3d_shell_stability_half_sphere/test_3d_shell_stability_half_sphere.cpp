@@ -71,7 +71,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
-    Vec3d particle =  Vec3d::Zero();
+    Vec3d particle = Vec3d::Zero();
     unsigned int count = 0;
     Real value = 0;
 
@@ -144,11 +144,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
-    // output
-    shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    shell_body.addDerivedBodyStateForRecording<Displacement>();
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.writeToFile(0);
+
     // methods
     InnerRelation shell_body_inner(shell_body);
 
@@ -161,7 +157,6 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
@@ -181,6 +176,13 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
+
+    // file and screen output
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addVariableRecording<Vecd>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    vtp_output.writeToFile(0);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();

@@ -884,7 +884,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 void StructuralSimulation::runSimulation(Real end_time)
 {
-    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_);
 
     /** Statistics for computing time. */
     write_states.writeToFile(0);
@@ -915,7 +915,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 
 double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
-    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_);
     GlobalStaticVariables::physical_time_ = 0.0;
 
     /** Statistics for computing time. */
@@ -961,7 +961,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)
     : StructuralSimulation(input),
-      write_states_(system_.real_bodies_),
+      write_states_(system_),
       dt(0.0)
 {
     write_states_.writeToFile(0);

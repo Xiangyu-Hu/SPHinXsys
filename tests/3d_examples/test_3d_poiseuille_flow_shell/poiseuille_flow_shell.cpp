@@ -255,11 +255,11 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    shell_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    shell_boundary.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
-    BodyStatesRecordingToVtp body_states_recording(system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(system);
+    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
+    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
+    body_states_recording.addVariableRecording<Real>(shell_boundary, "Average1stPrincipleCurvature");
+    body_states_recording.addVariableRecording<Real>(shell_boundary, "Average2ndPrincipleCurvature");
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", observer_contact_axial);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial("Velocity", observer_contact_radial);
     //----------------------------------------------------------------------
