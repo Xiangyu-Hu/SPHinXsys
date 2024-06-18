@@ -51,7 +51,7 @@
 #define PARTICLE_DYNAMICS_ALGORITHMS_H
 
 #include "base_local_dynamics.h"
-#include "base_particle_dynamics.hpp"
+#include "base_particle_dynamics.h"
 #include "particle_iterators.h"
 
 #include <type_traits>
@@ -128,6 +128,7 @@ template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class ReduceDynamics : public LocalDynamicsType,
                        public BaseDynamics<typename LocalDynamicsType::ReturnType>
 {
+    using ReturnType = typename LocalDynamicsType::ReturnType;
   public:
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
@@ -135,7 +136,6 @@ class ReduceDynamics : public LocalDynamicsType,
           BaseDynamics<ReturnType>(identifier.getSPHBody()){};
     virtual ~ReduceDynamics(){};
 
-    using ReturnType = typename LocalDynamicsType::ReturnType;
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 

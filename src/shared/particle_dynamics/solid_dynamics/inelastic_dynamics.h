@@ -43,16 +43,16 @@ namespace solid_dynamics
 class DecomposedPlasticIntegration1stHalf
     : public DecomposedIntegration1stHalf
 {
-public:
-    DecomposedPlasticIntegration1stHalf(BaseInnerRelation& inner_relation);
-    virtual ~DecomposedPlasticIntegration1stHalf() {};
+  public:
+    DecomposedPlasticIntegration1stHalf(BaseInnerRelation &inner_relation);
+    virtual ~DecomposedPlasticIntegration1stHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         // including gravity and force from fluid
         Vecd force = Vecd::Zero();
-        const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
@@ -68,14 +68,14 @@ public:
 
             Vecd shear_force_ij = plastic_solid_.ShearModulus() * pair_scaling * (e_ij + limiter * e_ij_difference);
             force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * e_ij + shear_force_ij) *
-                inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
+                     inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
         }
 
         force_[index_i] = force;
     };
 
-protected:
-    PlasticSolid& plastic_solid_;
+  protected:
+    PlasticSolid &plastic_solid_;
     StdLargeVec<Matd> scaling_matrix_, inverse_F_;
 };
 } // namespace solid_dynamics

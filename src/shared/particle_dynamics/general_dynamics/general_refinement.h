@@ -40,20 +40,10 @@ class ParticleSplitAndMerge;
  * @class ComputeDensityErrorInner
  * @brief compute error of particle splitting and merging
  */
-class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegateInner
+class ComputeDensityErrorInner : public LocalDynamics, public DataDelegateInner
 {
   public:
-    ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
-        : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
-          particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
-          rho0_(sph_body_.base_material_->ReferenceDensity()),
-          inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
-          h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-          Vol_(particles_->Vol_)
-    {
-        density_error_.resize(particles_->real_particles_bound_);
-        particles_->addVariableToWrite<Real>("Density");
-    };
+    ComputeDensityErrorInner(BaseInnerRelation &inner_relation);
     virtual ~ComputeDensityErrorInner(){};
 
     Vecd getPositionFromDensityError(const StdVec<size_t> &original_indices, const StdVec<Vecd> &initial_new_positions,
@@ -66,8 +56,8 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
   protected:
     ParticleSplitAndMerge &particle_adaptation_;
     Real rho0_, inv_sigma0_;
-    StdLargeVec<Real> &h_ratio_;
-    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &h_ratio_, &Vol_, &rho_, &mass_;
     Vecd E_cof_ = Vecd::Zero();
     Real sigma_E_ = 0.0;
     Real E_cof_sigma_ = 0.0;
@@ -91,15 +81,15 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
  * @class ComputeDensityErrorWithWall
  * @brief compute error of particle splitting and merging
  */
-class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public GeneralDataDelegateContactOnly
+class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public DataDelegateContactOnly
 {
   public:
     ComputeDensityErrorWithWall(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : ComputeDensityErrorInner(inner_relation), GeneralDataDelegateContactOnly(contact_relation)
+        : ComputeDensityErrorInner(inner_relation), DataDelegateContactOnly(contact_relation)
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
-            contact_Vol_.push_back(&(contact_bodies_[k]->getBaseParticles().Vol_));
+            contact_Vol_.push_back(&(contact_bodies_[k]->getBaseParticles().VolumetricMeasures()));
         }
     };
     virtual ~ComputeDensityErrorWithWall(){};
@@ -117,7 +107,7 @@ class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public Gene
  * @class ParticleRefinementWithPrescribedArea
  * @brief particle split in prescribed area.
  */
-class ParticleRefinementWithPrescribedArea : public LocalDynamics, public GeneralDataDelegateSimple
+class ParticleRefinementWithPrescribedArea : public LocalDynamics, public DataDelegateSimple
 {
   public:
     ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region);
@@ -216,7 +206,7 @@ class SplitWithMinimumDensityErrorWithWall : public SplitWithMinimumDensityError
  * @brief merging particle for a body in prescribed area.
  */
 class ParticleMergeWithPrescribedArea : public ParticleRefinementWithPrescribedArea,
-                                        public DataDelegateInner<BaseParticles, DataDelegateEmptyBase>
+                                        public DataDelegateInnerOnly
 {
   public:
     ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region);

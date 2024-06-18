@@ -134,70 +134,40 @@ class SPHBody
         return level_set_shape;
     };
 
-    /** partial construct particles with an already constructed material */
-    template <class ParticleType = BaseParticles, class MaterialType = BaseMaterial>
-    void defineParticlesWithMaterial(MaterialType *material)
+    template <class MaterialType>
+    void assignMaterial(MaterialType *material)
     {
         base_material_ = material;
-        base_particles_ = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, material);
     };
 
-    /** partial construct particles with material informaiton. note that particle data not initialized yet */
-    template <class ParticleType = BaseParticles, class MaterialType = BaseMaterial, typename... Args>
-    void defineParticlesAndMaterial(Args &&...args)
+    template <class MaterialType = BaseMaterial, typename... Args>
+    MaterialType *defineMaterial(Args &&...args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        defineParticlesWithMaterial<ParticleType>(material);
+        assignMaterial(material);
+        return material;
     };
     //----------------------------------------------------------------------
     // Particle generating methods
     // Initialize particle data using a particle generator for geometric data.
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
-    template <class ParticleGeneratorType> // for self-defined particle generator
-    void generateParticles(ParticleGeneratorType &&particle_generator)
+    template <class ParticleType, class... Parameters, typename... Args>
+    void generateParticles(Args &&...args)
     {
+        base_particles_ = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
+        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         sph_adaptation_->initializeAdaptationVariables(*base_particles_);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
     };
-    // Using predefined particle generator
-    template <class... Parameters, typename... Args>
-    void generateParticles(Args &&...args)
-    {
-        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
-        generateParticles(particle_generator);
-    };
+
     // Buffer or ghost particles can be generated together with real particles
-    template <class... Parameters, class ReserveType, typename... Args>
+    template <class ParticleType, class... Parameters, class ReserveType, typename... Args>
     void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
-        generateParticles<ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
-    };
-
-    template <typename DataType>
-    void addBodyState(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name)
-    {
-        base_particles_->template registerVariable<DataType>(variable_addrs, variable_name);
-    };
-
-    template <typename VariableType>
-    void addBodyStateForRecording(const std::string &variable_name)
-    {
-        base_particles_->template addVariableToWrite<VariableType>(variable_name);
-    };
-
-    template <class DerivedVariableMethod, typename... Args>
-    void addDerivedBodyStateForRecording(Args &&...args)
-    {
-        base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(std::forward<Args>(args)...);
-    };
-
-    template <typename VariableType>
-    void addBodyStateToRestart(const std::string &variable_name)
-    {
-        base_particles_->template addVariableToRestart<VariableType>(variable_name);
+        generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
     virtual void writeParticlesToVtuFile(std::ostream &output_file);
@@ -229,7 +199,7 @@ class RealBody : public SPHBody
         : SPHBody(std::forward<Args>(args)...),
           iteration_count_(1), cell_linked_list_created_(false)
     {
-        this->getSPHSystem().real_bodies_.push_back(this);
+        this->getSPHSystem().addRealBody(this);
     };
     virtual ~RealBody(){};
     BaseCellLinkedList &getCellLinkedList();

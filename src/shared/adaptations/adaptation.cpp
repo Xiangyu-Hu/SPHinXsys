@@ -2,10 +2,10 @@
 
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
+#include "cell_linked_list.h"
+#include "level_set.h"
 #include "mesh_with_data_packages.hpp"
 #include "vector_functions.h"
-#include "level_set.h"
-#include "cell_linked_list.h"
 
 namespace SPH
 {
@@ -116,7 +116,7 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
     SPHAdaptation::initializeAdaptationVariables(base_particles);
     base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", [&](size_t i) -> Real
                                     { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
-    base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
+    base_particles.addVariableToSort<Real>("SmoothingLengthRatio");
     base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//

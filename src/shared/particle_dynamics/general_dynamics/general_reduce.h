@@ -38,14 +38,14 @@ namespace SPH
  * @class VariableNorm
  * @brief  obtained the maximum norm of a variable
  */
-template <typename DataType, typename NormType>
-class VariableNorm : public LocalDynamicsReduce<NormType>,
-                     public GeneralDataDelegateSimple
+template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
+class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>,
+                     public DataDelegateSimple
 {
   public:
-    VariableNorm(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<NormType>(sph_body),
-          GeneralDataDelegateSimple(sph_body),
+    VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
+          DataDelegateSimple(identifier.getSPHBody()),
           variable_(*particles_->getVariableByName<DataType>(variable_name)){};
     virtual ~VariableNorm(){};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
@@ -65,7 +65,7 @@ class VariableNorm : public LocalDynamicsReduce<NormType>,
  * @brief  check whether particle velocity within a given bound
  */
 class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>,
-                           public GeneralDataDelegateSimple
+                           public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &vel_;
@@ -84,7 +84,7 @@ class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>,
  */
 template <class DynamicsIdentifier>
 class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>,
-                                  public GeneralDataDelegateSimple
+                                  public DataDelegateSimple
 {
   protected:
     int axis_;
@@ -93,7 +93,8 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
   public:
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
-          GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis), pos_(particles_->pos_)
+          DataDelegateSimple(identifier.getSPHBody()), axis_(axis),
+          pos_(*particles_->template getVariableByName<Vecd>("Position"))
     {
         this->quantity_name_ = name;
     }
@@ -107,7 +108,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
  * @brief Get the maximum particle speed in a SPH body
  */
 class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>,
-                     public GeneralDataDelegateSimple
+                     public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &vel_;
@@ -125,7 +126,7 @@ class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>,
  * 			TODO: a test using this method
  */
 class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>,
-                           public GeneralDataDelegateSimple
+                           public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &pos_;
@@ -143,7 +144,7 @@ class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>,
  * 			TODO: a test using this method
  */
 class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
-                           public GeneralDataDelegateSimple
+                           public DataDelegateSimple
 {
   protected:
     StdLargeVec<Vecd> &pos_;
@@ -159,49 +160,49 @@ class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
  * @class QuantitySummation
  * @brief Compute the summation of  a particle variable in a body
  */
-template <typename VariableType>
-class QuantitySummation : public LocalDynamicsReduce<ReduceSum<VariableType>>,
-                          public GeneralDataDelegateSimple
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>,
+                          public DataDelegateSimple
 {
-  protected:
-    StdLargeVec<VariableType> &variable_;
-
   public:
-    explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<ReduceSum<VariableType>>(sph_body),
-          GeneralDataDelegateSimple(sph_body),
-          variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+    explicit QuantitySummation(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>(identifier),
+          DataDelegateSimple(identifier.getSPHBody()),
+          variable_(*this->particles_->template getVariableByName<DataType>(variable_name))
     {
         this->quantity_name_ = "Total" + variable_name;
     };
     virtual ~QuantitySummation(){};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    DataType reduce(size_t index_i, Real dt = 0.0)
     {
         return variable_[index_i];
     };
+
+  protected:
+    StdLargeVec<DataType> &variable_;
 };
 
 /**
  * @class QuantityMoment
  * @brief Compute the moment of a body
  */
-template <typename VariableType>
-class QuantityMoment : public QuantitySummation<VariableType>
+template <typename DataType, class DynamicsIdentifier>
+class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
 {
   protected:
     StdLargeVec<Real> &mass_;
 
   public:
-    explicit QuantityMoment(SPHBody &sph_body, const std::string &variable_name)
-        : QuantitySummation<VariableType>(sph_body, variable_name),
-          mass_(this->particles_->mass_)
+    explicit QuantityMoment(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : QuantitySummation<DataType, DynamicsIdentifier>(identifier, variable_name),
+          mass_(*this->particles_->template getVariableByName<Real>("Mass"))
     {
         this->quantity_name_ = variable_name + "Moment";
     };
     virtual ~QuantityMoment(){};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    DataType reduce(size_t index_i, Real dt = 0.0)
     {
         return mass_[index_i] * this->variable_[index_i];
     };
@@ -209,7 +210,7 @@ class QuantityMoment : public QuantitySummation<VariableType>
 
 class TotalKineticEnergy
     : public LocalDynamicsReduce<ReduceSum<Real>>,
-      public GeneralDataDelegateSimple
+      public DataDelegateSimple
 {
   protected:
     StdLargeVec<Real> &mass_;

@@ -37,7 +37,7 @@ namespace SPH
 
 class Shape;
 class ParticleRefinementByShape;
-class ShellParticles;
+class SurfaceParticles;
 
 template <> // Base class for generating particles from lattice positions
 class GeneratingMethod<Lattice>

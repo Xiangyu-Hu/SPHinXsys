@@ -5,7 +5,6 @@
  * @author 	Zhentong Wang and Xiangyu Hu
  */
 #include "common_weakly_compressible_FVM_classes.h"
-#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -99,10 +98,9 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
-    water_block.generateParticlesWithReserve<UnstructuredMesh>(ghost_boundary, ansys_mesh);
-    water_block.addBodyStateForRecording<Real>("Density");
+    water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -128,6 +126,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, ansys_mesh);
+    write_real_body_states.addVariableRecording<Real>(water_block, "Density");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_on_inserted_body(water_block, "ViscousForceOnSolid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_on_inserted_body(water_block, "PressureForceOnSolid");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
@@ -171,9 +170,9 @@ int main(int ac, char *av[])
             GlobalStaticVariables::physical_time_ += dt;
             if (number_of_iterations % screen_output_interval == 0)
             {
-                cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                     << GlobalStaticVariables::physical_time_
-                     << "	dt = " << dt << "\n";
+                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                          << GlobalStaticVariables::physical_time_
+                          << "	dt = " << dt << "\n";
                 viscous_force_on_solid.exec();
                 pressure_force_on_solid.exec();
                 write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
@@ -190,7 +189,7 @@ int main(int ac, char *av[])
     TickCount t4 = TickCount::now();
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_total_viscous_force_on_inserted_body.testResult();
 

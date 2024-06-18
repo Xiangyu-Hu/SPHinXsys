@@ -32,19 +32,13 @@
 
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
-#include "continuum_particles.h"
 #include "fluid_integration.hpp"
 #include "general_continuum.h"
 namespace SPH
 {
 namespace continuum_dynamics
 {
-typedef DataDelegateSimple<ContinuumParticles> ContinuumDataSimple;
-typedef DataDelegateInner<ContinuumParticles> ContinuumDataInner;
-typedef DataDelegateSimple<PlasticContinuumParticles> PlasticContinuumDataSimple;
-typedef DataDelegateInner<PlasticContinuumParticles> PlasticContinuumDataInner;
-
-class ContinuumInitialCondition : public LocalDynamics, public PlasticContinuumDataSimple
+class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
   public:
     explicit ContinuumInitialCondition(SPHBody &sph_body);
@@ -69,7 +63,7 @@ class BaseIntegration1stHalf : public FluidDynamicsType
 using Integration1stHalf = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerNoRiemann>;
 using Integration1stHalfRiemann = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerRiemann>;
 
-class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<ContinuumDataInner>
+class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
 {
   public:
     explicit ShearAccelerationRelaxation(BaseInnerRelation &inner_relation);
@@ -79,11 +73,10 @@ class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<Conti
   protected:
     GeneralContinuum &continuum_;
     Real G_, smoothing_length_;
-    StdLargeVec<Matd> &shear_stress_;
     StdLargeVec<Vecd> &acc_shear_;
 };
 
-class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<ContinuumDataInner>
+class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
 {
   public:
     explicit ShearStressRelaxation(BaseInnerRelation &inner_relation);
@@ -119,7 +112,7 @@ class PlasticIntegration1stHalf;
 
 template <class RiemannSolverType>
 class PlasticIntegration1stHalf<Inner<>, RiemannSolverType>
-    : public BasePlasticIntegration<PlasticContinuumDataInner>
+    : public BasePlasticIntegration<DataDelegateInner>
 {
   public:
     explicit PlasticIntegration1stHalf(BaseInnerRelation &inner_relation);
@@ -161,7 +154,7 @@ class PlasticIntegration2ndHalf;
 
 template <class RiemannSolverType>
 class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
-    : public BasePlasticIntegration<PlasticContinuumDataInner>
+    : public BasePlasticIntegration<DataDelegateInner>
 {
   public:
     explicit PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation);
@@ -175,6 +168,8 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
     StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
     StdLargeVec<Real> &Vol_, &mass_;
     Real E_, nu_;
+
+    Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);
 };
 using PlasticIntegration2ndHalfInnerNoRiemann = PlasticIntegration2ndHalf<Inner<>, NoRiemannSolver>;
 using PlasticIntegration2ndHalfInnerRiemann = PlasticIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
@@ -197,7 +192,7 @@ using PlasticIntegration2ndHalfWithWall = ComplexInteraction<PlasticIntegration2
 using PlasticIntegration2ndHalfWithWallNoRiemann = PlasticIntegration2ndHalfWithWall<NoRiemannSolver>;
 using PlasticIntegration2ndHalfWithWallRiemann = PlasticIntegration2ndHalfWithWall<AcousticRiemannSolver>;
 
-class StressDiffusion : public BasePlasticIntegration<PlasticContinuumDataInner>
+class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
 {
   public:
     explicit StressDiffusion(BaseInnerRelation &inner_relation);

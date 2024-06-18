@@ -52,8 +52,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
     input_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    input_body.defineParticlesAndMaterial();
-    input_body.generateParticles<Lattice>();
+    input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

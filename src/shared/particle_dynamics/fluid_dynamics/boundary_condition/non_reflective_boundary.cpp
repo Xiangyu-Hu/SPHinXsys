@@ -7,13 +7,18 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
       rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
-      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      Vol_(particles_->Vol_), mass_(particles_->mass_), vel_(particles_->vel_),
-      mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
+      smeared_surface_(*particles_->getVariableByName<int>("SmearedSurface")),
       n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {
     particles_->registerVariable(inner_weight_summation_, "InnerWeightSummation");
@@ -21,7 +26,6 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
     particles_->registerVariable(vel_normal_average_, "VelocityNormalAverage");
     particles_->registerVariable(vel_tangential_average_, "VelocityTangentialAverage");
     particles_->registerVariable(vel_average_, "VelocityAverage");
-    particles_->registerVariable(smeared_surface_, "SmearedSurface");
 };
 //=================================================================================================//
 void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)

@@ -32,7 +32,6 @@
 
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
-#include "beam_particles.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
 namespace SPH

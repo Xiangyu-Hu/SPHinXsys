@@ -4,7 +4,23 @@
 
 namespace SPH
 {
-//================================================================================================ =//
+//=================================================================================================//
+ComputeDensityErrorInner::ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_)),
+      rho0_(sph_body_.base_material_->ReferenceDensity()),
+      inv_sigma0_(1.0 / particle_adaptation_.LatticeNumberDensity()),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      mass_(*particles_->getVariableByName<Real>("Mass"))
+
+{
+    density_error_.resize(particles_->real_particles_bound_);
+    particles_->addVariableToWrite<Real>("Density");
+}
+//=================================================================================================//
 Vecd ComputeDensityErrorInner::
     getPositionFromDensityError(const StdVec<size_t> &original_indices, const StdVec<Vecd> &initial_new_positions,
                                 const StdVec<size_t> &new_indices, Real min_distance, Real max_distance)
@@ -22,8 +38,8 @@ Vecd ComputeDensityErrorInner::
     {
         temp_E = ABS(sigma_E_);
         pos_iteration = getPosition(original_indices, new_positions, new_indices);
-        Vecd displacement = pos_iteration - particles_->pos_[index_center];
-        pos_iteration = particles_->pos_[index_center] + positionLimitation(displacement, min_distance, max_distance);
+        Vecd displacement = pos_iteration - pos_[index_center];
+        pos_iteration = pos_[index_center] + positionLimitation(displacement, min_distance, max_distance);
 
         if (ABS(ABS(sigma_E_) - temp_E) < residual)
         {
@@ -37,7 +53,7 @@ Vecd ComputeDensityErrorInner::
         }
         iteration += 1;
         new_positions[0] = pos_iteration;
-        new_positions[1] = 2.0 * particles_->pos_[index_center] - pos_iteration;
+        new_positions[1] = 2.0 * pos_[index_center] - pos_iteration;
     }
     for (size_t n = 0; n != new_indices.size(); ++n)
         density_error_[new_indices[n]] = error_sum_min;
@@ -82,9 +98,9 @@ void ComputeDensityErrorInner::
     Vecd grad_kernel = computeKernelGradient(index_rho);
     for (size_t n = 0; n != new_positions.size(); ++n)
     {
-        Vecd displacement = new_positions[n] - particles_->pos_[index_rho];
+        Vecd displacement = new_positions[n] - pos_[index_rho];
         Real rho_newIndex = computeNewGeneratedParticleDensity(index_rho, new_positions[n]);
-        Real error = particles_->rho_[index_rho] - rho_newIndex + grad_kernel.dot(-displacement);
+        Real error = rho_[index_rho] - rho_newIndex + grad_kernel.dot(-displacement);
 
         sign_new_indices_.push_back(error / (ABS(error) + TinyReal));
         sigma_E_ += sign_new_indices_[n] * error;
@@ -101,8 +117,8 @@ Vecd ComputeDensityErrorInner::computeKernelGradient(size_t index_rho)
     {
         size_t index_j = inner_neighborhood.j_[n];
         grad_kernel += inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n] *
-                       particles_->mass_[inner_neighborhood.j_[n]] / rho0_ /
-                       particles_->Vol_[inner_neighborhood.j_[n]];
+                       mass_[inner_neighborhood.j_[n]] / rho0_ /
+                       Vol_[inner_neighborhood.j_[n]];
     }
     return grad_kernel;
 }
@@ -139,14 +155,14 @@ Vecd ComputeDensityErrorInner::
 Real ComputeDensityErrorInner::
     computeNewGeneratedParticleDensity(size_t index_rho, const Vecd &position)
 {
-    Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
-    Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
+    Real Vol_newIndex = Vol_[index_rho] / 2.0;
+    Real h_newIndex = pow(Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
     Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, ZeroVecd);
     Real inv_sigma_i = inv_sigma0_ / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
     Real sigma_newIndex = W0;
 
-    Vecd displacement = 2.0 * (position - particles_->pos_[index_rho]);
+    Vecd displacement = 2.0 * (position - pos_[index_rho]);
     dW_new_indices_.push_back(computeKernelWeightGradientBetweenParticles(h_newIndex, displacement, Vol_newIndex));
     sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement);
 
@@ -154,9 +170,9 @@ Real ComputeDensityErrorInner::
     Neighborhood &inner_neighborhood = inner_configuration_[index_rho];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        Vecd displacement = position - particles_->pos_[inner_neighborhood.j_[n]];
+        Vecd displacement = position - pos_[inner_neighborhood.j_[n]];
         Real h_ratio_min = SMIN(h_ratio_[inner_neighborhood.j_[n]], h_newIndex);
-        Real Vol_j = particles_->mass_[inner_neighborhood.j_[n]] / rho0_;
+        Real Vol_j = mass_[inner_neighborhood.j_[n]] / rho0_;
         Real Vol_ratio = Vol_j / Vol_newIndex;
         sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement, Vol_ratio);
         grad_sigma += computeKernelWeightGradientBetweenParticles(h_ratio_min, displacement, Vol_j);
@@ -170,21 +186,21 @@ void ComputeDensityErrorInner::
     computeDensityErrorOnNeighborParticles(Neighborhood &neighborhood, size_t index_rho,
                                            const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions)
 {
-    Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
-    Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
+    Real Vol_newIndex = Vol_[index_rho] / 2.0;
+    Real h_newIndex = pow(Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
     for (size_t k = 0; k != neighborhood.current_size_; ++k)
     {
         Real h_ratio_j = h_ratio_[neighborhood.j_[k]];
-        Vecd pos_j = particles_->pos_[neighborhood.j_[k]];
-        Real Vol_j = particles_->mass_[neighborhood.j_[k]] / rho0_;
+        Vecd pos_j = pos_[neighborhood.j_[k]];
+        Real Vol_j = mass_[neighborhood.j_[k]] / rho0_;
         Real inv_sigma_j = inv_sigma0_ / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
         Real sigma_split_j = 0.0;
 
         for (size_t n = 0; n != original_indices.size(); ++n)
         {
-            Vecd displacement = pos_j - particles_->pos_[original_indices[n]];
-            Real Vol_ratio = particles_->Vol_[original_indices[n]] / Vol_j;
+            Vecd displacement = pos_j - pos_[original_indices[n]];
+            Real Vol_ratio = Vol_[original_indices[n]] / Vol_j;
             sigma_split_j += computeKernelWeightBetweenParticles(h_ratio_j, displacement, Vol_ratio);
         }
 
@@ -233,7 +249,7 @@ Vecd ComputeDensityErrorWithWall::computeKernelGradient(size_t index_rho)
     Neighborhood &contact_neighborhood = inner_configuration_[index_rho];
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
@@ -258,8 +274,8 @@ void ComputeDensityErrorWithWall::
 Real ComputeDensityErrorWithWall::
     computeNewGeneratedParticleDensity(size_t index_rho, const Vecd &position)
 {
-    Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
-    Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
+    Real Vol_newIndex = Vol_[index_rho] / 2.0;
+    Real h_newIndex = pow(Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
     Real inv_sigma_i = inv_sigma0_ / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
     ;
@@ -271,9 +287,9 @@ Real ComputeDensityErrorWithWall::
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_rho];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            Vecd displacement = position - particles_->pos_[contact_neighborhood.j_[n]];
+            Vecd displacement = position - pos_[contact_neighborhood.j_[n]];
             Real h_ratio_min = SMIN(h_ratio_[contact_neighborhood.j_[n]], h_newIndex);
-            Real Vol_j = particles_->mass_[contact_neighborhood.j_[n]] / rho0_;
+            Real Vol_j = mass_[contact_neighborhood.j_[n]] / rho0_;
             Real Vol_ratio = Vol_j / Vol_newIndex;
             sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement, Vol_ratio);
             grad_sigma += computeKernelWeightGradientBetweenParticles(h_ratio_min, displacement, Vol_j);
@@ -286,12 +302,14 @@ Real ComputeDensityErrorWithWall::
 //=================================================================================================//
 ParticleRefinementWithPrescribedArea::
     ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region)
-    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       refinement_region_bounds_(refinement_region.getBounds()),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
       inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
-      Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
-      mass_(particles_->mass_),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
 bool ParticleRefinementWithPrescribedArea::
@@ -382,12 +400,12 @@ Vecd ParticleSplitWithPrescribedArea::getSplittingPosition(const StdVec<size_t> 
 {
     srand(int(new_indices[0]));
     Real delta_random = 0 + 2.0 * Pi * rand_uniform(0.0, 1.0) * (2.0 * Pi - 0);
-    Vecd pos_ = particles_->pos_[new_indices[0]];
+    Vecd position = pos_[new_indices[0]];
     Real delta = delta_random + Pi;
     Real Vol_split = Vol_[new_indices[0]] / 2.0;
     Real particle_spacing_j = pow(Vol_split, 1.0 / (Real)Dimensions);
 
-    return particle_adaptation_.splittingPattern(pos_, particle_spacing_j, delta);
+    return particle_adaptation_.splittingPattern(position, particle_spacing_j, delta);
 }
 //=================================================================================================//
 void ParticleSplitWithPrescribedArea::
@@ -397,7 +415,7 @@ void ParticleSplitWithPrescribedArea::
     Vol_[index_new] = mass_[index_new] * inv_rho0_;
     Real particle_spacing_j = pow(Vol_[index_new], 1.0 / (Real)Dimensions);
     h_ratio_[index_new] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
-    particles_->pos_[index_new] = pos_split;
+    pos_[index_new] = pos_split;
 }
 //=================================================================================================//
 Vecd SplitWithMinimumDensityErrorInner::getSplittingPosition(const StdVec<size_t> &new_indices)
@@ -442,8 +460,8 @@ void SplitWithMinimumDensityErrorInner::update(size_t index_i, Real dt)
 ParticleMergeWithPrescribedArea::
     ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
     : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
-      DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
-      all_particle_data_(particles_->getAllParticleData()), vel_n_(particles_->vel_),
+      DataDelegateInnerOnly(inner_relation),
+      all_particle_data_(particles_->getAllParticleData()), vel_n_(*particles_->getVariableByName<Vecd>("Velocity")),
       merge_particle_value_(all_particle_data_)
 {
     particles_->registerVariable(total_merge_error_, "MergeDensityError", Real(0));
@@ -487,7 +505,7 @@ bool ParticleMergeWithPrescribedArea::
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real distance_ = (particles_->pos_[index_j] - position).norm();
+        Real distance_ = (pos_[index_j] - position).norm();
         Real Vol_j = mass_[index_j] * inv_rho0_;
         if (!tag_merged_[index_j])
             if (distance_ < search_distance)

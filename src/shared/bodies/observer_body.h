@@ -46,7 +46,6 @@ class ObserverBody : public SPHBody
     template <typename... Args>
     ObserverBody(Args &&...args) : SPHBody(std::forward<Args>(args)...)
     {
-        defineParticlesAndMaterial();
         sph_system_.observation_bodies_.push_back(this);
     };
     virtual ~ObserverBody(){};

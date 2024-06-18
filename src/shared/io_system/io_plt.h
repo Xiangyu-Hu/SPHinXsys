@@ -58,7 +58,7 @@ class BodyStatesRecordingToPlt : public BodyStatesRecording
 {
   public:
     BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToPlt(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
+    BodyStatesRecordingToPlt(SPHSystem &sph_system) : BodyStatesRecording(sph_system){};
     virtual ~BodyStatesRecordingToPlt(){};
 
   protected:

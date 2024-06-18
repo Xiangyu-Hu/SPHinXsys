@@ -50,7 +50,7 @@ class RepulsionForce<Base, DataDelegationType>
     RepulsionForce(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
           repulsion_force_(*this->particles_->template registerSharedVariable<Vecd>(variable_name)),
-          Vol_(this->particles_->Vol_){};
+          Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")){};
     virtual ~RepulsionForce(){};
 
   protected:
@@ -59,7 +59,7 @@ class RepulsionForce<Base, DataDelegationType>
 };
 
 template <>
-class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, SolidDataInner>, public ForcePrior
+class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegateInner>, public ForcePrior
 {
   public:
     explicit RepulsionForce(SelfSurfaceContactRelation &self_contact_relation);
@@ -75,7 +75,7 @@ class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, SolidDataIn
 using SelfContactForce = RepulsionForce<Contact<Inner<>>>;
 
 template <>
-class RepulsionForce<Contact<>> : public RepulsionForce<Base, ContactDynamicsData>, public ForcePrior
+class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
 {
   public:
     explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
@@ -91,7 +91,7 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, ContactDynamicsDat
 using ContactForce = RepulsionForce<Contact<>>;
 
 template <> // Computing the repulsion force from a rigid wall.
-class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, ContactWithWallData>, public ForcePrior
+class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
 {
   public:
     explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
@@ -101,12 +101,12 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, ContactWithWal
   protected:
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
 };
 using ContactForceFromWall = RepulsionForce<Contact<Wall>>;
 
 template <> // Computing the repulsion force acting on a rigid wall.
-class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, ContactDynamicsData>,
+class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegateContact>,
                                         public ForcePrior
 {
   public:

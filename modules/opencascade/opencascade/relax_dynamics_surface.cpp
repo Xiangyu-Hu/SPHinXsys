@@ -7,12 +7,12 @@
 
 namespace SPH
 {
-//=====================================================================================================//
 namespace relax_dynamics
 {
 //=================================================================================================//
 ShapeSurfaceBounding2::ShapeSurfaceBounding2(RealBody &real_body_)
-    : LocalDynamics(real_body_), RelaxDataDelegateSimple(real_body_), pos_(particles_->pos_)
+    : LocalDynamics(real_body_), DataDelegateSimple(real_body_),
+      pos_(*particles_->getVariableByName<Vecd>("Position"))
 {
     shape_ = &real_body_.getInitialShape();
 }
@@ -52,9 +52,10 @@ void RelaxationStepInnerSecondHalf::exec(Real dt)
 
 //=================================================================================================//
 SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body)
-    : RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body),
+    : DataDelegateSimple(sph_body), LocalDynamics(sph_body),
       surface_shape_(DynamicCast<SurfaceShape>(this, &sph_body.getInitialShape())),
-      pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection")) {}
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      n_(*particles_->registerSharedVariable<Vecd>("NormalDirection")) {}
 
 //=================================================================================================//
 void SurfaceNormalDirection::update(size_t index_i, Real dt)
@@ -79,18 +80,5 @@ void SurfaceNormalDirection::update(size_t index_i, Real dt)
     n_[index_i] = normal_direction_.normalized();
 }
 //=================================================================================================//
-ConstrainSurfaceBodyRegion::
-    ConstrainSurfaceBodyRegion(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), RelaxDataDelegateSimple(sph_body_),
-      force_(particles_->force_)
-{
-}
-//=================================================================================================//
-void ConstrainSurfaceBodyRegion::update(size_t index_i, Real dt)
-{
-    force_[index_i] = Vecd::Zero();
-}
-//=================================================================================================//
 } // namespace relax_dynamics
-  //=================================================================================================//
 } // namespace SPH

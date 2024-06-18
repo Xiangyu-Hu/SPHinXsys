@@ -213,7 +213,7 @@ jobs:
         id: first-try
         run: |
           cd build 
-          ctest  --output-on-failure
+          ctest  --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the second try for failed cases
@@ -221,7 +221,7 @@ jobs:
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the third try for failed cases
@@ -229,7 +229,7 @@ jobs:
         if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
@@ -237,14 +237,14 @@ jobs:
         if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
 
@@ -358,7 +358,7 @@ jobs:
         id: first-try
         run: |
           cd C:\build 
-          ctest.exe --output-on-failure
+          ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the second try for failed cases
@@ -366,7 +366,7 @@ jobs:
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd C:\build 
-          ctest.exe --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the third try for failed cases
@@ -374,7 +374,7 @@ jobs:
         if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd C:\build 
-          ctest.exe --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
@@ -382,14 +382,14 @@ jobs:
         if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd C:\build 
-          ctest.exe --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd C:\build 
-          ctest.exe --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
 
@@ -509,7 +509,7 @@ jobs:
         id: first-try
         run: |
           cd build 
-          ctest  --output-on-failure
+          ctest  --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the second try for failed cases
@@ -517,7 +517,7 @@ jobs:
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the third try for failed cases
@@ -525,7 +525,7 @@ jobs:
         if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
@@ -533,11 +533,11 @@ jobs:
         if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
-          ctest --rerun-failed --output-on-failure
+          ctest --rerun-failed --output-on-failure --timeout 1000

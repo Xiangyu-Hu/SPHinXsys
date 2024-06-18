@@ -104,6 +104,9 @@ std::vector<Vecd> createFishBlockingShape()
 
     return pnts_blocking_shape;
 }
+
+namespace SPH
+{
 /**
  * Water body shape defintion.
  */
@@ -158,10 +161,12 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 /**
  * Observer particle generator.
  */
-class FishObserverParticleGenerator : public ParticleGenerator<Observer>
+class FishObserver;
+template <>
+class ParticleGenerator<FishObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit FishObserverParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
         positions_.push_back(Vecd(cx + resolution_ref, cy));
         positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
@@ -191,6 +196,8 @@ struct InflowVelocity
         return target_velocity;
     }
 };
+} // namespace SPH
+
 /**
  * Main program starts here.
  */
@@ -211,31 +218,30 @@ int main(int ac, char *av[])
      * @brief   Particles and body creation for water.
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<Lattice>();
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particles and body creation for fish.
      */
     SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape();
-    fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    fish_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<Reload>(fish_body.getName())
-        : fish_body.generateParticles<Lattice>();
+        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
+        : fish_body.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particle and body creation of fish observer.
      */
     ObserverBody fish_observer(system, "Observer");
-    FishObserverParticleGenerator fish_observer_particle_generator(fish_observer);
-    fish_observer.generateParticles(fish_observer_particle_generator);
+    fish_observer.generateParticles<BaseParticles, FishObserver>();
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation fish_body_inner(fish_body);
@@ -258,7 +264,7 @@ int main(int ac, char *av[])
         /** Write the body state to Vtp file. */
         BodyStatesRecordingToVtp write_fish_body(fish_body);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files({&fish_body});
+        ReloadParticleIO write_particle_reload_files(fish_body);
 
         /** A  Physics relaxation step. */
         RelaxationStepInner relaxation_step_inner(fish_body_inner);
@@ -403,7 +409,7 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
         constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
-    BodyStatesRecordingToVtp write_real_body_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
     /**

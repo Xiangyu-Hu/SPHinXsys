@@ -62,13 +62,10 @@ class BaseLocalDynamics
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier){};
     virtual ~BaseLocalDynamics(){};
-    SPHBody &getSPHBody() { return sph_body_; };
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
   protected:
     DynamicsIdentifier &identifier_;
-    SPHBody &sph_body_ = identifier_.getSPHBody();
-    BaseParticles &base_particles_ = sph_body_.getBaseParticles();
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -107,7 +104,7 @@ class Average : public ReduceSumType
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    Average(DynamicsIdentifier &identifier, Args &&... args)
+    Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
     virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
@@ -131,8 +128,8 @@ struct ConstructorArgs
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs &&... other_args)
-        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**
@@ -150,7 +147,7 @@ class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
   public:
     ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0){};
+    void interaction(size_t index_i, Real dt = 0.0) {};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,
@@ -164,7 +161,7 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
-                                OtherParameterSets &&... other_parameter_sets)
+                                OtherParameterSets &&...other_parameter_sets)
         : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 

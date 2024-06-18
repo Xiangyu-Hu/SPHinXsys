@@ -41,27 +41,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class EulerianAcousticTimeStepSize
- * @brief Computing the acoustic time step size
- */
-class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
-{
-  protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
-    Real smoothing_length_;
-
-  public:
-    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body);
-    virtual ~EulerianCompressibleAcousticTimeStepSize(){};
-
-    Real reduce(size_t index_i, Real dt = 0.0);
-    virtual Real outputResult(Real reduced_value) override;
-    CompressibleFluid compressible_fluid_;
-};
-
-class BaseIntegrationInCompressible : public BaseIntegration<FluidDataInner>
+class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
 {
   public:
     explicit BaseIntegrationInCompressible(BaseInnerRelation &inner_relation);
@@ -104,6 +84,32 @@ class EulerianCompressibleIntegration2ndHalf : public BaseIntegrationInCompressi
 using EulerianCompressibleIntegration2ndHalfNoRiemann = EulerianCompressibleIntegration2ndHalf<NoRiemannSolverInCompressibleEulerianMethod>;
 using EulerianCompressibleIntegration2ndHalfHLLCRiemann = EulerianCompressibleIntegration2ndHalf<HLLCRiemannSolver>;
 using EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann = EulerianCompressibleIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
+
+class CompressibleFluidInitialCondition : public FluidInitialCondition
+{
+  public:
+    explicit CompressibleFluidInitialCondition(SPHBody &sph_body);
+
+  protected:
+    StdLargeVec<Vecd> &mom_;
+    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_, &E_;
+};
+
+class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
+{
+  protected:
+    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Vecd> &vel_;
+    Real smoothing_length_;
+
+  public:
+    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body);
+    virtual ~EulerianCompressibleAcousticTimeStepSize(){};
+
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+    CompressibleFluid compressible_fluid_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_COMPRESSIBLE_FLUID_INTEGRATION_H
