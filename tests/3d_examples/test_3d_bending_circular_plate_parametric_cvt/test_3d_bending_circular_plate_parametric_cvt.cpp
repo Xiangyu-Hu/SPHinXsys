@@ -241,6 +241,10 @@ return_data bending_circular_plate(Real dp_ratio)
     shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
 
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addVariableRecording<Vec3d>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
@@ -274,10 +278,7 @@ return_data bending_circular_plate(Real dp_ratio)
     corrected_configuration.exec();
     constant_gravity_force.exec();
 
-    // output
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.addVariableRecording<Vec3d>(shell_body, "NormalDirection");
-    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    // file and screen outputs
     vtp_output.writeToFile(0);
     StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer point

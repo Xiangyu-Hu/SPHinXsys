@@ -247,7 +247,7 @@ int main(int ac, char *av[])
     write_real_body_states.addVariableRecording<Vec3d>(gate, "NormalDirection");
     write_real_body_states.addVariableRecording<Real>(plate, "Average1stPrincipleCurvature");
     write_real_body_states.addVariableRecording<Real>(plate, "Average2ndPrincipleCurvature");
-    write_real_body_states.addVariableRecording<Real>(plate, "PressureForceFromFluid");
+    write_real_body_states.addVariableRecording<Vec3d>(plate, "PressureForceFromFluid");
     write_real_body_states.addVariableRecording<Vec3d>(wall_boundary, "NormalDirection");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(plate);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
