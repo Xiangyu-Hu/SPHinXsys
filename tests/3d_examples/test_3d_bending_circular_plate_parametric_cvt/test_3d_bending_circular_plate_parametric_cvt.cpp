@@ -241,10 +241,6 @@ return_data bending_circular_plate(Real dp_ratio)
     shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
 
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.addVariableRecording<Vec3d>(shell_body, "NormalDirection");
-    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
-
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
@@ -255,7 +251,6 @@ return_data bending_circular_plate(Real dp_ratio)
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
@@ -279,7 +274,12 @@ return_data bending_circular_plate(Real dp_ratio)
     constant_gravity_force.exec();
 
     // file and screen outputs
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addVariableRecording<Vec3d>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
+
     StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood

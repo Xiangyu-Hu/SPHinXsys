@@ -39,6 +39,10 @@ void BodyStatesRecording::writeToFile()
 //=============================================================================================//
 void BodyStatesRecording::writeToFile(size_t iteration_step)
 {
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
     writeWithFileName(padValueWithZeros(iteration_step));
 };
 //=============================================================================================/
