@@ -86,7 +86,7 @@ class BodyStatesRecording : public BaseIO
     virtual ~BodyStatesRecording(){};
     /** write with filename indicated by physical time */
     void writeToFile();
-    virtual void writeToFile(size_t iteration_step) final;
+    virtual void writeToFile(size_t iteration_step) override;
 
     template <typename DataType>
     void addVariableRecording(SPHBody &sph_body, const std::string &name)
