@@ -18,7 +18,11 @@ int main(int argc, char *argv[])
     oil_tank_crash(1, 2, 1, true);
 }
 
-class ShellTankParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Tank;
+template <>
+class ParticleGenerator<Tank> : public ParticleGenerator<Surface>
 {
     const StdVec<Vec3d> &pos_0_;
     const StdVec<Vec3d> &normal_;
@@ -26,7 +30,7 @@ class ShellTankParticleGenerator : public ParticleGenerator<Surface>
     const Real shell_thickness_;
 
   public:
-    explicit ShellTankParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const StdVec<Vec3d> &normal, const StdVec<Real> &particle_area, Real thickness)
+    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const StdVec<Vec3d> &normal, const StdVec<Real> &particle_area, Real thickness)
         : ParticleGenerator<Surface>(sph_body),
           pos_0_(pos_0),
           normal_(normal),
@@ -43,6 +47,7 @@ class ShellTankParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 void relax_body(RealBody &body, InnerRelation &inner)
 {
@@ -219,29 +224,28 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     // Create objects
     // tank
     SolidBody tank_body(system, mesh_tank);
-    tank_body.defineParticlesWithMaterial<ShellParticles>(&material_tank);
+    tank_body.assignMaterial(&material_tank);
     // generating particles from predefined positions from obj file
     StdVec<Vec3d> obj_vertices = read_obj_vertices("input/oil_tank_x" + std::to_string(res_factor_tank) + "_pos.txt");
     StdVec<Vec3d> obj_normals = read_obj_vertices("input/oil_tank_x" + std::to_string(res_factor_tank) + "_normal.txt");
     StdVec<Real> obj_areas = read_obj_scalars("input/oil_tank_x" + std::to_string(res_factor_tank) + "_area.txt");
-    ShellTankParticleGenerator tank_particle_generator(tank_body, obj_vertices, obj_normals, obj_areas, tank_thickness);
-    tank_body.generateParticles(tank_particle_generator);
-    auto particles_tank = dynamic_cast<ShellParticles *>(&tank_body.getBaseParticles());
+    tank_body.generateParticles<SurfaceParticles, Tank>(obj_vertices, obj_normals, obj_areas, tank_thickness);
+    auto particles_tank = &tank_body.getBaseParticles();
 
     // truck
     SolidBody truck_body(system, mesh_truck);
     truck_body.defineBodyLevelSetShape();
     truck_body.defineAdaptationRatios(1.15, res_tank / res_truck);
-    truck_body.defineParticlesWithMaterial<SolidParticles>(&material_tank);
-    truck_body.generateParticles<Lattice>();
-    auto particles_truck = dynamic_cast<SolidParticles *>(&truck_body.getBaseParticles());
+    truck_body.assignMaterial(&material_tank);
+    truck_body.generateParticles<BaseParticles, Lattice>();
+    auto particles_truck = &truck_body.getBaseParticles();
 
     // oil
     FluidBody oil_block(system, mesh_oil);
     oil_block.defineBodyLevelSetShape();
     oil_block.defineAdaptationRatios(1.15, res_tank / res_oil);
-    oil_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    oil_block.generateParticles<Lattice>();
+    oil_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    oil_block.generateParticles<BaseParticles, Lattice>();
 
     // Inner relations
     InnerRelation tank_inner(tank_body);
@@ -251,7 +255,6 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     // relax
     relax_body(oil_block, oil_block_inner);
     relax_body(truck_body, truck_inner);
-    particles_truck->pos0_ = particles_truck->pos_;
 
     // fluid-shell contact
     ContactRelationToShell oil_tank_contact(oil_block, {&tank_body}, {false});
@@ -262,7 +265,6 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     // Methods
     // tank
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_tank(tank_inner);
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_tank(tank_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_tank(tank_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_tank(tank_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal_tank(tank_body);
@@ -271,6 +273,7 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
         velocity_damping(0.2, tank_inner, "Velocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         rotation_damping(0.2, tank_inner, "AngularVelocity", physical_viscosity);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_tank(tank_body);
 
     // truck
     auto update_truck_position = [&](Real dt)
@@ -280,8 +283,7 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
             IndexRange(0, particles_truck->total_real_particles_),
             [&](size_t index_i)
             {
-                particles_truck->vel_[index_i] = velocity_truck;
-                particles_truck->pos_[index_i] += particles_truck->vel_[index_i] * dt;
+                particles_truck->ParticlePositions()[index_i] += velocity_truck * dt;
             });
     };
 
@@ -318,8 +320,8 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
         {
             for (const Real xi : pos_fix_x)
             {
-                if (std::abs(particles_tank->pos_[index_i].x() - xi) < res_tank &&
-                    particles_tank->pos_[index_i].y() < y_min)
+                if (std::abs(particles_tank->ParticlePositions()[index_i].x() - xi) < res_tank &&
+                    particles_tank->ParticlePositions()[index_i].y() < y_min)
                 {
                     ids.push_back(index_i);
                     constraint_indicator[index_i] = 1;
@@ -330,13 +332,15 @@ void oil_tank_crash(int res_factor_tank, int res_factor_truck, int res_factor_oi
     }();
     auto fix_bc = [&]()
     {
+        auto &vel_ = *particles_tank->getVariableByName<Vec3d>("Velocity");
+        auto &angular_vel_ = *particles_tank->getVariableByName<Vec3d>("AngularVelocity");
         particle_for(
             execution::ParallelPolicy(),
             fix_id,
             [&](size_t index_i)
             {
-                particles_tank->vel_[index_i] = Vec3d::Zero();
-                particles_tank->angular_vel_[index_i] = Vec3d::Zero();
+                vel_[index_i] = Vec3d::Zero();
+                angular_vel_[index_i] = Vec3d::Zero();
             });
     };
 

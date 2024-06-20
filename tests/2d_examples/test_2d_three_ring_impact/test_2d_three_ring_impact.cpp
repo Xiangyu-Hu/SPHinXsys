@@ -14,7 +14,7 @@ void relax_solid(RealBody &body, InnerRelation &inner)
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepInner relaxation_step_inner(inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -44,7 +44,11 @@ class Ring : public MultiPolygonShape
     }
 };
 
-class ShellRingParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class ShellRing;
+template <>
+class ParticleGenerator<ShellRing> : public ParticleGenerator<Surface>
 {
     const Vec2d center_;
     const Real mid_srf_radius_;
@@ -52,7 +56,7 @@ class ShellRingParticleGenerator : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    ShellRingParticleGenerator(SPHBody &sph_body, const Vec2d &center, Real mid_srf_radius, Real dp, Real thickness)
+    ParticleGenerator(SPHBody &sph_body, const Vec2d &center, Real mid_srf_radius, Real dp, Real thickness)
         : ParticleGenerator<Surface>(sph_body),
           center_(center),
           mid_srf_radius_(mid_srf_radius),
@@ -70,6 +74,7 @@ class ShellRingParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
 {
@@ -142,21 +147,21 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Body
     SolidBody ring_l_body(system, makeShared<Ring>("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l));
     ring_l_body.defineBodyLevelSetShape();
-    ring_l_body.defineParticlesWithMaterial<ElasticSolidParticles>(material_l.get());
-    ring_l_body.generateParticles<Lattice>();
-    auto particles_l = dynamic_cast<ElasticSolidParticles *>(&ring_l_body.getBaseParticles());
+    ring_l_body.assignMaterial(material_l.get());
+    ring_l_body.generateParticles<BaseParticles, Lattice>();
+    auto particles_l = &ring_l_body.getBaseParticles();
 
     SolidBody ring_m_body(system, makeShared<DefaultShape>("RingMedium"));
     ring_m_body.defineAdaptationRatios(1.15, dp_l / dp_m);
-    ring_m_body.defineParticlesWithMaterial<ShellParticles>(material_m.get());
-    ring_m_body.generateParticles(ShellRingParticleGenerator(ring_m_body, center_m, 0.5 * mid_srf_diameter_m, dp_m, thickness_m));
-    auto particles_m = dynamic_cast<ShellParticles *>(&ring_m_body.getBaseParticles());
+    ring_m_body.assignMaterial(material_m.get());
+    ring_m_body.generateParticles<SurfaceParticles, ShellRing>(center_m, 0.5 * mid_srf_diameter_m, dp_m, thickness_m);
+    auto particles_m = &ring_m_body.getBaseParticles();
 
     SolidBody ring_s_body(system, makeShared<DefaultShape>("RingSmall"));
     ring_s_body.defineAdaptationRatios(1.15, dp_l / dp_s);
-    ring_s_body.defineParticlesWithMaterial<ShellParticles>(material_s.get());
-    ring_s_body.generateParticles(ShellRingParticleGenerator(ring_s_body, center_s, 0.5 * mid_srf_diameter_s, dp_s, thickness_s));
-    auto particles_s = dynamic_cast<ShellParticles *>(&ring_s_body.getBaseParticles());
+    ring_s_body.assignMaterial(material_s.get());
+    ring_s_body.generateParticles<SurfaceParticles, ShellRing>(center_s, 0.5 * mid_srf_diameter_s, dp_s, thickness_s);
+    auto particles_s = &ring_s_body.getBaseParticles();
 
     // Inner relation
     InnerRelation ring_l_inner(ring_l_body);
@@ -165,18 +170,16 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     // relaxation
     relax_solid(ring_l_body, ring_l_inner);
-    particles_l->pos0_ = particles_l->pos_;
 
     // Methods
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_l(ring_l_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size_l(ring_l_body);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_l(ring_l_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_l(ring_l_inner);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
         velocity_damping_l(0.2, ring_l_inner, "Velocity", physical_viscosity_l);
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size_l(ring_l_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_m(ring_m_inner);
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_m(ring_m_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_m(ring_m_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_m(ring_m_inner);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
@@ -184,9 +187,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
         rotation_damping_m(0.2, ring_m_inner, "AngularVelocity", physical_viscosity_m);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal_m(ring_m_body);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_m(ring_m_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_s(ring_s_inner);
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_s(ring_s_body);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_s(ring_s_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_s(ring_s_inner);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
@@ -194,6 +197,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
         rotation_damping_s(0.2, ring_s_inner, "AngularVelocity", physical_viscosity_s);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal_s(ring_s_body);
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_s(ring_s_body);
 
     // self contact
     ShellSelfContactRelation self_contact_m(ring_m_body);
@@ -221,33 +225,34 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // self contact
     InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> self_contact_density_m(self_contact_m);
     // shell-shell
-    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> contact_density_s_to_m(contact_s_to_m);
-    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> contact_density_m_to_s(contact_m_to_s);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density_s_to_m(contact_s_to_m);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density_m_to_s(contact_m_to_s);
     // shell-solid
     InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_m_to_l(contact_m_to_l);
     // solid-shell
-    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> contact_density_l_to_m(contact_l_to_m);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density_l_to_m(contact_l_to_m);
 
     // force
     // self contact
     InteractionWithUpdate<solid_dynamics::SelfContactForce> self_contact_forces_m(self_contact_m);
     // shell-shell
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_s_to_m(contact_s_to_m, "ShellRepulsionForceToShell", "RepulsionDensityToShell", "RepulsionDensityToShell");
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_m_to_s(contact_m_to_s, "ShellRepulsionForceToShell", "RepulsionDensityToShell", "RepulsionDensityToShell");
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_s_to_m(contact_s_to_m);
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_m_to_s(contact_m_to_s);
     // shell-solid
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_force_m_to_l(contact_m_to_l, "ShellRepulsionForceToSolid", "RepulsionDensity", "RepulsionDensityToShell");
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_force_m_to_l(contact_m_to_l);
     // solid-shell
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_force_l_to_m(contact_l_to_m, "SolidRepulsionForceToShell", "RepulsionDensityToShell", "RepulsionDensity");
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_force_l_to_m(contact_l_to_m);
 
     // Inital condition
     auto vel_ic = [&, vel = Vec2d(-30, 30)]()
     {
+        auto &vel_ = *particles_s->getVariableByName<Vec2d>("Velocity");
         particle_for(
             execution::ParallelPolicy(),
             IndexRange(0, particles_s->total_real_particles_),
             [&](size_t index_i)
             {
-                particles_s->vel_[index_i] = vel;
+                vel_[index_i] = vel;
             });
     };
 
@@ -257,7 +262,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
         IndexVector fixed_particles_id;
         for (size_t i = 0; i < particles_l->total_real_particles_; ++i)
         {
-            Real radius = (particles_l->pos_[i] - center_l).norm();
+            Real radius = (particles_l->ParticlePositions()[i] - center_l).norm();
             if (radius > 0.5 * diameter_outer_l - 0.7 * dp_l)
                 fixed_particles_id.push_back(i);
         }
@@ -265,36 +270,38 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     }();
     auto fix_bc = [&]()
     {
+        auto &vel_ = *particles_l->getVariableByName<Vec2d>("Velocity");
         particle_for(
             execution::ParallelPolicy(),
             fix_id_l,
             [&](size_t index_i)
             {
-                particles_l->vel_[index_i] = Vec2d::Zero();
+                vel_[index_i] = Vec2d::Zero();
             });
     };
 
     // Check
-    auto check_nan = [&](const BaseParticles *particles)
+    auto check_nan = [&](BaseParticles *particles)
     {
-        for (const auto &pos : particles->pos_)
+        const auto &pos_ = particles->ParticlePositions();
+        for (const auto &pos : pos_)
             if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
                 throw std::runtime_error("position has become nan");
     };
 
     // Output
-    ring_l_body.addBodyStateForRecording<Real>("RepulsionDensityToShell");
-    ring_l_body.addBodyStateForRecording<Vec2d>("SolidRepulsionForceToShell");
+    ring_l_body.addBodyStateForRecording<Real>("RepulsionDensitySolidShell");
+    ring_l_body.addBodyStateForRecording<Vec2d>("RepulsionForceSolidShell");
     ring_m_body.addBodyStateForRecording<Vec2d>("NormalDirection");
     ring_m_body.addBodyStateForRecording<Real>("1stPrincipleCurvature");
     ring_m_body.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    ring_m_body.addBodyStateForRecording<Real>("RepulsionDensityToShell");
-    ring_m_body.addBodyStateForRecording<Real>("RepulsionDensity");
-    ring_m_body.addBodyStateForRecording<Vec2d>("ShellRepulsionForceToShell");
-    ring_m_body.addBodyStateForRecording<Vec2d>("ShellRepulsionForceToSolid");
+    ring_m_body.addBodyStateForRecording<Real>("RepulsionDensityShellShell");
+    ring_m_body.addBodyStateForRecording<Real>("RepulsionDensityShellSolid");
+    ring_m_body.addBodyStateForRecording<Vec2d>("RepulsionForceShellShell");
+    ring_m_body.addBodyStateForRecording<Vec2d>("RepulsionForceShellSolid");
     ring_s_body.addBodyStateForRecording<Vec2d>("NormalDirection");
-    ring_s_body.addBodyStateForRecording<Real>("RepulsionDensityToShell");
-    ring_s_body.addBodyStateForRecording<Vec2d>("ShellRepulsionForceToShell");
+    ring_s_body.addBodyStateForRecording<Real>("RepulsionDensityShellShell");
+    ring_s_body.addBodyStateForRecording<Vec2d>("RepulsionForceShellShell");
     BodyStatesRecordingToVtp vtp_output(system.real_bodies_);
     vtp_output.writeToFile(0);
 

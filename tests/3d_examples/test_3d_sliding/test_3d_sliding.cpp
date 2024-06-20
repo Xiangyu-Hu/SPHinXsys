@@ -7,7 +7,11 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-class WallParticleGenerator : public ParticleGenerator<Surface>
+namespace SPH
+{
+class Wall;
+template <>
+class ParticleGenerator<Wall> : public ParticleGenerator<Surface>
 {
     const Vec3d center_;
     const Real length_;
@@ -15,7 +19,7 @@ class WallParticleGenerator : public ParticleGenerator<Surface>
     const Real dp_;
 
   public:
-    WallParticleGenerator(SPHBody &sph_body, const Vec3d &center, Real length, Real width, Real dp)
+    ParticleGenerator(SPHBody &sph_body, const Vec3d &center, Real length, Real width, Real dp)
         : ParticleGenerator<Surface>(sph_body),
           center_(center),
           length_(length),
@@ -37,6 +41,7 @@ class WallParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 
 Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
 {
@@ -87,11 +92,11 @@ void block_sliding(
     // Import meshes
     auto cube_translation = Vec3d(0.5 * cube_length + 2 * resolution_cube, 0.5 * cube_length, 0.0);
     auto mesh_cube = std::make_shared<TriangleMeshShapeBrick>(0.5 * cube_length * Vec3d::Ones(), 5, cube_translation, "Cube");
-    auto slope_translation = Vec3d(0.5 * slope_length, -(1.15 * (resolution_cube + resolution_slope) - 0.5 * resolution_cube), 0);
+    auto slope_translation = Vec3d(0.5 * slope_length, -0.5 * resolution_slope, 0);
     auto mesh_slope = std::make_shared<TriangleMeshShapeBrick>(0.5 * Vec3d(slope_length, resolution_slope, slope_width), 5, slope_translation, "Slope");
 
     // Material models
-    SaintVenantKirchhoffSolid material_cube(rho0_s, Youngs_modulus, poisson);
+    auto material_cube = makeShared<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 
     // System bounding box
     BoundingBox bb_system = union_bounding_box(mesh_cube->getBounds(), mesh_slope->getBounds());
@@ -102,32 +107,32 @@ void block_sliding(
 
     // Create objects
     SolidBody cube_body(system, mesh_cube);
-    cube_body.defineParticlesWithMaterial<ElasticSolidParticles>(&material_cube);
-    cube_body.generateParticles<Lattice>();
-    auto particles_cube = dynamic_cast<ElasticSolidParticles *>(&cube_body.getBaseParticles());
+    cube_body.assignMaterial(material_cube.get());
+    cube_body.generateParticles<BaseParticles, Lattice>();
+    auto particles_cube = &cube_body.getBaseParticles();
 
     SolidBody slope_body(system, mesh_slope);
     slope_body.defineAdaptationRatios(1.15, resolution_cube / resolution_slope);
-    slope_body.defineParticlesWithMaterial<ShellParticles>(&material_cube);
-    slope_body.generateParticles(WallParticleGenerator(slope_body, slope_translation, slope_length, slope_width, resolution_slope));
+    slope_body.assignMaterial(material_cube.get());
+    slope_body.generateParticles<SurfaceParticles, Wall>(slope_translation, slope_length, slope_width, resolution_slope);
 
     // Inner relation
     InnerRelation cube_inner(cube_body);
 
     // Methods
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(cube_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cube_inner);
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         velocity_damping(0.5, cube_inner, "Velocity", get_physical_viscosity_general(rho0_s, Youngs_modulus, resolution_cube));
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
 
     // Contact relation
     SurfaceContactRelationToShell contact_cube_to_slope(cube_body, {&slope_body}, {true});
     // Contact density
-    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> contact_density(contact_cube_to_slope);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density(contact_cube_to_slope);
     // Contact Force
-    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope, "SolidRepulsionForceToShell", "RepulsionDensityToShell");
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope);
 
     // gravity
     const Real g = 9.81;
@@ -147,14 +152,13 @@ void block_sliding(
     // };
 
     // Output
-    cube_body.addBodyStateForRecording<Real>("RepulsionDensityToShell");
-    cube_body.addBodyStateForRecording<Vecd>("SolidRepulsionForceToShell");
     BodyStatesRecordingToVtp vtp_output(system.real_bodies_);
     vtp_output.writeToFile(0);
 
     // Observer
     StdLargeVec<Vecd> rotated_disp;
     particles_cube->registerVariable(rotated_disp, "RotatedDisplacement");
+    const auto &pos_0_ = *particles_cube->registerSharedVariableFrom<Vec3d>("InitialPosition", "Position");
     auto update_disp = [&]()
     {
         particle_for(
@@ -162,11 +166,11 @@ void block_sliding(
             IndexRange(0, particles_cube->total_real_particles_),
             [&](size_t index_i)
             {
-                rotated_disp[index_i] = rotation_inverse * particles_cube->displacement(index_i);
+                rotated_disp[index_i] = rotation_inverse * (particles_cube->ParticlePositions()[index_i] - pos_0_[index_i]);
             });
     };
     ObserverBody cube_observer(system, "CubeObserver");
-    cube_observer.generateParticles<Observer>(StdVec<Vecd>{cube_translation});
+    cube_observer.generateParticles<BaseParticles, Observer>(StdVec<Vecd>{cube_translation});
     ContactRelation cube_observer_contact(cube_observer, {&cube_body});
     ObservedQuantityRecording<Vecd>
         write_cube_displacement("RotatedDisplacement", cube_observer_contact);

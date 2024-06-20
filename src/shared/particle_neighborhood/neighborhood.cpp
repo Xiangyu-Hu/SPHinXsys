@@ -267,7 +267,7 @@ void BaseNeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborh
 
     if (distance < radius)
     {
-        Real W_ijV_j_ttl = std::max(kernel_->W(distance, displacement) - offset_W_ij, Real(0));
+        Real W_ijV_j_ttl = kernel_->W(distance, displacement) - offset_W_ij;
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
@@ -294,7 +294,7 @@ void BaseNeighborBuilderContactToShell::update_neighbors(Neighborhood &neighborh
             const Real Vol_j_dummy = factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
-            W_ijV_j_ttl += std::max(kernel_->W(distance_dummy, displacement_dummy) - offset_W_ij, Real(0)) * Vol_j_dummy;
+            W_ijV_j_ttl += (kernel_->W(distance_dummy, displacement_dummy) - offset_W_ij) * Vol_j_dummy;
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
@@ -405,12 +405,11 @@ NeighborBuilderShellSelfContact::
     : BaseNeighborBuilderContactShell(body),
       k1_(*body.getBaseParticles().registerSharedVariable<Real>("1stPrincipleCurvature")),
       k2_(*body.getBaseParticles().registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      pos0_(*body.getBaseParticles().getVariableByName<Vecd>("InitialPosition"))
+      pos0_(*body.getBaseParticles().registerSharedVariableFrom<Vecd>("InitialPosition", "Position"))
 {
     // create a unreduced kernel for shell self contact
     Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(smoothing_length);
-    offset_W_ij_ = 0;
 }
 //=================================================================================================//
 void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
@@ -426,7 +425,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
     // only particles within 1*dp distance should have force
     if (distance < kernel_->CutOffRadius() && distance0 > kernel_->CutOffRadius())
     {
-        Real W_ijV_j_ttl = std::max(kernel_->W(distance, displacement) - offset_W_ij_, Real(0));
+        Real W_ijV_j_ttl = kernel_->W(distance, displacement);
         Real dW_ijV_j_ttl = kernel_->dW(distance, displacement);
         Vecd dW_ijV_j_e_ij_ttl = dW_ijV_j_ttl * displacement / (distance + TinyReal);
 
@@ -453,7 +452,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
             const Real Vol_j_dummy = factor_1 * factor_2;
             Real dW_ijV_j = kernel_->dW(distance_dummy, displacement_dummy) * Vol_j_dummy;
             Vecd e_ij = displacement_dummy / distance_dummy;
-            W_ijV_j_ttl += std::max(kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy - offset_W_ij_, Real(0));
+            W_ijV_j_ttl += kernel_->W(distance_dummy, displacement_dummy) * Vol_j_dummy;
             dW_ijV_j_ttl += dW_ijV_j;
             dW_ijV_j_e_ij_ttl += dW_ijV_j * e_ij;
 
@@ -484,7 +483,7 @@ NeighborBuilderSurfaceContactToShell::NeighborBuilderSurfaceContactToShell(SPHBo
     Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
     Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
-    offset_W_ij_ = 0;
+    offset_W_ij_ = kernel_->W(particle_distance_ave_, ZeroVecd);
 }
 //=================================================================================================//
 } // namespace SPH

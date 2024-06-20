@@ -59,7 +59,7 @@ template <>
 class RepulsionDensitySummation<Inner<>> : public RepulsionDensitySummation<Base, DataDelegateInner>
 {
   public:
-    explicit RepulsionDensitySummation(BaseInnerRelation &self_contact_relation);
+    explicit RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
     virtual ~RepulsionDensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -114,22 +114,28 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateC
  * @class ShellSelfContactDensityUsingDummyParticles
  * @brief Computing the contact density due to shell contact using dummy particle.
  */
-class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, SolidDataInner>
+class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, DataDelegateInner>
 {
+  private:
+    StdLargeVec<Real> &mass_;
+
   public:
     explicit ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation);
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
- * @class ContactDensitySummationToShell
- * @brief Computing the contact density due to shell contact
+ * @class ContactDensitySummationShell
+ * @brief Computing the contact density due to shell contact bodies
  */
-class ContactDensitySummationToShell : public RepulsionDensitySummation<Base, ContactDynamicsData>
+class ContactDensitySummationShell : public RepulsionDensitySummation<Base, DataDelegateContact>
 {
+  private:
+    StdVec<StdLargeVec<Real> *> contact_mass_;
+
   public:
-    explicit ContactDensitySummationToShell(SurfaceContactRelationToShell &solid_body_contact_relation);
-    ~ContactDensitySummationToShell() override = default;
+    explicit ContactDensitySummationShell(SurfaceContactRelationToShell &solid_body_contact_relation);
+    ~ContactDensitySummationShell() override = default;
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics

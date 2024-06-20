@@ -297,7 +297,6 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
     StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
     StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
     StdLargeVec<Vecd> &pos0_;
-    Real offset_W_ij_;
 };
 
 /**
@@ -311,7 +310,7 @@ class NeighborBuilderSurfaceContactToShell : public BaseNeighborBuilderContactTo
     inline void operator()(Neighborhood &neighborhood,
                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
     {
-        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius(), 0.0);
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j, particle_distance_ave_, offset_W_ij_);
     }
 
   private:

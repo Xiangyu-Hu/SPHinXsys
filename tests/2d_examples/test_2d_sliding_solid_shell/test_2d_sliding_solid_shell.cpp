@@ -44,10 +44,15 @@ class Cube : public MultiPolygonShape
         multi_polygon_.addABox(translation_cube, halfsize_cube, ShapeBooleanOps::add);
     }
 };
-class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
+
+namespace SPH
+{
+class WallBoundary;
+template <>
+class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 {
   public:
-    explicit WallBoundaryParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     void initializeGeometricVariables() override
     {
         Real s0 = -BW + 0.5 * resolution_shell;
@@ -63,6 +68,7 @@ class WallBoundaryParticleGenerator : public ParticleGenerator<Surface>
         }
     }
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -82,16 +88,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
     free_cube.defineBodyLevelSetShape()->cleanLevelSet(0);
-    free_cube.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    free_cube.generateParticles<Lattice>();
+    free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    free_cube.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles(WallBoundaryParticleGenerator(wall_boundary));
+    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.generateParticles<SurfaceParticles, WallBoundary>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
-    cube_observer.generateParticles<Observer>(observation_location);
+    cube_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -116,28 +122,26 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
     /** Kernel correction. */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
-    /** Time step size. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     /** stress relaxation for the solid body. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummationToShell> free_cube_update_contact_density(free_cube_contact);
-    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact, "RepulsionForce", "RepulsionDensityToShell");
+    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> free_cube_update_contact_density(free_cube_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     /** Damping*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
         damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
+    /** Time step size. */
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    free_cube.addBodyStateForRecording<Real>("RepulsionDensityToShell");
-    free_cube.addBodyStateForRecording<Vecd>("RepulsionForce");
     wall_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     /** Observer and output. */
     ObservedQuantityRecording<Vecd>
-        write_free_cube_displacement("Displacement", cube_observer_contact);
+        write_free_cube_displacement("Position", cube_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
