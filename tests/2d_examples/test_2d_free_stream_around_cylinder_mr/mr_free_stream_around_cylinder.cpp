@@ -33,7 +33,6 @@ int main(int ac, char *av[])
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
-    water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 4.0);
@@ -75,8 +74,8 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-        ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_real_body_states(sph_system);
+        ReloadParticleIO write_real_body_particle_reload_files({&water_block, &cylinder});
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
@@ -155,10 +154,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
+    write_real_body_states.addVariableRecording<int>(water_block, "Indicator");
+    write_real_body_states.addVariableRecording<Real>(water_block, "VolumetricMeasure");
+    write_real_body_states.addVariableRecording<Real>(water_block, "SmoothingLengthRatio");
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     RegressionTestTimeAverage<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(cylinder, "PressureForceFromFluid");

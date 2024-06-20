@@ -170,30 +170,6 @@ class SPHBody
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
-    template <typename DataType>
-    void addBodyState(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name)
-    {
-        base_particles_->template registerVariable<DataType>(variable_addrs, variable_name);
-    };
-
-    template <typename VariableType>
-    void addBodyStateForRecording(const std::string &variable_name)
-    {
-        base_particles_->template addVariableToWrite<VariableType>(variable_name);
-    };
-
-    template <class DerivedVariableMethod, typename... Args>
-    void addDerivedBodyStateForRecording(Args &&...args)
-    {
-        base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(*this, std::forward<Args>(args)...);
-    };
-
-    template <typename VariableType>
-    void addBodyStateToRestart(const std::string &variable_name)
-    {
-        base_particles_->template addVariableToRestart<VariableType>(variable_name);
-    };
-
     virtual void writeParticlesToVtuFile(std::ostream &output_file);
     virtual void writeParticlesToVtpFile(std::ofstream &output_file);
     virtual void writeParticlesToPltFile(std::ofstream &output_file);
@@ -223,7 +199,7 @@ class RealBody : public SPHBody
         : SPHBody(std::forward<Args>(args)...),
           iteration_count_(1), cell_linked_list_created_(false)
     {
-        this->getSPHSystem().real_bodies_.push_back(this);
+        this->getSPHSystem().addRealBody(this);
     };
     virtual ~RealBody(){};
     BaseCellLinkedList &getCellLinkedList();

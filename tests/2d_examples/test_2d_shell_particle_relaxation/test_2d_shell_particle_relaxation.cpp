@@ -44,12 +44,6 @@ int main(int ac, char *av[])
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
     pipe_body.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
-    pipe_body.addBodyStateForRecording<Vecd>("NormalDirection");
-    /**
-     * @brief define simple data file input and outputs functions.
-     */
-    BodyStatesRecordingToVtp write_real_body_states({pipe_body});
-    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, pipe_body.getCellLinkedList());
 
     InnerRelation pipe_body_inner(pipe_body);
     using namespace relax_dynamics;
@@ -57,7 +51,13 @@ int main(int ac, char *av[])
     /** A  Physics relaxation step. */
     ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner);
     ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
-    pipe_body.addBodyStateForRecording<int>("UpdatedIndicator");
+    /**
+     * @brief define simple data file input and outputs functions.
+     */
+    BodyStatesRecordingToVtp write_real_body_states({pipe_body});
+    write_real_body_states.addVariableRecording<Vecd>(pipe_body, "NormalDirection");
+    write_real_body_states.addVariableRecording<int>(pipe_body, "UpdatedIndicator");
+    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, pipe_body.getCellLinkedList());
     /**
      * @brief 	Particle relaxation starts here.
      */

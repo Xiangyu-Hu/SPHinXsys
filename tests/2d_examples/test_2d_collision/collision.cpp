@@ -131,7 +131,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_ball_state(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_ball_state(sph_system);
         ReloadParticleIO write_particle_reload_files({&free_ball, &damping_ball});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -207,7 +207,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         free_ball_displacement_recording("Position", free_ball_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

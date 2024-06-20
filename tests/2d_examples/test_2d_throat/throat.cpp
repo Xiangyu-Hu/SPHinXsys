@@ -185,7 +185,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
         write_fluid_kinetic_energy(fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>

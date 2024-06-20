@@ -218,8 +218,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_ball_state(system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files({&beam_body});
+        BodyStatesRecordingToVtp write_ball_state(system);
+        ReloadParticleIO write_particle_reload_files(beam_body);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -269,7 +269,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(system);
     ReducedQuantityRecording<TotalKineticEnergy> write_kinetic_mechanical_energy(beam_body);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------

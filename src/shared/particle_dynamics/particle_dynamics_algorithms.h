@@ -128,6 +128,7 @@ template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class ReduceDynamics : public LocalDynamicsType,
                        public BaseDynamics<typename LocalDynamicsType::ReturnType>
 {
+    using ReturnType = typename LocalDynamicsType::ReturnType;
   public:
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
@@ -135,7 +136,6 @@ class ReduceDynamics : public LocalDynamicsType,
           BaseDynamics<typename LocalDynamicsType::ReturnType>(identifier.getSPHBody()){};
     virtual ~ReduceDynamics(){};
 
-    using ReturnType = typename LocalDynamicsType::ReturnType;
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 

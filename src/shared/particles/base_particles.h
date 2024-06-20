@@ -21,10 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_particles.h
- * @brief 	This is the base class of SPH particles. The basic data of the particles
- *			is saved in separated large vectors. Each derived class will introduce several extra
- * 			vectors for the new data. Note that there is no class of single particle.
+ * @file base_particles.h
+ * @brief This is the base class of SPH particles containing data
+ * and operation for all types of particles.
+ * Note that there is no class of single particle.
+ * TODO: It seems that I need to transfer the IO related functions to the IO classes.
+ * TODO: Sorting related functions and data should be transferred to the sorting classes.
  * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
@@ -46,39 +48,36 @@ namespace SPH
 class SPHBody;
 class BaseMaterial;
 class BodySurface;
-template <class ReturnType>
-class BaseDynamics;
 
 /**
  * @class BaseParticles
- * @brief Particles with essential (geometric and kinematic) data.
- * 		  There are three types of particles， all particles of a same type are saved with continuous memory segments.
- * 		  The first type is real particles whose states are updated by particle dynamics.
- * 		  One is buffer particles whose state are not updated by particle dynamics.
- * 		  Buffer particles are saved behind real particles.
- * 		  The global value of total_real_particles_ separate the real and buffer particles.
- * 		  They may be switched from real particles or switch to real particles.
- * 		  As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially.
- * 		  The basic idea is swap the data of the last real particle with the one will be switched particle,
- * 		  and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one.
- * 		  Switch from buffer particle to real particle is easy. One just need to assign expect state to
- * 		  the first buffer particle and increase total_real_particles_ by one.
- * 		  The other is ghost particles whose states are updated according to
- * 		  boundary condition if their indices are included in the neighbor particle list.
- * 		  Ghost particles whose states are updated according to
- *      boundary condition if their indices are included in the neighbor particle list.
- *      The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
- *      All particles are bounded by particle_bound_, which is the total number of particles in all types.
- * 		  It will be initialized to zero before a time step.
- * 		  In SPHinXsys, the discrete variables (state of each particle) registered in general particle data
- *      (ParticleData) belong to a hierarchy of two layers.
- * 		  The first is for the basic physical states to describe the physical process.
- * 		  These variables are defined within the classes of particles.
- * 		  The second is for the local, dynamics-method-related variables, which are defined in specific methods,
- * 		  and are only used by the relevant methods. Generally, a discrete variable is defined
- *      and the corresponding data owned by one object so that other objects can use it by the function
- *      getVariableByName. A shared discrete variable can also be defined by several objects.
- *      In this case, the data is owned by BaseParticles within all_shared_data_ptrs_.
+ * @brief Particles with essential (geometric and matter) data.
+ * There are three groups of particles，all particles of a same type are saved with continuous memory segments.
+ * The first is for real particles whose states are updated by particle dynamics.
+ * One is buffer particles whose state are not updated by particle dynamics.
+ * Buffer particles are saved behind real particles.
+ * The global value of total_real_particles_ separate the real and buffer particles.
+ * They may be switched from real particles or switch to real particles.
+ * As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially.
+ * The basic idea is swap the data of the last real particle with the one will be switched particle,
+ * and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one.
+ * Switch from buffer particle to real particle is easy. One just need to assign expect state to
+ * the first buffer particle and increase total_real_particles_ by one.
+ * The third group is for ghost particles whose states are updated according to
+ * boundary condition if their indices are included in the neighbor particle list.
+ * Ghost particles whose states are updated according to
+ * boundary condition if their indices are included in the neighbor particle list.
+ * The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
+ * All particles are bounded by particle_bound_, which is the total number of particles in all types.
+ * It will be initialized to zero before a time step.
+ * In SPHinXsys, the discrete variables (state of each particle) registered in general particle data
+ * (ParticleData) belong to a hierarchy of two layers.
+ * The first is for the basic geometric and matter properties.
+ * These variables are created of after particles are generated.
+ * The second is for the local, dynamics-method-related variables, which are defined in specific methods,
+ * and are only used by the relevant methods. Generally, a discrete variable is defined
+ * and the corresponding data can use or redefined (with no change to the data) by other methods
+ * using the function getVariableByName.
  */
 class BaseParticles
 {
@@ -86,7 +85,6 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
     DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -96,7 +94,7 @@ class BaseParticles
     //----------------------------------------------------------------------
     size_t total_real_particles_;
     size_t real_particles_bound_; /**< Maximum possible number of real particles. Also starting index for ghost particles. */
-    size_t particles_bound_;      /**< Total number of particles in all types. */
+    size_t particles_bound_;      /**< Total number of particles in all groups. */
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
@@ -146,10 +144,6 @@ class BaseParticles
     template <typename DataType>
     void addVariableToReload(const std::string &variable_name);
     inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
-
-    template <class DerivedVariableMethod, class... Ts>
-    void addDerivedVariableToWrite(SPHBody &sph_body, Ts &&...);
-    void computeDerivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting
     //----------------------------------------------------------------------
@@ -189,8 +183,8 @@ class BaseParticles
   protected:
     StdLargeVec<Vecd> pos_;  /**< Position */
     StdLargeVec<Real> Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;  /**< Density */
-    StdLargeVec<Real> mass_; /**< Mass*/
+    StdLargeVec<Real> rho_;  /**< Density as a fundamental property of phyiscal matter */
+    StdLargeVec<Real> mass_; /**< Mass as another fundamental property of physical matter */
 
     SPHBody &sph_body_;
     std::string body_name_;
@@ -203,7 +197,6 @@ class BaseParticles
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
-    StdVec<BaseDynamics<void> *> derived_variables_;
 
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
@@ -250,24 +243,6 @@ class BaseParticles
   protected:
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
-};
-
-/**
- * @class BaseDerivedVariable
- * @brief computing displacement from current and initial particle position
- */
-template <typename DataType>
-class BaseDerivedVariable
-{
-  public:
-    using DerivedDataType = DataType;
-    std::string variable_name_;
-
-    BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name);
-    virtual ~BaseDerivedVariable(){};
-
-  protected:
-    StdLargeVec<DataType> derived_variable_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H

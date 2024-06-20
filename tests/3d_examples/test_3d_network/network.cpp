@@ -55,7 +55,7 @@ int main(int ac, char *av[])
     tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     tree_on_sphere.generateParticles<BaseParticles, Network>(starting_point, second_point, iteration_levels, grad_factor);
     /** Write particle data. */
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     write_states.writeToFile(0);
 
     return 0;

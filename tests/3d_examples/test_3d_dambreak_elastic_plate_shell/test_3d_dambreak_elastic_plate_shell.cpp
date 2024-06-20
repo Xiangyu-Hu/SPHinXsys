@@ -242,14 +242,14 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    plate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    plate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
-    plate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
-    plate.addDerivedBodyStateForRecording<Displacement>();
-    gate.addBodyStateForRecording<Vec3d>("NormalDirection");
-    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
+    write_real_body_states.addVariableRecording<Vec3d>(gate, "NormalDirection");
+    write_real_body_states.addVariableRecording<Real>(plate, "Average1stPrincipleCurvature");
+    write_real_body_states.addVariableRecording<Real>(plate, "Average2ndPrincipleCurvature");
+    write_real_body_states.addVariableRecording<Vec3d>(plate, "PressureForceFromFluid");
+    write_real_body_states.addVariableRecording<Vec3d>(wall_boundary, "NormalDirection");
+    write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(plate);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);
     //----------------------------------------------------------------------
@@ -281,7 +281,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_water_block_states.writeToFile(0);
+    write_real_body_states.writeToFile(0);
     write_displacement_1.writeToFile(0);
     write_displacement_2.writeToFile(0);
     //----------------------------------------------------------------------
@@ -365,7 +365,7 @@ int main(int ac, char *av[])
             gate.setNewlyUpdated();
         if (GlobalStaticVariables::physical_time_ <= contact_time)
             plate.setNewlyUpdated();
-        write_water_block_states.writeToFile();
+        write_real_body_states.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

@@ -172,7 +172,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     /** WaveProbe. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createWaveGauge(), "WaveGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
         write_recorded_pressure_fp2("Pressure", fp2_contact_w);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp3("Pressure", fp3_contact_w);
-    RestartIO restart_io(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

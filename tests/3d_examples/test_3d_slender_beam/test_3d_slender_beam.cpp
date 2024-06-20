@@ -185,7 +185,7 @@ int main(int ac, char *av[])
         bar_rotation_b_damping(0.5, bar_body_inner, "BinormalAngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     ObservedQuantityRecording<Vecd> write_beam_max_displacement("Position", bar_observer_contact);
 
     /** Apply initial condition. */

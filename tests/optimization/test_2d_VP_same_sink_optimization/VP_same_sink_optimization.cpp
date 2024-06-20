@@ -216,8 +216,8 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
