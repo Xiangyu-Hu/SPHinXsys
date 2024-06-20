@@ -134,8 +134,6 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
-    water_block.addBodyStateForRecording<Real>("Pressure"); // output for debug
-    water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
@@ -163,7 +161,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_body_states(sph_system);
+    write_body_states.addVariableRecording<Real>(water_block, "Pressure"); // output for debug
+    write_body_states.addVariableRecording<int>(water_block, "Indicator"); // output for debug
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
         write_water_kinetic_energy(water_block);
     //----------------------------------------------------------------------

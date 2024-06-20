@@ -138,8 +138,8 @@ int main(int ac, char *av[])
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addVariableRecording<Vecd>(cylinder_body, "PseudoNormal");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_max_displacement("Position", cylinder_observer_contact);
 

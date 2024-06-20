@@ -64,8 +64,8 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
         RelaxationStepInner relaxation_step_inner(insert_body_inner);
-        BodyStatesRecordingToVtp write_insert_body_to_vtp({&insert_body});
-        ReloadParticleIO write_particle_reload_files({&insert_body});
+        BodyStatesRecordingToVtp write_insert_body_to_vtp(insert_body);
+        ReloadParticleIO write_particle_reload_files(insert_body);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     RegressionTestTimeAverage<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(insert_body, "ViscousForceFromFluid");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);

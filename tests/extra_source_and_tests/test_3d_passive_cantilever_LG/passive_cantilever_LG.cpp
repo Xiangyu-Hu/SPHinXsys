@@ -102,7 +102,7 @@ int main(int ac, char *av[])
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", cantilever_observer_contact);
     /**

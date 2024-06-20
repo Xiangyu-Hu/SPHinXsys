@@ -81,18 +81,58 @@ class BodyStatesRecording : public BaseIO
 {
 
   public:
-    BodyStatesRecording(SPHBodyVector bodies);
+    BodyStatesRecording(SPHSystem &sph_system);
     BodyStatesRecording(SPHBody &body);
     virtual ~BodyStatesRecording(){};
     /** write with filename indicated by physical time */
     void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
 
+    template <typename DataType>
+    void addVariableRecording(SPHBody &sph_body, const std::string &name)
+    {
+        if (isBodyIncluded(&sph_body))
+        {
+            sph_body.getBaseParticles().addVariableToWrite<DataType>(name);
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
+
+    template <typename DerivedVariableMethod,
+              typename DynamicsIdentifier, typename... Args>
+    void addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        SPHBody &sph_body = identifier.getSPHBody();
+        if (isBodyIncluded(&sph_body))
+        {
+            derived_variables_.push_back(
+                derived_variables_keeper_.createPtr<DerivedVariableMethod>(
+                    identifier, std::forward<Args>(args)...));
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording body list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
+
   protected:
     SPHBodyVector bodies_;
+    StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
-
+    bool isBodyIncluded(SPHBody *sph_body);
     virtual void writeWithFileName(const std::string &sequence) = 0;
+
+  private:
+    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 };
 
 /**
@@ -109,7 +149,7 @@ class RestartIO : public BaseIO
     Real readRestartTime(size_t restart_step);
 
   public:
-    RestartIO(SPHBodyVector bodies);
+    RestartIO(SPHSystem &sph_system);
     virtual ~RestartIO(){};
 
     virtual void writeToFile(size_t iteration_step = 0) override;

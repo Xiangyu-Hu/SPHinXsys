@@ -213,11 +213,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<int>("BufferParticleIndicator");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
+    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
+    body_states_recording.addVariableRecording<Real>(water_block, "Density");
+    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
