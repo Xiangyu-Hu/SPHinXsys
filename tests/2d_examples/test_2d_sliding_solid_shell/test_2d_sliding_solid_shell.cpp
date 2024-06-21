@@ -107,7 +107,7 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_cube_inner(free_cube);
-    SurfaceContactRelationToShell free_cube_contact(free_cube, {&wall_boundary}, {false});
+    SurfaceContactRelationFromShell free_cube_contact(free_cube, {&wall_boundary}, {false});
     ShellInnerRelationWithContactKernel wall_curvature_inner(wall_boundary, free_cube);
     ContactRelation cube_observer_contact(cube_observer, {&free_cube});
     //----------------------------------------------------------------------
@@ -126,7 +126,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> free_cube_update_contact_density(free_cube_contact);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> free_cube_update_contact_density(free_cube_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     /** Damping*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>

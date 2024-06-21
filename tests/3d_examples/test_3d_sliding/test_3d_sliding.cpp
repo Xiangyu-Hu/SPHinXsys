@@ -128,9 +128,9 @@ void block_sliding(
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
 
     // Contact relation
-    SurfaceContactRelationToShell contact_cube_to_slope(cube_body, {&slope_body}, {true});
+    SurfaceContactRelationFromShell contact_cube_to_slope(cube_body, {&slope_body}, {true});
     // Contact density
-    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density(contact_cube_to_slope);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density(contact_cube_to_slope);
     // Contact Force
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope);
 

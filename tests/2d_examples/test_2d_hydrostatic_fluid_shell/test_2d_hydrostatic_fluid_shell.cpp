@@ -212,8 +212,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     InnerRelation gate_inner(gate);
     // shell normal should point from fluid to shell
     // normal corrector set to true if shell normal is currently pointing from shell to fluid
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
-    ContactRelationFromShell gate_contact(gate, {&water_block}, {true});
+    ContactRelationFromShell water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
+    ContactRelationToShell gate_contact(gate, {&water_block}, {true});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     // inner relation to compute curvature
     ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_block);

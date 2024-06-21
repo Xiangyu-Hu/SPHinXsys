@@ -207,9 +207,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     SurfaceContactRelationFromShellToShell contact_s_to_m(ring_s_body, {&ring_m_body}, {true});
     SurfaceContactRelationFromShellToShell contact_m_to_s(ring_m_body, {&ring_s_body}, {true});
     // shell-solid
-    SurfaceContactRelationFromShell contact_m_to_l(ring_m_body, {&ring_l_body});
+    SurfaceContactRelationToShell contact_m_to_l(ring_m_body, {&ring_l_body});
     // solid-shell
-    SurfaceContactRelationToShell contact_l_to_m(ring_l_body, {&ring_m_body}, {true});
+    SurfaceContactRelationFromShell contact_l_to_m(ring_l_body, {&ring_m_body}, {true});
 
     // Inner relation of curvature
     ShellInnerRelationWithContactKernel curvature_inner_m_with_s_kernel(ring_m_body, ring_s_body);
@@ -225,12 +225,12 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // self contact
     InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> self_contact_density_m(self_contact_m);
     // shell-shell
-    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density_s_to_m(contact_s_to_m);
-    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density_m_to_s(contact_m_to_s);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density_s_to_m(contact_s_to_m);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density_m_to_s(contact_m_to_s);
     // shell-solid
     InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_m_to_l(contact_m_to_l);
     // solid-shell
-    InteractionDynamics<solid_dynamics::ContactDensitySummationShell> contact_density_l_to_m(contact_l_to_m);
+    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density_l_to_m(contact_l_to_m);
 
     // force
     // self contact
