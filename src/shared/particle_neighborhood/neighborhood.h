@@ -311,10 +311,6 @@ class NeighborBuilderSurfaceContactFromShell : public BaseNeighborBuilderContact
     {
         update_neighbors(neighborhood, pos_i, index_i, list_data_j);
     }
-
-  private:
-    Real direction_corrector_;
-    Real offset_W_ij_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

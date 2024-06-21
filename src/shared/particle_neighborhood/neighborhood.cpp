@@ -475,8 +475,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
 };
 //=================================================================================================//
 NeighborBuilderSurfaceContactFromShell::NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
-    : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction),
-      direction_corrector_(normal_correction ? -1 : 1)
+    : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction)
 {
     Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
     Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
