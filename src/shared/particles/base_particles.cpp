@@ -13,6 +13,7 @@ namespace SPH
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
       particle_sorting_(*this),
+      pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
@@ -27,8 +28,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     //----------------------------------------------------------------------
     //		register geometric data only
     //----------------------------------------------------------------------
-    registerVariable(pos_, "Position");
-    registerVariable(Vol_, "VolumetricMeasure");
+    pos_ = registerSharedVariable<Vecd>("Position");
+    Vol_ = registerSharedVariable<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
     //		add particle reload data on geometries
     //----------------------------------------------------------------------
@@ -41,10 +42,10 @@ void BaseParticles::initializeOtherVariables()
     //----------------------------------------------------------------------
     //		register non-geometric data
     //----------------------------------------------------------------------
-    registerVariable(rho_, "Density", base_material_.ReferenceDensity());
-    registerVariable(mass_, "Mass",
-                     [&](size_t i) -> Real
-                     { return rho_[i] * ParticleVolume(i); });
+    rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
+    mass_ = registerSharedVariable<Real>("Mass",
+                                         [&](size_t i) -> Real
+                                         { return (*rho_)[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
@@ -121,7 +122,7 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
 void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
 {
     // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d(pos_[index]);
+    Vec3d particle_position = upgradeToVec3d((*pos_)[index]);
     output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
                 << index << " ";
 
@@ -172,7 +173,7 @@ void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream &output_file, Bo
     for (size_t i = 0; i != total_surface_particles; ++i)
     {
         size_t particle_i = surface_particles.body_part_particles_[i];
-        Vec3d particle_position = upgradeToVec3d(pos_[particle_i]);
+        Vec3d particle_position = upgradeToVec3d((*pos_)[particle_i]);
         output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
     }
     output_file << std::endl;

@@ -43,12 +43,12 @@ class SurfaceParticles : public BaseParticles
     SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~SurfaceParticles(){};
 
-    StdLargeVec<Vecd> n_;                      /**< normal direction */
-    StdLargeVec<Real> thickness_;              /**< shell thickness */
-    StdLargeVec<Matd> transformation_matrix0_; /**< initial transformation matrix from global to local coordinates */
+    StdLargeVec<Vecd> *n_;                      /**< normal direction */
+    StdLargeVec<Real> *thickness_;              /**< shell thickness */
+    StdLargeVec<Matd> *transformation_matrix0_; /**< initial transformation matrix from global to local coordinates */
 
     /** get particle volume. */
-    virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
+    virtual Real ParticleVolume(size_t index_i) override { return (*Vol_)[index_i] * (*thickness_)[index_i]; }
     virtual void registerTransformationMatrix();
     virtual void initializeOtherVariables() override;
     /** Return this pointer. */

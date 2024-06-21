@@ -6,7 +6,8 @@ namespace SPH
 {
 //=============================================================================================//
 SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : BaseParticles(sph_body, base_material)
+    : BaseParticles(sph_body, base_material), n_(nullptr), thickness_(nullptr),
+      transformation_matrix0_(nullptr)
 {
     //----------------------------------------------------------------------
     //		modify kernel function for surface particles
@@ -15,8 +16,8 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     //----------------------------------------------------------------------
     //		register geometric data only
     //----------------------------------------------------------------------
-    registerVariable(n_, "NormalDirection");
-    registerVariable(thickness_, "Thickness");
+    n_ = registerSharedVariable<Vecd>("NormalDirection");
+    thickness_ = registerSharedVariable<Real>("Thickness");
     /**
      * add particle reload data
      */
@@ -32,8 +33,9 @@ void SurfaceParticles::initializeOtherVariables()
 //=================================================================================================//
 void SurfaceParticles::registerTransformationMatrix()
 {
-    registerVariable(transformation_matrix0_, "TransformationMatrix", [&](size_t index_i) -> Matd
-                     { return getTransformationMatrix(n_[index_i]); });
+    transformation_matrix0_ = registerSharedVariable<Matd>(
+        "TransformationMatrix", [&](size_t index_i) -> Matd
+        { return getTransformationMatrix((*n_)[index_i]); });
 }
 //=================================================================================================//
 } // namespace SPH
