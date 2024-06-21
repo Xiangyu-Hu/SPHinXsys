@@ -5,6 +5,7 @@
  */
 
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 
 namespace SPH
@@ -69,12 +70,14 @@ void block_sliding(
     int resolution_factor_slope)
 {
     // Global parameters
+    constexpr Real threshold = 5e-2; // 5% error
+
     const Real end_time = 3.0;
     const Real scale = 1.0;
 
     // geometry
     const Real cube_length = 1.0 * scale;
-    const Real slope_length = 20.0 * scale;
+    const Real slope_length = 25.0 * scale;
     const Real slope_width = 2.0 * scale;
     const Real slope_angle = 30.0 / 180.0 * Pi;
     Eigen::AngleAxisd rotation(slope_angle, Vec3d::UnitZ());
@@ -92,7 +95,7 @@ void block_sliding(
     // Import meshes
     auto cube_translation = Vec3d(0.5 * cube_length + 2 * resolution_cube, 0.5 * cube_length, 0.0);
     auto mesh_cube = std::make_shared<TriangleMeshShapeBrick>(0.5 * cube_length * Vec3d::Ones(), 5, cube_translation, "Cube");
-    auto slope_translation = Vec3d(0.5 * slope_length, -0.5 * resolution_slope, 0);
+    auto slope_translation = Vec3d(0.5 * slope_length, -(0.65 * resolution_cube + 1.15 * resolution_slope), 0);
     auto mesh_slope = std::make_shared<TriangleMeshShapeBrick>(0.5 * Vec3d(slope_length, resolution_slope, slope_width), 5, slope_translation, "Slope");
 
     // Material models
@@ -140,16 +143,17 @@ void block_sliding(
     SimpleDynamics<GravityForce> constant_gravity(cube_body, gravity);
 
     // analytical solution
-    // Real sin_theta = sin(slope_angle);
-    // Real cos_theta = cos(slope_angle);
-    // // analytical displacement under gravity
-    // auto get_analytical_displacement = [&](Real time)
-    // {
-    //     Real a = 0.5 * g * sin_theta * time * time;
-    //     Real u_x = a * cos_theta;
-    //     Real u_y = a * sin_theta;
-    //     return Vec3d(u_x, u_y, 0);
-    // };
+    Real sin_theta = sin(slope_angle);
+    Real cos_theta = cos(slope_angle);
+    // analytical displacement under gravity
+    auto get_analytical_displacement = [&](Real time)
+    {
+        Real a = 0.5 * g * sin_theta * time * time;
+        Real u_x = a * cos_theta;
+        Real u_y = a * sin_theta;
+        return Vec3d(u_x, u_y, 0);
+    };
+    const Real max_error = threshold * get_analytical_displacement(end_time).norm();
 
     // Output
     BodyStatesRecordingToVtp vtp_output(system);
@@ -174,6 +178,14 @@ void block_sliding(
     ContactRelation cube_observer_contact(cube_observer, {&cube_body});
     ObservedQuantityRecording<Vecd>
         write_cube_displacement("RotatedDisplacement", cube_observer_contact);
+
+    auto check_disp = [&]()
+    {
+        const Vec3d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
+        const Vec3d disp = (*write_cube_displacement.getObservedQuantity())[0];
+        for (int n = 0; n < 3; n++)
+            ASSERT_NEAR(abs(disp[n]), abs(analytical_disp[n]), max_error);
+    };
 
     // initialize
     system.initializeSystemCellLinkedLists();
@@ -225,6 +237,7 @@ void block_sliding(
             ite_output++;
             update_disp();
             write_cube_displacement.writeToFile(ite);
+            check_disp();
             vtp_output.writeToFile(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
@@ -245,7 +258,13 @@ void block_sliding(
 //------------------------------------------------------------------------------
 // the main program
 //------------------------------------------------------------------------------
-int main(int ac, char *av[])
+TEST(sliding_3d, factor_2x_2x)
 {
     block_sliding(2, 2);
+}
+
+int main(int ac, char *av[])
+{
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
