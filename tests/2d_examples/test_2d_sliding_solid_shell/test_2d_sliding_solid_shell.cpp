@@ -136,9 +136,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    wall_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     /** Observer and output. */
     ObservedQuantityRecording<Vecd>
         write_free_cube_displacement("Position", cube_observer_contact);

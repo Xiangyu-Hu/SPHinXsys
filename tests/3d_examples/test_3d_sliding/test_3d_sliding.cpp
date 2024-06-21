@@ -152,7 +152,7 @@ void block_sliding(
     // };
 
     // Output
-    BodyStatesRecordingToVtp vtp_output(system.real_bodies_);
+    BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
 
     // Observer

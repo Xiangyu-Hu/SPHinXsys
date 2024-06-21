@@ -290,19 +290,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     };
 
     // Output
-    ring_l_body.addBodyStateForRecording<Real>("RepulsionDensitySolidShell");
-    ring_l_body.addBodyStateForRecording<Vec2d>("RepulsionForceSolidShell");
-    ring_m_body.addBodyStateForRecording<Vec2d>("NormalDirection");
-    ring_m_body.addBodyStateForRecording<Real>("1stPrincipleCurvature");
-    ring_m_body.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    ring_m_body.addBodyStateForRecording<Real>("RepulsionDensityShellShell");
-    ring_m_body.addBodyStateForRecording<Real>("RepulsionDensityShellSolid");
-    ring_m_body.addBodyStateForRecording<Vec2d>("RepulsionForceShellShell");
-    ring_m_body.addBodyStateForRecording<Vec2d>("RepulsionForceShellSolid");
-    ring_s_body.addBodyStateForRecording<Vec2d>("NormalDirection");
-    ring_s_body.addBodyStateForRecording<Real>("RepulsionDensityShellShell");
-    ring_s_body.addBodyStateForRecording<Vec2d>("RepulsionForceShellShell");
-    BodyStatesRecordingToVtp vtp_output(system.real_bodies_);
+    BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
 
     // Initialization
@@ -344,15 +332,18 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 }
 
                 contact_density_s_to_m.exec();
-                contact_density_m_to_s.exec();
-                contact_density_l_to_m.exec();
-                contact_density_m_to_l.exec();
-                self_contact_density_m.exec();
-
                 contact_forces_s_to_m.exec();
+
+                contact_density_m_to_s.exec();
                 contact_forces_m_to_s.exec();
+
+                contact_density_l_to_m.exec();
                 contact_force_l_to_m.exec();
+
+                contact_density_m_to_l.exec();
                 contact_force_m_to_l.exec();
+
+                self_contact_density_m.exec();
                 self_contact_forces_m.exec();
 
                 dt = std::min({computing_time_step_size_l.exec(), computing_time_step_size_m.exec(), computing_time_step_size_s.exec()});
