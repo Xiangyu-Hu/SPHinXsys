@@ -221,46 +221,45 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 };
 
 /**
- * @class BaseNeighborBuilderToShell
+ * @class BaseNeighborBuilderFromShell
  * @brief A base neighbor builder functor for solid/shell or fluid/shell contact relation.
  */
-class BaseNeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
+class BaseNeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
 {
   public:
-    BaseNeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    BaseNeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
 
   protected:
     void update_neighbors(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i,
-                          const ListData &list_data_j,
-                          Real radius, Real offset_W_ij);
+                          const ListData &list_data_j);
 
   private:
     Real direction_corrector_;
 };
 
 /**
- * @class NeighborBuilderContactToShell
+ * @class NeighborBuilderContactFromShell
  * @brief A contact neighbor builder functor for contact relation from fluid to shell.
  */
-class NeighborBuilderContactToShell : public BaseNeighborBuilderContactToShell
+class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactFromShell
 {
   public:
-    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
     {
-        update_neighbors(neighborhood, pos_i, index_i, list_data_j, kernel_->CutOffRadius(), 0.0);
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j);
     };
 };
 
 /**
- * @class NeighborBuilderContactFromShell
+ * @class NeighborBuilderContactToShell
  * @brief A contact neighbor builder functor for contact relation from shell to fluid.
  */
-class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactShell
+class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
 {
   public:
-    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
@@ -300,21 +299,20 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
 };
 
 /**
- * @class NeighborBuilderSurfaceContactToShell
+ * @class NeighborBuilderSurfaceContactFromShell
  * @brief A solid contact neighbor builder functor between solid and a shell
  */
-class NeighborBuilderSurfaceContactToShell : public BaseNeighborBuilderContactToShell
+class NeighborBuilderSurfaceContactFromShell : public BaseNeighborBuilderContactFromShell
 {
   public:
-    NeighborBuilderSurfaceContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
     {
-        update_neighbors(neighborhood, pos_i, index_i, list_data_j, particle_distance_ave_, offset_W_ij_);
+        update_neighbors(neighborhood, pos_i, index_i, list_data_j);
     }
 
   private:
-    Real particle_distance_ave_;
     Real direction_corrector_;
     Real offset_W_ij_;
 };
