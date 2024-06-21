@@ -198,9 +198,9 @@ class Environment : public PreSettingCase
     BoundaryGeometryParallelToYAxis boundary_geometry_y;
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
         constrain_holder_y;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_position_damping;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_rotation_damping;
     /** Output */
     IOEnvironment io_environment;

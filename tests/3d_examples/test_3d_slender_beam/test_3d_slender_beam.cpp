@@ -177,11 +177,11 @@ int main(int ac, char *av[])
     BoundaryGeometryParallelToYAxis boundary_geometry_y(bar_body, "BoundaryGeometryParallelToYAxis");
     SimpleDynamics<slender_structure_dynamics::ConstrainBarBodyRegionAlongAxis>
         constrain_holder_y(boundary_geometry_y, 1);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         bar_position_damping(0.5, bar_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         bar_rotation_damping(0.5, bar_body_inner, "AngularVelocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         bar_rotation_b_damping(0.5, bar_body_inner, "BinormalAngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
