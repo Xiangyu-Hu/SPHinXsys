@@ -6,7 +6,8 @@
  * @author 	chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //	SPHinXsys Library.
-using namespace SPH;   //	Namespace cite here.
+#include <gtest/gtest.h>
+using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -40,7 +41,7 @@ class Cube : public MultiPolygonShape
     explicit Cube(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         Vec2d halfsize_cube(0.5 * L, 0.5 * L);
-        Transform translation_cube(halfsize_cube);
+        Transform translation_cube(halfsize_cube + 0.65 * (resolution_ref + resolution_shell) * Vec2d::UnitY());
         multi_polygon_.addABox(translation_cube, halfsize_cube, ShapeBooleanOps::add);
     }
 };
@@ -72,16 +73,12 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+void run_simulation()
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-#ifdef BOOST_AVAILABLE
-    // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
-#endif
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
@@ -136,6 +133,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    // analytical solution
+    Real sin_theta = sin(angle);
+    Real cos_theta = cos(angle);
+    // analytical displacement under gravity
+    auto get_analytical_displacement = [&](Real time)
+    {
+        Real a = 0.5 * gravity_g * sin_theta * time * time;
+        Real u_x = a * cos_theta;
+        Real u_y = a * sin_theta;
+        return Vec2d(u_x, u_y);
+    };
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     /** Observer and output. */
@@ -218,5 +226,20 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    return 0;
+    // gtest
+    const Vec2d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
+    const Vec2d disp = (*write_free_cube_displacement.getObservedQuantity())[0] - observation_location[0];
+    for (int n = 0; n < 2; n++)
+        ASSERT_NEAR(abs(disp[n]), abs(analytical_disp[n]), 0.05 * analytical_disp.norm());
+}
+
+TEST(sliding_2d, displacement)
+{
+    run_simulation();
+}
+
+int main(int ac, char *av[])
+{
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
