@@ -7,10 +7,10 @@ namespace fluid_dynamics
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf<Inner<>>::
     Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : Integration1stHalfInnerRiemann(inner_relation)
+    : Integration1stHalfInnerRiemann(inner_relation),
+      tau_(*particles_->registerSharedVariable<Matd>("ElasticStress")),
+      dtau_dt_(*particles_->registerSharedVariable<Matd>("ElasticStressChangeRate"))
 {
-    particles_->registerVariable(tau_, "ElasticStress");
-    particles_->registerVariable(dtau_dt_, "ElasticStressChangeRate");
     particles_->addVariableToSort<Matd>("ElasticStress");
     particles_->addVariableToRestart<Matd>("ElasticStress");
 }

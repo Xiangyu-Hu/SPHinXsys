@@ -64,11 +64,11 @@ class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInner
   public:
     explicit BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation);
     virtual ~BaseForceFromFluidInFVM(){};
-    StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
+    StdLargeVec<Vecd> &getForceFromFluid() { return *force_from_fluid_; };
 
   protected:
     StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> force_from_fluid_;
+    StdLargeVec<Vecd> *force_from_fluid_;
 };
 
 /**
@@ -110,7 +110,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
           riemann_solver_(fluid_, fluid_),
           each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
     {
-        particles_->registerVariable(force_from_fluid_, "PressureForceOnSolid");
+        force_from_fluid_ = particles_->registerSharedVariable<Vecd>("PressureForceOnSolid");
     };
     Fluid &fluid_;
     StdLargeVec<Vecd> &vel_;
@@ -134,7 +134,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
                 FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
                 FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, e_ij);
                 force -= 2.0 * (-e_ij) * interface_state.p_ * Vol_i * inner_neighborhood.dW_ij_[2] * Vol_[index_j];
-                force_from_fluid_[index_i] = force;
+                (*force_from_fluid_)[index_i] = force;
             }
         }
     };

@@ -7,12 +7,13 @@ namespace fluid_dynamics
 //=================================================================================================//
 SurfaceTensionStress::
     SurfaceTensionStress(BaseContactRelation &contact_relation, StdVec<Real> contact_surface_tension)
-    : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation)
+    : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
+      color_gradient_(*particles_->registerSharedVariable<Vecd>("ColorGradient")),
+      surface_tension_stress_(*particles_->registerSharedVariable<Matd>("SurfaceTensionStress")),
+      contact_surface_tension_(contact_surface_tension)
 {
-    particles_->registerVariable(color_gradient_, "ColorGradient");
     particles_->addVariableToSort<Vecd>("ColorGradient");
     particles_->addVariableToWrite<Vecd>("ColorGradient");
-    particles_->registerVariable(surface_tension_stress_, "SurfaceTensionStress");
     particles_->addVariableToSort<Matd>("SurfaceTensionStress");
     particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
     Real rho0 = getSPHBody().base_material_->ReferenceDensity();

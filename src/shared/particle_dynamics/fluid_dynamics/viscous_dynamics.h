@@ -175,7 +175,7 @@ class VorticityInner : public LocalDynamics, public DataDelegateInner
   protected:
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_;
-    StdLargeVec<AngularVecd> vorticity_;
+    StdLargeVec<AngularVecd> &vorticity_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -276,10 +276,8 @@ ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
       F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
       F_bending_(*particles_->getVariableByName<Matd>("BendingDeformationGradient")),
       k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature"))
-{
-    particles_->registerVariable(dn_0_, "InitialNormalGradient");
-};
+      k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
+      dn_0_(*particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
 //=================================================================================================//
 void ShellCurvature::compute_initial_curvature()
 {

@@ -83,11 +83,10 @@ ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_
     : DataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
       pos_(*particles_->getVariableByName<Vecd>("Position")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
-{
-    particles_->registerVariable(n_temp_, "PreviousNormalDirection", [&](size_t i) -> Vecd
-                                 { return n_[i]; });
-}
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+      n_temp_(*particles_->registerSharedVariable<Vecd>(
+          "PreviousNormalDirection", [&](size_t i) -> Vecd
+          { return n_[i]; })) {}
 //=================================================================================================//
 void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Real dt)
 {
@@ -111,10 +110,11 @@ ShellNormalDirectionPrediction::ConsistencyCorrection::
     ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       consistency_criterion_(consistency_criterion),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+      updated_indicator_(*particles_->registerSharedVariable<int>(
+          "UpdatedIndicator", [&](size_t i) -> int
+          { return 0; }))
 {
-    particles_->registerVariable(updated_indicator_, "UpdatedIndicator", [&](size_t i) -> int
-                                 { return 0; });
     updated_indicator_[particles_->total_real_particles_ / 3] = 1;
 }
 //=================================================================================================//

@@ -17,16 +17,14 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
       vel_(*particles_->getVariableByName<Vecd>("Velocity")),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")),
       pos_(*particles_->getVariableByName<Vecd>("Position")),
+      inner_weight_summation_(*particles_->registerSharedVariable<Real>("InnerWeightSummation")),
+      rho_average_(*particles_->registerSharedVariable<Real>("DensityAverage")),
+      vel_normal_average_(*particles_->registerSharedVariable<Real>("VelocityNormalAverage")),
+      vel_tangential_average_(*particles_->registerSharedVariable<Vecd>("VelocityTangentialAverage")),
+      vel_average_(*particles_->registerSharedVariable<Vecd>("VelocityAverage")),
       indicator_(*particles_->getVariableByName<int>("Indicator")),
       smeared_surface_(*particles_->getVariableByName<int>("SmearedSurface")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
-{
-    particles_->registerVariable(inner_weight_summation_, "InnerWeightSummation");
-    particles_->registerVariable(rho_average_, "DensityAverage");
-    particles_->registerVariable(vel_normal_average_, "VelocityNormalAverage");
-    particles_->registerVariable(vel_tangential_average_, "VelocityTangentialAverage");
-    particles_->registerVariable(vel_average_, "VelocityAverage");
-};
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection")){};
 //=================================================================================================//
 void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
 {

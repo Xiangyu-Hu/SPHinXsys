@@ -46,9 +46,9 @@ bool FreeSurfaceIndication<Inner<>>::isVeryNearFreeSurface(size_t index_i)
 //=================================================================================================//
 FreeSurfaceIndication<Inner<SpatialTemporal>>::
     FreeSurfaceIndication(BaseInnerRelation &inner_relation)
-    : FreeSurfaceIndication<Inner<>>(inner_relation)
+    : FreeSurfaceIndication<Inner<>>(inner_relation),
+      previous_surface_indicator_(*particles_->registerSharedVariable<int>("PreviousSurfaceIndicator"))
 {
-    particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
     particles_->addVariableToSort<int>("PreviousSurfaceIndicator");
 }
 //=================================================================================================//

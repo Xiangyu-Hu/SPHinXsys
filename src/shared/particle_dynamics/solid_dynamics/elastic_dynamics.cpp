@@ -87,13 +87,10 @@ void BaseIntegration1stHalf::update(size_t index_i, Real dt)
     vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
 //=================================================================================================//
-Integration1stHalf::
-    Integration1stHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration1stHalf(inner_relation)
-{
-    particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
-    numerical_dissipation_factor_ = 0.25;
-}
+Integration1stHalf::Integration1stHalf(BaseInnerRelation &inner_relation)
+    : BaseIntegration1stHalf(inner_relation),
+      stress_PK1_B_(*particles_->registerSharedVariable<Matd>("StressPK1OnParticle")),
+      numerical_dissipation_factor_(0.25) {}
 //=================================================================================================//
 Integration1stHalfPK2::Integration1stHalfPK2(BaseInnerRelation &inner_relation)
     : Integration1stHalf(inner_relation){};
@@ -152,12 +149,10 @@ void Integration1stHalfCauchy::initialization(size_t index_i, Real dt)
 //=================================================================================================//
 DecomposedIntegration1stHalf::
     DecomposedIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : BaseIntegration1stHalf(inner_relation)
-{
-    particles_->registerVariable(J_to_minus_2_over_dimension_, "DeterminantTerm");
-    particles_->registerVariable(stress_on_particle_, "StressOnParticle");
-    particles_->registerVariable(inverse_F_T_, "InverseTransposedDeformation");
-};
+    : BaseIntegration1stHalf(inner_relation),
+      J_to_minus_2_over_dimension_(*particles_->registerSharedVariable<Real>("DeterminantTerm")),
+      stress_on_particle_(*particles_->registerSharedVariable<Matd>("StressOnParticle")),
+      inverse_F_T_(*particles_->registerSharedVariable<Matd>("InverseTransposedDeformation")) {}
 //=================================================================================================//
 void DecomposedIntegration1stHalf::initialization(size_t index_i, Real dt)
 {

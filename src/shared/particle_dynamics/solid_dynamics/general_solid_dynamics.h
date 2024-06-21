@@ -53,7 +53,7 @@ class DistributingPointForces : public LocalDynamics, public DataDelegateSimple
     Real particle_spacing_ref_, h_spacing_ratio_;
     StdLargeVec<Vecd> &pos_, &force_prior_;
     StdLargeVec<Real> &thickness_;
-    std::vector<StdLargeVec<Real>> weight_;
+    std::vector<StdLargeVec<Real> *> weight_;
     std::vector<Real> sum_of_weight_;
 
     void getWeight();
