@@ -40,9 +40,9 @@ int get_name_type(SurfaceContactRelation &solid_body_contact_relation)
 {
     if (dynamic_cast<SurfaceContactRelationFromShellToShell *>(&solid_body_contact_relation))
         return 3;
-    else if (dynamic_cast<SurfaceContactRelationToShell *>(&solid_body_contact_relation))
-        return 2;
     else if (dynamic_cast<SurfaceContactRelationFromShell *>(&solid_body_contact_relation))
+        return 2;
+    else if (dynamic_cast<SurfaceContactRelationToShell *>(&solid_body_contact_relation))
         return 1;
     else
         return 0;

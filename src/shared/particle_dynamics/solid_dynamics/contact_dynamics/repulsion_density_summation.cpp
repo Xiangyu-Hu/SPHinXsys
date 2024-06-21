@@ -29,7 +29,7 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 RepulsionDensitySummation<Contact<>>::
     RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation,
-                                                           dynamic_cast<SurfaceContactRelationFromShell *>(&solid_body_contact_relation)
+                                                           dynamic_cast<SurfaceContactRelationToShell *>(&solid_body_contact_relation)
                                                                ? "RepulsionDensityShellSolid"
                                                                : "RepulsionDensitySolidSolid"),
       mass_(*particles_->getVariableByName<Real>("Mass")),
@@ -142,8 +142,8 @@ void ShellSelfContactDensitySummation::interaction(size_t index_i, Real dt)
     repulsion_density_[index_i] = sigma;
 }
 //=================================================================================================//
-ContactDensitySummationShell::
-    ContactDensitySummationShell(SurfaceContactRelationToShell &solid_body_contact_relation)
+ContactDensitySummationFromShell::
+    ContactDensitySummationFromShell(SurfaceContactRelationFromShell &solid_body_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation,
                                                            dynamic_cast<SurfaceContactRelationFromShellToShell *>(&solid_body_contact_relation)
                                                                ? "RepulsionDensityShellShell"
@@ -153,7 +153,7 @@ ContactDensitySummationShell::
         contact_mass_.push_back(contact_particle->getVariableByName<Real>("Mass"));
 }
 //=================================================================================================//
-void ContactDensitySummationShell::interaction(size_t index_i, Real dt)
+void ContactDensitySummationFromShell::interaction(size_t index_i, Real dt)
 {
     /** Contact interaction. */
     Real sigma = 0.0;

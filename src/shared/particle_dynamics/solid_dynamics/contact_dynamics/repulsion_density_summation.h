@@ -128,14 +128,14 @@ class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, 
  * @class ContactDensitySummationShell
  * @brief Computing the contact density due to shell contact bodies
  */
-class ContactDensitySummationShell : public RepulsionDensitySummation<Base, DataDelegateContact>
+class ContactDensitySummationFromShell : public RepulsionDensitySummation<Base, DataDelegateContact>
 {
   private:
     StdVec<StdLargeVec<Real> *> contact_mass_;
 
   public:
-    explicit ContactDensitySummationShell(SurfaceContactRelationToShell &solid_body_contact_relation);
-    ~ContactDensitySummationShell() override = default;
+    explicit ContactDensitySummationFromShell(SurfaceContactRelationFromShell &solid_body_contact_relation);
+    ~ContactDensitySummationFromShell() override = default;
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics
