@@ -17,10 +17,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.0;                                               /**< Reference length. */
-Real DH = 3.0;                                               /**< Reference and the height of main channel. */
-Real DL1 = 0.7 * DL;                                         /**< The length of the main channel. */
-Real resolution_ref = 0.15;                                  /**< Initial reference particle spacing. */
+Real DL = 0.2;                                               /**< Reference length. */
+Real DH = 0.1;                                               /**< Reference and the height of main channel. */
+Real DL1 = 0.75 * DL;                                         /**< The length of the main channel. */
+Real resolution_ref = 0.005;                                  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
@@ -29,7 +29,7 @@ StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement o
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
 Real Outlet_pressure = 0;
-Real rho0_f = 1.0;                                                   /**< Reference density of fluid. */
+Real rho0_f = 1000.0;                                                   /**< Reference density of fluid. */
 Real Re = 100.0;                                                     /**< Reynolds number. */
 Real U_f = 1.0;                                                      /**< Characteristic velocity. */
 Real mu_f = rho0_f * U_f * DH / Re;                                  /**< Dynamics viscosity. */
@@ -260,8 +260,8 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 100.0;   /**< End time. */
-    Real Output_Time = end_time/1000.0; /**< Time stamps for output of body states. */
+    Real end_time = 30.0;   /**< End time. */
+    Real Output_Time = end_time/300.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
