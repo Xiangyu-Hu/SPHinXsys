@@ -112,12 +112,15 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Parameterized management on generalized particle data
     //----------------------------------------------------------------------
+  private:
     template <typename DataType>
-    void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
+    void registerVariable(StdLargeVec<DataType> *contained_data, const std::string &variable_name,
                           DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
-    void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
+    void registerVariable(StdLargeVec<DataType> *contained_data, const std::string &variable_name,
                           const InitializationFunction &initialization);
+
+  public:
     template <typename DataType, typename... Args>
     StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>

@@ -14,38 +14,25 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
+void BaseParticles::registerVariable(StdLargeVec<DataType> *contained_data,
                                      const std::string &variable_name, DataType initial_value)
 {
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
+    contained_data->resize(particles_bound_, initial_value);
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    std::get<type_index>(all_particle_data_).push_back(contained_data);
+    size_t new_variable_index = std::get<type_index>(all_particle_data_).size() - 1;
 
-    if (variable == nullptr)
-    {
-        variable_addrs.resize(particles_bound_, initial_value);
-
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
-        size_t new_variable_index = std::get<type_index>(all_particle_data_).size() - 1;
-
-        addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name, new_variable_index);
-    }
-    else
-    {
-        std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
-        std::cout << "\n Please check if " << variable_name << " is a sharable variable." << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name, new_variable_index);
 }
 //=================================================================================================//
 template <typename DataType, class InitializationFunction>
-void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
+void BaseParticles::registerVariable(StdLargeVec<DataType> *contained_data,
                                      const std::string &variable_name, const InitializationFunction &initialization)
 {
-    registerVariable(variable_addrs, variable_name);
+    registerVariable(contained_data, variable_name);
     for (size_t i = 0; i != particles_bound_; ++i)
     {
-        variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
+        (*contained_data)[i] = initialization(i); // Here, lambda function is applied for initialization.
     }
 }
 //=================================================================================================//
@@ -89,7 +76,7 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
     {
         UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
-        registerVariable(*contained_data, variable_name, std::forward<Args>(args)...);
+        registerVariable(contained_data, variable_name, std::forward<Args>(args)...);
         return contained_data;
     }
     else
