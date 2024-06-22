@@ -32,6 +32,7 @@
 
 #include "base_variable.h"
 #include "mesh_with_data_packages.hpp"
+#include "base_geometry.h"
 
 namespace SPH
 {
@@ -40,6 +41,7 @@ namespace SPH
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.
  */
+template <typename IndexType>
 class BaseMeshLocalDynamics
 {
   public:
@@ -47,24 +49,25 @@ class BaseMeshLocalDynamics
         : mesh_data_(mesh_data){};
     virtual ~BaseMeshLocalDynamics(){};
 
-    virtual void update(size_t package_index) = 0;
+    virtual void update(const IndexType &index) = 0;
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
 };
 
-// class InitializeDataInACell : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit InitializeDataInACell(MeshWithGridDataPackages &mesh_data, Shape &shape)
-//         : BaseMeshLocalDynamics(mesh_data),
-//           shape_(shape){};
-//     virtual ~InitializeDataInACell(){};
+class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
+{
+  public:
+    explicit InitializeDataInACell(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
+        : BaseMeshLocalDynamics(mesh_data),
+          shape_(shape){};
+    virtual ~InitializeDataInACell(){};
 
-//     void update();
+    void update(const Arrayi &index);
   
-//   private:
-//     Shape &shape_;
-// };
+  private:
+    Shape &shape_;
+    Real grid_spacing_ = mesh_data_.GridSpacing();
+};
 
 // class TagACellIsInnerPackage
 //     : public BaseMeshLocalDynamics
@@ -96,7 +99,7 @@ class BaseMeshLocalDynamics
 //     void update();
 // };
 
-class UpdateLevelSetGradient : public BaseMeshLocalDynamics
+class UpdateLevelSetGradient : public BaseMeshLocalDynamics<size_t>
 {
   public:
     explicit UpdateLevelSetGradient(MeshWithGridDataPackages<4> &mesh_data)
@@ -105,7 +108,7 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
           phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")){};
     virtual ~UpdateLevelSetGradient(){};
 
-    void update(size_t package_index);
+    void update(const size_t &index);
     
   private:
     MeshVariable<Real> &phi_;

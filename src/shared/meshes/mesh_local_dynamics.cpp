@@ -38,23 +38,23 @@
 namespace SPH
 {
 //=================================================================================================//
-// void InitializeDataInACell::update()
-// {
-//     Vecd cell_position = CellPositionFromIndex(cell_index);
-//     Real signed_distance = shape_.findSignedDistance(cell_position);
-//     Vecd normal_direction = shape_.findNormalDirection(cell_position);
-//     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-//     if (measure < grid_spacing_)
-//     {
-//         mesh_data_.assignCore(cell_index);
-//     }
-//     else
-//     {
-//         size_t package_index = shape_.checkContain(cell_position) ? 0 : 1;
-//         mesh_data_.assignSingular(cell_index);
-//         mesh_data_.assignDataPackageIndex(cell_index, package_index);
-//     }
-// }
+void InitializeDataInACell::update(const Arrayi &cell_index)
+{
+    Vecd cell_position = mesh_data_.CellPositionFromIndex(cell_index);
+    Real signed_distance = shape_.findSignedDistance(cell_position);
+    Vecd normal_direction = shape_.findNormalDirection(cell_position);
+    Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
+    if (measure < grid_spacing_)
+    {
+        mesh_data_.assignCore(cell_index);
+    }
+    else
+    {
+        size_t package_index = shape_.checkContain(cell_position) ? 0 : 1;
+        mesh_data_.assignSingular(cell_index);
+        mesh_data_.assignDataPackageIndex(cell_index, package_index);
+    }
+}
 //=================================================================================================//
 // void TagACellIsInnerPackage::update()
 // {
@@ -77,9 +77,9 @@ namespace SPH
 
 // }
 //=================================================================================================//
-void UpdateLevelSetGradient::update(size_t package_index)
+void UpdateLevelSetGradient::update(const size_t &index)
 {
-    mesh_data_.computeGradient(phi_, phi_gradient_, package_index);
+    mesh_data_.computeGradient(phi_, phi_gradient_, index);
 }
 //=================================================================================================//
 // Real UpdateKernelIntegrals::computeKernelIntegral(const Vecd &position)

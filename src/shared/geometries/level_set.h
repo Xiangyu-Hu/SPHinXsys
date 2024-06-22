@@ -124,6 +124,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     void updateKernelIntegrals();
     bool isInnerPackage(const Arrayi &cell_index);
     void initializeDataInACell(const Arrayi &cell_index);
+    MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
     void tagACellIsInnerPackage(const Arrayi &cell_index);
     void initializeIndexMesh();
     void initializeCellNeighborhood();

@@ -132,6 +132,7 @@ class MeshWithGridDataPackages : public Mesh
     };
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     virtual Real DataSpacing() override { return data_spacing_; };
+    Real GridSpacing() { return grid_spacing_; };
 
   protected:
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
@@ -197,12 +198,8 @@ class MeshWithGridDataPackages : public Mesh
     template <typename FunctionOnData>
     void for_each_cell_data(const FunctionOnData &function);
 
-    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
     size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
     void assignCategoryOnMetaDataMesh(const Arrayi &cell_index, const int category);
-    void assignSingular(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 0); };
-    void assignInner(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 1); };
-    void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
     bool isSingularDataPackage(const Arrayi &cell_index);
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isCoreDataPackage(const Arrayi &cell_index);
@@ -242,6 +239,12 @@ class MeshWithGridDataPackages : public Mesh
     }
 
   public:
+    void assignSingular(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 0); };
+    void assignInner(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 1); };
+    void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
+    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
+    template <typename FunctionOnData>
+    void grid_parallel_for(const FunctionOnData &function);
     void resizeMeshVariableData()
     {
         resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);

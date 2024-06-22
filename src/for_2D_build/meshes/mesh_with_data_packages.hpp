@@ -8,6 +8,7 @@
 #define MESH_WITH_DATA_PACKAGES_2D_HPP
 
 #include "mesh_with_data_packages.h"
+#include "mesh_iterators.hpp"
 
 //=================================================================================================//
 namespace SPH
@@ -215,6 +216,18 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
                         mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
 
     return bilinear;
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename FunctionOnData>
+void MeshWithGridDataPackages<PKG_SIZE>::
+    grid_parallel_for(const FunctionOnData &function)
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](size_t i, size_t j)
+                      {
+                          function(Arrayi(i, j));
+                      });
 }
 //=================================================================================================//
 } // namespace SPH

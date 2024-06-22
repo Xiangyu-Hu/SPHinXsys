@@ -13,12 +13,7 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
                    Shape &shape, SPHAdaptation &sph_adaptation)
     : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 {
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          initializeDataInACell(Arrayi(i, j));
-                      });
-
+    initialize_data_in_a_cell.exec();
     finishDataPackages();
 }
 //=================================================================================================//

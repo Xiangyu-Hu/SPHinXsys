@@ -65,19 +65,26 @@ class BaseMeshDynamics
  * @class MeshAllDynamics
  * @brief Mesh dynamics for all cell on the mesh
  */
-// template <class LocalDynamicsType>
-// class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
-// {
-//   public:
-//     template <typename... Args>
-//     MeshAllDynamics(MeshWithGridDataPackages &mesh_data, Args &&...args)
-//         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-//           BaseMeshDynamics<void>(mesh_data){};
-//     virtual ~MeshAllDynamics(){};
+template <class LocalDynamicsType>
+class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
+{
+  public:
+    template <typename... Args>
+    MeshAllDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
+          BaseMeshDynamics<void>(mesh_data){};
+    virtual ~MeshAllDynamics(){};
 
-//     //[todo] 2d/3d different version
-//     virtual void exec();
-// };
+    virtual void exec() override
+    {
+        mesh_data_.grid_parallel_for(
+            [&](Arrayi cell_index)
+            {
+              this->update(cell_index);
+            }
+        );
+    };
+};
 
 /**
  * @class MeshInnerDynamics
