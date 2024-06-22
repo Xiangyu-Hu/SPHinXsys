@@ -124,7 +124,6 @@ class BaseParticles
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
-    ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
 
     template <typename DataType>
     DataType *registerSingleVariable(const std::string &variable_name,

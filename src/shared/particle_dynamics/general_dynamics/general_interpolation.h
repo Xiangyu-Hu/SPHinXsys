@@ -112,26 +112,9 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
         : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
     {
-        this->interpolated_quantities_ = registerObservedQuantity(variable_name);
+        this->interpolated_quantities_ = this->particles_->template registerSharedVariable<DataType>(variable_name);
     };
     virtual ~ObservingAQuantity(){};
-
-  protected:
-    StdLargeVec<DataType> *observed_quantities_;
-
-    /** Register the  observed variable if the variable name is new.
-     * If the variable is registered already, the registered variable will be returned. */
-    StdLargeVec<DataType> *registerObservedQuantity(const std::string &variable_name)
-    {
-        BaseParticles *particles = this->particles_;
-        DiscreteVariable<DataType> *variable = findVariableByName<DataType>(particles->AllDiscreteVariables(), variable_name);
-        if (variable == nullptr)
-        {
-            observed_quantities_ = particles->registerSharedVariable<DataType>(variable_name, ZeroData<DataType>::value);
-            return observed_quantities_;
-        }
-        return particles->getVariableByName<DataType>(variable_name);
-    };
 };
 
 /**
