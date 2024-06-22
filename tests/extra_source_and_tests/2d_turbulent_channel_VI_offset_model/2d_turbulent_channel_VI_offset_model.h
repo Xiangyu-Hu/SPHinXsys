@@ -14,7 +14,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 120.0;                         /**< Channel length. */
-Real num_fluid_cross_section = 40.0;
+Real num_fluid_cross_section = 20.0;
 
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
@@ -68,17 +68,24 @@ Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize 
 
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
-Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
+int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
+Real observe_spacing = DH_C / num_observer_points;
+
+// By cell.
+Real x_observe = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
-int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
 StdVec<Real> monitoring_bound = { 109 ,111 };
-Real observe_spacing = DH_C / num_observer_points;
-StdVec<Vecd> observation_locations;
+
+// By kernel weight.
+StdVec<Vecd> observation_location;
+Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref/2.0 + offset_distance);
+Vecd unit_direction_observe = Vecd(0.0, 1.0);
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------

@@ -23,14 +23,9 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineBodyLevelSetShape();
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    //water_block.generateParticles<ParticleGeneratorLattice>();
-    //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        //? water_block.generateParticles<Reload>(water_block.getName())
-        //: water_block.generateParticles<Lattice>();
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    //water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
-    //water_block.generateParticles<Lattice>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (false)
         ? water_block.generateParticlesWithReserve<Reload>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
     /**
@@ -44,9 +39,19 @@ int main(int ac, char *av[])
         : wall_boundary.generateParticles<Lattice>();
 
 
+   for(int i = 0; i < num_observer_points; ++i)
+   {
+       Vecd pos_observer_i= pos_observe_start + i * observe_spacing * unit_direction_observe;
+       observation_location.push_back(pos_observer_i);
+   }
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
+    fluid_observer.generateParticles<Observer>(observation_location);
+
+
     /** topology */
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
+    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -174,8 +179,14 @@ int main(int ac, char *av[])
     /** Turbulent eddy viscosity calculation needs values of Wall Y start. */
     SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 
-    /** Output the body states. */
+    //----------------------------------------------------------------------
+    //	File output and regression check.
+    //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    ObservedQuantityRecording<Vecd> write_recorded_water_velocity("Velocity", fluid_observer_contact);
+    ObservedQuantityRecording<Real> write_recorded_water_k("TurbulenceKineticEnergy", fluid_observer_contact);
+    ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
+    ObservedQuantityRecording<Real> write_recorded_water_epsilon("TurbulentDissipation", fluid_observer_contact);
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -192,7 +203,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 5.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -279,18 +290,25 @@ int main(int ac, char *av[])
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
+            fluid_observer_contact.updateConfiguration();
 
             if (GlobalStaticVariables::physical_time_ > end_time * 0.6) 
             {
                 get_time_average_cross_section_data.exec();
                 get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
-
+                write_recorded_water_velocity.writeToFile(number_of_iterations);
+                write_recorded_water_k.writeToFile(number_of_iterations);
+                write_recorded_water_mut.writeToFile(number_of_iterations);
+                write_recorded_water_epsilon.writeToFile(number_of_iterations);
             }
             //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
                 //body_states_recording.writeToFile();
+
+
         }
         //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
+        
         num_output_file++;
         //if (num_output_file == 100)
         //    system("pause");
