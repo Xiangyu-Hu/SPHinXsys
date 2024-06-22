@@ -65,14 +65,13 @@ template <typename DataType>
 class DiscreteVariable : public BaseVariable
 {
   public:
-    DiscreteVariable(const std::string &name, size_t index)
-        : BaseVariable(name), index_in_container_(index){};
-    virtual ~DiscreteVariable(){};
-
-    size_t IndexInContainer() const { return index_in_container_; };
+    DiscreteVariable(const std::string &name, size_t data_size = 1)
+        : BaseVariable(name), data_field_(new StdLargeVec<DataType>){};
+    virtual ~DiscreteVariable() { delete data_field_; };
+    StdLargeVec<DataType> *DataField() { return data_field_; };
 
   private:
-    size_t index_in_container_;
+    StdLargeVec<DataType> *data_field_;
 };
 
 template <typename DataType>
@@ -80,12 +79,10 @@ class MeshVariable : public BaseVariable
 {
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
-    MeshVariable(const std::string &name, size_t index)
-        : BaseVariable(name), index_in_container_(index),
-          data_field_(nullptr){};
+    MeshVariable(const std::string &name, size_t data_size)
+        : BaseVariable(name), data_field_(nullptr){};
     virtual ~MeshVariable() { delete[] data_field_; };
 
-    size_t IndexInContainer() const { return index_in_container_; };
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
     PackageData *DataField() { return data_field_; };
     void allocateAllMeshVariableData(const size_t size)
@@ -94,7 +91,6 @@ class MeshVariable : public BaseVariable
     }
 
   private:
-    size_t index_in_container_;
     PackageData *data_field_;
 };
 

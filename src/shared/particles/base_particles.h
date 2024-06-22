@@ -83,7 +83,6 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
     DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
 
   public:
@@ -114,11 +113,9 @@ class BaseParticles
     //----------------------------------------------------------------------
   private:
     template <typename DataType>
-    void registerVariable(StdLargeVec<DataType> *contained_data, const std::string &variable_name,
-                          DataType initial_value = ZeroData<DataType>::value);
+    void initializeVariable(StdLargeVec<DataType> *contained_data, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
-    void registerVariable(StdLargeVec<DataType> *contained_data, const std::string &variable_name,
-                          const InitializationFunction &initialization);
+    void initializeVariable(StdLargeVec<DataType> *contained_data, const InitializationFunction &initialization);
 
   public:
     template <typename DataType, typename... Args>
