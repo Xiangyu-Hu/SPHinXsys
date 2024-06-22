@@ -32,7 +32,7 @@ ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_
       mu_(fluid_.ReferenceViscosity()),
       each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
 {
-    force_from_fluid_ = particles_->registerSharedVariable<Vecd>("ViscousForceFromFluid");
+    force_from_fluid_ = particles_->registerSharedVariable<Vecd>("ViscousForceOnSolid");
 }
 //=================================================================================================//
 void ViscousForceFromFluidInFVM::interaction(size_t index_i, Real dt)
