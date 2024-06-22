@@ -38,8 +38,8 @@ class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
     {
         for (const auto &pos : pos_0_)
         {
-            preparePositionAndVolumetricMeasure(pos, particle_area_);
-            prepareSurfaceProperties(normal_, thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(normal_, thickness_);
         }
     }
 };

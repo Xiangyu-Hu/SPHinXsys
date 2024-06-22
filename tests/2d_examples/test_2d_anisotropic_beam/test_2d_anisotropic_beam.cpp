@@ -84,7 +84,7 @@ class ParticleGenerator<Beam> : public ParticleGenerator<Base>
             {
                 Real x = -SL + (i + 0.5) * resolution_ref_large;
                 Real y = -PH / 2 + (j + 0.5) * resolution_ref;
-                preparePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
             }
         }
     }

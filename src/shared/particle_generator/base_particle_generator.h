@@ -61,33 +61,40 @@ class GeneratingMethod;
 template <> // default volume metric particle generator
 class ParticleGenerator<Base>
 {
+    StdLargeVec<Vecd> position_;           // prepared geometric data: particle position
+    StdLargeVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
+
   public:
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
-    virtual void prepareGeometricData() = 0;
     void generateParticlesWithGeometricVariables();
 
   protected:
     BaseParticles &base_particles_;
     Real particle_spacing_ref_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<size_t> &unsorted_id_;
-    virtual void prepareParticlePosition(const Vecd &position);
-    virtual void preparePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
+    StdLargeVec<Vecd> *pos_; // particle variable: position
+    StdLargeVec<Real> *Vol_; // particle variable: volume measure
+    virtual void addParticlePosition(const Vecd &position);
+    virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
+    virtual void prepareGeometricData() = 0;             // first step of particle generation
+    virtual void initializeGeometricParticleVariables(); // second step of particle generation
 };
 
 template <> // generate surface particles
 class ParticleGenerator<Surface> : public ParticleGenerator<Base>
 {
+    StdLargeVec<Vecd> surface_normal_;
+    StdLargeVec<Real> surface_thickness_;
+
   public:
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
 
   protected:
-    StdLargeVec<Vecd> &n_;         /**< surface normal */
-    StdLargeVec<Real> &thickness_; /**< surface thickness */
-    virtual void prepareSurfaceProperties(const Vecd &surface_normal, Real thickness);
+    StdLargeVec<Vecd> *n_;         /**< surface normal */
+    StdLargeVec<Real> *thickness_; /**< surface thickness */
+    virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
+    virtual void initializeGeometricParticleVariables() override;
 };
 
 template <> // generate observer particles
@@ -115,6 +122,7 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
     ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name);
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
+    virtual void initializeGeometricParticleVariables() override;
 };
 
 } // namespace SPH

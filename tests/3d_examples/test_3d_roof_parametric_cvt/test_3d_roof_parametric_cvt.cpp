@@ -70,8 +70,8 @@ class ParticleGenerator<ShellRoof> : public ParticleGenerator<Surface>
             // creating the normal direction - z coordinate is always zero
             Vec3d center_to_pos = pos - center_;
             center_to_pos[2] = 0;
-            preparePositionAndVolumetricMeasure(pos, particle_area_);
-            prepareSurfaceProperties(center_to_pos.normalized(), thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };
@@ -236,9 +236,9 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_);
                 Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                 Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_);
-                preparePositionAndVolumetricMeasure(Vecd(x, z - radius_mid_surface, y - radius_mid_surface + 1), particle_spacing_ref * particle_spacing_ref);
+                addPositionAndVolumetricMeasure(Vecd(x, z - radius_mid_surface, y - radius_mid_surface + 1), particle_spacing_ref * particle_spacing_ref);
                 Vecd n_0 = Vec3d(x / radius_mid_surface, z / radius_mid_surface, 0.0);
-                prepareSurfaceProperties(n_0, thickness);
+                addSurfaceProperties(n_0, thickness);
             }
         }
     }

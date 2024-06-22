@@ -45,10 +45,10 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
             Real y = 0.5 * particle_spacing_gate + Real(i) * particle_spacing_gate;
             const Vec2d normal_direction_1(1.0, 0.0);
             const Vec2d normal_direction_2(-1.0, 0.0);
-            preparePositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
-            prepareSurfaceProperties(normal_direction_1, particle_spacing_gate);
-            preparePositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
-            prepareSurfaceProperties(normal_direction_2, particle_spacing_gate);
+            addPositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
+            addSurfaceProperties(normal_direction_1, particle_spacing_gate);
+            addPositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
+            addSurfaceProperties(normal_direction_2, particle_spacing_gate);
         }
     }
 };
@@ -76,9 +76,9 @@ class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
         {
             Real x = -BW + 0.5 * particle_spacing_gate + Real(i) * particle_spacing_gate;
             Real y = -0.5 * particle_spacing_gate;
-            preparePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
+            addPositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
             const Vec2d normal_direction(0, 1.0);
-            prepareSurfaceProperties(normal_direction, Gate_thickness);
+            addSurfaceProperties(normal_direction, Gate_thickness);
         }
     }
 };

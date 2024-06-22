@@ -119,8 +119,13 @@ class BaseParticles
   public:
     template <typename DataType, typename... Args>
     StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
+
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
+
+    template <typename DataType>
+    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const StdLargeVec<DataType> &geometric_data);
+
     template <typename DataType>
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
 

@@ -100,8 +100,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
             Real z = (DW - plate_width + resolution_shell) * 0.5;
             while (z < 0.5 * (DW + plate_width))
             {
-                preparePositionAndVolumetricMeasure(Vec3d(plate_x_pos, y, z), resolution_shell * resolution_shell);
-                prepareSurfaceProperties(Vec3d(1, 0, 0), t);
+                addPositionAndVolumetricMeasure(Vec3d(plate_x_pos, y, z), resolution_shell * resolution_shell);
+                addSurfaceProperties(Vec3d(1, 0, 0), t);
                 z += resolution_shell;
             }
             y += resolution_shell;

@@ -52,9 +52,9 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                      cos(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
             Real y = radius_mid_surface *
                      sin(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-            preparePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
+            addPositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
             Vec2d normal_direction = Vec2d(x / radius_mid_surface, y / radius_mid_surface);
-            prepareSurfaceProperties(normal_direction, thickness);
+            addSurfaceProperties(normal_direction, thickness);
         }
     }
 };

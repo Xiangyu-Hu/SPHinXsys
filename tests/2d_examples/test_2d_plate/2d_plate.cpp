@@ -52,8 +52,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
         {
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-            preparePositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
-            prepareSurfaceProperties(n_0, thickness);
+            addPositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
+            addSurfaceProperties(n_0, thickness);
         }
     };
 };

@@ -16,7 +16,7 @@ void ParticleGenerator<UnstructuredMesh>::prepareGeometricData()
 {
     for (size_t i = 0; i != elements_centroids_.size(); ++i)
     {
-        preparePositionAndVolumetricMeasure(elements_centroids_[i], elements_volumes_[i]);
+        addPositionAndVolumetricMeasure(elements_centroids_[i], elements_volumes_[i]);
     }
 }
 //=================================================================================================//

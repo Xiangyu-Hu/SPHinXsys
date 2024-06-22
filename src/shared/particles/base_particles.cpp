@@ -22,19 +22,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
       write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_),
-      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_)
-{
-    //----------------------------------------------------------------------
-    //		register geometric data only
-    //----------------------------------------------------------------------
-    pos_ = registerSharedVariable<Vecd>("Position");
-    Vol_ = registerSharedVariable<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
-    //		add particle reload data on geometries
-    //----------------------------------------------------------------------
-    addVariableToReload<Vecd>("Position");
-    addVariableToReload<Real>("VolumetricMeasure");
-}
+      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_) {}
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
@@ -53,6 +41,11 @@ void BaseParticles::initializeBasicParticleVariables()
         sorted_id_.push_back(sequence_.size());
         sequence_.push_back(0);
     }
+    //----------------------------------------------------------------------
+    //		add particle reload data on geometries
+    //----------------------------------------------------------------------
+    addVariableToReload<Vecd>("Position");
+    addVariableToReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds()

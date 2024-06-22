@@ -69,8 +69,8 @@ class ParticleGenerator<Bar> : public ParticleGenerator<Line>
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
             Real y = 0.0;
             Real z = 0.0;
-            preparePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref);
-            initializeLineProperties(n_0, b_n_0, PT, PW);
+            addPositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref);
+            addLineProperties(n_0, b_n_0, PT, PW);
         }
     }
 };

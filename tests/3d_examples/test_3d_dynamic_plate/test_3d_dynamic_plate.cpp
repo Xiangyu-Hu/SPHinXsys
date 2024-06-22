@@ -55,8 +55,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
             {
                 Real x = particle_spacing_ref * i - BW + particle_spacing_ref * 0.5;
                 Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
-                preparePositionAndVolumetricMeasure(Vecd(x, y, 0), particle_spacing_ref * particle_spacing_ref);
-                prepareSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0), particle_spacing_ref * particle_spacing_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }

@@ -82,7 +82,8 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
 }
 //=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(const std::string &new_name, const std::string &old_name)
+StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
+    const std::string &new_name, const std::string &old_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
 
@@ -100,6 +101,14 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(const std::stri
     }
 
     return nullptr;
+}
+//=================================================================================================//
+template <typename DataType>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
+    const std::string &new_name, const StdLargeVec<DataType> &geometric_data)
+{
+    return registerSharedVariable<DataType>(new_name, [&](size_t index)
+                                            { return geometric_data[index]; });
 }
 //=================================================================================================//
 template <typename DataType>

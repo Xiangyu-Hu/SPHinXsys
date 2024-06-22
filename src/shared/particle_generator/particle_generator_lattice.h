@@ -73,7 +73,7 @@ class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
   protected:
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;
-    virtual void preparePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
+    virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
 
 template <> // For generating surface particles from lattice positions using reduced order approach

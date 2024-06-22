@@ -10,14 +10,11 @@ namespace SPH
 ParticleGenerator<Base>::ParticleGenerator(SPHBody &sph_body)
     : base_particles_(sph_body.getBaseParticles()),
       particle_spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      pos_(base_particles_.ParticlePositions()),
-      Vol_(base_particles_.VolumetricMeasures()),
-      unsorted_id_(base_particles_.unsorted_id_) {}
+      pos_(nullptr), Vol_(nullptr) {}
 //=================================================================================================//
-void ParticleGenerator<Base>::prepareParticlePosition(const Vecd &position)
+void ParticleGenerator<Base>::addParticlePosition(const Vecd &position)
 {
-    pos_.push_back(position);
-    unsorted_id_.push_back(base_particles_.total_real_particles_);
+    position_.push_back(position);
     base_particles_.total_real_particles_++;
 }
 //=================================================================================================//
@@ -25,31 +22,43 @@ void ParticleGenerator<Base>::generateParticlesWithGeometricVariables()
 {
     prepareGeometricData();
     base_particles_.initializeAllParticlesBounds();
+    initializeGeometricParticleVariables();
 }
 //=================================================================================================//
-void ParticleGenerator<Base>::preparePositionAndVolumetricMeasure(
+void ParticleGenerator<Base>::addPositionAndVolumetricMeasure(
     const Vecd &position, Real volumetric_measure)
 {
-    prepareParticlePosition(position);
-    Vol_.push_back(volumetric_measure);
+    addParticlePosition(position);
+    volumetric_measure_.push_back(volumetric_measure);
+}
+//=================================================================================================//
+void ParticleGenerator<Base>::initializeGeometricParticleVariables()
+{
+    pos_ = base_particles_.registerSharedVariableFrom<Vecd>("Position", position_);
+    Vol_ = base_particles_.registerSharedVariableFrom<Real>("VolumetricMeasure", volumetric_measure_);
 }
 //=================================================================================================//
 ParticleGenerator<Surface>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Base>(sph_body),
-      n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
-      thickness_(*base_particles_.getVariableByName<Real>("Thickness")) {}
+    : ParticleGenerator<Base>(sph_body), n_(nullptr), thickness_(nullptr) {}
 //=================================================================================================//
-void ParticleGenerator<Surface>::prepareSurfaceProperties(const Vecd &surface_normal, Real thickness)
+void ParticleGenerator<Surface>::addSurfaceProperties(const Vecd &surface_normal, Real thickness)
 {
-    n_.push_back(surface_normal);
-    thickness_.push_back(thickness);
+    surface_normal_.push_back(surface_normal);
+    surface_thickness_.push_back(thickness);
+}
+//=================================================================================================//
+void ParticleGenerator<Surface>::initializeGeometricParticleVariables()
+{
+    ParticleGenerator<Base>::initializeGeometricParticleVariables();
+    n_ = base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", surface_normal_);
+    thickness_ = base_particles_.registerSharedVariableFrom<Real>("Thickness", surface_thickness_);
 }
 //=================================================================================================//
 void ParticleGenerator<Observer>::prepareGeometricData()
 {
     for (size_t i = 0; i < positions_.size(); ++i)
     {
-        preparePositionAndVolumetricMeasure(positions_[i], 0.0);
+        addPositionAndVolumetricMeasure(positions_[i], 0.0);
     }
 }
 //=================================================================================================//
@@ -70,6 +79,10 @@ ParticleGenerator<Reload>::ParticleGenerator(SPHBody &sph_body, const std::strin
 void ParticleGenerator<Reload>::prepareGeometricData()
 {
     base_material_.registerReloadLocalParameters(&base_particles_);
+}
+//=================================================================================================//
+void ParticleGenerator<Reload>::initializeGeometricParticleVariables()
+{
     base_particles_.readFromXmlForReloadParticle(file_path_);
 }
 //=================================================================================================//

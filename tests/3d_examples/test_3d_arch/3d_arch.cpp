@@ -65,8 +65,8 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Vecd position = rotation_matrix * Vecd(x, y, z);
                 Vec3d n_0 = rotation_matrix * Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 
-                preparePositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
-                prepareSurfaceProperties(n_0, thickness);
+                addPositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
+                addSurfaceProperties(n_0, thickness);
             }
         }
     }

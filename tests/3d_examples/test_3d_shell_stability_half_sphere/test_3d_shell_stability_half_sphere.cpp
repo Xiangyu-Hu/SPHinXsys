@@ -37,8 +37,8 @@ class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
         for (const auto &pos : pos_0_)
         {
             Vec3d center_to_pos = pos - center_;
-            preparePositionAndVolumetricMeasure(pos, particle_area_);
-            prepareSurfaceProperties(center_to_pos.normalized(), thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };

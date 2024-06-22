@@ -101,10 +101,10 @@ class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(theta);
                 Real y = -wall_thickness_ + (full_length + 2 * wall_thickness_) * j / (Real)particle_number_height + 0.5 * resolution_shell_;
                 Real z = radius_mid_surface * sin(theta);
-                preparePositionAndVolumetricMeasure(Vec3d(x, y, z),
-                                                    resolution_shell_ * resolution_shell_);
+                addPositionAndVolumetricMeasure(Vec3d(x, y, z),
+                                                resolution_shell_ * resolution_shell_);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                prepareSurfaceProperties(n_0, shell_thickness_);
+                addSurfaceProperties(n_0, shell_thickness_);
             }
         }
     }

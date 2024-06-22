@@ -110,9 +110,9 @@ class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
 
         for (int i = 0; i != (int)points.size(); i++)
         {
-            preparePositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
+            addPositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
             Vecd n_0 = Vec3d(1.0, 1.0, 1.0);
-            prepareSurfaceProperties(n_0, thickness);
+            addSurfaceProperties(n_0, thickness);
         }
     }
     SPHBody &sph_body_;

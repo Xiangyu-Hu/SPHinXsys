@@ -67,8 +67,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
             {
                 Real x = resolution_ref * i - BW + resolution_ref * 0.5 - PL * 0.5;
                 Real y = resolution_ref * j - BW + resolution_ref * 0.5 - PH * 0.5;
-                preparePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
-                prepareSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }

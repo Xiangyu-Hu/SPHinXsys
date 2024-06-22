@@ -57,14 +57,14 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
             Real x = -DL_sponge_ - BW_ + (Real(i) + 0.5) * resolution_ref_;
             // upper wall
             Real y1 = DH + 0.5 * resolution_ref_;
-            preparePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
+            addPositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
             Vec2d normal_direction_1 = Vec2d(0, 1.0);
-            prepareSurfaceProperties(normal_direction_1, wall_thickness_);
+            addSurfaceProperties(normal_direction_1, wall_thickness_);
             // lower wall
             Real y2 = -0.5 * resolution_ref_; // lower wall
-            preparePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
+            addPositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
             Vec2d normal_direction_2 = Vec2d(0, -1.0);
-            prepareSurfaceProperties(normal_direction_2, wall_thickness_);
+            addSurfaceProperties(normal_direction_2, wall_thickness_);
         }
     }
 };
