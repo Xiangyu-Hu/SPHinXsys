@@ -47,7 +47,7 @@ class ParticleGenerator<Network> : public ParticleGenerator<Base>
     virtual ~ParticleGenerator(){};
 
     /** Created base particles based on edges in branch */
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 
   protected:
     Vecd starting_pnt_;                                 /**< Starting point for net work. */

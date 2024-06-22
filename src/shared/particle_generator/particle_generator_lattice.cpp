@@ -34,13 +34,13 @@ ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body)
     : ParticleGenerator<Lattice, Adaptive>(sph_body, sph_body.getInitialShape()) {}
 //=================================================================================================//
 void ParticleGenerator<Lattice, Adaptive>::
-    initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
+    preparePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 {
     Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);
     Real local_particle_volume_ratio = pow(lattice_spacing_ / local_particle_spacing, Dimensions);
     if (rand_uniform(0.0, 1.0) < local_particle_volume_ratio)
     {
-        ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
+        ParticleGenerator<Base>::preparePositionAndVolumetricMeasure(
             position, volume / local_particle_volume_ratio);
     }
 }

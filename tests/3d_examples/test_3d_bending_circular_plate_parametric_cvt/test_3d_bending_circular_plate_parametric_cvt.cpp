@@ -34,12 +34,12 @@ class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
           normal_(normal),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(normal_, thickness_);
+            preparePositionAndVolumetricMeasure(pos, particle_area_);
+            prepareSurfaceProperties(normal_, thickness_);
         }
     }
 };

@@ -12,11 +12,11 @@ GeneratingMethod<UnstructuredMesh>::GeneratingMethod(ANSYSMesh &ansys_mesh)
 ParticleGenerator<UnstructuredMesh>::ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh)
     : ParticleGenerator<Base>(sph_body), GeneratingMethod<UnstructuredMesh>(ansys_mesh) {}
 //=================================================================================================//
-void ParticleGenerator<UnstructuredMesh>::initializeGeometricVariables()
+void ParticleGenerator<UnstructuredMesh>::prepareGeometricData()
 {
     for (size_t i = 0; i != elements_centroids_.size(); ++i)
     {
-        initializePositionAndVolumetricMeasure(elements_centroids_[i], elements_volumes_[i]);
+        preparePositionAndVolumetricMeasure(elements_centroids_[i], elements_volumes_[i]);
     }
 }
 //=================================================================================================//

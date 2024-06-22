@@ -61,7 +61,7 @@ class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
   public:
     explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Surface>(sph_body), sph_body_(sph_body){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
 
@@ -110,9 +110,9 @@ class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
 
         for (int i = 0; i != (int)points.size(); i++)
         {
-            initializePositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
+            preparePositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
             Vecd n_0 = Vec3d(1.0, 1.0, 1.0);
-            initializeSurfaceProperties(n_0, thickness);
+            prepareSurfaceProperties(n_0, thickness);
         }
     }
     SPHBody &sph_body_;

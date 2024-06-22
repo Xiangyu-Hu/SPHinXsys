@@ -52,7 +52,7 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
         for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
@@ -65,8 +65,8 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Vecd position = rotation_matrix * Vecd(x, y, z);
                 Vec3d n_0 = rotation_matrix * Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 
-                initializePositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
-                initializeSurfaceProperties(n_0, thickness);
+                preparePositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
+                prepareSurfaceProperties(n_0, thickness);
             }
         }
     }

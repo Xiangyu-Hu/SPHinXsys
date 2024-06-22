@@ -63,15 +63,15 @@ class ParticleGenerator<ShellRoof> : public ParticleGenerator<Surface>
           center_(center),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
             // creating the normal direction - z coordinate is always zero
             Vec3d center_to_pos = pos - center_;
             center_to_pos[2] = 0;
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
+            preparePositionAndVolumetricMeasure(pos, particle_area_);
+            prepareSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };
@@ -217,7 +217,7 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
     explicit ParticleGenerator(SPHBody &sph_body, Real particle_number = 16)
         : ParticleGenerator<Surface>(sph_body),
           particle_number_(particle_number){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
         Real height = 50.0;             /** Height of the cylinder. */
@@ -236,9 +236,9 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_);
                 Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                 Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_);
-                initializePositionAndVolumetricMeasure(Vecd(x, z - radius_mid_surface, y - radius_mid_surface + 1), particle_spacing_ref * particle_spacing_ref);
+                preparePositionAndVolumetricMeasure(Vecd(x, z - radius_mid_surface, y - radius_mid_surface + 1), particle_spacing_ref * particle_spacing_ref);
                 Vecd n_0 = Vec3d(x / radius_mid_surface, z / radius_mid_surface, 0.0);
-                initializeSurfaceProperties(n_0, thickness);
+                prepareSurfaceProperties(n_0, thickness);
             }
         }
     }

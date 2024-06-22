@@ -64,7 +64,7 @@ class ParticleGenerator<Base>
   public:
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() = 0;
+    virtual void prepareGeometricData() = 0;
     void generateParticlesWithGeometricVariables();
 
   protected:
@@ -73,8 +73,8 @@ class ParticleGenerator<Base>
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<size_t> &unsorted_id_;
-    virtual void initializePosition(const Vecd &position);
-    virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
+    virtual void prepareParticlePosition(const Vecd &position);
+    virtual void preparePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
 };
 
 template <> // generate surface particles
@@ -87,7 +87,7 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
   protected:
     StdLargeVec<Vecd> &n_;         /**< surface normal */
     StdLargeVec<Real> &thickness_; /**< surface thickness */
-    virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
+    virtual void prepareSurfaceProperties(const Vecd &surface_normal, Real thickness);
 };
 
 template <> // generate observer particles
@@ -99,7 +99,7 @@ class ParticleGenerator<Observer> : public ParticleGenerator<Base>
     ParticleGenerator(SPHBody &sph_body, const StdVec<Vecd> &positions)
         : ParticleGenerator<Base>(sph_body), positions_(positions){};
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 
   protected:
     StdVec<Vecd> positions_;
@@ -114,7 +114,7 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
   public:
     ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 };
 
 } // namespace SPH

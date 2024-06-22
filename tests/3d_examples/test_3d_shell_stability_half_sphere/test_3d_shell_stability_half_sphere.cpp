@@ -32,13 +32,13 @@ class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
           center_(center),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
             Vec3d center_to_pos = pos - center_;
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
+            preparePositionAndVolumetricMeasure(pos, particle_area_);
+            prepareSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };

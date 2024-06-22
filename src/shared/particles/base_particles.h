@@ -97,7 +97,6 @@ class BaseParticles
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
-    ParticleData &getAllParticleData() { return all_particle_data_; };
     /** initialize other variables after the particles are generated */
     virtual void initializeBasicParticleVariables();
     //----------------------------------------------------------------------

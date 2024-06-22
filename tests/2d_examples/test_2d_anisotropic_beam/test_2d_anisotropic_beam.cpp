@@ -75,7 +75,7 @@ class ParticleGenerator<Beam> : public ParticleGenerator<Base>
   public:
     ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
 
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // set particles directly
         for (int i = 0; i < x_num; i++)
@@ -84,7 +84,7 @@ class ParticleGenerator<Beam> : public ParticleGenerator<Base>
             {
                 Real x = -SL + (i + 0.5) * resolution_ref_large;
                 Real y = -PH / 2 + (j + 0.5) * resolution_ref;
-                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+                preparePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
             }
         }
     }

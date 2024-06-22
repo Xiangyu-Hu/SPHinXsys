@@ -46,7 +46,7 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Base>
   public:
     explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Base>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (int k = 0; k < particle_number; k++)
         {
@@ -57,7 +57,7 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Base>
                     Real x = particle_spacing_ref * i - BW + particle_spacing_ref * 0.5;
                     Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                     Real z = particle_spacing_ref * (k - ((particle_number - 1.0) / 2.0));
-                    initializePositionAndVolumetricMeasure(
+                    preparePositionAndVolumetricMeasure(
                         Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * particle_spacing_ref);
                 }
             }

@@ -59,7 +59,7 @@ class ParticleGenerator<Lattice>
   public:
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 };
 
 template <> // For generating particles with adaptive resolution from lattice positions
@@ -73,7 +73,7 @@ class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
   protected:
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;
-    virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
+    virtual void preparePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
 
 template <> // For generating surface particles from lattice positions using reduced order approach
@@ -83,7 +83,7 @@ class ParticleGenerator<ThickSurface, Lattice>
   public:
     ParticleGenerator(SPHBody &sph_body, Real thickness);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 
   protected:
     Real total_volume_;                  /**< Total volume of body calculated from level set. */

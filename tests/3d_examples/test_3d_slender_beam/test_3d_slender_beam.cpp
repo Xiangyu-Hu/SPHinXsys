@@ -60,7 +60,7 @@ class ParticleGenerator<Bar> : public ParticleGenerator<Line>
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // the beam and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -69,7 +69,7 @@ class ParticleGenerator<Bar> : public ParticleGenerator<Line>
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
             Real y = 0.0;
             Real z = 0.0;
-            initializePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref);
+            preparePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref);
             initializeLineProperties(n_0, b_n_0, PT, PW);
         }
     }

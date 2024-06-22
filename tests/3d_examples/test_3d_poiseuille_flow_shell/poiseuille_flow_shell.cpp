@@ -86,7 +86,7 @@ class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
         : ParticleGenerator<Surface>(sph_body),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const Real radius_mid_surface = fluid_radius + resolution_shell_ * 0.5;
         const auto particle_number_mid_surface =
@@ -101,10 +101,10 @@ class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(theta);
                 Real y = -wall_thickness_ + (full_length + 2 * wall_thickness_) * j / (Real)particle_number_height + 0.5 * resolution_shell_;
                 Real z = radius_mid_surface * sin(theta);
-                initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
-                                                       resolution_shell_ * resolution_shell_);
+                preparePositionAndVolumetricMeasure(Vec3d(x, y, z),
+                                                    resolution_shell_ * resolution_shell_);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                initializeSurfaceProperties(n_0, shell_thickness_);
+                prepareSurfaceProperties(n_0, shell_thickness_);
             }
         }
     }

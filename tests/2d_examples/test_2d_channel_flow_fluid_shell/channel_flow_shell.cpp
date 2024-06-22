@@ -49,7 +49,7 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
     explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
         : ParticleGenerator<Surface>(sph_body), DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
           resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / resolution_ref_);
         for (int i = 0; i < particle_number_mid_surface; i++)
@@ -57,14 +57,14 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
             Real x = -DL_sponge_ - BW_ + (Real(i) + 0.5) * resolution_ref_;
             // upper wall
             Real y1 = DH + 0.5 * resolution_ref_;
-            initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
+            preparePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
             Vec2d normal_direction_1 = Vec2d(0, 1.0);
-            initializeSurfaceProperties(normal_direction_1, wall_thickness_);
+            prepareSurfaceProperties(normal_direction_1, wall_thickness_);
             // lower wall
             Real y2 = -0.5 * resolution_ref_; // lower wall
-            initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
+            preparePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
             Vec2d normal_direction_2 = Vec2d(0, -1.0);
-            initializeSurfaceProperties(normal_direction_2, wall_thickness_);
+            prepareSurfaceProperties(normal_direction_2, wall_thickness_);
         }
     }
 };

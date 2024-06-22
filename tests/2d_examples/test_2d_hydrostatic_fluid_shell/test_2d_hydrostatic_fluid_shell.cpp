@@ -35,7 +35,7 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
                                Real particle_spacing_gate)
         : ParticleGenerator<Surface>(sph_body),
           DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const auto particle_number_wall = int(DH / particle_spacing_gate);
         for (int i = 0; i < particle_number_wall; i++)
@@ -45,10 +45,10 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
             Real y = 0.5 * particle_spacing_gate + Real(i) * particle_spacing_gate;
             const Vec2d normal_direction_1(1.0, 0.0);
             const Vec2d normal_direction_2(-1.0, 0.0);
-            initializePositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
-            initializeSurfaceProperties(normal_direction_1, particle_spacing_gate);
-            initializePositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
-            initializeSurfaceProperties(normal_direction_2, particle_spacing_gate);
+            preparePositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
+            prepareSurfaceProperties(normal_direction_1, particle_spacing_gate);
+            preparePositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
+            prepareSurfaceProperties(normal_direction_2, particle_spacing_gate);
         }
     }
 };
@@ -68,7 +68,7 @@ class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
     explicit ParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
         : ParticleGenerator<Surface>(sph_body),
           DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const auto particle_number_gate = int((DL + 2 * BW) / particle_spacing_gate);
         // generate particles for the elastic gate
@@ -76,9 +76,9 @@ class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
         {
             Real x = -BW + 0.5 * particle_spacing_gate + Real(i) * particle_spacing_gate;
             Real y = -0.5 * particle_spacing_gate;
-            initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
+            preparePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
             const Vec2d normal_direction(0, 1.0);
-            initializeSurfaceProperties(normal_direction, Gate_thickness);
+            prepareSurfaceProperties(normal_direction, Gate_thickness);
         }
     }
 };

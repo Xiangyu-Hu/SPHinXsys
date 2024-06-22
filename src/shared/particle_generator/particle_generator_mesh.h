@@ -54,7 +54,7 @@ class ParticleGenerator<UnstructuredMesh>
   public:
     explicit ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 };
 
 } // namespace SPH

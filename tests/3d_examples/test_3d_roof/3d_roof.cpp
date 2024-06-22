@@ -57,7 +57,7 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
         for (int i = 0; i < particle_number + 1; i++)
@@ -67,9 +67,9 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + i * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
                 Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                 Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + i * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-                initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+                preparePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
                 Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                initializeSurfaceProperties(n_0, thickness);
+                prepareSurfaceProperties(n_0, thickness);
             }
         }
     }

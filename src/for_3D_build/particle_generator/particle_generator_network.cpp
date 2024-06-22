@@ -29,7 +29,7 @@ ParticleGenerator<Network>::
 void ParticleGenerator<Network>::
     growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
 {
-    initializePositionAndVolumetricMeasure(new_point, segment_length_);
+    preparePositionAndVolumetricMeasure(new_point, segment_length_);
     tree_->branch_locations_.push_back(branch->id_);
     branch->inner_particles_.push_back(pos_.size() - 1);
     branch->end_direction_ = end_direction;
@@ -164,7 +164,7 @@ bool ParticleGenerator<Network>::
     return is_valid;
 }
 //=================================================================================================//
-void ParticleGenerator<Network>::initializeGeometricVariables()
+void ParticleGenerator<Network>::prepareGeometricData()
 {
     BodyStatesRecordingToVtp write_states({sph_body_});
 

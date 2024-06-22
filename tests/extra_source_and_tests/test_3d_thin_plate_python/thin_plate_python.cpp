@@ -49,7 +49,7 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Param
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -58,8 +58,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Param
             {
                 Real x = resolution_ref * i - BW + resolution_ref * 0.5;
                 Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-                initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
-                initializeSurfaceProperties(n_0, PT);
+                preparePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                prepareSurfaceProperties(n_0, PT);
             }
         }
     }
