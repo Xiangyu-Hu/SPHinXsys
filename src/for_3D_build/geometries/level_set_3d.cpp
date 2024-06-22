@@ -63,7 +63,7 @@ void LevelSet::finishDataPackages()
             initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
         });
 
-    updateLevelSetGradient();
+    update_level_set_gradient.exec();
     updateKernelIntegrals();
 }
 //=================================================================================================//

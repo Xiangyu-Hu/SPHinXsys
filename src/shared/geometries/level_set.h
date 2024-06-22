@@ -32,6 +32,8 @@
 #include "adaptation.h"
 #include "base_geometry.h"
 #include "mesh_with_data_packages.hpp"
+#include "mesh_dynamics.h"
+#include "mesh_local_dynamics.h"
 
 namespace SPH
 {
@@ -108,6 +110,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
     Kernel &kernel_;
+    MeshWithGridDataPackages<4> &mesh_data_ = *this;
 
     void initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set);
     void initializeBasicDataForAPackage(const Arrayi &cell_index, const size_t package_index, Shape &shape);
@@ -125,6 +128,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     void initializeIndexMesh();
     void initializeCellNeighborhood();
     void updateLevelSetGradient();
+    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
 
     // upwind algorithm choosing candidate difference by the sign
     Real upwindDifference(Real sign, Real df_p, Real df_n);

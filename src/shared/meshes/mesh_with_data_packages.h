@@ -193,11 +193,6 @@ class MeshWithGridDataPackages : public Mesh
     };
     DataAssembleOperation<ResizeMeshVariableData> resize_mesh_variable_data_;
 
-    void resizeMeshVariableData()
-    {
-        resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);
-    }
-
     /** void (non_value_returning) function iterate on all data points by value. */
     template <typename FunctionOnData>
     void for_each_cell_data(const FunctionOnData &function);
@@ -218,11 +213,6 @@ class MeshWithGridDataPackages : public Mesh
     void assignByPosition(MeshVariable<DataType> &mesh_variable,
                           const Arrayi &cell_index,
                           const FunctionByPosition &function_by_position);
-    /** compute gradient transform within data package at `package_index` */
-    template <typename InDataType, typename OutDataType>
-    void computeGradient(MeshVariable<InDataType> &in_variable,
-                         MeshVariable<OutDataType> &out_variable,
-                         const size_t package_index);
     /** obtain averaged value at a corner of a data cell */
     template <typename DataType>
     DataType CornerAverage(MeshVariable<DataType> &mesh_variable,
@@ -237,7 +227,6 @@ class MeshWithGridDataPackages : public Mesh
     {
         return CellLowerCorner(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
     }
-
     /** return the grid index from its position and the index of the cell it belongs to. */
     Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
     {
@@ -252,6 +241,23 @@ class MeshWithGridDataPackages : public Mesh
         return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
     }
 
+  public:
+    void resizeMeshVariableData()
+    {
+        resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);
+    }
+
+    template <typename DataType>
+    MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
+    {
+        return findVariableByName<DataType>(all_mesh_variables_, variable_name);
+    }
+
+    /** compute gradient transform within data package at `package_index` */
+    template <typename InDataType, typename OutDataType>
+    void computeGradient(MeshVariable<InDataType> &in_variable,
+                         MeshVariable<OutDataType> &out_variable,
+                         const size_t package_index);
     /** Iterator on a collection of mesh data packages. parallel computing. */
     template <typename FunctionOnData>
     void package_parallel_for(const FunctionOnData &function)
@@ -267,6 +273,12 @@ class MeshWithGridDataPackages : public Mesh
             },
             ap);
     }
+
+    template <typename InDataType, typename OutDataType>
+    void testGradient(MeshVariable<InDataType> &in_variable,
+                      MeshVariable<OutDataType> &out_variable){
+                        printf("test gradient\n");
+                      }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H
