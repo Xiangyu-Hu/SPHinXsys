@@ -99,7 +99,7 @@ class BaseParticles
     BaseMaterial &getBaseMaterial() { return base_material_; };
     ParticleData &getAllParticleData() { return all_particle_data_; };
     /** initialize other variables after the particles are generated */
-    virtual void initializeOtherVariables();
+    virtual void initializeBasicParticleVariables();
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
     //----------------------------------------------------------------------

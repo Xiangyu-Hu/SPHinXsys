@@ -18,9 +18,9 @@ LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
     addVariableToReload<Real>("Width");
 }
 //=================================================================================================//
-void LinearParticles::initializeOtherVariables()
+void LinearParticles::initializeBasicParticleVariables()
 {
-    SurfaceParticles::initializeOtherVariables();
+    SurfaceParticles::initializeBasicParticleVariables();
 
     addVariableToWrite<Vecd>("BinormalDirection");
 }

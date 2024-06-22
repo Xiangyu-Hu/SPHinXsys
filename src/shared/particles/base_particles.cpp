@@ -37,7 +37,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     addVariableToReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
-void BaseParticles::initializeOtherVariables()
+void BaseParticles::initializeBasicParticleVariables()
 {
     //----------------------------------------------------------------------
     //		register non-geometric data

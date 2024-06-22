@@ -25,9 +25,9 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     addVariableToReload<Real>("Thickness");
 }
 //=================================================================================================//
-void SurfaceParticles::initializeOtherVariables()
+void SurfaceParticles::initializeBasicParticleVariables()
 {
-    BaseParticles::initializeOtherVariables();
+    BaseParticles::initializeBasicParticleVariables();
     registerTransformationMatrix();
 }
 //=================================================================================================//

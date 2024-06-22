@@ -10,7 +10,7 @@ namespace SPH
 ParticleGenerator<Base>::ParticleGenerator(SPHBody &sph_body)
     : base_particles_(sph_body.getBaseParticles()),
       particle_spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      pos_(base_particles_.ParticlePositions()), 
+      pos_(base_particles_.ParticlePositions()),
       Vol_(base_particles_.VolumetricMeasures()),
       unsorted_id_(base_particles_.unsorted_id_) {}
 //=================================================================================================//
@@ -21,7 +21,7 @@ void ParticleGenerator<Base>::initializePosition(const Vecd &position)
     base_particles_.total_real_particles_++;
 }
 //=================================================================================================//
-void ParticleGenerator<Base>::generateParticlesWithBasicVariables()
+void ParticleGenerator<Base>::generateParticlesWithGeometricVariables()
 {
     initializeGeometricVariables();
     base_particles_.initializeAllParticlesBounds();

@@ -65,9 +65,9 @@ class ParticleGenerator<ParticleBuffer<BufferSizeEstimator>, OtherParameters...>
     };
     virtual ~ParticleGenerator(){};
 
-    void generateParticlesWithBasicVariables()
+    void generateParticlesWithGeometricVariables()
     {
-        ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
+        ParticleGenerator<OtherParameters...>::generateParticlesWithGeometricVariables();
         ParticleGenerator<ParticleBuffer<BufferSizeEstimator>, OtherParameters...>::reserveBufferParticles();
     };
 
@@ -92,9 +92,9 @@ class ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>
           ghost_boundary_(ghost_boundary){};
     virtual ~ParticleGenerator(){};
 
-    void generateParticlesWithBasicVariables()
+    void generateParticlesWithGeometricVariables()
     {
-        ParticleGenerator<OtherParameters...>::generateParticlesWithBasicVariables();
+        ParticleGenerator<OtherParameters...>::generateParticlesWithGeometricVariables();
         ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>::reserveGhostParticles();
     };
 

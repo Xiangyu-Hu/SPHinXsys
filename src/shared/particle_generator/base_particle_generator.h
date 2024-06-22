@@ -65,7 +65,7 @@ class ParticleGenerator<Base>
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
     virtual void initializeGeometricVariables() = 0;
-    void generateParticlesWithBasicVariables();
+    void generateParticlesWithGeometricVariables();
 
   protected:
     BaseParticles &base_particles_;
