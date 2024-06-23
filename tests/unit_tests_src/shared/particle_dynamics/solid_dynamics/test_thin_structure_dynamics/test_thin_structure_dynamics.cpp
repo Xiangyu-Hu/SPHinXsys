@@ -97,9 +97,9 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
   public:
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
-          pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          angular_vel_(*particles_->getVariableDataByName<Vecd>("AngularVelocity")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
     virtual ~ControlledRotation(){};
 
   protected:
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(system);
     write_states.addVariableRecording<Vecd>(plate_body, "PseudoNormal");
     write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);
-    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
+    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableDataByName<Real>("VonMisesStrain");
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -228,8 +228,8 @@ int main(int ac, char *av[])
 
     update_normal.exec();
 
-    pseudo_normal = *shell_particles->getVariableByName<Vecd>("PseudoNormal");
-    normal = *shell_particles->getVariableByName<Vecd>("NormalDirection");
+    pseudo_normal = *shell_particles->getVariableDataByName<Vecd>("PseudoNormal");
+    normal = *shell_particles->getVariableDataByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

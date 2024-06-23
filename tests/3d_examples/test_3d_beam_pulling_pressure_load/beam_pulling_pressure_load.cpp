@@ -46,9 +46,9 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
   public:
     PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
         : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
-          mass_n_(*particles_->getVariableByName<Real>("Mass")),
-          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-          F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
+          mass_n_(*particles_->getVariableDataByName<Real>("Mass")),
+          Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          F_(*particles_->getVariableDataByName<Matd>("DeformationGradient")),
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())
     {
