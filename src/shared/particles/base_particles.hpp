@@ -122,8 +122,7 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
 }
 //=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
-    DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
+DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
     if (variable == nullptr)
