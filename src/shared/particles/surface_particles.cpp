@@ -14,12 +14,12 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     //----------------------------------------------------------------------
     sph_body.sph_adaptation_->getKernel()->reduceOnce();
     //----------------------------------------------------------------------
-    //		register geometric data only
+    // add geometries variable which will initialized particle generator
     //----------------------------------------------------------------------
-    n_ = registerSharedVariable<Vecd>("NormalDirection");
-    thickness_ = registerSharedVariable<Real>("Thickness");
+    addSharedVariable<Vecd>("NormalDirection");
+    addSharedVariable<Real>("Thickness");
     /**
-     * add particle reload data
+     * add particle reload variables
      */
     addVariableToReload<Vecd>("NormalDirection");
     addVariableToReload<Real>("Thickness");
@@ -28,6 +28,8 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
 void SurfaceParticles::initializeBasicParticleVariables()
 {
     BaseParticles::initializeBasicParticleVariables();
+    n_ = getVariableDataByName<Vecd>("NormalDirection");
+    thickness_ = getVariableDataByName<Real>("Thickness");
     registerTransformationMatrix();
 }
 //=================================================================================================//

@@ -7,8 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 ParticleGenerator<Line>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Base>(sph_body),
-      n_(nullptr), thickness_(nullptr), b_n_(nullptr), width_(nullptr) {}
+    : ParticleGenerator<Base>(sph_body) {}
 //=================================================================================================//
 void ParticleGenerator<Line>::addLineProperties(
     const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width)
@@ -22,10 +21,10 @@ void ParticleGenerator<Line>::addLineProperties(
 void ParticleGenerator<Line>::initializeGeometricParticleVariables()
 {
     ParticleGenerator<Base>::initializeGeometricParticleVariables();
-    n_ = base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", line_normal_);
-    b_n_ = base_particles_.registerSharedVariableFrom<Vecd>("BinormalDirection", line_binormal_);
-    thickness_ = base_particles_.registerSharedVariableFrom<Real>("Thickness", line_thickness_);
-    width_ = base_particles_.registerSharedVariableFrom<Real>("Width", line_width_);
+    base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", line_normal_);
+    base_particles_.registerSharedVariableFrom<Vecd>("BinormalDirection", line_binormal_);
+    base_particles_.registerSharedVariableFrom<Real>("Thickness", line_thickness_);
+    base_particles_.registerSharedVariableFrom<Real>("Width", line_width_);
 }
 //=================================================================================================//
 } // namespace SPH

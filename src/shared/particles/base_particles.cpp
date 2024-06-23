@@ -22,12 +22,27 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
       write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_),
-      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_) {}
+      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_)
+{
+    //----------------------------------------------------------------------
+    // add geometries variable which will initialized particle generator
+    //----------------------------------------------------------------------
+    addSharedVariable<Vecd>("Position");
+    addSharedVariable<Real>("VolumetricMeasure");
+    //----------------------------------------------------------------------
+    // add particle reload data on geometries
+    //----------------------------------------------------------------------
+    addVariableToReload<Vecd>("Position");
+    addVariableToReload<Real>("VolumetricMeasure");
+}
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
-    pos_ = getVariableByName<Vecd>("Position");
-    Vol_ = getVariableByName<Real>("VolumetricMeasure");
+    //----------------------------------------------------------------------
+    // get geometric variable data which is initialized by particle generator
+    //----------------------------------------------------------------------
+    pos_ = getVariableDataByName<Vecd>("Position");
+    Vol_ = getVariableDataByName<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
     //		register non-geometric data
     //----------------------------------------------------------------------
@@ -40,14 +55,10 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     for (size_t i = 0; i != particles_bound_; ++i)
     {
-        sorted_id_.push_back(sequence_.size());
+        unsorted_id_.push_back(i);
+        sorted_id_.push_back(i);
         sequence_.push_back(0);
     }
-    //----------------------------------------------------------------------
-    //		add particle reload data on geometries
-    //----------------------------------------------------------------------
-    addVariableToReload<Vecd>("Position");
-    addVariableToReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds()

@@ -7,12 +7,12 @@ LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr)
 {
     //----------------------------------------------------------------------
-    //		register geometric data only
+    // add geometries variable which will initialized particle generator
     //----------------------------------------------------------------------
-    b_n_ = registerSharedVariable<Vecd>("BinormalDirection");
-    width_ = registerSharedVariable<Real>("Width");
+    addSharedVariable<Vecd>("BinormalDirection");
+    addSharedVariable<Real>("Width");
     /**
-     * add particle reload data
+     * add particle reload variable
      */
     addVariableToReload<Vecd>("BinormalDirection");
     addVariableToReload<Real>("Width");
@@ -21,7 +21,8 @@ LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
 void LinearParticles::initializeBasicParticleVariables()
 {
     SurfaceParticles::initializeBasicParticleVariables();
-
+    b_n_ = getVariableDataByName<Vecd>("BinormalDirection");
+    width_ = getVariableDataByName<Real>("Width");
     addVariableToWrite<Vecd>("BinormalDirection");
 }
 //=================================================================================================//

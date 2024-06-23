@@ -72,8 +72,6 @@ class ParticleGenerator<Base>
   protected:
     BaseParticles &base_particles_;
     Real particle_spacing_ref_;
-    StdLargeVec<Vecd> *pos_; // particle variable: position
-    StdLargeVec<Real> *Vol_; // particle variable: volume measure
     virtual void addParticlePosition(const Vecd &position);
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
     virtual void prepareGeometricData() = 0;             // first step of particle generation
@@ -91,8 +89,6 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
     virtual ~ParticleGenerator(){};
 
   protected:
-    StdLargeVec<Vecd> *n_;         /**< surface normal */
-    StdLargeVec<Real> *thickness_; /**< surface thickness */
     virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
     virtual void initializeGeometricParticleVariables() override;
 };

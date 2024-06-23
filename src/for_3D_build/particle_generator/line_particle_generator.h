@@ -48,12 +48,6 @@ class ParticleGenerator<Line> : public ParticleGenerator<Base>
     virtual ~ParticleGenerator(){};
 
   protected:
-    StdLargeVec<Vecd> *n_;         /**< line normal */
-    StdLargeVec<Real> *thickness_; /**< line thickness */
-    StdLargeVec<Vecd> *b_n_;       /**< line binormal */
-    StdLargeVec<Real> *width_;     /**< line width */
-
-    /** Initialize line particle. */
     virtual void addLineProperties(
         const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
     virtual void initializeGeometricParticleVariables() override;

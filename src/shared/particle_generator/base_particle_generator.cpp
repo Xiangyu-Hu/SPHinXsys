@@ -9,8 +9,7 @@ namespace SPH
 //=================================================================================================//
 ParticleGenerator<Base>::ParticleGenerator(SPHBody &sph_body)
     : base_particles_(sph_body.getBaseParticles()),
-      particle_spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      pos_(nullptr), Vol_(nullptr) {}
+      particle_spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
 void ParticleGenerator<Base>::addParticlePosition(const Vecd &position)
 {
@@ -34,12 +33,12 @@ void ParticleGenerator<Base>::addPositionAndVolumetricMeasure(
 //=================================================================================================//
 void ParticleGenerator<Base>::initializeGeometricParticleVariables()
 {
-    pos_ = base_particles_.registerSharedVariableFrom<Vecd>("Position", position_);
-    Vol_ = base_particles_.registerSharedVariableFrom<Real>("VolumetricMeasure", volumetric_measure_);
+    base_particles_.registerSharedVariableFrom<Vecd>("Position", position_);
+    base_particles_.registerSharedVariableFrom<Real>("VolumetricMeasure", volumetric_measure_);
 }
 //=================================================================================================//
 ParticleGenerator<Surface>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Base>(sph_body), n_(nullptr), thickness_(nullptr) {}
+    : ParticleGenerator<Base>(sph_body) {}
 //=================================================================================================//
 void ParticleGenerator<Surface>::addSurfaceProperties(const Vecd &surface_normal, Real thickness)
 {
@@ -50,8 +49,8 @@ void ParticleGenerator<Surface>::addSurfaceProperties(const Vecd &surface_normal
 void ParticleGenerator<Surface>::initializeGeometricParticleVariables()
 {
     ParticleGenerator<Base>::initializeGeometricParticleVariables();
-    n_ = base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", surface_normal_);
-    thickness_ = base_particles_.registerSharedVariableFrom<Real>("Thickness", surface_thickness_);
+    base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", surface_normal_);
+    base_particles_.registerSharedVariableFrom<Real>("Thickness", surface_thickness_);
 }
 //=================================================================================================//
 void ParticleGenerator<Observer>::prepareGeometricData()
