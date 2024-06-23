@@ -105,8 +105,8 @@ FreeSurfaceIndication<Contact<NonWetting>>::FreeSurfaceIndication(BaseContactRel
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_phi_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Phi"));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_phi_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("Phi"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

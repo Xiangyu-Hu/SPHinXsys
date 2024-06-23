@@ -60,8 +60,8 @@ class InitialVelocity
     InitialVelocity(SPHBody &sph_body)
         : fluid_dynamics::FluidInitialCondition(sph_body),
           fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())),
-          p_(*fluid_particles_->getVariableByName<Real>("Pressure")),
-          rho_(*fluid_particles_->getVariableByName<Real>("Density")){};
+          p_(*fluid_particles_->getVariableDataByName<Real>("Pressure")),
+          rho_(*fluid_particles_->getVariableDataByName<Real>("Density")){};
 
     void update(size_t index_i, Real dt)
     {

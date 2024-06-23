@@ -98,10 +98,10 @@ class SurfaceOperationsVentricle
   public:
     SurfaceOperationsVentricle(InnerRelation &inner_relation, const IndexVector &ids)
         : particles_(inner_relation.getSPHBody().getBaseParticles()),
-          vel_(*particles_.getVariableByName<Vecd>("Velocity")),
-          n_(*particles_.getVariableByName<Vecd>("NormalDirection")),
+          vel_(*particles_.getVariableDataByName<Vecd>("Velocity")),
+          n_(*particles_.getVariableDataByName<Vecd>("NormalDirection")),
           n0_(*particles_.registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-          F_(*particles_.getVariableByName<Matd>("DeformationGradient")),
+          F_(*particles_.getVariableDataByName<Matd>("DeformationGradient")),
           ids_(ids), srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
           Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)
     {

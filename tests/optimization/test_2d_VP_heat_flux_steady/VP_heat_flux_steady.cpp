@@ -93,7 +93,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -111,9 +111,9 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux"))) {}
+          heat_flux_(*(particles_->getVariableDataByName<Real>("HeatFlux"))) {}
 
     void update(size_t index_i, Real dt)
     {

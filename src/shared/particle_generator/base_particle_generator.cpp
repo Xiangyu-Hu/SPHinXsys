@@ -36,8 +36,8 @@ void ParticleGenerator<Base>::initializePositionAndVolumetricMeasure(
 //=================================================================================================//
 ParticleGenerator<Surface>::ParticleGenerator(SPHBody &sph_body)
     : ParticleGenerator<Base>(sph_body),
-      n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
-      thickness_(*base_particles_.getVariableByName<Real>("Thickness")) {}
+      n_(*base_particles_.getVariableDataByName<Vecd>("NormalDirection")),
+      thickness_(*base_particles_.getVariableDataByName<Real>("Thickness")) {}
 //=================================================================================================//
 void ParticleGenerator<Surface>::initializeSurfaceProperties(const Vecd &surface_normal, Real thickness)
 {

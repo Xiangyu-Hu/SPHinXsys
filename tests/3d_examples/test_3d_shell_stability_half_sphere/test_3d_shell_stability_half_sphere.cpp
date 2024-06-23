@@ -160,7 +160,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
-    StdLargeVec<Vec3d> &position = *shell_particles->getVariableByName<Vec3d>("Position");
+    StdLargeVec<Vec3d> &position = *shell_particles->getVariableDataByName<Vec3d>("Position");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
         for (size_t i = 0; i < position.size(); ++i)
@@ -212,8 +212,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         }
 
         // test volume
-        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableByName<Real>("VolumetricMeasure");
-        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableDataByName<Real>("VolumetricMeasure");
+        StdLargeVec<Real> &mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
         Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
         Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);

@@ -34,13 +34,13 @@
 namespace SPH
 {
 
-/** 
+/**
  * @class WithinScope
- * Base class introduce the concept of "within the scope". 
- * The derived class should implement the operator bool(size_t...) 
+ * Base class introduce the concept of "within the scope".
+ * The derived class should implement the operator bool(size_t...)
  * to indicate whether an indexed element is within the scope.
- * Generally, the object of the derived class 
- * should be named as "within_scope" or "within_scope_" (class member) 
+ * Generally, the object of the derived class
+ * should be named as "within_scope" or "within_scope_" (class member)
  * so that the code can be more readable.
  */
 class WithinScope
@@ -69,7 +69,7 @@ class IndicatedParticles : public WithinScope
   public:
     explicit IndicatedParticles(BaseParticles *base_particles)
         : WithinScope(),
-          indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+          indicator_(*base_particles->getVariableDataByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] == INDICATOR;
@@ -86,7 +86,7 @@ class NotIndicatedParticles : public WithinScope
   public:
     explicit NotIndicatedParticles(BaseParticles *base_particles)
         : WithinScope(),
-          indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+          indicator_(*base_particles->getVariableDataByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] != INDICATOR;
@@ -197,7 +197,7 @@ class LinearGradientCorrection : public KernelCorrection
   public:
     LinearGradientCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
+          B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 
     Matd operator()(size_t index_i)
     {
@@ -224,7 +224,7 @@ class AdaptiveResolution
 {
   public:
     AdaptiveResolution(BaseParticles *particles)
-        : h_ratio_(*particles->getVariableByName<Real>("SmoothingLengthRatio")){};
+        : h_ratio_(*particles->getVariableDataByName<Real>("SmoothingLengthRatio")){};
 
     Real operator()(size_t index_i)
     {

@@ -47,9 +47,9 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+            contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
             StdLargeVec<DataType> *contact_data =
-                this->contact_particles_[k]->template getVariableByName<DataType>(variable_name);
+                this->contact_particles_[k]->template getVariableDataByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
         }
     };
@@ -96,7 +96,7 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
         : BaseInterpolation<DataType>(contact_relation, target_variable)
     {
         this->interpolated_quantities_ =
-            this->particles_->template getVariableByName<DataType>(interpolated_variable);
+            this->particles_->template getVariableDataByName<DataType>(interpolated_variable);
     };
     virtual ~InterpolatingAQuantity(){};
 };

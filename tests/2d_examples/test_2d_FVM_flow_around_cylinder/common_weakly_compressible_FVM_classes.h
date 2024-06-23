@@ -104,9 +104,9 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
     explicit PressureForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index)
         : BaseForceFromFluidInFVM(inner_relation),
           fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          p_(*particles_->getVariableByName<Real>("Pressure")),
-          rho_(*particles_->getVariableByName<Real>("Density")),
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          p_(*particles_->getVariableDataByName<Real>("Pressure")),
+          rho_(*particles_->getVariableDataByName<Real>("Density")),
           riemann_solver_(fluid_, fluid_),
           each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
     {

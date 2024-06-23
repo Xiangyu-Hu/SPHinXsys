@@ -11,10 +11,10 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      rho_(*this->particles_->template getVariableByName<Real>("Density")),
-      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
-      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
+      rho_(*this->particles_->template getVariableDataByName<Real>("Density")),
+      mass_(*this->particles_->template getVariableDataByName<Real>("Mass")),
+      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      vel_(*this->particles_->template getVariableDataByName<Vecd>("Velocity")),
       viscous_force_(*this->particles_->template registerSharedVariable<Vecd>("ViscousForce")),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -134,8 +134,8 @@ ViscousForce<Contact<>, ViscosityType>::ViscousForce(BaseContactRelation &contac
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_mu_.emplace_back(ViscosityType(particles_, contact_particles_[k]));
-        contact_vel_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
-        wall_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_vel_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("Velocity"));
+        wall_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

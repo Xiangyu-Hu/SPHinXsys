@@ -77,7 +77,7 @@ class BodySurface;
  * The second is for the local, dynamics-method-related variables, which are defined in specific methods,
  * and are only used by the relevant methods. Generally, a discrete variable is defined
  * and the corresponding data can use or redefined (with no change to the data) by other methods
- * using the function getVariableByName.
+ * using the function getVariableDataByName.
  */
 class BaseParticles
 {
@@ -113,17 +113,21 @@ class BaseParticles
     //----------------------------------------------------------------------
   private:
     template <typename DataType>
-    void initializeVariable(StdLargeVec<DataType> *contained_data, DataType initial_value = ZeroData<DataType>::value);
+    void initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
-    void initializeVariable(StdLargeVec<DataType> *contained_data, const InitializationFunction &initialization);
+    void initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
 
   public:
+    template <typename DataType>
+    DiscreteVariable<DataType> *addSharedVariable(const std::string &variable_name);
     template <typename DataType, typename... Args>
     StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
+    DiscreteVariable<DataType> *getVariableByName(const std::string &variable_name);
+    template <typename DataType>
+    StdLargeVec<DataType> *getVariableDataByName(const std::string &variable_name);
 
     template <typename DataType>
     DataType *registerSingleVariable(const std::string &variable_name,

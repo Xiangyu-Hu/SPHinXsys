@@ -39,6 +39,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
+    pos_ = getVariableByName<Vecd>("Position");
+    Vol_ = getVariableByName<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
     //		register non-geometric data
     //----------------------------------------------------------------------

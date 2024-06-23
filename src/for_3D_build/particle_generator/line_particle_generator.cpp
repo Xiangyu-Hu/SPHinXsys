@@ -8,10 +8,10 @@ namespace SPH
 //=================================================================================================//
 ParticleGenerator<Line>::ParticleGenerator(SPHBody &sph_body)
     : ParticleGenerator<Base>(sph_body),
-      n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
-      thickness_(*base_particles_.getVariableByName<Real>("Thickness")),
-      b_n_(*base_particles_.getVariableByName<Vecd>("BinormalDirection")),
-      width_(*base_particles_.getVariableByName<Real>("Width")) {}
+      n_(*base_particles_.getVariableDataByName<Vecd>("NormalDirection")),
+      thickness_(*base_particles_.getVariableDataByName<Real>("Thickness")),
+      b_n_(*base_particles_.getVariableDataByName<Vecd>("BinormalDirection")),
+      width_(*base_particles_.getVariableDataByName<Real>("Width")) {}
 //=================================================================================================//
 void ParticleGenerator<Line>::initializeLineProperties(
     const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width)

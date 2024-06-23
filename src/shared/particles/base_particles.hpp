@@ -14,21 +14,31 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::initializeVariable(StdLargeVec<DataType> *contained_data, DataType initial_value)
+void BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {
-    contained_data->resize(particles_bound_, initial_value);
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    std::get<type_index>(all_particle_data_).push_back(contained_data);
+    if (variable->DataField() == nullptr)
+    {
+        variable->allocateDataField(particles_bound_, initial_value);
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        std::get<type_index>(all_particle_data_).push_back(variable->DataField());
+    }
+    else
+    {
+        std::cout << "\n Error: the variable '" << variable->Name() << "' has already been allocated!" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
 }
 //=================================================================================================//
 template <typename DataType, class InitializationFunction>
-void BaseParticles::initializeVariable(StdLargeVec<DataType> *contained_data,
+void BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
                                        const InitializationFunction &initialization)
 {
-    initializeVariable(contained_data);
+    initializeVariable(variable);
+    auto &contained_data = *variable->DataField();
     for (size_t i = 0; i != particles_bound_; ++i)
     {
-        (*contained_data)[i] = initialization(i); // Here, lambda function is applied for initialization.
+        contained_data[i] = initialization(i); // Here, lambda function is applied for initialization.
     }
 }
 //=================================================================================================//
@@ -61,24 +71,28 @@ DataType *BaseParticles::getSingleVariableByName(const std::string &variable_nam
     return nullptr;
 }
 //=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::addSharedVariable(const std::string &variable_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
+    if (variable == nullptr)
+    {
+        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name);
+    }
+    return variable;
+}
+//=================================================================================================//
 template <typename DataType, typename... Args>
 StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&...args)
 {
 
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
+    DiscreteVariable<DataType> *variable = addSharedVariable<DataType>(variable_name);
 
-    if (variable == nullptr)
+    if (variable->DataField() == nullptr)
     {
-        DiscreteVariable<DataType> *new_variable =
-            addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name);
-        StdLargeVec<DataType> *contained_data = new_variable->DataField();
-        initializeVariable(contained_data, std::forward<Args>(args)...);
-        return contained_data;
+        initializeVariable(variable, std::forward<Args>(args)...);
     }
-    else
-    {
-        return variable->DataField();
-    }
+    return variable->DataField();
 }
 //=================================================================================================//
 template <typename DataType>
@@ -86,39 +100,44 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(const std::stri
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
 
-    if (variable != nullptr)
-    {
-        StdLargeVec<DataType> &old_data = *variable->DataField();
-        return registerSharedVariable<DataType>(new_name, [&](size_t index)
-                                                { return old_data[index]; });
-    }
-    else
+    if (variable == nullptr)
     {
         std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
 
-    return nullptr;
+    StdLargeVec<DataType> &old_data = *variable->DataField();
+    return registerSharedVariable<DataType>(new_name, [&](size_t index)
+                                            { return old_data[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
+DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
-
-    if (variable != nullptr)
-    {
-        return variable->DataField();
-    }
-    else
+    if (variable == nullptr)
     {
         std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
+    return variable;
+}
+//=================================================================================================//
+template <typename DataType>
+StdLargeVec<DataType> *BaseParticles::getVariableDataByName(const std::string &variable_name)
+{
+    DiscreteVariable<DataType> *variable = getVariableByName<DataType>(variable_name);
 
-    return nullptr;
+    if (variable->DataField() == nullptr)
+    {
+        std::cout << "\nError: the variable '" << variable_name << "' has not been allocated yet!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    return variable->DataField();
 }
 //=================================================================================================//
 template <typename DataType>

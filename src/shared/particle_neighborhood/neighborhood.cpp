@@ -99,7 +99,7 @@ void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
 NeighborBuilderInnerAdaptive::
     NeighborBuilderInnerAdaptive(SPHBody &body)
     : NeighborBuilder(body.sph_adaptation_->getKernel()),
-      h_ratio_(*body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")) {}
+      h_ratio_(*body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
 void NeighborBuilderInnerAdaptive::
 operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -221,8 +221,8 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 //=================================================================================================//
 BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_body)
     : NeighborBuilder(shell_body.sph_adaptation_->getKernel()),
-      n_(*shell_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
-      thickness_(*shell_body.getBaseParticles().getVariableByName<Real>("Thickness")),
+      n_(*shell_body.getBaseParticles().getVariableDataByName<Vecd>("NormalDirection")),
+      thickness_(*shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
       k1_ave_(*shell_body.getBaseParticles().registerSharedVariable<Real>("Average1stPrincipleCurvature")),
       k2_ave_(*shell_body.getBaseParticles().registerSharedVariable<Real>("Average2ndPrincipleCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
