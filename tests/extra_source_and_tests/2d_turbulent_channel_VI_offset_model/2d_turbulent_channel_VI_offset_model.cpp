@@ -21,7 +21,7 @@ int main(int ac, char *av[])
      */
 
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    //water_block.defineBodyLevelSetShape();
+    water_block.defineBodyLevelSetShape();
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -32,7 +32,7 @@ int main(int ac, char *av[])
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    //wall_boundary.defineBodyLevelSetShape();
+    wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<Reload>( wall_boundary.getName())
