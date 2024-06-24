@@ -245,13 +245,17 @@ Matd LocallyOrthotropicMuscle::StressPK2(Matd &F, size_t i)
            a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * (*local_f0s0_)[i];
 }
 //=================================================================================================//
+void LocallyOrthotropicMuscle::addReloadLocalParameters(BaseParticles *base_particles)
+{
+    Muscle::addReloadLocalParameters(base_particles);
+    base_particles->addVariableToReload<Vecd>("Fiber");
+    base_particles->addVariableToReload<Vecd>("Sheet");
+}
 void LocallyOrthotropicMuscle::registerReloadLocalParameters(BaseParticles *base_particles)
 {
     Muscle::registerReloadLocalParameters(base_particles);
     local_f0_ = base_particles->registerSharedVariable<Vecd>("Fiber");
     local_s0_ = base_particles->registerSharedVariable<Vecd>("Sheet");
-    base_particles->addVariableToReload<Vecd>("Fiber");
-    base_particles->addVariableToReload<Vecd>("Sheet");
 }
 //=================================================================================================//
 void LocallyOrthotropicMuscle::initializeLocalParameters(BaseParticles *base_particles)

@@ -119,6 +119,7 @@ class ParticleGenerator<Reload> : public ParticleGenerator<Base>
     ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name);
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
+    virtual void setAllParticleBounds() override;
     virtual void initializeGeometricParticleVariables() override;
 };
 

@@ -104,6 +104,7 @@ class BaseParticles
     //----------------------------------------------------------------------
     void initializeAllParticlesBounds(size_t total_real_particles);
     void increaseAllParticlesBounds(size_t buffer_size);
+    void setAllParticlesBoundsFromReloadXml(std::string &filefullpath);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
@@ -112,13 +113,13 @@ class BaseParticles
     //----------------------------------------------------------------------
   private:
     template <typename DataType>
-    void initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
+    DiscreteVariable<DataType> *addSharedVariable(const std::string &variable_name);
+    template <typename DataType>
+    StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
-    void initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
+    StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
 
   public:
-    template <typename DataType>
-    DiscreteVariable<DataType> *addSharedVariable(const std::string &variable_name);
     template <typename DataType, typename... Args>
     StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
 
@@ -237,7 +238,7 @@ class BaseParticles
         ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
     };
 
   public:

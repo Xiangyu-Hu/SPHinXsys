@@ -90,10 +90,14 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &species_
                                                      Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
     : LocalDirectionalDiffusion(species_name, species_name, diff_cf, bias_diff_cf, bias_direction) {}
 //=================================================================================================//
+void LocalDirectionalDiffusion::addReloadLocalParameters(BaseParticles *base_particles)
+{
+    base_particles->addVariableToReload<Vecd>("Fiber");
+}
+//=================================================================================================//
 void LocalDirectionalDiffusion::registerReloadLocalParameters(BaseParticles *base_particles)
 {
     local_bias_direction_ = base_particles->registerSharedVariable<Vecd>("Fiber");
-    base_particles->addVariableToReload<Vecd>("Fiber");
 }
 //=================================================================================================//
 void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_particles)

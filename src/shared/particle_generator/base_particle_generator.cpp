@@ -82,7 +82,12 @@ ParticleGenerator<Reload>::ParticleGenerator(SPHBody &sph_body, const std::strin
 //=================================================================================================//
 void ParticleGenerator<Reload>::prepareGeometricData()
 {
-    base_material_.registerReloadLocalParameters(&base_particles_);
+    base_material_.addReloadLocalParameters(&base_particles_);
+}
+//=================================================================================================//
+void ParticleGenerator<Reload>::setAllParticleBounds()
+{
+    base_particles_.setAllParticlesBoundsFromReloadXml(file_path_);
 }
 //=================================================================================================//
 void ParticleGenerator<Reload>::initializeGeometricParticleVariables()

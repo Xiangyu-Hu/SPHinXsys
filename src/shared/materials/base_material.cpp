@@ -10,6 +10,10 @@ void BaseMaterial::setLocalParameters(bool is_reload, BaseParticles *base_partic
     {
         registerReloadLocalParameters(base_particles);
     }
+    else
+    {
+        addReloadLocalParameters(base_particles);
+    }
 
     initializeLocalParameters(base_particles);
 }

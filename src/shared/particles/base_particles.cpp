@@ -25,12 +25,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_)
 {
     //----------------------------------------------------------------------
-    // add geometries variable which will initialized particle generator
-    //----------------------------------------------------------------------
-    addSharedVariable<Vecd>("Position");
-    addSharedVariable<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
-    // add particle reload data on geometries
+    // Indicate particle reload variable on geometries
+    // without allocated memory for the variable.
     //----------------------------------------------------------------------
     addVariableToReload<Vecd>("Position");
     addVariableToReload<Real>("VolumetricMeasure");
@@ -73,6 +69,15 @@ void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
     real_particles_bound_ += buffer_size;
     particles_bound_ += buffer_size;
 }
+//=================================================================================================//
+void BaseParticles::setAllParticlesBoundsFromReloadXml(std::string &filefullpath)
+{
+    reload_xml_parser_.loadXmlFile(filefullpath);
+    total_real_particles_ = reload_xml_parser_.Size(reload_xml_parser_.first_element_);
+    real_particles_bound_ = total_real_particles_;
+    particles_bound_ = real_particles_bound_;
+}
+
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
@@ -302,7 +307,7 @@ void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
-    read_restart_variable_from_xml_(all_particle_data_);
+    read_restart_variable_from_xml_(this);
 }
 //=================================================================================================//
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
@@ -315,13 +320,7 @@ void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
-    total_real_particles_ = reload_xml_parser_.Size(reload_xml_parser_.first_element_);
-    for (size_t i = 0; i != total_real_particles_; ++i)
-    {
-        unsorted_id_.push_back(i);
-    };
-    resize_particles_(total_real_particles_);
-    read_reload_variable_from_xml_(all_particle_data_);
+    read_reload_variable_from_xml_(this);
 }
 //=================================================================================================//
 } // namespace SPH

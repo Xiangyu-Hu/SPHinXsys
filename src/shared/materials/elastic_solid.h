@@ -328,6 +328,7 @@ class LocallyOrthotropicMuscle : public Muscle
     };
     virtual ~LocallyOrthotropicMuscle(){};
 
+    virtual void addReloadLocalParameters(BaseParticles *base_particles) override;
     virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 

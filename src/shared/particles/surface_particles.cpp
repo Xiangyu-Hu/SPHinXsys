@@ -14,13 +14,9 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     //----------------------------------------------------------------------
     sph_body.sph_adaptation_->getKernel()->reduceOnce();
     //----------------------------------------------------------------------
-    // add geometries variable which will initialized particle generator
+    // Indicate particle reload variable on geometries
+    // without allocated memory for the variable.
     //----------------------------------------------------------------------
-    addSharedVariable<Vecd>("NormalDirection");
-    addSharedVariable<Real>("Thickness");
-    /**
-     * add particle reload variables
-     */
     addVariableToReload<Vecd>("NormalDirection");
     addVariableToReload<Real>("Thickness");
 }

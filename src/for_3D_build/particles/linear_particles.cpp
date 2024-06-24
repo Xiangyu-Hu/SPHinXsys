@@ -7,13 +7,9 @@ LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr)
 {
     //----------------------------------------------------------------------
-    // add geometries variable which will initialized particle generator
+    // Indicate particle reload variable on geometries
+    // without allocated memory for the variable.
     //----------------------------------------------------------------------
-    addSharedVariable<Vecd>("BinormalDirection");
-    addSharedVariable<Real>("Width");
-    /**
-     * add particle reload variable
-     */
     addVariableToReload<Vecd>("BinormalDirection");
     addVariableToReload<Real>("Width");
 }

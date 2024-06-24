@@ -14,7 +14,8 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
+StdLargeVec<DataType> *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
+                                                         DataType initial_value)
 {
     if (variable->DataField() == nullptr)
     {
@@ -28,18 +29,20 @@ void BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, Dat
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
+    return variable->DataField();
 }
 //=================================================================================================//
 template <typename DataType, class InitializationFunction>
-void BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
-                                       const InitializationFunction &initialization)
+StdLargeVec<DataType> *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
+                                                         const InitializationFunction &initialization)
 {
-    initializeVariable(variable);
-    auto &contained_data = *variable->DataField();
+
+    auto &contained_data = *initializeVariable(variable);
     for (size_t i = 0; i != total_real_particles_; ++i)
     {
         contained_data[i] = initialization(i); // Here, lambda function is applied for initialization.
     }
+    return &contained_data;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -203,6 +206,7 @@ void BaseParticles::addVariableToRestart(const std::string &variable_name)
 template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &variable_name)
 {
+    addSharedVariable<DataType>(variable_name);
     addVariableToList<DataType>(variables_to_reload_, variable_name);
 }
 //=================================================================================================//
@@ -251,12 +255,14 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Pa
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::ReadAParticleVariableFromXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data)
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {
         size_t index = 0;
-        StdLargeVec<DataType> &variable_data = *variables[i]->DataField();
+        StdLargeVec<DataType> &variable_data = variables[i]->DataField() != nullptr
+                                                   ? *variables[i]->DataField()
+                                                   : *base_particles->initializeVariable<DataType>(variables[i]);
         for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
             xml_parser_.queryAttributeValue(child, variables[i]->Name(), variable_data[index]);
