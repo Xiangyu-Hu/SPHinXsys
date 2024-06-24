@@ -17,7 +17,6 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
       reload_xml_parser_("xml_particle_reload", "particles"),
-      resize_particles_(all_particle_data_),
       copy_particle_data_(all_particle_data_),
       write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
       write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
@@ -300,7 +299,7 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    write_restart_variable_to_xml_(all_particle_data_);
+    write_restart_variable_to_xml_();
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
@@ -313,7 +312,7 @@ void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
-    write_reload_variable_to_xml_(all_particle_data_);
+    write_reload_variable_to_xml_();
     reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//

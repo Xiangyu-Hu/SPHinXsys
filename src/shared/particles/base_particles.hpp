@@ -218,16 +218,6 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::ResizeParticles::
-operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size)
-{
-    for (size_t i = 0; i != data_keeper.size(); ++i)
-    {
-        data_keeper[i]->resize(new_size, ZeroData<DataType>::value);
-    }
-}
-//=================================================================================================//
-template <typename DataType>
 void BaseParticles::CopyParticleData::
 operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index)
 {
@@ -239,7 +229,7 @@ operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::WriteAParticleVariableToXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data)
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {

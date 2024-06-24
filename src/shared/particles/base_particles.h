@@ -211,12 +211,6 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Small structs for generalize particle operations
     //----------------------------------------------------------------------
-    struct ResizeParticles
-    {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size);
-    };
-
     struct CopyParticleData
     {
         template <typename DataType>
@@ -229,7 +223,7 @@ class BaseParticles
         WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
     };
 
     struct ReadAParticleVariableFromXml
@@ -245,7 +239,6 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------
-    OperationOnDataAssemble<ParticleData, ResizeParticles> resize_particles_;
     OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
 
   protected:
