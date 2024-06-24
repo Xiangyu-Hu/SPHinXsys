@@ -102,7 +102,7 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
-    void initializeAllParticlesBounds();
+    void initializeAllParticlesBounds(size_t total_real_particles);
     void increaseAllParticlesBounds(size_t buffer_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateGhostParticle(size_t ghost_index, size_t index);

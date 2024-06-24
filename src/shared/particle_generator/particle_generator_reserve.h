@@ -65,15 +65,9 @@ class ParticleGenerator<ParticleBuffer<BufferSizeEstimator>, OtherParameters...>
     };
     virtual ~ParticleGenerator(){};
 
-    void generateParticlesWithGeometricVariables()
+    virtual void setAllParticleBounds() override
     {
-        ParticleGenerator<OtherParameters...>::generateParticlesWithGeometricVariables();
-        ParticleGenerator<ParticleBuffer<BufferSizeEstimator>, OtherParameters...>::reserveBufferParticles();
-    };
-
-  protected:
-    void reserveBufferParticles()
-    {
+        ParticleGenerator<OtherParameters...>::setAllParticleBounds();
         buffer_boundary_.reserveBufferParticles(this->base_particles_, this->particle_spacing_ref_);
     };
 
@@ -92,19 +86,14 @@ class ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>
           ghost_boundary_(ghost_boundary){};
     virtual ~ParticleGenerator(){};
 
-    void generateParticlesWithGeometricVariables()
+    virtual void setAllParticleBounds() override
     {
-        ParticleGenerator<OtherParameters...>::generateParticlesWithGeometricVariables();
-        ParticleGenerator<Ghost<GhostParameter>, OtherParameters...>::reserveGhostParticles();
+        ParticleGenerator<OtherParameters...>::setAllParticleBounds();
+        ghost_boundary_.reserveGhostParticles(this->base_particles_, this->particle_spacing_ref_);
     };
 
   protected:
     Ghost<GhostParameter> &ghost_boundary_;
-
-    void reserveGhostParticles()
-    {
-        ghost_boundary_.reserveGhostParticles(this->base_particles_, this->particle_spacing_ref_);
-    };
 };
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_RESERVE_H

@@ -75,7 +75,8 @@ class ParticleGenerator<Base>
     virtual void addParticlePosition(const Vecd &position);
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
     virtual void prepareGeometricData() = 0;             // first step of particle generation
-    virtual void initializeGeometricParticleVariables(); // second step of particle generation
+    virtual void setAllParticleBounds();                 // second step of particle generation
+    virtual void initializeGeometricParticleVariables(); // third step of particle generation
 };
 
 template <> // generate surface particles

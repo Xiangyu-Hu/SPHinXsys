@@ -31,15 +31,7 @@ void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 //=================================================================================================//
 void ParticleBuffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
 {
-    size_t old_bound = base_particles.real_particles_bound_;
     base_particles.increaseAllParticlesBounds(buffer_size);
-    size_t new_bound = base_particles.real_particles_bound_;
-
-    base_particles.resize_particles_(new_bound);
-    for (size_t i = old_bound; i != new_bound; ++i)
-    {
-        base_particles.unsorted_id_.push_back(i);
-    }
 }
 //=================================================================================================//
 void Ghost<Base>::checkWithinGhostSize(const ParticlesBound &ghost_bound)
@@ -61,8 +53,6 @@ size_t Ghost<Base>::allocateGhostParticles(BaseParticles &base_particles, size_t
 {
     size_t ghost_lower_bound = base_particles.particles_bound_;
     base_particles.particles_bound_ += ghost_size;
-    base_particles.resize_particles_(base_particles.particles_bound_);
-    base_particles.unsorted_id_.resize(base_particles.particles_bound_, 0);
     return ghost_lower_bound;
 }
 //=================================================================================================//

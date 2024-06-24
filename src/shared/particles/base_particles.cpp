@@ -61,8 +61,9 @@ void BaseParticles::initializeBasicParticleVariables()
     }
 }
 //=================================================================================================//
-void BaseParticles::initializeAllParticlesBounds()
+void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)
 {
+    total_real_particles_ = total_real_particles;
     real_particles_bound_ = total_real_particles_;
     particles_bound_ = real_particles_bound_;
 }

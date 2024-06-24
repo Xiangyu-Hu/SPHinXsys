@@ -36,7 +36,7 @@ void BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
 {
     initializeVariable(variable);
     auto &contained_data = *variable->DataField();
-    for (size_t i = 0; i != particles_bound_; ++i)
+    for (size_t i = 0; i != total_real_particles_; ++i)
     {
         contained_data[i] = initialization(i); // Here, lambda function is applied for initialization.
     }

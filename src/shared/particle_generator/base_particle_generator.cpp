@@ -20,8 +20,13 @@ void ParticleGenerator<Base>::addParticlePosition(const Vecd &position)
 void ParticleGenerator<Base>::generateParticlesWithGeometricVariables()
 {
     prepareGeometricData();
-    base_particles_.initializeAllParticlesBounds();
+    setAllParticleBounds();
     initializeGeometricParticleVariables();
+}
+//=================================================================================================//
+void ParticleGenerator<Base>::setAllParticleBounds()
+{
+    base_particles_.initializeAllParticlesBounds(position_.size());
 }
 //=================================================================================================//
 void ParticleGenerator<Base>::addPositionAndVolumetricMeasure(
