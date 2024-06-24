@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -21,7 +21,7 @@ int main(int ac, char *av[])
      */
 
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineBodyLevelSetShape();
+    //water_block.defineBodyLevelSetShape();
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -32,7 +32,7 @@ int main(int ac, char *av[])
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineBodyLevelSetShape();
+    //wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<Reload>( wall_boundary.getName())
@@ -135,6 +135,9 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
+    SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
+
+
     SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
@@ -203,7 +206,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 5.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 10.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -250,6 +253,9 @@ int main(int ac, char *av[])
                 turbulent_kinetic_energy_force.exec();
 
                 pressure_relaxation.exec(dt);
+
+                constrain_normal_velocity_in_P_region.exec();
+
                 
                 inlet_velocity_buffer_inflow_condition.exec();
 
