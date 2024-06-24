@@ -1,7 +1,5 @@
 FROM nvidia/cuda:12.5.0-devel-ubuntu20.04
 
-SHELL ["/bin/bash", "-c"]
-
 ARG build_with_dependencies_source=0
 ARG SPH_ONLY_STATIC_BUILD=0
 ARG was_build=0
@@ -57,6 +55,7 @@ ENV SIMBODY_HOME=/home/simbody
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib
 ENV CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include
 
+SHELL ["/bin/bash", "-c"]
 RUN source /opt/intel/oneapi/setvars.sh --include-intel-llvm && cmake   -G "Unix Makefiles"                                                     \
     -D CMAKE_BUILD_TYPE=Release                                                 \
     -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx                          \
