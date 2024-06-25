@@ -499,7 +499,18 @@ namespace fluid_dynamics
 		StdLargeVec<int>& is_near_wall_P1_;
 		StdLargeVec<Vecd>& e_nearest_normal_;
 	};
+//=================================================================================================//
+	class ConstrainVelocityAt_Y_Direction : public LocalDynamics,
+		public FluidDataSimple
+	{
+	public:
+		explicit ConstrainVelocityAt_Y_Direction(SPHBody& sph_body);
+		virtual ~ConstrainVelocityAt_Y_Direction() {};
 
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<Vecd>& vel_;
+	};
 
 //=================================================================================================//
 //*********************TESTING MODULES*********************

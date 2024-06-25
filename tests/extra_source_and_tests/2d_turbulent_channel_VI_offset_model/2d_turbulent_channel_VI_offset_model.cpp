@@ -135,7 +135,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
     SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
-
+    SimpleDynamics<fluid_dynamics::ConstrainVelocityAt_Y_Direction> constrain_Y_velocity(water_block);
 
     SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
 
@@ -254,7 +254,9 @@ int main(int ac, char *av[])
                 pressure_relaxation.exec(dt);
 
                 constrain_normal_velocity_in_P_region.exec();
-
+                
+                //** For test *
+                constrain_Y_velocity.exec();
                 
                 inlet_velocity_buffer_inflow_condition.exec();
 
