@@ -103,8 +103,8 @@ class BaseParticles
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
     void initializeAllParticlesBounds(size_t total_real_particles);
+    void initializeAllParticlesBounds(std::string &filefullpath);
     void increaseAllParticlesBounds(size_t buffer_size);
-    void setAllParticlesBoundsFromReloadXml(std::string &filefullpath);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
@@ -178,7 +178,7 @@ class BaseParticles
     void readParticleFromXmlForRestart(std::string &filefullpath);
     void writeToXmlForReloadParticle(std::string &filefullpath);
     void readFromXmlForReloadParticle(std::string &filefullpath);
-    XmlParser *getReloadXmlParser() { return &reload_xml_parser_; };
+    XmlParser &readReloadXmlFile(const std::string &filefullpath);
     virtual BaseParticles *ThisObjectPtr() { return this; };
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles

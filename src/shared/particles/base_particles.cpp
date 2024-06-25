@@ -63,20 +63,17 @@ void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)
     particles_bound_ = real_particles_bound_;
 }
 //=================================================================================================//
+void BaseParticles::initializeAllParticlesBounds(std::string &filefullpath)
+{
+    reload_xml_parser_.loadXmlFile(filefullpath);
+    initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
+}
+//=================================================================================================//
 void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
 {
     real_particles_bound_ += buffer_size;
     particles_bound_ += buffer_size;
 }
-//=================================================================================================//
-void BaseParticles::setAllParticlesBoundsFromReloadXml(std::string &filefullpath)
-{
-    reload_xml_parser_.loadXmlFile(filefullpath);
-    total_real_particles_ = reload_xml_parser_.Size(reload_xml_parser_.first_element_);
-    real_particles_bound_ = total_real_particles_;
-    particles_bound_ = real_particles_bound_;
-}
-
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
@@ -320,6 +317,12 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
     read_reload_variable_from_xml_(this);
+}
+//=================================================================================================//
+XmlParser &BaseParticles::readReloadXmlFile(const std::string &filefullpath)
+{
+    reload_xml_parser_.loadXmlFile(filefullpath);
+    return reload_xml_parser_;
 }
 //=================================================================================================//
 } // namespace SPH
