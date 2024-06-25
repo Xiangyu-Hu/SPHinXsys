@@ -44,6 +44,7 @@ namespace fluid_dynamics
 		turbu_epsilon_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipation"))),
 		turbu_epsilon_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipationPrior"))),
 		turbu_mu_(*(this->particles_->template registerSharedVariable<Real>("TurbulentViscosity"))),
+		turbu_strain_rate_(*(this->particles_->template registerSharedVariable<Matd>("TurbulentStrainRate"))),
 		mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
 		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 		particle_spacing_min_(base_relation.getSPHBody().sph_adaptation_->MinimumSpacing()),

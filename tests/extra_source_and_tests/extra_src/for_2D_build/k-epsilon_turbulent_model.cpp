@@ -155,7 +155,8 @@ namespace fluid_dynamics
 		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
 		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
-		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+		turbu_strain_rate_(*particles_->getVariableByName<Matd>("TurbulentStrainRate"))
 	{
 		particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 		particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
@@ -179,6 +180,10 @@ namespace fluid_dynamics
 		particles_->addVariableToWrite<Real>("TurbulentDissipation");
 
 		particles_->registerSortableVariable<Real>("TurbulentDissipationPrior");
+
+		particles_->registerSortableVariable<Matd>("TurbulentStrainRate");
+		particles_->addVariableToWrite<Matd>("TurbulentStrainRate");
+
 
 		//** Obtain Initial values for transport equations *		
 		std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
@@ -251,6 +256,7 @@ namespace fluid_dynamics
 		//** for test */
 		k_diffusion_[index_i] = k_lap;
 		vel_x_[index_i] = vel_[index_i][0];
+		turbu_strain_rate_[index_i] = strain_rate;
 
 	}
 	//=================================================================================================//

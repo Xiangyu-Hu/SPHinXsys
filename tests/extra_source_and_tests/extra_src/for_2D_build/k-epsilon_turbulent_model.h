@@ -149,6 +149,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real> turbu_k_, turbu_k_prior_;
 		StdLargeVec<Real> turbu_epsilon_, turbu_epsilon_prior_;
 		StdLargeVec<Real> turbu_mu_;
+		StdLargeVec<Matd> turbu_strain_rate_; //** temporary naming to distinguish the regular strain rate * 
 		
 		Real mu_, smoothing_length_, particle_spacing_min_;
 		StdLargeVec<Real>& rho_,&Vol_;
@@ -180,6 +181,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& turbu_epsilon_;
 		StdLargeVec<Real>& turbu_epsilon_prior_;
 		StdLargeVec<Real>& turbu_mu_;
+		StdLargeVec<Matd>& turbu_strain_rate_;
         StdLargeVec<int> is_extra_viscous_dissipation_;
 
 		//** for test */
