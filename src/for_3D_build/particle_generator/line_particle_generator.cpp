@@ -18,9 +18,9 @@ void ParticleGenerator<Line>::addLineProperties(
     line_width_.push_back(width);
 }
 //=================================================================================================//
-void ParticleGenerator<Line>::initializeGeometricParticleVariables()
+void ParticleGenerator<Line>::initializeParticleVariables()
 {
-    ParticleGenerator<Base>::initializeGeometricParticleVariables();
+    ParticleGenerator<Base>::initializeParticleVariables();
     base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", line_normal_);
     base_particles_.registerSharedVariableFrom<Vecd>("BinormalDirection", line_binormal_);
     base_particles_.registerSharedVariableFrom<Real>("Thickness", line_thickness_);

@@ -21,7 +21,7 @@ void ParticleGenerator<Base>::generateParticlesWithGeometricVariables()
 {
     prepareGeometricData();
     setAllParticleBounds();
-    initializeGeometricParticleVariables();
+    initializeParticleVariables();
 }
 //=================================================================================================//
 void ParticleGenerator<Base>::setAllParticleBounds()
@@ -36,7 +36,7 @@ void ParticleGenerator<Base>::addPositionAndVolumetricMeasure(
     volumetric_measure_.push_back(volumetric_measure);
 }
 //=================================================================================================//
-void ParticleGenerator<Base>::initializeGeometricParticleVariables()
+void ParticleGenerator<Base>::initializeParticleVariables()
 {
     base_particles_.registerSharedVariableFrom<Vecd>("Position", position_);
     base_particles_.registerSharedVariableFrom<Real>("VolumetricMeasure", volumetric_measure_);
@@ -51,9 +51,9 @@ void ParticleGenerator<Surface>::addSurfaceProperties(const Vecd &surface_normal
     surface_thickness_.push_back(thickness);
 }
 //=================================================================================================//
-void ParticleGenerator<Surface>::initializeGeometricParticleVariables()
+void ParticleGenerator<Surface>::initializeParticleVariables()
 {
-    ParticleGenerator<Base>::initializeGeometricParticleVariables();
+    ParticleGenerator<Base>::initializeParticleVariables();
     base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", surface_normal_);
     base_particles_.registerSharedVariableFrom<Real>("Thickness", surface_thickness_);
 }
@@ -64,35 +64,6 @@ void ParticleGenerator<Observer>::prepareGeometricData()
     {
         addPositionAndVolumetricMeasure(positions_[i], 0.0);
     }
-}
-//=================================================================================================//
-ParticleGenerator<Reload>::ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name)
-    : ParticleGenerator<Base>(sph_body), base_material_(sph_body.getBaseMaterial())
-{
-    std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().reload_folder_;
-    if (!fs::exists(reload_folder))
-    {
-        std::cout << "\n Error: the particle reload folder:" << reload_folder << " is not exists" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-
-    file_path_ = reload_folder + "/" + reload_body_name + "_rld.xml";
-}
-//=================================================================================================//
-void ParticleGenerator<Reload>::prepareGeometricData()
-{
-    base_particles_.readReloadXmlFile(file_path_);
-}
-//=================================================================================================//
-void ParticleGenerator<Reload>::setAllParticleBounds()
-{
-    base_particles_.initializeAllParticlesBounds(file_path_);
-}
-//=================================================================================================//
-void ParticleGenerator<Reload>::initializeGeometricParticleVariables()
-{
-    base_particles_.readFromXmlForReloadParticle(file_path_);
 }
 //=================================================================================================//
 } // namespace SPH

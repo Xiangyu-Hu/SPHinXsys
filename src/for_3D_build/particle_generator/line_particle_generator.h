@@ -50,7 +50,7 @@ class ParticleGenerator<Line> : public ParticleGenerator<Base>
   protected:
     virtual void addLineProperties(
         const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
-    virtual void initializeGeometricParticleVariables() override;
+    virtual void initializeParticleVariables() override;
 };
 } // namespace SPH
 #endif // LINE_PARTICLE_GENERATOR_H

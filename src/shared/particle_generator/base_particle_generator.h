@@ -74,9 +74,9 @@ class ParticleGenerator<Base>
     Real particle_spacing_ref_;
     virtual void addParticlePosition(const Vecd &position);
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
-    virtual void prepareGeometricData() = 0;             // first step of particle generation
-    virtual void setAllParticleBounds();                 // second step of particle generation
-    virtual void initializeGeometricParticleVariables(); // third step of particle generation
+    virtual void prepareGeometricData() = 0;    // first step of particle generation
+    virtual void setAllParticleBounds();        // second step of particle generation
+    virtual void initializeParticleVariables(); // third step of particle generation
 };
 
 template <> // generate surface particles
@@ -91,7 +91,7 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
 
   protected:
     virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
-    virtual void initializeGeometricParticleVariables() override;
+    virtual void initializeParticleVariables() override;
 };
 
 template <> // generate observer particles
@@ -120,8 +120,8 @@ class ParticleGenerator<Reload, BaseGeneratorParameters...> : public ParticleGen
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
     virtual void setAllParticleBounds() override;
-    virtual void initializeGeometricParticleVariables() override;
+    virtual void initializeParticleVariables() override;
 };
-
 } // namespace SPH
+#include "base_particle_generator.hpp"
 #endif // BASE_PARTICLE_GENERATOR_H
