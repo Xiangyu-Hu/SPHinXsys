@@ -126,7 +126,7 @@ void run_simulation()
     InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> free_cube_update_contact_density(free_cube_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     /** Damping*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
     /** Time step size. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
@@ -201,7 +201,6 @@ void run_simulation()
                 free_cube_compute_solid_contact_forces.exec();
 
                 free_cube_stress_relaxation_first_half.exec(dt);
-                damping.exec(dt);
                 free_cube_stress_relaxation_second_half.exec(dt);
 
                 free_cube.updateCellLinkedList();

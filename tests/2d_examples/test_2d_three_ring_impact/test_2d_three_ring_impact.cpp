@@ -4,6 +4,8 @@
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
+#include "base_data_type.h"
+#include "large_data_containers.h"
 #include "sphinxsys.h"
 using namespace SPH;
 
@@ -175,16 +177,16 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_l(ring_l_inner);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_l(ring_l_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_l(ring_l_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_l(0.2, ring_l_inner, "Velocity", physical_viscosity_l);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size_l(ring_l_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_m(ring_m_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_m(ring_m_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_m(ring_m_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_m(0.2, ring_m_inner, "Velocity", physical_viscosity_m);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         rotation_damping_m(0.2, ring_m_inner, "AngularVelocity", physical_viscosity_m);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal_m(ring_m_body);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_m(ring_m_body);
@@ -192,9 +194,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_s(ring_s_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_s(ring_s_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_s(ring_s_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_s(0.2, ring_s_inner, "Velocity", physical_viscosity_s);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         rotation_damping_s(0.2, ring_s_inner, "AngularVelocity", physical_viscosity_s);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal_s(ring_s_body);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_s(ring_s_body);
@@ -280,6 +282,15 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
             });
     };
 
+    // Observer
+    const Vec2d observer_pos = center_m + 0.5 * mid_srf_diameter_m * (center_m - center_s).normalized();
+    StdVec<Vec2d> observation_location{observer_pos};
+    ObserverBody observer(system, "Observer");
+    observer.generateParticles<BaseParticles, Observer>(observation_location);
+    ContactRelation observer_contact(observer, {&ring_m_body});
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+        write_ring_m_pos("Position", observer_contact);
+
     // Check
     auto check_nan = [&](BaseParticles *particles)
     {
@@ -292,6 +303,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Output
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
+    write_ring_m_pos.writeToFile(0);
 
     // Initialization
     system.initializeSystemCellLinkedLists();
@@ -397,6 +409,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
+            write_ring_m_pos.writeToFile(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
@@ -412,6 +425,11 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
         vtp_output.writeToFile(ite_output + 1);
         exit(0);
     }
+
+    if (system.GenerateRegressionData())
+        write_ring_m_pos.generateDataBase(dp_m);
+    else
+        write_ring_m_pos.testResult();
 }
 //------------------------------------------------------------------------------
 // the main program

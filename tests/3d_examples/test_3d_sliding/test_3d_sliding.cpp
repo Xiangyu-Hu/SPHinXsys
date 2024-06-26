@@ -126,7 +126,7 @@ void block_sliding(
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(cube_inner);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cube_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         velocity_damping(0.5, cube_inner, "Velocity", get_physical_viscosity_general(rho0_s, Youngs_modulus, resolution_cube));
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
 
