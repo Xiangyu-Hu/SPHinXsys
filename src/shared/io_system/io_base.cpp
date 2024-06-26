@@ -1,9 +1,3 @@
-
-/**
- * @file 	io_base.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "io_base.h"
 
 #include "sph_system.h"
@@ -18,6 +12,14 @@ std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream
 {
     int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);
     return padValueWithZeros(i_time);
+}
+//=============================================================================================/
+bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
+{
+    auto result = std::find_if(bodies.begin(), bodies.end(),
+                               [&](auto &body) -> bool
+                               { return body == sph_body; });
+    return result != bodies.end() ? true : false;
 }
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
@@ -45,14 +47,6 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     }
     writeWithFileName(padValueWithZeros(iteration_step));
 };
-//=============================================================================================/
-bool BodyStatesRecording::isBodyIncluded(SPHBody *sph_body)
-{
-    auto result = std::find_if(bodies_.begin(), bodies_.end(),
-                               [&](auto &body) -> bool
-                               { return body == sph_body; });
-    return result != bodies_.end() ? true : false;
-}
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),

@@ -30,6 +30,7 @@
 #define IO_BASE_H
 
 #include "all_physical_dynamics.h"
+#include "base_body.h"
 #include "base_data_package.h"
 #include "parameterization.h"
 #include "sph_data_containers.h"
@@ -71,6 +72,8 @@ class BaseIO
         s_time << std::setw(max_string_width) << std::setfill('0') << value;
         return s_time.str();
     }
+
+    bool isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
 };
 
 /**
@@ -91,7 +94,7 @@ class BodyStatesRecording : public BaseIO
     template <typename DataType>
     void addVariableRecording(SPHBody &sph_body, const std::string &name)
     {
-        if (isBodyIncluded(&sph_body))
+        if (isBodyIncluded(bodies_, &sph_body))
         {
             sph_body.getBaseParticles().addVariableToWrite<DataType>(name);
         }
@@ -109,7 +112,7 @@ class BodyStatesRecording : public BaseIO
     void addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
     {
         SPHBody &sph_body = identifier.getSPHBody();
-        if (isBodyIncluded(&sph_body))
+        if (isBodyIncluded(bodies_, &sph_body))
         {
             derived_variables_.push_back(
                 derived_variables_keeper_.createPtr<DerivedVariableMethod>(
@@ -128,7 +131,6 @@ class BodyStatesRecording : public BaseIO
     SPHBodyVector bodies_;
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
-    bool isBodyIncluded(SPHBody *sph_body);
     virtual void writeWithFileName(const std::string &sequence) = 0;
 
   private:
