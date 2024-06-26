@@ -77,6 +77,7 @@ class ParticleGenerator<Base>
     virtual void prepareGeometricData() = 0;    // first step of particle generation
     virtual void setAllParticleBounds();        // second step of particle generation
     virtual void initializeParticleVariables(); // third step of particle generation
+    virtual void initializeParticleVariablesFromReload();
 };
 
 template <> // generate surface particles
@@ -92,6 +93,7 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
   protected:
     virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
     virtual void initializeParticleVariables() override;
+    virtual void initializeParticleVariablesFromReload() override;
 };
 
 template <> // generate observer particles
