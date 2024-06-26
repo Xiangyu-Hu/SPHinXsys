@@ -272,10 +272,10 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
-    write_real_body_states_to_vtp.addVariableRecording<Real>(water_block, "Pressure");
-    write_real_body_states_to_vtp.addVariableRecording<Real>(gate, "Average1stPrincipleCurvature");
-    write_real_body_states_to_vtp.addVariableRecording<Real>(gate, "Average2ndPrincipleCurvature");
-    write_real_body_states_to_vtp.addVariableRecording<Vecd>(gate, "PressureForceFromFluid");
+    write_real_body_states_to_vtp.addToWríte<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWríte<Real>(gate, "Average1stPrincipleCurvature");
+    write_real_body_states_to_vtp.addToWríte<Real>(gate, "Average2ndPrincipleCurvature");
+    write_real_body_states_to_vtp.addToWríte<Vecd>(gate, "PressureForceFromFluid");
     write_real_body_states_to_vtp.addDerivedVariableRecording<SimpleDynamics<Displacement>>(gate);
     /** Output the observed displacement of gate center. */
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Displacement", gate_observer_contact);

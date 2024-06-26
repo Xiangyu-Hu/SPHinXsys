@@ -155,10 +155,10 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
-    write_real_body_states.addVariableRecording<int>(water_block, "Indicator");
-    write_real_body_states.addVariableRecording<Real>(water_block, "VolumetricMeasure");
-    write_real_body_states.addVariableRecording<Real>(water_block, "SmoothingLengthRatio");
+    write_real_body_states.addToWríte<Real>(water_block, "Pressure");
+    write_real_body_states.addToWríte<int>(water_block, "Indicator");
+    write_real_body_states.addToWríte<Real>(water_block, "VolumetricMeasure");
+    write_real_body_states.addToWríte<Real>(water_block, "SmoothingLengthRatio");
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     RegressionTestTimeAverage<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(cylinder, "PressureForceFromFluid");

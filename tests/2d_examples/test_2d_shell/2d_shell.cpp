@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addVariableRecording<Vecd>(cylinder_body, "PseudoNormal");
+    write_states.addToWríte<Vecd>(cylinder_body, "PseudoNormal");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_max_displacement("Position", cylinder_observer_contact);
 

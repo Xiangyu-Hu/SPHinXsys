@@ -96,7 +96,7 @@ DiscreteVariable<DataType> *BaseParticles::addSharedVariable(const std::string &
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&... args)
+StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&...args)
 {
 
     DiscreteVariable<DataType> *variable = addSharedVariable<DataType>(variable_name);
@@ -122,18 +122,20 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
     }
 
     StdLargeVec<DataType> &old_data = *variable->DataField();
-    return registerSharedVariable<DataType>(new_name, [&](size_t index) { return old_data[index]; });
+    return registerSharedVariable<DataType>(new_name, [&](size_t index)
+                                            { return old_data[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
     const std::string &variable_name, const StdLargeVec<DataType> &geometric_data)
 {
-    return registerSharedVariable<DataType>(variable_name, [&](size_t index) { return geometric_data[index]; });
+    return registerSharedVariable<DataType>(variable_name, [&](size_t index)
+                                            { return geometric_data[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::registerSharedVariableFromReloadXml(const std::string &variable_name)
+StdLargeVec<DataType> *BaseParticles::registerSharedVariableFromReload(const std::string &variable_name)
 {
     StdLargeVec<DataType> *contained_data = registerSharedVariable<DataType>(variable_name);
 

@@ -55,7 +55,7 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
-    write_imported_model_to_vtp.addVariableRecording<Vecd>(imported_model, "NormalDirection");
+    write_imported_model_to_vtp.addToWríte<Vecd>(imported_model, "NormalDirection");
     MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.

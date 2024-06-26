@@ -237,7 +237,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addVariableRecording<Real>(wall_boundary, "Average1stPrincipleCurvature");
+    write_real_body_states.addToWríte<Real>(wall_boundary, "Average1stPrincipleCurvature");
     ObservedQuantityRecording<Vecd> write_fluid_axial_velocity("Velocity", fluid_axial_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_radial_velocity("Velocity", fluid_radial_observer_contact);
     //----------------------------------------------------------------------

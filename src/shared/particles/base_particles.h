@@ -121,7 +121,7 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&... args);
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
 
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
@@ -130,7 +130,7 @@ class BaseParticles
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &variable_name, const StdLargeVec<DataType> &geometric_data);
 
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFromReloadXml(const std::string &variable_name);
+    StdLargeVec<DataType> *registerSharedVariableFromReload(const std::string &variable_name);
 
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &variable_name);

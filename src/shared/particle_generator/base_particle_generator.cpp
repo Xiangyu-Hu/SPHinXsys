@@ -40,6 +40,14 @@ void ParticleGenerator<Base>::initializeParticleVariables()
 {
     base_particles_.registerSharedVariableFrom<Vecd>("Position", position_);
     base_particles_.registerSharedVariableFrom<Real>("VolumetricMeasure", volumetric_measure_);
+    base_particles_.addVariableToReload<Vecd>("Position");
+    base_particles_.addVariableToReload<Real>("VolumetricMeasure");
+}
+//=================================================================================================//
+void ParticleGenerator<Base>::initializeParticleVariablesFromReload()
+{
+    base_particles_.registerSharedVariableFromReload<Vecd>("Position");
+    base_particles_.registerSharedVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 ParticleGenerator<Surface>::ParticleGenerator(SPHBody &sph_body)
@@ -56,6 +64,15 @@ void ParticleGenerator<Surface>::initializeParticleVariables()
     ParticleGenerator<Base>::initializeParticleVariables();
     base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", surface_normal_);
     base_particles_.registerSharedVariableFrom<Real>("Thickness", surface_thickness_);
+    base_particles_.addVariableToReload<Vecd>("NormalDirection");
+    base_particles_.addVariableToReload<Real>("Thickness");
+}
+//=================================================================================================//
+void ParticleGenerator<Surface>::initializeParticleVariablesFromReload()
+{
+    ParticleGenerator<Base>::initializeParticleVariablesFromReload();
+    base_particles_.registerSharedVariableFromReload<Vecd>("NormalDirection");
+    base_particles_.registerSharedVariableFromReload<Real>("Thickness");
 }
 //=================================================================================================//
 void ParticleGenerator<Observer>::prepareGeometricData()

@@ -309,7 +309,7 @@ int main(int ac, char *av[])
         BodySurface surface_part(herat_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addVariableRecording<Real>(herat_model, "Phi");
+        write_herat_model_state_to_vtp.addToWríte<Real>(herat_model, "Phi");
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -408,10 +408,10 @@ int main(int ac, char *av[])
     //	SPH Output section
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addVariableRecording<Real>(physiology_heart, "Voltage");
-    write_states.addVariableRecording<Real>(physiology_heart, "GateVariable");
-    write_states.addVariableRecording<Real>(physiology_heart, "ActiveContractionStress");
-    write_states.addVariableRecording<Real>(mechanics_heart, "ActiveContractionStress");
+    write_states.addToWríte<Real>(physiology_heart, "Voltage");
+    write_states.addToWríte<Real>(physiology_heart, "GateVariable");
+    write_states.addToWríte<Real>(physiology_heart, "ActiveContractionStress");
+    write_states.addToWríte<Real>(mechanics_heart, "ActiveContractionStress");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_voltage("Voltage", voltage_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

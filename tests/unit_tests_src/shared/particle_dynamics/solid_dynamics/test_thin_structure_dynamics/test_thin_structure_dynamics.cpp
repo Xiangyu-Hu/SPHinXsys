@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     /** File and screen outputs */
     IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_states(system);
-    write_states.addVariableRecording<Vecd>(plate_body, "PseudoNormal");
+    write_states.addToWríte<Vecd>(plate_body, "PseudoNormal");
     write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);
     StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableDataByName<Real>("VonMisesStrain");
 

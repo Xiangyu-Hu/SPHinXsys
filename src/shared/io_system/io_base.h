@@ -92,7 +92,7 @@ class BodyStatesRecording : public BaseIO
     virtual void writeToFile(size_t iteration_step) override;
 
     template <typename DataType>
-    void addVariableRecording(SPHBody &sph_body, const std::string &name)
+    void addToWríte(SPHBody &sph_body, const std::string &name)
     {
         if (isBodyIncluded(bodies_, &sph_body))
         {
@@ -179,6 +179,22 @@ class ReloadParticleIO : public BaseIO
     ReloadParticleIO(SPHBody &sph_body);
     ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name);
     virtual ~ReloadParticleIO(){};
+
+    template <typename DataType>
+    void addToReload(SPHBody &sph_body, const std::string &name)
+    {
+        if (isBodyIncluded(bodies_, &sph_body))
+        {
+            sph_body.getBaseParticles().addVariableToReload<DataType>(name);
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
 
     virtual void writeToFile(size_t iteration_step = 0) override;
     virtual void readFromFile(size_t iteration_step = 0);

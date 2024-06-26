@@ -243,12 +243,12 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
-    write_real_body_states.addVariableRecording<Vec3d>(gate, "NormalDirection");
-    write_real_body_states.addVariableRecording<Real>(plate, "Average1stPrincipleCurvature");
-    write_real_body_states.addVariableRecording<Real>(plate, "Average2ndPrincipleCurvature");
-    write_real_body_states.addVariableRecording<Vec3d>(plate, "PressureForceFromFluid");
-    write_real_body_states.addVariableRecording<Vec3d>(wall_boundary, "NormalDirection");
+    write_real_body_states.addToWríte<Real>(water_block, "Pressure");
+    write_real_body_states.addToWríte<Vec3d>(gate, "NormalDirection");
+    write_real_body_states.addToWríte<Real>(plate, "Average1stPrincipleCurvature");
+    write_real_body_states.addToWríte<Real>(plate, "Average2ndPrincipleCurvature");
+    write_real_body_states.addToWríte<Vec3d>(plate, "PressureForceFromFluid");
+    write_real_body_states.addToWríte<Vec3d>(wall_boundary, "NormalDirection");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(plate);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);

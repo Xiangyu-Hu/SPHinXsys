@@ -48,7 +48,6 @@ class LinearParticles : public SurfaceParticles
     /** Initialize variable for shell particles. */
     virtual void initializeBasicParticleVariables() override;
     virtual void registerTransformationMatrix() override;
-    virtual LinearParticles *ThisObjectPtr() override { return this; };
 };
 
 } // namespace SPH

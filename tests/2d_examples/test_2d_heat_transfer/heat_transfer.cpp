@@ -256,8 +256,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addVariableRecording<Real>(thermofluid_body, "Phi");
-    write_real_body_states.addVariableRecording<Real>(thermosolid_body, "Phi");
+    write_real_body_states.addToWríte<Real>(thermofluid_body, "Phi");
+    write_real_body_states.addToWríte<Real>(thermosolid_body, "Phi");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_fluid_phi("Phi", fluid_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------

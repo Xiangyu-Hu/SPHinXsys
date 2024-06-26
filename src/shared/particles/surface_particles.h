@@ -51,8 +51,6 @@ class SurfaceParticles : public BaseParticles
     virtual Real ParticleVolume(size_t index_i) override { return (*Vol_)[index_i] * (*thickness_)[index_i]; }
     virtual void registerTransformationMatrix();
     virtual void initializeBasicParticleVariables() override;
-    /** Return this pointer. */
-    virtual SurfaceParticles *ThisObjectPtr() override { return this; };
 };
 
 } // namespace SPH

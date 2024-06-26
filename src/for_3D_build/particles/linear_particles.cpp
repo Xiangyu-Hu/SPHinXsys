@@ -4,15 +4,7 @@ namespace SPH
 {
 //=============================================================================================//
 LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr)
-{
-    //----------------------------------------------------------------------
-    // Indicate particle reload variable on geometries
-    // without allocated memory for the variable.
-    //----------------------------------------------------------------------
-    addVariableToReload<Vecd>("BinormalDirection");
-    addVariableToReload<Real>("Width");
-}
+    : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr) {}
 //=================================================================================================//
 void LinearParticles::initializeBasicParticleVariables()
 {

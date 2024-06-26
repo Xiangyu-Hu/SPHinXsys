@@ -13,12 +13,6 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     //		modify kernel function for surface particles
     //----------------------------------------------------------------------
     sph_body.sph_adaptation_->getKernel()->reduceOnce();
-    //----------------------------------------------------------------------
-    // Indicate particle reload variable on geometries
-    // without allocated memory for the variable.
-    //----------------------------------------------------------------------
-    addVariableToReload<Vecd>("NormalDirection");
-    addVariableToReload<Real>("Thickness");
 }
 //=================================================================================================//
 void SurfaceParticles::initializeBasicParticleVariables()

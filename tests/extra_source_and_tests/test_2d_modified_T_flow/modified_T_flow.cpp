@@ -1,9 +1,9 @@
 /*
-* @file modified_T_shaped_pipe.cpp
-* @brief This is the benchmark test of multi -inlet and multi - outlet.
-* @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D. 
-* @author Xiangyu Hu,Shuoguo Zhang
-*/
+ * @file modified_T_shaped_pipe.cpp
+ * @brief This is the benchmark test of multi -inlet and multi - outlet.
+ * @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D.
+ * @author Xiangyu Hu,Shuoguo Zhang
+ */
 
 #include "bidirectional_buffer.h"
 #include "density_correciton.h"
@@ -19,8 +19,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.2;                                               /**< Reference length. */
 Real DH = 0.1;                                               /**< Reference and the height of main channel. */
-Real DL1 = 0.75 * DL;                                         /**< The length of the main channel. */
-Real resolution_ref = 0.005;                                  /**< Initial reference particle spacing. */
+Real DL1 = 0.75 * DL;                                        /**< The length of the main channel. */
+Real resolution_ref = 0.005;                                 /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
@@ -29,11 +29,11 @@ StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement o
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
 Real Outlet_pressure = 0;
-Real rho0_f = 1000.0;                                                   /**< Reference density of fluid. */
-Real Re = 100.0;                                                     /**< Reynolds number. */
-Real U_f = 1.0;                                                      /**< Characteristic velocity. */
-Real mu_f = rho0_f * U_f * DH / Re;                                  /**< Dynamics viscosity. */
-Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1)));/** Reference sound speed needs to consider the flow speed in the narrow channels. */
+Real rho0_f = 1000.0;                                                 /**< Reference density of fluid. */
+Real Re = 100.0;                                                      /**< Reynolds number. */
+Real U_f = 1.0;                                                       /**< Characteristic velocity. */
+Real mu_f = rho0_f * U_f * DH / Re;                                   /**< Dynamics viscosity. */
+Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1))); /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
@@ -237,10 +237,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
-    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
-    body_states_recording.addVariableRecording<Real>(water_block, "Density");
-    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
+    body_states_recording.addToWríte<Real>(water_block, "Pressure");
+    body_states_recording.addToWríte<int>(water_block, "Indicator");
+    body_states_recording.addToWríte<Real>(water_block, "Density");
+    body_states_recording.addToWríte<int>(water_block, "BufferParticleIndicator");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
@@ -260,9 +260,9 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 30.0;   /**< End time. */
-    Real Output_Time = end_time/300.0; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real end_time = 30.0;                /**< End time. */
+    Real Output_Time = end_time / 300.0; /**< Time stamps for output of body states. */
+    Real dt = 0.0;                       /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

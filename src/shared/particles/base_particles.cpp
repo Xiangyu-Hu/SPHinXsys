@@ -21,15 +21,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
       write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_),
-      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_)
-{
-    //----------------------------------------------------------------------
-    // Indicate particle reload variable on geometries
-    // without allocated memory for the variable.
-    //----------------------------------------------------------------------
-    addVariableToReload<Vecd>("Position");
-    addVariableToReload<Real>("VolumetricMeasure");
-}
+      read_reload_variable_from_xml_(variables_to_reload_, reload_xml_parser_) {}
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
@@ -43,7 +35,8 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
     mass_ = registerSharedVariable<Real>("Mass",
-                                         [&](size_t i) -> Real { return (*rho_)[i] * ParticleVolume(i); });
+                                         [&](size_t i) -> Real
+                                         { return (*rho_)[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------

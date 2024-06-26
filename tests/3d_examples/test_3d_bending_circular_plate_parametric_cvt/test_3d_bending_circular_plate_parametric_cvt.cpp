@@ -275,7 +275,7 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // file and screen outputs
     BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.addVariableRecording<Vec3d>(shell_body, "NormalDirection");
+    vtp_output.addToWríte<Vec3d>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
     ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
