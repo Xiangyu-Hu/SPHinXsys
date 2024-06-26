@@ -36,6 +36,8 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <memory>
+#include <typeinfo>
 #include <vector>
 
 #include <Eigen/Cholesky>

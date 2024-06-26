@@ -103,7 +103,7 @@ class BaseParticles
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
     void initializeAllParticlesBounds(size_t total_real_particles);
-    void initializeAllParticlesBounds(std::string &filefullpath);
+    void initializeAllParticlesBoundsFromReloadXml();
     void increaseAllParticlesBounds(size_t buffer_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateGhostParticle(size_t ghost_index, size_t index);
@@ -121,13 +121,16 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&... args);
 
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
 
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const StdLargeVec<DataType> &geometric_data);
+    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &variable_name, const StdLargeVec<DataType> &geometric_data);
+
+    template <typename DataType>
+    StdLargeVec<DataType> *registerSharedVariableFromReloadXml(const std::string &variable_name);
 
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &variable_name);
@@ -179,7 +182,8 @@ class BaseParticles
     void writeToXmlForReloadParticle(std::string &filefullpath);
     void readFromXmlForReloadParticle(std::string &filefullpath);
     XmlParser &readReloadXmlFile(const std::string &filefullpath);
-    virtual BaseParticles *ThisObjectPtr() { return this; };
+    template <typename OwnerType>
+    void checkReloadFileRead(OwnerType *owner);
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
@@ -205,6 +209,7 @@ class BaseParticles
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
+    bool is_reload_file_read_ = false;
 
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);

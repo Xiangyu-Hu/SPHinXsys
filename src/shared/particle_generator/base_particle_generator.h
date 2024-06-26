@@ -109,8 +109,8 @@ class ParticleGenerator<Observer> : public ParticleGenerator<Base>
     StdVec<Vecd> positions_;
 };
 
-template <> // generate particles by reloading dynamically relaxed particles
-class ParticleGenerator<Reload> : public ParticleGenerator<Base>
+template <typename... BaseGeneratorParameters> // generate particles by reloading dynamically relaxed particles
+class ParticleGenerator<Reload, BaseGeneratorParameters...> : public ParticleGenerator<BaseGeneratorParameters...>
 {
     BaseMaterial &base_material_;
     std::string file_path_;

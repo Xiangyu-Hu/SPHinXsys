@@ -43,8 +43,7 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
     mass_ = registerSharedVariable<Real>("Mass",
-                                         [&](size_t i) -> Real
-                                         { return (*rho_)[i] * ParticleVolume(i); });
+                                         [&](size_t i) -> Real { return (*rho_)[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
@@ -63,9 +62,8 @@ void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)
     particles_bound_ = real_particles_bound_;
 }
 //=================================================================================================//
-void BaseParticles::initializeAllParticlesBounds(std::string &filefullpath)
+void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
 {
-    reload_xml_parser_.loadXmlFile(filefullpath);
     initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
 }
 //=================================================================================================//
@@ -321,6 +319,7 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 //=================================================================================================//
 XmlParser &BaseParticles::readReloadXmlFile(const std::string &filefullpath)
 {
+    is_reload_file_read_ = true;
     reload_xml_parser_.loadXmlFile(filefullpath);
     return reload_xml_parser_;
 }

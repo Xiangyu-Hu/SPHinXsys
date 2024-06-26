@@ -9,13 +9,23 @@
 
 #include "base_particles.h"
 
-//=====================================================================================================//
 namespace SPH
 {
 //=================================================================================================//
+template <typename OwnerType>
+void BaseParticles::checkReloadFileRead(OwnerType *owner)
+{
+    if (reload_xml_parser_.first_element_ == nullptr)
+    {
+        std::cout << "\n Error: the reload file is not read! \n";
+        std::cout << "\n This error occurs in " << typeid(*owner).name() << '\n';
+        exit(1);
+    }
+}
+//=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
-                                                         DataType initial_value)
+StdLargeVec<DataType> *BaseParticles::
+    initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {
     if (variable->DataField() == nullptr)
     {
@@ -33,10 +43,9 @@ StdLargeVec<DataType> *BaseParticles::initializeVariable(DiscreteVariable<DataTy
 }
 //=================================================================================================//
 template <typename DataType, class InitializationFunction>
-StdLargeVec<DataType> *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable,
-                                                         const InitializationFunction &initialization)
+StdLargeVec<DataType> *BaseParticles::
+    initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization)
 {
-
     auto &contained_data = *initializeVariable(variable);
     for (size_t i = 0; i != total_real_particles_; ++i)
     {
@@ -46,7 +55,8 @@ StdLargeVec<DataType> *BaseParticles::initializeVariable(DiscreteVariable<DataTy
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::registerSingleVariable(const std::string &variable_name, DataType initial_value)
+DataType *BaseParticles::
+    registerSingleVariable(const std::string &variable_name, DataType initial_value)
 {
     SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, variable_name);
 
@@ -86,7 +96,7 @@ DiscreteVariable<DataType> *BaseParticles::addSharedVariable(const std::string &
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&...args)
+StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name, Args &&... args)
 {
 
     DiscreteVariable<DataType> *variable = addSharedVariable<DataType>(variable_name);
@@ -112,16 +122,29 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
     }
 
     StdLargeVec<DataType> &old_data = *variable->DataField();
-    return registerSharedVariable<DataType>(new_name, [&](size_t index)
-                                            { return old_data[index]; });
+    return registerSharedVariable<DataType>(new_name, [&](size_t index) { return old_data[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::registerSharedVariableFrom(
-    const std::string &new_name, const StdLargeVec<DataType> &geometric_data)
+    const std::string &variable_name, const StdLargeVec<DataType> &geometric_data)
 {
-    return registerSharedVariable<DataType>(new_name, [&](size_t index)
-                                            { return geometric_data[index]; });
+    return registerSharedVariable<DataType>(variable_name, [&](size_t index) { return geometric_data[index]; });
+}
+//=================================================================================================//
+template <typename DataType>
+StdLargeVec<DataType> *BaseParticles::registerSharedVariableFromReloadXml(const std::string &variable_name)
+{
+    StdLargeVec<DataType> *contained_data = registerSharedVariable<DataType>(variable_name);
+
+    size_t index = 0;
+    for (auto child = reload_xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+    {
+        reload_xml_parser_.queryAttributeValue(child, variable_name, (*contained_data)[index]);
+        index++;
+    }
+
+    return contained_data;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -206,7 +229,6 @@ void BaseParticles::addVariableToRestart(const std::string &variable_name)
 template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &variable_name)
 {
-    addSharedVariable<DataType>(variable_name);
     addVariableToList<DataType>(variables_to_reload_, variable_name);
 }
 //=================================================================================================//
