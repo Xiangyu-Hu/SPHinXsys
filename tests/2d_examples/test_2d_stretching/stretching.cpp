@@ -265,7 +265,7 @@ int main(int ac, char *av[])
     BodyRegionByParticle beam_constrain(beam_body, makeShared<MultiPolygonShape>(createConstrainBeamShape()));
     SimpleDynamics<ConstrainXVelocity> constrain_beam_end(beam_constrain);
     InteractionDynamics<solid_dynamics::DeformationGradientBySummation> beam_deformation_gradient_tensor(beam_body_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------

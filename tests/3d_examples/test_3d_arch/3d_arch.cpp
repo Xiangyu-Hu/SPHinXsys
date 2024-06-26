@@ -177,9 +177,9 @@ int main(int ac, char *av[])
     SimpleDynamics<ControlDisplacement> dis_control(dis_control_geometry);
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd, FixedDampingRate>>>
         cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd, FixedDampingRate>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     BodyStatesRecordingToVtp write_states(sph_system);

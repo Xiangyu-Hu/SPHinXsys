@@ -199,8 +199,8 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::ContactDensitySummation> damping_ball_update_contact_density(damping_ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> damping_ball_compute_solid_contact_forces(damping_ball_contact);
     /** Damping for one ball */
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
+        damping(0.5, ConstructorArgs(damping_ball_inner, "Velocity", physical_viscosity));
 
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);

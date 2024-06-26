@@ -153,7 +153,7 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 
     // Damping the velocity field for quasi-static solution
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

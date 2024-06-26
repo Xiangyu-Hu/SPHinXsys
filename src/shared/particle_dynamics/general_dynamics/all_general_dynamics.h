@@ -37,8 +37,6 @@
 #include "general_constraint.h"
 #include "general_geometric.h"
 #include "general_interpolation.h"
-#include "general_life_time_dynamics.h"
 #include "general_reduce.h"
-#include "general_refinement.h"
 #include "kernel_correction.hpp"
 #include "particle_smoothing.hpp"
