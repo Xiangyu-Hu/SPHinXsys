@@ -3,8 +3,8 @@
 
 #include "base_particle_generator.h"
 
-#include "base_particles.h"
-#include "io_all.h"
+#include "base_body.h"
+#include "base_particles.hpp"
 
 namespace SPH
 {

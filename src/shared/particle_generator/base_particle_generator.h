@@ -123,5 +123,4 @@ class ParticleGenerator<Reload, BaseGeneratorParameters...> : public ParticleGen
     virtual void initializeParticleVariables() override;
 };
 } // namespace SPH
-#include "base_particle_generator.hpp"
 #endif // BASE_PARTICLE_GENERATOR_H
