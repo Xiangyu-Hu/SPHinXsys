@@ -263,8 +263,9 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     const Real Re = 100.0;                    /**< Reynolds number. */
     const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
     Real predicted_pressure = 12 * mu_f * DL * U_f / pow(DH, 2);
-    Real c_f = std::max(sqrt(predicted_pressure / 0.01 * (1 / rho0_f)), U_f * 10.);
-    std::cout << "predicted_pressure = " << predicted_pressure << std::endl;
+    Real maximum_pressure_fluctuation = predicted_pressure * 5;
+    Real c_f = std::max(sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)), U_f * 10.);
+    std::cout << "predicted_pressure = " << predicted_pressure << ", accepted predicted_pressure fluctuation= " << maximum_pressure_fluctuation << std::endl;
     outlet_pressure = 0.0;
     //----------------------------------------------------------------------
     Real resolution_ref = DH / number_of_particles; /**< Initial reference particle spacing. */
