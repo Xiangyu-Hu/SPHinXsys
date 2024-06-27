@@ -1,4 +1,7 @@
-FROM nvidia/cuda:12.5.0-devel-ubuntu20.04
+# This docker is for developing using sycl with and without gpu
+# To exec dambreak sycl example: docker run -it --rm --cpus 40 --gpus '"device=0,2"' -v ./:/home/SPHinXsys ./build/tests/2d_examples/test_2d_dambreak_sycl/bin/test_2d_dambreak_sycl
+
+FROM nvidia/cuda:12.2.0-devel-ubuntu20.04
 
 ARG build_with_dependencies_source=0
 ARG SPH_ONLY_STATIC_BUILD=0
@@ -45,25 +48,14 @@ RUN cd $HOME && cd vcpkg && ./vcpkg install --clean-after-build \
     pybind11                        \
     simbody
 
-COPY ./ /home/SPHinXsys/
+RUN apt-get install -y gdb
 WORKDIR /home/SPHinXsys
-RUN rm -rf build
 
 ENV TBB_HOME=/usr/lib/x86_64-linux-gnu
 ENV BOOST_HOME=/usr/lib/x86_64-linux-gnu
 ENV SIMBODY_HOME=/home/simbody
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/oneapi/compiler/latest/lib/
 ENV CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include
 
 SHELL ["/bin/bash", "-c"]
-RUN source /opt/intel/oneapi/setvars.sh --include-intel-llvm && cmake   -G "Unix Makefiles"                                                     \
-    -D CMAKE_BUILD_TYPE=Release                                                 \
-    -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx                          \
-    -D CMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake"      \
-    -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache   \
-    -D SPHINXSYS_USE_SYCL=ON                                                    \
-    -D SPHINXSYS_SYCL_TARGETS=nvptx64-nvidia-cuda                               \
-    -S .                                                                        \
-    -B ./build
-RUN cmake --build build/ --target test_2d_dambreak_sycl
-RUN mkdir build && cd build && cmake .. -DWASM_BUILD=${was_build} -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${SPH_ONLY_STATIC_BUILD} && make -j$(nproc)
