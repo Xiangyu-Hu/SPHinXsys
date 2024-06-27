@@ -108,6 +108,8 @@ ShellStressRelaxationFirstHalf::
       global_moment_(*particles_->registerSharedVariable<Matd>("GlobalMoment")),
       mid_surface_cauchy_stress_(*particles_->registerSharedVariable<Matd>("MidSurfaceCauchyStress")),
       global_shear_stress_(*particles_->registerSharedVariable<Vecd>("GlobalShearStress")),
+      global_F_(*particles_->registerSharedVariable<Matd>("GlobalDeformationGradient")),
+      global_F_bending_(*particles_->registerSharedVariable<Matd>("GlobalBendingDeformationGradient")),
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
@@ -144,13 +146,18 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
     F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
 
+    global_F_[index_i] = transformation_matrix0_[index_i].transpose() * F_[index_i] * transformation_matrix0_[index_i];
+    global_F_bending_[index_i] = transformation_matrix0_[index_i].transpose() * F_bending_[index_i] * transformation_matrix0_[index_i];
+
     Real J = F_[index_i].determinant();
-    Matd inverse_F = F_[index_i].inverse();
+    Matd inverse_transpose_global_F = global_F_[index_i].inverse().transpose();
 
     rho_[index_i] = rho0_ / J;
 
     /** Get transformation matrix from global coordinates to current local coordinates. */
     Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i]);
+    /** Get transformation matrix from initial local coordinates to current local coordinates. */
+    Matd transformation_matrix_0_to_current = current_transformation_matrix * transformation_matrix0_[index_i].transpose();
 
     Matd resultant_stress = Matd::Zero();
     Matd resultant_moment = Matd::Zero();
@@ -161,9 +168,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;
         Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * thickness_[index_i] * 0.5;
         Matd inverse_F_gaussian_point = F_gaussian_point.inverse();
-        Matd current_local_almansi_strain = current_transformation_matrix * transformation_matrix0_[index_i].transpose() * 0.5 *
+        Matd current_local_almansi_strain = transformation_matrix_0_to_current * 0.5 *
                                             (Matd::Identity() - inverse_F_gaussian_point.transpose() * inverse_F_gaussian_point) *
-                                            transformation_matrix0_[index_i] * current_transformation_matrix.transpose();
+                                            transformation_matrix_0_to_current.transpose();
 
         /** correct Almansi strain tensor according to plane stress problem. */
         current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
@@ -171,9 +178,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         /** correct out-plane numerical damping. */
         numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) +
-                             current_transformation_matrix * transformation_matrix0_[index_i].transpose() * F_gaussian_point *
+                                 transformation_matrix_0_to_current * F_gaussian_point *
                                  elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_matrix_, index_i) *
-                                 F_gaussian_point.transpose() * transformation_matrix0_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+                                 F_gaussian_point.transpose() * transformation_matrix_0_to_current.transpose() / F_gaussian_point.determinant();
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -199,13 +206,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     /** stress and moment in global coordinates for pair interaction */
     global_stress_[index_i] = J * current_transformation_matrix.transpose() *
-                              resultant_stress * current_transformation_matrix *
-                              transformation_matrix0_[index_i].transpose() *
-                              inverse_F.transpose() * transformation_matrix0_[index_i];
+                              resultant_stress * current_transformation_matrix * inverse_transpose_global_F;
     global_moment_[index_i] = J * current_transformation_matrix.transpose() *
-                              resultant_moment * current_transformation_matrix *
-                              transformation_matrix0_[index_i].transpose() * inverse_F.transpose() *
-                              transformation_matrix0_[index_i];
+                              resultant_moment * current_transformation_matrix * inverse_transpose_global_F;
     global_shear_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_shear_stress;
 }
 //=================================================================================================//
