@@ -328,8 +328,8 @@ class LocallyOrthotropicMuscle : public Muscle
     };
     virtual ~LocallyOrthotropicMuscle(){};
 
-    virtual void addReloadLocalParameters(BaseParticles *base_particles) override;
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
     virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return (*local_f0f0_)[particle_index_i]; };

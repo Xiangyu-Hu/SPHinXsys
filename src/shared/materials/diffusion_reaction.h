@@ -165,8 +165,8 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
                               Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
     virtual ~LocalDirectionalDiffusion(){};
 
-    virtual void addReloadLocalParameters(BaseParticles *base_particles) override;
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) override
@@ -252,16 +252,16 @@ class ReactionDiffusion : public BaseMaterial
     StdVec<DiffusionType *> AllDiffusions() { return all_diffusions_; };
     ReactionType &ReactionModel() { return reaction_model_; };
 
-    virtual void addReloadLocalParameters(BaseParticles *base_particles) override
+    virtual void registerLocalParameters(BaseParticles *base_particles) override
     {
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
-            all_diffusions_[k]->addReloadLocalParameters(base_particles);
+            all_diffusions_[k]->registerLocalParameters(base_particles);
     };
 
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override
     {
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
-            all_diffusions_[k]->registerReloadLocalParameters(base_particles);
+            all_diffusions_[k]->registerLocalParametersFromReload(base_particles);
     };
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override

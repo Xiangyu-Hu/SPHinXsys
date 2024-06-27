@@ -7,9 +7,13 @@ namespace SPH
 //=================================================================================================//
 void BaseMaterial::setLocalParameters(bool is_reload, BaseParticles *base_particles)
 {
-    if (!is_reload)
+    if (is_reload)
     {
-        registerReloadLocalParameters(base_particles);
+        registerLocalParametersFromReload(base_particles);
+    }
+    else
+    {
+        registerLocalParameters(base_particles);
     }
 
     initializeLocalParameters(base_particles);

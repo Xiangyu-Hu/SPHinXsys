@@ -47,6 +47,8 @@ int main(int ac, char *av[])
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
         BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         ReloadParticleIO write_particle_reload_files(herat_model);
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
