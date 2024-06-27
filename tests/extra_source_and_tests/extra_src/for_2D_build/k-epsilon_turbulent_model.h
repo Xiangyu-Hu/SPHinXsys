@@ -504,12 +504,14 @@ namespace fluid_dynamics
 		public FluidDataSimple
 	{
 	public:
-		explicit ConstrainVelocityAt_Y_Direction(SPHBody& sph_body);
+		explicit ConstrainVelocityAt_Y_Direction(SPHBody& sph_body, Real Length_channel);
 		virtual ~ConstrainVelocityAt_Y_Direction() {};
 
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Vecd>& vel_;
+		StdLargeVec<Vecd>& pos_;
+		Real length_channel_;
 	};
 
 //=================================================================================================//

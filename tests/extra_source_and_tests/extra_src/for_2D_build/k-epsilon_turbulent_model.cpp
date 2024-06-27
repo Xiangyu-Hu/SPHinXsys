@@ -1040,13 +1040,19 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	ConstrainVelocityAt_Y_Direction::
-		ConstrainVelocityAt_Y_Direction(SPHBody& sph_body)
+		ConstrainVelocityAt_Y_Direction(SPHBody& sph_body, Real Length_channel)
 		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
-		vel_(particles_->vel_){}
+		vel_(particles_->vel_),
+		pos_(particles_->pos_),
+		length_channel_(Length_channel){}
 	//=================================================================================================//
 	void ConstrainVelocityAt_Y_Direction::update(size_t index_i, Real dt)
 	{
-		vel_[index_i][1] = 0.0;
+		if(pos_[index_i][0]> 0.5 * length_channel_) //** Very temporary treatment *
+		{
+			vel_[index_i][1] = 0.0;
+		}
+		
 	}
 //=================================================================================================//
 //=================================================================================================//
