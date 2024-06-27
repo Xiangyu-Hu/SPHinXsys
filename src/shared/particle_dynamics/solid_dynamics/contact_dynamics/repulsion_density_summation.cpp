@@ -45,14 +45,18 @@ RepulsionDensitySummation<Contact<>>::
     // different resolution: distance = 0.5 * dp1 + 0.5 * dp2
     // dp1, dp2 half reference spacing
     Real dp_1 = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
+
+    // generate a unreduced kernel, in case the source body is a shell
+    Real source_smoothing_length = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    Kernel* kernel = kernel_keeper_.createPtr<KernelWendlandC2>(source_smoothing_length);
+
     // different resolution: distance = 0.5 * dp1 + 0.5 * dp2
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Real dp_2 = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
         Real distance = 0.5 * dp_1 + 0.5 * dp_2;
-        Real source_smoothing_length = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-        Real target_smoothing_length = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength();
-        offset_W_ij_[k] = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length))->W(distance, ZeroVecd);
+
+        offset_W_ij_[k] = kernel->W(distance, ZeroVecd);
     }
 }
 //=================================================================================================//
@@ -75,7 +79,7 @@ void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 };
 //=================================================================================================//
 ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
+    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensitySolidSolid"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
       particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
