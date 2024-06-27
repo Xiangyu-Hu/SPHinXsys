@@ -80,8 +80,8 @@ void block_sliding(
     const Real slope_length = 25.0 * scale;
     const Real slope_width = 2.0 * scale;
     const Real slope_angle = 30.0 / 180.0 * Pi;
-    Eigen::AngleAxisd rotation(slope_angle, Vec3d::UnitZ());
-    auto rotation_inverse = rotation.inverse();
+    const auto rotation = Rotation3d(slope_angle, Vec3d::UnitZ()).toRotationMatrix();
+    auto rotation_inverse = rotation.transpose();
 
     // resolutions
     const Real resolution_cube = cube_length / (resolution_factor_cube * 5.0);
