@@ -151,7 +151,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
             force -= 2.0 * p_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
+    repulsion_force_[index_i] = force * Vol_[index_i];
 }
 //=================================================================================================//
 } // namespace solid_dynamics
