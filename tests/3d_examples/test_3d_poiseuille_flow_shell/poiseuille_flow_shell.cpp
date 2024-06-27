@@ -256,10 +256,10 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(system);
-    body_states_recording.addToWríte<int>(water_block, "Indicator");
-    body_states_recording.addToWríte<Real>(water_block, "Pressure");
-    body_states_recording.addToWríte<Real>(shell_boundary, "Average1stPrincipleCurvature");
-    body_states_recording.addToWríte<Real>(shell_boundary, "Average2ndPrincipleCurvature");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");
+    body_states_recording.addToWrite<Real>(shell_boundary, "Average1stPrincipleCurvature");
+    body_states_recording.addToWrite<Real>(shell_boundary, "Average2ndPrincipleCurvature");
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", observer_contact_axial);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial("Velocity", observer_contact_radial);
     //----------------------------------------------------------------------
@@ -379,8 +379,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
-    {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
         return Vec3d(0.0,
                      2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);

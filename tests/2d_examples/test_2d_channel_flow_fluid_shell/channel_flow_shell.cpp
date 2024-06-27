@@ -154,8 +154,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	define geometry of SPH bodies
     //----------------------------------------------------------------------
     /** create a water block shape */
-    auto createWaterBlockShape = [&]()
-    {
+    auto createWaterBlockShape = [&]() {
         // geometry
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
@@ -237,7 +236,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addToWríte<Real>(wall_boundary, "Average1stPrincipleCurvature");
+    write_real_body_states.addToWrite<Real>(wall_boundary, "Average1stPrincipleCurvature");
     ObservedQuantityRecording<Vecd> write_fluid_axial_velocity("Velocity", fluid_axial_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_radial_velocity("Velocity", fluid_radial_observer_contact);
     //----------------------------------------------------------------------
@@ -340,8 +339,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
      * @brief 	Gtest start from here.
      */
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)
-    {
+    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos) {
         Real y = 2 * pos[1] / DH - 1;
         return Vec2d(1.5 * U_f * (1 - y * y), 0);
     };

@@ -41,11 +41,11 @@ namespace SPH
 //----------------------------------------------------------------------
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Base>
+class ParticleGenerator<Plate> : public ParticleGenerator<>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Base>(sph_body){};
+        : ParticleGenerator<>(sph_body){};
     virtual void prepareGeometricData() override
     {
         for (int k = 0; k < particle_number; k++)
@@ -163,10 +163,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addToWríte<Real>(plate_body, "VonMisesStress");
-    write_states.addToWríte<Real>(plate_body, "VonMisesStress");
-    write_states.addToWríte<Real>(plate_body, "Pressure");
-    write_states.addToWríte<Real>(plate_body, "Density");
+    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
+    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
+    write_states.addToWrite<Real>(plate_body, "Pressure");
+    write_states.addToWrite<Real>(plate_body, "Density");
     RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(plate_body);

@@ -148,10 +148,10 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addToWríte<Real>(beam_body, "VonMisesStress");
-    write_beam_states.addToWríte<Real>(beam_body, "VonMisesStrain");
-    write_beam_states.addToWríte<Real>(beam_body, "Density");
-    write_beam_states.addToWríte<Real>(beam_body, "Pressure");
+    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStress");
+    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStrain");
+    write_beam_states.addToWrite<Real>(beam_body, "Density");
+    write_beam_states.addToWrite<Real>(beam_body, "Pressure");
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_beam_kinetic_energy(beam_body);
     //----------------------------------------------------------------------

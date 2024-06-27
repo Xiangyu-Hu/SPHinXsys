@@ -114,7 +114,7 @@ int main(int ac, char *av[])
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
-        write_relaxed_particles.addToWríte<int>(rigid_shell, "UpdatedIndicator");
+        write_relaxed_particles.addToWrite<int>(rigid_shell, "UpdatedIndicator");
         MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, rigid_shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload({&ball, &rigid_shell});
         //----------------------------------------------------------------------

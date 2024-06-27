@@ -86,7 +86,7 @@ int main(int ac, char *av[])
         BodySurface surface_part(herat_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addToWríte<Real>(herat_model, "Phi");
+        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -202,10 +202,10 @@ int main(int ac, char *av[])
 
     /**IO for observer.*/
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addToWríte<Real>(physiology_heart, "Voltage");
-    write_states.addToWríte<Real>(physiology_heart, "GateVariable");
-    write_states.addToWríte<Real>(physiology_heart, "ActiveContractionStress");
-    write_states.addToWríte<Real>(mechanics_heart, "ActiveContractionStress");
+    write_states.addToWrite<Real>(physiology_heart, "Voltage");
+    write_states.addToWrite<Real>(physiology_heart, "GateVariable");
+    write_states.addToWrite<Real>(physiology_heart, "ActiveContractionStress");
+    write_states.addToWrite<Real>(mechanics_heart, "ActiveContractionStress");
     ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
     ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
     /**

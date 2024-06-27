@@ -349,10 +349,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWríte<Real>(water_block, "Pressure");          // output for debug
-    body_states_recording.addToWríte<Real>(water_block, "Density");           // output for debug
-    body_states_recording.addToWríte<int>(water_block, "Indicator");          // output for debug
-    body_states_recording.addToWríte<Vecd>(wall_boundary, "NormalDirection"); // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");          // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Density");           // output for debug
+    body_states_recording.addToWrite<int>(water_block, "Indicator");          // output for debug
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection"); // output for debug
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);

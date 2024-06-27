@@ -162,8 +162,8 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_body_states(sph_system);
-    write_body_states.addToWríte<Real>(water_block, "Pressure"); // output for debug
-    write_body_states.addToWríte<int>(water_block, "Indicator"); // output for debug
+    write_body_states.addToWrite<Real>(water_block, "Pressure"); // output for debug
+    write_body_states.addToWrite<int>(water_block, "Indicator"); // output for debug
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
         write_water_kinetic_energy(water_block);
     //----------------------------------------------------------------------

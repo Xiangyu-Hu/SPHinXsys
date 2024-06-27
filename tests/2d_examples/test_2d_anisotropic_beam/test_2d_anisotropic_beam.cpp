@@ -70,10 +70,10 @@ class Beam : public MultiPolygonShape
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
 template <>
-class ParticleGenerator<Beam> : public ParticleGenerator<Base>
+class ParticleGenerator<Beam> : public ParticleGenerator<>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
+    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<>(sph_body){};
 
     virtual void prepareGeometricData() override
     {
@@ -190,8 +190,8 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     system.handleCommandlineOptions(ac, av);
-#endif //----------------------------------------------------------------------
-       //	Creating body, materials and particles.
+#endif //---------------------------------------------------------------------- \
+       //	Creating body, materials and particles.                               \
        //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
@@ -230,7 +230,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addToWríte<Real>(beam_body, "ShowingNeighbor");
+    write_beam_states.addToWrite<Real>(beam_body, "ShowingNeighbor");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------

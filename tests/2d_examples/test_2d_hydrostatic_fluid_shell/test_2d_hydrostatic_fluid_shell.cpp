@@ -108,8 +108,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Geometry definition.
     //----------------------------------------------------------------------
-    auto createWaterBlockShape = [&]()
-    {
+    auto createWaterBlockShape = [&]() {
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(DamP_lb);
         water_block_shape.push_back(DamP_lt);
@@ -133,8 +132,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	create Gate constrain shape
     //----------------------------------------------------------------------
-    auto createGateConstrainShape = [&]()
-    {
+    auto createGateConstrainShape = [&]() {
         // geometry
         std::vector<Vecd> gate_constraint_shape_left;
         gate_constraint_shape_left.push_back(ConstrainLP_lb);
@@ -272,10 +270,10 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
-    write_real_body_states_to_vtp.addToWríte<Real>(water_block, "Pressure");
-    write_real_body_states_to_vtp.addToWríte<Real>(gate, "Average1stPrincipleCurvature");
-    write_real_body_states_to_vtp.addToWríte<Real>(gate, "Average2ndPrincipleCurvature");
-    write_real_body_states_to_vtp.addToWríte<Vecd>(gate, "PressureForceFromFluid");
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWrite<Real>(gate, "Average1stPrincipleCurvature");
+    write_real_body_states_to_vtp.addToWrite<Real>(gate, "Average2ndPrincipleCurvature");
+    write_real_body_states_to_vtp.addToWrite<Vecd>(gate, "PressureForceFromFluid");
     write_real_body_states_to_vtp.addDerivedVariableRecording<SimpleDynamics<Displacement>>(gate);
     /** Output the observed displacement of gate center. */
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Displacement", gate_observer_contact);

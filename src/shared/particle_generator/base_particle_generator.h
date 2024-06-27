@@ -59,7 +59,7 @@ template <typename... Parameters>
 class GeneratingMethod;
 
 template <> // default volume metric particle generator
-class ParticleGenerator<Base>
+class ParticleGenerator<>
 {
     StdLargeVec<Vecd> position_;           // prepared geometric data: particle position
     StdLargeVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
@@ -81,7 +81,7 @@ class ParticleGenerator<Base>
 };
 
 template <> // generate surface particles
-class ParticleGenerator<Surface> : public ParticleGenerator<Base>
+class ParticleGenerator<Surface> : public ParticleGenerator<>
 {
     StdLargeVec<Vecd> surface_normal_;
     StdLargeVec<Real> surface_thickness_;
@@ -97,13 +97,13 @@ class ParticleGenerator<Surface> : public ParticleGenerator<Base>
 };
 
 template <> // generate observer particles
-class ParticleGenerator<Observer> : public ParticleGenerator<Base>
+class ParticleGenerator<Observer> : public ParticleGenerator<>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Base>(sph_body){};
+        : ParticleGenerator<>(sph_body){};
     ParticleGenerator(SPHBody &sph_body, const StdVec<Vecd> &positions)
-        : ParticleGenerator<Base>(sph_body), positions_(positions){};
+        : ParticleGenerator<>(sph_body), positions_(positions){};
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
 

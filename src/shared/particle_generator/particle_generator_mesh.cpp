@@ -10,7 +10,7 @@ GeneratingMethod<UnstructuredMesh>::GeneratingMethod(ANSYSMesh &ansys_mesh)
       elements_volumes_(ansys_mesh.elements_volumes_) {}
 //=================================================================================================//
 ParticleGenerator<UnstructuredMesh>::ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh)
-    : ParticleGenerator<Base>(sph_body), GeneratingMethod<UnstructuredMesh>(ansys_mesh) {}
+    : ParticleGenerator<>(sph_body), GeneratingMethod<UnstructuredMesh>(ansys_mesh) {}
 //=================================================================================================//
 void ParticleGenerator<UnstructuredMesh>::prepareGeometricData()
 {

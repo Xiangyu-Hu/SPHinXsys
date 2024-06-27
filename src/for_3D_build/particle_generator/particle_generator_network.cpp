@@ -12,7 +12,7 @@ namespace SPH
 ParticleGenerator<Network>::
     ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor)
-    : ParticleGenerator<Base>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
+    : ParticleGenerator<>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
       grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(sph_body.getInitialShape()),

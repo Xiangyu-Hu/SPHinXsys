@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 ParticleGenerator<Line>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Base>(sph_body) {}
+    : ParticleGenerator<>(sph_body) {}
 //=================================================================================================//
 void ParticleGenerator<Line>::addLineProperties(
     const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width)
@@ -20,7 +20,7 @@ void ParticleGenerator<Line>::addLineProperties(
 //=================================================================================================//
 void ParticleGenerator<Line>::initializeParticleVariables()
 {
-    ParticleGenerator<Base>::initializeParticleVariables();
+    ParticleGenerator<>::initializeParticleVariables();
     base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", line_normal_);
     base_particles_.registerSharedVariableFrom<Vecd>("BinormalDirection", line_binormal_);
     base_particles_.registerSharedVariableFrom<Real>("Thickness", line_thickness_);
@@ -33,7 +33,7 @@ void ParticleGenerator<Line>::initializeParticleVariables()
 //=================================================================================================//
 void ParticleGenerator<Surface>::initializeParticleVariablesFromReload()
 {
-    ParticleGenerator<Base>::initializeParticleVariablesFromReload();
+    ParticleGenerator<>::initializeParticleVariablesFromReload();
     base_particles_.registerSharedVariableFromReload<Vecd>("NormalDirection");
     base_particles_.registerSharedVariableFromReload<Vecd>("BinormalDirection");
     base_particles_.registerSharedVariableFromReload<Real>("Thickness");

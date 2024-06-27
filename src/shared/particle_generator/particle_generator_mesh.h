@@ -49,7 +49,7 @@ class GeneratingMethod<UnstructuredMesh>
 
 template <>
 class ParticleGenerator<UnstructuredMesh>
-    : public ParticleGenerator<Base>, public GeneratingMethod<UnstructuredMesh>
+    : public ParticleGenerator<>, public GeneratingMethod<UnstructuredMesh>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh);

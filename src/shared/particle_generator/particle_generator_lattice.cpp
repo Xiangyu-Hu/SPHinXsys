@@ -21,7 +21,7 @@ GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
 }
 //=================================================================================================//
 ParticleGenerator<Lattice>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<Base>(sph_body), GeneratingMethod<Lattice>(sph_body) {}
+    : ParticleGenerator<>(sph_body), GeneratingMethod<Lattice>(sph_body) {}
 //=================================================================================================//
 ParticleGenerator<Lattice, Adaptive>::ParticleGenerator(SPHBody &sph_body, Shape &target_shape)
     : ParticleGenerator<Lattice>(sph_body), target_shape_(target_shape),
@@ -40,7 +40,7 @@ void ParticleGenerator<Lattice, Adaptive>::
     Real local_particle_volume_ratio = pow(lattice_spacing_ / local_particle_spacing, Dimensions);
     if (rand_uniform(0.0, 1.0) < local_particle_volume_ratio)
     {
-        ParticleGenerator<Base>::addPositionAndVolumetricMeasure(
+        ParticleGenerator<>::addPositionAndVolumetricMeasure(
             position, volume / local_particle_volume_ratio);
     }
 }

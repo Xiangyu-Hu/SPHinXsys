@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWríte<Vecd>(wall_boundary, "NormalDirection"); // output for debug
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection"); // output for debug
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>

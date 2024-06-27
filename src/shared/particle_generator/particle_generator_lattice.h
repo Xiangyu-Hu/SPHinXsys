@@ -54,7 +54,7 @@ class GeneratingMethod<Lattice>
 
 template <>
 class ParticleGenerator<Lattice>
-    : public ParticleGenerator<Base>, public GeneratingMethod<Lattice>
+    : public ParticleGenerator<>, public GeneratingMethod<Lattice>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body);
