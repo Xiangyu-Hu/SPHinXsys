@@ -46,6 +46,7 @@ In the terminal, install the required system dependencies
         sudo apt install -y ccache              # ccache is a compiler cache. It speeds up recompilation by caching previous compilations
         sudo apt install -y python3-dev
         sudo apt install -y gfortran
+        sudo apt-get install autoconf automake autoconf-archive
 
 If you want a debugger for development purposes:
 
@@ -382,6 +383,7 @@ Note that gfortran is essential for lapack_reference, which is needed for simbod
         brew install ccache
         brew install gfortran
         brew install ninja
+        brew install autoconf automake autoconf-archive
 
 From here, pick a workspace where the library and any dependent code will be downloaded. 
 The following block will install the direct dependencies required by SPHinXsys in user-space:
