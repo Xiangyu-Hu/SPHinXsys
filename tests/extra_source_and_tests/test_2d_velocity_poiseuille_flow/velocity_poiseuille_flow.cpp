@@ -346,8 +346,8 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
     SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
 
-    Vecd inflow_translation(10 * resolution_ref, 0);
-    Vecd inflow_halfsize(10 * resolution_ref, 0.5 * DH);
+    Vecd inflow_translation(half_boundary_width, 0);
+    Vecd inflow_halfsize(half_boundary_width, 0.5 * DH);
     // BodyAlignedBoxByCell inflow_region(
     //     water_block, makeShared<AlignedBoxShape>(Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     BodyAlignedBoxByCell inflow_region(
@@ -390,6 +390,8 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     StdLargeVec<Vecd> &vel_radial = *velocity_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
     auto &vel_of_mid_index_observer = vel_radial[mid_index_of_observer][0];
     int convergence_checker_output_interval = 50;
+    std::ofstream file_mid_observer("output_velocity_of_mid_observer_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
+    file_mid_observer << "Time,Velocity X,Convergence Rate\n";
 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -466,6 +468,10 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
                 {
                     std::cout << "Converged at iteration " << vel_of_mid_index_observer << std::endl;
                 }
+                if (std::isfinite(conv_checker.get_percentage_difference()))
+                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << conv_checker.get_percentage_difference() << "\n";
+                else
+                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << 0 << "\n";
             }
         }
         TickCount t2 = TickCount::now();
@@ -475,6 +481,7 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
+    file_mid_observer.close();
 
     TickCount t4 = TickCount::now();
 
@@ -493,9 +500,9 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     StdLargeVec<Vecd> &pos_radial = velocity_observer.getBaseParticles().ParticlePositions();
 
     // Create and open a CSV file
-    std::ofstream file("output_velocity_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
+    std::ofstream file_radial_velocity("output_velocity_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
     // Write the header row
-    file << "Position Y,Parabolic Velocity X,Velocity X\n";
+    file_radial_velocity << "Position Y,Parabolic Velocity X,Velocity X\n";
 
     // Loop over all particles to calculate and write the required data
     for (size_t i = 0; i < pos_radial.size(); i++)
@@ -504,17 +511,17 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
         Real par_vel = parabolic_velocity(pos_radial[i][1], U_f, DH);
 
         // Write data to file
-        file << pos_radial[i][1] << "," << par_vel << "," << vel_radial[i][0] << "\n";
+        file_radial_velocity << pos_radial[i][1] << "," << par_vel << "," << vel_radial[i][0] << "\n";
 
         // Existing test, assuming you still want to run it
         EXPECT_NEAR(parabolic_velocity(pos_radial[i][1], U_f, DH), vel_radial[i][0], U_f * 5e-2);
     }
 
     // Close the file
-    file.close();
+    file_radial_velocity.close();
 }
 int main(int ac, char *av[])
 {
-    channel_flow(ac, av, 40, 40);
+    channel_flow(ac, av, 50, 40);
     return 0;
 }
