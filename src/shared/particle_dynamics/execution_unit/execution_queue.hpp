@@ -16,7 +16,7 @@ namespace SPH::execution {
 
         sycl::queue &getQueue() {
             if(!sycl_queue)
-                sycl_queue = std::make_unique<sycl::queue>(sycl::gpu_selector_v);
+                sycl_queue = std::make_unique<sycl::queue>(sycl::default_selector_v);
             return *sycl_queue;
         }
 
