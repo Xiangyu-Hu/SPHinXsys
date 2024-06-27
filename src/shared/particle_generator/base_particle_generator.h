@@ -114,7 +114,6 @@ class ParticleGenerator<Observer> : public ParticleGenerator<>
 template <typename... BaseGeneratorParameters> // generate particles by reloading dynamically relaxed particles
 class ParticleGenerator<Reload, BaseGeneratorParameters...> : public ParticleGenerator<BaseGeneratorParameters...>
 {
-    BaseMaterial &base_material_;
     std::string file_path_;
 
   public:

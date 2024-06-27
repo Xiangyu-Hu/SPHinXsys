@@ -190,9 +190,10 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     system.handleCommandlineOptions(ac, av);
-#endif //---------------------------------------------------------------------- \
-       //	Creating body, materials and particles.                               \
-       //----------------------------------------------------------------------
+#endif
+    //----------------------------------------------------------------------
+    //	Creating body, materials and particles.
+    //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);

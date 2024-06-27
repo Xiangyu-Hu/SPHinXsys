@@ -34,7 +34,7 @@ void ParticleGenerator<Reload, BaseGeneratorParameters...>::prepareGeometricData
 template <typename... BaseGeneratorParameters>
 void ParticleGenerator<Reload, BaseGeneratorParameters...>::setAllParticleBounds()
 {
-    this->base_particles_.initializeAllParticlesBounds(file_path_);
+    this->base_particles_.initializeAllParticlesBoundsFromReloadXml();
 };
 //=================================================================================================//
 template <typename... BaseGeneratorParameters>
