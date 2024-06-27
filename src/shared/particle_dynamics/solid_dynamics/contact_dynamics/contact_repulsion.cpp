@@ -120,8 +120,8 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 RepulsionForce<Wall, Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce" + contact_body_names[get_name_type(solid_body_contact_relation)]),
-      ForcePrior(particles_, "RepulsionForce" + contact_body_names[get_name_type(solid_body_contact_relation)])
+    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)]),
+      ForcePrior(particles_, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)])
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
