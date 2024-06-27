@@ -197,7 +197,6 @@ class ReloadParticleIO : public BaseIO
     };
 
     virtual void writeToFile(size_t iteration_step = 0) override;
-    virtual void readFromFile(size_t iteration_step = 0);
 };
 } // namespace SPH
 #endif // IO_BASE_H

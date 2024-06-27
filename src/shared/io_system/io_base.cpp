@@ -145,23 +145,5 @@ void ReloadParticleIO::writeToFile(size_t iteration_step)
         bodies_[i]->writeToXmlForReloadParticle(filefullpath);
     }
 }
-//=============================================================================================//
-void ReloadParticleIO::readFromFile(size_t restart_step)
-{
-    std::cout << "\n Reloading particles from files." << std::endl;
-    for (size_t i = 0; i < bodies_.size(); ++i)
-    {
-        std::string filefullpath = file_names_[i];
-
-        if (!fs::exists(filefullpath))
-        {
-            std::cout << "\n Error: the input file:" << filefullpath << " is not exists" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-
-        bodies_[i]->readFromXmlForReloadParticle(filefullpath);
-    }
-}
 //=================================================================================================//
 } // namespace SPH

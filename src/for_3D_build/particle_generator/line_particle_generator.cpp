@@ -31,7 +31,7 @@ void ParticleGenerator<Line>::initializeParticleVariables()
     base_particles_.addVariableToReload<Real>("Width");
 }
 //=================================================================================================//
-void ParticleGenerator<Surface>::initializeParticleVariablesFromReload()
+void ParticleGenerator<Line>::initializeParticleVariablesFromReload()
 {
     ParticleGenerator<>::initializeParticleVariablesFromReload();
     base_particles_.registerSharedVariableFromReload<Vecd>("NormalDirection");

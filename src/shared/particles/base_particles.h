@@ -179,7 +179,6 @@ class BaseParticles
     void writeParticlesToXmlForRestart(std::string &filefullpath);
     void readParticleFromXmlForRestart(std::string &filefullpath);
     void writeToXmlForReloadParticle(std::string &filefullpath);
-    void readFromXmlForReloadParticle(std::string &filefullpath);
     XmlParser &readReloadXmlFile(const std::string &filefullpath);
     template <typename OwnerType>
     void checkReloadFileRead(OwnerType *owner);
@@ -247,7 +246,7 @@ class BaseParticles
 
   protected:
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
-    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H
