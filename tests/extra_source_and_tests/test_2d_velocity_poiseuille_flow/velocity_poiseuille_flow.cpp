@@ -98,6 +98,7 @@ class ConvergenceChecker
         T average = (max_val + min_val) / 2;
         T percentage_difference = (range / average) * 100;
         percentage_difference_ = percentage_difference;
+        std::cout << "converger percentage_difference_ :" << percentage_difference_ << "\n";
         return percentage_difference < threshold;
     }
 
@@ -261,8 +262,9 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     U_f = 1.0;                                /**< Characteristic velocity. */
     const Real Re = 100.0;                    /**< Reynolds number. */
     const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
-    Real predicted_pressure = 2 * 8 * mu_f * DL * U_f / pow(DH, 2);
+    Real predicted_pressure = 12 * mu_f * DL * U_f / pow(DH, 2);
     Real c_f = std::max(sqrt(predicted_pressure / 0.01 * (1 / rho0_f)), U_f * 10.);
+    std::cout << "predicted_pressure = " << predicted_pressure << std::endl;
     outlet_pressure = 0.0;
     //----------------------------------------------------------------------
     Real resolution_ref = DH / number_of_particles; /**< Initial reference particle spacing. */
@@ -271,7 +273,7 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     //	Geometric shapes used in this case.
     //----------------------------------------------------------------------
-    Real boundary_width = 5.0 * resolution_ref;
+    Real boundary_width = 3.0 * resolution_ref;
     Real half_boundary_width = 0.5 * boundary_width;
     Vec2d bidirectional_buffer_halfsize = Vec2d(half_boundary_width, DH * 0.5);
     Vec2d left_bidirectional_translation = Vec2d(half_boundary_width, 0.);
@@ -356,13 +358,15 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    BodyStatesRecordingToVtp waterblock_recording(sph_system);
+    BodyStatesRecordingToVtp observer_recording(velocity_observer);
 
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
-    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
-    body_states_recording.addVariableRecording<Real>(water_block, "Density");
-    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
+    waterblock_recording.addVariableRecording<Real>(water_block, "Pressure");
+    waterblock_recording.addVariableRecording<int>(water_block, "Indicator");
+    waterblock_recording.addVariableRecording<Real>(water_block, "Density");
+    waterblock_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
     ObservingAQuantity<Vecd> update_observer_velocity(velocity_observer_contact, "Velocity");
+    observer_recording.addVariableRecording<Vecd>(velocity_observer, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -378,9 +382,10 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 20.0;    /**< End time. */
-    Real Output_Time = 0.25; /**< Time stamps for output of body states. */
-    Real dt = 0.0;           /**< Default acoustic time step sizes. */
+    Real end_time = 20.0;       /**< End time. */
+    Real max_end_time = 1000.0; /**< End time. */
+    Real Output_Time = 2;       /**< Time stamps for output of body states. */
+    Real dt = 0.0;              /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Defined convergence checker
     //----------------------------------------------------------------------
@@ -405,13 +410,15 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile();
+    waterblock_recording.writeToFile();
+    observer_recording.writeToFile();
     update_observer_velocity.exec();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time || !is_converged)
+    while ((GlobalStaticVariables::physical_time_ < end_time || !is_converged) && GlobalStaticVariables::physical_time_ <= max_end_time)
     {
+
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
@@ -477,7 +484,8 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
         TickCount t2 = TickCount::now();
         velocity_observer_contact.updateConfiguration();
         update_observer_velocity.exec();
-        body_states_recording.writeToFile();
+        waterblock_recording.writeToFile();
+        observer_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -522,6 +530,6 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
 }
 int main(int ac, char *av[])
 {
-    channel_flow(ac, av, 50, 40);
+    channel_flow(ac, av, 10, 40);
     return 0;
 }
