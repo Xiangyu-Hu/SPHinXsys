@@ -61,9 +61,6 @@ class GeneratingMethod;
 template <> // default volume metric particle generator
 class ParticleGenerator<>
 {
-    StdLargeVec<Vecd> position_;           // prepared geometric data: particle position
-    StdLargeVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
-
   public:
     explicit ParticleGenerator(SPHBody &sph_body);
     virtual ~ParticleGenerator(){};
@@ -72,6 +69,9 @@ class ParticleGenerator<>
   protected:
     BaseParticles &base_particles_;
     Real particle_spacing_ref_;
+    StdLargeVec<Vecd> position_;           // prepared geometric data: particle position
+    StdLargeVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
+
     virtual void addParticlePosition(const Vecd &position);
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
     virtual void prepareGeometricData() = 0;    // first step of particle generation

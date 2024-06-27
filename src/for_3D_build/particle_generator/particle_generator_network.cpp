@@ -23,7 +23,7 @@ ParticleGenerator<Network>::
     Vecd end_direction = displacement / (displacement.norm() + TinyReal);
     /** Add initial particle to the first branch of the tree. */
     growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-    cell_linked_list_.InsertListDataEntry(0, pos_[0]);
+    cell_linked_list_.InsertListDataEntry(0, position_[0]);
 }
 //=================================================================================================//
 void ParticleGenerator<Network>::
@@ -31,7 +31,7 @@ void ParticleGenerator<Network>::
 {
     addPositionAndVolumetricMeasure(new_point, segment_length_);
     tree_->branch_locations_.push_back(branch->id_);
-    branch->inner_particles_.push_back(pos_.size() - 1);
+    branch->inner_particles_.push_back(position_.size() - 1);
     branch->end_direction_ = end_direction;
 }
 //=================================================================================================//
@@ -106,7 +106,7 @@ bool ParticleGenerator<Network>::
     TreeBody::Branch *parent_branch = tree_->branches_[parent_id];
     IndexVector &parent_elements = parent_branch->inner_particles_;
 
-    Vecd init_point = pos_[parent_elements.back()];
+    Vecd init_point = position_[parent_elements.back()];
     Vecd init_direction = parent_branch->end_direction_;
 
     Vecd surface_norm = initial_shape_.findNormalDirection(init_point);
@@ -157,7 +157,7 @@ bool ParticleGenerator<Network>::
 
         for (const size_t &particle_idx : new_branch->inner_particles_)
         {
-            cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx]);
+            cell_linked_list_.InsertListDataEntry(particle_idx, position_[particle_idx]);
         }
     }
 

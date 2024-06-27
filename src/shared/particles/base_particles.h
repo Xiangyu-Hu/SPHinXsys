@@ -34,7 +34,6 @@
 #define BASE_PARTICLES_H
 
 #include "base_data_package.h"
-#include "base_material.h"
 #include "base_variable.h"
 #include "particle_sorting.h"
 #include "sph_data_containers.h"
@@ -121,7 +120,7 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&... args);
 
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
