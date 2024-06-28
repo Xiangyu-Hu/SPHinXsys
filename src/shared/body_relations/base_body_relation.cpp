@@ -1,6 +1,7 @@
 #include "base_body_relation.h"
-#include "base_particle_dynamics.h"
 
+#include "base_particle_dynamics.h"
+#include "base_particles.hpp"
 namespace SPH
 {
 //=================================================================================================//
@@ -31,8 +32,7 @@ void BaseInnerRelation::resetNeighborhoodCurrentSize()
 {
     parallel_for(
         IndexRange(0, base_particles_.total_real_particles_),
-        [&](const IndexRange &r)
-        {
+        [&](const IndexRange &r) {
             for (size_t num = r.begin(); num != r.end(); ++num)
             {
                 inner_configuration_[num].current_size_ = 0;
@@ -58,8 +58,7 @@ void BaseContactRelation::resetNeighborhoodCurrentSize()
     {
         parallel_for(
             IndexRange(0, base_particles_.total_real_particles_),
-            [&](const IndexRange &r)
-            {
+            [&](const IndexRange &r) {
                 for (size_t num = r.begin(); num != r.end(); ++num)
                 {
                     contact_configuration_[k][num].current_size_ = 0;
