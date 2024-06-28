@@ -135,7 +135,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
     SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
-    SimpleDynamics<fluid_dynamics::ConstrainVelocityAt_Y_Direction> constrain_Y_velocity(water_block, DL);
+    //SimpleDynamics<fluid_dynamics::ConstrainVelocityAt_Y_Direction> constrain_Y_velocity(water_block, DL);
 
     SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound,offset_distance);
 
@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     
     /** Impose transport velocity. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
 
@@ -236,7 +236,7 @@ int main(int ac, char *av[])
             //viscous_force.exec();
             turbulent_viscous_force.exec();
 
-            transport_velocity_correction.exec();
+            //transport_velocity_correction.exec();
             /** Dynamics including pressure relaxation. */
             Real relaxation_time = 0.0;
             int inner_itr = 0;
@@ -256,7 +256,7 @@ int main(int ac, char *av[])
                 constrain_normal_velocity_in_P_region.exec();
                 
                 //** For test *
-                constrain_Y_velocity.exec();
+                //constrain_Y_velocity.exec();
                 
                 inlet_velocity_buffer_inflow_condition.exec();
 

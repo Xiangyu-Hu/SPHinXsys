@@ -513,6 +513,23 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd>& pos_;
 		Real length_channel_;
 	};
+//=================================================================================================//
+template <int INDICATOR>
+class TurbulentIndicatedParticles : public WithinScope
+{
+    //StdLargeVec<int> &indicator_;
+
+  public:
+    explicit TurbulentIndicatedParticles(BaseParticles *base_particles)
+        : WithinScope(){};
+    bool operator()(size_t index_i)
+    {
+        return true;
+    };
+};
+
+using TurbulentPlugFlowParticles = TurbulentIndicatedParticles<0>;
+//=================================================================================================//
 
 //=================================================================================================//
 //*********************TESTING MODULES*********************
