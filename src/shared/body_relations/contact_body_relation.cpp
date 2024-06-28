@@ -128,34 +128,6 @@ void AdaptiveContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies,
-                                               const StdVec<bool> &normal_corrections)
-    : ContactRelationCrossResolution(sph_body, contact_bodies)
-{
-    if (contact_bodies.size() != normal_corrections.size())
-    {
-        throw std::runtime_error("ContactRelationToShell: sizes of normal_corrections and contact_bodies are different!");
-    }
-
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        get_shell_contact_neighbors_.push_back(
-            neighbor_builder_contact_to_shell_ptrs_keeper_.createPtr<NeighborBuilderContactToShell>(
-                sph_body_, *contact_bodies_[k], normal_corrections[k]));
-    }
-}
-//=================================================================================================//
-void ContactRelationToShell::updateConfiguration()
-{
-    resetNeighborhoodCurrentSize();
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        target_cell_linked_lists_[k]->searchNeighborsByParticles(
-            sph_body_, contact_configuration_[k],
-            *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
-    }
-}
-//=================================================================================================//
 ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVector contact_bodies,
                                                    const StdVec<bool> &normal_corrections)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
@@ -167,7 +139,7 @@ ContactRelationFromShell::ContactRelationFromShell(SPHBody &sph_body, RealBodyVe
 
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        get_contact_neighbors_.push_back(
+        get_shell_contact_neighbors_.push_back(
             neighbor_builder_contact_from_shell_ptrs_keeper_.createPtr<NeighborBuilderContactFromShell>(
                 sph_body_, *contact_bodies_[k], normal_corrections[k]));
     }
@@ -180,8 +152,80 @@ void ContactRelationFromShell::updateConfiguration()
     {
         target_cell_linked_lists_[k]->searchNeighborsByParticles(
             sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
+ContactRelationToShell::ContactRelationToShell(SPHBody &sph_body, RealBodyVector contact_bodies,
+                                               const StdVec<bool> &normal_corrections)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    if (contact_bodies.size() != normal_corrections.size())
+    {
+        throw std::runtime_error("ContactRelationToShell: sizes of normal_corrections and contact_bodies are different!");
+    }
+
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_contact_neighbors_.push_back(
+            neighbor_builder_contact_to_shell_ptrs_keeper_.createPtr<NeighborBuilderContactToShell>(
+                sph_body_, *contact_bodies_[k], normal_corrections[k]));
+    }
+}
+//=================================================================================================//
+void ContactRelationToShell::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            sph_body_, contact_configuration_[k],
             *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
+}
+//=================================================================================================//
+SurfaceContactRelationFromShell::SurfaceContactRelationFromShell(SPHBody &sph_body, const RealBodyVector &contact_bodies,
+                                                                 const StdVec<bool> &normal_corrections)
+    : SurfaceContactRelation(sph_body, contact_bodies)
+{
+    if (contact_bodies.size() != normal_corrections.size())
+    {
+        throw std::runtime_error("SurfaceContactRelationToShell: sizes of normal_corrections and contact_bodies are different!");
+    }
+
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_shell_contact_neighbors_.push_back(
+            neighbor_builder_contact_from_shell_ptrs_keeper_
+                .createPtr<NeighborBuilderSurfaceContactFromShell>(sph_body_, *contact_bodies_[k], normal_corrections[k]));
+    }
+}
+//=================================================================================================//
+void SurfaceContactRelationFromShell::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->searchNeighborsByParticles(
+            *body_surface_layer_, contact_configuration_[k],
+            *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
+SurfaceContactRelationToShell::SurfaceContactRelationToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies)
+    : SurfaceContactRelation(sph_body, contact_bodies)
+{
+    // Fix invalid list of particles ids with shell (in case body shape is absent by the time of construction)
+    body_part_particles_.resize(sph_body.getBaseParticles().total_real_particles_);
+    std::iota(body_part_particles_.begin(), body_part_particles_.end(), 0);
+}
+//=================================================================================================//
+SurfaceContactRelationFromShellToShell::SurfaceContactRelationFromShellToShell(SPHBody &sph_body, const RealBodyVector &contact_bodies,
+                                                                               const StdVec<bool> &normal_corrections)
+    : SurfaceContactRelationFromShell(sph_body, contact_bodies, normal_corrections)
+{
+    body_part_particles_.resize(sph_body.getBaseParticles().total_real_particles_);
+    std::iota(body_part_particles_.begin(), body_part_particles_.end(), 0);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -287,8 +287,8 @@ ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
 void ShellCurvature::compute_initial_curvature()
 {
     particle_for(
-        par,
-        particles_->total_real_particles_,
+        execution::ParallelPolicy(),
+        IndexRange(0, particles_->total_real_particles_),
         [this](size_t index_i)
         {
             Matd dn_0_i = Matd::Zero();

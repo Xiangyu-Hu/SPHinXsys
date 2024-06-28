@@ -128,5 +128,21 @@ class ShellInnerRelationWithContactKernel : public BaseInnerRelation
     explicit ShellInnerRelationWithContactKernel(RealBody &real_body, RealBody &contact_body);
     void updateConfiguration() override;
 };
+
+/**
+ * @class ShellSelfContactRelation
+ * @brief The relation for self contact of a shell
+ */
+class ShellSelfContactRelation : public BaseInnerRelation
+{
+  public:
+    explicit ShellSelfContactRelation(RealBody &real_body);
+    void updateConfiguration() override;
+
+  private:
+    SearchDepthSingleResolution get_single_search_depth_;
+    NeighborBuilderShellSelfContact get_shell_self_contact_neighbor_;
+    CellLinkedList &cell_linked_list_;
+};
 } // namespace SPH
 #endif // INNER_BODY_RELATION_H
