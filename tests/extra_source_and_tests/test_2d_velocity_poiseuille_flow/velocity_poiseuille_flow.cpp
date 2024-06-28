@@ -335,7 +335,7 @@ class NozzleWallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const size_t number_of_particles, const bool is_FDA = false, const bool use_transport_correction = true, const bool use_linear_gradient_correction = true, const size_t number_of_observer = 50)
+void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const size_t number_of_particles, const bool is_FDA = false, const bool use_transport_correction = true, const bool use_linear_gradient_correction = true, const bool use_Riemann = true, const size_t number_of_observer = 50)
 {
     //----------------------------------------------------------------------
     //	Basic geometry parameters and numerical setup.
@@ -387,9 +387,10 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     std::string filename_suffix = "_DL" + std::to_string(int(length_to_height_ratio));
     filename_suffix += "_NumPart" + std::to_string(int(number_of_particles));
     filename_suffix += "_TransPort" + std::to_string(int(use_transport_correction));
-    filename_suffix += "LGC" + std::to_string(int(use_linear_gradient_correction));
+    filename_suffix += "_LGC" + std::to_string(int(use_linear_gradient_correction));
+    filename_suffix += "_Riemann" + std::to_string(int(use_Riemann));
     if (is_FDA)
-        filename_suffix += "FDA";
+        filename_suffix += "_FDA";
     auto &output_folder = sph_system.getIOEnvironment().output_folder_;
     output_folder += filename_suffix;
     std::cout << "sph_system.getIOEnvironment().output_folder_ : " << sph_system.getIOEnvironment().output_folder_ << std::endl;
@@ -457,7 +458,10 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation_riemann(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation_no_riemann(water_block_inner, water_block_contact);
+
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
@@ -547,6 +551,12 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     observer_recording.writeToFile();
     update_observer_velocity.exec();
     //----------------------------------------------------------------------
+    //	Dt_ref to control error
+    //----------------------------------------------------------------------
+    auto Dt_ref = get_fluid_advection_time_step_size.exec();
+    auto dt_ref = get_fluid_time_step_size.exec();
+
+    //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
     while ((GlobalStaticVariables::physical_time_ < end_time || !is_converged) && GlobalStaticVariables::physical_time_ <= max_end_time)
@@ -558,6 +568,12 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
         {
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
+            if (Dt < 1e-3 * Dt_ref)
+            {
+                std::cerr << "Error: Time step size Dt is too small. Exiting the function. Dt = " << Dt << "     Dt_ref = " << Dt_ref << std::endl;
+                return;
+            }
+
             update_fluid_density.exec();
             if (use_linear_gradient_correction)
                 corrected_configuration_fluid.exec();
@@ -571,12 +587,20 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
             while (relaxation_time < Dt)
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+                if (dt < 1e-3 * dt_ref)
+                {
+                    std::cerr << "Error: Time step size Dt is too small. Exiting the function. dt = " << dt << "     dt_ref = " << dt_ref << std::endl;
+                    return;
+                }
                 pressure_relaxation.exec(dt);
                 kernel_summation.exec();
                 left_inflow_pressure_condition.exec(dt);
                 right_inflow_pressure_condition.exec(dt);
                 inflow_velocity_condition.exec();
-                density_relaxation.exec(dt);
+                if (use_Riemann)
+                    density_relaxation_riemann.exec(dt);
+                else
+                    density_relaxation_no_riemann.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
@@ -664,6 +688,54 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
 }
 int main(int ac, char *av[])
 {
-    channel_flow(ac, av, 25, 10, true);
+    size_t length_to_height_ratio = 20;
+    size_t number_of_particles = 40;
+    bool is_FDA = false;
+    bool use_transport_correction = false;
+    bool use_linear_gradient_correction = false;
+    bool use_Riemann = true;
+    // Study without transport_correction in different length_to_height_ratio
+    {
+        length_to_height_ratio = 10;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    {
+        length_to_height_ratio = 30;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    {
+        length_to_height_ratio = 40;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    // Study without transport_correction in different length_to_height_ratio
+    use_transport_correction = true;
+    {
+        length_to_height_ratio = 10;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    {
+        length_to_height_ratio = 30;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    {
+        length_to_height_ratio = 40;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    // Study without transport_correction in different length_to_height_ratio
+    use_transport_correction = true;
+    use_linear_gradient_correction = true;
+    {
+        length_to_height_ratio = 10;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    {
+        length_to_height_ratio = 30;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+    {
+        length_to_height_ratio = 40;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    }
+
     return 0;
 }
