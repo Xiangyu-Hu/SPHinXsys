@@ -6,6 +6,7 @@
  */
 #include "base_particle_dynamics.h"
 #include "bidirectional_buffer.h"
+#include "data_type.h"
 #include "density_correciton.h"
 #include "density_correciton.hpp"
 #include "io_environment.h"
@@ -19,9 +20,9 @@
 #include <string>
 
 using namespace SPH;
-Real DH = 0.;
-Real U_f = 0.;
-Real outlet_pressure = 0;
+Real DH = 0.;             // prescribed value in main()
+Real U_f = 0.;            // prescribed value in main()
+Real outlet_pressure = 0; // prescribed value in main()
 
 //----------------------------------------------------------------------
 //	Circular buffer for checking convergence usage
@@ -109,7 +110,6 @@ class ConvergenceChecker
     bool update(T new_value)
     {
         buffer.push(new_value);
-        std::cout << "value : " << new_value << std::endl;
         return calculate_convergence();
     }
 
@@ -122,7 +122,7 @@ class ConvergenceChecker
 //----------------------------------------------------------------------
 //	Function to create observer locations
 //----------------------------------------------------------------------
-std::vector<Vecd> createObserverLocations(double DL, double DH, int num_points)
+std::vector<Vecd> createObserverLocations(double x, double DH, int num_points)
 {
     std::vector<Vecd> observer_location;
     observer_location.reserve(num_points);
@@ -131,7 +131,7 @@ std::vector<Vecd> createObserverLocations(double DL, double DH, int num_points)
     for (int i = 0; i < num_points; ++i)
     {
         double y = -0.5 * DH + i * dy;
-        observer_location.push_back(Vecd(0.5 * DL, y));
+        observer_location.push_back(Vecd(x, y));
     }
 
     return observer_location;
@@ -180,7 +180,7 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(U_f), t_ref_(2.0), DH_(DH)
+        : u_ref_(U_f), t_ref_(5.0), DH_(DH)
     {
     }
 
@@ -244,17 +244,108 @@ class WallBoundary : public MultiPolygonShape
         std::cout << "wall inner done" << std::endl;
     }
 };
+//----------------------------------------------------------------------
+//	Basic geometry parameters for FDA.
+//----------------------------------------------------------------------
+//        ______(L_in)____    |    (L_throat)    |________(L_out)________
+//       |                \                      |                       |
+//       |                 \                     |                       |
+//       |                  \                    |                       |
+//       |                   \___________________|                       |
+//       |                            |                                  |
+//       |                            |                                  |
+//      (DH)                       H_noozle                              |
+//       |                            |                                  |
+//       |           _________________|__________                        |
+//       |             alpha /                   |                       |
+//       |                \ /                  (DH/3)                    |
+//       |                 /                     |                       |
+//       |________________/                      |_______________________|
+//       |                |   |
+//       |              (L_slope)
+//       |
+//----------------------------------------------------------------------
+//	Nozzle fluid body definition.
+//----------------------------------------------------------------------
+class NozzleWaterBlock : public MultiPolygonShape
+{
+  public:
+    explicit NozzleWaterBlock(const std::string &shape_name, const Real DH, const Real L_in, const Real L_throat, const Real L_slope, const Real L_out) : MultiPolygonShape(shape_name)
+    {
+        const Real H_noozle = DH / 3;
+        std::vector<Vecd> water_block_shape;
+        water_block_shape.push_back(Vecd(0.0, -0.5 * DH));
+        water_block_shape.push_back(Vecd(0.0, 0.5 * DH));
+        water_block_shape.push_back(Vecd(L_in, 0.5 * DH));
+        water_block_shape.push_back(Vecd(L_in + L_slope, 0.5 * DH - H_noozle));
+        water_block_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH - H_noozle));
+        water_block_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH));
+        water_block_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out, 0.5 * DH));
+        water_block_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out, -0.5 * DH));
+        water_block_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH));
+        water_block_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH + H_noozle));
+        water_block_shape.push_back(Vecd(L_in + L_slope, -0.5 * DH + H_noozle));
+        water_block_shape.push_back(Vecd(L_in, -0.5 * DH));
+        water_block_shape.push_back(Vecd(0.0, -0.5 * DH));
+        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+    }
+};
+//----------------------------------------------------------------------
+//	Nozzle wall boundary body definition.
+//----------------------------------------------------------------------
+class NozzleWallBoundary : public MultiPolygonShape
+{
+  public:
+    explicit NozzleWallBoundary(const std::string &shape_name, const Real DH, const Real L_in, const Real L_throat, const Real L_slope, const Real L_out, const Real Bw) : MultiPolygonShape(shape_name)
+    {
+        const Real H_noozle = DH / 3;
+        std::vector<Vecd> outer_wall_shape;
+        outer_wall_shape.push_back(Vecd(0.0, -0.5 * DH - Bw));
+        outer_wall_shape.push_back(Vecd(0.0, 0.5 * DH + Bw));
+        outer_wall_shape.push_back(Vecd(L_in, 0.5 * DH + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope, 0.5 * DH - H_noozle + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH - H_noozle + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out, 0.5 * DH + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out, -0.5 * DH - Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH - Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH + H_noozle - Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope, -0.5 * DH + H_noozle - Bw));
+        outer_wall_shape.push_back(Vecd(L_in, -0.5 * DH - Bw));
+        outer_wall_shape.push_back(Vecd(0.0, -0.5 * DH - Bw));
+        std::vector<Vecd> inner_wall_shape;
+        inner_wall_shape.push_back(Vecd(0.0 - Bw, -0.5 * DH));
+        inner_wall_shape.push_back(Vecd(0.0 - Bw, 0.5 * DH));
+        inner_wall_shape.push_back(Vecd(L_in, 0.5 * DH));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope, 0.5 * DH - H_noozle));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH - H_noozle));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out + Bw, 0.5 * DH));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out + Bw, -0.5 * DH));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH + H_noozle));
+        inner_wall_shape.push_back(Vecd(L_in + L_slope, -0.5 * DH + H_noozle));
+        inner_wall_shape.push_back(Vecd(L_in, -0.5 * DH));
+        inner_wall_shape.push_back(Vecd(0.0 - Bw, -0.5 * DH));
+        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+    }
+};
 
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const size_t number_of_particles, const size_t number_of_observer = 50)
+void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const size_t number_of_particles, const bool is_FDA = false, const bool use_transport_correction = true, const bool use_linear_gradient_correction = true, const size_t number_of_observer = 50)
 {
     //----------------------------------------------------------------------
     //	Basic geometry parameters and numerical setup.
     //----------------------------------------------------------------------
-    DH = 2.0;                                    /**< Channel height. */
-    const Real DL = DH * length_to_height_ratio; /**< Channel length. */
+    DH = 2.0;                              /**< Channel height. */
+    Real DL = DH * length_to_height_ratio; /**< Channel length. */
+    const Real L_throat = DH * 4 / 1.2;    // Based on FDA geometry
+    const Real L_slope = DH * 2.2685 / 1.2;
+    const Real L_out = DH * 7;
+    const Real L_in = DL - L_throat - L_slope - L_out;
     //----------------------------------------------------------------------
     //	Global parameters on the fluid properties
     //----------------------------------------------------------------------
@@ -263,14 +354,16 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     const Real Re = 100.0;                    /**< Reynolds number. */
     const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
     Real predicted_pressure = 8 * mu_f * DL * U_f / pow(DH, 2);
-    Real maximum_pressure_fluctuation = predicted_pressure * 5;
-    Real c_f = std::max(sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)), U_f * 10.);
+    Real maximum_pressure_fluctuation = predicted_pressure * 2.0;
+    Real c_f = std::max(sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)), U_f * 10.); // sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)) means maximum_pressure_fluctuation will be 1% of p0
     std::cout << "predicted_pressure = " << predicted_pressure << ", accepted predicted_pressure fluctuation= " << maximum_pressure_fluctuation << std::endl;
+    Real U_max = std::max(c_f / 10.0, U_f);
     outlet_pressure = 0.0;
     //----------------------------------------------------------------------
     Real resolution_ref = DH / number_of_particles; /**< Initial reference particle spacing. */
     Real BW = resolution_ref * 4.;                  /**< Extending width for BCs. */
-    BoundingBox system_domain_bounds(Vec2d(-BW, -BW - 0.5 * DH), Vec2d(DL + BW, 0.5 * DH + BW));
+    BoundingBox b_box(Vec2d(-BW, -BW - 0.5 * DH), Vec2d(DL + BW, 0.5 * DH + BW));
+    BoundingBox system_domain_bounds(b_box);
     //----------------------------------------------------------------------
     //	Geometric shapes used in this case.
     //----------------------------------------------------------------------
@@ -285,21 +378,51 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+
+    std::string filename_suffix = "_DL" + std::to_string(int(length_to_height_ratio));
+    filename_suffix += "_NumPart" + std::to_string(int(number_of_particles));
+    filename_suffix += "_TransPort" + std::to_string(int(use_transport_correction));
+    filename_suffix += "LGC" + std::to_string(int(use_linear_gradient_correction));
+    if (is_FDA)
+        filename_suffix += "FDA";
+    auto &output_folder = sph_system.getIOEnvironment().output_folder_;
+    output_folder += filename_suffix;
+    std::cout << "sph_system.getIOEnvironment().output_folder_ : " << sph_system.getIOEnvironment().output_folder_ << std::endl;
+    std::filesystem::remove_all(sph_system.getIOEnvironment().output_folder_);
+    std::filesystem::create_directory(sph_system.getIOEnvironment().output_folder_);
+
     GlobalStaticVariables::physical_time_ = 0.;
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody", DH, DL));
+    std::shared_ptr<MultiPolygonShape> water_block_shape;
+    std::shared_ptr<MultiPolygonShape> wall_block_shape;
+
+    if (is_FDA)
+    {
+        water_block_shape = makeShared<NozzleWaterBlock>("NozzleWaterBody", DH, L_in, L_throat, L_slope, L_out);
+        wall_block_shape = makeShared<NozzleWallBoundary>("NozzleWallBody", DH, L_in, L_throat, L_slope, L_out, BW);
+    }
+    else
+    {
+        water_block_shape = makeShared<WaterBlock>("WaterBody", DH, DL);
+        wall_block_shape = makeShared<WallBoundary>("WallBoundary", DH, DL, BW);
+    }
+
+    FluidBody water_block(sph_system, water_block_shape);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary", DH, DL, BW));
+    SolidBody wall_boundary(sph_system, wall_block_shape);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
-    velocity_observer.generateParticles<BaseParticles, Observer>(createObserverLocations(DL, DH, 50));
+    Real radial_observer_x = DL * 0.5;
+    if (is_FDA)
+        radial_observer_x = L_in * 0.5;
+    velocity_observer.generateParticles<BaseParticles, Observer>(createObserverLocations(radial_observer_x, DH, 50));
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -332,8 +455,9 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
     BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
@@ -393,10 +517,13 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     ConvergenceChecker<double> conv_checker(10, 0.5); // Buffer of 10 values, convergence threshold of 0.5 percent
     bool is_converged = false;
     size_t mid_index_of_observer = number_of_observer / 2.0;
+    StdLargeVec<Vecd> &pos_radial = velocity_observer.getBaseParticles().ParticlePositions();
     StdLargeVec<Vecd> &vel_radial = *velocity_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
     auto &vel_of_mid_index_observer = vel_radial[mid_index_of_observer][0];
+    auto &pos_y_of_mid_index_observer = pos_radial[mid_index_of_observer][1];
+
     int convergence_checker_output_interval = 50;
-    std::ofstream file_mid_observer("output_velocity_of_mid_observer_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
+    std::ofstream file_mid_observer(sph_system.getIOEnvironment().output_folder_ + "/output_velocity_of_mid_observer_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
     file_mid_observer << "Time,Velocity X,Convergence Rate\n";
 
     //----------------------------------------------------------------------
@@ -427,8 +554,11 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
+            if (use_linear_gradient_correction)
+                corrected_configuration_fluid.exec();
             viscous_acceleration.exec();
-            transport_velocity_correction.exec();
+            if (use_transport_correction)
+                transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -472,6 +602,7 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
                 velocity_observer_contact.updateConfiguration();
                 update_observer_velocity.exec();
                 is_converged = conv_checker.update(vel_of_mid_index_observer);
+                std::cout << "add value to analysis convergence :" << vel_of_mid_index_observer << ", analytical value" << parabolic_velocity(pos_y_of_mid_index_observer, U_f, DH) << std::endl;
                 if (is_converged)
                 {
                     std::cout << "Converged at iteration " << vel_of_mid_index_observer << std::endl;
@@ -505,11 +636,8 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    // Existing code for setting up observers and particles
-    StdLargeVec<Vecd> &pos_radial = velocity_observer.getBaseParticles().ParticlePositions();
-
     // Create and open a CSV file
-    std::ofstream file_radial_velocity("output_velocity_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
+    std::ofstream file_radial_velocity(sph_system.getIOEnvironment().output_folder_ + "/output_velocity_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
     // Write the header row
     file_radial_velocity << "Position Y,Parabolic Velocity X,Velocity X\n";
 
@@ -531,6 +659,6 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
 }
 int main(int ac, char *av[])
 {
-    channel_flow(ac, av, 10, 40);
+    channel_flow(ac, av, 25, 10, true);
     return 0;
 }
