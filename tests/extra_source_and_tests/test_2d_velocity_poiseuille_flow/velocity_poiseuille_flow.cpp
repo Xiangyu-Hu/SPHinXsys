@@ -64,6 +64,18 @@ class CircularBuffer
     {
         return count == capacity;
     }
+
+    T get_average() const
+    {
+        if (count < capacity)
+            return std::numeric_limits<T>::infinity();
+        T sum = 0;
+        for (size_t i = 0; i < buffer.size(); ++i)
+        {
+            sum += buffer[i];
+        }
+        return sum / buffer.size();
+    }
 };
 
 //----------------------------------------------------------------------
@@ -494,7 +506,6 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp waterblock_recording(sph_system);
     BodyStatesRecordingToVtp observer_recording(velocity_observer);
-
     waterblock_recording.addVariableRecording<Real>(water_block, "Pressure");
     waterblock_recording.addVariableRecording<int>(water_block, "Indicator");
     waterblock_recording.addVariableRecording<Real>(water_block, "Density");
@@ -535,6 +546,21 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     std::ofstream file_mid_observer(sph_system.getIOEnvironment().output_folder_ + "/output_velocity_of_mid_observer_" + std::to_string(int(length_to_height_ratio)) + "DH_" + std::to_string(number_of_particles) + ".csv");
     file_mid_observer << "Time,Velocity X,Convergence Rate\n";
 
+    //----------------------------------------------------------------------
+    //	Additional setup for obtaining avg velocity of observer
+    //----------------------------------------------------------------------
+    std::vector<CircularBuffer<Real>> observer_circular_vel(number_of_observer, CircularBuffer<Real>(10));
+    StdLargeVec<Real> observer_avg_vel;
+    velocity_observer.getBaseParticles().registerVariable(observer_avg_vel, "avg_vel");
+    auto calculate_observer_avg_vel = [&]()
+    {
+        for (size_t index_i = 0; index_i < number_of_observer; index_i++)
+        {
+            observer_circular_vel[index_i].push(vel_radial[index_i][0]);
+            observer_avg_vel[index_i] = observer_circular_vel[index_i].get_average();
+        }
+    };
+    observer_recording.addVariableRecording<Real>(velocity_observer, "avg_vel");
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -640,6 +666,8 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
                     file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << conv_checker.get_percentage_difference() << "\n";
                 else
                     file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << 0 << "\n";
+
+                calculate_observer_avg_vel();
             }
         }
         TickCount t2 = TickCount::now();
