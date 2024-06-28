@@ -14,11 +14,16 @@ void LinearParticles::initializeBasicParticleVariables()
     addVariableToWrite<Vecd>("BinormalDirection");
 }
 //=================================================================================================//
+StdLargeVec<Real> *LinearParticles::registerParticleMass(StdLargeVec<Real> *rho)
+{
+    return registerSharedVariable<Real>(
+        "Mass", [&](size_t i) -> Real { return (*rho)[i] * (*Vol_)[i] * (*thickness_)[i] * (*width_)[i]; });
+}
+//=================================================================================================//
 void LinearParticles::registerTransformationMatrix()
 {
     transformation_matrix0_ = registerSharedVariable<Matd>(
-        "TransformationMatrix", [&](size_t index_i) -> Matd
-        { return getTransformationMatrix((*n_)[index_i], (*b_n_)[index_i]); });
+        "TransformationMatrix", [&](size_t index_i) -> Matd { return getTransformationMatrix((*n_)[index_i], (*b_n_)[index_i]); });
 }
 //=================================================================================================//
 } // namespace SPH

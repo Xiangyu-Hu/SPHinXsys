@@ -16,8 +16,9 @@ OptimizationBySplittingAlgorithmBase<VariableType>::
     OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &variable_name)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       diffusion_(DynamicCast<LocalIsotropicDiffusion>(this, sph_body_.getBaseMaterial())),
+      rho_(*particles_->getVariableDataByName<Real>("Density")),
       Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      mass_(*this->particles_->template getVariableDataByName<Real>("Mass")),
+      mass_(*this->particles_->registerParticleMass(&rho_)),
       normal_vector_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
       variable_(*(this->particles_->template registerSharedVariable<VariableType>(variable_name))),
       heat_flux_(*(this->particles_->template registerSharedVariable<Real>("HeatFlux"))),

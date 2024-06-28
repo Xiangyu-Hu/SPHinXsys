@@ -12,7 +12,7 @@ namespace SPH
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
       particle_sorting_(*this),
-      pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
+      pos_(nullptr), Vol_(nullptr), rho_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
@@ -30,12 +30,9 @@ void BaseParticles::initializeBasicParticleVariables()
     pos_ = getVariableDataByName<Vecd>("Position");
     Vol_ = getVariableDataByName<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
-    //		register non-geometric data
+    // register non-geometric data, TODO: this should be moved to pspecific article dynamics
     //----------------------------------------------------------------------
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
-    mass_ = registerSharedVariable<Real>("Mass",
-                                         [&](size_t i) -> Real
-                                         { return (*rho_)[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		initialize unregistered data
     //----------------------------------------------------------------------
@@ -45,6 +42,12 @@ void BaseParticles::initializeBasicParticleVariables()
         sorted_id_.push_back(i);
         sequence_.push_back(0);
     }
+}
+//=================================================================================================//
+StdLargeVec<Real> *BaseParticles::registerParticleMass(StdLargeVec<Real> *rho)
+{
+    return registerSharedVariable<Real>(
+        "Mass", [&](size_t i) -> Real { return (*rho)[i] * (*Vol_)[i]; });
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)

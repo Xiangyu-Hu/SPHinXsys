@@ -51,7 +51,7 @@ class OptimizationBySplittingAlgorithmBase
 
   protected:
     LocalIsotropicDiffusion &diffusion_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    StdLargeVec<Real> &rho_, &Vol_, &mass_;
     StdLargeVec<Vecd> &normal_vector_;
     StdLargeVec<VariableType> &variable_;
     StdLargeVec<Real> &heat_flux_, &heat_source_;

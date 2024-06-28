@@ -187,14 +187,13 @@ class BaseParticles
     //----------------------------------------------------------------------
     StdLargeVec<Vecd> &ParticlePositions() { return *pos_; }
     StdLargeVec<Real> &VolumetricMeasures() { return *Vol_; }
-    virtual Real ParticleVolume(size_t index) { return (*Vol_)[index]; }
+    virtual StdLargeVec<Real> *registerParticleMass(StdLargeVec<Real> *rho);
     virtual Real ParticleSpacing(size_t index) { return std::pow((*Vol_)[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    StdLargeVec<Vecd> *pos_;  /**< Position */
-    StdLargeVec<Real> *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> *rho_;  /**< Density as a fundamental property of phyiscal matter */
-    StdLargeVec<Real> *mass_; /**< Mass as another fundamental property of physical matter */
+    StdLargeVec<Vecd> *pos_; /**< Position */
+    StdLargeVec<Real> *Vol_; /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> *rho_; /**< Density as a fundamental property of phyiscal matter */
 
     SPHBody &sph_body_;
     std::string body_name_;

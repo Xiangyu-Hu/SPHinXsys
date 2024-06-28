@@ -78,7 +78,7 @@ BaseIntegration1stHalf::
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
+      mass_(*particles_->registerParticleMass(&rho_)),
       force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//

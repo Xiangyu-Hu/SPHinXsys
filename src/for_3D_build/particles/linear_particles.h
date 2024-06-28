@@ -43,9 +43,7 @@ class LinearParticles : public SurfaceParticles
     StdLargeVec<Vecd> *b_n_; /**< binormal direction */
     StdLargeVec<Real> *width_;
 
-    /** get particle volume. */
-    virtual Real ParticleVolume(size_t index_i) override { return (*Vol_)[index_i] * (*thickness_)[index_i] * (*width_)[index_i]; }
-    /** Initialize variable for shell particles. */
+    virtual StdLargeVec<Real> *registerParticleMass(StdLargeVec<Real> *rho) override;
     virtual void initializeBasicParticleVariables() override;
     virtual void registerTransformationMatrix() override;
 };

@@ -23,11 +23,16 @@ void SurfaceParticles::initializeBasicParticleVariables()
     registerTransformationMatrix();
 }
 //=================================================================================================//
+StdLargeVec<Real> *SurfaceParticles::registerParticleMass(StdLargeVec<Real> *rho)
+{
+    return registerSharedVariable<Real>(
+        "Mass", [&](size_t i) -> Real { return (*rho)[i] * (*Vol_)[i] * (*thickness_)[i]; });
+}
+//=================================================================================================//
 void SurfaceParticles::registerTransformationMatrix()
 {
     transformation_matrix0_ = registerSharedVariable<Matd>(
-        "TransformationMatrix", [&](size_t index_i) -> Matd
-        { return getTransformationMatrix((*n_)[index_i]); });
+        "TransformationMatrix", [&](size_t index_i) -> Matd { return getTransformationMatrix((*n_)[index_i]); });
 }
 //=================================================================================================//
 } // namespace SPH

@@ -28,7 +28,7 @@ StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearSha
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
       p_(*particles_->getVariableDataByName<Real>("Pressure")),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
+      mass_(*particles_->registerParticleMass(&rho_)),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(*particles_->getVariableDataByName<Vecd>("Force")),

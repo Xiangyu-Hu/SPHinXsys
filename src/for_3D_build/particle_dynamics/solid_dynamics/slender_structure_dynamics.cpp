@@ -104,7 +104,7 @@ BarStressRelaxationFirstHalf::
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
+      mass_(*particles_->registerParticleMass(&rho_)),
       global_stress_(*particles_->registerSharedVariable<Matd>("GlobalStress")),
       global_moment_(*particles_->registerSharedVariable<Matd>("GlobalMoment")),
       mid_surface_cauchy_stress_(*particles_->registerSharedVariable<Matd>("MidSurfaceCauchyStress")),
