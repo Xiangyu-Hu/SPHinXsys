@@ -514,17 +514,33 @@ namespace fluid_dynamics
 		Real length_channel_;
 	};
 //=================================================================================================//
+	class UpdateTurbulentPlugFlowIndicator : public LocalDynamics,
+		public FluidDataSimple
+	{
+	public:
+		explicit UpdateTurbulentPlugFlowIndicator(SPHBody& sph_body, Real DH);
+		virtual ~UpdateTurbulentPlugFlowIndicator() {};
+
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<int> turbu_plug_flow_indicator_;
+		StdLargeVec<Vecd>& pos_;
+		Real channel_width_;
+	};
+//=================================================================================================//
 template <int INDICATOR>
 class TurbulentIndicatedParticles : public WithinScope
 {
-    //StdLargeVec<int> &indicator_;
-
+    StdLargeVec<int> &indicator_;
+    StdLargeVec<int> &turbu_plug_flow_indicator_;
   public:
     explicit TurbulentIndicatedParticles(BaseParticles *base_particles)
-        : WithinScope(){};
+        : WithinScope(),
+          indicator_(*base_particles->getVariableByName<int>("Indicator")),
+		  turbu_plug_flow_indicator_(*base_particles->getVariableByName<int>("TurbulentPlugFlowIndicator")){};
     bool operator()(size_t index_i)
     {
-        return true;
+        return indicator_[index_i] == INDICATOR && turbu_plug_flow_indicator_[index_i] == INDICATOR;
     };
 };
 

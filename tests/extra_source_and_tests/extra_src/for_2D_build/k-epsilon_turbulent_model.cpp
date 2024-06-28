@@ -1055,6 +1055,28 @@ namespace fluid_dynamics
 		
 	}
 //=================================================================================================//
+	UpdateTurbulentPlugFlowIndicator::
+		UpdateTurbulentPlugFlowIndicator(SPHBody& sph_body, Real DH)
+		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
+		pos_(particles_->pos_), channel_width_(DH)
+		{
+			particles_->registerVariable(turbu_plug_flow_indicator_, "TurbulentPlugFlowIndicator");
+			particles_->registerSortableVariable<int>("TurbulentPlugFlowIndicator");
+			particles_->addVariableToWrite<int>("TurbulentPlugFlowIndicator");
+		}
+	//=================================================================================================//
+	void UpdateTurbulentPlugFlowIndicator::update(size_t index_i, Real dt)
+	{
+		turbu_plug_flow_indicator_[index_i] = 0 ;
+		if(pos_[index_i][0]> 0.0 ) //** Buffer region is still applied tran.vel. Very temporary treatment *
+		{
+			if(pos_[index_i][1]> 0.25 * channel_width_ && pos_[index_i][1] < 0.75 * channel_width_ ) //** Very temporary treatment * 
+			{
+				turbu_plug_flow_indicator_[index_i] = 1 ;
+			}
+		}
+	}
+//=================================================================================================//
 //=================================================================================================//
 //*********************TESTING MODULES*********************
 //=================================================================================================//
