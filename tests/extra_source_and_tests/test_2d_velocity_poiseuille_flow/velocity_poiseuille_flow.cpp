@@ -346,6 +346,11 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     const Real L_slope = DH * 2.2685 / 1.2;
     const Real L_out = DH * 7;
     const Real L_in = DL - L_throat - L_slope - L_out;
+    if (is_FDA && L_in < 0.)
+    {
+        std::cerr << "Invalid input: L_in cannot be negative for FDA geometry." << std::endl;
+        return;
+    }
     //----------------------------------------------------------------------
     //	Global parameters on the fluid properties
     //----------------------------------------------------------------------
