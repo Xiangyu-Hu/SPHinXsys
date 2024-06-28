@@ -99,8 +99,7 @@ class DensitySummation<Contact<Base>> : public DensitySummation<Base, DataDelega
     virtual ~DensitySummation(){};
 
   protected:
-    StdVec<Real> contact_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<StdLargeVec<Real> *> contact_Vol0_;
     Real ContactSummation(size_t index_i);
 };
 
