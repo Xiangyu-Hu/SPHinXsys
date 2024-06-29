@@ -43,10 +43,10 @@ StdVec<Vecd> observation_location = {GateP_lb};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                         /**< Reference density of fluid. */
-Real gravity_g = 9.8e-3;                   /**< Value of gravity. */
-Real U_f = 1.0;                            /**< Characteristic velocity. */
-Real c_f = 20.0 * sqrt(140.0 * gravity_g); /**< Reference sound speed. */
+Real rho0_f = 1.0;                                /**< Reference density of fluid. */
+Gravity gravity(Vecd(0.0, -9.8e-3));              /**< Value of gravity. */
+Real U_f = 2.0 * sqrt(Dam_H * gravity.MaxNorm()); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;                            /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Material parameters of the elastic gate.
 //----------------------------------------------------------------------
@@ -182,7 +182,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
+    // such as kernel correction, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
@@ -203,15 +203,13 @@ int main(int ac, char *av[])
     SimpleDynamics<FixBodyPartConstraint> gate_constraint(gate_constraint_part);
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
-
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------

@@ -70,7 +70,8 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
 
     return water_block_shape;
-}
+};
+
 class WaterBlock : public ComplexShape
 {
   public:

@@ -29,6 +29,7 @@ Real rho0_s = 1.0e3;
 Real Youngs_modulus = 5.0e4;
 Real poisson = 0.45;
 Real physical_viscosity = 10000.0;
+Gravity gravity(Vecd(0.0, -1.0));
 //----------------------------------------------------------------------
 //	Geometric shapes
 //----------------------------------------------------------------------
@@ -177,14 +178,11 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
+    // such as kernel correction, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
-    SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
 
@@ -204,6 +202,8 @@ int main(int ac, char *av[])
 
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
+    SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
+    SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

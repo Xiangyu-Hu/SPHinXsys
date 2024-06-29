@@ -49,8 +49,8 @@ DensitySummation<Contact<Base>>::DensitySummation(BaseContactRelation &contact_r
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_Vol0_.push_back(contact_particles_[k]->registerSharedVariableFrom<Real>
-            ("InitialVolumetricMeasure", "VolumetricMeasure"));
+        contact_Vol0_.push_back(contact_particles_[k]->registerSharedVariableFrom<Real>(
+            "InitialVolumetricMeasure", "VolumetricMeasure"));
     }
 }
 //=================================================================================================//

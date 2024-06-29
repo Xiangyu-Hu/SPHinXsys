@@ -64,6 +64,7 @@ class Gravity : public ExternalForce
     /** This function can be used for runtime control of external force. */
     virtual Vecd InducedAcceleration(const Vecd &position = Vecd::Zero()) override;
     Real getPotential(const Vecd &position);
+    virtual Real MaxNorm() { return global_acceleration_.norm(); };
 };
 } // namespace SPH
 #endif // EXTERNAL_FORCE_H

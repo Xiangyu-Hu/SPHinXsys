@@ -19,10 +19,10 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                       /**< Reference density of fluid. */
-Real gravity_g = 1.0;                    /**< Gravity. */
-Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+Real rho0_f = 1.0;                               /**< Reference density of fluid. */
+Gravity gravity(Vecd(0.0, -1.0));                /**< Gravity. */
+Real U_ref = 2.0 * sqrt(gravity.MaxNorm() * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                         /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -89,13 +89,11 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
+    // such as kernel correction, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_wall_contact);
@@ -104,6 +102,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

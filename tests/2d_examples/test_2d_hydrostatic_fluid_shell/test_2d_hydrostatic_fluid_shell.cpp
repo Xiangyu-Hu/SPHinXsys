@@ -108,7 +108,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Geometry definition.
     //----------------------------------------------------------------------
-    auto createWaterBlockShape = [&]() {
+    auto createWaterBlockShape = [&]()
+    {
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(DamP_lb);
         water_block_shape.push_back(DamP_lt);
@@ -132,7 +133,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	create Gate constrain shape
     //----------------------------------------------------------------------
-    auto createGateConstrainShape = [&]() {
+    auto createGateConstrainShape = [&]()
+    {
         // geometry
         std::vector<Vecd> gate_constraint_shape_left;
         gate_constraint_shape_left.push_back(ConstrainLP_lb);
@@ -156,12 +158,12 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Material properties of the fluid.
     //----------------------------------------------------------------------
-    const Real rho0_f = 1000.0;                       /**< Reference density of fluid. */
-    const Real gravity_g = 9.81;                      /**< Value of gravity. */
-    const Real U_ref = 2.0 * sqrt(Dam_H * gravity_g); /**< Characteristic velocity. */
-    const Real c_f = 10.0 * U_ref;                    /**< Reference sound speed. */
-    const Real Re = 0.1;                              /**< Reynolds number. */
-    const Real mu_f = rho0_f * U_ref * DL / Re;       /**< Dynamics viscosity. */
+    const Real rho0_f = 1000.0;                               /**< Reference density of fluid. */
+    Gravity gravity(Vecd(0.0, -9.81));                        /**< Value of gravity. */
+    const Real U_ref = 2.0 * sqrt(Dam_H * gravity.MaxNorm()); /**< Characteristic velocity. */
+    const Real c_f = 10.0 * U_ref;                            /**< Reference sound speed. */
+    const Real Re = 0.1;                                      /**< Reynolds number. */
+    const Real mu_f = rho0_f * U_ref * DL / Re;               /**< Dynamics viscosity. */
     //----------------------------------------------------------------------
     //	Material properties of the elastic gate.
     //----------------------------------------------------------------------
@@ -224,7 +226,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
+    // such as kernel correction, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
@@ -247,15 +249,12 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
 
-    /** Compute time step size without considering sound wave speed. */
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
-    /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
         fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));

@@ -9,10 +9,10 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-ParticleGenerator<Reload, BaseGeneratorParameters...>::
+template <typename... BaseGeneratorType>
+ParticleGenerator<Reload, BaseGeneratorType...>::
     ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name)
-    : ParticleGenerator<BaseGeneratorParameters...>(sph_body)
+    : ParticleGenerator<BaseGeneratorType...>(sph_body)
 {
     std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().reload_folder_;
     if (!fs::exists(reload_folder))
@@ -25,22 +25,22 @@ ParticleGenerator<Reload, BaseGeneratorParameters...>::
     file_path_ = reload_folder + "/" + reload_body_name + "_rld.xml";
 }
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-void ParticleGenerator<Reload, BaseGeneratorParameters...>::prepareGeometricData()
+template <typename... BaseGeneratorType>
+void ParticleGenerator<Reload, BaseGeneratorType...>::prepareGeometricData()
 {
     this->base_particles_.readReloadXmlFile(file_path_);
 }
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-void ParticleGenerator<Reload, BaseGeneratorParameters...>::setAllParticleBounds()
+template <typename... BaseGeneratorType>
+void ParticleGenerator<Reload, BaseGeneratorType...>::setAllParticleBounds()
 {
     this->base_particles_.initializeAllParticlesBoundsFromReloadXml();
 };
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-void ParticleGenerator<Reload, BaseGeneratorParameters...>::initializeParticleVariables()
+template <typename... BaseGeneratorType>
+void ParticleGenerator<Reload, BaseGeneratorType...>::initializeParticleVariables()
 {
-    ParticleGenerator<BaseGeneratorParameters...>::initializeParticleVariablesFromReload();
+    ParticleGenerator<BaseGeneratorType...>::initializeParticleVariablesFromReload();
 }
 //=================================================================================================//
 } // namespace SPH

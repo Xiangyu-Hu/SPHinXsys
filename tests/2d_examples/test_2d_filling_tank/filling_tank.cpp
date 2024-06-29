@@ -21,12 +21,12 @@ Real inlet_distance = -BW;    /**< Inflow location distance */
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+Real rho0_f = 1.0;                                              /**< Reference density of fluid. */
+Gravity gravity(Vecd(0.0, -1.0));                               /**< Gravity force of fluid. */
+Real U_f = 2.0 * sqrt(gravity.MaxNorm() * (inlet_height + LH)); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;                                          /**< Reference sound speed. */
 // observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
-Real rho0_f = 1.0;                                      /**< Reference density of fluid. */
-Real gravity_g = 1.0;                                   /**< Gravity force of fluid. */
-Real U_f = 2.0 * sqrt(gravity_g * (inlet_height + LH)); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;                                  /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometries
 //----------------------------------------------------------------------
@@ -133,7 +133,6 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_body_inner, water_body_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_body_inner, water_body_contact);
 
-    Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(water_body, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);

@@ -22,7 +22,7 @@ GravityForce::GravityForce(SPHBody &sph_body, Gravity &gravity)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       ForcePrior(particles_, "GravityForce"), gravity_(gravity),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      mass_(*particles_->registerSharedVariable<Real>("Mass")) {}
+      mass_(*particles_->getVariableDataByName<Real>("Mass")) {}
 //=================================================================================================//
 void GravityForce::update(size_t index_i, Real dt)
 {

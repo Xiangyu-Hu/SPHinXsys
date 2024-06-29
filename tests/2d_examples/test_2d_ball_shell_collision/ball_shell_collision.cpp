@@ -15,7 +15,7 @@ Vec2d shell_shape_center(2.0, 2.0);
 Real thickness = resolution_ref * 1.;
 Vec2d ball_center(3.0, 1.5);
 Real ball_radius = 0.5;
-Vec2d gravity(0.0, -1.0);
+Gravity constant_gravity(Vec2d(0.0, -1.0));
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
     rigid_shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.getName());
+        rigid_shell.generateParticles<SurfaceParticles, Reload, Surface>(rigid_shell.getName());
     }
     else if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
@@ -162,13 +162,11 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
+    // such as kernel correction, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
 
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
@@ -177,6 +175,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
 
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
+    SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

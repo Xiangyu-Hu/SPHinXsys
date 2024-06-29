@@ -95,7 +95,7 @@ int main(int ac, char *av[])
     shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        shell.generateParticles<SurfaceParticles, Reload>(shell.getName());
+        shell.generateParticles<SurfaceParticles, Reload, Surface>(shell.getName());
     }
     else
     {
