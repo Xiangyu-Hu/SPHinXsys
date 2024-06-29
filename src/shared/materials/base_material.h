@@ -103,16 +103,18 @@ class Solid : public BaseMaterial
   public:
     Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0)
         : BaseMaterial(rho0), contact_stiffness_(contact_stiffness),
+          contact_impendence_(rho0 * sqrt(contact_stiffness / rho0)),
           contact_friction_(contact_friction)
     {
         material_type_name_ = "Solid";
     };
-    explicit Solid(Real rho0) : Solid(rho0, 1.0){};
+    explicit Solid(Real rho0) : Solid(rho0, rho0){};
     Solid() : Solid(1.0){};
     virtual ~Solid(){};
 
     Real ContactFriction() { return contact_friction_; };
     Real ContactStiffness() { return contact_stiffness_; };
+    Real ContactImpedence() { return contact_impendence_; };
     virtual Solid *ThisObjectPtr() override { return this; };
     /** Get average velocity when interacting with fluid. */
     virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles);
@@ -120,10 +122,11 @@ class Solid : public BaseMaterial
     virtual StdLargeVec<Vecd> *AverageAcceleration(BaseParticles *base_particles);
 
   protected:
-    Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
-    Real contact_friction_;  /**< friction property mimic fluid viscosity*/
-
-    void setContactStiffness(Real c0) { contact_stiffness_ = c0 * c0; };
+    Real contact_stiffness_;  /**< Stiffness has the unit of bulk modules*/
+    Real contact_impendence_; /**< contact-impendence */
+    Real contact_friction_;   /**< friction property mimic fluid viscosity */
+    void setContactStiffness(Real c0) { contact_stiffness_ = rho0_ * c0 * c0; };
+    void setContactImpedence(Real c0) { contact_impendence_ = rho0_ * c0; };
 };
 } // namespace SPH
 #endif // BASE_MATERIAL_H

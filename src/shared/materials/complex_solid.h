@@ -87,7 +87,9 @@ class CompositeSolid : public ElasticSolid
             composite_ptrs_keeper_.createPtr<ElasticSolidType>(std::forward<Args>(args)...);
         composite_materials_.push_back(added_material);
         c0_ = SMAX(c0_, added_material->ReferenceSoundSpeed());
+        rho0_ = SMAX(rho0_, added_material->ReferenceDensity());
         setContactStiffness(c0_);
+        setContactImpedence(c0_);
     };
 };
 

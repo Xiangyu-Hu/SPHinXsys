@@ -49,11 +49,13 @@ class RepulsionForce<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionForce(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+          solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
           repulsion_force_(*this->particles_->template registerSharedVariable<Vecd>(variable_name)),
           Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")){};
     virtual ~RepulsionForce(){};
 
   protected:
+    Solid &solid_;
     StdLargeVec<Vecd> &repulsion_force_;
     StdLargeVec<Real> &Vol_;
 };
@@ -67,7 +69,6 @@ class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegat
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Solid &solid_;
     StdLargeVec<Real> &self_repulsion_density_;
     StdLargeVec<Vecd> &vel_;
     Real contact_impedance_;
@@ -83,7 +84,6 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContac
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
     StdVec<Solid *> contact_solids_;
     StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
@@ -99,7 +99,6 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateCo
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
     StdVec<StdLargeVec<Real> *> contact_Vol_;
 };
