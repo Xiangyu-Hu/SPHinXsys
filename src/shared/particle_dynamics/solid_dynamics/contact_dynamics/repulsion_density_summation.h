@@ -78,8 +78,8 @@ class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Ba
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    Real rho0_;
+    StdVec<StdLargeVec<Real> *> contact_Vol0_;
     StdVec<Real> offset_W_ij_;
 };
 using ContactDensitySummation = RepulsionDensitySummation<Contact<>>;
