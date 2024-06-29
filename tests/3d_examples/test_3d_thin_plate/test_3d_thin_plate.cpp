@@ -155,17 +155,16 @@ int main(int ac, char *av[])
     InnerRelation plate_body_inner(plate_body);
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
-    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
-
     /**
      * This section define all numerical methods will be used in this case.
      */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
-    /** active-passive stress relaxation. */
+
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
-    /** Time step size calculation. */
+
+    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
     /** Constrain the Boundary. */
     BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");

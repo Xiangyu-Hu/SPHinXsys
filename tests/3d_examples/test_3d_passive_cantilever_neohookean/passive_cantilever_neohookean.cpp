@@ -78,10 +78,6 @@ int main(int ac, char *av[])
     InnerRelation cantilever_body_inner(cantilever_body);
     ContactRelation cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
-    //-------- common particle dynamics ----------------------------------------
-    TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> apply_time_dependent_gravity(cantilever_body, gravity);
-
     /**
      * This section define all numerical methods will be used in this case.
      */
@@ -90,7 +86,9 @@ int main(int ac, char *av[])
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(cantilever_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cantilever_body_inner);
-    /** Time step size calculation. */
+
+    TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
+    SimpleDynamics<GravityForce> apply_time_dependent_gravity(cantilever_body, gravity);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cantilever_body);
     /** Constrain the holder. */
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");

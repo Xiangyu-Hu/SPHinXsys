@@ -59,10 +59,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Initialize particle acceleration. */
     SimpleDynamics<NormalDirectionFromSubShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
-
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
-    SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
     InteractionDynamics<fluid_dynamics::BoundingFromWall> air_near_wall_bounding(air_wall_contact);
 
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>
@@ -80,6 +76,9 @@ int main(int ac, char *av[])
         update_air_density_by_summation(air_inner, air_water_contact, air_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
         air_transport_correction(air_inner, air_water_contact, air_wall_contact);
+
+    SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
+    SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);

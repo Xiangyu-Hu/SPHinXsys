@@ -28,6 +28,7 @@ Real rho0_s = 1265.0;
 Real poisson = 0.45;
 Real Youngs_modulus = 5e4;
 Real physical_viscosity = 200.0;
+Gravity gravity(Vecd(-100.0, 0.0, 0.0));
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -84,8 +85,6 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(-100.0, 0.0, 0.0));
-    SimpleDynamics<GravityForce> plate_initialize_constant_gravity(moving_plate, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
@@ -98,7 +97,8 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::ContactDensitySummation> plate_update_contact_density(plate_myocardium_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
-    /** Constrain the holder. */
+
+    SimpleDynamics<GravityForce> plate_initialize_constant_gravity(moving_plate, gravity);
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
     BodyRegionByParticle holder(myocardium_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);

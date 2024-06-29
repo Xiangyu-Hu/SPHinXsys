@@ -23,10 +23,10 @@ Vecd offset = Vecd::Zero();
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1000.0;                  /**< Reference density of fluid. */
-Real gravity_g = 9.81;                 /**< Value of gravity. */
-Real U_f = 2.0 * sqrt(WH * gravity_g); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;                 /**< Reference sound speed. */
+Real rho0_f = 1000.0;                          /**< Reference density of fluid. */
+Gravity gravity(Vec3d(0.0, 0.0, -9.81));       /**< Value of gravity. */
+Real U_f = 2.0 * sqrt(WH * gravity.MaxNorm()); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;                         /**< Reference sound speed. */
 Real mu_f = 1.0e-3;
 //----------------------------------------------------------------------
 //	Structure Properties G and Inertia

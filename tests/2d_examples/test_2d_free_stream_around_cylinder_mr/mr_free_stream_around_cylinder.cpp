@@ -114,8 +114,6 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
-    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_contact);
 
@@ -130,9 +128,9 @@ int main(int ac, char *av[])
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
 
-    /** Time step size without considering sound wave speed. */
+    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
+    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** modify the velocity of boundary particles with free-stream velocity. */
     SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);

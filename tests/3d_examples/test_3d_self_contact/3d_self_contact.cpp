@@ -27,6 +27,7 @@ Real rho0_s = 1.265;
 Real poisson = 0.45;
 Real Youngs_modulus = 5e4;
 Real physical_viscosity = 200.0;
+Gravity gravity(Vec3d(0.0, -1.0, 0.0));
 //----------------------------------------------------------------------
 //	Body shapes used in the case.
 //----------------------------------------------------------------------
@@ -136,20 +137,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	This section define all numerical methods will be used in this case.
     //----------------------------------------------------------------------
-    Gravity gravity(Vec3d(0.0, -1.0, 0.0));
-    SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
-    // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
 
-    // stress relaxation.
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(coil_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
-    // Algorithms for solid-solid contacts.
     InteractionDynamics<solid_dynamics::ContactDensitySummation> coil_update_contact_density(coil_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
     InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
 
+    SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 
     // Damping the velocity field for quasi-static solution

@@ -16,10 +16,10 @@ Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
 // for material properties
-Real rho0_s = 2600;           // reference density of soil
-Real gravity_g = 9.8;         // gravity force of soil
-Real Youngs_modulus = 5.98e6; // reference Youngs modulus
-Real poisson = 0.3;           // Poisson ratio
+Real rho0_s = 2600;                     // reference density of soil
+Gravity gravity(Vec3d(0.0, -9.8, 0.0)); // gravity force of soil
+Real Youngs_modulus = 5.98e6;           // reference Youngs modulus
+Real poisson = 0.3;                     // Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
 Real friction_angle = 30 * Pi / 180;
 /** Define the soil body. */
@@ -153,8 +153,6 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<SoilInitialCondition> soil_initial_condition(soil_block);
 
@@ -163,6 +161,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
 
+    SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

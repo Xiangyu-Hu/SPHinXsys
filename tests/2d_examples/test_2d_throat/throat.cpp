@@ -26,8 +26,9 @@ Real BW = resolution_ref * 4.0; // boundary width
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;
-Real gravity_g = 1.0; /**< Gravity force of fluid. */
-Real Re = 0.001;      /**< Reynolds number defined in the channel */
+Gravity gravity(Vecd(1.0, 0.0)); /**< Gravity force of fluid. */
+Real gravity_g = gravity.MaxNorm();
+Real Re = 0.001; /**< Reynolds number defined in the channel */
 // obtain viscosity according planar Poiseuille flow solution in the channel
 Real mu_f = rho0_f * sqrt(0.5 * rho0_f * pow(0.5 * DH, 3) * gravity_g / Re);
 // maximum flow velocity in the channel
@@ -162,8 +163,6 @@ int main(int ac, char *av[])
     //-------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
-    Gravity gravity(Vecd(gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
     InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
 
@@ -175,6 +174,7 @@ int main(int ac, char *av[])
         ConstructorArgs(fluid_block_inner, "Velocity", mu_f), ConstructorArgs(fluid_block_contact, "Velocity", mu_f));
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
 
+    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);

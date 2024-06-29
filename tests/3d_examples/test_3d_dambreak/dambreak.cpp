@@ -19,8 +19,8 @@ Real LW = 0.5;                // liquid width
 
 // for material properties of the fluid
 Real rho0_f = 1.0;
-Real gravity_g = 1.0;
-Real U_f = 2.0 * sqrt(gravity_g * LH);
+Gravity gravity(Vec3d(0.0, -1.0, 0.0));
+Real U_f = 2.0 * sqrt(gravity.MaxNorm() * LH);
 Real c_f = 10.0 * U_f;
 
 //	define the water block shape
@@ -114,14 +114,13 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_wall_contact);
 
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------

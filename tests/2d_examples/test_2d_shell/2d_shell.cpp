@@ -122,13 +122,13 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
-    TimeDependentExternalForce time_dependent_external_force(Vec2d(0.0, gravitational_acceleration));
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
     /** The main shell dynamics model: stress relaxation. */
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
 
+    TimeDependentExternalForce time_dependent_external_force(Vec2d(0.0, gravitational_acceleration));
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fixed_free_rotate_shell_boundary(boundary_geometry);

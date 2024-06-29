@@ -119,14 +119,15 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
     physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
     std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
-    // pressure
-    Vec3d gravity = gravity_z * Vec3d(1, 0, 0) / unit_mm;
+    // pressure force implementation as gravity
+    Gravity constant_gravity(gravity_z * Vec3d(1, 0, 0) / unit_mm);
     // system bounding box
     BoundingBox bb_system;
 
     // generating particles from predefined positions from obj file
     StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
-    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec) { vec *= scale; });
+    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec)
+                  { vec *= scale; });
     Real particle_area = total_area / obj_vertices.size();
     // find out BoundingBox
     bb_system = get_particles_bounding_box(obj_vertices);
@@ -147,15 +148,14 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     // methods
     InnerRelation shell_body_inner(shell_body);
 
-    Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
 
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
+    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");

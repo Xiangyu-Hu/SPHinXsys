@@ -20,10 +20,10 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                       /**< Reference density of fluid. */
-Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
-Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+Real rho0_f = 1.0;                               /**< Reference density of fluid. */
+Gravity gravity(Vecd(0.0, -1.0));                /**< Gravity force of fluid. */
+Real U_ref = 2.0 * sqrt(gravity.MaxNorm() * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                         /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -129,13 +129,11 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
-
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
 
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 

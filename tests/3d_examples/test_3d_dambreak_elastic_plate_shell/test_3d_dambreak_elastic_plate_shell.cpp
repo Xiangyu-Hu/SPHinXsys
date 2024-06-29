@@ -35,8 +35,8 @@ const BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -BW), Vec3d(DL + BW, DH +
 // for material properties of the fluid
 const Real rho0_f = 997.0;
 const Real mu_f = 8.93e-7 * rho0_f;
-const Real gravity_g = 9.8;
-const Real U_f = 2.0 * sqrt(gravity_g * LH);
+Gravity gravity(Vec3d(0.0, -9.8, 0.0));
+const Real U_f = 2.0 * sqrt(gravity.MaxNorm() * LH);
 const Real c_f = 10.0 * U_f;
 
 // material properties of the plate
@@ -222,14 +222,13 @@ int main(int ac, char *av[])
     BoundaryGeometry plate_boundary_geometry(plate, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> plate_constraint(plate_boundary_geometry);
     // fluid
-    Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>>
         pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>>
         density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>>
         update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>>

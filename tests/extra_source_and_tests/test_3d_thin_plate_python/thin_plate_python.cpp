@@ -179,8 +179,6 @@ class Environment : public PreSettingCase
     InnerRelation plate_body_inner;
     ContactRelation plate_observer_contact;
 
-    TimeDependentExternalForce time_dependent_external_force;
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force;
     /**
      * This section define all numerical methods will be used in this case.
      */
@@ -189,7 +187,9 @@ class Environment : public PreSettingCase
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half;
     /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration;
-    /** Time step size calculation. */
+
+    TimeDependentExternalForce time_dependent_external_force;
+    SimpleDynamics<GravityForce> apply_time_dependent_external_force;
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size;
     /** Constrain the Boundary. */
     BoundaryGeometryParallelToXAxis boundary_geometry_x;

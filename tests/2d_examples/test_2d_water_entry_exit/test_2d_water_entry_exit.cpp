@@ -26,12 +26,12 @@ StdVec<Vecd> wetting_observer_location =
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                       /**< Fluid density. */
-Real rho0_s = 0.5;                       /**< Cylinder density. */
-Real gravity_g = 9.81;                   /**< Gravity. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
-Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
+Real rho0_f = 1.0;                               /**< Fluid density. */
+Real rho0_s = 0.5;                               /**< Cylinder density. */
+Gravity gravity(Vecd(0.0, -9.81));               /**< Gravity. */
+Real U_max = 2.0 * sqrt(gravity.MaxNorm() * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_max;                         /**< Reference sound speed. */
+Real mu_f = 8.9e-7;                              /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
@@ -283,8 +283,6 @@ int main(int ac, char *av[])
     SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
     SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
 
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
@@ -295,6 +293,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
 
+    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------

@@ -41,9 +41,9 @@ Vec2d Wmak_lt(Wmk_p - Maker_width, 1.5); /**< Left top. */
 Vec2d Wmak_rt(Wmk_p, 1.5);               /**< Right top. */
 Vec2d Wmak_rb(Wmk_p, 0.0);               /**< Right bottom. */
 /* BEACH */
-Vec2d b1a(TB, 0);              /**< beach start. */
-Vec2d bwh((WH) * 10 + TB, WH); /**< water height at beach. */
-Vec2d b1b(25, 1);              /**< beach end. */
+Vec2d b1a(TB, 0);            /**< beach start. */
+Vec2d bwh((WH)*10 + TB, WH); /**< water height at beach. */
+Vec2d b1b(25, 1);            /**< beach end. */
 
 /*
  * Buoyant Structure Shape
@@ -111,10 +111,10 @@ Real cablength = bp_y;
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1000.0;                    /**< Reference density of fluid. */
-Real gravity_g = 9.81;                   /**< Value of gravity. */
-Real U_f = 2.0 * sqrt(0.79 * gravity_g); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;                   /**< Reference sound speed. */
+Real rho0_f = 1000.0;                            /**< Reference density of fluid. */
+Gravity gravity(Vecd(0.0, -9.81));               /**< Value of gravity. */
+Real U_f = 2.0 * sqrt(0.79 * gravity.MaxNorm()); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;                           /**< Reference sound speed. */
 Real mu_f = 1.0e-3;
 
 //----------------------------------------------------------------------

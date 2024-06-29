@@ -21,11 +21,11 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                       /**< Reference density of water. */
-Real rho0_a = 0.001;                     /**< Reference density of air. */
-Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
-Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+Real rho0_f = 1.0;                               /**< Reference density of water. */
+Real rho0_a = 0.001;                             /**< Reference density of air. */
+Gravity gravity(Vecd(0.0, -1.0));                /**< Gravity force of fluid. */
+Real U_ref = 2.0 * sqrt(gravity.MaxNorm() * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                         /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric elements used in shape modeling.
 //----------------------------------------------------------------------

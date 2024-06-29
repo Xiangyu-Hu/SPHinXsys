@@ -22,7 +22,7 @@ Vec2d offset = Vec2d::Zero();
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 Real rho0_f = 1000.0;                    /**< Reference density of fluid. */
-Real gravity_g = 9.81;                   /**< Value of gravity. */
+Gravity gravity(Vecd(0.0, -9.81));       /**< Value of gravity. */
 Real U_f = 2.0 * sqrt(0.79 * gravity_g); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;                   /**< Reference sound speed. */
 Real mu_f = 1.0e-3;

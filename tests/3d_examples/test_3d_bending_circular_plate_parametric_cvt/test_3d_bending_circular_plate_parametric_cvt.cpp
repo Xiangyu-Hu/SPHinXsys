@@ -129,12 +129,18 @@ struct observer_point_shell
     void interpolate(SurfaceParticles &particles)
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
-        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
-        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
-        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
-        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
-        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
-        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) {
+        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                            { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
+        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
+        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                          { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
+        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                    { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
+        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
+        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                 {
 			Mat3d F = (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id];
 			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
@@ -194,7 +200,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real physical_viscosity = 7e3 * thickness; // where is this value coming from?
     // pressure
     Real pressure = 6 * psi_to_pa;
-    Vec3d gravity = -pressure / (thickness * rho) * sym_vec; // force/mass simplified by area
+    Gravity constant_gravity(-pressure / (thickness * rho) * sym_vec); // force/mass simplified by area
     // system bounding box
     BoundingBox bb_system;
 
@@ -237,13 +243,13 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
+
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
+    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges

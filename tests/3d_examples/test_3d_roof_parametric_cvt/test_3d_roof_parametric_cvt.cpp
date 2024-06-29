@@ -161,12 +161,18 @@ struct observer_point_shell
     void interpolate(SurfaceParticles &particles)
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
-        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
-        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
-        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
-        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
-        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
-        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) {
+        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                            { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
+        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
+        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                          { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
+        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                    { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
+        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
+        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                 {
 			Mat3d F = (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id];
 			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
@@ -291,7 +297,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // physical_viscosity = 2*get_physical_viscosity_general(rho, E, thickness);
     // std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
     // gravity
-    Vec3d gravity = -9.8066 * radial_vec;
+    Gravity constant_gravity(-9.8066 * radial_vec);
     // system bounding box
     BoundingBox bb_system;
     StdVec<Vec3d> obj_vertices;
@@ -329,20 +335,19 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     system.system_domain_bounds_ = bb_system;
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
-    {   // recalculate the volume/area after knowing the particle positions
-        // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
-        // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
+    { // recalculate the volume/area after knowing the particle positions
+      // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
+      // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
 
     // methods
     InnerRelation shell_body_inner(shell_body);
-    Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
+    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");

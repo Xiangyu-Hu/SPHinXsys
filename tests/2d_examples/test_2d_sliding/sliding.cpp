@@ -26,8 +26,8 @@ StdVec<Vecd> observation_location = {Vecd(7.2, 9.8)};
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 5.0e5;
 Real poisson = 0.45;
-Real gravity_g = 9.8;
 Real physical_viscosity = 1000000.0;
+Gravity gravity(Vecd(0.0, -9.8));
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
 //----------------------------------------------------------------------
@@ -102,8 +102,7 @@ int main(int ac, char *av[])
     Transform transform2d(Rotation2d(-0.5235));
     SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
+
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
@@ -111,6 +110,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
 
+    SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.

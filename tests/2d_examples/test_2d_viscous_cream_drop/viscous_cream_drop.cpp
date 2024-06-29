@@ -22,7 +22,7 @@ StdVec<Vecd> observation_location = {cream_center};
 //----------------------------------------------------------------------
 //	Global parameters on material properties.
 //----------------------------------------------------------------------
-Real gravity_g = 9.8;
+Gravity gravity(Vecd(0.0, -9.8));
 // shaving cream material
 Real rho0_s = 77.7;                                                                                     /*  density  */
 Real Bulk_modulus = 1.09e5;                                                                             /*  bulk modulus */
@@ -32,6 +32,7 @@ Real viscosity = 27.2;                                                          
 Real Herschel_Bulkley_power = 0.22;                                                                     /*   Herschel_Bulkley_power. */
 Real Youngs_modulus = (9.0 * Shear_modulus * Bulk_modulus) / (3.0 * Bulk_modulus + Shear_modulus);      /*   Young's modulus  */
 Real poisson = (3.0 * Bulk_modulus - 2.0 * Shear_modulus) / (6.0 * Bulk_modulus + 2.0 * Shear_modulus); /*  Poisson's ratio */
+
 //----------------------------------------------------------------------
 //	Geometric shapes.
 //----------------------------------------------------------------------
@@ -156,13 +157,12 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
 
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> cream_stress_relaxation_second_half(cream_inner);
 
+    SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
     BodyRegionByParticle platform(cream, makeShared<MultiPolygonShape>(createPlatformConstraint()));
     SimpleDynamics<FixBodyPartConstraint> platform_constraint(platform);
