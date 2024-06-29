@@ -17,10 +17,21 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
 //=================================================================================================//
 void SurfaceParticles::initializeBasicParticleVariables()
 {
-    BaseParticles::initializeBasicParticleVariables();
-    n_ = getVariableDataByName<Vecd>("NormalDirection");
-    thickness_ = getVariableDataByName<Real>("Thickness");
     registerTransformationMatrix();
+}
+//=================================================================================================//
+void SurfaceParticles::registerSurfaceProperties(StdLargeVec<Vecd> &n, StdLargeVec<Real> &thickness)
+{
+    n_ = registerSharedVariableFrom<Vecd>("NormalDirection", n);
+    thickness_ = registerSharedVariableFrom<Real>("Thickness", thickness);
+    addVariableToReload<Vecd>("NormalDirection");
+    addVariableToReload<Real>("Thickness");
+}
+//=================================================================================================//
+void SurfaceParticles::registerSurfacePropertiesFromReload()
+{
+    n_ = registerSharedVariableFromReload<Vecd>("NormalDirection");
+    thickness_ = registerSharedVariableFromReload<Real>("Thickness");
 }
 //=================================================================================================//
 void SurfaceParticles::registerTransformationMatrix()

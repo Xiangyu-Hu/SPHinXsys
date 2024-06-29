@@ -9,7 +9,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void ParticleGenerator<Lattice>::prepareGeometricData()
+void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
 {
     BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
     Real particle_volume = lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
@@ -29,7 +29,7 @@ void ParticleGenerator<Lattice>::prepareGeometricData()
             }
 }
 //=================================================================================================//
-void ParticleGenerator<ThickSurface, Lattice>::prepareGeometricData()
+void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
 {
     // Calculate the total volume and
     // count the number of cells inside the body volume, where we might put particles.

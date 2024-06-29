@@ -96,7 +96,7 @@ class BaseParticles
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
-    /** initialize other variables after the particles are generated */
+    /** initialize basic variables after the particles are generated */
     virtual void initializeBasicParticleVariables();
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
@@ -120,7 +120,7 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&... args);
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
 
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
@@ -185,6 +185,8 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
+    void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
+    void registerPositionAndVolumetricMeasureFromReload();
     StdLargeVec<Vecd> &ParticlePositions() { return *pos_; }
     StdLargeVec<Real> &VolumetricMeasures() { return *Vol_; }
     virtual Real ParticleVolume(size_t index) { return (*Vol_)[index]; }

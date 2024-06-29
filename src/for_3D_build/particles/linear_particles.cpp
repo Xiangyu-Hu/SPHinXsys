@@ -6,12 +6,19 @@ namespace SPH
 LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr) {}
 //=================================================================================================//
-void LinearParticles::initializeBasicParticleVariables()
+void LinearParticles::registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec<Real> &width)
 {
-    SurfaceParticles::initializeBasicParticleVariables();
-    b_n_ = getVariableDataByName<Vecd>("BinormalDirection");
-    width_ = getVariableDataByName<Real>("Width");
+    b_n_ = registerSharedVariableFrom<Vecd>("BinormalDirection", b_n);
+    width_ = registerSharedVariableFrom<Real>("Width", width);
+    addVariableToReload<Vecd>("BinormalDirection");
+    addVariableToReload<Real>("Width");
     addVariableToWrite<Vecd>("BinormalDirection");
+}
+//=================================================================================================//
+void LinearParticles::registerLinePropertiesFromReload()
+{
+    b_n_ = registerSharedVariableFromReload<Vecd>("NormalDirection");
+    width_ = registerSharedVariableFromReload<Real>("Thickness");
 }
 //=================================================================================================//
 void LinearParticles::registerTransformationMatrix()

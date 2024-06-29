@@ -39,10 +39,11 @@ namespace SPH
 class Network;
 
 template <> // Generate a tree-shape network using particles
-class ParticleGenerator<Network> : public ParticleGenerator<>
+class ParticleGenerator<BaseParticles, Network> : public ParticleGenerator<BaseParticles>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor);
     virtual ~ParticleGenerator(){};
 

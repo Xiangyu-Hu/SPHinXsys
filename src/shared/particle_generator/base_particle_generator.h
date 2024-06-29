@@ -35,22 +35,14 @@
 #ifndef BASE_PARTICLE_GENERATOR_H
 #define BASE_PARTICLE_GENERATOR_H
 
+#include "all_particles.h"
 #include "base_data_package.h"
 #include "large_data_containers.h"
 #include "sph_data_containers.h"
 
 namespace SPH
 {
-
 class SPHBody;
-class BaseParticles;
-//---------------------------------------------------------------------------
-// Geometric types of particles. The default type is volume metric particles.
-//---------------------------------------------------------------------------
-class Surface;
-class ThickSurface; // Surface thickness equal or larger than the particle spacing
-class Observer;
-class Reload;
 
 template <typename... Parameters>
 class ParticleGenerator;
@@ -59,10 +51,10 @@ template <typename... Parameters>
 class GeneratingMethod;
 
 template <> // default volume metric particle generator
-class ParticleGenerator<>
+class ParticleGenerator<BaseParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body);
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
     virtual ~ParticleGenerator(){};
     void generateParticlesWithGeometricVariables();
 
@@ -81,29 +73,30 @@ class ParticleGenerator<>
 };
 
 template <> // generate surface particles
-class ParticleGenerator<Surface> : public ParticleGenerator<>
+class ParticleGenerator<SurfaceParticles> : public ParticleGenerator<BaseParticles>
 {
     StdLargeVec<Vecd> surface_normal_;
     StdLargeVec<Real> surface_thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body);
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles);
     virtual ~ParticleGenerator(){};
 
   protected:
+    SurfaceParticles &surface_particles_;
     virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
     virtual void initializeParticleVariables() override;
     virtual void initializeParticleVariablesFromReload() override;
 };
 
 template <> // generate observer particles
-class ParticleGenerator<Observer> : public ParticleGenerator<>
+class ParticleGenerator<ObserverParticles> : public ParticleGenerator<BaseParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<>(sph_body){};
-    ParticleGenerator(SPHBody &sph_body, const StdVec<Vecd> &positions)
-        : ParticleGenerator<>(sph_body), positions_(positions){};
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles), positions_(positions){};
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
 
@@ -111,8 +104,9 @@ class ParticleGenerator<Observer> : public ParticleGenerator<>
     StdVec<Vecd> positions_;
 };
 
-template <typename... BaseGeneratorParameters> // generate particles by reloading dynamically relaxed particles
-class ParticleGenerator<Reload, BaseGeneratorParameters...> : public ParticleGenerator<BaseGeneratorParameters...>
+class Reload;
+template <typename ParticlesType> // generate particles by reloading dynamically relaxed particles
+class ParticleGenerator<ParticlesType, Reload> : public ParticleGenerator<ParticlesType>
 {
     std::string file_path_;
 

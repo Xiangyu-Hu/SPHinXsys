@@ -7,75 +7,70 @@
 namespace SPH
 {
 //=================================================================================================//
-ParticleGenerator<>::ParticleGenerator(SPHBody &sph_body)
-    : base_particles_(sph_body.getBaseParticles()),
+ParticleGenerator<BaseParticles>::
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+    : base_particles_(base_particles),
       particle_spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
-void ParticleGenerator<>::addParticlePosition(const Vecd &position)
+void ParticleGenerator<BaseParticles>::addParticlePosition(const Vecd &position)
 {
     position_.push_back(position);
     base_particles_.total_real_particles_++;
 }
 //=================================================================================================//
-void ParticleGenerator<>::generateParticlesWithGeometricVariables()
+void ParticleGenerator<BaseParticles>::generateParticlesWithGeometricVariables()
 {
     prepareGeometricData();
     setAllParticleBounds();
     initializeParticleVariables();
 }
 //=================================================================================================//
-void ParticleGenerator<>::setAllParticleBounds()
+void ParticleGenerator<BaseParticles>::setAllParticleBounds()
 {
     base_particles_.initializeAllParticlesBounds(position_.size());
 }
 //=================================================================================================//
-void ParticleGenerator<>::addPositionAndVolumetricMeasure(
+void ParticleGenerator<BaseParticles>::addPositionAndVolumetricMeasure(
     const Vecd &position, Real volumetric_measure)
 {
     addParticlePosition(position);
     volumetric_measure_.push_back(volumetric_measure);
 }
 //=================================================================================================//
-void ParticleGenerator<>::initializeParticleVariables()
+void ParticleGenerator<BaseParticles>::initializeParticleVariables()
 {
-    base_particles_.registerSharedVariableFrom<Vecd>("Position", position_);
-    base_particles_.registerSharedVariableFrom<Real>("VolumetricMeasure", volumetric_measure_);
-    base_particles_.addVariableToReload<Vecd>("Position");
-    base_particles_.addVariableToReload<Real>("VolumetricMeasure");
+    base_particles_.registerPositionAndVolumetricMeasure(position_, volumetric_measure_);
 }
 //=================================================================================================//
-void ParticleGenerator<>::initializeParticleVariablesFromReload()
+void ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload()
 {
-    base_particles_.registerSharedVariableFromReload<Vecd>("Position");
-    base_particles_.registerSharedVariableFromReload<Real>("VolumetricMeasure");
+    base_particles_.registerPositionAndVolumetricMeasureFromReload();
 }
 //=================================================================================================//
-ParticleGenerator<Surface>::ParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator<>(sph_body) {}
+ParticleGenerator<SurfaceParticles>::
+    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+    : ParticleGenerator<BaseParticles>(sph_body, surface_particles),
+      surface_particles_(surface_particles) {}
 //=================================================================================================//
-void ParticleGenerator<Surface>::addSurfaceProperties(const Vecd &surface_normal, Real thickness)
+void ParticleGenerator<SurfaceParticles>::addSurfaceProperties(const Vecd &surface_normal, Real thickness)
 {
     surface_normal_.push_back(surface_normal);
     surface_thickness_.push_back(thickness);
 }
 //=================================================================================================//
-void ParticleGenerator<Surface>::initializeParticleVariables()
+void ParticleGenerator<SurfaceParticles>::initializeParticleVariables()
 {
-    ParticleGenerator<>::initializeParticleVariables();
-    base_particles_.registerSharedVariableFrom<Vecd>("NormalDirection", surface_normal_);
-    base_particles_.registerSharedVariableFrom<Real>("Thickness", surface_thickness_);
-    base_particles_.addVariableToReload<Vecd>("NormalDirection");
-    base_particles_.addVariableToReload<Real>("Thickness");
+    ParticleGenerator<BaseParticles>::initializeParticleVariables();
+    surface_particles_.registerSurfaceProperties(surface_normal_, surface_thickness_);
 }
 //=================================================================================================//
-void ParticleGenerator<Surface>::initializeParticleVariablesFromReload()
+void ParticleGenerator<SurfaceParticles>::initializeParticleVariablesFromReload()
 {
-    ParticleGenerator<>::initializeParticleVariablesFromReload();
-    base_particles_.registerSharedVariableFromReload<Vecd>("NormalDirection");
-    base_particles_.registerSharedVariableFromReload<Real>("Thickness");
+    ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload();
+    surface_particles_.registerSurfacePropertiesFromReload();
 }
 //=================================================================================================//
-void ParticleGenerator<Observer>::prepareGeometricData()
+void ParticleGenerator<ObserverParticles>::prepareGeometricData()
 {
     for (size_t i = 0; i < positions_.size(); ++i)
     {

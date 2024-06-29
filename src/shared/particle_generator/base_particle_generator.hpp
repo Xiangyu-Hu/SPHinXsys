@@ -9,8 +9,8 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-ParticleGenerator<Reload, BaseGeneratorParameters...>::
+template <typename ParticlesType>
+ParticleGenerator<ParticlesType, Reload>::
     ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name)
     : ParticleGenerator<BaseGeneratorParameters...>(sph_body)
 {
@@ -25,22 +25,22 @@ ParticleGenerator<Reload, BaseGeneratorParameters...>::
     file_path_ = reload_folder + "/" + reload_body_name + "_rld.xml";
 }
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-void ParticleGenerator<Reload, BaseGeneratorParameters...>::prepareGeometricData()
+template <typename ParticlesType>
+void ParticleGenerator<ParticlesType, Reload>::prepareGeometricData()
 {
     this->base_particles_.readReloadXmlFile(file_path_);
 }
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-void ParticleGenerator<Reload, BaseGeneratorParameters...>::setAllParticleBounds()
+template <typename ParticlesType>
+void ParticleGenerator<ParticlesType, Reload>::setAllParticleBounds()
 {
     this->base_particles_.initializeAllParticlesBoundsFromReloadXml();
 };
 //=================================================================================================//
-template <typename... BaseGeneratorParameters>
-void ParticleGenerator<Reload, BaseGeneratorParameters...>::initializeParticleVariables()
+template <typename ParticlesType>
+void ParticleGenerator<ParticlesType, Reload>::initializeParticleVariables()
 {
-    ParticleGenerator<BaseGeneratorParameters...>::initializeParticleVariablesFromReload();
+    ParticleGenerator<ParticlesType>::initializeParticleVariablesFromReload();
 }
 //=================================================================================================//
 } // namespace SPH

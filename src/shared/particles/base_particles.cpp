@@ -25,11 +25,6 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 void BaseParticles::initializeBasicParticleVariables()
 {
     //----------------------------------------------------------------------
-    // get geometric variable data which is initialized by particle generator
-    //----------------------------------------------------------------------
-    pos_ = getVariableDataByName<Vecd>("Position");
-    Vol_ = getVariableDataByName<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
     //		register non-geometric data
     //----------------------------------------------------------------------
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
@@ -45,6 +40,20 @@ void BaseParticles::initializeBasicParticleVariables()
         sorted_id_.push_back(i);
         sequence_.push_back(0);
     }
+}
+//=================================================================================================//
+void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
+{
+    pos_ = registerSharedVariableFrom<Vecd>("Position", pos);
+    Vol_ = registerSharedVariableFrom<Real>("VolumetricMeasure", Vol);
+    addVariableToReload<Vecd>("Position");
+    addVariableToReload<Real>("VolumetricMeasure");
+}
+//=================================================================================================//
+void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
+{
+    pos_ = registerSharedVariableFromReload<Vecd>("Position");
+    Vol_ = registerSharedVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)

@@ -47,7 +47,8 @@ class SurfaceParticles : public BaseParticles
     StdLargeVec<Real> *thickness_;              /**< shell thickness */
     StdLargeVec<Matd> *transformation_matrix0_; /**< initial transformation matrix from global to local coordinates */
 
-    /** get particle volume. */
+    void registerSurfaceProperties(StdLargeVec<Vecd> &n, StdLargeVec<Real> &thickness);
+    void registerSurfacePropertiesFromReload();
     virtual Real ParticleVolume(size_t index_i) override { return (*Vol_)[index_i] * (*thickness_)[index_i]; }
     virtual void registerTransformationMatrix();
     virtual void initializeBasicParticleVariables() override;

@@ -9,10 +9,11 @@
 namespace SPH
 {
 //=================================================================================================//
-ParticleGenerator<Network>::
-    ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
+ParticleGenerator<BaseParticles, Network>::
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor)
-    : ParticleGenerator<>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
+      starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
       grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(sph_body.getInitialShape()),
@@ -26,7 +27,7 @@ ParticleGenerator<Network>::
     cell_linked_list_.InsertListDataEntry(0, position_[0]);
 }
 //=================================================================================================//
-void ParticleGenerator<Network>::
+void ParticleGenerator<BaseParticles, Network>::
     growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
 {
     addPositionAndVolumetricMeasure(new_point, segment_length_);
@@ -35,7 +36,7 @@ void ParticleGenerator<Network>::
     branch->end_direction_ = end_direction;
 }
 //=================================================================================================//
-Vecd ParticleGenerator<Network>::getGradientFromNearestPoints(Vecd pt, Real delta)
+Vecd ParticleGenerator<BaseParticles, Network>::getGradientFromNearestPoints(Vecd pt, Real delta)
 {
     Vecd up_grad = Vecd::Zero();
     Vecd down_grad = Vecd::Zero();
@@ -59,7 +60,7 @@ Vecd ParticleGenerator<Network>::getGradientFromNearestPoints(Vecd pt, Real delt
     return down_grad - up_grad;
 }
 //=================================================================================================//
-Vecd ParticleGenerator<Network>::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
+Vecd ParticleGenerator<BaseParticles, Network>::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
 {
     Vecd pnt_to_project = init_point + dir * segment_length_;
 
@@ -70,7 +71,7 @@ Vecd ParticleGenerator<Network>::createATentativeNewBranchPoint(Vecd init_point,
     return new_point;
 }
 //=================================================================================================//
-bool ParticleGenerator<Network>::
+bool ParticleGenerator<BaseParticles, Network>::
     isCollision(const Vecd &new_point, const ListData &nearest_neighbor, size_t parent_id)
 {
     bool collision = false;
@@ -99,7 +100,7 @@ bool ParticleGenerator<Network>::
     return collision;
 }
 //=================================================================================================//
-bool ParticleGenerator<Network>::
+bool ParticleGenerator<BaseParticles, Network>::
     createABranchIfValid(size_t parent_id, Real angle, Real repulsivity, size_t number_segments)
 {
     bool is_valid = false;
@@ -164,7 +165,7 @@ bool ParticleGenerator<Network>::
     return is_valid;
 }
 //=================================================================================================//
-void ParticleGenerator<Network>::prepareGeometricData()
+void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
 {
     BodyStatesRecordingToVtp write_states({sph_body_});
 
