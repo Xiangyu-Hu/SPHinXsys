@@ -58,7 +58,8 @@ Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.
 Vec2d Flap_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);          // right bottom
 
 // gravity
-Gravity gravity(Vecd(0.0, -9.81));
+Real gravity_g = 9.81;
+Gravity gravity(Vecd(0.0, -gravity_g));
 
 // for material properties of the fluid
 Real rho0_f = 1000.0;

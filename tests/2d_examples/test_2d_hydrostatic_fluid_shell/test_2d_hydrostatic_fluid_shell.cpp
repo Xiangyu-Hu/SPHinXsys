@@ -387,7 +387,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     // analytical solution
-    const Real p = rho0_f * gravity_g * Dam_H;
+    const Real p = rho0_f * gravity.MaxNorm() * Dam_H;
     const Real I = 1 / 12.0 * 1.0 * std::pow(Gate_thickness, 3);
     const Real max_disp_analytical = p * std::pow(Dam_L, 4) / 384.0 / Youngs_modulus / I;
 

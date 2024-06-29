@@ -16,10 +16,11 @@ Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
 // for material properties
-Real rho0_s = 2600;                     // reference density of soil
-Gravity gravity(Vec3d(0.0, -9.8, 0.0)); // gravity force of soil
-Real Youngs_modulus = 5.98e6;           // reference Youngs modulus
-Real poisson = 0.3;                     // Poisson ratio
+Real rho0_s = 2600; // reference density of soil
+Real gravity_y = 9.8;
+Gravity gravity(Vec3d(0.0, -gravity_y, 0.0)); // gravity force of soil
+Real Youngs_modulus = 5.98e6;                 // reference Youngs modulus
+Real poisson = 0.3;                           // Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
 Real friction_angle = 30 * Pi / 180;
 /** Define the soil body. */
@@ -64,7 +65,7 @@ class SoilInitialCondition : public continuum_dynamics::ContinuumInitialConditio
         /** initial stress */
         Real y = pos_[index_i][1];
         Real gama = 1 - sin(friction_angle);
-        Real stress_yy = -rho0_s * gravity_g * y;
+        Real stress_yy = -rho0_s * gravity_y * y;
         stress_tensor_3D_[index_i](1, 1) = stress_yy;
         stress_tensor_3D_[index_i](0, 0) = stress_yy * gama;
         stress_tensor_3D_[index_i](2, 2) = stress_yy * gama;

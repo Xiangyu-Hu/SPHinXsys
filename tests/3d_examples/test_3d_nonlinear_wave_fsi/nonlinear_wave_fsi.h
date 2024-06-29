@@ -40,7 +40,8 @@ Vec2d Wmak_rb(Wmk_p, 0.0);               /**< Right bottom. */
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 Real rho0_f = 1000.0;                          /**< Reference density of fluid. */
-Gravity gravity(Vecd(0.0, 0.0, -9.81));        /**< Value of gravity. */
+Real gravity_g = 9.81;                         /**< Magntitude of gravity. */
+Gravity gravity(Vecd(0.0, 0.0, -gravity_g));   /**< Value of gravity. */
 Real U_f = 2.0 * sqrt(WH * gravity.MaxNorm()); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;                         /**< Reference sound speed. */
 Real mu_f = 1.0e-3;
@@ -455,7 +456,7 @@ class WaveMaking : public BodyPartMotionConstraint
   public:
     WaveMaking(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity_g),
+          h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity.MaxNorm()),
           acc_(*particles_->registerSharedVariable<Vecd>("Acceleration"))
 
     {
