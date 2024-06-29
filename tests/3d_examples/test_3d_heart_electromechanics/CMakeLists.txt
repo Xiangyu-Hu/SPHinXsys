@@ -23,5 +23,5 @@ add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --reload=true --state_reco
     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
-
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "muscle, diffusion reaction")
+

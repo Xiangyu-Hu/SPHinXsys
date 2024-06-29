@@ -20,6 +20,6 @@ add_test(NAME ${PROJECT_NAME}
 	COMMAND ${PROJECT_NAME}
 	WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "particle relaxation, shell")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "shell")
 
 gtest_discover_tests(${PROJECT_NAME} WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
