@@ -53,11 +53,11 @@ namespace SPH
 {
 class WaterObserver;
 template <>
-class ParticleGenerator<WaterObserver> : public ParticleGenerator<Observer>
+class ParticleGenerator<WaterObserver> : public ParticleGenerator<ObserverParticles>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Observer>(sph_body)
+        : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
     {
         // add observation points
         positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));

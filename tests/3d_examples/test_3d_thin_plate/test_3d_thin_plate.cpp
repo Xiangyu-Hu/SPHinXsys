@@ -53,10 +53,10 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
     virtual void prepareGeometricData() override
     {
         // the plate and boundary
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

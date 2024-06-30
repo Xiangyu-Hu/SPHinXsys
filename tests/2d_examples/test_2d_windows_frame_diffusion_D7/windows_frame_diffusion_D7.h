@@ -474,28 +474,22 @@ class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
 
 using DiffusionBodyRelaxation =
     DiffusionBodyRelaxationComplex<BaseDiffusion, KernelGradientInner, KernelGradientContact, Robin>;
-//----------------------------------------------------------------------
-//	An observer body to measure temperature at given positions.
-//----------------------------------------------------------------------
-class TemperatureObserver;
-template <>
-class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<Observer>
-{
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** A line of measuring points at the given position. */
-        size_t number_of_observation_points = 5;
-        Real range_of_measure = H - 0.02;
-        Real start_of_measure = 0.01;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(
-                0.028, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the given position. */
+    size_t number_of_observation_points = 5;
+    Real range_of_measure = H - 0.02;
+    Real start_of_measure = 0.01;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(
+            0.028, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 #endif // WINDOWS_FRAME_DIFFUSION_D7_H

@@ -24,16 +24,16 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 class WallBoundary;
 template <>
-class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real DH;
     Real DL;
     Real particle_spacing_gate;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
-                               Real particle_spacing_gate)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real DH, Real DL, Real particle_spacing_gate)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
     void prepareGeometricData() override
     {
@@ -57,7 +57,7 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 //----------------------------------------------------------------------
 class Gate;
 template <>
-class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Gate> : public ParticleGenerator<SurfaceParticles>
 {
     Real DL;
     Real BW;
@@ -65,8 +65,9 @@ class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
     Real Gate_thickness;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
     void prepareGeometricData() override
     {
@@ -108,7 +109,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Geometry definition.
     //----------------------------------------------------------------------
-    auto createWaterBlockShape = [&]() {
+    auto createWaterBlockShape = [&]()
+    {
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(DamP_lb);
         water_block_shape.push_back(DamP_lt);
@@ -132,7 +134,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	create Gate constrain shape
     //----------------------------------------------------------------------
-    auto createGateConstrainShape = [&]() {
+    auto createGateConstrainShape = [&]()
+    {
         // geometry
         std::vector<Vecd> gate_constraint_shape_left;
         gate_constraint_shape_left.push_back(ConstrainLP_lb);
@@ -197,7 +200,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
     gate_observer.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    gate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

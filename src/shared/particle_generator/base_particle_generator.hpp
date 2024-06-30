@@ -11,8 +11,8 @@ namespace SPH
 //=================================================================================================//
 template <typename ParticlesType>
 ParticleGenerator<ParticlesType, Reload>::
-    ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name)
-    : ParticleGenerator<BaseGeneratorParameters...>(sph_body)
+    ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name)
+    : ParticleGenerator<ParticlesType>(sph_body, particles)
 {
     std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().reload_folder_;
     if (!fs::exists(reload_folder))

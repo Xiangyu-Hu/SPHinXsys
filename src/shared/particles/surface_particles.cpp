@@ -17,6 +17,7 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
 //=================================================================================================//
 void SurfaceParticles::initializeBasicParticleVariables()
 {
+    BaseParticles::initializeBasicParticleVariables();
     registerTransformationMatrix();
 }
 //=================================================================================================//

@@ -88,10 +88,10 @@ namespace SPH
 {
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
     void prepareGeometricData() override
     {
         Real y = -BW + 0.5 * resolution_shell;
@@ -178,8 +178,8 @@ int main(int ac, char *av[])
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     ObserverBody disp_observer_2(sph_system, "Observer2");
     disp_observer_2.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    disp_observer_1.generateParticles<BaseParticles, Observer>(observer_position_1);
-    disp_observer_2.generateParticles<BaseParticles, Observer>(observer_position_2);
+    disp_observer_1.generateParticles<ObserverParticles>(observer_position_1);
+    disp_observer_2.generateParticles<ObserverParticles>(observer_position_2);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

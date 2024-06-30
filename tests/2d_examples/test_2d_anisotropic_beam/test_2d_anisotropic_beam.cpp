@@ -70,10 +70,11 @@ class Beam : public MultiPolygonShape
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
 template <>
-class ParticleGenerator<Beam> : public ParticleGenerator<>
+class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BaseParticles>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<>(sph_body){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
 
     virtual void prepareGeometricData() override
     {
@@ -201,7 +202,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

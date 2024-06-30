@@ -156,7 +156,7 @@ class SPHBody
     void generateParticles(Args &&...args)
     {
         ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
-        ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, particles, std::forward<Args>(args)...);
+        ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithGeometricVariables();
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
@@ -165,7 +165,7 @@ class SPHBody
     };
 
     // Buffer or ghost particles can be generated together with real particles
-    template <class ParticleType, class... Parameters, class ReserveType, typename... Args>
+    template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
     void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);

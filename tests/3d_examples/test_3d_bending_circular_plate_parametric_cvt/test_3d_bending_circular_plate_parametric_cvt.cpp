@@ -20,7 +20,7 @@ namespace SPH
 {
 class ShellCircle;
 template <>
-class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
+class ParticleGenerator<ShellCircle> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -29,7 +29,7 @@ class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
@@ -129,12 +129,18 @@ struct observer_point_shell
     void interpolate(SurfaceParticles &particles)
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
-        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
-        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
-        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
-        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
-        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
-        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) {
+        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                            { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
+        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
+        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                          { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
+        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                    { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
+        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
+        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                 {
 			Mat3d F = (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id];
 			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();

@@ -93,9 +93,7 @@ template <> // generate observer particles
 class ParticleGenerator<ObserverParticles> : public ParticleGenerator<BaseParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions)
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions)
         : ParticleGenerator<BaseParticles>(sph_body, base_particles), positions_(positions){};
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
@@ -111,7 +109,7 @@ class ParticleGenerator<ParticlesType, Reload> : public ParticleGenerator<Partic
     std::string file_path_;
 
   public:
-    ParticleGenerator(SPHBody &sph_body, const std::string &reload_body_name);
+    ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name);
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
     virtual void setAllParticleBounds() override;

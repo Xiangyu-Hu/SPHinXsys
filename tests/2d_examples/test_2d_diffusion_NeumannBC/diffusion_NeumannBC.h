@@ -167,28 +167,23 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDel
 //----------------------------------------------------------------------
 using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
     IsotropicDiffusion, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
-//----------------------------------------------------------------------
-//	An observer body to measure temperature at given positions.
-//----------------------------------------------------------------------
-template <>
-class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
-{
-  public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** A line of measuring points at the middle line. */
-        size_t number_of_observation_points = 5;
-        Real range_of_measure = L;
-        Real start_of_measure = 0;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
-                                                    Real(number_of_observation_points - 1) +
-                                                start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the middle line. */
+    size_t number_of_observation_points = 5;
+    Real range_of_measure = L;
+    Real start_of_measure = 0;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
+                                                Real(number_of_observation_points - 1) +
+                                            start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 #endif // DIFFUSION_NEUMANN_BC_H

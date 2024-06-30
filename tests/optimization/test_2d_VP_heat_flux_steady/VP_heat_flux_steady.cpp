@@ -141,10 +141,10 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
 //----------------------------------------------------------------------
 class TemperatureObserver;
 template <>
-class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<Observer>
+class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<ObserverParticles>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    ParticleGenerator(SPHBody &sph_body, ObserverParticles &observer_particles) : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 11;
@@ -186,7 +186,7 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<BaseParticles, TemperatureObserver>();
+    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

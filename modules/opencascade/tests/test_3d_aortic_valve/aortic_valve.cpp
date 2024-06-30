@@ -56,11 +56,11 @@ class BoundaryGeometry : public BodyPartByParticle
 
 class Leaflet;
 template <>
-class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
+class ParticleGenerator<Leaflet> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Surface>(sph_body), sph_body_(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body){};
     virtual void prepareGeometricData() override
     {
         SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());

@@ -17,7 +17,7 @@ namespace SPH
 {
 class ShellSphere;
 template <>
-class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
+class ParticleGenerator<ShellSphere> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -27,7 +27,7 @@ class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
   public:
     explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
                                const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -126,7 +126,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // generating particles from predefined positions from obj file
     StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
-    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec) { vec *= scale; });
+    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec)
+                  { vec *= scale; });
     Real particle_area = total_area / obj_vertices.size();
     // find out BoundingBox
     bb_system = get_particles_bounding_box(obj_vertices);

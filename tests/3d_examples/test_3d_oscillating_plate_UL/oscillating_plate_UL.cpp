@@ -41,11 +41,11 @@ namespace SPH
 //----------------------------------------------------------------------
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<>
+class ParticleGenerator<Plate> : public ParticleGenerator<BaseParticles>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<>(sph_body){};
+        : ParticleGenerator<BaseParticles>(sph_body){};
     virtual void prepareGeometricData() override
     {
         for (int k = 0; k < particle_number; k++)
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     plate_body.generateParticles<BaseParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

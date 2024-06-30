@@ -237,10 +237,10 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
  */
 class HeartObserver;
 template <>
-class ParticleGenerator<HeartObserver> : public ParticleGenerator<Observer>
+class ParticleGenerator<HeartObserver> : public ParticleGenerator<ObserverParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body, ObserverParticles &observer_particles) : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
     {
         /** position and volume. */
         positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));

@@ -32,12 +32,12 @@ namespace SPH
 //----------------------------------------------------------------------
 class ObserverAxial;
 template <>
-class ParticleGenerator<ObserverAxial> : public ParticleGenerator<Observer>
+class ParticleGenerator<ObserverAxial> : public ParticleGenerator<ObserverParticles>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, double full_length,
                       Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGenerator<Observer>(sph_body)
+        : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
     {
         int ny = 51;
         for (int i = 0; i < ny; i++)
@@ -51,13 +51,13 @@ class ParticleGenerator<ObserverAxial> : public ParticleGenerator<Observer>
 
 class ObserverRadial;
 template <>
-class ParticleGenerator<ObserverRadial> : public ParticleGenerator<Observer>
+class ParticleGenerator<ObserverRadial> : public ParticleGenerator<ObserverParticles>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, double full_length, double diameter,
                       int number_of_particles,
                       Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGenerator<Observer>(sph_body)
+        : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
     {
 
         int n = number_of_particles + 1;
@@ -75,7 +75,7 @@ class ParticleGenerator<ObserverRadial> : public ParticleGenerator<Observer>
 
 class ShellBoundary;
 template <>
-class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<ShellBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real resolution_shell_;
     Real wall_thickness_;
@@ -83,7 +83,7 @@ class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
     void prepareGeometricData() override
@@ -379,7 +379,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
+    {
         return Vec3d(0.0,
                      2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);

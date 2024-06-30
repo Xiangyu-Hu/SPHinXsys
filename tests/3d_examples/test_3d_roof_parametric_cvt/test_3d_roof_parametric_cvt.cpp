@@ -49,7 +49,7 @@ namespace SPH
 {
 class ShellRoof;
 template <>
-class ParticleGenerator<ShellRoof> : public ParticleGenerator<Surface>
+class ParticleGenerator<ShellRoof> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -58,7 +58,7 @@ class ParticleGenerator<ShellRoof> : public ParticleGenerator<Surface>
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -161,12 +161,18 @@ struct observer_point_shell
     void interpolate(SurfaceParticles &particles)
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
-        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
-        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
-        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
-        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
-        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
-        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id) {
+        pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                            { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
+        displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
+        global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                          { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
+        global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                    { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
+        def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                   { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
+        pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
+                                                 {
 			Mat3d F = (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id];
 			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
@@ -203,13 +209,13 @@ namespace SPH
 {
 class Cylinder;
 template <>
-class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
     Real particle_number_;
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, Real particle_number = 16)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body),
           particle_number_(particle_number){};
     virtual void prepareGeometricData() override
     {
@@ -329,9 +335,9 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     system.system_domain_bounds_ = bb_system;
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
-    {   // recalculate the volume/area after knowing the particle positions
-        // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
-        // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
+    { // recalculate the volume/area after knowing the particle positions
+      // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
+      // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
     }
 
     // methods

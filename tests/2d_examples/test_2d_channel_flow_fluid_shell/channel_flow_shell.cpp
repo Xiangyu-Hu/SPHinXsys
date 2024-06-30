@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
 /** Particle generator and constraint boundary for shell baffle. */
 class WallBoundary;
 template <>
-class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real DL_sponge_;
     Real BW_;
@@ -46,8 +46,10 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
     Real wall_thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
-        : ParticleGenerator<Surface>(sph_body), DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real resolution_ref, Real wall_thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
+          DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
           resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
     void prepareGeometricData() override
     {
@@ -97,49 +99,38 @@ struct InflowVelocity
     }
 };
 
-/** fluid observer particle generator */
-class FluidAxialObserver;
-template <>
-class ParticleGenerator<FluidAxialObserver> : public ParticleGenerator<Observer>
+StdVec<Vecd> createFluidAxialObservationPoints(Real resolution_ref)
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref)
-        : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the entrance of the channel. */
+    size_t number_observation_points = 51;
+    Real range_of_measure = DL - resolution_ref * 4.0;
+    Real start_of_measure = resolution_ref * 2.0;
+    Real y_position = 0.5 * DH;
+    /** the measuring locations */
+    for (size_t i = 0; i < number_observation_points; ++i)
     {
-        /** A line of measuring points at the entrance of the channel. */
-        size_t number_observation_points = 51;
-        Real range_of_measure = DL - resolution_ref * 4.0;
-        Real start_of_measure = resolution_ref * 2.0;
-        Real y_position = 0.5 * DH;
-        /** the measuring locations */
-        for (size_t i = 0; i < number_observation_points; ++i)
-        {
-            Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure, y_position);
-            positions_.push_back(point_coordinate);
-        }
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure, y_position);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 
-class FluidRadialObserver;
-template <>
-class ParticleGenerator<FluidRadialObserver> : public ParticleGenerator<Observer>
+StdVec<Vecd> createFluidRadialObservationPoints(Real resolution_ref)
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref)
-        : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the entrance of the channel. */
+    size_t number_observation_points = 21;
+    Real range_of_measure = DH - resolution_ref * 4.0;
+    Real start_of_measure = resolution_ref * 2.0;
+    Real x_position = 0.5 * DL;
+    /** the measuring locations */
+    for (size_t i = 0; i < number_observation_points; ++i)
     {
-        /** A line of measuring points at the entrance of the channel. */
-        size_t number_observation_points = 21;
-        Real range_of_measure = DH - resolution_ref * 4.0;
-        Real start_of_measure = resolution_ref * 2.0;
-        Real x_position = 0.5 * DL;
-        /** the measuring locations */
-        for (size_t i = 0; i < number_observation_points; ++i)
-        {
-            Vec2d point_coordinate(x_position, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+        Vec2d point_coordinate(x_position, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 
@@ -154,7 +145,8 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	define geometry of SPH bodies
     //----------------------------------------------------------------------
     /** create a water block shape */
-    auto createWaterBlockShape = [&]() {
+    auto createWaterBlockShape = [&]()
+    {
         // geometry
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
@@ -184,10 +176,10 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(resolution_ref, wall_thickness);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    fluid_axial_observer.generateParticles<BaseParticles, FluidAxialObserver>(resolution_ref);
+    fluid_axial_observer.generateParticles<ObserverParticles>(createFluidAxialObservationPoints(resolution_ref));
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    fluid_radial_observer.generateParticles<BaseParticles, FluidRadialObserver>(resolution_ref);
+    fluid_radial_observer.generateParticles<ObserverParticles>(createFluidRadialObservationPoints(resolution_ref));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -339,7 +331,8 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
      * @brief 	Gtest start from here.
      */
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos) {
+    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)
+    {
         Real y = 2 * pos[1] / DH - 1;
         return Vec2d(1.5 * U_f * (1 - y * y), 0);
     };
