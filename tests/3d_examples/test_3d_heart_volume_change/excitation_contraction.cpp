@@ -126,10 +126,10 @@ int main(int ac, char *av[])
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<BaseParticles, HeartObserver>();
+    voltage_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<BaseParticles, HeartObserver>();
+    myocardium_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	SPHBody relation (topology) section
     //----------------------------------------------------------------------

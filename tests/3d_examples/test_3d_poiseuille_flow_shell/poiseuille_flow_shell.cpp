@@ -27,63 +27,50 @@ const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-//	User defined particle generators.
-//----------------------------------------------------------------------
-class ObserverAxial;
-template <>
-class ParticleGenerator<ObserverAxial> : public ParticleGenerator<ObserverParticles>
+StdVec<Vecd> createAxialObservationPoints(
+    double full_length, Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
-  public:
-    ParticleGenerator(SPHBody &sph_body, double full_length,
-                      Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
+    StdVec<Vecd> observation_points;
+    int ny = 51;
+    for (int i = 0; i < ny; i++)
     {
-        int ny = 51;
-        for (int i = 0; i < ny; i++)
-        {
-            double y = full_length / (ny - 1) * i;
-            Vec3d point_coordinate(0.0, y, 0.0);
-            positions_.emplace_back(point_coordinate + translation);
-        }
+        double y = full_length / (ny - 1) * i;
+        Vec3d point_coordinate(0.0, y, 0.0);
+        observation_points.emplace_back(point_coordinate + translation);
     }
+    return observation_points;
 };
 
-class ObserverRadial;
-template <>
-class ParticleGenerator<ObserverRadial> : public ParticleGenerator<ObserverParticles>
+StdVec<Vecd> createRadialObservationPoints(
+    double full_length, double diameter, int number_of_particles,
+    Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
-  public:
-    ParticleGenerator(SPHBody &sph_body, double full_length, double diameter,
-                      int number_of_particles,
-                      Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
+    StdVec<Vecd> observation_points;
+    int n = number_of_particles + 1;
+    double y = full_length / 2.0;
+    for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
+                                    // interpolation there is incorrect
+                                    // TODO: fix the interpolation
     {
-
-        int n = number_of_particles + 1;
-        double y = full_length / 2.0;
-        for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
-                                        // interpolation there is incorrect
-                                        // TODO: fix the interpolation
-        {
-            double z = diameter / 2.0 * i / double(n);
-            positions_.emplace_back(Vec3d(0.0, y, z) + translation);
-            positions_.emplace_back(Vec3d(0.0, y, -z) + translation);
-        }
+        double z = diameter / 2.0 * i / double(n);
+        observation_points.emplace_back(Vec3d(0.0, y, z) + translation);
+        observation_points.emplace_back(Vec3d(0.0, y, -z) + translation);
     }
+    return observation_points;
 };
 
 class ShellBoundary;
 template <>
-class ParticleGenerator<ShellBoundary> : public ParticleGenerator<SurfaceParticles>
+class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real resolution_shell_;
     Real wall_thickness_;
     Real shell_thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
-        : ParticleGenerator<SurfaceParticles>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real resolution_shell, Real wall_thickness, Real shell_thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
     void prepareGeometricData() override
@@ -198,9 +185,9 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
 
     ObserverBody observer_axial(system, "fluid_observer_axial");
-    observer_axial.generateParticles<BaseParticles, ObserverAxial>(full_length);
+    observer_axial.generateParticles<ObserverParticles>(createAxialObservationPoints(full_length));
     ObserverBody observer_radial(system, "fluid_observer_radial");
-    observer_radial.generateParticles<BaseParticles, ObserverRadial>(full_length, diameter, number_of_particles);
+    observer_radial.generateParticles<ObserverParticles>(createRadialObservationPoints(full_length, diameter, number_of_particles));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

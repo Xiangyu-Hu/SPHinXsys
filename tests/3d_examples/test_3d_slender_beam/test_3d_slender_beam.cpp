@@ -53,10 +53,11 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Bar;
 template <>
-class ParticleGenerator<Bar> : public ParticleGenerator<Line>
+class ParticleGenerator<LinearParticles, Bar> : public ParticleGenerator<LinearParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body, LinearParticles &linear_particles)
+        : ParticleGenerator<LinearParticles>(sph_body, linear_particles)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };

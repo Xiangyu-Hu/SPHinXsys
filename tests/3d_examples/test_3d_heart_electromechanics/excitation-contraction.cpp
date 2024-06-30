@@ -226,23 +226,16 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &voltage_;
 };
-/**
- * define observer particle generator.
- */
-class HeartObserver;
-template <>
-class ParticleGenerator<HeartObserver> : public ParticleGenerator<ObserverParticles>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, ObserverParticles &observer_particles) : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
-    {
-        /** position and volume. */
-        positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
-        positions_.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
-        positions_.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
+    observation_points.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
+    observation_points.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
+    return observation_points;
 };
 } // namespace SPH
 
@@ -360,10 +353,10 @@ int main(int ac, char *av[])
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<BaseParticles, HeartObserver>();
+    voltage_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<BaseParticles, HeartObserver>();
+    myocardium_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	SPHBody relation (topology) section
     //----------------------------------------------------------------------

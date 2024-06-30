@@ -20,7 +20,7 @@ namespace SPH
 {
 class ShellCircle;
 template <>
-class ParticleGenerator<ShellCircle> : public ParticleGenerator<SurfaceParticles>
+class ParticleGenerator<SurfaceParticles, ShellCircle> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -28,8 +28,9 @@ class ParticleGenerator<ShellCircle> : public ParticleGenerator<SurfaceParticles
     const Real thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : ParticleGenerator<SurfaceParticles>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),

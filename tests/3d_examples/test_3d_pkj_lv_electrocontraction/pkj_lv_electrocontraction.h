@@ -235,22 +235,18 @@ class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public DataDelega
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &voltage_;
 };
-// Observer particle generator.
-class HeartObserver;
-template <>
-class ParticleGenerator<HeartObserver> : public ParticleGenerator<ObserverParticles>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, ObserverParticles &observer_particles) : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
-    {
-        /** position and volume. */
-        positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
-        positions_.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
-        positions_.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
+    observation_points.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
+    observation_points.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
+    return observation_points;
 };
+
 /**
  * application dependent initial condition
  */
@@ -280,7 +276,8 @@ class ApplyStimulusCurrentToPKJ : public LocalDynamics, public DataDelegateSimpl
  */
 class NetworkWithExtraCheck;
 template <>
-class ParticleGenerator<NetworkWithExtraCheck> : public ParticleGenerator<Network>
+class ParticleGenerator<BaseParticles, NetworkWithExtraCheck>
+    : public ParticleGenerator<BaseParticles, Network>
 {
   protected:
     bool extraCheck(const Vecd &new_position) override
@@ -292,7 +289,9 @@ class ParticleGenerator<NetworkWithExtraCheck> : public ParticleGenerator<Networ
     };
 
   public:
-    ParticleGenerator(SPHBody &sph_body, Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
-        : ParticleGenerator<Network>(sph_body, starting_pnt, second_pnt, iterator, grad_factor){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
+        : ParticleGenerator<BaseParticles, Network>(
+              sph_body, base_particles, starting_pnt, second_pnt, iterator, grad_factor){};
 };
 } // namespace SPH

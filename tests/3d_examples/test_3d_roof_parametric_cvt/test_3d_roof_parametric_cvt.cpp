@@ -49,7 +49,7 @@ namespace SPH
 {
 class ShellRoof;
 template <>
-class ParticleGenerator<ShellRoof> : public ParticleGenerator<SurfaceParticles>
+class ParticleGenerator<SurfaceParticles, ShellRoof> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -57,8 +57,9 @@ class ParticleGenerator<ShellRoof> : public ParticleGenerator<SurfaceParticles>
     const Real thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGenerator<SurfaceParticles>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &pos_0, const Vec3d &center, Real particle_area, Real thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
@@ -214,8 +215,9 @@ class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<S
     Real particle_number_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real particle_number = 16)
-        : ParticleGenerator<SurfaceParticles>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real particle_number = 16)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           particle_number_(particle_number){};
     virtual void prepareGeometricData() override
     {

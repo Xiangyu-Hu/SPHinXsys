@@ -41,11 +41,11 @@ namespace SPH
 //----------------------------------------------------------------------
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<BaseParticles>
+class ParticleGenerator<BaseParticles, Plate> : public ParticleGenerator<BaseParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<BaseParticles>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
     virtual void prepareGeometricData() override
     {
         for (int k = 0; k < particle_number; k++)

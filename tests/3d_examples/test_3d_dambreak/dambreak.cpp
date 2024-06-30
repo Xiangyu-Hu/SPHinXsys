@@ -48,27 +48,17 @@ class WallBoundary : public ComplexShape
     }
 };
 
-//	define an observer particle generator
-namespace SPH
+StdVec<Vecd> createObservationPoints()
 {
-class WaterObserver;
-template <>
-class ParticleGenerator<WaterObserver> : public ParticleGenerator<ObserverParticles>
-{
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<ObserverParticles>(sph_body, observer_particles)
-    {
-        // add observation points
-        positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.1, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.2, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.24, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.252, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.266, 0.5 * DW));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(DL, 0.01, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.1, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.2, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.24, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.252, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.266, 0.5 * DW));
+    return observation_points;
 };
-} // namespace SPH
 
 // the main program with commandline options
 int main(int ac, char *av[])
@@ -92,7 +82,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<BaseParticles, WaterObserver>();
+    fluid_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
