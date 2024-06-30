@@ -93,6 +93,7 @@ class SPHBody
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };
+    void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
@@ -161,7 +162,6 @@ class SPHBody
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
         base_material_->setLocalParameters(sph_system_.ReloadParticles(), particles);
-        base_particles_ = particles;
     };
 
     // Buffer or ghost particles can be generated together with real particles

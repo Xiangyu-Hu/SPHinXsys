@@ -20,7 +20,10 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       copy_particle_data_(all_particle_data_),
       write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
       write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
-      read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_) {}
+      read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_)
+{
+    sph_body.assignBaseParticles(this);
+}
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
