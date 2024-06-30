@@ -56,7 +56,7 @@ class BoundaryGeometry : public BodyPartByParticle
 
 class Leaflet;
 template <>
-class ParticleGenerator<Leaflet> : public ParticleGenerator<SurfaceParticles>
+class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<SurfaceParticles>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
