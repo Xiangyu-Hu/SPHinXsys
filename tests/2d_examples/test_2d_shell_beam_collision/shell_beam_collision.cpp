@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
+        shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
-        write_relaxed_particles.addVariableRecording<int>(shell, "UpdatedIndicator");
+        write_relaxed_particles.addToWrite<int>(shell, "UpdatedIndicator");
         MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload_files(shell);
         //----------------------------------------------------------------------

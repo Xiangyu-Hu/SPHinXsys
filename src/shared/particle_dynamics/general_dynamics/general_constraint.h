@@ -45,7 +45,7 @@ class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>,
                        DataType constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          constrained_variable_(*particles_->getVariableByName<DataType>(variable_name)),
+          constrained_variable_(*particles_->getVariableDataByName<DataType>(variable_name)),
           constrained_value_(constrained_value){};
     virtual ~ConstantConstraint(){};
     void update(size_t index_i, Real dt = 0.0)
@@ -95,7 +95,7 @@ class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public Da
     explicit MotionConstraint(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
+          pos_(*this->particles_->template getVariableDataByName<Vecd>("Position")),
           pos0_(*this->particles_->template registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
           vel_(*this->particles_->template registerSharedVariable<Vecd>("Velocity")){};
 

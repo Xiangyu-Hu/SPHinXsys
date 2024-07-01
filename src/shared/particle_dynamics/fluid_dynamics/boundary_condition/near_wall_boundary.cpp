@@ -9,13 +9,13 @@ NearWallDistance::NearWallDistance(BaseContactRelation &wall_contact_relation)
     : LocalDynamics(wall_contact_relation.getSPHBody()), DataDelegateContact(wall_contact_relation),
       spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing()),
       distance_default_(100.0 * spacing_ref_),
-      pos_(*particles_->getVariableByName<Vecd>("Position"))
+      pos_(*particles_->getVariableDataByName<Vecd>("Position"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        wall_pos_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Position"));
-        wall_n_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-        wall_phi_.push_back(contact_particles_[k]->getVariableByName<Real>("SignedDistance"));
+        wall_pos_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Position"));
+        wall_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
+        wall_phi_.push_back(contact_particles_[k]->getVariableDataByName<Real>("SignedDistance"));
     }
 }
 //=================================================================================================//

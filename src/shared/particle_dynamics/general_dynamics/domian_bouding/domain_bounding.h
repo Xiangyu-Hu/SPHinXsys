@@ -113,7 +113,7 @@ class BasePeriodicCondition
               periodic_translation_(periodic_box.getPeriodicTranslation()),
               cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()),
               bound_cells_data_(bound_cells_data),
-              pos_(*particles_->getVariableByName<Vecd>("Position")){};
+              pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
         virtual ~PeriodicBounding(){};
 
         virtual void exec(Real dt = 0.0) override

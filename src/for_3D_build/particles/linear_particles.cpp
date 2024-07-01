@@ -4,35 +4,28 @@ namespace SPH
 {
 //=============================================================================================//
 LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : SurfaceParticles(sph_body, base_material)
+    : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr) {}
+//=================================================================================================//
+void LinearParticles::registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec<Real> &width)
 {
-    //----------------------------------------------------------------------
-    //		modify kernel function for surface particles
-    //----------------------------------------------------------------------
-    // sph_body.sph_adaptation_->getKernel()->reduceTwice();
-    //----------------------------------------------------------------------
-    //		register geometric data only
-    //----------------------------------------------------------------------
-    registerVariable(b_n_, "BinormalDirection");
-    registerVariable(width_, "Width");
-    /**
-     * add particle reload data
-     */
-    // addVariableNameToList<Vecd>(variables_to_reload_, "BinormalDirection");
-    // addVariableNameToList<Real>(variables_to_reload_, "Width");
+    b_n_ = registerSharedVariableFrom<Vecd>("BinormalDirection", b_n);
+    width_ = registerSharedVariableFrom<Real>("Width", width);
+    addVariableToReload<Vecd>("BinormalDirection");
+    addVariableToReload<Real>("Width");
+    addVariableToWrite<Vecd>("BinormalDirection");
 }
 //=================================================================================================//
-void LinearParticles::initializeOtherVariables()
+void LinearParticles::registerLinePropertiesFromReload()
 {
-    SurfaceParticles::initializeOtherVariables();
-
-    addVariableToWrite<Vecd>("BinormalDirection");
+    b_n_ = registerSharedVariableFromReload<Vecd>("NormalDirection");
+    width_ = registerSharedVariableFromReload<Real>("Thickness");
 }
 //=================================================================================================//
 void LinearParticles::registerTransformationMatrix()
 {
-    registerVariable(transformation_matrix0_, "TransformationMatrix", [&](size_t index_i) -> Matd
-                     { return getTransformationMatrix(n_[index_i], b_n_[index_i]); });
+    transformation_matrix0_ = registerSharedVariable<Matd>(
+        "TransformationMatrix", [&](size_t index_i) -> Matd
+        { return getTransformationMatrix((*n_)[index_i], (*b_n_)[index_i]); });
 }
 //=================================================================================================//
 } // namespace SPH

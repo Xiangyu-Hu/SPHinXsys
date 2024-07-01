@@ -95,7 +95,7 @@ class IsotropicDiffusion : public BaseDiffusion
 class LocalIsotropicDiffusion : public IsotropicDiffusion
 {
   protected:
-    StdLargeVec<Real> local_diffusivity_;
+    StdLargeVec<Real> *local_diffusivity_;
 
   public:
     LocalIsotropicDiffusion(const std::string &diffusion_species_name,
@@ -107,10 +107,10 @@ class LocalIsotropicDiffusion : public IsotropicDiffusion
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
-    virtual Real getDiffusionCoeffWithBoundary(size_t index_i) override { return local_diffusivity_[index_i]; };
+    virtual Real getDiffusionCoeffWithBoundary(size_t index_i) override { return (*local_diffusivity_)[index_i]; };
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) override
     {
-        return 0.5 * (local_diffusivity_[index_i] + local_diffusivity_[index_j]);
+        return 0.5 * ((*local_diffusivity_)[index_i] + (*local_diffusivity_)[index_j]);
     };
 };
 
@@ -154,8 +154,8 @@ class DirectionalDiffusion : public IsotropicDiffusion
 class LocalDirectionalDiffusion : public DirectionalDiffusion
 {
   protected:
-    StdLargeVec<Vecd> local_bias_direction_;
-    StdLargeVec<Matd> local_transformed_diffusivity_;
+    StdLargeVec<Vecd> *local_bias_direction_;
+    StdLargeVec<Matd> *local_transformed_diffusivity_;
 
   public:
     LocalDirectionalDiffusion(const std::string &diffusion_species_name,
@@ -165,12 +165,13 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
                               Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
     virtual ~LocalDirectionalDiffusion(){};
 
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) override
     {
-        Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[index_i], local_transformed_diffusivity_[index_j]);
+        Matd trans_diffusivity = getAverageValue((*local_transformed_diffusivity_)[index_i], (*local_transformed_diffusivity_)[index_j]);
         Vecd grad_ij = trans_diffusivity * e_ij;
         return 1.0 / grad_ij.squaredNorm();
     };
@@ -251,10 +252,16 @@ class ReactionDiffusion : public BaseMaterial
     StdVec<DiffusionType *> AllDiffusions() { return all_diffusions_; };
     ReactionType &ReactionModel() { return reaction_model_; };
 
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override
+    virtual void registerLocalParameters(BaseParticles *base_particles) override
     {
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
-            all_diffusions_[k]->registerReloadLocalParameters(base_particles);
+            all_diffusions_[k]->registerLocalParameters(base_particles);
+    };
+
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override
+    {
+        for (size_t k = 0; k < all_diffusions_.size(); ++k)
+            all_diffusions_[k]->registerLocalParametersFromReload(base_particles);
     };
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override

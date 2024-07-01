@@ -46,7 +46,7 @@ class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier
     VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          variable_(*particles_->getVariableByName<DataType>(variable_name)){};
+          variable_(*particles_->getVariableDataByName<DataType>(variable_name)){};
     virtual ~VariableNorm(){};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
     Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
@@ -94,7 +94,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()), axis_(axis),
-          pos_(*particles_->template getVariableByName<Vecd>("Position"))
+          pos_(*particles_->template getVariableDataByName<Vecd>("Position"))
     {
         this->quantity_name_ = name;
     }
@@ -168,7 +168,7 @@ class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, Dy
     explicit QuantitySummation(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          variable_(*this->particles_->template getVariableByName<DataType>(variable_name))
+          variable_(*this->particles_->template getVariableDataByName<DataType>(variable_name))
     {
         this->quantity_name_ = "Total" + variable_name;
     };
@@ -196,7 +196,7 @@ class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
   public:
     explicit QuantityMoment(DynamicsIdentifier &identifier, const std::string &variable_name)
         : QuantitySummation<DataType, DynamicsIdentifier>(identifier, variable_name),
-          mass_(*this->particles_->template getVariableByName<Real>("Mass"))
+          mass_(*this->particles_->template getVariableDataByName<Real>("Mass"))
     {
         this->quantity_name_ = variable_name + "Moment";
     };

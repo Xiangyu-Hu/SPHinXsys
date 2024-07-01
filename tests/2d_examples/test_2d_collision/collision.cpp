@@ -107,9 +107,9 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
-    free_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_1);
+    free_ball_observer.generateParticles<ObserverParticles>(observation_location_1);
     ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
-    damping_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_2);
+    damping_ball_observer.generateParticles<ObserverParticles>(observation_location_2);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

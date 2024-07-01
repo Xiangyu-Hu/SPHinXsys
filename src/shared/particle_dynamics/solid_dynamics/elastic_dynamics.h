@@ -204,7 +204,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Matd> stress_PK1_B_;
+    StdLargeVec<Matd> &stress_PK1_B_;
     Real numerical_dissipation_factor_;
     Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 };
@@ -284,8 +284,8 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Real> J_to_minus_2_over_dimension_;
-    StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
+    StdLargeVec<Real> &J_to_minus_2_over_dimension_;
+    StdLargeVec<Matd> &stress_on_particle_, &inverse_F_T_;
     const Real correction_factor_ = 1.07;
 };
 

@@ -33,11 +33,11 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Cylinder;
 template <>
-class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
         for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
@@ -47,9 +47,9 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
                 Real y = (j - particle_number_height / 2) * resolution_ref + resolution_ref * 0.5;
                 Real z = radius_mid_surface * sin(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-                initializePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref * resolution_ref);
+                addPositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref * resolution_ref);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                initializeSurfaceProperties(n_0, thickness);
+                addSurfaceProperties(n_0, thickness);
             }
         }
     }
@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<BaseParticles, Observer>(StdVec<Vec3d>{ball_center});
+    ball_observer.generateParticles<ObserverParticles>(StdVec<Vec3d>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

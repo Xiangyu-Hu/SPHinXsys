@@ -17,7 +17,7 @@ namespace SPH
 {
 class ShellSphere;
 template <>
-class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, ShellSphere> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -25,20 +25,21 @@ class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &pos_0,
                                const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
             Vec3d center_to_pos = pos - center_;
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };
@@ -160,7 +161,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
-    StdLargeVec<Vec3d> &position = *shell_particles->getVariableByName<Vec3d>("Position");
+    StdLargeVec<Vec3d> &position = *shell_particles->getVariableDataByName<Vec3d>("Position");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
         for (size_t i = 0; i < position.size(); ++i)
@@ -179,7 +180,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // file and screen output
     BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.addVariableRecording<Vecd>(shell_body, "NormalDirection");
+    vtp_output.addToWrite<Vecd>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
     ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
@@ -212,8 +213,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         }
 
         // test volume
-        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableByName<Real>("VolumetricMeasure");
-        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableDataByName<Real>("VolumetricMeasure");
+        StdLargeVec<Real> &mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
         Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
         Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);

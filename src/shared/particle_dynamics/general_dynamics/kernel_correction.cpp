@@ -33,8 +33,8 @@ LinearGradientCorrectionMatrix<Contact<>>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -59,7 +59,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
     : KernelGradientCorrection<DataDelegateInner>(inner_relation),
-      average_correction_matrix_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
+      average_correction_matrix_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -75,8 +75,8 @@ KernelGradientCorrection<Contact<>>::
     {
         contact_average_correction_matrix_.push_back(
             PairAverageVariable<Matd>(
-                *particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"),
-                *contact_particles_[k]->getVariableByName<Matd>("LinearGradientCorrectionMatrix")));
+                *particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"),
+                *contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")));
     }
 }
 //=================================================================================================//

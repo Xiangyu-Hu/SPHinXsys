@@ -47,9 +47,9 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+            contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
             StdLargeVec<DataType> *contact_data =
-                this->contact_particles_[k]->template getVariableByName<DataType>(variable_name);
+                this->contact_particles_[k]->template getVariableDataByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
         }
     };
@@ -96,7 +96,7 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
         : BaseInterpolation<DataType>(contact_relation, target_variable)
     {
         this->interpolated_quantities_ =
-            this->particles_->template getVariableByName<DataType>(interpolated_variable);
+            this->particles_->template getVariableDataByName<DataType>(interpolated_variable);
     };
     virtual ~InterpolatingAQuantity(){};
 };
@@ -112,26 +112,9 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
         : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
     {
-        this->interpolated_quantities_ = registerObservedQuantity(variable_name);
+        this->interpolated_quantities_ = this->particles_->template registerSharedVariable<DataType>(variable_name);
     };
     virtual ~ObservingAQuantity(){};
-
-  protected:
-    StdLargeVec<DataType> observed_quantities_;
-
-    /** Register the  observed variable if the variable name is new.
-     * If the variable is registered already, the registered variable will be returned. */
-    StdLargeVec<DataType> *registerObservedQuantity(const std::string &variable_name)
-    {
-        BaseParticles *particles = this->particles_;
-        DiscreteVariable<DataType> *variable = findVariableByName<DataType>(particles->AllDiscreteVariables(), variable_name);
-        if (variable == nullptr)
-        {
-            particles->registerVariable(observed_quantities_, variable_name, ZeroData<DataType>::value);
-            return &observed_quantities_;
-        }
-        return particles->getVariableByName<DataType>(variable_name);
-    };
 };
 
 /**

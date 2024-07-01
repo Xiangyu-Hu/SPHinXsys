@@ -99,7 +99,7 @@ void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
 NeighborBuilderInnerAdaptive::
     NeighborBuilderInnerAdaptive(SPHBody &body)
     : NeighborBuilder(body.sph_adaptation_->getKernel()),
-      h_ratio_(*body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")) {}
+      h_ratio_(*body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
 void NeighborBuilderInnerAdaptive::
 operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -167,9 +167,9 @@ NeighborBuilderSurfaceContact::NeighborBuilderSurfaceContact(SPHBody &body, SPHB
 }
 //=================================================================================================//
 NeighborBuilderContactBodyPart::NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part)
-    : NeighborBuilder(NeighborBuilder::chooseKernel(body, contact_body_part.getSPHBody()))
+    : NeighborBuilder(NeighborBuilder::chooseKernel(body, contact_body_part.getSPHBody())),
+      part_indicator_(*body.getBaseParticles().registerSharedVariable<int>("BodyPartByParticleIndicator"))
 {
-    contact_body_part.getSPHBody().getBaseParticles().registerVariable(part_indicator_, "BodyPartByParticleIndicator");
     BodyPartByParticle &contact_body_part_by_particle = DynamicCast<BodyPartByParticle>(this, contact_body_part);
     IndexVector part_particles = contact_body_part_by_particle.body_part_particles_;
 
@@ -221,8 +221,8 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 //=================================================================================================//
 BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_body)
     : NeighborBuilder(shell_body.sph_adaptation_->getKernel()),
-      n_(*shell_body.getBaseParticles().getVariableByName<Vecd>("NormalDirection")),
-      thickness_(*shell_body.getBaseParticles().getVariableByName<Real>("Thickness")),
+      n_(*shell_body.getBaseParticles().getVariableDataByName<Vecd>("NormalDirection")),
+      thickness_(*shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
       k1_ave_(*shell_body.getBaseParticles().registerSharedVariable<Real>("Average1stPrincipleCurvature")),
       k2_ave_(*shell_body.getBaseParticles().registerSharedVariable<Real>("Average2ndPrincipleCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}

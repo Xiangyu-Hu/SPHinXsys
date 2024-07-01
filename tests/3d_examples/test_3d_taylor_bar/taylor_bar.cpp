@@ -39,7 +39,7 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
-    my_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    my_observer.generateParticles<ObserverParticles>(observation_location);
 
     /**body relation topology */
     InnerRelation column_inner(column);

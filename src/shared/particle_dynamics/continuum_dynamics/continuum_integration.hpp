@@ -11,7 +11,7 @@ namespace continuum_dynamics
 template <class FluidDynamicsType>
 BaseIntegration1stHalf<FluidDynamicsType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : FluidDynamicsType(inner_relation),
-      acc_shear_(*this->particles_->template getVariableByName<Vecd>("AccelerationByShear")) {}
+      acc_shear_(*this->particles_->template getVariableDataByName<Vecd>("AccelerationByShear")) {}
 //=================================================================================================//
 template <class FluidDynamicsType>
 void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
@@ -144,8 +144,8 @@ PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf
       riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       acc_deviatoric_plastic_strain_(*particles_->registerSharedVariable<Real>("AccDeviatoricPlasticStrain")),
       vertical_stress_(*particles_->registerSharedVariable<Real>("VerticalStress")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio())
 {
     particles_->addVariableToSort<Real>("AccDeviatoricPlasticStrain");

@@ -34,7 +34,6 @@
 #define BASE_PARTICLES_H
 
 #include "base_data_package.h"
-#include "base_material.h"
 #include "base_variable.h"
 #include "particle_sorting.h"
 #include "sph_data_containers.h"
@@ -77,13 +76,12 @@ class BodySurface;
  * The second is for the local, dynamics-method-related variables, which are defined in specific methods,
  * and are only used by the relevant methods. Generally, a discrete variable is defined
  * and the corresponding data can use or redefined (with no change to the data) by other methods
- * using the function getVariableByName.
+ * using the function getVariableDataByName.
  */
 class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
     DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
 
   public:
@@ -98,13 +96,13 @@ class BaseParticles
 
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
-    ParticleData &getAllParticleData() { return all_particle_data_; };
-    /** initialize other variables after the particles are generated */
-    virtual void initializeOtherVariables();
+    /** initialize basic variables after the particles are generated */
+    virtual void initializeBasicParticleVariables();
     //----------------------------------------------------------------------
     //		Generalized particle manipulation
     //----------------------------------------------------------------------
-    void initializeAllParticlesBounds();
+    void initializeAllParticlesBounds(size_t total_real_particles);
+    void initializeAllParticlesBoundsFromReloadXml();
     void increaseAllParticlesBounds(size_t buffer_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateGhostParticle(size_t ghost_index, size_t index);
@@ -112,19 +110,31 @@ class BaseParticles
     //----------------------------------------------------------------------
     //		Parameterized management on generalized particle data
     //----------------------------------------------------------------------
+  private:
     template <typename DataType>
-    void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
-                          DataType initial_value = ZeroData<DataType>::value);
+    DiscreteVariable<DataType> *addSharedVariable(const std::string &variable_name);
+    template <typename DataType>
+    StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
-    void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
-                          const InitializationFunction &initialization);
+    StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
+
+  public:
     template <typename DataType, typename... Args>
     StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
+
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
+
     template <typename DataType>
-    StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
-    ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
+    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &variable_name, const StdLargeVec<DataType> &geometric_data);
+
+    template <typename DataType>
+    StdLargeVec<DataType> *registerSharedVariableFromReload(const std::string &variable_name);
+
+    template <typename DataType>
+    DiscreteVariable<DataType> *getVariableByName(const std::string &variable_name);
+    template <typename DataType>
+    StdLargeVec<DataType> *getVariableDataByName(const std::string &variable_name);
 
     template <typename DataType>
     DataType *registerSingleVariable(const std::string &variable_name,
@@ -169,22 +179,24 @@ class BaseParticles
     void writeParticlesToXmlForRestart(std::string &filefullpath);
     void readParticleFromXmlForRestart(std::string &filefullpath);
     void writeToXmlForReloadParticle(std::string &filefullpath);
-    void readFromXmlForReloadParticle(std::string &filefullpath);
-    XmlParser *getReloadXmlParser() { return &reload_xml_parser_; };
-    virtual BaseParticles *ThisObjectPtr() { return this; };
+    XmlParser &readReloadXmlFile(const std::string &filefullpath);
+    template <typename OwnerType>
+    void checkReloadFileRead(OwnerType *owner);
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
-    StdLargeVec<Vecd> &ParticlePositions() { return pos_; }
-    StdLargeVec<Real> &VolumetricMeasures() { return Vol_; }
-    virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
-    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
+    void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
+    void registerPositionAndVolumetricMeasureFromReload();
+    StdLargeVec<Vecd> &ParticlePositions() { return *pos_; }
+    StdLargeVec<Real> &VolumetricMeasures() { return *Vol_; }
+    virtual Real ParticleVolume(size_t index) { return (*Vol_)[index]; }
+    virtual Real ParticleSpacing(size_t index) { return std::pow((*Vol_)[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    StdLargeVec<Vecd> pos_;  /**< Position */
-    StdLargeVec<Real> Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_;  /**< Density as a fundamental property of phyiscal matter */
-    StdLargeVec<Real> mass_; /**< Mass as another fundamental property of physical matter */
+    StdLargeVec<Vecd> *pos_;  /**< Position */
+    StdLargeVec<Real> *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
+    StdLargeVec<Real> *rho_;  /**< Density as a fundamental property of phyiscal matter */
+    StdLargeVec<Real> *mass_; /**< Mass as another fundamental property of physical matter */
 
     SPHBody &sph_body_;
     std::string body_name_;
@@ -197,18 +209,13 @@ class BaseParticles
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
+    bool is_reload_file_read_ = false;
 
     virtual void writePltFileHeader(std::ofstream &output_file);
     virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
     //----------------------------------------------------------------------
     //		Small structs for generalize particle operations
     //----------------------------------------------------------------------
-    struct ResizeParticles
-    {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t new_size);
-    };
-
     struct CopyParticleData
     {
         template <typename DataType>
@@ -221,7 +228,7 @@ class BaseParticles
         WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
     };
 
     struct ReadAParticleVariableFromXml
@@ -230,19 +237,18 @@ class BaseParticles
         ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, ParticleData &all_particle_data);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
     };
 
   public:
     //----------------------------------------------------------------------
     //		Assemble based generalize particle operations
     //----------------------------------------------------------------------
-    OperationOnDataAssemble<ParticleData, ResizeParticles> resize_particles_;
     OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
 
   protected:
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
-    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H

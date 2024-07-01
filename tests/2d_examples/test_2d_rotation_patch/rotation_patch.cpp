@@ -60,8 +60,8 @@ class InitialVelocity
     InitialVelocity(SPHBody &sph_body)
         : fluid_dynamics::FluidInitialCondition(sph_body),
           fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())),
-          p_(*fluid_particles_->getVariableByName<Real>("Pressure")),
-          rho_(*fluid_particles_->getVariableByName<Real>("Density")){};
+          p_(*fluid_particles_->getVariableDataByName<Real>("Pressure")),
+          rho_(*fluid_particles_->getVariableDataByName<Real>("Density")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -128,7 +128,7 @@ int main(int ac, char *av[])
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};
-    fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    fluid_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -158,9 +158,9 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(water_block, "DensitySummation");
-    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
-    body_states_recording.addVariableRecording<Matd>(water_block, "LinearGradientCorrectionMatrix");
+    body_states_recording.addToWrite<Real>(water_block, "DensitySummation");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+    body_states_recording.addToWrite<Matd>(water_block, "LinearGradientCorrectionMatrix");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_water_kinetic_energy(water_block);
     ObservedQuantityRecording<Real> write_recorded_water_pressure("Pressure", fluid_observer_contact);

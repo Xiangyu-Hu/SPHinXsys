@@ -7,7 +7,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 VelocityGradient<Contact<Wall>>::VelocityGradient(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<VelocityGradient>(wall_contact_relation),
-      distance_from_wall_(*particles_->getVariableByName<Vecd>("DistanceFromWall")) {}
+      distance_from_wall_(*particles_->getVariableDataByName<Vecd>("DistanceFromWall")) {}
 //=================================================================================================//
 void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -16,7 +16,7 @@ void VelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

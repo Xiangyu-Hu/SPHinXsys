@@ -7,7 +7,7 @@ namespace continuum_dynamics
 {
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
       stress_tensor_3D_(*particles_->registerSharedVariable<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
@@ -48,8 +48,8 @@ ShearStressRelaxation::ShearStressRelaxation(BaseInnerRelation &inner_relation)
       strain_tensor_rate_(*particles_->registerSharedVariable<Matd>("StrainTensorRate")),
       von_mises_stress_(*particles_->registerSharedVariable<Real>("VonMisesStress")),
       von_mises_strain_(*particles_->registerSharedVariable<Real>("VonMisesStrain")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
 {
     particles_->addVariableToSort<Matd>("ShearStress");
     particles_->addVariableToSort<Matd>("ShearStressRate");

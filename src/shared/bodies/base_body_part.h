@@ -47,7 +47,7 @@ class BodyPart
     BodyPart(SPHBody &sph_body, const std::string &body_part_name)
         : sph_body_(sph_body), body_part_name_(body_part_name),
           base_particles_(sph_body.getBaseParticles()),
-          pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
+          pos_(*base_particles_.getVariableDataByName<Vecd>("Position")){};
     virtual ~BodyPart(){};
 
     SPHBody &getSPHBody() { return sph_body_; };

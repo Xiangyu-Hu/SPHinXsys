@@ -100,7 +100,7 @@ class CorrectedKernelGradientInner
 
   public:
     explicit CorrectedKernelGradientInner(BaseParticles *inner_particles)
-        : B_(*inner_particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
+        : B_(*inner_particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
@@ -143,8 +143,8 @@ class CorrectedKernelGradientContact
 
   public:
     CorrectedKernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles)
-        : B_(*inner_particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
-          contact_B_(*contact_particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
+        : B_(*inner_particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          contact_B_(*contact_particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return 0.5 * dW_ijV_j * (B_[index_i] + contact_B_[index_j]) * e_ij;

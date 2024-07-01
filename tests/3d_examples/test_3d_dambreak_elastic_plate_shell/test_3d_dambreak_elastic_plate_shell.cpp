@@ -88,11 +88,11 @@ namespace SPH
 {
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    void prepareGeometricData() override
     {
         Real y = -BW + 0.5 * resolution_shell;
         while (y < plate_height)
@@ -100,8 +100,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
             Real z = (DW - plate_width + resolution_shell) * 0.5;
             while (z < 0.5 * (DW + plate_width))
             {
-                initializePositionAndVolumetricMeasure(Vec3d(plate_x_pos, y, z), resolution_shell * resolution_shell);
-                initializeSurfaceProperties(Vec3d(1, 0, 0), t);
+                addPositionAndVolumetricMeasure(Vec3d(plate_x_pos, y, z), resolution_shell * resolution_shell);
+                addSurfaceProperties(Vec3d(1, 0, 0), t);
                 z += resolution_shell;
             }
             y += resolution_shell;
@@ -178,8 +178,8 @@ int main(int ac, char *av[])
     disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     ObserverBody disp_observer_2(sph_system, "Observer2");
     disp_observer_2.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    disp_observer_1.generateParticles<BaseParticles, Observer>(observer_position_1);
-    disp_observer_2.generateParticles<BaseParticles, Observer>(observer_position_2);
+    disp_observer_1.generateParticles<ObserverParticles>(observer_position_1);
+    disp_observer_2.generateParticles<ObserverParticles>(observer_position_2);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -243,12 +243,12 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
-    write_real_body_states.addVariableRecording<Vec3d>(gate, "NormalDirection");
-    write_real_body_states.addVariableRecording<Real>(plate, "Average1stPrincipleCurvature");
-    write_real_body_states.addVariableRecording<Real>(plate, "Average2ndPrincipleCurvature");
-    write_real_body_states.addVariableRecording<Vec3d>(plate, "PressureForceFromFluid");
-    write_real_body_states.addVariableRecording<Vec3d>(wall_boundary, "NormalDirection");
+    write_real_body_states.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states.addToWrite<Vec3d>(gate, "NormalDirection");
+    write_real_body_states.addToWrite<Real>(plate, "Average1stPrincipleCurvature");
+    write_real_body_states.addToWrite<Real>(plate, "Average2ndPrincipleCurvature");
+    write_real_body_states.addToWrite<Vec3d>(plate, "PressureForceFromFluid");
+    write_real_body_states.addToWrite<Vec3d>(wall_boundary, "NormalDirection");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(plate);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_1("Displacement", disp_observer_contact_1);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement_2("Displacement", disp_observer_contact_2);

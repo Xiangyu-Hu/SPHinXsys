@@ -50,8 +50,8 @@ class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegat
     Vecd vel_farfield_;
     StdLargeVec<Real> &rho_, &p_, &Vol_, &mass_;
     StdLargeVec<Vecd> &vel_, &mom_, &pos_;
-    StdLargeVec<Real> inner_weight_summation_, rho_average_, vel_normal_average_;
-    StdLargeVec<Vecd> vel_tangential_average_, vel_average_;
+    StdLargeVec<Real> &inner_weight_summation_, &rho_average_, &vel_normal_average_;
+    StdLargeVec<Vecd> &vel_tangential_average_, &vel_average_;
     StdLargeVec<int> &indicator_, &smeared_surface_;
     StdLargeVec<Vecd> &n_;
 };
