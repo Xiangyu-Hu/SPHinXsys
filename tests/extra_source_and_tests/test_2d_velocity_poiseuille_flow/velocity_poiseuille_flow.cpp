@@ -470,6 +470,7 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation_correction(water_block_inner, water_block_contact);
 
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation_riemann(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation_no_riemann(water_block_inner, water_block_contact);
@@ -618,7 +619,13 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
                     std::cerr << "Error: Time step size Dt is too small. Exiting the function. dt = " << dt << "     dt_ref = " << dt_ref << std::endl;
                     return;
                 }
-                pressure_relaxation.exec(dt);
+
+                if (use_linear_gradient_correction)
+
+                    pressure_relaxation_correction.exec(dt);
+                else
+                    pressure_relaxation.exec(dt);
+
                 kernel_summation.exec();
                 left_inflow_pressure_condition.exec(dt);
                 right_inflow_pressure_condition.exec(dt);
