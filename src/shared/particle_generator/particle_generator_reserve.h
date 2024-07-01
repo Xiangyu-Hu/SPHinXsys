@@ -50,25 +50,25 @@ struct has_ghost_particles<T, std::void_t<decltype(&T::reserveGhostParticles)>> 
 {
 };
 
-template <class PartifclesType, class BufferSizeEstimator, typename... OtherParameters>
-class ParticleGenerator<PartifclesType, ParticleBuffer<BufferSizeEstimator>, OtherParameters...>
-    : public ParticleGenerator<PartifclesType, OtherParameters...>
+template <class ParticlesType, class BufferSizeEstimator, typename... OtherParameters>
+class ParticleGenerator<ParticlesType, ParticleBuffer<BufferSizeEstimator>, OtherParameters...>
+    : public ParticleGenerator<ParticlesType, OtherParameters...>
 {
   public:
     template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, PartifclesType &particles,
+    ParticleGenerator(SPHBody &sph_body, ParticlesType &particles,
                       ParticleBuffer<BufferSizeEstimator> &buffer_boundary, Args &&...args)
-        : ParticleGenerator<PartifclesType, OtherParameters...>(sph_body, particles, std::forward<Args>(args)...),
+        : ParticleGenerator<ParticlesType, OtherParameters...>(sph_body, particles, std::forward<Args>(args)...),
           buffer_boundary_(buffer_boundary)
     {
-        static_assert(!has_ghost_particles<ParticleGenerator<PartifclesType, OtherParameters...>>::value,
+        static_assert(!has_ghost_particles<ParticleGenerator<ParticlesType, OtherParameters...>>::value,
                       "ParticleGenerator: GhostReservation is not allowed ahead of BufferReservation.");
     };
     virtual ~ParticleGenerator(){};
 
     virtual void setAllParticleBounds() override
     {
-        ParticleGenerator<PartifclesType, OtherParameters...>::setAllParticleBounds();
+        ParticleGenerator<ParticlesType, OtherParameters...>::setAllParticleBounds();
         buffer_boundary_.reserveBufferParticles(this->base_particles_, this->particle_spacing_ref_);
     };
 
@@ -76,21 +76,21 @@ class ParticleGenerator<PartifclesType, ParticleBuffer<BufferSizeEstimator>, Oth
     ParticleBuffer<BufferSizeEstimator> &buffer_boundary_;
 };
 
-template <class PartifclesType, typename GhostParameter, typename... OtherParameters>
-class ParticleGenerator<PartifclesType, Ghost<GhostParameter>, OtherParameters...>
-    : public ParticleGenerator<PartifclesType, OtherParameters...>
+template <class ParticlesType, typename GhostParameter, typename... OtherParameters>
+class ParticleGenerator<ParticlesType, Ghost<GhostParameter>, OtherParameters...>
+    : public ParticleGenerator<ParticlesType, OtherParameters...>
 {
   public:
     template <typename... Args>
-    ParticleGenerator(SPHBody &sph_body, PartifclesType &particles,
+    ParticleGenerator(SPHBody &sph_body, ParticlesType &particles,
                       Ghost<GhostParameter> &ghost_boundary, Args &&...args)
-        : ParticleGenerator<PartifclesType, OtherParameters...>(sph_body, particles, std::forward<Args>(args)...),
+        : ParticleGenerator<ParticlesType, OtherParameters...>(sph_body, particles, std::forward<Args>(args)...),
           ghost_boundary_(ghost_boundary){};
     virtual ~ParticleGenerator(){};
 
     virtual void setAllParticleBounds() override
     {
-        ParticleGenerator<PartifclesType, OtherParameters...>::setAllParticleBounds();
+        ParticleGenerator<ParticlesType, OtherParameters...>::setAllParticleBounds();
         ghost_boundary_.reserveGhostParticles(this->base_particles_, this->particle_spacing_ref_);
     };
 

@@ -54,7 +54,7 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
 
     // initialize a uniform distribution between 0 (inclusive) and 1 (exclusive)
     std::mt19937_64 rng;
-    std::uniform_real_distribution<Real> unif(0, 1);
+    std::uniform_real_distribution<Real> uniform_distr(0, 1);
 
     // Calculate the interval based on the number of particles.
     Real interval = planned_number_of_particles_ / (all_cells_ + TinyReal);
@@ -71,7 +71,7 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
                 {
                     if (initial_shape_.checkContain(particle_position))
                     {
-                        Real random_real = unif(rng);
+                        Real random_real = uniform_distr(rng);
                         // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
                         if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
                         {
