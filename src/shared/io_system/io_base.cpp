@@ -145,5 +145,14 @@ void ReloadParticleIO::writeToFile(size_t iteration_step)
         bodies_[i]->writeToXmlForReloadParticle(filefullpath);
     }
 }
+//=============================================================================================//
+ParticleGenerationRecording::ParticleGenerationRecording(SPHBody &sph_body)
+    : BaseIO(sph_body.getSPHSystem()), sph_body_(sph_body),
+      state_recording_(sph_system_.StateRecording()) {}
+//=============================================================================================//
+void ParticleGenerationRecording::writeToFile(size_t iteration_step)
+{
+    writeWithFileName(padValueWithZeros(iteration_step));
+}
 //=================================================================================================//
 } // namespace SPH

@@ -167,13 +167,13 @@ bool ParticleGenerator<BaseParticles, Network>::
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
 {
-    BodyStatesRecordingToVtp write_states({sph_body_});
+    ParticleGenerationRecordingToVtp write_particle_gneration(sph_body_, position_);
 
     std::cout << "Now creating Particles on network... " << std::endl;
 
     size_t ite = 0;
     sph_body_.setNewlyUpdated();
-    write_states.writeToFile(0);
+    write_particle_gneration.writeToFile(0);
 
     IndexVector branches_to_grow;
     IndexVector new_branches_to_grow;
@@ -201,7 +201,7 @@ void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
 
         ite++;
         sph_body_.setNewlyUpdated();
-        write_states.writeToFile(ite);
+        write_particle_gneration.writeToFile(ite);
     }
     std::mt19937_64 random_engine;
     for (size_t i = 0; i != n_it_; i++)
@@ -230,7 +230,7 @@ void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
 
         ite++;
         sph_body_.setNewlyUpdated();
-        write_states.writeToFile(ite);
+        write_particle_gneration.writeToFile(ite);
     }
 
     std::cout << base_particles_.total_real_particles_

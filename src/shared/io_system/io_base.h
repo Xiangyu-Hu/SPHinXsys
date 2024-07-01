@@ -109,7 +109,7 @@ class BodyStatesRecording : public BaseIO
 
     template <typename DerivedVariableMethod,
               typename DynamicsIdentifier, typename... Args>
-    void addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&... args)
+    void addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
     {
         SPHBody &sph_body = identifier.getSPHBody();
         if (isBodyIncluded(bodies_, &sph_body))
@@ -197,6 +197,19 @@ class ReloadParticleIO : public BaseIO
     };
 
     virtual void writeToFile(size_t iteration_step = 0) override;
+};
+
+class ParticleGenerationRecording : public BaseIO
+{
+
+  public:
+    ParticleGenerationRecording(SPHBody &body);
+    virtual void writeToFile(size_t iteration_step) override;
+
+  protected:
+    SPHBody &sph_body_;
+    bool state_recording_;
+    virtual void writeWithFileName(const std::string &sequence) = 0;
 };
 } // namespace SPH
 #endif // IO_BASE_H
