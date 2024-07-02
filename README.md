@@ -112,22 +112,29 @@ For installation, program manual and tutorials, please check <https://www.sphinx
 Please check the documentation of the code at <https://xiangyu-hu.github.io/SPHinXsys/>.
 For a Docker image, check <https://hub.docker.com/r/toshev/sphinxsys>.
 
-## Get involved to SPHinXsys
+## Interaction with SPHinXsys and the team
 
-Thank you for using and supporting our open-source project! We value all feedback and strive to improve our codebase continuously.
+Thank you for using and supporting our open-source project! 
+We value all feedbacks.
 
-As the code is on git-hub, you can register an account there (if you do not have a github account yet)
-and fork out the SPHinXsys repository.
-You can work on the forked repository and add new features, and then commit them.
-You can also initiate a pull request to the main repository,
-so that your new features can be merged into it.
+#### For SPHinXsys users:
 
-To ensure efficient and effective development, we prioritize addressing issues and pull requests from those who actively contribute to the project. Your contributions, whether through code, documentation, or other means, help us maintain and enhance the project for everyone.
-We encourage all users to consider contributing in any way they can. Together, we can build a better, more robust software.
+Your input is crucial to us. We encourage you to report any issues you encounter with the library, including:
 
+* Bug reports
+* Poorly written code or algorithm designs
+* Benchmark test issues, whether within the library or from literature, especially those highlighting potential deficiencies
 
-You are also welcomed to join the main repository as a collaborator,
-by which you are able to branch directly in the main repository,
-and review the pull request.
+We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
-If you have any further question, you are also welcomed to contact <xiangyu.hu@tum.de>.
+#### For SPHinXsys Developers:
+
+If you don't have a GitHub account yet, please register for one. Fork the SPHinXsys repository to add new features or improve existing ones. Once your changes are ready, commit them and initiate a pull request to have your contributions merged into the main repository.
+
+To ensure efficient and effective development, we prioritize addressing issues raised by active contributors—whether through code, documentation, or other means. We welcome any interaction with SPHinXsys and our team.
+
+You can also join us as a collaborator, enabling you to branch directly within the main repository and review pull requests.
+
+Together, we can build a leading-edge multi-physics library open for all!
+
+If you have any further question, please contact <xiangyu.hu@tum.de>.
