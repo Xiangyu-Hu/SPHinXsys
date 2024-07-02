@@ -1039,6 +1039,8 @@ namespace fluid_dynamics
 		}
 	}
 //=================================================================================================//
+
+//=================================================================================================//
 	ConstrainVelocityAt_Y_Direction::
 		ConstrainVelocityAt_Y_Direction(SPHBody& sph_body, Real Length_channel)
 		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 

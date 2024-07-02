@@ -500,6 +500,66 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd>& e_nearest_normal_;
 	};
 //=================================================================================================//
+	template <typename... InteractionTypes>
+	class ExtraTransportForce;
+
+	template <class DataDelegationType, class ParticleScope>
+	class ExtraTransportForce<Base, DataDelegationType, ParticleScope>
+		: public LocalDynamics, public DataDelegationType
+	{
+	public:
+		template <class BaseRelationType>
+		explicit ExtraTransportForce(BaseRelationType& base_relation);
+		virtual ~ExtraTransportForce() {};
+	protected:
+	    StdLargeVec<Real>& rho_;
+		StdLargeVec<Vecd>& vel_;
+		StdLargeVec<Vecd> &zero_gradient_residue_;
+		StdLargeVec<Matd> extra_transport_stress_;
+		StdLargeVec<Vecd> extra_transport_vel_;
+		ParticleScope within_scope_;
+	};
+	//** Inner part *
+	template < typename... CommonControlTypes>
+	class ExtraTransportForce<Inner<>, CommonControlTypes...> 
+        : public ExtraTransportForce<Base, FluidDataInner, CommonControlTypes...>
+	{
+	public:
+		explicit ExtraTransportForce(BaseInnerRelation& inner_relation);
+		virtual ~ExtraTransportForce() {};
+		void initialization(size_t index_i, Real dt = 0.0);
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+        StdLargeVec<Real> &Vol_;
+		const Real h_ref_;
+		StdLargeVec<Matd> &extra_transport_stress_;
+		StdLargeVec<Vecd> &extra_transport_vel_;
+	};
+	//** Wall part *
+	template <typename... CommonControlTypes>
+	class ExtraTransportForce<Contact<Boundary>, CommonControlTypes...> 
+	    : public ExtraTransportForce<Base, FluidContactData, CommonControlTypes...>
+	{
+	public:
+		explicit ExtraTransportForce(BaseContactRelation& contact_relation);
+		virtual ~ExtraTransportForce() {};
+		void interaction(size_t index_i, Real dt = 0.0);
+	protected:
+        StdLargeVec<Matd> &extra_transport_stress_;
+		StdLargeVec<Vecd> &extra_transport_vel_;
+	    StdVec<StdLargeVec<Real> *> wall_Vol_;
+	};
+
+	//** Interface part *
+    template < typename... CommonControlTypes>
+	using BaseExtraTransportForceComplex = ComplexInteraction<ExtraTransportForce<Inner<>, Contact<Boundary>>, CommonControlTypes...>;
+    
+	template <class ParticleScope>
+	using ExtraTransportForceComplex = BaseExtraTransportForceComplex<ParticleScope>;
+
+
+//=================================================================================================//
 	class ConstrainVelocityAt_Y_Direction : public LocalDynamics,
 		public FluidDataSimple
 	{
