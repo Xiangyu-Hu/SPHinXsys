@@ -124,6 +124,7 @@ Your input is crucial to us. We encourage you to report any issues you encounter
 * Bug reports
 * Poorly written code or algorithm designs
 * Benchmark test issues, whether within the library or from literature, especially those highlighting potential deficiencies
+* Other issues
 
 We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
