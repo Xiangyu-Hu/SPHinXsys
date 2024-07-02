@@ -316,12 +316,12 @@ class NozzleWallBoundary : public MultiPolygonShape
         outer_wall_shape.push_back(Vecd(0.0, 0.5 * DH + Bw));
         outer_wall_shape.push_back(Vecd(L_in, 0.5 * DH + Bw));
         outer_wall_shape.push_back(Vecd(L_in + L_slope, 0.5 * DH - H_noozle + Bw));
-        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH - H_noozle + Bw));
-        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, 0.5 * DH + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat - Bw, 0.5 * DH - H_noozle + Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat - Bw, 0.5 * DH + Bw));
         outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out, 0.5 * DH + Bw));
         outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat + L_out, -0.5 * DH - Bw));
-        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH - Bw));
-        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat, -0.5 * DH + H_noozle - Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat - Bw, -0.5 * DH - Bw));
+        outer_wall_shape.push_back(Vecd(L_in + L_slope + L_throat - Bw, -0.5 * DH + H_noozle - Bw));
         outer_wall_shape.push_back(Vecd(L_in + L_slope, -0.5 * DH + H_noozle - Bw));
         outer_wall_shape.push_back(Vecd(L_in, -0.5 * DH - Bw));
         outer_wall_shape.push_back(Vecd(0.0, -0.5 * DH - Bw));
