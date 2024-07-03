@@ -149,7 +149,7 @@ namespace fluid_dynamics
     {
 		if (this->within_scope_(index_i))
 		{
-            //vel_[index_i] += extra_transport_vel_[index_i] ;
+            this->vel_[index_i] += extra_transport_vel_[index_i] ;
 		}
 		
     }
