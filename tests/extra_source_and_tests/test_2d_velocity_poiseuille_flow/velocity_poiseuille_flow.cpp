@@ -356,8 +356,9 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     Real DL = DH * length_to_height_ratio; /**< Channel length. */
     const Real L_throat = DH * 4 / 1.2;    // Based on FDA geometry
     const Real L_slope = DH * 2.2685 / 1.2;
-    const Real L_out = DH * 7;
+    const Real L_out = DH * 22.5;
     const Real L_in = DL - L_throat - L_slope - L_out;
+    const Real DH_nozzle = 1 / 3 * DH;
     if (is_FDA && L_in < 0.)
     {
         std::cerr << "Invalid input: L_in cannot be negative for FDA geometry." << std::endl;
@@ -371,10 +372,18 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     const Real Re = 100.0;                    /**< Reynolds number. */
     const Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
     Real predicted_pressure = 8 * mu_f * DL * U_f / pow(DH, 2);
+    //----------------------------------------------------------------------
+    //  Increasing pressure difference due to nozzle using Bernoulli equation
+    //  p1 + 0.5 rho v1^2 = p2 + 0.5 rho v2^2, where 1 is inlet and 2 is nozzle
+    //  Nozzle width = 1/3 DH => v2 = 3*v1
+    //  p1-p2 = 4*rho * v1^2
+    //----------------------------------------------------------------------
+    if (is_FDA)
+        predicted_pressure += 4 * rho0_f * pow(U_f, 2);
     Real maximum_pressure_fluctuation = predicted_pressure * 2.0;
-    Real c_f = std::max(sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)), U_f * 10.); // sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)) means maximum_pressure_fluctuation will be 1% of p0
+    Real c_f = is_FDA ? std::max(sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)), U_f * 10.) : std::max(sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)), U_f * 10. * DH / DH_nozzle); // sqrt(maximum_pressure_fluctuation / 0.01 * (1 / rho0_f)) means maximum_pressure_fluctuation will be 1% of p0
     std::cout << "predicted_pressure = " << predicted_pressure << ", accepted predicted_pressure fluctuation= " << maximum_pressure_fluctuation << std::endl;
-    Real U_max = std::max(c_f / 10.0, U_f);
+    Real U_max = is_FDA ? std::max(c_f / 10.0, U_f) : std::max(c_f / 10.0, U_f * DH / DH_nozzle);
     outlet_pressure = 0.0;
     //----------------------------------------------------------------------
     Real resolution_ref = DH / number_of_particles; /**< Initial reference particle spacing. */
@@ -528,10 +537,10 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 20.0;       /**< End time. */
-    Real max_end_time = 1000.0; /**< End time. */
-    Real Output_Time = 2;       /**< Time stamps for output of body states. */
-    Real dt = 0.0;              /**< Default acoustic time step sizes. */
+    Real end_time = 20.0;      /**< End time. */
+    Real max_end_time = 300.0; /**< End time. */
+    Real Output_Time = 20;     /**< Time stamps for output of body states. */
+    Real dt = 0.0;             /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Defined convergence checker
     //----------------------------------------------------------------------
@@ -723,54 +732,98 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
 }
 int main(int ac, char *av[])
 {
-    size_t length_to_height_ratio = 20;
+    Real length_to_height_ratio = 20;
     size_t number_of_particles = 40;
     bool is_FDA = false;
     bool use_transport_correction = false;
     bool use_linear_gradient_correction = false;
     bool use_Riemann = true;
-    // Study without transport_correction in different length_to_height_ratio
-    {
-        length_to_height_ratio = 10;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-    {
-        length_to_height_ratio = 30;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-    {
-        length_to_height_ratio = 40;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-    // Study without transport_correction in different length_to_height_ratio
-    use_transport_correction = true;
-    {
-        length_to_height_ratio = 10;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-    {
-        length_to_height_ratio = 30;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-    {
-        length_to_height_ratio = 40;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
+    // // Study without transport_correction in different length_to_height_ratio
+    // {
+    //     length_to_height_ratio = 10;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 30;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 40;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // // Study without transport_correction in different length_to_height_ratio
+    // use_transport_correction = true;
+    // {
+    //     length_to_height_ratio = 10;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 30;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 40;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
     // Study without transport_correction in different length_to_height_ratio
     use_transport_correction = true;
     use_linear_gradient_correction = true;
+    // {
+    //     length_to_height_ratio = 10;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 30;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 40;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // use_transport_correction = false;
+    // use_linear_gradient_correction = true;
+    // {
+    //     length_to_height_ratio = 10;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 30;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 40;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // is_FDA = true;
+    // use_transport_correction = false;
+    // use_linear_gradient_correction = true;
+    // {
+    //     length_to_height_ratio = 10;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 30;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 40;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    is_FDA = true;
+    use_transport_correction = true;
+    use_linear_gradient_correction = true;
+    number_of_particles = 60;
+    // {
+    //     length_to_height_ratio = 10;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
+    // {
+    //     length_to_height_ratio = 30;
+    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
+    // }
     {
-        length_to_height_ratio = 10;
+        length_to_height_ratio = 47.5;
         channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
     }
-    {
-        length_to_height_ratio = 30;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-    {
-        length_to_height_ratio = 40;
-        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    }
-
     return 0;
 }
