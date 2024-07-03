@@ -536,6 +536,10 @@ namespace fluid_dynamics
 		StdLargeVec<Matd> &extra_transport_stress_;
 		StdLargeVec<Vecd> &extra_transport_vel_;
 	};
+
+	template < class ParticleScope>
+	using ExtraTransportForceInner =ExtraTransportForce<Inner<>, ParticleScope>;
+
 	//** Wall part *
 	template <typename... CommonControlTypes>
 	class ExtraTransportForce<Contact<Boundary>, CommonControlTypes...> 
@@ -557,7 +561,6 @@ namespace fluid_dynamics
     
 	template <class ParticleScope>
 	using ExtraTransportForceComplex = BaseExtraTransportForceComplex<ParticleScope>;
-
 
 //=================================================================================================//
 	class ConstrainVelocityAt_Y_Direction : public LocalDynamics,
