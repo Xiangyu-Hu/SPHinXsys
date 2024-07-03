@@ -20,6 +20,12 @@ Real bias_coeff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
 //----------------------------------------------------------------------
+// Define extra classes which are used in the main program.
+// These classes are defined under the namespace of SPH.
+//----------------------------------------------------------------------
+namespace SPH
+{
+//----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
 class DiffusionBlock : public MultiPolygonShape
@@ -37,65 +43,45 @@ class DiffusionBlock : public MultiPolygonShape
     }
 };
 //----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
-    };
-};
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-//----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-
         if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
         {
-            all_species_[phi_][index_i] = 1.0;
+            phi_[index_i] = 1.0;
         }
         if (pos_[index_i][0] >= 1.0)
         {
-            all_species_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
+            phi_[index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
         }
     };
+
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxation<Inner<DiffusionParticles, CorrectedKernelGradientInner>>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
+using DiffusionBodyRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, BaseDiffusion>>;
 //----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
-class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
+template <>
+class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
 {
   public:
-    explicit ParticleGeneratorTemperatureObserver(SPHBody &sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body)
         : ParticleGenerator<Observer>(sph_body)
     {
         size_t number_of_observation_points = 11;
@@ -109,6 +95,7 @@ class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
         }
     }
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -123,13 +110,14 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<Lattice>();
+    DirectionalDiffusion *diffusion =
+        diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles(ParticleGeneratorTemperatureObserver(temperature_observer));
+    temperature_observer.generateParticles<BaseParticles, ObserverBody>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -144,16 +132,18 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
-    SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
-    GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
+
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, diffusion);
+    SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
+
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------

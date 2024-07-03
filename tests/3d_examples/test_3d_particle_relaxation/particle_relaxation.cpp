@@ -49,13 +49,12 @@ int main(int ac, char *av[])
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
     imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-    imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<Lattice, Adaptive>();
-    imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+    imported_model.generateParticles<BaseParticles, Lattice, Adaptive>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
+    write_imported_model_to_vtp.addVariableRecording<Real>(imported_model, "SmoothingLengthRatio");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.

@@ -13,7 +13,7 @@ case name: test_0d_regression_test
 
 case_name = "test_0d_regression_test"
 body_name = "InnerDomain"
-parameter_name = "DiffusionReactionSpeciesAverage"
+parameter_name = "TotalPhi"
 body_name_1 = "TemperatureObserver"
 parameter_name_1 = "Phi"
 

@@ -20,28 +20,45 @@ std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream
     return padValueWithZeros(i_time);
 }
 //=============================================================================================//
-BodyStatesRecording::BodyStatesRecording(SPHBodyVector bodies)
-    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
+BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
+    : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
       state_recording_(sph_system_.StateRecording()) {}
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHBody &body)
-    : BodyStatesRecording({&body}) {}
+    : BaseIO(body.getSPHSystem()), bodies_({&body}),
+      state_recording_(sph_system_.StateRecording()) {}
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
     writeWithFileName(convertPhysicalTimeToString(GlobalStaticVariables::physical_time_));
 }
 //=============================================================================================//
 void BodyStatesRecording::writeToFile(size_t iteration_step)
 {
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
     writeWithFileName(padValueWithZeros(iteration_step));
 };
+//=============================================================================================/
+bool BodyStatesRecording::isBodyIncluded(SPHBody *sph_body)
+{
+    auto result = std::find_if(bodies_.begin(), bodies_.end(),
+                               [&](auto &body) -> bool
+                               { return body == sph_body; });
+    return result != bodies_.end() ? true : false;
+}
 //=============================================================================================//
-RestartIO::RestartIO(SPHBodyVector bodies)
-    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
+RestartIO::RestartIO(SPHSystem &sph_system)
+    : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
       overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
 {
-    std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
+    std::transform(bodies_.begin(), bodies_.end(), std::back_inserter(file_names_),
                    [&](SPHBody *body) -> std::string
                    { return io_environment_.restart_folder_ + "/" + body->getName() + "_rst_"; });
 }

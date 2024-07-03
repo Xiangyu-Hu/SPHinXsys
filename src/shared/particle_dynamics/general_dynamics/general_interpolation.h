@@ -33,23 +33,21 @@
 
 namespace SPH
 {
-typedef DataDelegateContact<BaseParticles, BaseParticles> InterpolationContactData;
-
 /**
  * @class BaseInterpolation
  * @brief Base class for interpolation.
  */
 template <typename DataType>
-class BaseInterpolation : public LocalDynamics, public InterpolationContactData
+class BaseInterpolation : public LocalDynamics, public DataDelegateContact
 {
   public:
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
-        : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
+        : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
           interpolated_quantities_(nullptr)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+            contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
             StdLargeVec<DataType> *contact_data =
                 this->contact_particles_[k]->template getVariableByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
@@ -142,7 +140,7 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
  * TODO: this formulation is not correct, need to be fixed.
  */
 class CorrectInterpolationKernelWeights : public LocalDynamics,
-                                          public InterpolationContactData
+                                          public DataDelegateContact
 {
   public:
     explicit CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation);

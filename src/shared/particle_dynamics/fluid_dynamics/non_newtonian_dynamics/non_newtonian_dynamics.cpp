@@ -11,7 +11,7 @@ Oldroyd_BIntegration1stHalf<Inner<>>::
 {
     particles_->registerVariable(tau_, "ElasticStress");
     particles_->registerVariable(dtau_dt_, "ElasticStressChangeRate");
-    particles_->registerSortableVariable<Matd>("ElasticStress");
+    particles_->addVariableToSort<Matd>("ElasticStress");
     particles_->addVariableToRestart<Matd>("ElasticStress");
 }
 //=================================================================================================//
@@ -55,7 +55,7 @@ void Oldroyd_BIntegration1stHalf<Contact<Wall>>::interaction(size_t index_i, Rea
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real>& Vol_k = *(wall_Vol_[k]);
+        StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -94,9 +94,9 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::update(size_t index_i, Real dt)
 //=================================================================================================//
 SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      FluidDataSimple(sph_body),
+      DataDelegateSimple(sph_body),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      rho_(this->particles_->rho_),
+      rho_(*this->particles_->template getVariableByName<Real>("Density")),
       mu_srd_(*this->particles_->getVariableByName<Real>("VariableViscosity")),
       diffusionCFL(diffusionCFL) {}
 //=================================================================================================//
@@ -111,7 +111,7 @@ Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
-    : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
       vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),
       generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial())),
       mu_srd_(*particles_->registerSharedVariable<Real>("VariableViscosity"))

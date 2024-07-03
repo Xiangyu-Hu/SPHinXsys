@@ -1,5 +1,7 @@
 #include "particle_generator_mesh.h"
 
+#include "base_particle_dynamics.h"
+
 namespace SPH
 {
 //=================================================================================================//
