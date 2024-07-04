@@ -18,6 +18,112 @@
 #include <string>
 using namespace SPH;
 
+//----------------------------------------------------------------------
+//	Circular buffer for checking convergence usage
+//----------------------------------------------------------------------
+template <typename T>
+class CircularBuffer
+{
+  private:
+    std::vector<T> buffer;
+    size_t head = 0;
+    size_t capacity;
+    size_t count = 0;
+
+  public:
+    CircularBuffer(size_t size) : capacity(size)
+    {
+        buffer.resize(size);
+    }
+
+    void push(const T &item)
+    {
+        buffer[head] = item;
+        head = (head + 1) % capacity;
+        if (count < capacity)
+            count++;
+    }
+
+    T &operator[](size_t index)
+    {
+        return buffer[(head - count + index) % capacity];
+    }
+
+    size_t size() const
+    {
+        return count;
+    }
+
+    bool is_full() const
+    {
+        return count == capacity;
+    }
+
+    T get_average() const
+    {
+        if (count < capacity)
+            return std::numeric_limits<T>::infinity();
+        T sum = 0;
+        for (size_t i = 0; i < buffer.size(); ++i)
+        {
+            sum += buffer[i];
+        }
+        return sum / buffer.size();
+    }
+};
+
+//----------------------------------------------------------------------
+//	ConvergenceChecker
+//----------------------------------------------------------------------
+template <typename T>
+class ConvergenceChecker
+{
+  private:
+    CircularBuffer<T> buffer;
+    T threshold;
+    T percentage_difference_ = std::numeric_limits<T>::infinity();
+
+    bool calculate_convergence()
+    {
+        if (!buffer.is_full())
+        {
+            return false; // Not enough data to determine convergence
+        }
+
+        T max_val = buffer[0];
+        T min_val = buffer[0];
+        for (size_t i = 1; i < buffer.size(); ++i)
+        {
+            if (buffer[i] > max_val)
+                max_val = buffer[i];
+            if (buffer[i] < min_val)
+                min_val = buffer[i];
+        }
+
+        // Calculate the percentage difference
+        T range = max_val - min_val;
+        T average = (max_val + min_val) / 2;
+        T percentage_difference = (range / average) * 100;
+        percentage_difference_ = percentage_difference;
+        std::cout << "converger percentage_difference_ :" << percentage_difference_ << "\n";
+        return percentage_difference < threshold;
+    }
+
+  public:
+    ConvergenceChecker(size_t size, T conv_threshold)
+        : buffer(size), threshold(conv_threshold) {}
+
+    bool update(T new_value)
+    {
+        buffer.push(new_value);
+        return calculate_convergence();
+    }
+
+    T get_percentage_difference()
+    {
+        return percentage_difference_;
+    }
+};
 struct AxialVelocityProfile
 {
     double z;
@@ -103,10 +209,10 @@ void readDataFromFile(
     }
 };
 
-StdVec<Vecd> ObersverAxialGenerator(double x_min, double x_max)
+StdVec<Vecd> ObersverAxialGenerator(double x_min, double x_max, size_t number_of_axial_observer)
 {
     StdVec<Vecd> observer_location;
-    int ny = 51;
+    int ny = number_of_axial_observer + 1;
     double full_length = x_max - x_min;
     for (int i = 0; i < ny; ++i)
     {
@@ -173,7 +279,7 @@ struct FDA_nozzle_parameters
     double fluid_length = 200 * scale; // defined in mesh file
     double outlet_pressure = 0;
     // end time
-    double end_time = 5.0;
+    double end_time = 500.0;
 };
 
 void setup_directory(const std::string &path)
@@ -261,7 +367,7 @@ class TimeDependentAcceleration : public Gravity
 
   public:
     explicit TimeDependentAcceleration(Vecd gravity_vector)
-        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.00), du_ave_dt_(0) {}
+        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.), du_ave_dt_(0.) {}
 
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
@@ -278,18 +384,19 @@ struct InflowVelocity
 {
     Real u_max_;
     Real radius_squared_; // radius at inlet
+    Real t_ref_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_max_(0.0), radius_squared_(0.0) {}
+        : u_max_(0.0), radius_squared_(0.0), t_ref_(2.0) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vec3d pos = position;
         pos[0] = 0; // set x direction to 0
         double radius_square = pos.squaredNorm();
-
-        u_max_ = U_f * 2;
+        Real run_time = GlobalStaticVariables::physical_time_;
+        u_max_ = run_time < t_ref_ ? 0.5 * U_f * (1.0 - cos(Pi * run_time / t_ref_)) : U_f;
         radius_squared_ = pow(inlet_diameter * 0.5, 2);
         double vel = u_max_ * (1 - radius_square / radius_squared_);
         Vec3d target_velocity = Vec3d::UnitX() * vel;
@@ -393,20 +500,8 @@ class RadialObserverContainer
     }
 };
 
-void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500)
+void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
 {
-    GlobalStaticVariables::physical_time_ = 0;
-
-    const double scale = params.scale;
-    inlet_diameter = params.inlet_diameter;
-    const double Q_f = params.Q_f;
-    U_f = Q_f / params.inlet_area;
-    const double U_max = Q_f / params.throat_area * 2; // U max suppose to happend at throat
-    const double c_f = 10 * U_max;                     // Speed of sound
-
-    std::cout << "U_f (velocity at inlet): " << U_f << std::endl;
-    std::cout << "Re: " << Re << std::endl;
-
     // Map to hold each profile accessed by the z-value as a key (obtaining radial velocity)
     std::map<double, AxialVelocityProfile> radial_velocity_profiles;
     std::map<double, AxialVelocityProfile> axial_velocity_profiles;
@@ -418,6 +513,20 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         "./input/PIV_Sudden_Expansion_500_999.txt", "plot-z-distribution-axial-velocity", axial_velocity_profiles);
     readDataFromFile(
         "./input/PIV_Sudden_Expansion_500_999.txt", "plot-z-distribution-pressure", axial_pressure_profiles);
+    GlobalStaticVariables::physical_time_ = 0;
+
+    const double scale = params.scale;
+    inlet_diameter = params.inlet_diameter;
+    const double Q_f = params.Q_f;
+    U_f = Q_f / params.inlet_area;
+    double U_max = Q_f / params.throat_area * 2;                                        // U max suppose to happend at throat
+    const double max_pressure_diff = 250.;                                              // maximum pressure difference found from exp data
+    double c_f = SMAX(10. * U_max, pow(max_pressure_diff / 0.01 / params.rho0_f, 0.5)); // Speed of sound
+    U_max = SMAX(c_f * 0.1, U_max);
+
+    std::cout << "U_f (velocity at inlet): " << U_f << std::endl;
+    std::cout << "U_max                  : " << U_max << std::endl;
+    std::cout << "Re                     : " << Re << std::endl;
 
     // radial observer at x axis
     std::vector<double> radiao_observer_X;
@@ -452,7 +561,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     const double x_min_domain = fluid_shape->getBounds().first_.x();
     const double x_max_domain = fluid_shape->getBounds().second_.x();
 
-    Real boundary_width = 5 * resolution_ref;
+    Real boundary_width = 3. * resolution_ref;
     Real half_boundary_width = boundary_width * 0.5;
     Vecd bidirectional_buffer_halfsize = Vec3d(half_boundary_width, params.inlet_diameter * 0.5, params.inlet_diameter * 0.5);
     Vec3d left_disposer_translation = Vec3d(x_min_domain + half_boundary_width, 0, 0);
@@ -563,7 +672,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     /** mass equation. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Computing viscous acceleration. */
@@ -601,17 +710,19 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //----------------------------------------------------------------------
     //	Observer
     //----------------------------------------------------------------------
+    // Axial
     ObserverBody observer_axial(sph_system, "fluid_observer_axial");
-    observer_axial.generateParticles<BaseParticles, Observer>(ObersverAxialGenerator(x_min_domain, x_max_domain));
+    observer_axial.generateParticles<BaseParticles, Observer>(ObersverAxialGenerator(x_min_domain, x_max_domain, number_of_axial_observer));
     ContactRelation axial_velocity_observer_contact(observer_axial, {&water_block});
+    ObservingAQuantity<Vecd>
+        update_axial_observer_velocity(axial_velocity_observer_contact, "Velocity");
+    // Radial
     RadialObserverContainer observer_radial_container(sph_system);
     for (auto &pos : radiao_observer_X)
     {
         observer_radial_container.add_radial_observer(
             pos, params.inlet_diameter, water_block, wall_boundary);
     }
-    ObservingAQuantity<Vecd>
-        update_axial_observer_velocity(axial_velocity_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -623,6 +734,20 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     water_body_recording.addVariableRecording<Real>(water_block, "Density");
     water_body_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
     water_body_recording.addVariableRecording<Vec3d>(water_block, "KernelSummation");
+    //----------------------------------------------------------------------
+    //	Defined convergence checker
+    //----------------------------------------------------------------------
+    ConvergenceChecker<double> conv_checker(10, 0.5); // Buffer of 10 values, convergence threshold of 0.5 percent
+    bool is_converged = false;
+    size_t mid_index_of_observer = number_of_axial_observer / 2.0;
+    // StdLargeVec<Vecd> &pos_radial = observer_axial.getBaseParticles().ParticlePositions();
+    StdLargeVec<Vecd> &vel_radial = *observer_axial.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    auto &vel_of_mid_index_observer = vel_radial[mid_index_of_observer][0];
+    // auto &pos_y_of_mid_index_observer = pos_radial[mid_index_of_observer][1];
+
+    int convergence_checker_output_interval = 50;
+    std::ofstream file_mid_observer(sph_system.getIOEnvironment().output_folder_ + "/output_velocity_of_mid_observer_NP" + std::to_string(number_of_particles) + ".csv");
+    file_mid_observer << "Time,Velocity X,Convergence Rate\n";
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -695,13 +820,14 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
-                          << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                          << "	Dt = " << Dt << "	dt = " << dt << "	convergence = " << conv_checker.get_percentage_difference() << "    is_converged = " << is_converged << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
                     update_axial_observer_velocity.exec();
                 }
             }
+
             number_of_iterations++;
 
             time_instance = TickCount::now();
@@ -716,6 +842,23 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             boundary_indicator.exec();
             left_emitter_inflow_injection.tag_buffer_particles.exec();
             right_emitter_inflow_injection.tag_buffer_particles.exec();
+            if (number_of_iterations % convergence_checker_output_interval == 0)
+            {
+                axial_velocity_observer_contact.updateConfiguration();
+                update_axial_observer_velocity.exec();
+                is_converged = conv_checker.update(vel_of_mid_index_observer);
+                std::cout << "add value to analysis convergence :" << vel_of_mid_index_observer << std::endl;
+                if (is_converged)
+                {
+                    std::cout << "Converged at iteration " << vel_of_mid_index_observer << std::endl;
+                }
+                if (std::isfinite(conv_checker.get_percentage_difference()))
+                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << conv_checker.get_percentage_difference() << "\n";
+                else
+                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << 0 << "\n";
+
+                // calculate_observer_avg_vel();
+            }
         }
         TickCount t2 = TickCount::now();
         axial_velocity_observer_contact.updateConfiguration();
