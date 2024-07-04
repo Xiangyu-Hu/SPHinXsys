@@ -532,6 +532,8 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
+    TimeDependentAcceleration time_dependent_acceleration(Vecd::Zero());
+    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
       /** zeroth order consistency */
     InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
@@ -648,6 +650,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
+            apply_gravity_force.exec();
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
