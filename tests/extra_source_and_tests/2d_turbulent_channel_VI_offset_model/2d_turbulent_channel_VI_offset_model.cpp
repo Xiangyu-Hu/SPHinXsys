@@ -156,6 +156,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
     water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
     water_block.addBodyStateForRecording<Real>("Density"); // output for debug
+    water_block.addBodyStateForRecording<Vecd>("ZeroGradientResidue"); // output for debug
 
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
