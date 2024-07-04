@@ -8,11 +8,11 @@
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
+#include "sphinxsys.h"
 #include <cmath>
 #include <functional>
 #include <gtest/gtest.h>
 #include <ostream>
-#include <sphinxsys.h>
 
 #include <numbers>
 #include <string>
@@ -297,7 +297,7 @@ class ObserverRadial : public ObserverBody
   public:
     ObserverRadial(SPHSystem &sph_system, std::string name, double x, double diameter) : ObserverBody(sph_system, name) // Assuming the observer has a predefined shape or characteristic name.
     {
-        this->generateParticles<Observer>(ObserverRadialGenerator(x, diameter));
+        this->generateParticles<BaseParticles, Observer>(ObserverRadialGenerator(x, diameter));
     }
 };
 
@@ -472,20 +472,16 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     std::filesystem::create_directory(folderPath);
     // FLUID
     FluidBody water_block(sph_system, fluid_shape);
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
-    water_block.generateParticlesWithReserve<Lattice>(in_outlet_particle_buffer);
+    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_shape);
-    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<Lattice>();
+    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     InnerRelation wall_boundary_inner(wall_boundary);
-    //----------------------------------------------------------------------
-    //	Define simple file input and outputs functions.
-    //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
@@ -506,7 +502,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         //----------------------------------------------------------------------
         random_inserted_body_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        write_states.writeToFile(0);
+        water_body_recording.writeToFile(0);
         //----------------------------------------------------------------------
         //	Particle relaxation loop.
         //----------------------------------------------------------------------
@@ -518,33 +514,45 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             if (ite_p % 200 == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-                write_states.writeToFile(ite_p);
+                water_body_recording.writeToFile(ite_p);
             }
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
         // Output particles position for reload.
         // write_particle_reload_files.writeToFile(0);
     }
-
-    ObserverBody observer_axial(sph_system, "fluid_observer_axial");
-    observer_axial.generateParticles<Observer>(ObersverAxialGenerator(x_min_domain, x_max_domain));
-
-    /** topology */
+    //----------------------------------------------------------------------
+    //	Topology
+    //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    ContactRelation water_block_contact(water_block, {&wall_boundary});
-    ContactRelation axial_velocity_observer_contact(observer_axial, {&water_block});
-    RadialObserverContainer observer_radial_container(sph_system);
-    for (auto &pos : radiao_observer_X)
-    {
-        observer_radial_container.add_radial_observer(
-            pos, params.inlet_diameter, water_block, wall_boundary);
-    }
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
-
-    /**
-     * @brief 	Define all numerical methods which are used in this case.
-     */
+    ContactRelation water_block_contact(water_block, {&wall_boundary});    
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);    
+    //----------------------------------------------------------------------
+    //	Define all numerical methods which are used in this case.
+    //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+      /** zeroth order consistency */
+    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
+    /** surface particle identification */
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
+        boundary_indicator(water_block_inner, water_block_contact);
+    /** momentum equation. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    /** mass equation. */
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    /** Time step size without considering sound wave speed. */
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    /** Time step size with considering sound wave speed. */
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+        /** Computing viscous acceleration. */
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
+        viscous_acceleration(water_block_inner, water_block_contact);
+    /** Impose transport velocity. */
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
+        transport_velocity_correction(water_block_inner, water_block_contact);
+    //----------------------------------------------------------------------
+    //	Set up boundary condition
+    //----------------------------------------------------------------------
     /** delete outflow particles */
     BodyAlignedBoxByCell left_disposer(
         water_block, makeShared<AlignedBoxShape>(Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(left_disposer_translation)), bidirectional_buffer_halfsize));
@@ -552,94 +560,83 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     BodyAlignedBoxByCell right_disposer(
         water_block, makeShared<AlignedBoxShape>(Transform(Vecd(right_disposer_translation)), bidirectional_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer, xAxis);
-    /** surface particle identification */
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
-        boundary_indicator(water_block_inner, water_block_contact);
     /** bidirectional buffer */
     BodyAlignedBoxByCell left_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Vecd(left_bidirectional_translation)), bidirectional_buffer_halfsize));
-
     // fluid_dynamics::BidirectionalBuffer<LeftInflowPressure, SequencedPolicy> left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
     fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
-
     BodyAlignedBoxByCell right_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(right_bidirectional_translation)), bidirectional_buffer_halfsize));
-
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure, SequencedPolicy> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis); /** output parameters */
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<int>("BufferParticleIndicator");
-    // water_block.addBodyStateForRecording<Vec3d>("KernelSummation");
 
-    /** density correction in pressure-driven flow */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
-    /** zeroth order consistency */
-    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
-    /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** momentum equation. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    /** mass equation. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** pressure boundary condition. */
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
     SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
-
-    // Set up velocity condition
-
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
+    /** density correction in pressure-driven flow */
+    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
 
-    /** Computing viscous acceleration. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
-        viscous_acceleration(water_block_inner, water_block_contact);
-
-    /** Impose transport velocity. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
-        transport_velocity_correction(water_block_inner, water_block_contact);
-
-    /**
-     * @brief Output.
-     */
-    /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(sph_system.sph_bodies_);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_centerline_velocity("Velocity", axial_velocity_observer_contact);
-    /**
-     * @brief Setup geometry and initial conditions.
-     */
+    //----------------------------------------------------------------------
+    //	Observer
+    //----------------------------------------------------------------------
+    ObserverBody observer_axial(sph_system, "fluid_observer_axial");
+    observer_axial.generateParticles<BaseParticles, Observer>(ObersverAxialGenerator(x_min_domain, x_max_domain));
+    ContactRelation axial_velocity_observer_contact(observer_axial, {&water_block});
+    RadialObserverContainer observer_radial_container(sph_system);
+    for (auto &pos : radiao_observer_X)
+    {
+        observer_radial_container.add_radial_observer(
+            pos, params.inlet_diameter, water_block, wall_boundary);
+    }    
+    ObservingAQuantity<Vecd>
+        update_axial_observer_velocity(axial_velocity_observer_contact, "Velocity");
+    //----------------------------------------------------------------------
+    //	Define simple file input and outputs functions.
+    //----------------------------------------------------------------------
+    BodyStatesRecordingToVtp observer_axial_recording(observer_axial);
+    observer_axial_recording.addVariableRecording<Vecd>(observer_axial, "Velocity");
+    BodyStatesRecordingToVtp water_body_recording(water_block);
+    water_body_recording.addVariableRecording<Real>(water_block, "Pressure");
+    water_body_recording.addVariableRecording<int>(water_block, "Indicator");
+    water_body_recording.addVariableRecording<Real>(water_block, "Density");
+    water_body_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
+    water_body_recording.addVariableRecording<Vec3d>(water_block,"KernelSummation");
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     boundary_indicator.exec();
     left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
     wall_boundary_normal_direction.exec();
-
-    /**
-     * @brief 	Basic parameters.
-     */
+    //----------------------------------------------------------------------
+    //	Setup computing and initial conditions.
+    //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = params.end_time; /**< End time. */
     Real Output_Time = 0.25;         /**< Time stamps for output of body states. */
     Real dt = 0.0;                   /**< Default acoustic time step sizes. */
-    /** statistics for computing CPU time. */
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;
     TimeInterval interval_computing_pressure_relaxation;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
-
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile();
-    write_centerline_velocity.writeToFile(number_of_iterations);
-    /**
-     * @brief 	Main loop starts here.
-     */
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    observer_axial_recording.writeToFile();
+    update_axial_observer_velocity.exec();
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -677,7 +674,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_centerline_velocity.writeToFile(number_of_iterations);
+                    update_axial_observer_velocity.exec();
                 }
             }
             number_of_iterations++;
@@ -699,7 +696,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         axial_velocity_observer_contact.updateConfiguration();
         observer_radial_container.update_configureations();
         observer_radial_container.update_observing_quantities();
-        body_states_recording.writeToFile();
+        observer_axial_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -721,7 +718,7 @@ int main(int argc, char *argv[])
 {
     const double Re = 500;
     FDA_nozzle_parameters params;
-    std::vector<int> number_of_particles = {5, 10, 15, 20}; // Create a vector with desired particle counts
+    std::vector<int> number_of_particles = {5}; // Create a vector with desired particle counts
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
