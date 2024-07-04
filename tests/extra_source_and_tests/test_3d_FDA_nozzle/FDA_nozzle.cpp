@@ -493,8 +493,10 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
+        /** Write the body state to Vtp file. */
+        BodyStatesRecordingToVtp write_wall_body_to_vtp(wall_boundary);
         // Write the particle reload files.
-        // ReloadParticleIO write_particle_reload_files(wall_boundary);
+        ReloadParticleIO write_particle_reload_files(wall_boundary);
         // A  Physics relaxation step.
         RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
         //----------------------------------------------------------------------
@@ -502,7 +504,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         //----------------------------------------------------------------------
         random_inserted_body_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        water_body_recording.writeToFile(0);
+        write_wall_body_to_vtp.writeToFile(0);
         //----------------------------------------------------------------------
         //	Particle relaxation loop.
         //----------------------------------------------------------------------
@@ -514,12 +516,12 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             if (ite_p % 200 == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-                water_body_recording.writeToFile(ite_p);
+                write_wall_body_to_vtp.writeToFile(ite_p);
             }
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
         // Output particles position for reload.
-        // write_particle_reload_files.writeToFile(0);
+        write_particle_reload_files.writeToFile(0);
     }
     //----------------------------------------------------------------------
     //	Topology
@@ -536,8 +538,10 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     /** surface particle identification */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
         boundary_indicator(water_block_inner, water_block_contact);
+
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
     /** momentum equation. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     /** mass equation. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
@@ -632,8 +636,9 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    observer_axial_recording.writeToFile();
     update_axial_observer_velocity.exec();
+    observer_axial_recording.writeToFile();    
+    water_body_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -646,6 +651,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
+            corrected_configuration_fluid.exec();
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -697,6 +703,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         observer_radial_container.update_configureations();
         observer_radial_container.update_observing_quantities();
         observer_axial_recording.writeToFile();
+        water_body_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
