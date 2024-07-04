@@ -520,8 +520,8 @@ namespace fluid_dynamics
 		ParticleScope within_scope_;
 	};
 	//** Inner part *
-	template < typename... CommonControlTypes>
-	class ExtraTransportForce<Inner<>, CommonControlTypes...> 
+	template <class LimiterType, typename... CommonControlTypes>
+	class ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...> 
         : public ExtraTransportForce<Base, FluidDataInner, CommonControlTypes...>
 	{
 	public:
@@ -535,10 +535,11 @@ namespace fluid_dynamics
 		const Real h_ref_;
 		StdLargeVec<Matd> &extra_transport_stress_;
 		StdLargeVec<Vecd> &extra_transport_vel_;
+		LimiterType limiter_;
 	};
 
-	template < class ParticleScope>
-	using ExtraTransportForceInner =ExtraTransportForce<Inner<>, ParticleScope>;
+	template <class LimiterType, class ParticleScope>
+	using ExtraTransportForceInner =ExtraTransportForce<Inner<LimiterType>, ParticleScope>;
 
 	//** Wall part *
 	template <typename... CommonControlTypes>
@@ -556,12 +557,14 @@ namespace fluid_dynamics
 	};
 
 	//** Interface part *
-    template < typename... CommonControlTypes>
-	using BaseExtraTransportForceComplex = ComplexInteraction<ExtraTransportForce<Inner<>, Contact<Boundary>>, CommonControlTypes...>;
+    template <class LimiterType, typename... CommonControlTypes>
+	using BaseExtraTransportForceComplex = ComplexInteraction<ExtraTransportForce<Inner<LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
     
 	template <class ParticleScope>
 	using ExtraTransportForceComplex = BaseExtraTransportForceComplex<ParticleScope>;
 
+	template <class ParticleScope>
+	using ExtraTransportForceLimitedComplex = BaseExtraTransportForceComplex<TruncatedLinear, ParticleScope>;
 //=================================================================================================//
 	class ConstrainVelocityAt_Y_Direction : public LocalDynamics,
 		public FluidDataSimple
