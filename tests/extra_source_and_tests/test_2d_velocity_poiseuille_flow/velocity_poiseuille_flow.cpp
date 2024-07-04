@@ -23,6 +23,7 @@ using namespace SPH;
 Real DH = 0.;             // prescribed value in main()
 Real U_f = 0.;            // prescribed value in main()
 Real outlet_pressure = 0; // prescribed value in main()
+Real t_ref = 5.;
 
 //----------------------------------------------------------------------
 //	Circular buffer for checking convergence usage
@@ -177,6 +178,25 @@ struct RightInflowPressure
         return outlet_pressure_;
     }
 };
+//----------------------------------------------------------------------
+//	Define time dependent acceleration in x-direction
+//----------------------------------------------------------------------
+class TimeDependentAcceleration : public Gravity
+{
+    Real t_ref_, u_ref_, du_ave_dt_;
+
+  public:
+    explicit TimeDependentAcceleration(Vecd gravity_vector, Real t_ref, Real u_ref)
+        : Gravity(gravity_vector), t_ref_(t_ref), u_ref_(u_ref), du_ave_dt_(0) {}
+
+    virtual Vecd InducedAcceleration(const Vecd &position) override
+    {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
+
+        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
+    }
+};
 
 //----------------------------------------------------------------------
 //	inflow velocity definition.
@@ -192,7 +212,7 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(U_f), t_ref_(5.0), DH_(DH)
+        : u_ref_(U_f), t_ref_(t_ref), DH_(DH)
     {
     }
 
@@ -347,16 +367,17 @@ class NozzleWallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const size_t number_of_particles, const bool is_FDA = false, const bool use_transport_correction = true, const bool use_linear_gradient_correction = true, const bool use_Riemann = true, const size_t number_of_observer = 50)
+void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const size_t number_of_particles, const bool is_FDA = false, const bool use_transport_correction = true, const bool use_linear_gradient_correction = true, const bool use_Riemann = true, const Real max_end_time = 20., const size_t number_of_observer = 50)
 {
     //----------------------------------------------------------------------
     //	Basic geometry parameters and numerical setup.
     //----------------------------------------------------------------------
     DH = 2.0;                              /**< Channel height. */
+    const Real D_throat = 2./3.;
     Real DL = DH * length_to_height_ratio; /**< Channel length. */
     const Real L_throat = DH * 4 / 1.2;    // Based on FDA geometry
     const Real L_slope = DH * 2.2685 / 1.2;
-    const Real L_out = DH * 22.5;
+    const Real L_out = D_throat * 22.5; //based on https://www.mdpi.com/2311-5521/6/1/4#B33-fluids-06-00004, L_out is 22.5 times of throat diameter
     const Real L_in = DL - L_throat - L_slope - L_out;
     const Real DH_nozzle = 1 / 3 * DH;
     if (is_FDA && L_in < 0.)
@@ -474,6 +495,8 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
+    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero(),t_ref,U_f);
+    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);
@@ -537,10 +560,9 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 20.0;      /**< End time. */
-    Real max_end_time = 300.0; /**< End time. */
-    Real Output_Time = 20;     /**< Time stamps for output of body states. */
-    Real dt = 0.0;             /**< Default acoustic time step sizes. */
+    const Real end_time = 20.;  /**< Minimum run time. */
+    Real Output_Time = 2;       /**< Time stamps for output of body states. */
+    Real dt = 0.0;              /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Defined convergence checker
     //----------------------------------------------------------------------
@@ -602,6 +624,7 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
+            apply_gravity_force.exec();
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             if (Dt < 1e-3 * Dt_ref)
@@ -732,98 +755,23 @@ void channel_flow(int ac, char *av[], const Real length_to_height_ratio, const s
 }
 int main(int ac, char *av[])
 {
-    Real length_to_height_ratio = 20;
-    size_t number_of_particles = 40;
-    bool is_FDA = false;
-    bool use_transport_correction = false;
-    bool use_linear_gradient_correction = false;
+    size_t length_to_height_ratio = (25+22.5)/3.; // accroding to https://www.mdpi.com/2311-5521/6/1/4#B33-fluids-06-00004, the total length is (25+22.5) times to height of nozzle throat. DH / D_throat = 3
+    size_t number_of_particles = 20;
+    bool use_transport_correction = true;
+    bool use_linear_gradient_correction = true;
+    Real max_end_time = 20.;
     bool use_Riemann = true;
-    // // Study without transport_correction in different length_to_height_ratio
-    // {
-    //     length_to_height_ratio = 10;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 30;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 40;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // // Study without transport_correction in different length_to_height_ratio
-    // use_transport_correction = true;
-    // {
-    //     length_to_height_ratio = 10;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 30;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 40;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // Study without transport_correction in different length_to_height_ratio
-    use_transport_correction = true;
-    use_linear_gradient_correction = true;
-    // {
-    //     length_to_height_ratio = 10;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 30;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 40;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // use_transport_correction = false;
-    // use_linear_gradient_correction = true;
-    // {
-    //     length_to_height_ratio = 10;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 30;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 40;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // is_FDA = true;
-    // use_transport_correction = false;
-    // use_linear_gradient_correction = true;
-    // {
-    //     length_to_height_ratio = 10;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 30;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 40;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    is_FDA = true;
-    use_transport_correction = true;
-    use_linear_gradient_correction = true;
-    number_of_particles = 60;
-    // {
-    //     length_to_height_ratio = 10;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
-    // {
-    //     length_to_height_ratio = 30;
-    //     channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
-    // }
     {
-        length_to_height_ratio = 47.5;
+        bool is_FDA = false;
         channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann);
     }
+    {
+        bool is_FDA = true;
+        number_of_particles = 30;
+        max_end_time = 140.;
+        channel_flow(ac, av, length_to_height_ratio, number_of_particles, is_FDA, use_transport_correction, use_linear_gradient_correction, use_Riemann, max_end_time);
+    }
+    
+
     return 0;
 }
