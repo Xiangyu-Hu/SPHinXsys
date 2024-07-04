@@ -18,8 +18,6 @@
 #include <string>
 using namespace SPH;
 
-constexpr Real Pi = Real(M_PI);
-
 struct AxialVelocityProfile
 {
     double z;
@@ -254,10 +252,28 @@ struct RightInflowPressure
 
 Real U_f = 0.;
 Real inlet_diameter = 0;
+//----------------------------------------------------------------------
+//	Define time dependent acceleration in x-direction
+//----------------------------------------------------------------------
+class TimeDependentAcceleration : public Gravity
+{
+    Real t_ref_, u_ref_, du_ave_dt_;
 
-/**
- * @brief 	inflow velocity definition.
- */
+  public:
+    explicit TimeDependentAcceleration(Vecd gravity_vector)
+        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.00), du_ave_dt_(0) {}
+
+    virtual Vecd InducedAcceleration(const Vecd &position) override
+    {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
+
+        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0, 0.0) : global_acceleration_;
+    }
+};
+//----------------------------------------------------------------------
+//	inflow velocity definition.
+//----------------------------------------------------------------------
 struct InflowVelocity
 {
     Real u_max_;
@@ -527,15 +543,15 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //	Topology
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    ContactRelation water_block_contact(water_block, {&wall_boundary});    
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);    
+    ContactRelation water_block_contact(water_block, {&wall_boundary});
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
     TimeDependentAcceleration time_dependent_acceleration(Vecd::Zero());
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-      /** zeroth order consistency */
+    /** zeroth order consistency */
     InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
     /** surface particle identification */
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
@@ -550,7 +566,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-        /** Computing viscous acceleration. */
+    /** Computing viscous acceleration. */
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
         viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
@@ -593,7 +609,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     {
         observer_radial_container.add_radial_observer(
             pos, params.inlet_diameter, water_block, wall_boundary);
-    }    
+    }
     ObservingAQuantity<Vecd>
         update_axial_observer_velocity(axial_velocity_observer_contact, "Velocity");
     //----------------------------------------------------------------------
@@ -606,7 +622,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     water_body_recording.addVariableRecording<int>(water_block, "Indicator");
     water_body_recording.addVariableRecording<Real>(water_block, "Density");
     water_body_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
-    water_body_recording.addVariableRecording<Vec3d>(water_block,"KernelSummation");
+    water_body_recording.addVariableRecording<Vec3d>(water_block, "KernelSummation");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -639,7 +655,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //	First output before the main loop.
     //----------------------------------------------------------------------
     update_axial_observer_velocity.exec();
-    observer_axial_recording.writeToFile();    
+    observer_axial_recording.writeToFile();
     water_body_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
