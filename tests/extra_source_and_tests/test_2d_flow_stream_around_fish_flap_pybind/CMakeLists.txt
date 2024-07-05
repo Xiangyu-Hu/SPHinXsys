@@ -2,6 +2,7 @@
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 ### Pybind11
 find_package(pybind11 CONFIG REQUIRED)
+add_compile_options(-Wno-reorder)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
 
