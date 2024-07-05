@@ -11,7 +11,7 @@ if (MSVC)
     add_compile_options(/wd4251) # 例如，禁用特定警告
 else()
     # GCC 或 Clang 编译器设置
-    add_compile_options(-Wall -Wextra -Wno-reorder)
+    add_compile_options(-Wall -Wextra -Wno-reorder -Wno-unused-parameter)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
