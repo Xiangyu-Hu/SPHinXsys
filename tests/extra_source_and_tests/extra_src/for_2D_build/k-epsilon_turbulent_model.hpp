@@ -125,7 +125,7 @@ namespace fluid_dynamics
 		extra_transport_stress_[index_i] = Matd::Zero();
 		if (this->within_scope_(index_i))
 		{
-			Real correction_scaling =   0.05 * h_ref_ * h_ref_; 
+			Real correction_scaling =   0.2 * h_ref_ * h_ref_; 
 			Real inv_h_ratio = 1.0;
 			Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
             

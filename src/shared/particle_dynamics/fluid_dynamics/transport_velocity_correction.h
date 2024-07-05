@@ -65,7 +65,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
     : public TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>
 {
   public:
-    explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.05);
+    explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
     template <typename BodyRelationType, typename FirstArg>
     explicit TransportVelocityCorrection(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};

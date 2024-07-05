@@ -150,7 +150,7 @@ int main(int ac, char *av[])
 
     /** Impose transport velocity, with or without Extra Transprot Force, and with limiter . */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
-    Dynamics1Level<fluid_dynamics::ExtraTransportForceLimitedComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
+    //Dynamics1Level<fluid_dynamics::ExtraTransportForceLimitedComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
 
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
 
@@ -245,7 +245,7 @@ int main(int ac, char *av[])
 
             transport_velocity_correction.exec();
 
-            impose_extra_transport_force.exec();
+            //impose_extra_transport_force.exec();
 
             /** Dynamics including pressure relaxation. */
             Real relaxation_time = 0.0;
