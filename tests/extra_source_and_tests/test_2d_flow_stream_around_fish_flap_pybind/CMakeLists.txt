@@ -43,6 +43,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 target_link_libraries(${PROJECT_NAME} PRIVATE sphinxsys_2d)
 
 # test项目:
-add_test(NAME ${PROJECT_NAME} COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/drl_tool/install.py")
-set_tests_properties(${PROJECT_NAME} PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/drl_tool"
+add_test(NAME ${PROJECT_NAME} COMMAND ${Python3_EXECUTABLE} "${LIBRARY_OUTPUT_PATH}/drl_tool/install.py")
+set_tests_properties(${PROJECT_NAME} PROPERTIES WORKING_DIRECTORY "${LIBRARY_OUTPUT_PATH}/drl_tool"
     PASS_REGULAR_EXPRESSION "success")
