@@ -104,7 +104,7 @@ class SPHAdaptation
 class ParticleWithLocalRefinement : public SPHAdaptation
 {
   public:
-    StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    StdLargeVec<Real> *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement(){};
@@ -113,7 +113,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
-        return h_ratio_[particle_index_i];
+        return (*h_ratio_)[particle_index_i];
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;

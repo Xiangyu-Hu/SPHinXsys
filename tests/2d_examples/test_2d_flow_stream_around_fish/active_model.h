@@ -11,7 +11,7 @@ namespace SPH
  */
 class ActiveModelSolid : public SaintVenantKirchhoffSolid
 {
-    StdLargeVec<Matd> active_strain_;
+    StdLargeVec<Matd> *active_strain_;
 
   public:
     explicit ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);

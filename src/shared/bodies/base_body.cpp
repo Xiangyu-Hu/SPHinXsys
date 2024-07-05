@@ -114,11 +114,6 @@ void SPHBody::writeToXmlForReloadParticle(std::string &filefullpath)
     base_particles_->writeToXmlForReloadParticle(filefullpath);
 }
 //=================================================================================================//
-void SPHBody::readFromXmlForReloadParticle(std::string &filefullpath)
-{
-    base_particles_->readFromXmlForReloadParticle(filefullpath);
-}
-//=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()
 {
     if (!cell_linked_list_created_)

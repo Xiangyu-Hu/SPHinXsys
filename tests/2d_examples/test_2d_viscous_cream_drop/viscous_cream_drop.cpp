@@ -100,7 +100,7 @@ int main(int ac, char *av[])
         : cream.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
-    cream_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cream_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------

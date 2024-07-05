@@ -50,7 +50,7 @@ class Oldroyd_BIntegration1stHalf<Inner<>> : public Integration1stHalfInnerRiema
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> tau_, dtau_dt_;
+    StdLargeVec<Matd> &tau_, &dtau_dt_;
 };
 
 using Integration1stHalfContactWallRiemann =

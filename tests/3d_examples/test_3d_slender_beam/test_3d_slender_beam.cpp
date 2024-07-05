@@ -53,14 +53,15 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Bar;
 template <>
-class ParticleGenerator<Bar> : public ParticleGenerator<Line>
+class ParticleGenerator<LinearParticles, Bar> : public ParticleGenerator<LinearParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Line>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body, LinearParticles &linear_particles)
+        : ParticleGenerator<LinearParticles>(sph_body, linear_particles)
     {
         sph_body.sph_adaptation_->getKernel()->reduceOnce();
     };
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // the beam and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -69,8 +70,8 @@ class ParticleGenerator<Bar> : public ParticleGenerator<Line>
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
             Real y = 0.0;
             Real z = 0.0;
-            initializePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref);
-            initializeLineProperties(n_0, b_n_0, PT, PW);
+            addPositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref);
+            addLineProperties(n_0, b_n_0, PT, PW);
         }
     }
 };
@@ -148,7 +149,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody bar_observer(sph_system, "BarObserver");
-    bar_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    bar_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

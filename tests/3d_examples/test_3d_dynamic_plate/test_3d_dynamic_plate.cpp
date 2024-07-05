@@ -42,11 +42,11 @@ namespace SPH
 {
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -55,8 +55,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
             {
                 Real x = particle_spacing_ref * i - BW + particle_spacing_ref * 0.5;
                 Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
-                initializePositionAndVolumetricMeasure(Vecd(x, y, 0), particle_spacing_ref * particle_spacing_ref);
-                initializeSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0), particle_spacing_ref * particle_spacing_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }
@@ -116,7 +116,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -145,7 +145,7 @@ int main(int ac, char *av[])
     /** Output */
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addVariableRecording<Vec3d>(plate_body, "ForcePrior");
+    write_states.addToWrite<Vec3d>(plate_body, "ForcePrior");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact);
 

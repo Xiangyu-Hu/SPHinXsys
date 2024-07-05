@@ -42,18 +42,19 @@ namespace SPH
 {
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
         {
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-            initializePositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
-            initializeSurfaceProperties(n_0, thickness);
+            addPositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
+            addSurfaceProperties(n_0, thickness);
         }
     };
 };
@@ -97,7 +98,7 @@ int main(int ac, char *av[])
     plate_body.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -129,7 +130,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addVariableRecording<Vecd>(plate_body, "ForcePrior");
+    write_states.addToWrite<Vecd>(plate_body, "ForcePrior");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact); // TODO: using ensemble better
     //----------------------------------------------------------------------

@@ -32,7 +32,7 @@ int main(int ac, char *av[])
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
-    observer.generateParticles<BaseParticles, Observer>(
+    observer.generateParticles<ObserverParticles>(
         StdVec<Vecd>{obs});
     //----------------------------------------------------------------------
     //	Define body relation map.

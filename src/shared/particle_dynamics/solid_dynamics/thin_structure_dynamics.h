@@ -354,7 +354,7 @@ class ShellCurvature : public LocalDynamics, public DataDelegateInner
     StdLargeVec<Real> &k1_; // first principle curvature
     StdLargeVec<Real> &k2_; // second principle curvature
 
-    StdLargeVec<Matd> dn_0_;
+    StdLargeVec<Matd> &dn_0_;
 };
 
 /**

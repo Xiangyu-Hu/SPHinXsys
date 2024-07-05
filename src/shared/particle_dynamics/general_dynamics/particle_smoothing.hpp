@@ -11,10 +11,8 @@ ParticleSmoothing<VariableType>::
     ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
-      smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
-{
-    particles_->registerVariable(temp_, variable_name + "_temp");
-}
+      smoothed_(*particles_->template getVariableDataByName<VariableType>(variable_name)),
+      temp_(*particles_->registerSharedVariable<VariableType>(variable_name + "_temp")) {}
 //=================================================================================================//
 template <typename VariableType>
 void ParticleSmoothing<VariableType>::interaction(size_t index_i, Real dt)
@@ -41,11 +39,10 @@ template <typename VariableType>
 ParticleSnapshotAverage<VariableType>::
     ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      target_variable_(*particles_->template getVariableByName<VariableType>(variable_name))
+      target_variable_(*particles_->template getVariableDataByName<VariableType>(variable_name)),
+      averaged_variable_(*particles_->template registerSharedVariable<VariableType>("Averaged" + variable_name))
 {
-    std::string averaged_variable_name = "Averaged" + variable_name;
-    particles_->registerVariable(averaged_variable_, averaged_variable_name);
-    particles_->addVariableToWrite<VariableType>(averaged_variable_name);
+    particles_->addVariableToWrite<VariableType>("Averaged" + variable_name);
 }
 //=================================================================================================//
 template <typename VariableType>

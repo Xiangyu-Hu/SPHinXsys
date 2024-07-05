@@ -41,7 +41,7 @@ int main(int ac, char *av[])
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<BaseParticles, Observer>(observation_locations);
+    fluid_observer.generateParticles<ObserverParticles>(observation_locations);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
