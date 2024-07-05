@@ -1,0 +1,10 @@
+setup.py
+gym_fish/__init__.py
+gym_fish.egg-info/PKG-INFO
+gym_fish.egg-info/SOURCES.txt
+gym_fish.egg-info/dependency_links.txt
+gym_fish.egg-info/requires.txt
+gym_fish.egg-info/top_level.txt
+gym_fish/envs/__init__.py
+gym_fish/envs/check.py
+gym_fish/envs/fish.py
