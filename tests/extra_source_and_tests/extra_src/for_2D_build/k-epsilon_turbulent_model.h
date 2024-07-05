@@ -561,7 +561,7 @@ namespace fluid_dynamics
 	using BaseExtraTransportForceComplex = ComplexInteraction<ExtraTransportForce<Inner<LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
     
 	template <class ParticleScope>
-	using ExtraTransportForceComplex = BaseExtraTransportForceComplex<ParticleScope>;
+	using ExtraTransportForceComplex = BaseExtraTransportForceComplex<NoLimiter, ParticleScope>;
 
 	template <class ParticleScope>
 	using ExtraTransportForceLimitedComplex = BaseExtraTransportForceComplex<TruncatedLinear, ParticleScope>;
