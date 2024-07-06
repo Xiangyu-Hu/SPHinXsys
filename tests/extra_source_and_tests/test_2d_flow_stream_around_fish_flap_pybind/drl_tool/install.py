@@ -2,6 +2,10 @@
 import os
 import sys
 import subprocess
+import platform
+import argparse
+
+
 sys_str = platform.system()
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -35,10 +39,7 @@ print("tianshou library is installed and ready to use.")
 
 # swith to current position install cd pip install -e .
 #!/usr/bin/env python3
-import os
-import sys
-import platform
-import argparse
+
 # add dynamic link library or shared object to python env
 # attention: match current python version with the version exposing the cpp code
 
