@@ -2,7 +2,7 @@
 import os
 import sys
 import subprocess
-
+sys_str = platform.system()
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
@@ -11,10 +11,20 @@ def install_self():
 try:
     import tianshou
 except ImportError:
-    print("tianshou library not found. Installing...")
-    install("numpy==1.23.5")
-    install("tianshou")
-    import tianshou
+    if sys_str == 'Windows':
+        print("tianshou library not found. Installing...")
+    
+        install("tianshou")
+        import tianshou
+    elif sys_str == 'Linux':
+        install("numpy==1.23.5")
+        install("tianshou")
+        import tianshou
+    elif:
+        print("tianshou library not found. Installing...")
+    
+        install("tianshou")
+        import tianshou
 
 print("tianshou library is installed and ready to use.")
 
@@ -26,7 +36,7 @@ import platform
 import argparse
 # add dynamic link library or shared object to python env
 # attention: match current python version with the version exposing the cpp code
-sys_str = platform.system()
+
 # If this doesn't works, try path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
 path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 print('path1:', path_1)
