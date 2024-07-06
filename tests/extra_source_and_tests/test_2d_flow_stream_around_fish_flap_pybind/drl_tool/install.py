@@ -17,14 +17,13 @@ try:
 except ImportError:
     if sys_str == 'Windows':
         print("tianshou library not found. Installing...")
-    
         install("tianshou")
         import tianshou
     elif sys_str == 'Linux':
         print("numpy library reinstalling...")
-        install(" --user numpy==1.23.5")
+        install("numpy==1.23.4")
         print("tianshou library not found. Installing...")
-        install("--user tianshou")
+        install("tianshou")
         print("finish install numpy & tianshou")
         try:
             import tianshou
