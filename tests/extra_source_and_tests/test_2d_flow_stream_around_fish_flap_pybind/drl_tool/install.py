@@ -12,8 +12,8 @@ try:
     import tianshou
 except ImportError:
     print("tianshou library not found. Installing...")
-    install("numpy==1.23.4")
-    install("tianshou==0.5.1")
+    install("numpy==1.23.5")
+    install("tianshou==0.5.2")
     import tianshou
 
 print("tianshou library is installed and ready to use.")
