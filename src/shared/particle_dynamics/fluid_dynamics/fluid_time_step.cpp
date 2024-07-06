@@ -8,10 +8,13 @@ namespace fluid_dynamics
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-      mass_(particles_->mass_), vel_(particles_->vel_),
-      force_(particles_->force_), force_prior_(particles_->force_prior_),
+      DataDelegateSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      force_(*particles_->getVariableByName<Vecd>("Force")),
+      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
@@ -32,8 +35,11 @@ Real AcousticTimeStepSize::outputResult(Real reduced_value)
 AdvectionTimeStepSizeForImplicitViscosity::
     AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      FluidDataSimple(sph_body), mass_(particles_->mass_), vel_(particles_->vel_),
-      force_(particles_->force_), force_prior_(particles_->force_prior_),
+      DataDelegateSimple(sph_body),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      force_(*particles_->getVariableByName<Vecd>("Force")),
+      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//

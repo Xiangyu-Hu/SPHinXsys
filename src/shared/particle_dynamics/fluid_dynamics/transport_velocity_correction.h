@@ -62,7 +62,7 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
 
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
 class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>
-    : public TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
@@ -86,7 +86,7 @@ using TransportVelocityCorrectionInner =
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
-    : public TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, DataDelegateContact, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
@@ -99,7 +99,7 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
 
 template <class KernelCorrectionType, typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>
-    : public TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, DataDelegateContact, KernelCorrectionType, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);

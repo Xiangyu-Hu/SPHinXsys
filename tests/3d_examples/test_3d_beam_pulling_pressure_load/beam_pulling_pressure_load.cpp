@@ -41,22 +41,20 @@ class Beam : public ComplexShape
 };
 
 /* define load*/
-class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>,
-                     public solid_dynamics::ElasticSolidDataSimple
+class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
 {
   public:
     PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
         : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
-          solid_dynamics::ElasticSolidDataSimple(sph_body_),
-          mass_n_(particles_->mass_),
-          Vol_(particles_->Vol_),
-          F_(particles_->F_),
+          mass_n_(*particles_->getVariableByName<Real>("Mass")),
+          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+          F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())
     {
         area_0_.resize(particles_->total_real_particles_);
         for (size_t i = 0; i < particles_->total_real_particles_; ++i)
-            area_0_[i] = pow(particles_->Vol_[i], 2.0 / 3.0);
+            area_0_[i] = pow(Vol_[i], 2.0 / 3.0);
     }
 
     void update(size_t index_i, Real time = 0.0)
@@ -120,12 +118,12 @@ int main(int ac, char *av[])
 
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
-    beam_body.generateParticles<Lattice>();
+    beam_body.defineMaterial<LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
+    beam_body.generateParticles<BaseParticles, Lattice>();
 
     // Define Observer
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.generateParticles<Observer>(observation_location);
+    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
@@ -133,13 +131,12 @@ int main(int ac, char *av[])
     /** Corrected configuration. */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(beam_body_inner);
 
-    /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
-
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
+
+    /** Time step size calculation. */
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
 
     /** specify end-time for defining the force-time profile */
     Real end_time = 1;
@@ -163,11 +160,12 @@ int main(int ac, char *av[])
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
 
     /** Damping with the solid body*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
     /** Output */
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(beam_body);
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */

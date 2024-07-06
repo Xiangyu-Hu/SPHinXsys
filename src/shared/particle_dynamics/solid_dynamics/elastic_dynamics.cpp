@@ -11,59 +11,75 @@ namespace solid_dynamics
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      ElasticSolidDataSimple(sph_body), CFL_(CFL),
-      vel_(particles_->vel_), force_(particles_->force_), force_prior_(particles_->force_prior_),
-      mass_(particles_->mass_), smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
-      c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
+      DataDelegateSimple(sph_body), CFL_(CFL),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+      force_(*particles_->getVariableByName<Vecd>("Force")),
+      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+      c0_(elastic_solid_.ReferenceSoundSpeed()) {}
 //=================================================================================================//
 Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
-    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / (((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm() + TinyReal)),
+    Real acceleration_norm = ((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm();
+    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / (acceleration_norm + TinyReal)),
                        smoothing_length_ / (c0_ + vel_[index_i].norm()));
 }
 //=================================================================================================//
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      ElasticSolidDataSimple(sph_body),
-      pos_(particles_->pos_), vel_(particles_->vel_) {}
+      DataDelegateSimple(sph_body),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")) {}
 //=================================================================================================//
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      ElasticSolidDataSimple(sph_body),
-      n_(particles_->n_), n0_(particles_->n0_),
+      DataDelegateSimple(sph_body),
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(*particles_->getVariableByName<Real>("SignedDistance")),
       phi0_(*particles_->getVariableByName<Real>("InitialSignedDistance")),
-      F_(particles_->F_) {}
+      F_(*particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 {
-    // Nanson's relation is used to update the normal direction
+    // Still used polar decomposition to update the normal direction
+    n_[index_i] = getRotatedNormalDirection(F_[index_i], n0_[index_i]);
+    // Nanson's relation is used to update the distance to surface
     Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
-    Real inverse_norm = 1.0 / (current_normal.norm() + TinyReal);
-    n_[index_i] = current_normal * inverse_norm;
-    phi_[index_i] = phi0_[index_i] * inverse_norm;
+    phi_[index_i] = phi0_[index_i] / (current_normal.norm() + SqrtEps); // todo: check this
 }
 //=================================================================================================//
 DeformationGradientBySummation::
     DeformationGradientBySummation(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      Vol_(particles_->Vol_), pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)) {}
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
-      rho_(particles_->rho_), mass_(particles_->mass_), Vol_(particles_->Vol_),
-      pos_(particles_->pos_), vel_(particles_->vel_), force_(particles_->force_),
-      B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
+      force_(*particles_->registerSharedVariable<Vecd>("Force")),
+      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
+      dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate")) {}
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseElasticIntegration(inner_relation),
-      elastic_solid_(particles_->elastic_solid_),
-      rho0_(particles_->elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
-      force_prior_(particles_->force_prior_),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
+      rho_(*particles_->getVariableByName<Real>("Density")),
+      mass_(*particles_->getVariableByName<Real>("Mass")),
+      force_prior_(*particles_->registerSharedVariable<Vecd>("ForcePrior")),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)

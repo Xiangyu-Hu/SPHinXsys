@@ -49,11 +49,15 @@ TEST(Plate, RigidRotationTest)
     }
 }
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class ParticleGeneratorPlate : public ParticleGenerator<Surface>
+class Plate;
+template <>
+class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
 {
   public:
-    explicit ParticleGeneratorPlate(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
     virtual void initializeGeometricVariables() override
     {
         // the plate and boundary
@@ -93,7 +97,9 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
   public:
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(particles_->vel_), angular_vel_(particles_->angular_vel_), pos_(particles_->pos_){};
+          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+          angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
+          pos_(*particles_->getVariableByName<Vecd>("Position")){};
     virtual ~ControlledRotation(){};
 
   protected:
@@ -114,6 +120,7 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
         }
     };
 };
+} // namespace SPH
 /**
  *  The main program
  */
@@ -124,10 +131,9 @@ int main(int ac, char *av[])
 
     /** create a plate body. */
     SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles(ParticleGeneratorPlate(plate_body));
-    auto shell_particles = dynamic_cast<ShellParticles *>(&plate_body.getBaseParticles());
-    plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
+    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.generateParticles<SurfaceParticles, Plate>();
+    auto shell_particles = dynamic_cast<SurfaceParticles *>(&plate_body.getBaseParticles());
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -138,23 +144,23 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(plate_body_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
+
+    /** active-passive stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    /** active-passive stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(plate_body_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(plate_body_inner);
-    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** Constrain the Boundary. */
     ControlledGeometry controlled_geometry(plate_body, "ControlledGeometry");
     SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
-    /** Output */
+    SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
+    /** File and screen outputs */
     IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system);
+    write_states.addVariableRecording<Vecd>(plate_body, "PseudoNormal");
+    write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);
+    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -217,13 +223,13 @@ int main(int ac, char *av[])
     for (int i = 0; i < 10; i++)
     {
         random_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->total_real_particles_);
-        von_mises_strain.push_back(shell_particles->getVonMisesStrain(random_index[i]));
+        von_mises_strain.push_back(all_von_mises_strain[random_index[i]]);
     }
 
     update_normal.exec();
 
-    pseudo_normal = shell_particles->pseudo_n_;
-    normal = shell_particles->n_;
+    pseudo_normal = *shell_particles->getVariableByName<Vecd>("PseudoNormal");
+    normal = *shell_particles->getVariableByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

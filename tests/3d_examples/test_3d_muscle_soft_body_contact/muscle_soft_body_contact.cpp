@@ -63,13 +63,13 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
-    myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    myocardium_body.generateParticles<Lattice>();
+    myocardium_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    myocardium_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineAdaptationRatios(1.15, 1.5);
-    moving_plate.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    moving_plate.generateParticles<Lattice>();
+    moving_plate.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    moving_plate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -105,13 +105,13 @@ int main(int ac, char *av[])
     /** Add spring constraint on the plate. */
     SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
     /** Damping with the solid body*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_plate_kinetic_energy(moving_plate);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

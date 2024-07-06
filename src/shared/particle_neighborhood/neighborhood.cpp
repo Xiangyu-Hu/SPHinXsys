@@ -122,7 +122,7 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
 NeighborBuilderSelfContact::
     NeighborBuilderSelfContact(SPHBody &body)
     : NeighborBuilder(body.sph_adaptation_->getKernel()),
-      pos0_(*body.getBaseParticles().getVariableByName<Vecd>("InitialPosition")) {}
+      pos0_(*body.getBaseParticles().registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
 //=================================================================================================//
 void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
                                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j)

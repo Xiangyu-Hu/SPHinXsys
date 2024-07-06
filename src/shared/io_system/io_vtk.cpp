@@ -15,7 +15,6 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
         if (body->checkNewlyUpdated())
         {
             BaseParticles &base_particles = body->getBaseParticles();
-            base_particles.computeDerivedVariables();
 
             if (state_recording_)
             {
@@ -40,7 +39,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 out_file << "    ";
                 for (size_t i = 0; i != total_real_particles; ++i)
                 {
-                    Vec3d particle_position = upgradeToVec3d(base_particles.pos_[i]);
+                    Vec3d particle_position = upgradeToVec3d(base_particles.ParticlePositions()[i]);
                     out_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
                 }
                 out_file << std::endl;
@@ -89,9 +88,6 @@ void BodyStatesRecordingToVtpString::writeWithFileName(const std::string &sequen
     {
         if (body->checkNewlyUpdated())
         {
-            BaseParticles &base_particles = body->getBaseParticles();
-            base_particles.computeDerivedVariables();
-
             if (state_recording_)
             {
                 const auto &vtuName = body->getName() + "_" + sequence + ".vtu";
@@ -141,13 +137,13 @@ const VtuStringData &BodyStatesRecordingToVtpString::GetVtuData() const
 }
 //=============================================================================================//
 WriteToVtpIfVelocityOutOfBound::
-    WriteToVtpIfVelocityOutOfBound(SPHBodyVector bodies, Real velocity_bound)
-    : BodyStatesRecordingToVtp(bodies), out_of_bound_(false)
+    WriteToVtpIfVelocityOutOfBound(SPHSystem &sph_system, Real velocity_bound)
+    : BodyStatesRecordingToVtp(sph_system), out_of_bound_(false)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         check_bodies_.push_back(
-            check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies[i], velocity_bound));
+            check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies_[i], velocity_bound));
     }
 }
 //=============================================================================================//

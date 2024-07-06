@@ -93,14 +93,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody cream(sph_system, makeShared<Cream>("Cream"));
     cream.defineBodyLevelSetShape();
-    cream.defineParticlesAndMaterial<ElasticSolidParticles, ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
-                                                                                 yield_stress, viscosity, Herschel_Bulkley_power);
+    cream.defineMaterial<ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
+                                              yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cream.generateParticles<Reload>(cream.getName())
-        : cream.generateParticles<Lattice>();
+        ? cream.generateParticles<BaseParticles, Reload>(cream.getName())
+        : cream.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
-    cream_observer.generateParticles<Observer>(observation_location);
+    cream_observer.generateParticles<BaseParticles, Observer>(observation_location);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_cream_state(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_cream_state(sph_system);
         ReloadParticleIO write_particle_reload_files(cream);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -159,17 +159,17 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
-    /** stress relaxation for the balls. */
+
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> cream_stress_relaxation_second_half(cream_inner);
-    /** constraint for the cream. */
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
     BodyRegionByParticle platform(cream, makeShared<MultiPolygonShape>(createPlatformConstraint()));
     SimpleDynamics<FixBodyPartConstraint> platform_constraint(platform);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         cream_displacement_recording("Position", cream_observer_contact);
     //----------------------------------------------------------------------

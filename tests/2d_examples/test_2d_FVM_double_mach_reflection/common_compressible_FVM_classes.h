@@ -6,7 +6,8 @@
 
 #ifndef COMMON_COMPRESSIBLE_FVM_CLASSES_H
 #define COMMON_COMPRESSIBLE_FVM_CLASSES_H
-#include "unstructured_mesh.h"
+
+#include "sphinxsys.h"
 
 namespace SPH
 {

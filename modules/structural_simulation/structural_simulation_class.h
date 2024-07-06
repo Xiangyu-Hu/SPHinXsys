@@ -94,7 +94,7 @@ class SolidBodyForSimulation
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping_random_;
 
   public:
     // no particle reload --> direct generator
@@ -104,21 +104,21 @@ class SolidBodyForSimulation
     ~SolidBodyForSimulation(){};
 
     SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
-    ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
+    BaseParticles *getElasticSolidParticles() { return DynamicCast<BaseParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
     InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
     SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
 void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,
-                                    ElasticSolidParticles &solid_body_from_mesh_particles,
+                                    BaseParticles &solid_body_from_mesh_particles,
                                     InnerRelation &solid_body_from_mesh_inner);
 
 static inline Real getPhysicalViscosityGeneral(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 1.0)
@@ -248,13 +248,6 @@ class StructuralSimulation
 
     // iterators
     int iteration_;
-
-    // data storage
-    StdVec<Real> von_mises_stress_max_;
-    StdLargeVec<StdLargeVec<Real>> von_mises_stress_particles_;
-
-    StdVec<Real> von_mises_strain_max_;
-    StdLargeVec<StdLargeVec<Real>> von_mises_strain_particles_;
 
     // for constructor, the order is important
     void scaleTranslationAndResolution();

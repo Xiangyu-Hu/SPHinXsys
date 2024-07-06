@@ -25,10 +25,10 @@ Real C3 = 1.57;         // Unit W/(m2*K)
 Real C4 = 2.11;         // Unit W/(m*K)
 Real poly_cond = 0.25;  // Unit W/(m*k), polyamide conductivity
 Real epdm_cond = 0.25;  // epdm conductivity
-Real pvc_cond = 0.17;  // pvc conductivity
+Real pvc_cond = 0.17;   // pvc conductivity
 Real pane_cond = 0.035; // insulation panel conductivity
 
-Real getACConductivity(Real b, Real d, Real A)//calculate air cavities conductivity
+Real getACConductivity(Real b, Real d, Real A) // calculate air cavities conductivity
 {
     Real b_equal = sqrt(A * b / d);
     Real d_equal = sqrt(A * d / b);
@@ -54,17 +54,33 @@ Real getACConductivity(Real b, Real d, Real A)//calculate air cavities conductiv
 in the heat flow rate direction, b is the cavity dimension perpendicular to the heat
 flow rate direction. The Area parameters for non-rectangular are given, for rectangular
 formulas are given.---*/
-Real d1 = 0.031;Real b1 = 0.025;Real A1 = 0.00058;
-Real d2 = 0.009;Real b2 = 0.010;Real A2 = 0.000048;
-Real d3 = 0.019;Real b3 = 0.012;Real A3 = d3 * b3;
-Real d4 = 0.019;Real b4 = 0.025;Real A4 = 0.000367;
-Real d5 = 0.03;Real b5 = 0.005;Real A5 = d5 * b5;
-Real d6 = 0.035;Real b6 = 0.015;Real A6 = 0.000417;
-Real d7 = 0.037;Real b7 = 0.036;Real A7 = 0.0006735;
-Real od1 = 0.018;Real ob1 = 0.005;Real oA1 = od1 * ob1;
+Real d1 = 0.031;
+Real b1 = 0.025;
+Real A1 = 0.00058;
+Real d2 = 0.009;
+Real b2 = 0.010;
+Real A2 = 0.000048;
+Real d3 = 0.019;
+Real b3 = 0.012;
+Real A3 = d3 * b3;
+Real d4 = 0.019;
+Real b4 = 0.025;
+Real A4 = 0.000367;
+Real d5 = 0.03;
+Real b5 = 0.005;
+Real A5 = d5 * b5;
+Real d6 = 0.035;
+Real b6 = 0.015;
+Real A6 = 0.000417;
+Real d7 = 0.037;
+Real b7 = 0.036;
+Real A7 = 0.0006735;
+Real od1 = 0.018;
+Real ob1 = 0.005;
+Real oA1 = od1 * ob1;
 
 // unventilated air cavities conductivity
-Real ac1_cond = getACConductivity(b1, d1, A1); 
+Real ac1_cond = getACConductivity(b1, d1, A1);
 Real ac2_cond = getACConductivity(b2, d2, A2);
 Real ac3_cond = getACConductivity(b3, d3, A3);
 Real ac4_cond = getACConductivity(b4, d4, A4);
@@ -73,7 +89,7 @@ Real ac6_cond = getACConductivity(b6, d6, A6);
 Real ac7_cond = getACConductivity(b7, d7, A7);
 
 // slightly ventilated air conductivity
-Real acopen1_cond = 2 * getACConductivity(ob1, od1, oA1);
+Real ac1_open_cond = 2 * getACConductivity(ob1, od1, oA1);
 //----------------------------------------------------------------------
 //	Initial and boundary condition parameters.
 //----------------------------------------------------------------------
@@ -82,7 +98,7 @@ Real initial_temperature = 10.0;
 Real T_infinity_e = 0.0;
 Real T_infinity_i = 20.0;
 
-//Surface resistance, unit (K*m2)/W
+// Surface resistance, unit (K*m2)/W
 Real rs_i = 0.13;
 Real rs_i_increased = 0.20;
 Real rs_e = 0.04;
@@ -354,287 +370,132 @@ MultiPolygon createACOpenBody1()
 
     return multi_polygon;
 }
-//----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<LocalIsotropicDiffusion>("Phi", "Phi", pvc_cond);
-    }
-};
 
-class WallMaterial : public DiffusionReaction<Solid>
+namespace SPH
 {
-  public:
-    WallMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", poly_cond);
-        //polyamide conductivity is the largest, we use it to define the time step.
-    }
-};
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<SolidParticles, WallMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-template <class DynamicsIdentifier, class ParticlesType>
+template <class DynamicsIdentifier>
 class LocalQuantityDefinition
     : public BaseLocalDynamics<DynamicsIdentifier>,
-      public DiffusionReactionSimpleData<ParticlesType>
+      public DataDelegateSimple
 {
   public:
     LocalQuantityDefinition(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()){};
+          DataDelegateSimple(identifier.getSPHBody()){};
     virtual ~LocalQuantityDefinition(){};
 };
-class ThermalConductivityInitialization
-    : public LocalQuantityDefinition<BodyPartByParticle, DiffusionParticles>
-{
-  protected:
-    StdLargeVec<Real> &thermal_conductivity;
-    Real local_diff;
 
+class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByParticle>
+{
   public:
-    explicit ThermalConductivityInitialization(BodyPartByParticle &body_part, Real local_diff)
-        : LocalQuantityDefinition<BodyPartByParticle, DiffusionParticles>(body_part),
-          thermal_conductivity(*(particles_->getVariableByName<Real>("ThermalConductivity"))),
+    explicit LocalDiffusivityDefinition(BodyPartByParticle &body_part, Real local_diff)
+        : LocalQuantityDefinition<BodyPartByParticle>(body_part),
+          thermal_conductivity(*particles_->getVariableByName<Real>("ThermalConductivity")),
           local_diff(local_diff){};
 
     void update(size_t index_i, Real dt)
     {
         thermal_conductivity[index_i] = local_diff;
-    }
-};
-class LocalConvectionInitialization
-    : public LocalQuantityDefinition<BodyPartByParticle, WallParticles>
-{
-  protected:
-    StdLargeVec<Real> &convection_;
-    Real local_convection;
+    };
 
+  protected:
+    StdLargeVec<Real> &thermal_conductivity;
+    Real local_diff;
+};
+
+class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParticle>
+{
   public:
-    explicit LocalConvectionInitialization(BodyPartByParticle &body_part, Real local_convection)
-        : LocalQuantityDefinition<BodyPartByParticle, WallParticles>(body_part),
-          convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-          local_convection(local_convection){};
+    explicit LocalConvectionDefinition(BodyPartByParticle &body_part, Real local_convection)
+        : LocalQuantityDefinition<BodyPartByParticle>(body_part),
+          phi_convection_(*particles_->template getVariableByName<Real>("PhiConvection")),
+          local_convection_(local_convection){};
 
     void update(size_t index_i, Real dt)
     {
-        convection_[index_i] = local_convection;
-    }
-};
-class LocalHeatTransferConvection
-    : public LocalQuantityDefinition<BodyPartByParticle, WallParticles>
-{
+        phi_convection_[index_i] = local_convection_;
+    };
+
   protected:
-    StdLargeVec<Real> &ht_convection_;
-    Real local_ht_convection;
-
-  public:
-    explicit LocalHeatTransferConvection(BodyPartByParticle &body_part, Real local_ht_convection)
-        : LocalQuantityDefinition<BodyPartByParticle, WallParticles>(body_part),
-          ht_convection_(*(this->particles_->template getVariableByName<Real>("HT_Convection"))),
-          local_ht_convection(local_ht_convection){};
-
-    void update(size_t index_i, Real dt)
-    {
-        ht_convection_[index_i] = local_ht_convection;
-    }
+    StdLargeVec<Real> &phi_convection_;
+    Real local_convection_;
 };
-class DiffusionInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
-{
-  protected:
-    size_t phi_;
 
+class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
+{
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = initial_temperature;
+        phi_[index_i] = initial_temperature;
     };
-};
-class RobinWallBoundaryInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
-{
+
   protected:
-    size_t phi_;
-    StdLargeVec<Real> &convection_;
-    Real &T_infinity_;
+    StdLargeVec<Real> &phi_;
+};
 
+class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
+{
   public:
-    explicit RobinWallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-          convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-          T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("T_infinity")))
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
+    explicit RobinBoundaryDefinition(SolidBody &diffusion_body)
+        : LocalDynamics(diffusion_body), DataDelegateSimple(diffusion_body),
+          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          phi_(*particles_->registerSharedVariable<Real>("Phi")),
+          phi_convection_(*(this->particles_->template getVariableByName<Real>("PhiConvection"))),
+          phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>("PhiInfinity"))){};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = -0.0;
+        phi_[index_i] = -0.0;
 
         if (pos_[index_i][1] >= 0.064)
         {
-            convection_[index_i] = convection_i;
-            T_infinity_ = T_infinity_i;
+            phi_convection_[index_i] = convection_i;
+            phi_infinity_ = T_infinity_i;
         }
         if (pos_[index_i][1] <= 0.04)
         {
-            convection_[index_i] = convection_e;
-            T_infinity_ = T_infinity_e;
+            phi_convection_[index_i] = convection_e;
+            phi_infinity_ = T_infinity_e;
         }
-    }
-};
-class ExternalHeatTransferInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
-{
-  protected:
-    size_t phi_;
-    StdLargeVec<Real> &ht_convection_;
-    Real &ht_T_infinity_;
-
-  public:
-    explicit ExternalHeatTransferInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-          ht_convection_(*(this->particles_->template getVariableByName<Real>("HT_Convection"))),
-          ht_T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("HT_T_infinity")))
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
-
-    void update(size_t index_i, Real dt)
-    {
-       ht_convection_[index_i] = convection_e;
-       ht_T_infinity_ = T_infinity_e;
-    }
-};
-class InternalHeatTransferInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
-{
-  protected:
-    size_t phi_;
-    StdLargeVec<Real> &ht_convection_;
-    Real &ht_T_infinity_;
-
-  public:
-    explicit InternalHeatTransferInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-          ht_convection_(*(this->particles_->template getVariableByName<Real>("HT_Convection"))),
-          ht_T_infinity_(*(this->particles_->template getSingleVariableByName<Real>("HT_T_infinity")))
-    {
-       phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
-
-    void update(size_t index_i, Real dt)
-    {
-       ht_convection_[index_i] = convection_i;
-       ht_T_infinity_ = T_infinity_i;
-    }
-};
-
-template <typename... ControlTypes>
-class RobinFlux; /*Calculate heat transfer flux of Robin boundary condition*/
-template <class ParticlesType, class ContactParticlesType, class ContactKernelGradientType>
-class DiffusionRelaxation<RobinFlux<ParticlesType, ContactParticlesType, ContactKernelGradientType>>
-    : public DiffusionRelaxation<Contact<Base>, ParticlesType, ContactParticlesType, ContactKernelGradientType>
-{
-    StdLargeVec<Vecd> &n_;
-    StdVec<StdLargeVec<Vecd> *> ht_n_;
-    StdVec<Real *> ht_T_infinity_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Real> *> ht_flux_;
-    StdVec<StdLargeVec<Real> *> ht_convection_; // ht for heat transfer
-
-  public:
-    explicit DiffusionRelaxation(BaseContactRelation &contact_relation)
-        : DiffusionRelaxation<Contact<Base>, ParticlesType, ContactParticlesType, ContactKernelGradientType>(contact_relation),
-          n_(this->particles_->n_)
-    {
-       ht_flux_.resize(this->all_diffusions_.size());
-       ht_T_infinity_.resize(this->all_diffusions_.size());
-       ht_convection_.resize(this->contact_particles_.size());
-
-       for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-       {
-            ht_flux_[m] = this->particles_->template registerSharedVariable<Real>("HT_Flux");
-            for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-            {
-                ht_n_.push_back(&(this->contact_particles_[k]->n_));
-                contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
-                ht_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HT_Convection");
-                ht_T_infinity_[m] = this->contact_particles_[k]->template registerSingleVariable<Real>("HT_T_infinity");
-            }
-       }
     };
-    virtual ~DiffusionRelaxation(){};
 
-    void update(size_t index_i, Real dt)
-    {
-       for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-       {
-            for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-            {
-                Real ht_flux_ = 0.0;
-
-                StdLargeVec<Vecd> &n_k = *(ht_n_[k]);
-                StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-                StdLargeVec<Real> &ht_convection_k = *(ht_convection_[k]);
-                Real &ht_T_infinity_k = *(ht_T_infinity_[k]);
-
-                Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-                for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = contact_neighborhood.j_[n];
-                    Real dW_ijV_j_ = contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
-                    Vecd &e_ij = contact_neighborhood.e_ij_[n];
-
-                    const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
-                    Vecd n_ij = n_[index_i] - n_k[index_j];
-                    Real area_ij_Robin = grad_ijV_j.dot(n_ij);
-
-                    Real phi_ij = ht_T_infinity_k - (*this->diffusion_species_[m])[index_i];
-                    ht_flux_ += ht_convection_k[index_j] * phi_ij * area_ij_Robin * Vol_k[index_j];
-                }
-                (*this->ht_flux_[m])[index_i] = ht_flux_;
-            }
-       }
-    };
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> &phi_, &phi_convection_;
+    Real &phi_infinity_;
 };
 
-using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
-    DiffusionParticles, WallParticles, KernelGradientInner, KernelGradientContact, Robin, Robin>;
-using RobinFluxCalculation = SimpleDynamics<DiffusionRelaxation<
-    RobinFlux<DiffusionParticles, WallParticles, KernelGradientContact>>>;
+using DiffusionBodyRelaxation =
+    DiffusionBodyRelaxationComplex<BaseDiffusion, KernelGradientInner, KernelGradientContact, Robin>;
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions.
 //----------------------------------------------------------------------
-class ParticleGeneratorTemperatureObserver : public ParticleGenerator<Observer>
+class TemperatureObserver;
+template <>
+class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<Observer>
 {
   public:
-    explicit ParticleGeneratorTemperatureObserver(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
     {
-       /** A line of measuring points at the given position. */
-       size_t number_of_observation_points = 5;
-       Real range_of_measure = H - 0.02;
-       Real start_of_measure = 0.01;
+        /** A line of measuring points at the given position. */
+        size_t number_of_observation_points = 5;
+        Real range_of_measure = H - 0.02;
+        Real start_of_measure = 0.01;
 
-       for (size_t i = 0; i < number_of_observation_points; ++i)
-       {
+        for (size_t i = 0; i < number_of_observation_points; ++i)
+        {
             Vec2d point_coordinate(
                 0.028, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
             positions_.push_back(point_coordinate);
-       }
+        }
     }
 };
+} // namespace SPH
 #endif // WINDOWS_FRAME_DIFFUSION_D7_H

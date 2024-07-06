@@ -2,10 +2,10 @@
 
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
+#include "cell_linked_list.h"
+#include "level_set.h"
 #include "mesh_with_data_packages.hpp"
 #include "vector_functions.h"
-#include "level_set.h"
-#include "cell_linked_list.h"
 
 namespace SPH
 {
@@ -116,7 +116,7 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
     SPHAdaptation::initializeAdaptationVariables(base_particles);
     base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", [&](size_t i) -> Real
                                     { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
-    base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
+    base_particles.addVariableToSort<Real>("SmoothingLengthRatio");
     base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//
@@ -164,52 +164,6 @@ Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &po
 {
     Real phi = shape.findSignedDistance(position);
     return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
-}
-//=================================================================================================//
-ParticleSplitAndMerge::ParticleSplitAndMerge(Real resolution_ref, Real h_spacing_ratio, Real system_resolution_ratio,
-                                             int local_refinement_level)
-    : ParticleWithLocalRefinement(resolution_ref, h_spacing_ratio, system_resolution_ratio,
-                                  local_refinement_level)
-{
-    spacing_min_ = MostRefinedSpacingSplitting(spacing_ref_, local_refinement_level_);
-    Vol_min_ = pow(spacing_min_, Dimensions);
-    h_ratio_max_ = spacing_ref_ / spacing_min_;
-};
-//=================================================================================================//
-bool ParticleSplitAndMerge::isSplitAllowed(Real current_volume)
-{
-    return current_volume - 2.0 * Vol_min_ > -Eps ? true : false;
-}
-//=================================================================================================//
-bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
-{
-    return volume - 1.2 * pow(spacing_min_, Dimensions) < Eps ? true : false;
-}
-//=================================================================================================//
-Real ParticleSplitAndMerge::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
-{
-    return MostRefinedSpacingSplitting(coarse_particle_spacing, local_refinement_level);
-}
-Real ParticleSplitAndMerge::MostRefinedSpacingSplitting(Real coarse_particle_spacing, int local_refinement_level)
-{
-    Real minimum_spacing_particles = pow(2.0, local_refinement_level);
-    Real spacing_ratio = pow(minimum_spacing_particles, 1.0 / (Real)Dimensions);
-    return coarse_particle_spacing / spacing_ratio;
-}
-//=================================================================================================//
-size_t ParticleSplitAndMerge::getCellLinkedListTotalLevel()
-{
-    return 1 + (int)floor(log2(spacing_ref_ / spacing_min_));
-}
-//=================================================================================================//
-Vec2d ParticleSplitAndMerge::splittingPattern(Vec2d pos, Real particle_spacing, Real delta)
-{
-    return Vec2d(pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + Real(0.5) * particle_spacing * sin(delta));
-}
-//=================================================================================================//
-Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
-{
-    return Vec3d(pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta), pos[2]);
 }
 //=================================================================================================//
 } // namespace SPH

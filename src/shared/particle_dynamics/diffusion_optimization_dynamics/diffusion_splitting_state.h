@@ -24,6 +24,8 @@
 /**
  * @file 	diffusion_splitting_state.h
  * @brief 	This is the splitting method for solving state field in optimization problem.
+ * Note that here inner interaction and that with boundary are derived from the inner interaction.
+ * This is because the error and parameters are computed based on both.
  * @author   Bo Zhang and Xiangyu H
  */
 
@@ -39,9 +41,9 @@ namespace SPH
  * @class TemperatureSplittingByPDEInner
  * @brief The temperature on each particle will be modified innerly to satisfy the PDEs.
  */
-template <class ParticlesType, typename VariableType>
+template <typename VariableType>
 class TemperatureSplittingByPDEInner
-    : public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
+    : public OptimizationBySplittingAlgorithmBase<VariableType>
 {
   public:
     TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
@@ -57,10 +59,10 @@ class TemperatureSplittingByPDEInner
  * @class TemperatureSplittingByPDEWithBoundary
  * @brief The temperature on each particle will be modified with boundary to satisfy the PDEs.
  */
-template <class ParticlesType, class ContactParticlesType, typename VariableType>
+template <typename VariableType>
 class TemperatureSplittingByPDEWithBoundary
-    : public TemperatureSplittingByPDEInner<ParticlesType, VariableType>,
-      public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
+    : public TemperatureSplittingByPDEInner<VariableType>,
+      public DataDelegateContactOnly
 {
   public:
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,

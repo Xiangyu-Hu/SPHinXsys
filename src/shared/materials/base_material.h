@@ -94,7 +94,6 @@ class Fluid : public BaseMaterial
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
     virtual Fluid *ThisObjectPtr() override { return this; };
-    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 };
 
 /** @class  Solid
@@ -116,6 +115,10 @@ class Solid : public BaseMaterial
     Real ContactFriction() { return contact_friction_; };
     Real ContactStiffness() { return contact_stiffness_; };
     virtual Solid *ThisObjectPtr() override { return this; };
+    /** Get average velocity when interacting with fluid. */
+    virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles);
+    /** Get average acceleration when interacting with fluid. */
+    virtual StdLargeVec<Vecd> *AverageAcceleration(BaseParticles *base_particles);
 
   protected:
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/

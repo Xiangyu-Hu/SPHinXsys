@@ -53,7 +53,7 @@ class EulerianIntegration1stHalf;
 
 template <class RiemannSolverType>
 class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
-    : public EulerianIntegration<FluidDataInner>
+    : public EulerianIntegration<DataDelegateInner>
 {
   public:
     explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
@@ -93,7 +93,7 @@ class EulerianIntegration2ndHalf;
 
 template <class RiemannSolverType>
 class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
-    : public EulerianIntegration<FluidDataInner>
+    : public EulerianIntegration<DataDelegateInner>
 {
   public:
     typedef RiemannSolverType RiemannSolver;
