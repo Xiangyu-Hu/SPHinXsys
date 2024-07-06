@@ -26,7 +26,7 @@ except ImportError:
             import tianshou
         except ImportError:
             print("install tianshou failed ...")
-    elif:
+    else:
         print("tianshou library not found. Installing...")
         install("tianshou")
 
