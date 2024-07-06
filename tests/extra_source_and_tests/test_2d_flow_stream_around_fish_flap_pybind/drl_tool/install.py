@@ -20,7 +20,7 @@ except ImportError:
         print("numpy library reinstalling...")
         install(" --user numpy==1.23.5")
         print("tianshou library not found. Installing...")
-        install("--user tianshou==0.5.2")
+        install("--user tianshou")
         print("finish install numpy & tianshou")
         try:
             import tianshou
