@@ -9,9 +9,9 @@ namespace SPH
 {
 //=================================================================================================//
 SwapSortableParticleData::SwapSortableParticleData(BaseParticles &base_particles)
-    : sequence_(base_particles.sequence_),
-      unsorted_id_(base_particles.unsorted_id_),
-      sortable_data_(base_particles.sortable_data_),
+    : sequence_(base_particles.ParticleSequences()),
+      unsorted_id_(base_particles.ParticleUnsortedIds()),
+      sortable_data_(base_particles.SortableParticleData()),
       swap_particle_data_value_(sortable_data_) {}
 //=================================================================================================//
 void SwapSortableParticleData::operator()(size_t *a, size_t *b)
@@ -26,8 +26,11 @@ void SwapSortableParticleData::operator()(size_t *a, size_t *b)
 //=================================================================================================//
 ParticleSorting::ParticleSorting(BaseParticles &base_particles)
     : base_particles_(base_particles),
+      unsorted_id_(base_particles.ParticleUnsortedIds()),
+      sorted_id_(base_particles.ParticleSortedIds()),
+      sequence_(base_particles.ParticleSequences()),
       swap_sortable_particle_data_(base_particles), compare_(),
-      quick_sort_particle_range_(base_particles_.sequence_.data(), 0, compare_, swap_sortable_particle_data_),
+      quick_sort_particle_range_(sequence_.data(), 0, compare_, swap_sortable_particle_data_),
       quick_sort_particle_body_() {}
 //=================================================================================================//
 void ParticleSorting::sortingParticleData(size_t *begin, size_t size)
@@ -40,8 +43,6 @@ void ParticleSorting::sortingParticleData(size_t *begin, size_t size)
 //=================================================================================================//
 void ParticleSorting::updateSortedId()
 {
-    const StdLargeVec<size_t> &unsorted_id = base_particles_.unsorted_id_;
-    StdLargeVec<size_t> &sorted_id = base_particles_.sorted_id_;
     size_t total_real_particles = base_particles_.total_real_particles_;
     parallel_for(
         IndexRange(0, total_real_particles),
@@ -49,7 +50,7 @@ void ParticleSorting::updateSortedId()
         {
             for (size_t i = r.begin(); i != r.end(); ++i)
             {
-                sorted_id[unsorted_id[i]] = i;
+                sorted_id_[unsorted_id_[i]] = i;
             }
         },
         ap);

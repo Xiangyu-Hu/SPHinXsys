@@ -105,7 +105,7 @@ PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::
       ghost_boundary_(ghost_boundary),
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
       upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
-      sorted_id_(particles_->sorted_id_) {}
+      sorted_id_(particles_->ParticleSortedIds()) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 {

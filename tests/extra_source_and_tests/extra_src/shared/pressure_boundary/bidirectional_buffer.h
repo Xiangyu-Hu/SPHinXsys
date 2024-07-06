@@ -90,6 +90,7 @@ class BidirectionalBuffer
               axis_(axis), particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.aligned_box_),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+              unsorted_id_(particles_->ParticleUnsortedIds()),
               pos_n_(*particles_->getVariableDataByName<Vecd>("Position")),
               rho_n_(*particles_->getVariableDataByName<Real>("Density")),
               p_(*particles_->getVariableDataByName<Real>("Pressure")),
@@ -107,10 +108,7 @@ class BidirectionalBuffer
             {
                 mutex_switch_to_real_.lock();
                 particle_buffer_.checkEnoughBuffer(*particles_);
-                /** Buffer Particle state copied from real particle. */
-                particles_->copyFromAnotherParticle(particles_->total_real_particles_, index_i);
-                /** Realize the buffer particle by increasing the number of real particle in the body.  */
-                particles_->total_real_particles_ += 1;
+                particles_->createRealParticleFrom(index_i);
                 mutex_switch_to_real_.unlock();
 
                 /** Periodic bounding. */
@@ -128,6 +126,7 @@ class BidirectionalBuffer
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
+        StdLargeVec<size_t> &unsorted_id_;
         StdLargeVec<Vecd> &pos_n_;
         StdLargeVec<Real> &rho_n_, &p_;
         StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;

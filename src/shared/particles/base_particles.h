@@ -83,6 +83,8 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
+    UniquePtrsKeeper<DiscreteVariable<size_t>> unregistered_variable_ptrs_;
+    UniquePtrKeeper<ParticleSorting> particle_sort_ptr_keeper_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -107,12 +109,13 @@ class BaseParticles
     void copyFromAnotherParticle(size_t index, size_t another_index);
     void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
+    void createRealParticleFrom(size_t index);
     //----------------------------------------------------------------------
     //		Parameterized management on generalized particle data
     //----------------------------------------------------------------------
   private:
     template <typename DataType>
-    DiscreteVariable<DataType> *addSharedVariable(const std::string &variable_name);
+    DiscreteVariable<DataType> *addSharedVariable(const std::string &name);
     template <typename DataType>
     StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
@@ -120,54 +123,64 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name, Args &&...args);
+    StdLargeVec<DataType> *registerSharedVariable(const std::string &name, Args &&...args);
 
     template <typename DataType>
     StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
 
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &variable_name, const StdLargeVec<DataType> &geometric_data);
+    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
 
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFromReload(const std::string &variable_name);
+    StdLargeVec<DataType> *registerSharedVariableFromReload(const std::string &name);
 
     template <typename DataType>
-    DiscreteVariable<DataType> *getVariableByName(const std::string &variable_name);
+    DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <typename DataType>
-    StdLargeVec<DataType> *getVariableDataByName(const std::string &variable_name);
+    StdLargeVec<DataType> *getVariableDataByName(const std::string &name);
 
     template <typename DataType>
-    DataType *registerSingleVariable(const std::string &variable_name,
+    DataType *registerSingleVariable(const std::string &name,
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *getSingleVariableByName(const std::string &variable_name);
+    DataType *getSingleVariableByName(const std::string &name);
     //----------------------------------------------------------------------
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
     template <typename DataType>
-    DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
+    DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &name);
     template <typename DataType>
-    void addVariableToWrite(const std::string &variable_name);
+    void addVariableToWrite(const std::string &name);
     template <typename DataType>
-    void addVariableToRestart(const std::string &variable_name);
+    void addVariableToRestart(const std::string &name);
     inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
     template <typename DataType>
-    void addVariableToReload(const std::string &variable_name);
+    void addVariableToReload(const std::string &name);
     inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
     //----------------------------------------------------------------------
     //		Particle data for sorting
     //----------------------------------------------------------------------
-    StdLargeVec<size_t> unsorted_id_; /**< the ids assigned just after particle generated. */
-    StdLargeVec<size_t> sorted_id_;   /**< the sorted particle ids of particles from unsorted ids. */
-    StdLargeVec<size_t> sequence_;    /**< the sequence referred for sorting. */
+  protected:
+    StdLargeVec<size_t> *unsorted_id_; /**< the ids assigned just after particle generated. */
+    StdLargeVec<size_t> *sorted_id_;   /**< the sorted particle ids of particles from unsorted ids. */
+    StdLargeVec<size_t> *sequence_;    /**< the sequence referred for sorting. */
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
-    ParticleSorting particle_sorting_;
+    ParticleSorting *particle_sorting_;
 
+    template <typename... Args>
+    StdLargeVec<size_t> *addUnregisteredVariable(const std::string &name, Args &&...args);
+
+  public:
     template <typename DataType>
-    void addVariableToSort(const std::string &variable_name);
+    void addVariableToSort(const std::string &name);
     template <typename SequenceMethod>
     void sortParticles(SequenceMethod &sequence_method);
+    StdLargeVec<size_t> &ParticleUnsortedIds() { return *unsorted_id_; };
+    StdLargeVec<size_t> &ParticleSortedIds() { return *sorted_id_; };
+    StdLargeVec<size_t> &ParticleSequences() { return *sequence_; };
+    ParticleData &SortableParticleData() { return sortable_data_; };
+    ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     //----------------------------------------------------------------------
     //		Particle data ouput functions
     //----------------------------------------------------------------------

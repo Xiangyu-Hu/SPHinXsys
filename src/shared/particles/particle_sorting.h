@@ -253,6 +253,9 @@ class ParticleSorting
 {
   protected:
     BaseParticles &base_particles_;
+    StdLargeVec<size_t> &unsorted_id_;
+    StdLargeVec<size_t> &sorted_id_;
+    StdLargeVec<size_t> &sequence_;
 
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;

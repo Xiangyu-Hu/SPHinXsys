@@ -37,7 +37,7 @@ EmitterInflowCondition::
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      sorted_id_(particles_->sorted_id_),
+      sorted_id_(particles_->ParticleSortedIds()),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(*particles_->getVariableDataByName<Vecd>("Force")),
@@ -65,7 +65,8 @@ EmitterInflowInjection::
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      sorted_id_(particles_->sorted_id_),
+      unsorted_id_(particles_->ParticleUnsortedIds()),
+      sorted_id_(particles_->ParticleSortedIds()),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
       p_(*particles_->getVariableDataByName<Real>("Pressure")),
@@ -81,10 +82,7 @@ void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
     {
         mutex_switch_to_real_.lock();
         buffer_.checkEnoughBuffer(*particles_);
-        /** Buffer Particle state copied from real particle. */
-        particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
-        /** Realize the buffer particle by increasing the number of real particle in the body.  */
-        particles_->total_real_particles_ += 1;
+        particles_->createRealParticleFrom(sorted_index_i);
         mutex_switch_to_real_.unlock();
 
         /** Periodic bounding. */
