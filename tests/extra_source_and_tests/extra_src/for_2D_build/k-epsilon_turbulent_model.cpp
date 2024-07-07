@@ -636,12 +636,12 @@ namespace fluid_dynamics
 	JudgeIsNearWall::
 		JudgeIsNearWall(BaseInnerRelation& inner_relation,
 			BaseContactRelation& contact_relation)
-		: LocalDynamics(inner_relation.getSPHBody()), 
-		DataDelegateContact(contact_relation),
+		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateContact(contact_relation),
 		pos_(*particles_->getVariableByName<Vecd>("Position")),
 		dimension_(2),
 		fluid_particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
-		wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
+		wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
+		distance_from_wall_(*particles_->getVariableByName<Vecd>("DistanceFromWall"))
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
@@ -674,6 +674,8 @@ namespace fluid_dynamics
 
 		particles_->registerVariable(e_nearest_normal_, "WallNearestNormalUnitVector");
 		particles_->addVariableToSort<Vecd>("WallNearestNormalUnitVector");
+
+		particles_->addVariableToWrite<Vecd>("DistanceFromWall");
 	};
 	//=================================================================================================//
 	void JudgeIsNearWall::interaction(size_t index_i, Real dt)

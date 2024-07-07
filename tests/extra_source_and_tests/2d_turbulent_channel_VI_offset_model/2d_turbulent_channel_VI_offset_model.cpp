@@ -114,7 +114,7 @@ int main(int ac, char *av[])
     }
 
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    
+    InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(water_wall_contact);
     /** Turbulent standard wall function needs normal vectors of wall. */
     //NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
 
@@ -276,6 +276,7 @@ int main(int ac, char *av[])
 
                 density_relaxation.exec(dt);
 
+                distance_to_wall.exec();
                 update_near_wall_status.exec();
                 get_velocity_gradient.exec(dt);
                 standard_wall_function_correction.exec();

@@ -443,6 +443,7 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd>& pos_;
 		int dimension_;
 		Real fluid_particle_spacing_, wall_particle_spacing_;
+		StdLargeVec<Vecd> &distance_from_wall_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 		
