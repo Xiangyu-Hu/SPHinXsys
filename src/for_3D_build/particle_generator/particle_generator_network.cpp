@@ -233,8 +233,7 @@ void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
         write_particle_generation.writeToFile(ite);
     }
 
-    std::cout << base_particles_.TotalRealParticles()
-              << " Particles has been successfully created!" << std::endl;
+    std::cout << position_.size() << " particles has been successfully created!" << std::endl;
 }
 //=================================================================================================//
 } // namespace SPH
