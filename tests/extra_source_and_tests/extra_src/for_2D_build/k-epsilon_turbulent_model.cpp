@@ -86,10 +86,10 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
-		: GetVelocityGradient<Base, FluidDataInner>(inner_relation),
+		: GetVelocityGradient<Base, DataDelegateInner>(inner_relation),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
 	{
-		this->particles_->registerSortableVariable<Matd>("VelocityGradient");
+		this->particles_->addVariableToSort<Matd>("VelocityGradient");
 		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
 	}
 	//=================================================================================================//
@@ -114,15 +114,11 @@ namespace fluid_dynamics
     }
 	//=================================================================================================//
 	GetVelocityGradient<Contact<>>::GetVelocityGradient(BaseContactRelation& contact_relation)
-		: GetVelocityGradient<Base, FSIContactData>(contact_relation),
+		: GetVelocityGradient<Base, DataDelegateContact>(contact_relation),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
 	{
-		this->particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
+		this->particles_->addVariableToSort<Matd>("Velocity_Gradient_Wall");
 		this->particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
-		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-		{
-			wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
-		}
 	}
 	//=================================================================================================//
 	void GetVelocityGradient<Contact<>>::interaction(size_t index_i, Real dt)
@@ -131,10 +127,10 @@ namespace fluid_dynamics
 		if (is_near_wall_P1_[index_i] != 1)
 		{
 			Vecd vel_i = vel_[index_i];
-			for (size_t k = 0; k < FSIContactData::contact_configuration_.size(); ++k)
+			for (size_t k = 0; k < DataDelegateContact::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd>& vel_ave_k = *(wall_vel_ave_[k]);
-				Neighborhood& contact_neighborhood = (*FSIContactData::contact_configuration_[k])[index_i];
+				Neighborhood& contact_neighborhood = (*DataDelegateContact::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
@@ -148,7 +144,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values, int is_extr_visc_dissipa)
-		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
+		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
@@ -159,29 +155,29 @@ namespace fluid_dynamics
 		turbu_strain_rate_(*particles_->getVariableByName<Matd>("TurbulentStrainRate"))
 	{
 		particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
-		particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
+		particles_->addVariableToSort<Real>("ChangeRateOfTKE");
 
 		particles_->registerVariable(k_production_, "K_Production");
-		particles_->registerSortableVariable<Real>("K_Production");
+		particles_->addVariableToSort<Real>("K_Production");
 		particles_->addVariableToWrite<Real>("K_Production");
 
 		particles_->registerVariable(k_production_prior_, "K_ProductionPrior");
-		particles_->registerSortableVariable<Real>("K_ProductionPrior");
+		particles_->addVariableToSort<Real>("K_ProductionPrior");
 
-		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
+		particles_->addVariableToSort<Real>("TurbulenceKineticEnergy");
 		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
 
-		particles_->registerSortableVariable<Real>("TurbulenceKineticEnergyPrior");
+		particles_->addVariableToSort<Real>("TurbulenceKineticEnergyPrior");
 
-		particles_->registerSortableVariable<Real>("TurbulentViscosity");
+		particles_->addVariableToSort<Real>("TurbulentViscosity");
 		particles_->addVariableToWrite<Real>("TurbulentViscosity");
 
-		particles_->registerSortableVariable<Real>("TurbulentDissipation");
+		particles_->addVariableToSort<Real>("TurbulentDissipation");
 		particles_->addVariableToWrite<Real>("TurbulentDissipation");
 
-		particles_->registerSortableVariable<Real>("TurbulentDissipationPrior");
+		particles_->addVariableToSort<Real>("TurbulentDissipationPrior");
 
-		particles_->registerSortableVariable<Matd>("TurbulentStrainRate");
+		particles_->addVariableToSort<Matd>("TurbulentStrainRate");
 		particles_->addVariableToWrite<Matd>("TurbulentStrainRate");
 
 
@@ -194,14 +190,14 @@ namespace fluid_dynamics
 
 		//** for test */
 		particles_->registerVariable(k_diffusion_, "K_Diffusion");
-		particles_->registerSortableVariable<Real>("K_Diffusion");
+		particles_->addVariableToSort<Real>("K_Diffusion");
 		particles_->addVariableToWrite<Real>("K_Diffusion");
 		particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
 		particles_->registerVariable(vel_x_, "Velocity_X");
-		particles_->registerSortableVariable<Real>("Velocity_X");
+		particles_->addVariableToSort<Real>("Velocity_X");
 
 		particles_->registerVariable(turbu_indicator_, "TurbulentIndicator");
-		particles_->registerSortableVariable<int>("TurbulentIndicator");
+		particles_->addVariableToSort<int>("TurbulentIndicator");
 		particles_->addVariableToWrite<int>("TurbulentIndicator");
 
 		particles_->registerVariable(is_extra_viscous_dissipation_, "TurbulentExtraViscousDissipation");
@@ -273,7 +269,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
-		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),
+		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
@@ -284,19 +280,19 @@ namespace fluid_dynamics
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
 	{
 		particles_->registerVariable(dE_dt_, "ChangeRateOfTDR");
-		particles_->registerSortableVariable<Real>("ChangeRateOfTDR");
+		particles_->addVariableToSort<Real>("ChangeRateOfTDR");
 		particles_->addVariableToWrite<Real>("ChangeRateOfTDR");
 
 		particles_->registerVariable(ep_production, "Ep_Production");
-		particles_->registerSortableVariable<Real>("Ep_Production");
+		particles_->addVariableToSort<Real>("Ep_Production");
 		particles_->addVariableToWrite<Real>("Ep_Production");
 
 		particles_->registerVariable(ep_dissipation_, "Ep_Dissipation_");
-		particles_->registerSortableVariable<Real>("Ep_Dissipation_");
+		particles_->addVariableToSort<Real>("Ep_Dissipation_");
 		particles_->addVariableToWrite<Real>("Ep_Dissipation_");
 
 		particles_->registerVariable(ep_diffusion_, "Ep_Diffusion_");
-		particles_->registerSortableVariable<Real>("Ep_Diffusion_");
+		particles_->addVariableToSort<Real>("Ep_Diffusion_");
 		particles_->addVariableToWrite<Real>("Ep_Diffusion_");
 	}
 	//=================================================================================================//
@@ -348,7 +344,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation& inner_relation)
-		: TKEnergyForce<Base, FluidDataInner>(inner_relation),
+		: TKEnergyForce<Base, DataDelegateInner>(inner_relation),
 		test_k_grad_rslt_(*this->particles_->template getVariableByName<Vecd>("TkeGradResult"))
 	{
 		this->particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
@@ -379,7 +375,7 @@ namespace fluid_dynamics
     }
 	//=================================================================================================//
 	TKEnergyForce<Contact<>>::TKEnergyForce(BaseContactRelation& contact_relation)
-		: TKEnergyForce<Base, FluidContactData>(contact_relation),
+		: TKEnergyForce<Base, DataDelegateContact>(contact_relation),
 		test_k_grad_rslt_(*this->particles_->template getVariableByName<Vecd>("TkeGradResult"))
 	{
 		this->particles_->registerVariable(tke_acc_wall_, "TkeAccWall");
@@ -391,9 +387,9 @@ namespace fluid_dynamics
 		Real turbu_k_i = turbu_k_[index_i];
 		Vecd force = Vecd::Zero();
 		Vecd k_gradient = Vecd::Zero();
-		for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
+		for (size_t k = 0; k < DataDelegateContact::contact_configuration_.size(); ++k)
 		{
-			Neighborhood& contact_neighborhood = (*FluidContactData::contact_configuration_[k])[index_i];
+			Neighborhood& contact_neighborhood = (*DataDelegateContact::contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = contact_neighborhood.j_[n];
@@ -411,13 +407,13 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation& inner_relation)
-		: TurbuViscousForce<FluidDataInner>(inner_relation), 
-		ForcePrior(&base_particles_, "ViscousForce"),
+		: TurbuViscousForce<DataDelegateInner>(inner_relation), 
+		ForcePrior(particles_, "ViscousForce"),
 		turbu_indicator_(*this->particles_->template getVariableByName<int>("TurbulentIndicator")),
 		is_extra_viscous_dissipation_(*this->particles_->template getVariableByName<int>("TurbulentExtraViscousDissipation"))
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
-		this->particles_->registerSortableVariable<Vecd>("ViscousAccInner");
+		this->particles_->addVariableToSort<Vecd>("ViscousAccInner");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccInner");
 	}
 //=================================================================================================//
@@ -476,7 +472,7 @@ namespace fluid_dynamics
 		wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
-		this->particles_->registerSortableVariable<Vecd>("ViscousAccWall");
+		this->particles_->addVariableToSort<Vecd>("ViscousAccWall");
 		this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
 	}
 //=================================================================================================//
@@ -551,8 +547,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	TurbulentEddyViscosity::
 		TurbulentEddyViscosity(SPHBody& sph_body)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body),
-		rho_(particles_->rho_), 
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+		rho_(*particles_->getVariableByName<Real>("Density")), 
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
@@ -566,8 +562,8 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL)
-		: LocalDynamicsReduce<ReduceMax>(sph_body), FluidDataSimple(sph_body),
-		vel_(particles_->vel_), 
+		: LocalDynamicsReduce<ReduceMax>(sph_body), DataDelegateSimple(sph_body),
+		vel_(*particles_->getVariableByName<Vecd>("Velocity")), 
 		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
 		speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
@@ -639,49 +635,45 @@ namespace fluid_dynamics
 //=================================================================================================//
 	JudgeIsNearWall::
 		JudgeIsNearWall(BaseInnerRelation& inner_relation,
-			BaseContactRelation& contact_relation, NearShapeSurface& near_surface)
+			BaseContactRelation& contact_relation)
 		: LocalDynamics(inner_relation.getSPHBody()), 
-		FSIContactData(contact_relation),
-		pos_(particles_->pos_),
-		level_set_shape_(&near_surface.getLevelSetShape()), 
+		DataDelegateContact(contact_relation),
+		pos_(*particles_->getVariableByName<Vecd>("Position")),
 		dimension_(2),
 		fluid_particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
 		wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
-			contact_n_.push_back(&(contact_particles_[k]->n_));
-			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+			contact_n_.push_back(contact_particles_[k]->getVariableByName<Vecd>("NormalDirection"));
+			contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
 		}
-		particles_->registerVariable(distance_to_dummy_interface_levelset_, "DistanceToDummyInterfaceLS");
-		particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceLS");
-		particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceLS");
 
 		particles_->registerVariable(distance_to_dummy_interface_up_average_, "DistanceToDummyInterfaceUpAver");
-		particles_->registerSortableVariable<Real>("DistanceToDummyInterfaceUpAver");
+		particles_->addVariableToSort<Real>("DistanceToDummyInterfaceUpAver");
 		particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceUpAver");
 
 		particles_->registerVariable(distance_to_dummy_interface_, "DistanceToDummyInterface");
-		particles_->registerSortableVariable<Real>("DistanceToDummyInterface");
+		particles_->addVariableToSort<Real>("DistanceToDummyInterface");
 		particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
 
 		particles_->registerVariable(index_nearest_, "NearestIndex");
-		particles_->registerSortableVariable<int>("NearestIndex");
+		particles_->addVariableToSort<int>("NearestIndex");
 		particles_->addVariableToWrite<int>("NearestIndex");
 
 		particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
-		particles_->registerSortableVariable<int>("IsNearWallP1");
+		particles_->addVariableToSort<int>("IsNearWallP1");
 		particles_->addVariableToWrite<int>("IsNearWallP1");
 		
 		particles_->registerVariable(is_near_wall_P2_, "IsNearWallP2");
-		particles_->registerSortableVariable<int>("IsNearWallP2");
+		particles_->addVariableToSort<int>("IsNearWallP2");
 		particles_->addVariableToWrite<int>("IsNearWallP2");
 
 		particles_->registerVariable(e_nearest_tau_, "WallNearestTangentialUnitVector");
-		particles_->registerSortableVariable<Vecd>("WallNearestTangentialUnitVector");
+		particles_->addVariableToSort<Vecd>("WallNearestTangentialUnitVector");
 
 		particles_->registerVariable(e_nearest_normal_, "WallNearestNormalUnitVector");
-		particles_->registerSortableVariable<Vecd>("WallNearestNormalUnitVector");
+		particles_->addVariableToSort<Vecd>("WallNearestNormalUnitVector");
 	};
 	//=================================================================================================//
 	void JudgeIsNearWall::interaction(size_t index_i, Real dt)
@@ -690,7 +682,6 @@ namespace fluid_dynamics
 		is_near_wall_P2_[index_i] = 0;
 		index_nearest_[index_i] = 0;
 		distance_to_dummy_interface_[index_i] = 0.0;
-		distance_to_dummy_interface_levelset_[index_i] = 0.0;
 		distance_to_dummy_interface_up_average_[index_i] = 0.0;
 		e_nearest_normal_[index_i] = Vecd::Zero();
 		e_nearest_tau_[index_i] = Vecd::Zero();
@@ -771,13 +762,6 @@ namespace fluid_dynamics
 			e_nearest_normal_[index_i] = e_i_nearest_n;
 			e_nearest_tau_[index_i] = e_i_nearest_tau;
 			distance_to_dummy_interface_[index_i] = r_dummy_normal;
-			distance_to_dummy_interface_levelset_[index_i] = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
-
-			if (distance_to_dummy_interface_levelset_[index_i] != static_cast<Real>(distance_to_dummy_interface_levelset_[index_i]))
-			{
-				std::cout << "bbb" << std::endl;
-				std::cin.get();
-			}
 		}
 	}
 	//=================================================================================================//
@@ -787,8 +771,7 @@ namespace fluid_dynamics
 		if (is_near_wall_P2_[index_i] == 10)
 		{
 			//** Choose one kind of the distance to classify *
-			Real distance = distance_to_dummy_interface_levelset_[index_i];
-			//Real distance = distance_to_dummy_interface_[index_i];
+			Real distance = distance_to_dummy_interface_[index_i];
 			 
 			//** Classify the wall-nearest paritcles *
 			if (distance < 1.0 * fluid_particle_spacing_)
@@ -807,8 +790,8 @@ namespace fluid_dynamics
 	StandardWallFunctionCorrection::
 		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
 			BaseContactRelation& contact_relation, Real y_p_constant)
-		: LocalDynamics(inner_relation.getSPHBody()), FSIContactData(contact_relation),
-		vel_(particles_->vel_), rho_(particles_->rho_), 
+		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateContact(contact_relation),
+		vel_(*particles_->getVariableByName<Vecd>("Velocity")), rho_(*particles_->getVariableByName<Real>("Density")), 
 		molecular_viscosity_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
@@ -819,39 +802,38 @@ namespace fluid_dynamics
 		k_production_(*particles_->getVariableByName<Real>("K_Production")),
 		distance_to_dummy_interface_(*particles_->getVariableByName<Real>("DistanceToDummyInterface")),
 		distance_to_dummy_interface_up_average_(*particles_->getVariableByName<Real>("DistanceToDummyInterfaceUpAver")),
-		distance_to_dummy_interface_levelset_(*particles_->getVariableByName<Real>("DistanceToDummyInterfaceLS")),
 		index_nearest(*particles_->getVariableByName<int>("NearestIndex")),
 		e_nearest_tau_(*particles_->getVariableByName<Vecd>("WallNearestTangentialUnitVector")),
 		e_nearest_normal_(*particles_->getVariableByName<Vecd>("WallNearestNormalUnitVector"))
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
-			contact_n_.push_back(&(contact_particles_[k]->n_));
-			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+			contact_n_.push_back(contact_particles_[k]->getVariableByName<Vecd>("NormalDirection"));
+			contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
 		}
 
 		particles_->registerVariable(y_p_, "Y_P");
-		particles_->registerSortableVariable<Real>("Y_P");
+		particles_->addVariableToSort<Real>("Y_P");
 		particles_->addVariableToWrite<Real>("Y_P");
 
 		//** Fixed y_p_ as a constant distance *
 		std::fill(y_p_.begin(), y_p_.end(), y_p_constant);
 
 		particles_->registerVariable(wall_Y_plus_, "WallYplus");
-		particles_->registerSortableVariable<Real>("WallYplus");
+		particles_->addVariableToSort<Real>("WallYplus");
 		particles_->addVariableToWrite<Real>("WallYplus");
 
 		//** Initial value is important, especially when use log law *
 		particles_->registerVariable(wall_Y_star_, "WallYstar", TinyReal);
-		particles_->registerSortableVariable<Real>("WallYstar");
+		particles_->addVariableToSort<Real>("WallYstar");
 		particles_->addVariableToWrite<Real>("WallYstar");
 
 		particles_->registerVariable(velo_tan_, "TangentialVelocity");
-		particles_->registerSortableVariable<Real>("TangentialVelocity");
+		particles_->addVariableToSort<Real>("TangentialVelocity");
 		particles_->addVariableToWrite<Real>("TangentialVelocity");
 
 		particles_->registerVariable(velo_friction_, "FrictionVelocity");
-		particles_->registerSortableVariable<Vecd>("FrictionVelocity");
+		particles_->addVariableToSort<Vecd>("FrictionVelocity");
 		particles_->addVariableToWrite<Vecd>("FrictionVelocity");
 	};
 	//=================================================================================================//
@@ -1026,8 +1008,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	ConstrainNormalVelocityInRegionP::
 		ConstrainNormalVelocityInRegionP(SPHBody& sph_body)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
-		vel_(particles_->vel_),
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body), 
+		vel_(*particles_->getVariableByName<Vecd>("Velocity")),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
 		e_nearest_normal_(*particles_->getVariableByName<Vecd>("WallNearestNormalUnitVector")){}
 	//=================================================================================================//
@@ -1043,9 +1025,9 @@ namespace fluid_dynamics
 //=================================================================================================//
 	ConstrainVelocityAt_Y_Direction::
 		ConstrainVelocityAt_Y_Direction(SPHBody& sph_body, Real Length_channel)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
-		vel_(particles_->vel_),
-		pos_(particles_->pos_),
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body), 
+		vel_(*particles_->getVariableByName<Vecd>("Velocity")),
+		pos_(*particles_->getVariableByName<Vecd>("Position")),
 		length_channel_(Length_channel){}
 	//=================================================================================================//
 	void ConstrainVelocityAt_Y_Direction::update(size_t index_i, Real dt)
@@ -1059,11 +1041,11 @@ namespace fluid_dynamics
 //=================================================================================================//
 	UpdateTurbulentPlugFlowIndicator::
 		UpdateTurbulentPlugFlowIndicator(SPHBody& sph_body, Real DH)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body), 
-		pos_(particles_->pos_), channel_width_(DH)
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body), 
+		pos_(*particles_->getVariableByName<Vecd>("Position")), channel_width_(DH)
 		{
 			particles_->registerVariable(turbu_plug_flow_indicator_, "TurbulentPlugFlowIndicator");
-			particles_->registerSortableVariable<int>("TurbulentPlugFlowIndicator");
+			particles_->addVariableToSort<int>("TurbulentPlugFlowIndicator");
 			particles_->addVariableToWrite<int>("TurbulentPlugFlowIndicator");
 		}
 	//=================================================================================================//
@@ -1085,8 +1067,8 @@ namespace fluid_dynamics
 
 //=================================================================================================//
 	BaseGetTimeAverageData::BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points)
-		: BaseTurtbulentModel<Base, FluidDataInner>(inner_relation),  plt_engine_(),
-		pos_(particles_->pos_), 
+		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),  plt_engine_(),
+		pos_(*particles_->getVariableByName<Vecd>("Position")), 
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
@@ -1339,8 +1321,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	ClearYPositionForTest::
 		ClearYPositionForTest(SPHBody& sph_body)
-		: LocalDynamics(sph_body), FluidDataSimple(sph_body),
-		pos_(particles_->pos_), vel_(particles_->vel_) {}
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+		pos_(*particles_->getVariableByName<Vecd>("Position")), vel_(*particles_->getVariableByName<Vecd>("Velocity")) {}
 	//=================================================================================================//
 	void ClearYPositionForTest::update(size_t index_i, Real dt)
 	{

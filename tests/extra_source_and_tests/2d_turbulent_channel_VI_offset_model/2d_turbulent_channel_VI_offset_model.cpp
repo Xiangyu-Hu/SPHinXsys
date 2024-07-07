@@ -22,20 +22,20 @@ int main(int ac, char *av[])
 
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineBodyLevelSetShape();
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticlesWithReserve<Reload>(inlet_particle_buffer, water_block.getName())
-        : water_block.generateParticlesWithReserve<Lattice>(inlet_particle_buffer);
+        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
+        : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineBodyLevelSetShape();
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    //wall_boundary.defineBodyLevelSetShape();
+    wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<Reload>( wall_boundary.getName())
-        : wall_boundary.generateParticles<Lattice>();
+        ? wall_boundary.generateParticles<BaseParticles, Reload>( wall_boundary.getName())
+        : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
 
    for(int i = 0; i < num_observer_points; ++i)
@@ -44,7 +44,7 @@ int main(int ac, char *av[])
        observation_location.push_back(pos_observer_i);
    }
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<Observer>(observation_location);
+    fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
 
 
     /** topology */
@@ -71,14 +71,14 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles_water(water_block);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp( { &wall_boundary });
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp_water({ &water_block });
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp( wall_boundary );
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp_water(water_block );
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files( wall_boundary);
         ReloadParticleIO write_particle_reload_files_water(water_block);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
-        relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner_water(water_block_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner_water(water_block_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -114,16 +114,17 @@ int main(int ac, char *av[])
     }
 
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    /** Turbulent standard wall function needs normal vectors of wall. */
-    NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
     
+    /** Turbulent standard wall function needs normal vectors of wall. */
+    //NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
+
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);    
     
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-    InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact, near_surface);
+    InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact);
 
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     //InteractionDynamics<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
@@ -157,11 +158,6 @@ int main(int ac, char *av[])
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
     
-    water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
-    water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
-    water_block.addBodyStateForRecording<Real>("Density"); // output for debug
-    water_block.addBodyStateForRecording<Vecd>("ZeroGradientResidue"); // output for debug
-
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
@@ -191,7 +187,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+        /** Output the body states. */
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");		   // output for debug
+    body_states_recording.addVariableRecording<int>(water_block,"Indicator"); // output for debug
+    body_states_recording.addVariableRecording<Real>(water_block,"Density"); // output for debug
+    body_states_recording.addVariableRecording<Vecd>(water_block,"ZeroGradientResidue"); // output for debug
     ObservedQuantityRecording<Vecd> write_recorded_water_velocity("Velocity", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_k("TurbulenceKineticEnergy", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
@@ -202,7 +203,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+    body_states_recording.addVariableRecording<Vecd>(wall_boundary, "NormalDirection");
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile();

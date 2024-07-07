@@ -48,7 +48,9 @@ namespace fluid_dynamics
 		mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
 		smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 		particle_spacing_min_(base_relation.getSPHBody().sph_adaptation_->MinimumSpacing()),
-		rho_(this->particles_->rho_), Vol_(this->particles_->Vol_),vel_(this->particles_->vel_),
+		rho_(*this->particles_->template getVariableByName<Real>("Density")), 
+		Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+		vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
 		dimension_(2){}
 //=================================================================================================//
 	template <class DataDelegationType>
@@ -56,8 +58,10 @@ namespace fluid_dynamics
 	TKEnergyForce<Base, DataDelegationType>::
 		TKEnergyForce(BaseRelationType& base_relation) :
 		BaseTurtbulentModel<Base, DataDelegationType>(base_relation),
-		force_(this->particles_->force_), mass_(this->particles_->mass_),
-		indicator_(this->particles_->indicator_), pos_(this->particles_->pos_),
+		force_(*this->particles_->template registerSharedVariable<Vecd>("Force")), 
+		mass_(*this->particles_->template getVariableByName<Real>("Mass")),
+		indicator_(*this->particles_->template registerSharedVariable<int>("Indicator")), 
+		pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		test_k_grad_rslt_(*this->particles_->template registerSharedVariable<Vecd>("TkeGradResult")){}
 //=================================================================================================//
@@ -66,8 +70,9 @@ namespace fluid_dynamics
 	GetVelocityGradient<Base, DataDelegationType>::
 		GetVelocityGradient(BaseRelationType& base_relation) 
 		:LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-		Vol_(this->particles_->Vol_),
-		vel_(this->particles_->vel_), pos_(this->particles_->pos_),
+		Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+		vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")), 
+		pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
 		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1")),
 		velocity_gradient_(*(this->particles_->template registerSharedVariable<Matd>("VelocityGradient"))),
 		velocity_gradient_wall(*(this->particles_->template registerSharedVariable<Matd>("Velocity_Gradient_Wall"))){}
@@ -91,7 +96,7 @@ namespace fluid_dynamics
 	ExtraTransportForce<Base, DataDelegationType, ParticleScope>::
 		ExtraTransportForce(BaseRelationType& base_relation) :
 		LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-		rho_(this->particles_->rho_), vel_(this->particles_->vel_),
+		rho_(*this->particles_->template getVariableByName<Real>("Density")), vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
 		zero_gradient_residue_(*this->particles_->template getVariableByName<Vecd>("ZeroGradientResidue")),
 		extra_transport_stress_(*(this->particles_->template registerSharedVariable<Matd>("ExtraTransportStress"))),
 		extra_transport_vel_(*(this->particles_->template registerSharedVariable<Vecd>("ExtraTransportVelocity"))), 
@@ -104,8 +109,8 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	template <class LimiterType, typename... CommonControlTypes>
 	ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::ExtraTransportForce(BaseInnerRelation& inner_relation)
-		: ExtraTransportForce<Base, FluidDataInner, CommonControlTypes...>(inner_relation),
-		Vol_(this->particles_->Vol_),
+		: ExtraTransportForce<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
+		Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
 		h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 		extra_transport_stress_(*this->particles_->template getVariableByName<Matd>("ExtraTransportStress")),
 		extra_transport_vel_(*this->particles_->template getVariableByName<Vecd>("ExtraTransportVelocity")), 
@@ -167,7 +172,7 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	template <typename... CommonControlTypes>
 	ExtraTransportForce<Contact<Boundary>, CommonControlTypes...>::ExtraTransportForce(BaseContactRelation& contact_relation)
-		: ExtraTransportForce<Base, FluidContactData, CommonControlTypes...>(contact_relation),
+		: ExtraTransportForce<Base, DataDelegateContact, CommonControlTypes...>(contact_relation),
 		extra_transport_stress_(*this->particles_->template getVariableByName<Matd>("ExtraTransportStress")),
 		extra_transport_vel_(*this->particles_->template getVariableByName<Vecd>("ExtraTransportVelocity"))
 		{

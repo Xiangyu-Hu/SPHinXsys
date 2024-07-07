@@ -100,11 +100,11 @@ namespace fluid_dynamics
 	};
 	//** Inner part *
 	template <>
-	class GetVelocityGradient<Inner<>> : public GetVelocityGradient<Base, FluidDataInner>
+	class GetVelocityGradient<Inner<>> : public GetVelocityGradient<Base, DataDelegateInner>
 	{
 	public:
 		explicit GetVelocityGradient(BaseInnerRelation& inner_relation);
-			//: GetVelocityGradient<Base, FluidDataInner>(inner_relation) {};
+			//: GetVelocityGradient<Base, DataDelegateInner>(inner_relation) {};
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
@@ -114,11 +114,11 @@ namespace fluid_dynamics
 	
 	//** Wall part *
 	template <>
-	class GetVelocityGradient<Contact<>> : public GetVelocityGradient<Base, FSIContactData>
+	class GetVelocityGradient<Contact<>> : public GetVelocityGradient<Base, DataDelegateContact>
 	{
 	public:
 		explicit GetVelocityGradient(BaseContactRelation& contact_relation);
-			//: GetVelocityGradient<Base, FluidContactData>(contact_relation) {};
+			//: GetVelocityGradient<Base, DataDelegateContact>(contact_relation) {};
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
@@ -161,7 +161,7 @@ namespace fluid_dynamics
 	 * @class K_TurtbulentModelInner
 	 * @brief  K_TurtbulentModelInner
 	 */
-	class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInner>
 	{
 	public:
 		explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values, int is_extr_visc_dissipa = 0);
@@ -193,7 +193,7 @@ namespace fluid_dynamics
 	 * @class E_TurtbulentModelInner
 	 * @brief  E_TurtbulentModelInner
 	 */
-	class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInner>
 	{
 	public:
 		explicit E_TurtbulentModelInner(BaseInnerRelation& inner_relation);
@@ -218,7 +218,7 @@ namespace fluid_dynamics
 	 * @class kOmegaSST_TurtbulentModelInner
 	 * @brief  kOmegaSST_TurtbulentModelInner
 	 */
-	class kOmegaSST_kTransportEquationInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	class kOmegaSST_kTransportEquationInner : public BaseTurtbulentModel<Base, DataDelegateInner>
 	{
 	public:
 		explicit kOmegaSST_kTransportEquationInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values);
@@ -235,7 +235,7 @@ namespace fluid_dynamics
 	 * @class kOmegaSST_TurtbulentModelInner
 	 * @brief  kOmegaSST_TurtbulentModelInner
 	 */
-	class kOmegaSST_omegaTransportEquationInner : public BaseTurtbulentModel<Base, FluidDataInner>
+	class kOmegaSST_omegaTransportEquationInner : public BaseTurtbulentModel<Base, DataDelegateInner>
 	{
 	public:
 		explicit kOmegaSST_omegaTransportEquationInner(BaseInnerRelation& inner_relation);
@@ -273,7 +273,7 @@ namespace fluid_dynamics
 	};
 	//** Inner part *
 	template <>
-	class TKEnergyForce<Inner<>> : public TKEnergyForce<Base, FluidDataInner>
+	class TKEnergyForce<Inner<>> : public TKEnergyForce<Base, DataDelegateInner>
 	{
 	public:
 		explicit TKEnergyForce(BaseInnerRelation& inner_relation);
@@ -284,11 +284,11 @@ namespace fluid_dynamics
 	};
 	//** Wall part *
 	template <>
-	class TKEnergyForce<Contact<>> : public TKEnergyForce<Base, FluidContactData>
+	class TKEnergyForce<Contact<>> : public TKEnergyForce<Base, DataDelegateContact>
 	{
 	public:
 		explicit TKEnergyForce(BaseContactRelation& contact_relation);
-			//: TKEnergyForce<Base, FluidContactData>(contact_relation) {};
+			//: TKEnergyForce<Base, DataDelegateContact>(contact_relation) {};
 		virtual ~TKEnergyForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
@@ -331,7 +331,7 @@ namespace fluid_dynamics
 
 	//** Inner part *
 	template <>
-	class TurbuViscousForce<Inner<>> : public TurbuViscousForce<FluidDataInner>, public ForcePrior
+	class TurbuViscousForce<Inner<>> : public TurbuViscousForce<DataDelegateInner>, public ForcePrior
 	{
 	public:
 		explicit TurbuViscousForce(BaseInnerRelation& inner_relation);
@@ -363,7 +363,7 @@ namespace fluid_dynamics
 	 * @brief  the turbulent viscosity force induced acceleration
 	 */
 	class TurbulentEddyViscosity : public LocalDynamics,
-		public FluidDataSimple, public BaseTurbuClosureCoeff
+		public DataDelegateSimple, public BaseTurbuClosureCoeff
 	{
 	public:
 		explicit TurbulentEddyViscosity(SPHBody& sph_body);
@@ -384,7 +384,7 @@ namespace fluid_dynamics
 	 * @brief Computing the turbulent advection time step size
 	 */
 	class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<ReduceMax>,
-		public FluidDataSimple
+		public DataDelegateSimple
 	{
 	public:
 		explicit TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL = 0.25);
@@ -423,17 +423,16 @@ namespace fluid_dynamics
 		virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
 	};
 //=================================================================================================//
-	class JudgeIsNearWall : public LocalDynamics, public FSIContactData,
+	class JudgeIsNearWall : public LocalDynamics, public DataDelegateContact,
 		public BaseTurbuClosureCoeff
 	{
 	public:
 		JudgeIsNearWall(BaseInnerRelation& inner_relation,
-			BaseContactRelation& contact_relation, NearShapeSurface& near_surface);
+			BaseContactRelation& contact_relation);
 		virtual ~JudgeIsNearWall() {};
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Real> distance_to_dummy_interface_levelset_;
 		StdLargeVec<Real> distance_to_dummy_interface_;
 		StdLargeVec<Real> distance_to_dummy_interface_up_average_;
 		StdLargeVec<int> is_near_wall_P1_;
@@ -442,7 +441,6 @@ namespace fluid_dynamics
 		StdLargeVec<Vecd> e_nearest_tau_, e_nearest_normal_;
 
 		StdLargeVec<Vecd>& pos_;
-		LevelSetShape* level_set_shape_;
 		int dimension_;
 		Real fluid_particle_spacing_, wall_particle_spacing_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
@@ -451,7 +449,7 @@ namespace fluid_dynamics
 	};
 //=================================================================================================//
 	class StandardWallFunctionCorrection : 
-		public LocalDynamics, public FSIContactData, public WallFunction
+		public LocalDynamics, public DataDelegateContact, public WallFunction
 	{
 	public:
 		StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
@@ -478,7 +476,6 @@ namespace fluid_dynamics
 		StdLargeVec<Real>& k_production_;
 		StdLargeVec<Real>& distance_to_dummy_interface_;
 		StdLargeVec<Real>& distance_to_dummy_interface_up_average_;
-		StdLargeVec<Real>& distance_to_dummy_interface_levelset_;
 		StdLargeVec<int>& index_nearest;
 		StdLargeVec<Vecd>& e_nearest_tau_;
 		StdLargeVec<Vecd>& e_nearest_normal_;
@@ -487,7 +484,7 @@ namespace fluid_dynamics
 	};
 //=================================================================================================//
 	class ConstrainNormalVelocityInRegionP : public LocalDynamics,
-		public FluidDataSimple
+		public DataDelegateSimple
 	{
 	public:
 		explicit ConstrainNormalVelocityInRegionP(SPHBody& sph_body);
@@ -522,7 +519,7 @@ namespace fluid_dynamics
 	//** Inner part *
 	template <class LimiterType, typename... CommonControlTypes>
 	class ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...> 
-        : public ExtraTransportForce<Base, FluidDataInner, CommonControlTypes...>
+        : public ExtraTransportForce<Base, DataDelegateInner, CommonControlTypes...>
 	{
 	public:
 		explicit ExtraTransportForce(BaseInnerRelation& inner_relation);
@@ -544,7 +541,7 @@ namespace fluid_dynamics
 	//** Wall part *
 	template <typename... CommonControlTypes>
 	class ExtraTransportForce<Contact<Boundary>, CommonControlTypes...> 
-	    : public ExtraTransportForce<Base, FluidContactData, CommonControlTypes...>
+	    : public ExtraTransportForce<Base, DataDelegateContact, CommonControlTypes...>
 	{
 	public:
 		explicit ExtraTransportForce(BaseContactRelation& contact_relation);
@@ -567,7 +564,7 @@ namespace fluid_dynamics
 	using ExtraTransportForceLimitedComplex = BaseExtraTransportForceComplex<TruncatedLinear, ParticleScope>;
 //=================================================================================================//
 	class ConstrainVelocityAt_Y_Direction : public LocalDynamics,
-		public FluidDataSimple
+		public DataDelegateSimple
 	{
 	public:
 		explicit ConstrainVelocityAt_Y_Direction(SPHBody& sph_body, Real Length_channel);
@@ -581,7 +578,7 @@ namespace fluid_dynamics
 	};
 //=================================================================================================//
 	class UpdateTurbulentPlugFlowIndicator : public LocalDynamics,
-		public FluidDataSimple
+		public DataDelegateSimple
 	{
 	public:
 		explicit UpdateTurbulentPlugFlowIndicator(SPHBody& sph_body, Real DH);
@@ -621,7 +618,7 @@ using TurbulentPlugFlowParticles = TurbulentIndicatedParticles<0>;
 	* @brief  BaseGetTimeAverageData
 	*/
 	//template <class DataDelegationType>
-	class BaseGetTimeAverageData : public BaseTurtbulentModel<Base, FluidDataInner>
+	class BaseGetTimeAverageData : public BaseTurtbulentModel<Base, DataDelegateInner>
 	{
 	public:
 		explicit BaseGetTimeAverageData(BaseInnerRelation& inner_relation, int num_observer_points);
@@ -684,7 +681,7 @@ using TurbulentPlugFlowParticles = TurbulentIndicatedParticles<0>;
 	 * @brief  Test
 	 */
 	class ClearYPositionForTest : public LocalDynamics,
-		public FluidDataSimple, public BaseTurbuClosureCoeff
+		public DataDelegateSimple, public BaseTurbuClosureCoeff
 	{
 	public:
 		explicit ClearYPositionForTest(SPHBody& sph_body);
