@@ -49,9 +49,9 @@ EmitterInflowCondition::
       updated_transform_(aligned_box_.getTransform()),
       old_transform_(updated_transform_) {}
 //=================================================================================================//
-void EmitterInflowCondition ::update(size_t unsorted_index_i, Real dt)
+void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 {
-    size_t sorted_index_i = sorted_id_[unsorted_index_i];
+    size_t sorted_index_i = sorted_id_[original_index_i];
     Vecd frame_position = old_transform_.shiftBaseStationToFrame(pos_[sorted_index_i]);
     Vecd frame_velocity = old_transform_.xformBaseVecToFrame(vel_[sorted_index_i]);
     pos_[sorted_index_i] = updated_transform_.shiftFrameStationToBase(frame_position);
@@ -65,7 +65,7 @@ EmitterInflowInjection::
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      unsorted_id_(particles_->ParticleUnsortedIds()),
+      original_id_(particles_->ParticleOriginalIds()),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
@@ -75,9 +75,9 @@ EmitterInflowInjection::
     buffer_.checkParticlesReserved();
 }
 //=================================================================================================//
-void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
+void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 {
-    size_t sorted_index_i = sorted_id_[unsorted_index_i];
+    size_t sorted_index_i = sorted_id_[original_index_i];
     if (aligned_box_.checkUpperBound(axis_, pos_[sorted_index_i]))
     {
         mutex_switch_to_real_.lock();
@@ -102,7 +102,7 @@ DisposerOutflowDeletion::
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)
 {
     mutex_switch_to_buffer_.lock();
-    while (aligned_box_.checkUpperBound(axis_, pos_[index_i]) && index_i < particles_->total_real_particles_)
+    while (aligned_box_.checkUpperBound(axis_, pos_[index_i]) && index_i < particles_->TotalRealParticles())
     {
         particles_->switchToBufferParticle(index_i);
     }

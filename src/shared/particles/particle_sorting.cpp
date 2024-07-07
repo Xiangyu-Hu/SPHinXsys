@@ -10,7 +10,7 @@ namespace SPH
 //=================================================================================================//
 SwapSortableParticleData::SwapSortableParticleData(BaseParticles &base_particles)
     : sequence_(base_particles.ParticleSequences()),
-      unsorted_id_(base_particles.ParticleUnsortedIds()),
+      original_id_(base_particles.ParticleOriginalIds()),
       sortable_data_(base_particles.SortableParticleData()),
       swap_particle_data_value_(sortable_data_) {}
 //=================================================================================================//
@@ -20,13 +20,13 @@ void SwapSortableParticleData::operator()(size_t *a, size_t *b)
 
     size_t index_a = a - sequence_.data();
     size_t index_b = b - sequence_.data();
-    std::swap(unsorted_id_[index_a], unsorted_id_[index_b]);
+    std::swap(original_id_[index_a], original_id_[index_b]);
     swap_particle_data_value_(index_a, index_b);
 }
 //=================================================================================================//
 ParticleSorting::ParticleSorting(BaseParticles &base_particles)
     : base_particles_(base_particles),
-      unsorted_id_(base_particles.ParticleUnsortedIds()),
+      original_id_(base_particles.ParticleOriginalIds()),
       sorted_id_(base_particles.ParticleSortedIds()),
       sequence_(base_particles.ParticleSequences()),
       swap_sortable_particle_data_(base_particles), compare_(),
@@ -43,14 +43,14 @@ void ParticleSorting::sortingParticleData(size_t *begin, size_t size)
 //=================================================================================================//
 void ParticleSorting::updateSortedId()
 {
-    size_t total_real_particles = base_particles_.total_real_particles_;
+    size_t total_real_particles = base_particles_.TotalRealParticles();
     parallel_for(
         IndexRange(0, total_real_particles),
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i != r.end(); ++i)
             {
-                sorted_id_[unsorted_id_[i]] = i;
+                sorted_id_[original_id_[i]] = i;
             }
         },
         ap);

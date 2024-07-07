@@ -90,7 +90,7 @@ class BidirectionalBuffer
               axis_(axis), particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.aligned_box_),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-              unsorted_id_(particles_->ParticleUnsortedIds()),
+              original_id_(particles_->ParticleOriginalIds()),
               pos_n_(*particles_->getVariableDataByName<Vecd>("Position")),
               rho_n_(*particles_->getVariableDataByName<Real>("Density")),
               p_(*particles_->getVariableDataByName<Real>("Pressure")),
@@ -126,7 +126,7 @@ class BidirectionalBuffer
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
-        StdLargeVec<size_t> &unsorted_id_;
+        StdLargeVec<size_t> &original_id_;
         StdLargeVec<Vecd> &pos_n_;
         StdLargeVec<Real> &rho_n_, &p_;
         StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;

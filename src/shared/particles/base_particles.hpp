@@ -1,9 +1,3 @@
-/**
- * @file 	base_particles.hpp
- * @brief 	This is the implementation of the template functions in base_particles.h
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #ifndef BASE_PARTICLES_HPP
 #define BASE_PARTICLES_HPP
 
@@ -47,7 +41,7 @@ StdLargeVec<DataType> *BaseParticles::
     auto &contained_data = *initializeVariable(variable);
     for (size_t i = 0; i != total_real_particles_; ++i)
     {
-        contained_data[i] = initialization(i); // Here, lambda function is applied for initialization.
+        contained_data[i] = initialization(i); // Here, function object is applied for initialization.
     }
     return &contained_data;
 }
@@ -296,8 +290,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Ba
     }
 }
 //=================================================================================================//
-template <typename StreamType>
-void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
+template <typename OutStreamType>
+void BaseParticles::writeParticlesToVtk(OutStreamType &output_stream)
 {
     size_t total_real_particles = total_real_particles_;
 
@@ -311,12 +305,12 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
 
-    // write unsorted particles ID
-    output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+    // write original particles ID
+    output_stream << "    <DataArray Name=\"OriginalParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
     output_stream << "    ";
     for (size_t i = 0; i != total_real_particles; ++i)
     {
-        output_stream << (*unsorted_id_)[i] << " ";
+        output_stream << (*original_id_)[i] << " ";
     }
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";

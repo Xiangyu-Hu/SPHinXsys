@@ -10,8 +10,8 @@ void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particl
 {
     ghost_size_ = calculateGhostSize(particle_spacing);
 
-    lower_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
-    upper_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
+    lower_ghost_bound_.first = base_particles.allocateGhostParticles(ghost_size_);
+    upper_ghost_bound_.first = base_particles.allocateGhostParticles(ghost_size_);
 
     is_particles_reserved_ = true;
 }

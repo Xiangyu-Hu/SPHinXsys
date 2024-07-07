@@ -25,14 +25,15 @@ BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
     : SPHRelation(real_body), real_body_(&real_body)
 {
     subscribeToBody();
-    inner_configuration_.resize(base_particles_.real_particles_bound_, Neighborhood());
+    inner_configuration_.resize(base_particles_.RealParticlesBound(), Neighborhood());
 }
 //=================================================================================================//
 void BaseInnerRelation::resetNeighborhoodCurrentSize()
 {
     parallel_for(
-        IndexRange(0, base_particles_.total_real_particles_),
-        [&](const IndexRange &r) {
+        IndexRange(0, base_particles_.TotalRealParticles()),
+        [&](const IndexRange &r)
+        {
             for (size_t num = r.begin(); num != r.end(); ++num)
             {
                 inner_configuration_[num].current_size_ = 0;
@@ -48,7 +49,7 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
     contact_configuration_.resize(contact_bodies_.size());
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        contact_configuration_[k].resize(base_particles_.real_particles_bound_, Neighborhood());
+        contact_configuration_[k].resize(base_particles_.RealParticlesBound(), Neighborhood());
     }
 }
 //=================================================================================================//
@@ -57,8 +58,9 @@ void BaseContactRelation::resetNeighborhoodCurrentSize()
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         parallel_for(
-            IndexRange(0, base_particles_.total_real_particles_),
-            [&](const IndexRange &r) {
+            IndexRange(0, base_particles_.TotalRealParticles()),
+            [&](const IndexRange &r)
+            {
                 for (size_t num = r.begin(); num != r.end(); ++num)
                 {
                     contact_configuration_[k][num].current_size_ = 0;

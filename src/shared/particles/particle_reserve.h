@@ -99,7 +99,6 @@ class Ghost<Base> : public ParticleReserve
     size_t getGhostSize() { return ghost_size_; };
     void checkWithinGhostSize(const ParticlesBound &ghost_bound);
     IndexRange getGhostParticleRange(const ParticlesBound &ghost_bound);
-    size_t allocateGhostParticles(BaseParticles &base_particles, size_t ghost_size);
 
   protected:
     size_t ghost_size_ = 0;
@@ -115,7 +114,7 @@ class Ghost<GhostSizeEstimator> : public Ghost<Base>
     void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
     {
         ghost_size_ = ghost_size_estimator_(base_particles, particle_spacing);
-        ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
+        ghost_bound_.first = base_particles.allocateGhostParticles(ghost_size_);
         is_particles_reserved_ = true;
     };
     ParticlesBound &GhostBound() { return ghost_bound_; };

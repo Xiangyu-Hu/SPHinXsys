@@ -15,7 +15,6 @@ ParticleGenerator<BaseParticles>::
 void ParticleGenerator<BaseParticles>::addParticlePosition(const Vecd &position)
 {
     position_.push_back(position);
-    base_particles_.total_real_particles_++;
 }
 //=================================================================================================//
 void ParticleGenerator<BaseParticles>::generateParticlesWithGeometricVariables()

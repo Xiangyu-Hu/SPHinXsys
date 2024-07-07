@@ -178,7 +178,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         /** correct out-plane numerical damping. */
         numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) +
-                                 transformation_matrix_0_to_current * F_gaussian_point *
+                             transformation_matrix_0_to_current * F_gaussian_point *
                                  elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_matrix_, index_i) *
                                  F_gaussian_point.transpose() * transformation_matrix_0_to_current.transpose() / F_gaussian_point.determinant();
 
@@ -286,7 +286,7 @@ void ShellCurvature::compute_initial_curvature()
 {
     particle_for(
         par,
-        particles_->total_real_particles_,
+        particles_->TotalRealParticles(),
         [this](size_t index_i)
         {
             Matd dn_0_i = Matd::Zero();
