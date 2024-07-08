@@ -48,13 +48,13 @@ class GeneratingMethod<UnstructuredMesh>
 };
 
 template <>
-class ParticleGenerator<UnstructuredMesh>
-    : public ParticleGenerator<Base>, public GeneratingMethod<UnstructuredMesh>
+class ParticleGenerator<BaseParticles, UnstructuredMesh>
+    : public ParticleGenerator<BaseParticles>, public GeneratingMethod<UnstructuredMesh>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, ANSYSMesh &ansys_mesh);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 };
 
 } // namespace SPH

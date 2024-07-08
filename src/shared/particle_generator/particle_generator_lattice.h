@@ -53,37 +53,37 @@ class GeneratingMethod<Lattice>
 };
 
 template <>
-class ParticleGenerator<Lattice>
-    : public ParticleGenerator<Base>, public GeneratingMethod<Lattice>
+class ParticleGenerator<BaseParticles, Lattice>
+    : public ParticleGenerator<BaseParticles>, public GeneratingMethod<Lattice>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body);
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 };
 
 template <> // For generating particles with adaptive resolution from lattice positions
-class ParticleGenerator<Lattice, Adaptive> : public ParticleGenerator<Lattice>
+class ParticleGenerator<BaseParticles, Lattice, Adaptive> : public ParticleGenerator<BaseParticles, Lattice>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body, Shape &target_shape);
-    explicit ParticleGenerator(SPHBody &sph_body);
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape);
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
     virtual ~ParticleGenerator(){};
 
   protected:
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;
-    virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
+    virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
 
 template <> // For generating surface particles from lattice positions using reduced order approach
-class ParticleGenerator<ThickSurface, Lattice>
-    : public ParticleGenerator<Surface>, public GeneratingMethod<Lattice>
+class ParticleGenerator<SurfaceParticles, Lattice>
+    : public ParticleGenerator<SurfaceParticles>, public GeneratingMethod<Lattice>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body, Real thickness);
+    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, Real thickness);
     virtual ~ParticleGenerator(){};
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 
   protected:
     Real total_volume_;                  /**< Total volume of body calculated from level set. */

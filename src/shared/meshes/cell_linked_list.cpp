@@ -84,7 +84,7 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
     size_t total_levels, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
           tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
-      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
+      h_ratio_(*DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
 }
 //=================================================================================================//

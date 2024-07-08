@@ -47,8 +47,8 @@ int main(int ac, char *av[])
     Vec2d domain_upper_bound(domain_box_size, domain_box_size);
     BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setRunParticleRelaxation(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
 
     IOEnvironment io_environment(sph_system);
@@ -83,15 +83,15 @@ int main(int ac, char *av[])
     {
         Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
         rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        rigid_shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
+        rigid_shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
-    ball_observer.generateParticles<BaseParticles, Observer>(StdVec<Vecd>{ball_center});
+    ball_observer.generateParticles<ObserverParticles>(StdVec<Vecd>{ball_center});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation())
+    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
         //----------------------------------------------------------------------
         //	Define body relation map used for particle relaxation.
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
-        write_relaxed_particles.addVariableRecording<int>(rigid_shell, "UpdatedIndicator");
+        write_relaxed_particles.addToWrite<int>(rigid_shell, "UpdatedIndicator");
         MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, rigid_shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload({&ball, &rigid_shell});
         //----------------------------------------------------------------------

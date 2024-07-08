@@ -8,7 +8,7 @@ namespace solid_dynamics
 RepulsionDensitySummation<Inner<>>::
     RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionDensity"),
-      mass_(*particles_->getVariableByName<Real>("Mass"))
+      mass_(*particles_->getVariableDataByName<Real>("Mass"))
 {
     Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
     offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
@@ -28,16 +28,13 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RepulsionDensitySummation<Contact<>>::
     RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation,
-                                                           dynamic_cast<SurfaceContactRelationToShell *>(&solid_body_contact_relation)
-                                                               ? "RepulsionDensityShellSolid"
-                                                               : "RepulsionDensitySolidSolid"),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
+        contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
     }
 
     // we modify the default formulation by an offset, so that exactly touching bodies produce 0 initial force
@@ -102,7 +99,7 @@ ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_cont
         /** a calibration factor to avoid particle penetration into shell structure */
         calibration_factor_.push_back(solid_.ReferenceDensity() / (contact_max + Eps));
 
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

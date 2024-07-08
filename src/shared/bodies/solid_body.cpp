@@ -11,8 +11,8 @@ SolidBodyPartForSimbody::
     SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape)
     : BodyRegionByParticle(body, body_part_shape),
       rho0_(DynamicCast<Solid>(this, body.base_material_)->ReferenceDensity()),
-      Vol_(*base_particles_.getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*base_particles_.getVariableByName<Vecd>("Position"))
+      Vol_(*base_particles_.getVariableDataByName<Real>("VolumetricMeasure")),
+      pos_(*base_particles_.getVariableDataByName<Vecd>("Position"))
 {
     setMassProperties();
 }

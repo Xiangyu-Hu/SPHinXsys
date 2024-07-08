@@ -47,8 +47,8 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingInMeshToVtp write_real_body_states(wave_block, ansys_mesh);
-    write_real_body_states.addVariableRecording<Real>(wave_block, "Density");
-    write_real_body_states.addVariableRecording<Real>(wave_block, "Pressure");
+    write_real_body_states.addToWrite<Real>(wave_block, "Density");
+    write_real_body_states.addToWrite<Real>(wave_block, "Pressure");
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.

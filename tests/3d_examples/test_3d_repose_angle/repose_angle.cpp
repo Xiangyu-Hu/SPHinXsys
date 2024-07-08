@@ -169,10 +169,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(soil_block, "Density");
-    body_states_recording.addVariableRecording<Real>(soil_block, "Pressure");
-    body_states_recording.addVariableRecording<Real>(soil_block, "VerticalStress");
-    body_states_recording.addVariableRecording<Real>(soil_block, "AccDeviatoricPlasticStrain");
+    body_states_recording.addToWrite<Real>(soil_block, "Density");
+    body_states_recording.addToWrite<Real>(soil_block, "Pressure");
+    body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
+    body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_soil_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------

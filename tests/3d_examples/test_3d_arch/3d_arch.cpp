@@ -48,11 +48,11 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Cylinder;
 template <>
-class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
         for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
@@ -65,8 +65,8 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                 Vecd position = rotation_matrix * Vecd(x, y, z);
                 Vec3d n_0 = rotation_matrix * Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 
-                initializePositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
-                initializeSurfaceProperties(n_0, thickness);
+                addPositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
+                addSurfaceProperties(n_0, thickness);
             }
         }
     }
@@ -101,7 +101,7 @@ class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRe
   public:
     ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")){};
     virtual ~ControlDisplacement(){};
 
   protected:
@@ -154,7 +154,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cylinder_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies

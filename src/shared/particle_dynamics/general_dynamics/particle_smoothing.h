@@ -48,7 +48,7 @@ class ParticleSmoothing : public LocalDynamics, public DataDelegateInner
 
   protected:
     const Real W0_;
-    StdLargeVec<VariableType> &smoothed_, temp_;
+    StdLargeVec<VariableType> &smoothed_, &temp_;
 };
 
 /**
@@ -66,7 +66,7 @@ class ParticleSnapshotAverage : public LocalDynamics, public DataDelegateSimple
 
   protected:
     size_t number_of_snapshot_ = 0;
-    StdLargeVec<VariableType> averaged_variable_, &target_variable_;
+    StdLargeVec<VariableType> &target_variable_, &averaged_variable_;
 };
 } // namespace SPH
 #endif // PARTICLE_SMOOTHING_H

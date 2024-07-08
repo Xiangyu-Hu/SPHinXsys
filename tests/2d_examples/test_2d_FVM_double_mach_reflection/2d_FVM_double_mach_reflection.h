@@ -107,7 +107,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          E_(*particles_->getVariableByName<Real>("TotalEnergy")){};
+          E_(*particles_->getVariableDataByName<Real>("TotalEnergy")){};
     virtual ~DMFBoundaryConditionSetup(){};
 
     // Override these methods to define the specific boundary conditions

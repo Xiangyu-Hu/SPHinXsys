@@ -88,8 +88,8 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~LeftStretchSolidBodyRegion(){};
 
@@ -108,8 +108,8 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~RightStretchSolidBodyRegion(){};
 
@@ -151,7 +151,7 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")), pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~ConstrainXVelocity(){};
 
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
         : beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

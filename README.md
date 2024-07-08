@@ -7,14 +7,14 @@ this repository will be transferred to the SPHinXsys team
 in the next few weeks.
 After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
 
-**Project Status**  
+**Project status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
 [![Windows](https://img.shields.io/badge/os-Windows-green.svg)](https://shields.io/)
 [![macOS](https://img.shields.io/badge/os-macOs-green.svg)](https://shields.io/)
 ![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
 
-**Project Communication**  
+**Project communication**  
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/sphinxsys.svg?style=social&label=Follow%20%40sphinxsys)](https://twitter.com/sphinxsys)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
@@ -102,7 +102,7 @@ Computer Physics Communications, 267, 108066, 2021.
 
 The numerical methods and computational algorithms in SPHinXsys are based on the following [publications](assets/publication.md).
 
-## Software Architecture
+## Software architecture
 
 SPHinXsys is cross-platform can be compiled and used in Windows, Linux and McOS systems.
 
@@ -112,22 +112,30 @@ For installation, program manual and tutorials, please check <https://www.sphinx
 Please check the documentation of the code at <https://xiangyu-hu.github.io/SPHinXsys/>.
 For a Docker image, check <https://hub.docker.com/r/toshev/sphinxsys>.
 
-## Get involved to SPHinXsys
+## Interaction with SPHinXsys and the team
 
-Thank you for using and supporting our open-source project! We value all feedback and strive to improve our codebase continuously.
+Thank you for using and supporting our open-source project! 
+We value each feedback.
 
-As the code is on git-hub, you can register an account there (if you do not have a github account yet)
-and fork out the SPHinXsys repository.
-You can work on the forked repository and add new features, and then commit them.
-You can also initiate a pull request to the main repository,
-so that your new features can be merged into it.
+#### For SPHinXsys users:
 
-To ensure efficient and effective development, we prioritize addressing issues and pull requests from those who actively contribute to the project. Your contributions, whether through code, documentation, or other means, help us maintain and enhance the project for everyone.
-We encourage all users to consider contributing in any way they can. Together, we can build a better, more robust software.
+Your input is crucial to us. We encourage you to report any issues you encounter with the library, including:
 
+* Bug reports
+* Poorly written code or algorithm designs
+* Benchmark test issues, whether within the library or from literature, especially those highlighting potential deficiencies
+* Other issues
 
-You are also welcomed to join the main repository as a collaborator,
-by which you are able to branch directly in the main repository,
-and review the pull request.
+We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
-If you have any further question, you are also welcomed to contact <xiangyu.hu@tum.de>.
+#### For SPHinXsys developers:
+
+If you don't have a GitHub account yet, please register for one. Fork the SPHinXsys repository to add new features or improve existing ones. Once your changes are ready, commit them and initiate a pull request to have your contributions merged into the main repository.
+
+To ensure efficient and effective development, we prioritize addressing issues raised by active contributors—whether through code, documentation, or other means. We welcome any interaction with SPHinXsys and our team.
+
+You can also join us as a collaborator, enabling you to branch directly within the main repository and review pull requests.
+
+Together, we can build a leading-edge multi-physics library open for all!
+
+If you have any further question, please contact <xiangyu.hu@tum.de>.
