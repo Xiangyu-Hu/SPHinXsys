@@ -64,7 +64,7 @@ class TreeBody : public SecondaryStructure, public RealBody
     {
         return branches_ptr_keeper_.createPtr<Branch>(parent_id, this);
     };
-    size_t BranchLocation(size_t particle_idx);
+    size_t BranchLocation(size_t total_particles, size_t particle_idx);
     Branch *LastBranch() { return branches_[last_branch_id_]; };
 
     virtual void buildParticleConfiguration(ParticleConfiguration &particle_configuration) override;

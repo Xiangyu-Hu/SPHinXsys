@@ -97,8 +97,8 @@ class SPHBody
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
-    IndexRange LoopRange() { return IndexRange(0, base_particles_->total_real_particles_); };
-    size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
+    IndexRange LoopRange() { return IndexRange(0, base_particles_->TotalRealParticles()); };
+    size_t SizeOfLoopRange() { return base_particles_->TotalRealParticles(); };
     Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -174,7 +174,6 @@ class SPHBody
     virtual void writeParticlesToVtuFile(std::ostream &output_file);
     virtual void writeParticlesToVtpFile(std::ofstream &output_file);
     virtual void writeParticlesToPltFile(std::ofstream &output_file);
-    virtual void writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles);
     virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
     virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);

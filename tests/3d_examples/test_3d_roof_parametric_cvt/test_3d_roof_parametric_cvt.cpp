@@ -338,8 +338,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
     { // recalculate the volume/area after knowing the particle positions
-      // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
-      // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
+      // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->TotalRealParticles();
+      // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->TotalRealParticles();
     }
 
     // methods

@@ -222,7 +222,7 @@ int main(int ac, char *av[])
 
     for (int i = 0; i < 10; i++)
     {
-        random_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->total_real_particles_);
+        random_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->TotalRealParticles());
         von_mises_strain.push_back(all_von_mises_strain[random_index[i]]);
     }
 

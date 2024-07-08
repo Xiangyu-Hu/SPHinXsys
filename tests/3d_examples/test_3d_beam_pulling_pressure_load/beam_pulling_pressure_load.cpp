@@ -52,8 +52,8 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())
     {
-        area_0_.resize(particles_->total_real_particles_);
-        for (size_t i = 0; i < particles_->total_real_particles_; ++i)
+        area_0_.resize(particles_->TotalRealParticles());
+        for (size_t i = 0; i < particles_->TotalRealParticles(); ++i)
             area_0_[i] = pow(Vol_[i], 2.0 / 3.0);
     }
 

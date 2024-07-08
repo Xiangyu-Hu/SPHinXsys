@@ -49,7 +49,7 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     clearCellLists();
     StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
-    size_t total_real_particles = base_particles.total_real_particles_;
+    size_t total_real_particles = base_particles.TotalRealParticles();
     parallel_for(
         IndexRange(0, total_real_particles),
         [&](const IndexRange &r)
@@ -72,8 +72,8 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
     StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.sequence_;
-    size_t total_real_particles = base_particles.total_real_particles_;
+    StdLargeVec<size_t> &sequence = base_particles.ParticleSequences();
+    size_t total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
                  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
     return sequence;
@@ -118,7 +118,7 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
         mesh_levels_[level]->clearCellLists();
 
     StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
-    size_t total_real_particles = base_particles.total_real_particles_;
+    size_t total_real_particles = base_particles.TotalRealParticles();
     // rebuild the corresponding particle list.
     parallel_for(
         IndexRange(0, total_real_particles),
@@ -140,8 +140,8 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
 {
     StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.sequence_;
-    size_t total_real_particles = base_particles.total_real_particles_;
+    StdLargeVec<size_t> &sequence = base_particles.ParticleSequences();
+    size_t total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
                  [&](size_t i)
                  {

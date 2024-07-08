@@ -89,11 +89,6 @@ void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
     base_particles_->writeParticlesToVtk(output_file);
 }
 //=================================================================================================//
-void SPHBody::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles)
-{
-    base_particles_->writeSurfaceParticlesToVtuFile(output_file, surface_particles);
-}
-//=================================================================================================//
 void SPHBody::writeParticlesToPltFile(std::ofstream &output_file)
 {
     base_particles_->writeParticlesToPltFile(output_file);

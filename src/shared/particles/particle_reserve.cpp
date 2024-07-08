@@ -5,7 +5,7 @@ namespace SPH
 //=================================================================================================//
 size_t ReserveSizeFactor::operator()(BaseParticles &base_particles, Real particle_spacing)
 {
-    return std::ceil(Real(base_particles.total_real_particles_) * size_factor_);
+    return std::ceil(Real(base_particles.TotalRealParticles()) * size_factor_);
 }
 //=================================================================================================//
 void ParticleReserve::checkParticlesReserved()
@@ -21,7 +21,7 @@ void ParticleReserve::checkParticlesReserved()
 //=================================================================================================//
 void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 {
-    if (base_particles.total_real_particles_ >= base_particles.real_particles_bound_)
+    if (base_particles.TotalRealParticles() >= base_particles.RealParticlesBound())
     {
         std::cout << "\n ERROR: Not enough buffer particles have been reserved!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -47,13 +47,6 @@ void Ghost<Base>::checkWithinGhostSize(const ParticlesBound &ghost_bound)
 IndexRange Ghost<Base>::getGhostParticleRange(const ParticlesBound &ghost_bound)
 {
     return IndexRange(ghost_bound.first, ghost_bound.second);
-}
-//=================================================================================================//
-size_t Ghost<Base>::allocateGhostParticles(BaseParticles &base_particles, size_t ghost_size)
-{
-    size_t ghost_lower_bound = base_particles.particles_bound_;
-    base_particles.particles_bound_ += ghost_size;
-    return ghost_lower_bound;
 }
 //=================================================================================================//
 } // namespace SPH

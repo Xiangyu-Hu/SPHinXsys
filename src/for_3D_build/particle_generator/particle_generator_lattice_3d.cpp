@@ -73,7 +73,7 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
                     {
                         Real random_real = uniform_distr(rng);
                         // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
-                        if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
+                        if (random_real <= interval && base_particles_.TotalRealParticles() < planned_number_of_particles_)
                         {
                             addPositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / thickness_);
                             addSurfaceProperties(initial_shape_.findNormalDirection(particle_position), thickness_);

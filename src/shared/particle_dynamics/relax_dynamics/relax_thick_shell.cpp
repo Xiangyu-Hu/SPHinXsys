@@ -115,7 +115,7 @@ ShellNormalDirectionPrediction::ConsistencyCorrection::
           "UpdatedIndicator", [&](size_t i) -> int
           { return 0; }))
 {
-    updated_indicator_[particles_->total_real_particles_ / 3] = 1;
+    updated_indicator_[particles_->TotalRealParticles() / 3] = 1;
 }
 //=================================================================================================//
 void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t index_i, Real dt)

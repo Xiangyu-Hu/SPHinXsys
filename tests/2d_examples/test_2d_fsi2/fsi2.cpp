@@ -21,7 +21,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);        // Tag for computation with save particles distribution
+    sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 
     IOEnvironment io_environment(sph_system);

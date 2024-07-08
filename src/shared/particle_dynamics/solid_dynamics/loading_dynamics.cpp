@@ -17,7 +17,7 @@ SpringDamperConstraintParticleWise::
       mass_(*particles_->getVariableDataByName<Real>("Mass"))
 {
     // scale stiffness and damping by mass here, so it's not necessary in each iteration
-    stiffness_ = stiffness / std::accumulate(&mass_[0], &mass_[particles_->total_real_particles_], 0.0);
+    stiffness_ = stiffness / std::accumulate(&mass_[0], &mass_[particles_->TotalRealParticles()], 0.0);
     damping_coeff_ = stiffness_ * damping_ratio;
 }
 //=================================================================================================//
