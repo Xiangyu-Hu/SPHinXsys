@@ -91,7 +91,7 @@ struct InflowVelocity
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
         Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(0, position))
+        if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         }
@@ -145,8 +145,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	define geometry of SPH bodies
     //----------------------------------------------------------------------
     /** create a water block shape */
-    auto createWaterBlockShape = [&]()
-    {
+    auto createWaterBlockShape = [&]() {
         // geometry
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
@@ -331,8 +330,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
      * @brief 	Gtest start from here.
      */
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)
-    {
+    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos) {
         Real y = 2 * pos[1] / DH - 1;
         return Vec2d(1.5 * U_f * (1 - y * y), 0);
     };

@@ -112,7 +112,7 @@ class BidirectionalBuffer
                 mutex_switch_to_real_.unlock();
 
                 /** Periodic bounding. */
-                pos_n_[index_i] = aligned_box_.getUpperPeriodic(axis_, pos_n_[index_i]);
+                pos_n_[index_i] = aligned_box_.getUpperPeriodic(pos_n_[index_i]);
                 Real sound_speed = fluid_.getSoundSpeed(rho_n_[index_i]);
                 p_[index_i] = target_pressure_(p_[index_i]);
                 rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();

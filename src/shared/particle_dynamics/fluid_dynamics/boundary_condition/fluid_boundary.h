@@ -80,7 +80,7 @@ class FlowVelocityBuffer : public BaseFlowBoundaryCondition
  * @class   InflowVelocityCondition
  * @brief   Inflow boundary condition which imposes directly to a given velocity profile.
  *          TargetVelocity gives the velocity profile along the inflow direction,
- *          i.e. x direction in local frame.
+ *          i.e. the upper bound direction of the aligned box in local frame.
  */
 template <typename TargetVelocity>
 class InflowVelocityCondition : public BaseFlowBoundaryCondition
@@ -97,7 +97,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        if (aligned_box_.checkInBounds(0, pos_[index_i]))
+        if (aligned_box_.checkInBounds(pos_[index_i]))
         {
             Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
             Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
@@ -217,7 +217,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
 class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
 {
   public:
-    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis);
+    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjection(){};
 
     void update(size_t original_index_i, Real dt = 0.0);
@@ -230,7 +230,6 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &rho_, &p_;
     ParticleBuffer<Base> &buffer_;
-    const int axis_; /**< the axis direction for bounding*/
     AlignedBoxShape &aligned_box_;
 };
 
@@ -241,7 +240,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
 class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
 {
   public:
-    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis);
+    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part);
     virtual ~DisposerOutflowDeletion(){};
 
     void update(size_t index_i, Real dt = 0.0);
@@ -249,7 +248,6 @@ class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public
   protected:
     std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
     StdLargeVec<Vecd> &pos_;
-    const int axis_; /**< the axis direction for bounding*/
     AlignedBoxShape &aligned_box_;
 };
 } // namespace fluid_dynamics
