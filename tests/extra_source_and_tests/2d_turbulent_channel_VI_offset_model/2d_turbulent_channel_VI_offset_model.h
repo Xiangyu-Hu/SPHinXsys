@@ -72,7 +72,7 @@ Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
-Real x_observe_start = 0.90 * DL;
+Real x_observe_start = 0.99 * DL;
 int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
 Real observe_spacing = DH_C / num_observer_points;
 
