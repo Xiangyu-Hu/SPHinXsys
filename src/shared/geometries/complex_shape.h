@@ -47,7 +47,7 @@ class ComplexShape : public BinaryShapes
     virtual ~ComplexShape(){};
 
     template <typename... Args>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&... args)
+    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
         LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
@@ -66,21 +66,21 @@ using DefaultShape = ComplexShape;
  */
 class AlignedBoxShape : public TransformShape<GeometricShapeBox>
 {
-    const int upper_bound_axis_;
+    const int alignment_axis_;
 
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBoxShape(int upper_bound_axis, const Transform &transform, Args &&... args)
+    explicit AlignedBoxShape(int upper_bound_axis, const Transform &transform, Args &&...args)
         : TransformShape<GeometricShapeBox>(transform, std::forward<Args>(args)...),
-          upper_bound_axis_(upper_bound_axis){};
+          alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>
-    explicit AlignedBoxShape(int upper_bound_axis, const Shape &shape, Args &&... args)
+    explicit AlignedBoxShape(int upper_bound_axis, const Shape &shape, Args &&...args)
         : TransformShape<GeometricShapeBox>(
               Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
               0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
-          upper_bound_axis_(upper_bound_axis){};
+          alignment_axis_(upper_bound_axis){};
     virtual ~AlignedBoxShape(){};
 
     Vecd HalfSize() { return halfsize_; }
@@ -91,6 +91,7 @@ class AlignedBoxShape : public TransformShape<GeometricShapeBox>
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
     Vecd getUpperPeriodic(const Vecd &probe_point);
     Vecd getLowerPeriodic(const Vecd &probe_point);
+    int AlignmentAxis() { return alignment_axis_; };
 };
 } // namespace SPH
 #endif // COMPLEX_SHAPE_H

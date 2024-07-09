@@ -57,11 +57,11 @@ class BidirectionalBuffer
     class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
     {
       public:
-        TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, int axis)
+        TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               DataDelegateSimple(aligned_box_part.getSPHBody()),
               pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-              aligned_box_(aligned_box_part.aligned_box_), axis_(axis),
+              aligned_box_(aligned_box_part.getAlignedBoxShape()),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
@@ -70,13 +70,12 @@ class BidirectionalBuffer
 
         virtual void update(size_t index_i, Real dt = 0.0)
         {
-            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(axis_, pos_[index_i]) ? 1 : 0;
+            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(pos_[index_i]) ? 1 : 0;
         };
 
       protected:
         StdLargeVec<Vecd> &pos_;
         AlignedBoxShape &aligned_box_;
-        const int axis_;
         StdLargeVec<int> &buffer_particle_indicator_;
     };
 
@@ -84,11 +83,11 @@ class BidirectionalBuffer
     {
       public:
         Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
-                  int axis, TargetPressure &target_pressure)
+                  TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               DataDelegateSimple(aligned_box_part.getSPHBody()),
-              axis_(axis), particle_buffer_(particle_buffer),
-              aligned_box_(aligned_box_part.aligned_box_),
+              particle_buffer_(particle_buffer),
+              aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
               original_id_(particles_->ParticleOriginalIds()),
               pos_n_(*particles_->getVariableDataByName<Vecd>("Position")),
@@ -104,7 +103,7 @@ class BidirectionalBuffer
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            if (aligned_box_.checkUpperBound(axis_, pos_n_[index_i]) && buffer_particle_indicator_[index_i] == 1)
+            if (aligned_box_.checkUpperBound(pos_n_[index_i]) && buffer_particle_indicator_[index_i] == 1)
             {
                 mutex_switch_to_real_.lock();
                 particle_buffer_.checkEnoughBuffer(*particles_);
@@ -122,7 +121,6 @@ class BidirectionalBuffer
 
       protected:
         std::mutex mutex_switch_to_real_;
-        const int axis_;
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
@@ -136,9 +134,9 @@ class BidirectionalBuffer
     };
 
   public:
-    BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer, int axis)
-        : target_pressure_(*this), tag_buffer_particles(aligned_box_part, axis),
-          injection(aligned_box_part, particle_buffer, axis, target_pressure_){};
+    BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
+        : target_pressure_(*this), tag_buffer_particles(aligned_box_part),
+          injection(aligned_box_part, particle_buffer, target_pressure_){};
     virtual ~BidirectionalBuffer(){};
 
     SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;

@@ -89,7 +89,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
     /** default parameter indicates prescribe velocity */
     explicit InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part, Real relaxation_rate = 1.0)
         : BaseFlowBoundaryCondition(aligned_box_part),
-          relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.aligned_box_),
+          relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBoxShape()),
           transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
           target_velocity(*this){};
     virtual ~InflowVelocityCondition(){};

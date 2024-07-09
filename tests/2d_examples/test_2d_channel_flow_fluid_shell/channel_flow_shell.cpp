@@ -145,7 +145,8 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	define geometry of SPH bodies
     //----------------------------------------------------------------------
     /** create a water block shape */
-    auto createWaterBlockShape = [&]() {
+    auto createWaterBlockShape = [&]()
+    {
         // geometry
         std::vector<Vecd> water_block_shape;
         water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
@@ -216,7 +217,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
@@ -330,7 +331,8 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
      * @brief 	Gtest start from here.
      */
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos) {
+    std::function<Vec2d(Vec2d)> inflow_velocity = [&](Vec2d pos)
+    {
         Real y = 2 * pos[1] / DH - 1;
         return Vec2d(1.5 * U_f * (1 - y * y), 0);
     };

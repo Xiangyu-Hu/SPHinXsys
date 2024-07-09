@@ -6,8 +6,8 @@ namespace SPH
 bool AlignedBoxShape::checkInBounds(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[upper_bound_axis_] >= -halfsize_[upper_bound_axis_] &&
-                   position_in_frame[upper_bound_axis_] <= halfsize_[upper_bound_axis_]
+    return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] &&
+                   position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_]
                ? true
                : false;
 }
@@ -15,32 +15,32 @@ bool AlignedBoxShape::checkInBounds(const Vecd &probe_point)
 bool AlignedBoxShape::checkUpperBound(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[upper_bound_axis_] > halfsize_[upper_bound_axis_] ? true : false;
+    return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] ? true : false;
 }
 //=================================================================================================//
 bool AlignedBoxShape::checkLowerBound(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[upper_bound_axis_] < -halfsize_[upper_bound_axis_] ? true : false;
+    return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] ? true : false;
 }
 //=================================================================================================//
 bool AlignedBoxShape::checkNearUpperBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return ABS(position_in_frame[upper_bound_axis_] - halfsize_[upper_bound_axis_]) <= threshold ? true : false;
+    return ABS(position_in_frame[alignment_axis_] - halfsize_[alignment_axis_]) <= threshold ? true : false;
 }
 //=================================================================================================//
 bool AlignedBoxShape::checkNearLowerBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return ABS(position_in_frame[upper_bound_axis_] + halfsize_[upper_bound_axis_]) <= threshold ? true : false;
+    return ABS(position_in_frame[alignment_axis_] + halfsize_[alignment_axis_]) <= threshold ? true : false;
 }
 //=================================================================================================//
 Vecd AlignedBoxShape::getUpperPeriodic(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     Vecd shift = Vecd::Zero();
-    shift[upper_bound_axis_] -= 2.0 * halfsize_[upper_bound_axis_];
+    shift[alignment_axis_] -= 2.0 * halfsize_[alignment_axis_];
     return transform_.shiftFrameStationToBase(position_in_frame + shift);
 }
 //=================================================================================================//
@@ -48,7 +48,7 @@ Vecd AlignedBoxShape::getLowerPeriodic(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     Vecd shift = Vecd::Zero();
-    shift[upper_bound_axis_] += 2.0 * halfsize_[upper_bound_axis_];
+    shift[alignment_axis_] += 2.0 * halfsize_[alignment_axis_];
     return transform_.shiftFrameStationToBase(position_in_frame + shift);
 }
 //=================================================================================================//
