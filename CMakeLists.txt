@@ -14,6 +14,7 @@ option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code q
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
 option(SPHINXSYS_USE_SIMD "Build using SIMD instructions" OFF)
 option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
+option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -96,6 +97,19 @@ find_package(Boost QUIET COMPONENTS program_options)
 if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
+endif()
+
+if(SPHINXSYS_USE_SYCL)
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    message(FATAL_ERROR "-- SYCL is only supported with IntelLLVM compiler. Disabling SYCL support.")
+    endif()
+
+    if(NOT SPHINXSYS_SYCL_TARGETS)
+        set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
+    endif()
+    message("-- SPHinXsys use SYCL with targets ${SPHINXSYS_SYCL_TARGETS}")
+    target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS}  -Wno-unknown-cuda-version)
+    target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS}  -Wno-unknown-cuda-version)
 endif()
 
 # ------ Setup the concrete libraries
