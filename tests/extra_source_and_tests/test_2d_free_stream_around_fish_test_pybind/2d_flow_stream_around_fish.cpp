@@ -122,41 +122,73 @@ class SphFishReloadTestEnvironment : public SphBasicTestSystemSetting
 class SphFishReloadTest : public SphFishReloadTestEnvironment
 {
   protected:
+    //InnerRelation fish_inner, water_block_inner;
+    //ContactRelation water_block_contact, fish_contact, fish_observer_contact_water, fish_observer_contact_fish;
+    //ComplexRelation water_block_complex;
+    //TimeDependentAcceleration time_dependent_acceleration;
+    //SimpleDynamics<GravityForce> apply_gravity_force;
+    //BodyAlignedBoxByParticle emitter;
+    //SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection;
+    //BodyAlignedBoxByCell emitter_buffer;
+    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition;
+    //SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion;
+    //InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator;
+    //BodyAlignedBoxByCell disposer;
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density;
+    //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size;
+    //ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size;
+    //SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint;
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation;
+    //Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation;
+    //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration;
+    //InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction;
+    //InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity;
+    //SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction;
+    //InteractionWithUpdate<LinearGradientCorrectionMatrixInner> fish_body_corrected_configuration;
+    //InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish;
+    //InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_fish_update;
+    //solid_dynamics::AverageVelocityAndAcceleration average_fish_velocity_and_acceleration;
+    //SimpleDynamics<FishMaterialInitialization> composite_material_id_fish;
+    //SimpleDynamics<ImposingActiveStrain> imposing_active_strain;
+    //ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size;
+
+    //Dynamics1Level<solid_dynamics::Integration1stHalfPK2> fish_body_stress_relaxation_first_half;
+    //Dynamics1Level<solid_dynamics::Integration2ndHalf> fish_body_stress_relaxation_second_half;
+
+    //SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal;
     InnerRelation fish_inner, water_block_inner;
     ContactRelation water_block_contact, fish_contact, fish_observer_contact_water, fish_observer_contact_fish;
     ComplexRelation water_block_complex;
-    TimeDependentAcceleration time_dependent_acceleration;
-    SimpleDynamics<GravityForce> apply_gravity_force;
-    BodyAlignedBoxByParticle emitter;
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection;
-    BodyAlignedBoxByCell emitter_buffer;
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition;
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion;
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator;
-    BodyAlignedBoxByCell disposer;
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density;
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size;
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size;
-    SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint;
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation;
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation;
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration;
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction;
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity;
+
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction;
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> fish_body_corrected_configuration;
-    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish;
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_fish_update;
-    solid_dynamics::AverageVelocityAndAcceleration average_fish_velocity_and_acceleration;
     SimpleDynamics<FishMaterialInitialization> composite_material_id_fish;
-    SimpleDynamics<ImposingActiveStrain> imposing_active_strain;
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size;
-
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> fish_body_stress_relaxation_first_half;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> fish_body_stress_relaxation_second_half;
-
+    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size;
+    SimpleDynamics<ImposingActiveStrain> imposing_active_strain;
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal;
+    TimeDependentAcceleration time_dependent_acceleration;
+    SimpleDynamics<GravityForce> apply_gravity_force;
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation;
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation;
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density;
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration;
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction;
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size;
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size;
+    BodyAlignedBoxByParticle emitter;
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection;
+    BodyAlignedBoxByCell emitter_buffer, disposer;
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition;
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion;
+    SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint;
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity;
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish;
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_fish_update;
 
+    solid_dynamics::AverageVelocityAndAcceleration average_fish_velocity_and_acceleration;
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

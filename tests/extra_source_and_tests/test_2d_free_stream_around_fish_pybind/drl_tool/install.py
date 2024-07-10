@@ -7,6 +7,31 @@ import argparse
 
 
 sys_str = platform.system()
+# def install(package):
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# def install_self():
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", "."])
+# try:
+#     import tianshou
+# except ImportError:
+#     if sys_str == 'Windows':
+#         print("tianshou library not found. Installing...")
+#         install("tianshou")
+#         import tianshou
+#     elif sys_str == 'Linux':
+#         print("numpy library reinstalling...")
+#         install("numpy==1.23.4")
+#         print("tianshou library not found. Installing...")
+#         install("tianshou")
+#         print("finish install numpy & tianshou")
+#         try:
+#             import tianshou
+#         except ImportError:
+#             print("install tianshou failed ...")
+#     else:
+#         print("tianshou library not found. Installing...")
+#         install("tianshou")
 
 # swith to current position install cd pip install -e .
 #!/usr/bin/env python3
@@ -15,19 +40,21 @@ sys_str = platform.system()
 # attention: match current python version with the version exposing the cpp code
 
 # If this doesn't works, try path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
-def read_files_in_folder(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    print(f"Contents of {file_path}:")
-                    print(f.read())
-                    print("=" * 80)  # Separator between file contents
-            except Exception as e:
-                print(f"Could not read {file_path} due to {e}")
-path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
+def list_files_in_current_directory(path):
+    # 获取当前目录
+    current_directory = os.getcwd()
+    # 列出当前目录中的所有文件和文件夹
+    files_and_dirs = os.listdir(path)
+    
+    # 过滤出文件
+    files = [f for f in files_and_dirs if os.path.isfile(os.path.join(path, f))]
+    
+    # 打印文件名
+    for file in files:
+        print(file)
 
+
+path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
 print('path1:', path_1)
 if sys_str == 'Windows':
@@ -40,9 +67,10 @@ else:
 path = os.path.join(path_1, path_2)
 print(path)
 sys.path.append(path)
-read_files_in_folder(path)
 # change import depending on the project name
+list_files_in_current_directory(path)
 
+print("import test_2d_free_stream_around_fish_pybind")
 import test_2d_free_stream_around_fish_pybind as train
 r = train.from_sph_relaxation(2)
 b = train.from_sph_reload_and_train(2)

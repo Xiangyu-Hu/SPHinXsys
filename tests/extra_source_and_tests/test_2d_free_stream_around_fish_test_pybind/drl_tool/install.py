@@ -13,17 +13,18 @@ sys_str = platform.system()
 # attention: match current python version with the version exposing the cpp code
 
 # If this doesn't works, try path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
-def read_files_in_folder(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    print(f"Contents of {file_path}:")
-                    print(f.read())
-                    print("=" * 80)  # Separator between file contents
-            except Exception as e:
-                print(f"Could not read {file_path} due to {e}")
+def list_files_in_current_directory(path):
+    # 获取当前目录
+    current_directory = os.getcwd()
+    # 列出当前目录中的所有文件和文件夹
+    files_and_dirs = os.listdir(path)
+    
+    # 过滤出文件
+    files = [f for f in files_and_dirs if os.path.isfile(os.path.join(path, f))]
+    
+    # 打印文件名
+    for file in files:
+        print(file)
 
 path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
@@ -39,7 +40,7 @@ else:
 path = os.path.join(path_1, path_2)
 print(path)
 sys.path.append(path)
-read_files_in_folder(path)
+list_files_in_current_directory(path)
 # change import depending on the project name
 
 print("import test_2d_free_stream_around_fish_test_pybind")
