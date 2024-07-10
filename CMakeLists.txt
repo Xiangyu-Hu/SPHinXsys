@@ -104,6 +104,10 @@ if(SPHINXSYS_USE_SYCL)
     message(FATAL_ERROR "-- SYCL is only supported with IntelLLVM compiler. Disabling SYCL support.")
     endif()
 
+    if(NOT SPHINXSYS_USE_FLOAT)
+    message(FATAL_ERROR "-- The present SYCL implementation requires to use float point other than double for real numbers.")
+    endif()
+
     if(NOT SPHINXSYS_SYCL_TARGETS)
         set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
     endif()
