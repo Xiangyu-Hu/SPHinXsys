@@ -258,7 +258,7 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
 
     void setFreqfromPython(Real freq = 4)
     {
-        Real frequency_ = freq;
+        frequency_ = freq;
     };
 
   protected:
