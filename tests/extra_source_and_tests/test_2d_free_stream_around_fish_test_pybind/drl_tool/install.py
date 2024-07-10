@@ -44,7 +44,7 @@ print(path)
 sys.path.append(path)
 # change import depending on the project name
 
-list_files_in_current_directory(path1)
+list_files_in_current_directory(path_1)
 if list_files_in_current_directory(path) == True:
     print("import test_2d_free_stream_around_fish_test_pybind")
     import test_2d_free_stream_around_fish_test_pybind as train
