@@ -129,10 +129,11 @@ class SphFishReloadTest : public SphFishReloadTestEnvironment
     SimpleDynamics<GravityForce> apply_gravity_force;
     BodyAlignedBoxByParticle emitter;
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection;
-    BodyAlignedBoxByCell emitter_buffer, disposer;
+    BodyAlignedBoxByCell emitter_buffer;
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition;
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion;
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator;
+    BodyAlignedBoxByCell disposer;
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density;
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size;
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size;
