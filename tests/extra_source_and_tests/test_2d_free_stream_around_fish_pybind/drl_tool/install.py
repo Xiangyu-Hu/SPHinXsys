@@ -7,11 +7,11 @@ import argparse
 
 
 sys_str = platform.system()
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+# def install(package):
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-def install_self():
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", "."])
+# def install_self():
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", "."])
 # try:
 #     import tianshou
 # except ImportError:
@@ -53,20 +53,14 @@ path = os.path.join(path_1, path_2)
 print(path)
 sys.path.append(path)
 # change import depending on the project name
-try:
-    import test_2d_free_stream_around_fish_pybind as train
-    r = train.from_sph_relaxation(2)
-    b = train.from_sph_reload_and_train(2)
-    b.SetFreq(4)
-    b.RunCase(1, 0.1)
-    print("success")
-except ImportError:
-    import test_2d_free_stream_around_fish_test_pybind as train
-    r = train.from_sph_relaxation_and_test(2)
-    b = train.from_sph_reload_and_test(2)
-    b.SetFreq(4)
-    b.RunCase(1, 0.1)
-    print("success")
+
+import test_2d_free_stream_around_fish_pybind as train
+r = train.from_sph_relaxation(2)
+b = train.from_sph_reload_and_train(2)
+b.SetFreq(4)
+b.RunCase(1, 0.1)
+print("success")
+
 
 # 在cmake文件中生成 一个是加测试 运行add_test  DQN文件
 # 在cmake文件中

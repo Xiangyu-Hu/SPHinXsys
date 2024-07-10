@@ -8,9 +8,9 @@ find_package(pybind11 CONFIG REQUIRED)
 if (MSVC)
     # MSVC 编译器设置
     add_compile_options(/W4)
-    add_compile_options(/wd4251) # 例如，禁用特定警告
+    add_compile_options(/wd4251) 
 else()
-    # GCC 或 Clang 编译器设置
+    # GCC 
     add_compile_options(-Wall -Wextra -Wno-reorder -Wno-unused-parameter)
 endif()
 

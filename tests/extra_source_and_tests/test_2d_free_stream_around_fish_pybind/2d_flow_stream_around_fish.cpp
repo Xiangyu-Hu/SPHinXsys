@@ -31,7 +31,6 @@ protected:
     FluidBody water_block;
     SolidBody fish_body;
     ObserverBody fish_observer;
-    
 
 public:
     SphFishRelaxationEnvironment(int episode_env) :
