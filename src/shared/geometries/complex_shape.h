@@ -62,31 +62,36 @@ using DefaultShape = ComplexShape;
 /**
  * @class AlignedBoxShape
  * @brief Used to describe a bounding box in which
- * the plane vertical to axis direction is aligned to a planar piece of a shape.
+ * the upper bound direction is aligned to the normal of a planar piece on a shape.
  */
 class AlignedBoxShape : public TransformShape<GeometricShapeBox>
 {
+    const int alignment_axis_;
+
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBoxShape(const Transform &transform, Args &&...args)
-        : TransformShape<GeometricShapeBox>(transform, std::forward<Args>(args)...){};
+    explicit AlignedBoxShape(int upper_bound_axis, const Transform &transform, Args &&...args)
+        : TransformShape<GeometricShapeBox>(transform, std::forward<Args>(args)...),
+          alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>
-    explicit AlignedBoxShape(const Shape &shape, Args &&...args)
+    explicit AlignedBoxShape(int upper_bound_axis, const Shape &shape, Args &&...args)
         : TransformShape<GeometricShapeBox>(
               Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
-              0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...){};
+              0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
+          alignment_axis_(upper_bound_axis){};
     virtual ~AlignedBoxShape(){};
 
     Vecd HalfSize() { return halfsize_; }
-    bool checkInBounds(int axis, const Vecd &probe_point);
-    bool checkUpperBound(int axis, const Vecd &probe_point);
-    bool checkLowerBound(int axis, const Vecd &probe_point);
-    bool checkNearUpperBound(int axis, const Vecd &probe_point, Real threshold);
-    bool checkNearLowerBound(int axis, const Vecd &probe_point, Real threshold);
-    Vecd getUpperPeriodic(int axis, const Vecd &probe_point);
-    Vecd getLowerPeriodic(int axis, const Vecd &probe_point);
+    bool checkInBounds(const Vecd &probe_point);
+    bool checkUpperBound(const Vecd &probe_point);
+    bool checkLowerBound(const Vecd &probe_point);
+    bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
+    bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
+    Vecd getUpperPeriodic(const Vecd &probe_point);
+    Vecd getLowerPeriodic(const Vecd &probe_point);
+    int AlignmentAxis() { return alignment_axis_; };
 };
 } // namespace SPH
 #endif // COMPLEX_SHAPE_H

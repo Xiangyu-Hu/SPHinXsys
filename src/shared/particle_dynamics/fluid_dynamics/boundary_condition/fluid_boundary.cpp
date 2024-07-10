@@ -45,7 +45,7 @@ EmitterInflowCondition::
       p_(*particles_->getVariableDataByName<Real>("Pressure")),
       drho_dt_(*particles_->getVariableDataByName<Real>("DensityChangeRate")),
       inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
-      aligned_box_(aligned_box_part.aligned_box_),
+      aligned_box_(aligned_box_part.getAlignedBoxShape()),
       updated_transform_(aligned_box_.getTransform()),
       old_transform_(updated_transform_) {}
 //=================================================================================================//
@@ -61,7 +61,7 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowInjection::
-    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis)
+    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
@@ -70,7 +70,7 @@ EmitterInflowInjection::
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
       p_(*particles_->getVariableDataByName<Real>("Pressure")),
-      buffer_(buffer), axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
+      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBoxShape())
 {
     buffer_.checkParticlesReserved();
 }
@@ -78,7 +78,7 @@ EmitterInflowInjection::
 void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 {
     size_t sorted_index_i = sorted_id_[original_index_i];
-    if (aligned_box_.checkUpperBound(axis_, pos_[sorted_index_i]))
+    if (aligned_box_.checkUpperBound(pos_[sorted_index_i]))
     {
         mutex_switch_to_real_.lock();
         buffer_.checkEnoughBuffer(*particles_);
@@ -86,23 +86,23 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
         mutex_switch_to_real_.unlock();
 
         /** Periodic bounding. */
-        pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_[sorted_index_i]);
+        pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(pos_[sorted_index_i]);
         rho_[sorted_index_i] = fluid_.ReferenceDensity();
         p_[sorted_index_i] = fluid_.getPressure(rho_[sorted_index_i]);
     }
 }
 //=================================================================================================//
 DisposerOutflowDeletion::
-    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
+    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
       DataDelegateSimple(aligned_box_part.getSPHBody()),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
+      aligned_box_(aligned_box_part.getAlignedBoxShape()) {}
 //=================================================================================================//
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)
 {
     mutex_switch_to_buffer_.lock();
-    while (aligned_box_.checkUpperBound(axis_, pos_[index_i]) && index_i < particles_->TotalRealParticles())
+    while (aligned_box_.checkUpperBound(pos_[index_i]) && index_i < particles_->TotalRealParticles())
     {
         particles_->switchToBufferParticle(index_i);
     }
