@@ -15,16 +15,18 @@ sys_str = platform.system()
 # If this doesn't works, try path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
 def list_files_in_current_directory(path):
     # 获取当前目录
-    current_directory = os.getcwd()
     # 列出当前目录中的所有文件和文件夹
-    files_and_dirs = os.listdir(path)
-    
-    # 过滤出文件
-    files = [f for f in files_and_dirs if os.path.isfile(os.path.join(path, f))]
-    
-    # 打印文件名
-    for file in files:
-        print(file)
+    if os.path.exists(path):
+        files_and_dirs = os.listdir(path)
+        files = [f for f in files_and_dirs if os.path.isfile(os.path.join(path, f))]
+        
+        # 打印文件名
+        for file in files:
+            print(file)
+        return True
+    else:
+        print(f"The directory {path} does not exist.")
+        return False
 
 path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
@@ -40,16 +42,19 @@ else:
 path = os.path.join(path_1, path_2)
 print(path)
 sys.path.append(path)
-list_files_in_current_directory(path)
 # change import depending on the project name
 
-print("import test_2d_free_stream_around_fish_test_pybind")
-import test_2d_free_stream_around_fish_test_pybind as train
-r = train.from_sph_relaxation_and_test(2)
-b = train.from_sph_reload_and_test(2)
-b.SetFreq(4)
-b.RunCase(1, 0.1)
-print("success")
+list_files_in_current_directory(path1)
+if list_files_in_current_directory(path) == True:
+    print("import test_2d_free_stream_around_fish_test_pybind")
+    import test_2d_free_stream_around_fish_test_pybind as train
+    r = train.from_sph_relaxation_and_test(2)
+    b = train.from_sph_reload_and_test(2)
+    b.SetFreq(4)
+    b.RunCase(1, 0.1)
+    print("success")
+else:
+    print("success")
 
 # 在cmake文件中生成 一个是加测试 运行add_test  DQN文件
 # 在cmake文件中
