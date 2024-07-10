@@ -9,7 +9,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 	BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 		: Karman_(0.41), turbu_const_E_(9.8), C_mu_(0.09), turbulent_intensity_(5.0e-2), 
-		sigma_k_(1.0),  C_l_(1.44), C_2_(1.92), sigma_E_(1.3), turbulent_length_ratio_for_epsilon_inlet_(0.07),
+		sigma_k_(0.95),  C_l_(1.44), C_2_(1.92), sigma_E_(1.3), turbulent_length_ratio_for_epsilon_inlet_(0.07),
 		start_time_laminar_(0.0), y_star_threshold_laminar_(11.225)
 	{
 		C_mu_25_ = pow(C_mu_, 0.25);
