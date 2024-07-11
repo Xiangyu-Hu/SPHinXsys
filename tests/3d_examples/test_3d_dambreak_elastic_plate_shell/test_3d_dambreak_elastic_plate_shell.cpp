@@ -193,8 +193,8 @@ int main(int ac, char *av[])
     ContactRelation water_wall_contact(water_block, {&wall_boundary, &gate});
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
-    ContactRelationFromShell water_plate_contact(water_block, {&plate}, {false});
-    ContactRelationToShell plate_water_contact(plate, {&water_block}, {false});
+    ContactRelationFromShellToFluid water_plate_contact(water_block, {&plate}, {false});
+    ContactRelationFromFluidToShell plate_water_contact(plate, {&water_block}, {false});
     ShellInnerRelationWithContactKernel plate_curvature_inner(plate, water_block);
     ContactRelation disp_observer_contact_1(disp_observer_1, {&plate});
     ContactRelation disp_observer_contact_2(disp_observer_2, {&plate});

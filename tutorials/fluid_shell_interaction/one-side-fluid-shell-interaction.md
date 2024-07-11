@@ -215,9 +215,9 @@ We have those new classes:
 
 2. Contact relations
 
-`ContactRelationFromShell`: contact to fluid from shell. If the normal of shell points from shell to fluid, `normal_corrections` should set to true, so that the normal will be flipped in the neighbor builder.
+`ContactRelationFromShellToFluid`: fluid(source)-shell(contact) relation. If the normal of shell points from shell to fluid, `normal_corrections` should set to true, so that the normal will be flipped in the neighbor builder.
 
-`ContactRelationToShell`: contact to shell from fluid
+`ContactRelationFromFluidToShell`: shell(source)-fluid(contact) relation
 
 `ShellInnerRelationWithContactKernel`: inner contact to calculate the average curvature. The search depth is set to the search depth of fluid.
 

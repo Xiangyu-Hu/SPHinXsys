@@ -199,7 +199,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     ShellInnerRelationWithContactKernel wall_curvature_inner(shell_boundary, water_block);
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
-    ContactRelationFromShell water_block_contact(water_block, {&shell_boundary}, {false});
+    ContactRelationFromShellToFluid water_block_contact(water_block, {&shell_boundary}, {false});
     ContactRelation observer_contact_axial(observer_axial, {&water_block});
     ContactRelation observer_contact_radial(observer_radial, {&water_block});
     //----------------------------------------------------------------------
