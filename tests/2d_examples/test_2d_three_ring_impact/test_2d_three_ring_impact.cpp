@@ -50,7 +50,7 @@ namespace SPH
 {
 class ShellRing;
 template <>
-class ParticleGenerator<ShellRing> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, ShellRing> : public ParticleGenerator<SurfaceParticles>
 {
     const Vec2d center_;
     const Real mid_srf_radius_;
@@ -58,25 +58,42 @@ class ParticleGenerator<ShellRing> : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    ParticleGenerator(SPHBody &sph_body, const Vec2d &center, Real mid_srf_radius, Real dp, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, const Vec2d &center, Real mid_srf_radius, Real dp, Real thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           center_(center),
           mid_srf_radius_(mid_srf_radius),
           dp_(dp),
           thickness_(thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const auto number_of_particles = int(2 * Pi * mid_srf_radius_ / dp_);
         const Real dtheta = 2 * Pi / Real(number_of_particles);
         for (int n = 0; n < number_of_particles; n++)
         {
             const Vec2d center_to_pos = mid_srf_radius_ * Vec2d(cos(n * dtheta), sin(n * dtheta));
-            initializePositionAndVolumetricMeasure(center_ + center_to_pos, dp_);
-            initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
+            addPositionAndVolumetricMeasure(center_ + center_to_pos, dp_);
+            addSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };
 } // namespace SPH
+
+class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataDelegateSimple
+{
+  private:
+    StdLargeVec<Vec2d> *vel_;
+    Vec2d initial_velocity_;
+
+  public:
+    InitialVelocityCondition(SPHBody &body, Vec2d initial_velocity)
+        : BaseLocalDynamics<SPHBody>(body), DataDelegateSimple(body),
+          vel_(this->particles_->template registerSharedVariable<Vec2d>("Velocity")),
+          initial_velocity_(std::move(initial_velocity)){};
+    inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)
+    {
+        (*vel_)[index_i] = initial_velocity_;
+    }
+};
 
 Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
 {
@@ -205,13 +222,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     ShellSelfContactRelation self_contact_m(ring_m_body);
 
     // Contact relation
-    // shell-shell
-    SurfaceContactRelationFromShellToShell contact_s_to_m(ring_s_body, {&ring_m_body}, {true});
-    SurfaceContactRelationFromShellToShell contact_m_to_s(ring_m_body, {&ring_s_body}, {true});
-    // shell-solid
-    SurfaceContactRelationToShell contact_m_to_l(ring_m_body, {&ring_l_body});
-    // solid-shell
-    SurfaceContactRelationFromShell contact_l_to_m(ring_l_body, {&ring_m_body}, {true});
+    SurfaceContactRelation contact_s(ring_s_body, {&ring_m_body}, {true});
+    SurfaceContactRelation contact_m(ring_m_body, {&ring_s_body, &ring_l_body}, {true, false});
+    SurfaceContactRelation contact_l(ring_l_body, {&ring_m_body}, {true});
 
     // Inner relation of curvature
     ShellInnerRelationWithContactKernel curvature_inner_m_with_s_kernel(ring_m_body, ring_s_body);
@@ -226,40 +239,25 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // density
     // self contact
     InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> self_contact_density_m(self_contact_m);
-    // shell-shell
-    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density_s_to_m(contact_s_to_m);
-    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density_m_to_s(contact_m_to_s);
-    // shell-solid
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_m_to_l(contact_m_to_l);
-    // solid-shell
-    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density_l_to_m(contact_l_to_m);
+    // contact
+    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_s(contact_s);
+    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_m(contact_m);
+    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_l(contact_l);
 
     // force
     // self contact
     InteractionWithUpdate<solid_dynamics::SelfContactForce> self_contact_forces_m(self_contact_m);
-    // shell-shell
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_s_to_m(contact_s_to_m);
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_m_to_s(contact_m_to_s);
-    // shell-solid
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_force_m_to_l(contact_m_to_l);
-    // solid-shell
-    InteractionWithUpdate<solid_dynamics::ContactForce> contact_force_l_to_m(contact_l_to_m);
+    // contact
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_s(contact_s);
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_m(contact_m);
+    InteractionWithUpdate<solid_dynamics::ContactForce> contact_forces_l(contact_l);
 
     // Inital condition
-    auto vel_ic = [&, vel = Vec2d(-30, 30)]()
-    {
-        auto &vel_ = *particles_s->getVariableByName<Vec2d>("Velocity");
-        particle_for(
-            execution::ParallelPolicy(),
-            IndexRange(0, particles_s->total_real_particles_),
-            [&](size_t index_i)
-            {
-                vel_[index_i] = vel;
-            });
-    };
+    SimpleDynamics<InitialVelocityCondition> vel_ic_s(ring_s_body, Vec2d(-30, 30));
 
     // Boundary condition
-    auto fix_id_l = [&]()
+    BodyPartByParticle fixed_part_l(ring_l_body, "FixedPartL");
+    fixed_part_l.body_part_particles_ = [&]()
     {
         IndexVector fixed_particles_id;
         for (size_t i = 0; i < particles_l->total_real_particles_; ++i)
@@ -270,23 +268,13 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
         }
         return fixed_particles_id;
     }();
-    auto fix_bc = [&]()
-    {
-        auto &vel_ = *particles_l->getVariableByName<Vec2d>("Velocity");
-        particle_for(
-            execution::ParallelPolicy(),
-            fix_id_l,
-            [&](size_t index_i)
-            {
-                vel_[index_i] = Vec2d::Zero();
-            });
-    };
+    SimpleDynamics<FixBodyPartConstraint> fix_bc_l(fixed_part_l);
 
     // Observer
     const Vec2d observer_pos = center_m + 0.5 * mid_srf_diameter_m * (center_m - center_s).normalized();
     StdVec<Vec2d> observation_location{observer_pos};
     ObserverBody observer(system, "Observer");
-    observer.generateParticles<BaseParticles, Observer>(observation_location);
+    observer.generateParticles<ObserverParticles>(observation_location);
     ContactRelation observer_contact(observer, {&ring_m_body});
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_ring_m_pos("Position", observer_contact);
@@ -316,10 +304,10 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     curvature_m.compute_initial_curvature();
     average_curvature_m_with_s_kernel.exec();
     average_curvature_s_with_m_kernel.exec();
-    contact_s_to_m.updateConfiguration();
-    contact_m_to_s.updateConfiguration();
+    contact_s.updateConfiguration();
+    contact_m.updateConfiguration();
 
-    vel_ic();
+    vel_ic_s.exec();
 
     // Simulation
     GlobalStaticVariables::physical_time_ = 0.0;
@@ -343,17 +331,13 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                               << dt << "\n";
                 }
 
-                contact_density_s_to_m.exec();
-                contact_forces_s_to_m.exec();
+                contact_density_s.exec();
+                contact_density_m.exec();
+                contact_density_l.exec();
 
-                contact_density_m_to_s.exec();
-                contact_forces_m_to_s.exec();
-
-                contact_density_l_to_m.exec();
-                contact_force_l_to_m.exec();
-
-                contact_density_m_to_l.exec();
-                contact_force_m_to_l.exec();
+                contact_forces_s.exec();
+                contact_forces_m.exec();
+                contact_forces_l.exec();
 
                 self_contact_density_m.exec();
                 self_contact_forces_m.exec();
@@ -366,7 +350,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 stress_relaxation_first_half_m.exec(dt);
                 stress_relaxation_first_half_s.exec(dt);
 
-                fix_bc();
+                fix_bc_l.exec();
 
                 velocity_damping_l.exec(dt);
                 velocity_damping_m.exec(dt);
@@ -374,7 +358,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 rotation_damping_s.exec(dt);
                 velocity_damping_s.exec(dt);
 
-                fix_bc();
+                fix_bc_l.exec();
 
                 stress_relaxation_second_half_l.exec(dt);
                 stress_relaxation_second_half_m.exec(dt);
@@ -391,10 +375,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 average_curvature_s_with_m_kernel.exec();
                 curvature_m.exec();
                 self_contact_m.updateConfiguration();
-                contact_s_to_m.updateConfiguration();
-                contact_m_to_s.updateConfiguration();
-                contact_m_to_l.updateConfiguration();
-                contact_l_to_m.updateConfiguration();
+                contact_s.updateConfiguration();
+                contact_m.updateConfiguration();
+                contact_l.updateConfiguration();
 
                 ++ite;
                 integral_time += dt;

@@ -12,7 +12,7 @@ namespace SPH
 {
 class Wall;
 template <>
-class ParticleGenerator<Wall> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Wall> : public ParticleGenerator<SurfaceParticles>
 {
     const Vec3d center_;
     const Real length_;
@@ -20,13 +20,13 @@ class ParticleGenerator<Wall> : public ParticleGenerator<Surface>
     const Real dp_;
 
   public:
-    ParticleGenerator(SPHBody &sph_body, const Vec3d &center, Real length, Real width, Real dp)
-        : ParticleGenerator<Surface>(sph_body),
+    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, const Vec3d &center, Real length, Real width, Real dp)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           center_(center),
           length_(length),
           width_(width),
           dp_(dp){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         Real x = center_.x() - 0.5 * length_;
         while (x < center_.x() + 0.5 * length_)
@@ -34,8 +34,8 @@ class ParticleGenerator<Wall> : public ParticleGenerator<Surface>
             Real z = -0.5 * width_;
             while (z < 0.5 * width_)
             {
-                initializePositionAndVolumetricMeasure(Vec3d(x, center_.y(), z), dp_ * dp_);
-                initializeSurfaceProperties(Vec3d::UnitY(), dp_);
+                addPositionAndVolumetricMeasure(Vec3d(x, center_.y(), z), dp_ * dp_);
+                addSurfaceProperties(Vec3d::UnitY(), dp_);
                 z += dp_;
             }
             x += dp_;
@@ -112,7 +112,6 @@ void block_sliding(
     SolidBody cube_body(system, mesh_cube);
     cube_body.assignMaterial(material_cube.get());
     cube_body.generateParticles<BaseParticles, Lattice>();
-    auto particles_cube = &cube_body.getBaseParticles();
 
     SolidBody slope_body(system, mesh_slope);
     slope_body.defineAdaptationRatios(1.15, resolution_cube / resolution_slope);
@@ -131,9 +130,9 @@ void block_sliding(
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
 
     // Contact relation
-    SurfaceContactRelationFromShell contact_cube_to_slope(cube_body, {&slope_body}, {true});
+    SurfaceContactRelation contact_cube_to_slope(cube_body, {&slope_body}, {true});
     // Contact density
-    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> contact_density(contact_cube_to_slope);
+    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density(contact_cube_to_slope);
     // Contact Force
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope);
 
@@ -160,31 +159,19 @@ void block_sliding(
     vtp_output.writeToFile(0);
 
     // Observer
-    StdLargeVec<Vecd> rotated_disp;
-    particles_cube->registerVariable(rotated_disp, "RotatedDisplacement");
-    const auto &pos_0_ = *particles_cube->registerSharedVariableFrom<Vec3d>("InitialPosition", "Position");
-    auto update_disp = [&]()
-    {
-        particle_for(
-            execution::ParallelPolicy(),
-            IndexRange(0, particles_cube->total_real_particles_),
-            [&](size_t index_i)
-            {
-                rotated_disp[index_i] = rotation_inverse * (particles_cube->ParticlePositions()[index_i] - pos_0_[index_i]);
-            });
-    };
     ObserverBody cube_observer(system, "CubeObserver");
-    cube_observer.generateParticles<BaseParticles, Observer>(StdVec<Vecd>{cube_translation});
+    cube_observer.generateParticles<ObserverParticles>(StdVec<Vecd>{cube_translation});
     ContactRelation cube_observer_contact(cube_observer, {&cube_body});
     ObservedQuantityRecording<Vecd>
-        write_cube_displacement("RotatedDisplacement", cube_observer_contact);
+        write_cube_displacement("Position", cube_observer_contact);
 
     auto check_disp = [&]()
     {
         const Vec3d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
-        const Vec3d disp = (*write_cube_displacement.getObservedQuantity())[0];
+        const Vec3d pos_observer = (*write_cube_displacement.getObservedQuantity())[0];
+        const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
         for (int n = 0; n < 3; n++)
-            ASSERT_NEAR(abs(disp[n]), abs(analytical_disp[n]), max_error);
+            ASSERT_NEAR(abs(rotated_disp[n]), abs(analytical_disp[n]), max_error);
     };
 
     // initialize
@@ -235,7 +222,6 @@ void block_sliding(
             }
 
             ite_output++;
-            update_disp();
             write_cube_displacement.writeToFile(ite);
             check_disp();
             vtp_output.writeToFile(ite_output);

@@ -45,16 +45,16 @@ class Cube : public MultiPolygonShape
         multi_polygon_.addABox(translation_cube, halfsize_cube, ShapeBooleanOps::add);
     }
 };
-
 namespace SPH
 {
 class WallBoundary;
 template <>
-class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    void prepareGeometricData() override
     {
         Real s0 = -BW + 0.5 * resolution_shell;
         Real x = s0 * cos(angle);
@@ -62,8 +62,8 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 
         while (x < DL + BW)
         {
-            initializePositionAndVolumetricMeasure(Vec2d(x, y), resolution_shell);
-            initializeSurfaceProperties(Vec2d(-sin(angle), -cos(angle)), thickness_shell);
+            addPositionAndVolumetricMeasure(Vec2d(x, y), resolution_shell);
+            addSurfaceProperties(Vec2d(-sin(angle), -cos(angle)), thickness_shell);
             x += resolution_shell * cos(angle);
             y -= resolution_shell * sin(angle);
         }
@@ -94,7 +94,7 @@ void run_simulation()
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
-    cube_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cube_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -104,7 +104,7 @@ void run_simulation()
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_cube_inner(free_cube);
-    SurfaceContactRelationFromShell free_cube_contact(free_cube, {&wall_boundary}, {false});
+    SurfaceContactRelation free_cube_contact(free_cube, {&wall_boundary}, {false});
     ShellInnerRelationWithContactKernel wall_curvature_inner(wall_boundary, free_cube);
     ContactRelation cube_observer_contact(cube_observer, {&free_cube});
     //----------------------------------------------------------------------
@@ -123,7 +123,7 @@ void run_simulation()
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummationFromShell> free_cube_update_contact_density(free_cube_contact);
+    InteractionDynamics<solid_dynamics::ContactDensitySummation> free_cube_update_contact_density(free_cube_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     /** Damping*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
