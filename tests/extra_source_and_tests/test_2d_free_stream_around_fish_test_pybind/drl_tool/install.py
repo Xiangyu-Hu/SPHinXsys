@@ -28,14 +28,15 @@ def list_files_in_current_directory(path):
         print(f"The directory {path} does not exist.")
         return False
 
-path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
+path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+# path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
 
 print('path1:', path_1)
 if sys_str == 'Windows':
     path_2 = 'Release'
 elif sys_str == 'Linux':
-    path_2 = 'lib'
+    path_2 = ''
 else:
     path_2 = 'lib'
 
@@ -54,7 +55,7 @@ if list_files_in_current_directory(path) == True:
     b.RunCase(1, 0.1)
     print("success")
 else:
-    print("success")
+    print("error")
 
 # 在cmake文件中生成 一个是加测试 运行add_test  DQN文件
 # 在cmake文件中
