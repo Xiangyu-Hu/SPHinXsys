@@ -11,7 +11,8 @@ namespace SPH
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
-      particle_sorting_(*this),
+      original_id_(nullptr), sorted_id_(nullptr), sequence_(nullptr),
+      particle_sorting_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
@@ -28,21 +29,23 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 void BaseParticles::initializeBasicParticleVariables()
 {
     //----------------------------------------------------------------------
-    //		register non-geometric data
+    //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
     mass_ = registerSharedVariable<Real>("Mass",
                                          [&](size_t i) -> Real
                                          { return (*rho_)[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
-    //		initialize unregistered data
+    //		unregistered variables and data
     //----------------------------------------------------------------------
-    for (size_t i = 0; i != particles_bound_; ++i)
-    {
-        unsorted_id_.push_back(i);
-        sorted_id_.push_back(i);
-        sequence_.push_back(0);
-    }
+    original_id_ = addUnregisteredVariable("OriginalID",
+                                           [&](size_t i) -> size_t
+                                           { return i; });
+    sorted_id_ = addUnregisteredVariable("SortedID",
+                                         [&](size_t i) -> size_t
+                                         { return i; });
+    sequence_ = addUnregisteredVariable("Sequence");
+    particle_sorting_ = particle_sort_ptr_keeper_.createPtr<ParticleSorting>(*this);
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
@@ -82,11 +85,18 @@ void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
     copy_particle_data_(index, another_index);
 }
 //=================================================================================================//
+size_t BaseParticles::allocateGhostParticles(size_t ghost_size)
+{
+    size_t ghost_lower_bound = particles_bound_;
+    particles_bound_ += ghost_size;
+    return ghost_lower_bound;
+}
+//=================================================================================================//
 void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
 {
     copyFromAnotherParticle(ghost_index, index);
     /** For a ghost particle, its sorted id is that of corresponding real particle. */
-    sorted_id_[ghost_index] = index;
+    (*sorted_id_)[ghost_index] = index;
 }
 //=================================================================================================//
 void BaseParticles::switchToBufferParticle(size_t index)
@@ -95,11 +105,21 @@ void BaseParticles::switchToBufferParticle(size_t index)
     if (index < last_real_particle_index)
     {
         copyFromAnotherParticle(index, last_real_particle_index);
-        // update unsorted and sorted_id as well
-        std::swap(unsorted_id_[index], unsorted_id_[last_real_particle_index]);
-        sorted_id_[unsorted_id_[index]] = index;
+        // update original and sorted_id as well
+        std::swap((*original_id_)[index], (*original_id_)[last_real_particle_index]);
+        (*sorted_id_)[(*original_id_)[index]] = index;
     }
     total_real_particles_ -= 1;
+}
+//=================================================================================================//
+void BaseParticles::createRealParticleFrom(size_t index)
+{
+    size_t new_original_id = total_real_particles_;
+    (*original_id_)[new_original_id] = new_original_id;
+    /** Buffer Particle state copied from real particle. */
+    copyFromAnotherParticle(new_original_id, index);
+    /** Realize the buffer particle by increasing the number of real particle in the body.  */
+    total_real_particles_ += 1;
 }
 //=================================================================================================//
 void BaseParticles::writePltFileHeader(std::ofstream &output_file)
@@ -169,120 +189,6 @@ void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
         writePltFileParticleData(output_file, i);
         output_file << "\n";
     };
-}
-//=================================================================================================//
-void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface &surface_particles)
-{
-    size_t total_surface_particles = surface_particles.body_part_particles_.size();
-
-    // write current/final particle positions first
-    output_file << "   <Points>\n";
-    output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-    output_file << "    ";
-    for (size_t i = 0; i != total_surface_particles; ++i)
-    {
-        size_t particle_i = surface_particles.body_part_particles_[i];
-        Vec3d particle_position = upgradeToVec3d((*pos_)[particle_i]);
-        output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
-    }
-    output_file << std::endl;
-    output_file << "    </DataArray>\n";
-    output_file << "   </Points>\n";
-
-    // write header of particles data
-    output_file << "   <PointData  Vectors=\"vector\">\n";
-
-    // write sorted particles ID
-    output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-    output_file << "    ";
-    for (size_t i = 0; i != total_surface_particles; ++i)
-    {
-        size_t particle_i = surface_particles.body_part_particles_[i];
-        output_file << particle_i << " ";
-    }
-    output_file << std::endl;
-    output_file << "    </DataArray>\n";
-
-    // write unsorted particles ID
-    output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-    output_file << "    ";
-    for (size_t i = 0; i != total_surface_particles; ++i)
-    {
-        size_t particle_i = surface_particles.body_part_particles_[i];
-        output_file << unsorted_id_[particle_i] << " ";
-    }
-    output_file << std::endl;
-    output_file << "    </DataArray>\n";
-
-    // write matrices
-    constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
-    for (DiscreteVariable<Matd> *variable : std::get<type_index_Matd>(variables_to_write_))
-    {
-        StdLargeVec<Matd> &variable_data = *variable->DataField();
-        output_file << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
-        output_file << "    ";
-        for (size_t i = 0; i != total_surface_particles; ++i)
-        {
-            size_t particle_i = surface_particles.body_part_particles_[i];
-            Mat3d matrix_value = upgradeToMat3d(variable_data[particle_i]);
-            for (int k = 0; k != 3; ++k)
-            {
-                Vec3d col_vector = matrix_value.col(k);
-                output_file << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
-            }
-        }
-        output_file << std::endl;
-        output_file << "    </DataArray>\n";
-    }
-
-    // write vectors
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
-    {
-        StdLargeVec<Vecd> &variable_data = *variable->DataField();
-        output_file << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-        output_file << "    ";
-        for (size_t i = 0; i != total_surface_particles; ++i)
-        {
-            size_t particle_i = surface_particles.body_part_particles_[i];
-            Vec3d vector_value = upgradeToVec3d(variable_data[particle_i]);
-            output_file << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
-        }
-        output_file << std::endl;
-        output_file << "    </DataArray>\n";
-    }
-
-    // write scalars
-    constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
-    {
-        StdLargeVec<Real> &variable_data = *variable->DataField();
-        output_file << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
-        output_file << "    ";
-        for (size_t i = 0; i != total_surface_particles; ++i)
-        {
-            size_t particle_i = surface_particles.body_part_particles_[i];
-            output_file << std::fixed << std::setprecision(9) << variable_data[particle_i] << " ";
-        }
-        output_file << std::endl;
-        output_file << "    </DataArray>\n";
-    }
-
-    // write integers
-    constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
-    {
-        StdLargeVec<int> &variable_data = *variable->DataField();
-        output_file << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" Format=\"ascii\">\n";
-        output_file << "    ";
-        for (size_t i = 0; i != total_surface_particles; ++i)
-        {
-            size_t particle_i = surface_particles.body_part_particles_[i];
-            output_file << std::fixed << std::setprecision(9) << variable_data[particle_i] << " ";
-        }
-        output_file << std::endl;
-        output_file << "    </DataArray>\n";
-    }
 }
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)

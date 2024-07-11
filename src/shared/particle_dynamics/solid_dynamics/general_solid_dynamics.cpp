@@ -38,7 +38,7 @@ void DistributingPointForces::getWeight()
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
         sum_of_weight_[i] = 0.0;
-        for (size_t index = 0; index < particles_->total_real_particles_; ++index)
+        for (size_t index = 0; index < particles_->TotalRealParticles(); ++index)
         {
             (*weight_[i])[index] = 0.0;
             Vecd displacement = reference_positions_[i] - pos_[index];

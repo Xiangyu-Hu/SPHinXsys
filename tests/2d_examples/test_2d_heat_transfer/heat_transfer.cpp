@@ -168,7 +168,7 @@ struct InflowVelocity
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
         Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(0, position))
+        if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         }
@@ -240,7 +240,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
     PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
-    BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);

@@ -79,7 +79,7 @@ bool ParticleGenerator<BaseParticles, Network>::
 
     collision = extraCheck(new_point);
 
-    size_t edge_location = tree_->BranchLocation(std::get<0>(nearest_neighbor));
+    size_t edge_location = tree_->BranchLocation(position_.size(), std::get<0>(nearest_neighbor));
     if (edge_location == parent_id)
         is_family = true;
     for (const size_t &brother_branch : tree_->branches_[parent_id]->out_edge_)
@@ -233,8 +233,7 @@ void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
         write_particle_generation.writeToFile(ite);
     }
 
-    std::cout << base_particles_.total_real_particles_
-              << " Particles has been successfully created!" << std::endl;
+    std::cout << position_.size() << " particles has been successfully created!" << std::endl;
 }
 //=================================================================================================//
 } // namespace SPH

@@ -233,12 +233,12 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Boundary conditions. Inflow & Outflow in Y-direction
     //----------------------------------------------------------------------
-    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, yAxis);
-    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
+    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
-    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
+    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
@@ -366,8 +366,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
-    {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
         return Vec3d(0.0,
                      2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);

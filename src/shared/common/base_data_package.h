@@ -52,8 +52,7 @@ template <typename ContainedDataType>
 using DataContainerUniquePtrKeeper = UniquePtrsKeeper<ContainedDataType>;
 
 template <template <typename> typename KeeperType, template <typename> typename ContainerType>
-using DataAssemble = std::tuple<KeeperType<ContainerType<size_t>>,
-                                KeeperType<ContainerType<int>>,
+using DataAssemble = std::tuple<KeeperType<ContainerType<int>>,
                                 KeeperType<ContainerType<Real>>,
                                 KeeperType<ContainerType<Vec2d>>,
                                 KeeperType<ContainerType<Mat2d>>,
@@ -73,7 +72,6 @@ using DataContainerUniquePtrAssemble = DataAssemble<DataContainerUniquePtrKeeper
 template <template <typename> typename OperationType>
 class DataAssembleOperation
 {
-    OperationType<size_t> unsigned_operation;
     OperationType<int> integer_operation;
     OperationType<Real> scalar_operation;
     OperationType<Vec2d> vector2d_operation;
@@ -84,8 +82,7 @@ class DataAssembleOperation
   public:
     template <typename... Args>
     DataAssembleOperation(Args &&...args)
-        : unsigned_operation(std::forward<Args>(args)...),
-          integer_operation(std::forward<Args>(args)...),
+        : integer_operation(std::forward<Args>(args)...),
           scalar_operation(std::forward<Args>(args)...),
           vector2d_operation(std::forward<Args>(args)...),
           matrix2d_operation(std::forward<Args>(args)...),
@@ -94,7 +91,6 @@ class DataAssembleOperation
     template <typename... OperationArgs>
     void operator()(OperationArgs &&...operation_args)
     {
-        unsigned_operation(std::forward<OperationArgs>(operation_args)...);
         integer_operation(std::forward<OperationArgs>(operation_args)...);
         scalar_operation(std::forward<OperationArgs>(operation_args)...);
         vector2d_operation(std::forward<OperationArgs>(operation_args)...);

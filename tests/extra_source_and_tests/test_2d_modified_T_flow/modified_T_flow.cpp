@@ -201,31 +201,31 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
-    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer);
 
-    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer, xAxis);
+    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
     //----------------------------------------------------------------------
     // Up buffer
     //----------------------------------------------------------------------
     Vec2d up_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * BW);
-    BodyAlignedBoxByCell up_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell up_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer);
 
-    BodyAlignedBoxByCell up_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> up_disposer_outflow_deletion(up_disposer, xAxis);
+    BodyAlignedBoxByCell up_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> up_disposer_outflow_deletion(up_disposer);
     //----------------------------------------------------------------------
     // Down buffer
     //----------------------------------------------------------------------
     Vec2d down_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * BW);
-    BodyAlignedBoxByCell down_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_emitter_inflow_injection(down_emitter, in_outlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell down_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_emitter_inflow_injection(down_emitter, in_outlet_particle_buffer);
 
-    BodyAlignedBoxByCell down_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(-0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> down_disposer_outflow_deletion(down_disposer, xAxis);
+    BodyAlignedBoxByCell down_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> down_disposer_outflow_deletion(down_disposer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
