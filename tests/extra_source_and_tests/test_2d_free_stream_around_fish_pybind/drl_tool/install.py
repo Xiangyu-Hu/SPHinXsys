@@ -58,16 +58,16 @@ def list_files_in_current_directory(path):
     # 过滤出文件
 
 
-path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 # path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
 print('path1:', path_1)
 if sys_str == 'Windows':
     path_2 = 'Release'
 elif sys_str == 'Linux':
-    path_2 = 'lib'
+    path_2 = ''
 else:
-    path_2 = 'lib'
+    path_2 = ''
 
 path = os.path.join(path_1, path_2)
 print(path)
