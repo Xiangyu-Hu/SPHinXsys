@@ -1,12 +1,10 @@
 /**
- * @file dambreak.cpp
- * @brief 2D dambreak example.
- * @details This is the one of the basic test cases, also the first case for
- * understanding SPH method for free surface flow simulation.
- * @author Luhui Han, Chi Zhang and Xiangyu Hu
+ * @file dambreak_sycl.cpp
+ * @brief 2D dambreak example using SYCL.
+ * @author Xiangyu Hu
  */
-#include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;   // Namespace cite here.
+#include "sphinxsys_sycl.h"
+using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
