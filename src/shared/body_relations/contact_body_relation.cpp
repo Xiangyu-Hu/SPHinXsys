@@ -193,7 +193,7 @@ SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector
     // Fix invalid list of particles ids with shell (in case body shape is absent by the time of construction)
     if (dynamic_cast<SurfaceParticles *>(&sph_body.getBaseParticles()))
     {
-        body_part_particles_.resize(sph_body.getBaseParticles().total_real_particles_);
+        body_part_particles_.resize(sph_body.getBaseParticles().TotalRealParticles());
         std::iota(body_part_particles_.begin(), body_part_particles_.end(), 0);
     }
     // check if the normal_corrections size is correct

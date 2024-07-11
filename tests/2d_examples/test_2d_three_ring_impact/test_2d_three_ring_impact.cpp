@@ -95,6 +95,31 @@ class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataD
     }
 };
 
+class BoundaryGeometry : public BodyPartByParticle
+{
+  private:
+    Real diameter_;
+    Real dp_;
+    Vec2d center_;
+
+  public:
+    BoundaryGeometry(SPHBody &body, const std::string &body_part_name, Real diameter, Real dp, const Vec2d &center)
+        : BodyPartByParticle(body, body_part_name),
+          diameter_(diameter), dp_(dp), center_(center)
+    {
+        TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
+        tagParticles(tagging_particle_method);
+    };
+
+  private:
+    void tagManually(size_t index_i)
+    {
+        Real radius = (pos_[index_i] - center_).norm();
+        if (radius > 0.5 * diameter_ - 0.7 * dp_)
+            body_part_particles_.push_back(index_i);
+    };
+};
+
 Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
 {
     // the physical viscosity is defined in the paper of prof. Hu
@@ -232,7 +257,8 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     // Contact method
     // curvature update
-    SimpleDynamics<thin_structure_dynamics::ShellCurvature> curvature_m(ring_m_inner);
+    SimpleDynamics<thin_structure_dynamics::InitialShellCurvature> initial_curvature_m(ring_m_inner);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvatureUpdate> curvature_m_update(ring_m_inner);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> average_curvature_m_with_s_kernel(curvature_inner_m_with_s_kernel);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> average_curvature_s_with_m_kernel(curvature_inner_s_with_m_kernel);
 
@@ -256,18 +282,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     SimpleDynamics<InitialVelocityCondition> vel_ic_s(ring_s_body, Vec2d(-30, 30));
 
     // Boundary condition
-    BodyPartByParticle fixed_part_l(ring_l_body, "FixedPartL");
-    fixed_part_l.body_part_particles_ = [&]()
-    {
-        IndexVector fixed_particles_id;
-        for (size_t i = 0; i < particles_l->total_real_particles_; ++i)
-        {
-            Real radius = (particles_l->ParticlePositions()[i] - center_l).norm();
-            if (radius > 0.5 * diameter_outer_l - 0.7 * dp_l)
-                fixed_particles_id.push_back(i);
-        }
-        return fixed_particles_id;
-    }();
+    BoundaryGeometry fixed_part_l(ring_l_body, "FixedPartL", diameter_outer_l, dp_l, center_l);
     SimpleDynamics<FixBodyPartConstraint> fix_bc_l(fixed_part_l);
 
     // Observer
@@ -289,6 +304,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     };
 
     // Output
+    particles_m->addVariableToWrite<Real>("1stPrincipleCurvature");
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
     write_ring_m_pos.writeToFile(0);
@@ -301,7 +317,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     corrected_configuration_m.exec();
     corrected_configuration_s.exec();
 
-    curvature_m.compute_initial_curvature();
+    initial_curvature_m.exec();
     average_curvature_m_with_s_kernel.exec();
     average_curvature_s_with_m_kernel.exec();
     contact_s.updateConfiguration();
@@ -373,7 +389,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 curvature_inner_s_with_m_kernel.updateConfiguration();
                 average_curvature_m_with_s_kernel.exec();
                 average_curvature_s_with_m_kernel.exec();
-                curvature_m.exec();
+                curvature_m_update.exec();
                 self_contact_m.updateConfiguration();
                 contact_s.updateConfiguration();
                 contact_m.updateConfiguration();
