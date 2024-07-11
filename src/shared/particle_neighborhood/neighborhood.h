@@ -90,6 +90,8 @@ class NeighborBuilder
   public:
     NeighborBuilder(Kernel *kernel) : kernel_(kernel){};
     virtual ~NeighborBuilder(){};
+    virtual void operator()(Neighborhood &neighborhood,
+                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j) = 0;
 };
 
 /**
@@ -101,7 +103,7 @@ class NeighborBuilderInner : public NeighborBuilder
   public:
     explicit NeighborBuilderInner(SPHBody &body);
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
 
 /**
@@ -113,7 +115,7 @@ class NeighborBuilderInnerAdaptive : public NeighborBuilder
   public:
     explicit NeighborBuilderInnerAdaptive(SPHBody &body);
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
     StdLargeVec<Real> &h_ratio_;
@@ -129,7 +131,7 @@ class NeighborBuilderSelfContact : public NeighborBuilder
     explicit NeighborBuilderSelfContact(SPHBody &body);
     virtual ~NeighborBuilderSelfContact(){};
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
     StdLargeVec<Vecd> &pos0_;
@@ -145,7 +147,7 @@ class NeighborBuilderContact : public NeighborBuilder
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContact(){};
     virtual void operator()(Neighborhood &neighborhood,
-                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
 
 /**
@@ -172,7 +174,7 @@ class NeighborBuilderContactBodyPart : public NeighborBuilder
     NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part);
     virtual ~NeighborBuilderContactBodyPart(){};
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
     StdLargeVec<int> &part_indicator_; /**< indicator of the body part */
@@ -188,7 +190,7 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
     explicit NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body);
     virtual ~NeighborBuilderContactAdaptive(){};
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
     SPHAdaptation &adaptation_, &contact_adaptation_;
@@ -197,7 +199,7 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
 
 /**
  * @class BaseNeighborBuilderShell
- * @brief A base neighbor builder functor for contact relation to shell.
+ * @brief A base neighbor builder functor for contact relation from/to shell.
  */
 class BaseNeighborBuilderContactShell : public NeighborBuilder
 {
@@ -238,30 +240,30 @@ class BaseNeighborBuilderContactFromShell : public BaseNeighborBuilderContactShe
 };
 
 /**
- * @class NeighborBuilderContactFromShell
- * @brief A contact neighbor builder functor for contact relation from fluid to shell.
+ * @class NeighborBuilderContactFromShellToFluid
+ * @brief A contact neighbor builder functor for contact relation from shell (contact body) to fluid (source body).
  */
-class NeighborBuilderContactFromShell : public BaseNeighborBuilderContactFromShell
+class NeighborBuilderContactFromShellToFluid : public BaseNeighborBuilderContactFromShell
 {
   public:
-    NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderContactFromShellToFluid(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
-                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override
     {
         update_neighbors(neighborhood, pos_i, index_i, list_data_j);
     };
 };
 
 /**
- * @class NeighborBuilderContactToShell
- * @brief A contact neighbor builder functor for contact relation from shell to fluid.
+ * @class NeighborBuilderContactFromFluidToShell
+ * @brief A contact neighbor builder functor for contact relation from shell (contact body) to fluid (source body).
  */
-class NeighborBuilderContactToShell : public BaseNeighborBuilderContactShell
+class NeighborBuilderContactFromFluidToShell : public BaseNeighborBuilderContactShell
 {
   public:
-    NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderContactFromFluidToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   private:
     Real direction_corrector_;
@@ -290,7 +292,7 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
   public:
     explicit NeighborBuilderShellSelfContact(SPHBody &body);
     void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   private:
     StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
@@ -299,18 +301,36 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
 };
 
 /**
- * @class NeighborBuilderSurfaceContactFromShell
+ * @class NeighborBuilderContactFromShell
  * @brief A solid contact neighbor builder functor between solid and a shell
  */
-class NeighborBuilderSurfaceContactFromShell : public BaseNeighborBuilderContactFromShell
+class NeighborBuilderContactFromShellToSolid : public BaseNeighborBuilderContactFromShell
 {
   public:
-    NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderContactFromShellToSolid(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
-                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override
     {
         update_neighbors(neighborhood, pos_i, index_i, list_data_j);
     }
+};
+
+/**
+ * @class SolidNeighborBuilderSurfaceContact
+ * @brief A solid contact neighbor builder functor when bodies having surface contact with offset_Wij reduction.
+ */
+class NeighborBuilderContactFromSolidToSolid : public NeighborBuilderSurfaceContact
+{
+  private:
+    Real offset_W_ij_;
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
+
+  public:
+    NeighborBuilderContactFromSolidToSolid(SPHBody &body, SPHBody &contact_body);
+    ~NeighborBuilderContactFromSolidToSolid() override = default;
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

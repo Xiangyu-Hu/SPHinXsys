@@ -314,7 +314,7 @@ void BaseNeighborBuilderContactFromShell::update_neighbors(Neighborhood &neighbo
     }
 };
 //=================================================================================================//
-NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
+NeighborBuilderContactFromShellToFluid::NeighborBuilderContactFromShellToFluid(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction)
 {
     Real fluid_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
@@ -324,15 +324,15 @@ NeighborBuilderContactFromShell::NeighborBuilderContactFromShell(SPHBody &body, 
     kernel_ = body.sph_adaptation_->getKernel();
 }
 //=================================================================================================//
-NeighborBuilderContactToShell::NeighborBuilderContactToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
+NeighborBuilderContactFromFluidToShell::NeighborBuilderContactFromFluidToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactShell(body),
       direction_corrector_(normal_correction ? -1 : 1)
 {
     kernel_ = NeighborBuilder::chooseKernel(body, contact_body);
 }
 //=================================================================================================//
-void NeighborBuilderContactToShell::operator()(Neighborhood &neighborhood,
-                                               const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+void NeighborBuilderContactFromFluidToShell::operator()(Neighborhood &neighborhood,
+                                                        const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 {
     size_t index_j = list_data_j.first;
 
@@ -474,12 +474,57 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
     }
 };
 //=================================================================================================//
-NeighborBuilderSurfaceContactFromShell::NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
+NeighborBuilderContactFromShellToSolid::NeighborBuilderContactFromShellToSolid(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction)
 {
     Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
     Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
+}
+//=================================================================================================//
+NeighborBuilderContactFromSolidToSolid::NeighborBuilderContactFromSolidToSolid(SPHBody &body, SPHBody &contact_body)
+    : NeighborBuilderSurfaceContact(body, contact_body)
+{
+    Real dp_1 = body.getSPHBodyResolutionRef();
+    Real dp_2 = contact_body.getSPHBodyResolutionRef();
+    offset_W_ij_ = kernel_->W(0.5 * (dp_1 + dp_2), ZeroVecd);
+}
+//=================================================================================================//
+void NeighborBuilderContactFromSolidToSolid::createNeighbor(Neighborhood &neighborhood, const Real &distance,
+                                                            const Vecd &displacement, size_t index_j)
+{
+    neighborhood.j_.push_back(index_j);
+    neighborhood.W_ij_.push_back(std::max(kernel_->W(distance, displacement) - offset_W_ij_, Real(0)));
+    neighborhood.dW_ij_.push_back(kernel_->dW(distance, displacement));
+    neighborhood.r_ij_.push_back(distance);
+    neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
+    neighborhood.allocated_size_++;
+}
+//=================================================================================================//
+void NeighborBuilderContactFromSolidToSolid::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+                                                                const Vecd &displacement, size_t index_j)
+{
+    size_t current_size = neighborhood.current_size_;
+    neighborhood.j_[current_size] = index_j;
+    neighborhood.W_ij_[current_size] = std::max(kernel_->W(distance, displacement) - offset_W_ij_, Real(0));
+    neighborhood.dW_ij_[current_size] = kernel_->dW(distance, displacement);
+    neighborhood.r_ij_[current_size] = distance;
+    neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
+}
+//=================================================================================================//
+void NeighborBuilderContactFromSolidToSolid::operator()(Neighborhood &neighborhood,
+                                                        const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = list_data_j.first;
+    Vecd displacement = pos_i - list_data_j.second;
+    Real distance = displacement.norm();
+    if (distance < kernel_->CutOffRadius())
+    {
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, distance, displacement, index_j)
+            : initializeNeighbor(neighborhood, distance, displacement, index_j);
+        neighborhood.current_size_++;
+    }
 }
 //=================================================================================================//
 } // namespace SPH
