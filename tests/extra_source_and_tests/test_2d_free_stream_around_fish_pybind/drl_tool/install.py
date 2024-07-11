@@ -65,7 +65,7 @@ print('path1:', path_1)
 if sys_str == 'Windows':
     path_2 = 'Release'
 elif sys_str == 'Linux':
-    path_2 = ''
+    path_2 = 'lib'
 else:
     path_2 = 'lib'
 
