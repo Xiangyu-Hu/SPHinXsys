@@ -78,21 +78,21 @@ class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Ba
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    UniquePtrKeeper<Kernel> kernel_keeper_;
     StdLargeVec<Real> &mass_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
-    StdVec<Real> offset_W_ij_;
 };
 using ContactDensitySummation = RepulsionDensitySummation<Contact<>>;
 /**
  * @class ShellContactDensity
  * @brief Computing the contact density due to shell contact using a
  * 		 surface integral being solved by Gauss-Legendre quadrature integration.
+ *     This class can only be used when there's the source body only has contact to shell bodies,
+ *     otherwise the contact density will be overwritten by that of solid contact bodies
  */
 class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateContact>
 {
   public:
-    explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
+    explicit ShellContactDensity(ShellSurfaceContactRelation &solid_body_contact_relation);
     virtual ~ShellContactDensity(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -111,7 +111,7 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateC
 };
 
 /**
- * @class ShellSelfContactDensityUsingDummyParticles
+ * @class ShellSelfContactDensitySummation
  * @brief Computing the contact density due to shell contact using dummy particle.
  */
 class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, DataDelegateInner>
@@ -121,21 +121,6 @@ class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, 
 
   public:
     explicit ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation);
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class ContactDensitySummationShell
- * @brief Computing the contact density due to shell contact bodies
- */
-class ContactDensitySummationFromShell : public RepulsionDensitySummation<Base, DataDelegateContact>
-{
-  private:
-    StdVec<StdLargeVec<Real> *> contact_mass_;
-
-  public:
-    explicit ContactDensitySummationFromShell(SurfaceContactRelationFromShell &solid_body_contact_relation);
-    ~ContactDensitySummationFromShell() override = default;
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics

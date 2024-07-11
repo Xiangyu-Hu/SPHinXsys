@@ -29,31 +29,11 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 RepulsionDensitySummation<Contact<>>::
     RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
-      offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
+      mass_(*particles_->getVariableDataByName<Real>("Mass"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
-    }
-
-    // we modify the default formulation by an offset, so that exactly touching bodies produce 0 initial force
-    // subtract summation of the kernel function of 2 particles at 1 particle distance, and if the result is negative, we take 0
-    // different resolution: distance = 0.5 * dp1 + 0.5 * dp2
-    // dp1, dp2 half reference spacing
-    Real dp_1 = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
-
-    // generate a unreduced kernel, in case the source body is a shell
-    Real source_smoothing_length = solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-    Kernel* kernel = kernel_keeper_.createPtr<KernelWendlandC2>(source_smoothing_length);
-
-    // different resolution: distance = 0.5 * dp1 + 0.5 * dp2
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
-    {
-        Real dp_2 = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
-        Real distance = 0.5 * dp_1 + 0.5 * dp_2;
-
-        offset_W_ij_[k] = kernel->W(distance, ZeroVecd);
     }
 }
 //=================================================================================================//
@@ -68,15 +48,14 @@ void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
-            Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], Real(0));
-            sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
+            sigma += contact_neighborhood.W_ij_[n] * contact_mass_k[contact_neighborhood.j_[n]];
         }
     }
     repulsion_density_[index_i] = sigma;
 };
 //=================================================================================================//
-ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensitySolidSolid"),
+ShellContactDensity::ShellContactDensity(ShellSurfaceContactRelation &solid_body_contact_relation)
+    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
       particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
@@ -130,7 +109,7 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 ShellSelfContactDensitySummation::ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionDensity"),
-      mass_(*particles_->getVariableByName<Real>("Mass"))
+      mass_(*particles_->getVariableDataByName<Real>("Mass"))
 {
 }
 //=================================================================================================//
@@ -142,31 +121,6 @@ void ShellSelfContactDensitySummation::interaction(size_t index_i, Real dt)
         sigma += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
     repulsion_density_[index_i] = sigma;
 }
-//=================================================================================================//
-ContactDensitySummationFromShell::
-    ContactDensitySummationFromShell(SurfaceContactRelationFromShell &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation,
-                                                           dynamic_cast<SurfaceContactRelationFromShellToShell *>(&solid_body_contact_relation)
-                                                               ? "RepulsionDensityShellShell"
-                                                               : "RepulsionDensitySolidShell")
-{
-    for (auto *contact_particle : contact_particles_)
-        contact_mass_.push_back(contact_particle->getVariableByName<Real>("Mass"));
-}
-//=================================================================================================//
-void ContactDensitySummationFromShell::interaction(size_t index_i, Real dt)
-{
-    /** Contact interaction. */
-    Real sigma = 0.0;
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
-    {
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-        // W_ij correction is already done in the neighborhood update
-        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            sigma += contact_neighborhood.W_ij_[n] * (*contact_mass_[k])[contact_neighborhood.j_[n]];
-    }
-    repulsion_density_[index_i] = sigma;
-};
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
