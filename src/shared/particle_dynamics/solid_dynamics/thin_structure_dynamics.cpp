@@ -285,7 +285,7 @@ ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
 void ShellCurvature::compute_initial_curvature()
 {
     particle_for(
-        execution::ParallelPolicy,
+        execution::ParallelPolicy(),
         particles_->TotalRealParticles(),
         [this](size_t index_i)
         {
