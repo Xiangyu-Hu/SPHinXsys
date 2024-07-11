@@ -52,8 +52,9 @@ jobs:
             libx11-dev \
             libgl-dev
           wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/20f4e6a1-6b0b-4752-b8c1-e5eacba10e01/l_BaseKit_p_2024.0.0.49564_offline.sh
-          sudo sh ./l_BaseKit_p_2024.0.0.49564_offline.sh -a --silent --eula accept --components intel.oneapi.lin.dpcpp-cpp-compiler --install-dir /opt/intel
-          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          sh ./l_BaseKit_p_2024.0.0.49564_offline.sh -a --silent --eula accept --components intel.oneapi.lin.dpcpp-cpp-compiler
+          ls
+          source ${{github.workspace}}/opt/intel/oneapi/setvars.sh --include-intel-llvm
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
