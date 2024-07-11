@@ -331,16 +331,14 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
 };
 
 /**
- * @class ShellCurvature
- * @brief  Update shell curvature during deformation
+ * @class ShellInitialCurvature
+ * @brief  Compute shell initial curvature
  */
-class ShellCurvature : public LocalDynamics, public DataDelegateInner
+class InitialShellCurvature : public LocalDynamics, public DataDelegateInner
 {
   public:
-    explicit ShellCurvature(BaseInnerRelation &inner_relation);
-
+    explicit InitialShellCurvature(BaseInnerRelation &inner_relation);
     void update(size_t index_i, Real);
-    void compute_initial_curvature();
 
   private:
     StdLargeVec<Real> &Vol_;
@@ -348,6 +346,25 @@ class ShellCurvature : public LocalDynamics, public DataDelegateInner
     StdLargeVec<Matd> &B_;
     StdLargeVec<Matd> &transformation_matrix0_;
     StdLargeVec<Vecd> &n_;
+
+    StdLargeVec<Real> &k1_; // first principle curvature
+    StdLargeVec<Real> &k2_; // second principle curvature
+
+    StdLargeVec<Matd> &dn_0_;
+};
+
+/**
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
+ */
+class ShellCurvatureUpdate : public LocalDynamics, public DataDelegateInner
+{
+  public:
+    explicit ShellCurvatureUpdate(BaseInnerRelation &inner_relation);
+    void update(size_t index_i, Real);
+
+  private:
+    StdLargeVec<Matd> &transformation_matrix0_;
     StdLargeVec<Matd> &F_;
     StdLargeVec<Matd> &F_bending_;
 
