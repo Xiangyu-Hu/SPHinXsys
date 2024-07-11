@@ -68,14 +68,14 @@ class DiscreteVariable : public BaseVariable
     DiscreteVariable(const std::string &name)
         : BaseVariable(name), data_field_(nullptr){};
     virtual ~DiscreteVariable() { delete data_field_; };
-    StdLargeVec<DataType> *DataField() { return data_field_; };
-    void allocateDataField(const size_t size, const DataType &initial_value)
+    DataType *DataField() { return data_field_; };
+    void allocateDataField(const size_t size)
     {
-        data_field_ = new StdLargeVec<DataType>(size, initial_value);
+        data_field_ = new DataType[size];
     }
 
   private:
-    StdLargeVec<DataType> *data_field_;
+    DataType *data_field_;
 };
 
 template <typename DataType>

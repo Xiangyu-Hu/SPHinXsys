@@ -39,7 +39,7 @@ void SurfaceParticles::registerTransformationMatrix()
 {
     transformation_matrix0_ = registerSharedVariable<Matd>(
         "TransformationMatrix", [&](size_t index_i) -> Matd
-        { return getTransformationMatrix((*n_)[index_i]); });
+        { return getTransformationMatrix(n_[index_i]); });
 }
 //=================================================================================================//
 } // namespace SPH

@@ -34,7 +34,7 @@ void BaseParticles::initializeBasicParticleVariables()
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
     mass_ = registerSharedVariable<Real>("Mass",
                                          [&](size_t i) -> Real
-                                         { return (*rho_)[i] * ParticleVolume(i); });
+                                         { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
@@ -96,7 +96,7 @@ void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
 {
     copyFromAnotherParticle(ghost_index, index);
     /** For a ghost particle, its sorted id is that of corresponding real particle. */
-    (*sorted_id_)[ghost_index] = index;
+    sorted_id_[ghost_index] = index;
 }
 //=================================================================================================//
 void BaseParticles::switchToBufferParticle(size_t index)
@@ -106,8 +106,8 @@ void BaseParticles::switchToBufferParticle(size_t index)
     {
         copyFromAnotherParticle(index, last_real_particle_index);
         // update original and sorted_id as well
-        std::swap((*original_id_)[index], (*original_id_)[last_real_particle_index]);
-        (*sorted_id_)[(*original_id_)[index]] = index;
+        std::swap(original_id_[index], original_id_[last_real_particle_index]);
+        sorted_id_[original_id_[index]] = index;
     }
     total_real_particles_ -= 1;
 }
@@ -115,7 +115,7 @@ void BaseParticles::switchToBufferParticle(size_t index)
 void BaseParticles::createRealParticleFrom(size_t index)
 {
     size_t new_original_id = total_real_particles_;
-    (*original_id_)[new_original_id] = new_original_id;
+    original_id_[new_original_id] = new_original_id;
     /** Buffer Particle state copied from real particle. */
     copyFromAnotherParticle(new_original_id, index);
     /** Realize the buffer particle by increasing the number of real particle in the body.  */
@@ -151,30 +151,30 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
 void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
 {
     // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d((*pos_)[index]);
+    Vec3d particle_position = upgradeToVec3d(pos_[index]);
     output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
                 << index << " ";
 
     constexpr int type_index_int = DataTypeIndex<int>::value;
     for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
     {
-        StdLargeVec<int> &variable_data = *variable->DataField();
-        output_file << variable_data[index] << " ";
+        int *data_field = variable->DataField();
+        output_file << data_field[index] << " ";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
     {
-        StdLargeVec<Vecd> &variable_data = *variable->DataField();
-        Vec3d vector_value = upgradeToVec3d(variable_data[index]);
+        Vecd *data_field = variable->DataField();
+        Vec3d vector_value = upgradeToVec3d(data_field[index]);
         output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
     {
-        StdLargeVec<Real> &variable_data = *variable->DataField();
-        output_file << variable_data[index] << " ";
+        Real *data_field = variable->DataField();
+        output_file << data_field[index] << " ";
     };
 }
 //=================================================================================================//

@@ -128,23 +128,25 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *addSharedVariable(const std::string &name);
     template <typename DataType>
-    StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
+    DataType *allocateVariable(DiscreteVariable<DataType> *variable);
+    template <typename DataType>
+    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class InitializationFunction>
-    StdLargeVec<DataType> *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
+    DataType *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
 
   public:
     template <typename DataType, typename... Args>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &name, Args &&...args);
+    DataType *registerSharedVariable(const std::string &name, Args &&...args);
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
+    DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    DataType *registerSharedVariableFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariableFromReload(const std::string &name);
+    DataType *registerSharedVariableFromReload(const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <typename DataType>
-    StdLargeVec<DataType> *getVariableDataByName(const std::string &name);
+    DataType *getVariableDataByName(const std::string &name);
 
     template <typename DataType>
     DataType *registerSingleVariable(const std::string &name,
@@ -168,24 +170,24 @@ class BaseParticles
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    StdLargeVec<size_t> *original_id_; /**< the original ids assigned just after particle is generated. */
-    StdLargeVec<size_t> *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    StdLargeVec<size_t> *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
+    size_t *original_id_; /**< the original ids assigned just after particle is generated. */
+    size_t *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
+    size_t *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
     ParticleSorting *particle_sorting_;
 
     template <typename... Args>
-    StdLargeVec<size_t> *addUnregisteredVariable(const std::string &name, Args &&...args);
+    size_t *addUnregisteredVariable(const std::string &name, Args &&...args);
 
   public:
     template <typename DataType>
     void addVariableToSort(const std::string &name);
     template <typename SequenceMethod>
     void sortParticles(SequenceMethod &sequence_method);
-    StdLargeVec<size_t> &ParticleOriginalIds() { return *original_id_; };
-    StdLargeVec<size_t> &ParticleSortedIds() { return *sorted_id_; };
-    StdLargeVec<size_t> &ParticleSequences() { return *sequence_; };
+    size_t *ParticleOriginalIds() { return original_id_; };
+    size_t *ParticleSortedIds() { return sorted_id_; };
+    size_t *ParticleSequences() { return sequence_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
     ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     //----------------------------------------------------------------------
@@ -206,16 +208,16 @@ class BaseParticles
     //----------------------------------------------------------------------
     void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
     void registerPositionAndVolumetricMeasureFromReload();
-    StdLargeVec<Vecd> &ParticlePositions() { return *pos_; }
-    StdLargeVec<Real> &VolumetricMeasures() { return *Vol_; }
-    virtual Real ParticleVolume(size_t index) { return (*Vol_)[index]; }
-    virtual Real ParticleSpacing(size_t index) { return std::pow((*Vol_)[index], 1.0 / Real(Dimensions)); }
+    Vecd *ParticlePositions() { return pos_; }
+    Real *VolumetricMeasures() { return Vol_; }
+    virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
+    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    StdLargeVec<Vecd> *pos_;  /**< Position */
-    StdLargeVec<Real> *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> *rho_;  /**< Density as a fundamental property of phyiscal matter */
-    StdLargeVec<Real> *mass_; /**< Mass as another fundamental property of physical matter */
+    Vecd *pos_;  /**< Position */
+    Real *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
+    Real *rho_;  /**< Density as a fundamental property of phyiscal matter */
+    Real *mass_; /**< Mass as another fundamental property of physical matter */
 
     SPHBody &sph_body_;
     std::string body_name_;
@@ -240,7 +242,7 @@ class BaseParticles
     struct CopyParticleData
     {
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index);
+        void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index);
     };
 
     struct WriteAParticleVariableToXml

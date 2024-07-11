@@ -68,7 +68,7 @@ using SplitCellLists = StdVec<ConcurrentCellLists>;
 using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 /** Generalized particle data type */
-typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
+typedef DataContainerAssemble<AllocatedData> ParticleData;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
