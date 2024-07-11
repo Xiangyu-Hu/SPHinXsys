@@ -34,14 +34,14 @@ path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
 print('path1:', path_1)
 if sys_str == 'Windows':
-    path_2 = 'Release'
+    path_2 = ''
 elif sys_str == 'Linux':
     path_2 = ''
 else:
     path_2 = ''
 
 path = os.path.join(path_1, path_2)
-print(path)
+print('path: ', path)
 sys.path.append(path)
 # change import depending on the project name
 
