@@ -31,26 +31,9 @@ void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
     repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-const std::vector<std::string> source_body_names = {"SolidSolid", "ShellSolid",
-                                                    "SolidShell", "ShellShell"};
-const std::vector<std::string> contact_body_names = {"SolidSolid", "SolidShell",
-                                                     "ShellSolid", "ShellShell"};
-
-int get_name_type(SurfaceContactRelation &solid_body_contact_relation)
-{
-    if (dynamic_cast<SurfaceContactRelationFromShellToShell *>(&solid_body_contact_relation))
-        return 3;
-    else if (dynamic_cast<SurfaceContactRelationFromShell *>(&solid_body_contact_relation))
-        return 2;
-    else if (dynamic_cast<SurfaceContactRelationToShell *>(&solid_body_contact_relation))
-        return 1;
-    else
-        return 0;
-};
-//=================================================================================================//
-RepulsionForce<Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)]),
-      ForcePrior(particles_, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)]),
+RepulsionForce<Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
+    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
+      ForcePrior(particles_, "RepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       repulsion_density_(*particles_->getVariableDataByName<Real>("RepulsionDensity"))
 {
@@ -86,9 +69,9 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
     repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Contact<Wall>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)]),
-      ForcePrior(particles_, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)]),
+RepulsionForce<Contact<Wall>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
+    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
+      ForcePrior(particles_, "RepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       repulsion_density_(*particles_->getVariableDataByName<Real>("RepulsionDensity"))
 {
@@ -119,9 +102,9 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
     repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Wall, Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)]),
-      ForcePrior(particles_, "RepulsionForce" + source_body_names[get_name_type(solid_body_contact_relation)])
+RepulsionForce<Wall, Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
+    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
+      ForcePrior(particles_, "RepulsionForce")
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

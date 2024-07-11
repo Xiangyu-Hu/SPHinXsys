@@ -78,7 +78,7 @@ template <>
 class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -94,7 +94,7 @@ template <> // Computing the repulsion force from a rigid wall.
 class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -110,7 +110,7 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegate
                                         public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
