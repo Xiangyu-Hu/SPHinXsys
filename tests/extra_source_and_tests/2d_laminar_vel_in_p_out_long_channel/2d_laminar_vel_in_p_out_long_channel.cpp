@@ -12,7 +12,7 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DH = 0.1;                                               /**< Reference and the height of main channel. */
-Real DL = 20.0 * DH;                                               /**< Reference length. */
+Real DL = 60.0 * DH;                                               /**< Reference length. */
 Real resolution_ref = 0.005;                                  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
@@ -24,7 +24,7 @@ StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement o
 Real Outlet_pressure = 0;
 Real rho0_f = 1000.0;                                                   /**< Reference density of fluid. */
 Real Re = 100.0;                                                     /**< Reynolds number. */
-Real U_f = 0.01;                                                      /**< Characteristic velocity. */
+Real U_f = 1;                                                      /**< Characteristic velocity. */
 Real mu_f = rho0_f * U_f * DH / Re;                                  /**< Dynamics viscosity. */
 Real c_f = 10.0 * U_f ;/** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Vec2d normal = Vec2d(1.0, 0.0);
@@ -185,7 +185,10 @@ int main(int ac, char *av[])
     InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
@@ -253,7 +256,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 300.0;   /**< End time. */
+    Real end_time = 30.0;   /**< End time. */
     Real Output_Time = end_time/300.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
@@ -285,6 +288,9 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
+
+            corrected_configuration_fluid.exec();
+
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
