@@ -199,8 +199,8 @@ class ContactRelationFromFluidToShell : public ContactRelationCrossResolution
 class SurfaceContactRelation : public ContactRelationCrossResolution
 {
   private:
-    UniquePtrsKeeper<NeighborBuilderContactFromSolidToSolid> solid_neighbor_builder_contact_ptrs_keeper_;
-    UniquePtrsKeeper<NeighborBuilderContactFromShellToSolid> shell_neighbor_builder_contact_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderSurfaceContactFromSolid> solid_neighbor_builder_contact_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderSurfaceContactFromShell> shell_neighbor_builder_contact_ptrs_keeper_;
     UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
 
   public:

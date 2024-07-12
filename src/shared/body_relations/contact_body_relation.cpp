@@ -207,7 +207,7 @@ SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector
             // solid neighbors
             get_contact_neighbors_.push_back(
                 solid_neighbor_builder_contact_ptrs_keeper_
-                    .createPtr<NeighborBuilderContactFromSolidToSolid>(sph_body_, *contact_bodies_[k]));
+                    .createPtr<NeighborBuilderSurfaceContactFromSolid>(sph_body_, *contact_bodies_[k]));
         }
         else
         {
@@ -215,7 +215,7 @@ SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector
             const bool normal_correction = normal_corrections.empty() ? false : normal_corrections[k];
             get_contact_neighbors_.push_back(
                 shell_neighbor_builder_contact_ptrs_keeper_
-                    .createPtr<NeighborBuilderContactFromShellToSolid>(sph_body_, *contact_bodies_[k], normal_correction));
+                    .createPtr<NeighborBuilderSurfaceContactFromShell>(sph_body_, *contact_bodies_[k], normal_correction));
         }
     }
 }

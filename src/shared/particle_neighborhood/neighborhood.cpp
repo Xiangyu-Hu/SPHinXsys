@@ -474,7 +474,7 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
     }
 };
 //=================================================================================================//
-NeighborBuilderContactFromShellToSolid::NeighborBuilderContactFromShellToSolid(SPHBody &body, SPHBody &contact_body, bool normal_correction)
+NeighborBuilderSurfaceContactFromShell::NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction)
 {
     Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
@@ -482,7 +482,7 @@ NeighborBuilderContactFromShellToSolid::NeighborBuilderContactFromShellToSolid(S
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
 }
 //=================================================================================================//
-NeighborBuilderContactFromSolidToSolid::NeighborBuilderContactFromSolidToSolid(SPHBody &body, SPHBody &contact_body)
+NeighborBuilderSurfaceContactFromSolid::NeighborBuilderSurfaceContactFromSolid(SPHBody &body, SPHBody &contact_body)
     : NeighborBuilderSurfaceContact(body, contact_body)
 {
     Real dp_1 = body.getSPHBodyResolutionRef();
@@ -490,7 +490,7 @@ NeighborBuilderContactFromSolidToSolid::NeighborBuilderContactFromSolidToSolid(S
     offset_W_ij_ = kernel_->W(0.5 * (dp_1 + dp_2), ZeroVecd);
 }
 //=================================================================================================//
-void NeighborBuilderContactFromSolidToSolid::createNeighbor(Neighborhood &neighborhood, const Real &distance,
+void NeighborBuilderSurfaceContactFromSolid::createNeighbor(Neighborhood &neighborhood, const Real &distance,
                                                             const Vecd &displacement, size_t index_j)
 {
     neighborhood.j_.push_back(index_j);
@@ -501,7 +501,7 @@ void NeighborBuilderContactFromSolidToSolid::createNeighbor(Neighborhood &neighb
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
-void NeighborBuilderContactFromSolidToSolid::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+void NeighborBuilderSurfaceContactFromSolid::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
                                                                 const Vecd &displacement, size_t index_j)
 {
     size_t current_size = neighborhood.current_size_;
@@ -512,7 +512,7 @@ void NeighborBuilderContactFromSolidToSolid::initializeNeighbor(Neighborhood &ne
     neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
 //=================================================================================================//
-void NeighborBuilderContactFromSolidToSolid::operator()(Neighborhood &neighborhood,
+void NeighborBuilderSurfaceContactFromSolid::operator()(Neighborhood &neighborhood,
                                                         const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 {
     size_t index_j = list_data_j.first;

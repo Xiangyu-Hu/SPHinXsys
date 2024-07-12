@@ -301,13 +301,13 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
 };
 
 /**
- * @class NeighborBuilderContactFromShell
+ * @class NeighborBuilderSurfaceContactFromShell
  * @brief A solid contact neighbor builder functor between solid and a shell
  */
-class NeighborBuilderContactFromShellToSolid : public BaseNeighborBuilderContactFromShell
+class NeighborBuilderSurfaceContactFromShell : public BaseNeighborBuilderContactFromShell
 {
   public:
-    NeighborBuilderContactFromShellToSolid(SPHBody &body, SPHBody &contact_body, bool normal_correction);
+    NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction);
     inline void operator()(Neighborhood &neighborhood,
                            const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override
     {
@@ -316,10 +316,10 @@ class NeighborBuilderContactFromShellToSolid : public BaseNeighborBuilderContact
 };
 
 /**
- * @class SolidNeighborBuilderSurfaceContact
+ * @class NeighborBuilderSurfaceContactFromSolid
  * @brief A solid contact neighbor builder functor when bodies having surface contact with offset_Wij reduction.
  */
-class NeighborBuilderContactFromSolidToSolid : public NeighborBuilderSurfaceContact
+class NeighborBuilderSurfaceContactFromSolid : public NeighborBuilderSurfaceContact
 {
   private:
     Real offset_W_ij_;
@@ -327,8 +327,8 @@ class NeighborBuilderContactFromSolidToSolid : public NeighborBuilderSurfaceCont
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance, const Vecd &displacement, size_t j_index);
 
   public:
-    NeighborBuilderContactFromSolidToSolid(SPHBody &body, SPHBody &contact_body);
-    ~NeighborBuilderContactFromSolidToSolid() override = default;
+    NeighborBuilderSurfaceContactFromSolid(SPHBody &body, SPHBody &contact_body);
+    ~NeighborBuilderSurfaceContactFromSolid() override = default;
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
