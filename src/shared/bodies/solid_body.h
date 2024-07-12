@@ -78,8 +78,8 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
 
   protected:
     Real rho0_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_;
+    Real *Vol_;
+    Vecd *pos_;
 
   private:
     void setMassProperties();

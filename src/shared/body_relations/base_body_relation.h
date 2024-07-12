@@ -67,11 +67,11 @@ struct SearchDepthAdaptive
 {
     Real inv_grid_spacing_;
     Kernel *kernel_;
-    StdLargeVec<Real> &h_ratio_;
+    Real *h_ratio_;
     SearchDepthAdaptive(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
         : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
           kernel_(sph_body.sph_adaptation_->getKernel()),
-          h_ratio_(*sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")){};
+          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")){};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -116,7 +116,7 @@ class SPHRelation
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 };
 
 /**
