@@ -132,7 +132,7 @@ class DensitySummation<Inner<FreeSurface, SummationType...>> : public DensitySum
 {
   public:
     template <typename... Args>
-    explicit DensitySummation(Args &&... args);
+    explicit DensitySummation(Args &&...args);
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -164,13 +164,13 @@ class DensitySummation<Inner<NearSurfaceType, SummationType...>>
 {
   public:
     template <typename... Args>
-    explicit DensitySummation(Args &&... args);
+    explicit DensitySummation(Args &&...args);
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     NearSurfaceType near_surface_rho_;
-    StdLargeVec<int> &indicator_;
+    int *indicator_;
     bool isNearFreeSurface(size_t index_i);
 };
 using DensitySummationInnerNotNearSurface = DensitySummation<Inner<NotNearSurface>>;

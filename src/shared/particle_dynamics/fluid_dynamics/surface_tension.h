@@ -91,7 +91,7 @@ class SurfaceStressForce<Contact<>> : public SurfaceStressForce<DataDelegateCont
   protected:
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_color_gradient_;
-    StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
+    StdVec<Matd *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 

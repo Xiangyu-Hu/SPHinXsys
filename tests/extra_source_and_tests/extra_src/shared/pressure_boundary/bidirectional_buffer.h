@@ -76,7 +76,7 @@ class BidirectionalBuffer
       protected:
         Vecd *pos_;
         AlignedBoxShape &aligned_box_;
-        StdLargeVec<int> &buffer_particle_indicator_;
+        int *buffer_particle_indicator_;
     };
 
     class Injection : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
@@ -127,7 +127,7 @@ class BidirectionalBuffer
         StdLargeVec<size_t> &original_id_;
         Vecd *pos_n_;
         StdLargeVec<Real> &rho_n_, &p_;
-        StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;
+        int *previous_surface_indicator_, &buffer_particle_indicator_;
 
       private:
         TargetPressure &target_pressure_;

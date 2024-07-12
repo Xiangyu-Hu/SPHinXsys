@@ -129,7 +129,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
     Real rho0_;
     StdLargeVec<Real> &rho_sum_;
     Vecd *pos_, &vel_;
-    StdLargeVec<int> &indicator_;
+    int *indicator_;
     TargetVelocity target_velocity;
 
   public:

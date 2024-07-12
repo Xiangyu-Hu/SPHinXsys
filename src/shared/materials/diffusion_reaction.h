@@ -155,7 +155,7 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
 {
   protected:
     StdLargeVec<Vecd> *local_bias_direction_;
-    StdLargeVec<Matd> *local_transformed_diffusivity_;
+    Matd *local_transformed_diffusivity_;
 
   public:
     LocalDirectionalDiffusion(const std::string &diffusion_species_name,

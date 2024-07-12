@@ -175,7 +175,7 @@ class NeighborBuilderContactBodyPart : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   protected:
-    StdLargeVec<int> &part_indicator_; /**< indicator of the body part */
+    int *part_indicator_; /**< indicator of the body part */
 };
 
 /**

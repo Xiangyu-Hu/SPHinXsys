@@ -115,9 +115,9 @@ class Solid : public BaseMaterial
     Real ContactStiffness() { return contact_stiffness_; };
     virtual Solid *ThisObjectPtr() override { return this; };
     /** Get average velocity when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles);
+    virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageAcceleration(BaseParticles *base_particles);
+    virtual Vecd *AverageAcceleration(BaseParticles *base_particles);
 
   protected:
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/

@@ -55,7 +55,7 @@ class OptimizationBySplittingAlgorithmBase
     StdLargeVec<Vecd> &normal_vector_;
     VariableType *variable_;
     StdLargeVec<Real> &heat_flux_, &heat_source_;
-    StdLargeVec<int> &splitting_index_;
+    int *splitting_index_;
     StdLargeVec<Real> &species_modified_, &species_recovery_;
     StdLargeVec<Real> &parameter_recovery_, &eta_regularization_;
     StdLargeVec<Real> &residual_T_local_, &residual_T_global_;

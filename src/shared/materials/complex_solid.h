@@ -102,7 +102,7 @@ class MaterialIdInitialization
     explicit MaterialIdInitialization(SPHBody &sph_body);
 
   protected:
-    StdLargeVec<int> &material_id_;
+    int *material_id_;
     Vecd *pos_;
 };
 } // namespace SPH

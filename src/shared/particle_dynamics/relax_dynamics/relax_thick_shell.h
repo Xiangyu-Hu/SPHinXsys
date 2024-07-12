@@ -120,14 +120,14 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
         const Real consistency_criterion_;
         Vecd *n_;
-        StdLargeVec<int> &updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
+        int *updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
     };
 
     class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>,
                                     public DataDelegateSimple
     {
       protected:
-        StdLargeVec<int> &updated_indicator_;
+        int *updated_indicator_;
 
       public:
         explicit ConsistencyUpdatedCheck(SPHBody &sph_body);

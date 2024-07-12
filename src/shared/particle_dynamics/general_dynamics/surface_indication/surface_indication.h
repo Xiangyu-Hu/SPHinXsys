@@ -53,7 +53,7 @@ class FreeSurfaceIndication<DataDelegationType>
     virtual ~FreeSurfaceIndication(){};
 
   protected:
-    StdLargeVec<int> &indicator_;
+    int *indicator_;
     StdLargeVec<Real> &pos_div_, &Vol_;
     Real threshold_by_dimensions_;
 };
@@ -84,7 +84,7 @@ class FreeSurfaceIndication<Inner<SpatialTemporal>>
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<int> &previous_surface_indicator_;
+    int *previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
 };
 using SpatialTemporalFreeSurfaceIndicationInner = FreeSurfaceIndication<Inner<SpatialTemporal>>;

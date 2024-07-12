@@ -80,7 +80,7 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
     };
 
   protected:
-    StdLargeVec<int> &buffer_particle_indicator_;
+    int *buffer_particle_indicator_;
 };
 
 template <>
