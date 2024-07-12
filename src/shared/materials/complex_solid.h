@@ -61,7 +61,7 @@ class ActiveMuscle : public MuscleType
  */
 class CompositeSolid : public ElasticSolid
 {
-    StdLargeVec<int> *material_id_;
+    int *material_id_;
 
   protected:
     UniquePtrsKeeper<ElasticSolid> composite_ptrs_keeper_;

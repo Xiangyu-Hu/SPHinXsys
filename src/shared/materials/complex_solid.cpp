@@ -18,12 +18,12 @@ CompositeSolid::CompositeSolid(Real rho0)
 //=================================================================================================//
 Matd CompositeSolid::StressPK2(Matd &deformation, size_t index_i)
 {
-    return composite_materials_[(*material_id_)[index_i]]->StressPK2(deformation, index_i);
+    return composite_materials_[material_id_[index_i]]->StressPK2(deformation, index_i);
 }
 //=================================================================================================//
 Matd CompositeSolid::StressPK1(Matd &deformation, size_t index_i)
 {
-    return composite_materials_[(*material_id_)[index_i]]->StressPK1(deformation, index_i);
+    return composite_materials_[material_id_[index_i]]->StressPK1(deformation, index_i);
 }
 //=================================================================================================//
 Matd CompositeSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
@@ -33,7 +33,7 @@ Matd CompositeSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
 //=================================================================================================//
 Real CompositeSolid::CompositeDensity(size_t index_i)
 {
-    return composite_materials_[(*material_id_)[index_i]]->ReferenceDensity();
+    return composite_materials_[material_id_[index_i]]->ReferenceDensity();
 }
 //=================================================================================================//
 void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)

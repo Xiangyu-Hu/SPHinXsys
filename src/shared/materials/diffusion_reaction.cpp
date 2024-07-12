@@ -108,7 +108,7 @@ void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_pa
         [&](size_t i) -> Matd
         {
             Matd diff_i = diff_cf_ * Matd::Identity() +
-                          bias_diff_cf_ * (*local_bias_direction_)[i] * (*local_bias_direction_)[i].transpose();
+                          bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
             return inverseCholeskyDecomposition(diff_i);
         });
 
