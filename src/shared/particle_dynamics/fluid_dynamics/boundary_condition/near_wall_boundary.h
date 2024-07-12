@@ -62,7 +62,7 @@ class DistanceFromWall : public NearWallDistance
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &distance_from_wall_;
+    Vecd *distance_from_wall_;
 };
 
 class BoundingFromWall : public NearWallDistance

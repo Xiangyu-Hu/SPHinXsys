@@ -216,5 +216,5 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
   protected:
     int *material_id_;
     StdLargeVec<Vecd> &pos0_;
-    StdLargeVec<Matd> &active_strain_;
+    Matd *active_strain_;
 };

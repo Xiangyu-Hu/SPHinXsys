@@ -46,8 +46,8 @@ class SurfaceTensionStress : public LocalDynamics, public DataDelegateContact
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
+    Vecd *color_gradient_;
+    Matd *surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
     StdVec<Real *> contact_Vol_;
 };
@@ -65,9 +65,9 @@ class SurfaceStressForce<DataDelegationType>
     virtual ~SurfaceStressForce(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &color_gradient_, &surface_tension_force_;
-    StdLargeVec<Matd> &surface_tension_stress_;
+    Real *rho_, *mass_, *Vol_;
+    Vecd *color_gradient_, *surface_tension_force_;
+    Matd *surface_tension_stress_;
 };
 
 template <>

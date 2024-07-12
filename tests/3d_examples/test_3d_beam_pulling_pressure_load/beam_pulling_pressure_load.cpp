@@ -80,7 +80,7 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
     Real *mass_n_;
     StdLargeVec<Real> area_0_;
     Real *Vol_;
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 
     StdVec<std::array<Real, 2>> force_arr_;
     size_t particles_num_;

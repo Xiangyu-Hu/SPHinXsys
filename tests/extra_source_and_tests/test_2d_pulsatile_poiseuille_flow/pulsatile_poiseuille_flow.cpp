@@ -49,7 +49,7 @@ struct LeftInflowPressure
     template <class BoundaryConditionType>
     LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real *p_)
     {
         /*pulsatile pressure*/
         Real pressure = Inlet_pressure * cos(GlobalStaticVariables::physical_time_);
@@ -67,7 +67,7 @@ struct RightInflowPressure
     template <class BoundaryConditionType>
     RightInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real *p_)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;

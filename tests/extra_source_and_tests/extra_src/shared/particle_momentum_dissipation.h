@@ -56,7 +56,7 @@ class PorousMediaDampingPairwiseInner : public LocalDynamics, public DataDelegat
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real *Vol_, &mass_;
+    Real *Vol_, *mass_;
 
     VariableType *variable_;
     Real eta_; /**< damping coefficient */

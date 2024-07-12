@@ -94,7 +94,7 @@ class GreenLagrangeStrain : public BaseDerivedVariable<Matd, DataDelegateSimple>
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 };
 
 /**
@@ -111,8 +111,8 @@ class VonMisesStress : public BaseDerivedVariable<Real, DataDelegateSimple>,
 
   protected:
     Real rho0_;
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Matd> &F_;
+    Real *rho_;
+    Matd *F_;
     ElasticSolid &elastic_solid_;
 };
 
@@ -129,7 +129,7 @@ class VonMisesStrain : public BaseDerivedVariable<Real, DataDelegateSimple>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 };
 
 /**
@@ -147,7 +147,7 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real, DataDelegateSimpl
   protected:
     ElasticSolid &elastic_solid_;
     Real poisson_ratio_;
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 };
 
 /**
@@ -163,7 +163,7 @@ class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real, DataDelegateSi
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &mid_surface_cauchy_stress_;
+    Matd *mid_surface_cauchy_stress_;
 };
 } // namespace SPH
 #endif // SOLID_DYNAMICS_VARIABLE_H

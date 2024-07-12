@@ -50,7 +50,7 @@ class Oldroyd_BIntegration1stHalf<Inner<>> : public Integration1stHalfInnerRiema
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
+    Matd *tau_, &dtau_dt_;
 };
 
 using Integration1stHalfContactWallRiemann =
@@ -65,7 +65,7 @@ class Oldroyd_BIntegration1stHalf<Contact<Wall>> : public Integration1stHalfCont
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &tau_;
+    Matd *tau_;
 };
 
 template <typename... InteractionTypes>
@@ -81,7 +81,7 @@ class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiema
 
   protected:
     Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &vel_grad_, &tau_, &dtau_dt_;
+    Matd *vel_grad_, &tau_, &dtau_dt_;
     Real mu_p_, lambda_;
 };
 
@@ -114,7 +114,7 @@ class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public Dat
 
   protected:
     Real smoothing_length_;
-    StdLargeVec<Real> &rho_;
+    Real *rho_;
     StdLargeVec<Real> &mu_srd_;
     Real diffusionCFL;
     Real max_viscosity = 1e-12;
@@ -129,7 +129,7 @@ class ShearRateDependentViscosity : public LocalDynamics, public DataDelegateSim
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &vel_grad_;
+    Matd *vel_grad_;
     GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
     StdLargeVec<Real> &mu_srd_;
 };

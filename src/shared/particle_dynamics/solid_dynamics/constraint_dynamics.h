@@ -248,7 +248,7 @@ class TotalForceForSimBody
       public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &force_, &force_prior_, &pos_;
+    StdLargeVec<Vecd> *force_, *force_prior_, &pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;

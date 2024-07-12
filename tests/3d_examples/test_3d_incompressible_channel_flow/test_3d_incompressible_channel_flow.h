@@ -60,7 +60,7 @@ class InvCFInitialCondition
           vel_(particles_->registerSharedVariable<Vecd>("Velocity")){};
 
   protected:
-    StdLargeVec<Real> &rho_, &p_;
+    Real *rho_, *p_;
     void update(size_t index_i, Real dt)
     {
         rho_[index_i] = rho0_f;

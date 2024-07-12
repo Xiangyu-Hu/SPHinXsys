@@ -138,7 +138,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
   protected:
     Solid &solid_;
     Real *Vol_;
-    Vecd *vel_, &force_prior_; // note that prior force directly used here
+    Vecd *vel_, *force_prior_; // note that prior force directly used here
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_, contact_n_;
     Real penalty_strength_;

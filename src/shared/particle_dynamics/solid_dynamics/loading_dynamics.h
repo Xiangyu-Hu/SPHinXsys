@@ -68,7 +68,7 @@ using LoadingForce = BaseLoadingForce<SPHBody>;
 class SpringDamperConstraintParticleWise : public LoadingForce
 {
   protected:
-    Vecd *pos_, &pos0_, &vel_;
+    Vecd *pos_, &pos0_, *vel_;
     Real *mass_;
     Vecd stiffness_;
     Vecd damping_coeff_; // damping component parallel to the spring force component
@@ -102,8 +102,8 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Vecd *pos_, &pos0_, &n_, &n0_, &vel_;
-    Real *Vol_, &mass_;
+    Vecd *pos_, &pos0_, &n_, &n0_, *vel_;
+    Real *Vol_, *mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
     StdLargeVec<bool> apply_spring_force_to_particle_;
@@ -124,8 +124,8 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
 class SpringOnSurfaceParticles : public LoadingForce
 {
   protected:
-    Vecd *pos_, &pos0_, &vel_;
-    Real *Vol_, &mass_;
+    Vecd *pos_, &pos0_, *vel_;
+    Real *Vol_, *mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
     StdLargeVec<bool> apply_spring_force_to_particle_;
@@ -188,7 +188,7 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
 
   protected:
     StdLargeVec<Vecd> &pos0_, &n_;
-    Real *Vol_, &mass_;
+    Real *Vol_, *mass_;
     StdVec<std::array<Real, 2>> pressure_over_time_;
     StdLargeVec<bool> apply_pressure_to_particle_;
     Real getPressure();

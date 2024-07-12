@@ -42,7 +42,7 @@ struct NonPrescribedPressure
     template <class BoundaryConditionType>
     NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real *p_)
     {
         return p_;
     }
@@ -126,7 +126,7 @@ class BidirectionalBuffer
         Fluid &fluid_;
         StdLargeVec<size_t> &original_id_;
         Vecd *pos_n_;
-        StdLargeVec<Real> &rho_n_, &p_;
+        Real *rho_n_, *p_;
         int *previous_surface_indicator_, &buffer_particle_indicator_;
 
       private:

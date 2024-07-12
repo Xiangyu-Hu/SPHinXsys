@@ -51,8 +51,8 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    Vecd *vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
-    StdLargeVec<Real> &thickness_, &mass_;
+    Vecd *vel_, *force_, &angular_vel_, &dangular_vel_dt_, *force_prior_;
+    StdLargeVec<Real> &thickness_, *mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
 
@@ -98,7 +98,7 @@ class BarCorrectConfiguration : public LocalDynamics, public DataDelegateInner
     Real *Vol_;
     Matd *B_;
     StdLargeVec<Vecd> &n0_;
-    StdLargeVec<Matd> &transformation_matrix0_;
+    Matd *transformation_matrix0_;
 };
 
 /**
@@ -142,10 +142,10 @@ class BarDeformationGradientTensor : public LocalDynamics, public DataDelegateIn
     Real *Vol_;
     Vecd *pos_, &pseudo_n_, &n0_;
     Matd *B_, &F_, &F_bending_;
-    StdLargeVec<Matd> &transformation_matrix0_;
+    Matd *transformation_matrix0_;
 
     StdLargeVec<Vecd> &pseudo_b_n_, &b_n0_;
-    StdLargeVec<Matd> &F_b_bending_;
+    Matd *F_b_bending_;
 };
 
 /**
@@ -160,15 +160,15 @@ class BaseBarRelaxation : public LocalDynamics, public DataDelegateInner
 
   protected:
     Real *Vol_, &thickness_, &width_;
-    Vecd *pos_, &vel_, &force_, &force_prior_;
+    Vecd *pos_, *vel_, *force_, *force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     Matd *B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 
     StdLargeVec<Vecd> &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
         &angular_b_vel_, dangular_b_vel_dt_;
-    StdLargeVec<Matd> &transformation_matrix0_;
-    StdLargeVec<Matd> &F_b_bending_, &dF_b_bending_dt_;
+    Matd *transformation_matrix0_;
+    Matd *F_b_bending_, &dF_b_bending_dt_;
 };
 
 /**
@@ -228,8 +228,8 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
     Real rho0_, inv_rho0_;
     Real smoothing_length_;
     Matd numerical_damping_scaling_matrix_;
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
+    Real *rho_, *mass_;
+    Matd *global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
     StdLargeVec<Vecd> &global_shear_stress_, &n_;
 
     Real E0_, G0_, nu_, hourglass_control_factor_;
@@ -252,7 +252,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
     int number_of_gaussian_points_;
 
-    StdLargeVec<Matd> &global_b_stress_, &global_b_moment_;
+    Matd *global_b_stress_, &global_b_moment_;
     StdLargeVec<Vecd> &global_b_shear_stress_;
     StdLargeVec<Vecd> &b_n_;
     StdVec<Real> gaussian_point_x;
@@ -335,7 +335,7 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
   protected:
     const int axis_; /**< the axis direction for bounding*/
     Vecd *pos_, &pos0_;
-    Vecd *vel_, &force_;
+    Vecd *vel_, *force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;
 };

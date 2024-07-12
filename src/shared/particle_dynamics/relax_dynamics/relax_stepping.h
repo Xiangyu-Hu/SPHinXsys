@@ -149,7 +149,7 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
                                           public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Real> &h_ratio_, &Vol_;
+    StdLargeVec<Real> &h_ratio_, *Vol_;
     Vecd *pos_;
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;

@@ -45,7 +45,7 @@ class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimpl
     virtual ~ContinuumInitialCondition(){};
 
   protected:
-    Vecd *pos_, &vel_;
+    Vecd *pos_, *vel_;
     StdLargeVec<Mat3d> &stress_tensor_3D_;
 };
 
@@ -87,8 +87,8 @@ class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegat
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
-    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &Vol_;
+    Matd *shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
+    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, *Vol_;
     Matd *B_;
 };
 
@@ -104,7 +104,7 @@ class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelega
     PlasticContinuum &plastic_continuum_;
     StdLargeVec<Mat3d> &stress_tensor_3D_, &strain_tensor_3D_, &stress_rate_3D_, &strain_rate_3D_;
     StdLargeVec<Mat3d> &elastic_strain_tensor_3D_, &elastic_strain_rate_3D_;
-    StdLargeVec<Matd> &velocity_gradient_;
+    Matd *velocity_gradient_;
 };
 
 template <typename... InteractionTypes>
@@ -166,7 +166,7 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
     StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
-    Real *Vol_, &mass_;
+    Real *Vol_, *mass_;
     Real E_, nu_;
 
     Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);

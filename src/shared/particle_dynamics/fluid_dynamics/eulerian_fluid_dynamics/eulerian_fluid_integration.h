@@ -45,7 +45,7 @@ class EulerianIntegration : public BaseIntegration<DataDelegationType>
 
   protected:
     StdLargeVec<Vecd> &mom_, &dmom_dt_;
-    StdLargeVec<Real> &dmass_dt_, &Vol_;
+    StdLargeVec<Real> &dmass_dt_, *Vol_;
 };
 
 template <typename... InteractionTypes>

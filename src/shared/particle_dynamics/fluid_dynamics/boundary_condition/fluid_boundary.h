@@ -50,8 +50,8 @@ class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, publ
     virtual ~BaseFlowBoundaryCondition(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &p_;
-    Vecd *pos_, &vel_;
+    Real *rho_, *p_;
+    Vecd *pos_, *vel_;
 };
 
 /**
@@ -127,8 +127,8 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
   protected:
     Transform transform_;
     Real rho0_;
-    StdLargeVec<Real> &rho_sum_;
-    Vecd *pos_, &vel_;
+    Real *rho_sum_;
+    Vecd *pos_, *vel_;
     int *indicator_;
     TargetVelocity target_velocity;
 
@@ -195,8 +195,8 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
   protected:
     Fluid &fluid_;
     StdLargeVec<size_t> &sorted_id_;
-    Vecd *pos_, &vel_, &force_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
+    Vecd *pos_, *vel_, *force_;
+    Real *rho_, *p_, *drho_dt_;
     /** inflow pressure condition */
     Real inflow_pressure_;
     Real rho0_;
@@ -228,7 +228,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
     StdLargeVec<size_t> &original_id_;
     StdLargeVec<size_t> &sorted_id_;
     Vecd *pos_;
-    StdLargeVec<Real> &rho_, &p_;
+    Real *rho_, *p_;
     ParticleBuffer<Base> &buffer_;
     AlignedBoxShape &aligned_box_;
 };

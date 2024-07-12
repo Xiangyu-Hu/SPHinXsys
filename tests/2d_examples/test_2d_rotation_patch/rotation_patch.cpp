@@ -88,7 +88,7 @@ class InitialVelocity
 
   protected:
     BaseParticles *fluid_particles_;
-    StdLargeVec<Real> &p_, &rho_;
+    StdLargeVec<Real> *p_, &rho_;
 };
 //----------------------------------------------------------------------
 //	wave gauge

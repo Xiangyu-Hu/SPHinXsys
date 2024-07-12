@@ -133,7 +133,7 @@ class SurfaceOperationsVentricle
 
     BaseParticles &particles_;
     Vecd *vel_, &n_, &n0_;
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
     // ids_, srf_area_0_, srf_area_n_ maintain particle correspondence
     const IndexVector &ids_;  // ids of srf particles of interest
     StdVec<Real> srf_area_0_; // initial surface area

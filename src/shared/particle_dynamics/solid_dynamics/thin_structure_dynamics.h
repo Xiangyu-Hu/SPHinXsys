@@ -49,8 +49,8 @@ class UpdateShellNormalDirection : public LocalDynamics, public DataDelegateSimp
 {
   protected:
     Vecd *n_;
-    StdLargeVec<Matd> &F_;
-    StdLargeVec<Matd> &transformation_matrix0_;
+    Matd *F_;
+    Matd *transformation_matrix0_;
 
   public:
     explicit UpdateShellNormalDirection(SPHBody &sph_body);
@@ -69,8 +69,8 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    Vecd *vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
-    StdLargeVec<Real> &thickness_, &mass_;
+    Vecd *vel_, *force_, &angular_vel_, &dangular_vel_dt_, *force_prior_;
+    StdLargeVec<Real> &thickness_, *mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
 
@@ -113,7 +113,7 @@ class ShellCorrectConfiguration : public LocalDynamics, public DataDelegateInner
     Real *Vol_;
     Matd *B_;
     StdLargeVec<Vecd> &n0_;
-    StdLargeVec<Matd> &transformation_matrix0_;
+    Matd *transformation_matrix0_;
 };
 
 /**
@@ -152,7 +152,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public DataDelegate
     Real *Vol_;
     Vecd *pos_, &pseudo_n_, &n0_;
     Matd *B_, &F_, &F_bending_;
-    StdLargeVec<Matd> &transformation_matrix0_;
+    Matd *transformation_matrix0_;
 };
 
 /**
@@ -166,11 +166,11 @@ class BaseShellRelaxation : public LocalDynamics, public DataDelegateInner
     virtual ~BaseShellRelaxation(){};
 
   protected:
-    StdLargeVec<Real> &thickness_, &Vol_;
-    Vecd *pos_, &vel_, &force_, &force_prior_;
+    StdLargeVec<Real> &thickness_, *Vol_;
+    Vecd *pos_, *vel_, *force_, *force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
-    StdLargeVec<Matd> &transformation_matrix0_; // Transformation matrix from global to local coordinates
+    Matd *transformation_matrix0_; // Transformation matrix from global to local coordinates
     Matd *B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 };
 
@@ -238,10 +238,10 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
     Real rho0_, inv_rho0_;
     Real smoothing_length_;
     Matd numerical_damping_scaling_matrix_;
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
+    Real *rho_, *mass_;
+    Matd *global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
     StdLargeVec<Vecd> &global_shear_stress_;
-    StdLargeVec<Matd> &global_F_, &global_F_bending_;
+    Matd *global_F_, &global_F_bending_;
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
     const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
@@ -325,7 +325,7 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
   protected:
     const int axis_; /**< the axis direction for bounding*/
     Vecd *pos_, &pos0_;
-    Vecd *vel_, &force_;
+    Vecd *vel_, *force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     Real *mass_;
 };
@@ -346,15 +346,15 @@ class ShellCurvature : public LocalDynamics, public DataDelegateInner
     Real *Vol_;
     StdLargeVec<Vecd> &n0_;
     Matd *B_;
-    StdLargeVec<Matd> &transformation_matrix0_;
+    Matd *transformation_matrix0_;
     Vecd *n_;
-    StdLargeVec<Matd> &F_;
-    StdLargeVec<Matd> &F_bending_;
+    Matd *F_;
+    Matd *F_bending_;
 
     StdLargeVec<Real> &k1_; // first principle curvature
     StdLargeVec<Real> &k2_; // second principle curvature
 
-    StdLargeVec<Matd> &dn_0_;
+    Matd *dn_0_;
 };
 
 /**

@@ -90,7 +90,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
   protected:
     PorousMediaSolid &porous_solid_;
     Real *Vol_;
-    Vecd *pos_, &vel_;
+    Vecd *pos_, *vel_;
     Matd *B_, &F_, &dF_dt_;
     Real rho0_, inv_rho0_;
     Real smoothing_length_;
@@ -110,8 +110,8 @@ class PorousMediaStressRelaxationFirstHalf
 
   protected:
     StdLargeVec<Real> &Vol_update_, &fluid_saturation_, &total_mass_, &fluid_mass_, &dfluid_mass_dt_;
-    StdLargeVec<Vecd> &total_momentum_, &force_, &force_prior_, &fluid_velocity_, &relative_fluid_flux_;
-    StdLargeVec<Matd> &outer_fluid_velocity_relative_fluid_flux_, &Stress_;
+    StdLargeVec<Vecd> &total_momentum_, *force_, *force_prior_, &fluid_velocity_, &relative_fluid_flux_;
+    Matd *outer_fluid_velocity_relative_fluid_flux_, &Stress_;
 
     Real diffusivity_constant_, fluid_initial_density_, water_pressure_constant_;
 

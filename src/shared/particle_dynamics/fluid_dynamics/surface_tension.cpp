@@ -92,8 +92,8 @@ void SurfaceStressForce<Contact<>>::interaction(size_t index_i, Real dt)
     {
         Real contact_fraction_k = contact_fraction_[k];
         Real *Vol_k = contact_Vol_[k];
-        StdLargeVec<Vecd> &contact_color_gradient_k = *(contact_color_gradient_[k]);
-        StdLargeVec<Matd> &contact_surface_tension_stress_k = *(contact_surface_tension_stress_[k]);
+        Vecd *contact_color_gradient_k = contact_color_gradient_[k];
+        Matd *contact_surface_tension_stress_k = contact_surface_tension_stress_[k];
         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

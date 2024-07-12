@@ -42,7 +42,7 @@ namespace fluid_dynamics
 class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
 {
   protected:
-    StdLargeVec<Real> &rho_, &p_;
+    Real *rho_, *p_;
     Vecd *vel_;
     Fluid &fluid_;
     Real min_distance_between_nodes_;
@@ -114,7 +114,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
     };
     Fluid &fluid_;
     Vecd *vel_;
-    StdLargeVec<Real> &p_, &rho_;
+    StdLargeVec<Real> *p_, &rho_;
     RiemannSolverType riemann_solver_;
     StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;
     virtual ~PressureForceFromFluidInFVM(){};
