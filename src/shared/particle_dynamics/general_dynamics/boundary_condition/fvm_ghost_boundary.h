@@ -83,8 +83,8 @@ class BoundaryConditionSetupInFVM : public DataDelegateInner
     void resetBoundaryConditions();
 
   protected:
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    Vecd *vel_, &pos_, &mom_;
+    Real *rho_, *Vol_, *mass_, *p_;
+    Vecd *vel_, *pos_, *mom_;
     std::pair<size_t, size_t> &ghost_bound_;
     StdVec<StdVec<size_t>> &each_boundary_type_with_all_ghosts_index_;
     StdVec<StdVec<Vecd>> &each_boundary_type_with_all_ghosts_eij_;

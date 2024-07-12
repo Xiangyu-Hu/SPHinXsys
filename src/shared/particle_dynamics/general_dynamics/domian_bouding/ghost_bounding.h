@@ -99,7 +99,7 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
         Ghost<PeriodicAlongAxis> &ghost_boundary_;
         std::pair<size_t, size_t> &lower_ghost_bound_;
         std::pair<size_t, size_t> &upper_ghost_bound_;
-        StdLargeVec<size_t> &sorted_id_;
+        size_t *sorted_id_;
 
         void checkLowerBound(size_t index_i, Real dt = 0.0) override;
         void checkUpperBound(size_t index_i, Real dt = 0.0) override;
