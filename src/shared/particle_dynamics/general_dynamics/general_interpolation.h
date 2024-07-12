@@ -48,7 +48,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
-            StdLargeVec<DataType> *contact_data =
+            DataType *contact_data =
                 this->contact_particles_[k]->template getVariableDataByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
         }
@@ -74,13 +74,13 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
                 ttl_weight += weight_j;
             }
         }
-        (*interpolated_quantities_)[index_i] = observed_quantity / (ttl_weight + TinyReal);
+        interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
     };
 
   protected:
-    StdLargeVec<DataType> *interpolated_quantities_;
+    DataType *interpolated_quantities_;
     StdVec<Real *> contact_Vol_;
-    StdVec<StdLargeVec<DataType> *> contact_data_;
+    StdVec<DataType *> contact_data_;
 };
 
 /**

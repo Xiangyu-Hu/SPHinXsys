@@ -71,7 +71,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
             std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
-            plt_engine_.writeAQuantityHeader(out_file, (*this->interpolated_quantities_)[i], quantity_name_i);
+            plt_engine_.writeAQuantityHeader(out_file, this->interpolated_quantities_[i], quantity_name_i);
         }
         out_file << "\n";
         out_file.close();
@@ -85,7 +85,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
         out_file << GlobalStaticVariables::physical_time_ << "   ";
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
-            plt_engine_.writeAQuantity(out_file, (*this->interpolated_quantities_)[i]);
+            plt_engine_.writeAQuantity(out_file, this->interpolated_quantities_[i]);
         }
         out_file << "\n";
         out_file.close();

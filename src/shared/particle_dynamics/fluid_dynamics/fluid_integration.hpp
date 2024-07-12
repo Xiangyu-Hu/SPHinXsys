@@ -220,7 +220,7 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        Vecd *vel_ave_k = *(wall_vel_ave_[k]);
+        Vecd *vel_ave_k = wall_vel_ave_[k];
         Vecd *n_k = wall_n_[k];
         Real *wall_Vol_k = wall_Vol_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];

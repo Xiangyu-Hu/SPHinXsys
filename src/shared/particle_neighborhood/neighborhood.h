@@ -208,9 +208,9 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
     UniquePtrKeeper<Kernel> kernel_keeper_;
     Vecd *n_; // normal direction of contact body
     Real *thickness_;
-    StdLargeVec<Real> &k1_ave_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_ave_; // 2nd principle curvature of contact body
-    Real particle_distance_;    // reference spacing of contact body
+    Real *k1_ave_;           // 1st principle curvature of contact body
+    Real *k2_ave_;           // 2nd principle curvature of contact body
+    Real particle_distance_; // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         size_t index_j, const Real &W_ij,
