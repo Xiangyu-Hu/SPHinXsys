@@ -98,7 +98,7 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
     SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
                                    Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
 
-    StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
+    bool *getApplySpringForceToParticle() { return is_spring_force_applied_; }
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -106,7 +106,7 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
     Real *Vol_, *mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
-    StdLargeVec<bool> apply_spring_force_to_particle_;
+    bool *is_spring_force_applied_;
 
     virtual Vecd getSpringForce(size_t index_i, Vecd disp);
     virtual Vecd getDampingForce(size_t index_i);
@@ -128,12 +128,12 @@ class SpringOnSurfaceParticles : public LoadingForce
     Real *Vol_, *mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
-    StdLargeVec<bool> apply_spring_force_to_particle_;
+    bool *is_spring_force_applied_;
 
   public:
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio = 0.05);
 
-    const StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
+    bool *getApplySpringForceToParticle() { return is_spring_force_applied_; }
     void update(size_t index_i, Real dt = 0.0);
 };
 /**
@@ -183,14 +183,14 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
     SurfacePressureFromSource(BodyPartByParticle &body_part,
                               Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time);
 
-    StdLargeVec<bool> &GetApplyPressureToParticle() { return apply_pressure_to_particle_; }
+    bool *getApplyPressureToParticle() { return is_pressure_applied_; }
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Vecd *pos0_, *n_;
     Real *Vol_, *mass_;
     StdVec<std::array<Real, 2>> pressure_over_time_;
-    StdLargeVec<bool> apply_pressure_to_particle_;
+    bool *is_pressure_applied_;
     Real getPressure();
 };
 

@@ -17,7 +17,7 @@ SpringDamperConstraintParticleWise::
       mass_(particles_->getVariableDataByName<Real>("Mass"))
 {
     // scale stiffness and damping by mass here, so it's not necessary in each iteration
-    stiffness_ = stiffness / std::accumulate(mass_[0], mass_[particles_->TotalRealParticles()], 0.0);
+    stiffness_ = stiffness / std::accumulate(mass_, mass_ + particles_->TotalRealParticles(), Real(0.0));
     damping_coeff_ = stiffness_ * damping_ratio;
 }
 //=================================================================================================//
@@ -60,27 +60,27 @@ SpringNormalOnSurfaceParticles::
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
+      is_spring_force_applied_(particles_->addUnregisteredVariable<bool>("isSpringForceApplied", false))
 {
     BodySurface surface_layer(sph_body);
 
-    for (size_t particle_i : surface_layer.body_part_particles_)
+    for (size_t index_i : surface_layer.body_part_particles_)
     {
-        Vecd vector_to_particle = source_point - pos0_[particle_i];
-        Vecd normal = n0_[particle_i];
+        Vecd vector_to_particle = source_point - pos0_[index_i];
+        Vecd normal = n0_[index_i];
         Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
         // if outer surface, the normals close an angle greater than 90°
         // if the angle is greater than 90°, we apply the spring force to the surface particle
         Real epsilon = 1e-6; // to ignore exactly perpendicular surfaces
         if (outer_surface && cos_theta < -epsilon)
         {
-            apply_spring_force_to_particle_[particle_i] = true;
+            is_spring_force_applied_[index_i] = true;
         }
         // if not outer surface, it's inner surface, meaning the normals close an angle smaller than 90°
         // if the angle is less than 90°, we apply the spring force to the surface particle
         if (!outer_surface && cos_theta > epsilon)
         {
-            apply_spring_force_to_particle_[particle_i] = true;
+            is_spring_force_applied_[index_i] = true;
         }
     }
     // scale stiffness and damping by area here, so it's not necessary in each iteration
@@ -111,7 +111,7 @@ Vecd SpringNormalOnSurfaceParticles::getDampingForce(size_t index_i)
 //=================================================================================================//
 void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 {
-    if (apply_spring_force_to_particle_[index_i])
+    if (is_spring_force_applied_[index_i])
     {
         Vecd delta_x = pos_[index_i] - pos0_[index_i];
         loading_force_[index_i] = getSpringForce(index_i, delta_x) +
@@ -128,13 +128,13 @@ SpringOnSurfaceParticles::
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
+      is_spring_force_applied_(particles_->addUnregisteredVariable<bool>("isSpringForceApplied", false))
 {
     BodySurface surface_layer(sph_body);
     // select which particles the spring is applied to
     // if the particle is in the surface layer, the force is applied
-    for (size_t particle_i : surface_layer.body_part_particles_)
-        apply_spring_force_to_particle_[particle_i] = true;
+    for (size_t index_i : surface_layer.body_part_particles_)
+        is_spring_force_applied_[index_i] = true;
 
     // scale stiffness and damping by area here, so it's not necessary in each iteration
     // we take the area of the first particle, assuming they are uniform
@@ -147,7 +147,7 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
 {
     try
     {
-        if (apply_spring_force_to_particle_[index_i])
+        if (is_spring_force_applied_[index_i])
         {
             loading_force_[index_i] = -stiffness_ * (pos_[index_i] - pos0_[index_i]) -
                                       damping_coeff_ * vel_[index_i];
@@ -184,8 +184,8 @@ ForceInBodyRegion::
       force_vector_(Vecd::Zero()), end_time_(end_time)
 {
     Real total_mass_in_region(0);
-    for (size_t particle_i : body_part.body_part_particles_)
-        total_mass_in_region += mass_[particle_i];
+    for (size_t index_i : body_part.body_part_particles_)
+        total_mass_in_region += mass_[index_i];
     force_vector_ = force;
 }
 //=================================================================================================//
@@ -205,19 +205,19 @@ SurfacePressureFromSource::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
-      apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
+      is_pressure_applied_(particles_->addUnregisteredVariable<bool>("isPressureApplied", false))
 {
     BodySurface surface_layer(body_part.getSPHBody());
 
-    for (size_t particle_i : surface_layer.body_part_particles_)
+    for (size_t index_i : surface_layer.body_part_particles_)
     {
-        Vecd vector_to_particle = source_point - pos0_[particle_i];
-        Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, n_[particle_i]);
+        Vecd vector_to_particle = source_point - pos0_[index_i];
+        Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, n_[index_i]);
         // if the angle is less than 90°, we apply the pressure to the surface particle
         // ignore exactly perpendicular surfaces
         if (cos_theta > 1e-6)
         {
-            apply_pressure_to_particle_[particle_i] = true;
+            is_pressure_applied_[index_i] = true;
         }
     }
 }
@@ -252,7 +252,7 @@ Real SurfacePressureFromSource::getPressure()
 //=================================================================================================//
 void SurfacePressureFromSource::update(size_t index_i, Real dt)
 {
-    if (apply_pressure_to_particle_[index_i])
+    if (is_pressure_applied_[index_i])
     {
         Real area = pow(Vol_[index_i], 2.0 / 3.0);
         Real acc_from_pressure = getPressure() * area / mass_[index_i];
