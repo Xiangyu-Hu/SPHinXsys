@@ -69,10 +69,10 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
+size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.ParticleSequences();
+    Vecd *pos = base_particles.ParticlePositions();
+    size_t *sequence = base_particles.ParticleSequences();
     size_t total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
                  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
@@ -84,7 +84,7 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
     size_t total_levels, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
           tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
-      h_ratio_(*DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
+      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
 }
 //=================================================================================================//
@@ -137,10 +137,10 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
+size_t *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.ParticleSequences();
+    Vecd *pos = base_particles.ParticlePositions();
+    size_t *sequence = base_particles.ParticleSequences();
     size_t total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
                  [&](size_t i)
