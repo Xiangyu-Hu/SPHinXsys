@@ -47,8 +47,8 @@ int main(int ac, char *av[])
     Vec2d domain_upper_bound(domain_box_size, domain_box_size);
     BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setRunParticleRelaxation(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
 
     IOEnvironment io_environment(sph_system);
