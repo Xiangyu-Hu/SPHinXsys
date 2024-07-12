@@ -104,7 +104,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
 class ThermalConductivityRandomInitialization : public LocalDynamics, public DataDelegateSimple
@@ -150,7 +150,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_, &heat_flux_;
+    Real *phi_, &heat_flux_;
 };
 
 //----------------------------------------------------------------------
@@ -172,7 +172,7 @@ class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Real> &phi_, &species_modified_, &species_recovery_;
+    Real *phi_, &species_modified_, &species_recovery_;
 };
 
 class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple

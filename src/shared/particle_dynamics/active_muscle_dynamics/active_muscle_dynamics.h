@@ -50,7 +50,7 @@ class MuscleActivation : public LocalDynamics, public DataDelegateSimple
     virtual ~MuscleActivation(){};
 
   protected:
-    StdLargeVec<Vecd> &pos0_;
+    Vecd *pos0_;
     StdLargeVec<Real> &active_contraction_stress_;
 };
 } // namespace active_muscle_dynamics

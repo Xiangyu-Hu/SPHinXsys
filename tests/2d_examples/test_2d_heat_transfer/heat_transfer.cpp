@@ -118,7 +118,7 @@ class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegat
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Application dependent fluid body initial condition
@@ -141,7 +141,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics, public DataDelegat
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies

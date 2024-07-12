@@ -54,7 +54,7 @@ class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public Da
     virtual ~BaseLoadingForce(){};
 
   protected:
-    StdLargeVec<Vecd> &loading_force_;
+    Vecd *loading_force_;
 };
 using LoadingForce = BaseLoadingForce<SPHBody>;
 
@@ -68,7 +68,7 @@ using LoadingForce = BaseLoadingForce<SPHBody>;
 class SpringDamperConstraintParticleWise : public LoadingForce
 {
   protected:
-    Vecd *pos_, &pos0_, *vel_;
+    Vecd *pos_, *pos0_, *vel_;
     Real *mass_;
     Vecd stiffness_;
     Vecd damping_coeff_; // damping component parallel to the spring force component
@@ -102,7 +102,7 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Vecd *pos_, &pos0_, &n_, &n0_, *vel_;
+    Vecd *pos_, *pos0_, *n_, *n0_, *vel_;
     Real *Vol_, *mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
@@ -124,7 +124,7 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
 class SpringOnSurfaceParticles : public LoadingForce
 {
   protected:
-    Vecd *pos_, &pos0_, *vel_;
+    Vecd *pos_, *pos0_, *vel_;
     Real *Vol_, *mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
@@ -168,7 +168,7 @@ class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>
 
   protected:
     Real *mass_;
-    StdLargeVec<Vecd> &pos0_;
+    Vecd *pos0_;
     Vecd force_vector_;
     Real end_time_;
 };
@@ -187,7 +187,7 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos0_, &n_;
+    Vecd *pos0_, *n_;
     Real *Vol_, *mass_;
     StdVec<std::array<Real, 2>> pressure_over_time_;
     StdLargeVec<bool> apply_pressure_to_particle_;

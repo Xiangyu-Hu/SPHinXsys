@@ -91,7 +91,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
     PorousMediaSolid &porous_solid_;
     Real *Vol_;
     Vecd *pos_, *vel_;
-    Matd *B_, &F_, &dF_dt_;
+    Matd *B_, *F_, *dF_dt_;
     Real rho0_, inv_rho0_;
     Real smoothing_length_;
 };

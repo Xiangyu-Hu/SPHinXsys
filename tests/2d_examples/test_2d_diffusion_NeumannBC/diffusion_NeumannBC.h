@@ -109,7 +109,7 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     };
 
   protected:
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
 class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
@@ -136,7 +136,7 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataD
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
 class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
@@ -160,7 +160,7 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDel
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_, &phi_flux_;
+    Real *phi_, &phi_flux_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.

@@ -56,11 +56,11 @@ DataType *BaseParticles::
     return data_field;
 }
 //=================================================================================================//
-template <typename... Args>
-size_t *BaseParticles::addUnregisteredVariable(const std::string &name, Args &&...args)
+template <typename DataType, typename... Args>
+DataType *BaseParticles::addUnregisteredVariable(const std::string &name, Args &&...args)
 {
 
-    DiscreteVariable<size_t> *variable =
+    DiscreteVariable<DataType> *variable =
         unregistered_variable_ptrs_.createPtr<DiscreteVariable<size_t>>(name);
     initializeVariable(variable, std::forward<Args>(args)...);
     return variable->DataField();
@@ -251,8 +251,8 @@ void BaseParticles::addVariableToReload(const std::string &name)
 template <typename SequenceMethod>
 void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 {
-    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this);
-    particle_sorting_->sortingParticleData(sequence.data(), total_real_particles_);
+    size_t *sequence = sequence_method.computingSequence(*this);
+    particle_sorting_->sortingParticleData(sequence, total_real_particles_);
 }
 //=================================================================================================//
 template <typename DataType>

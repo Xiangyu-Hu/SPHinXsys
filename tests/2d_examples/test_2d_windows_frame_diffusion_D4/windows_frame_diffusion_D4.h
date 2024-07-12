@@ -345,7 +345,7 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     };
 
   protected:
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
 class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
@@ -376,7 +376,7 @@ class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_, &phi_convection_;
+    Real *phi_, &phi_convection_;
     Real &phi_infinity_;
 };
 

@@ -103,7 +103,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
 class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
@@ -134,7 +134,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_, &heat_flux_;
+    Real *phi_, &heat_flux_;
 };
 
 StdVec<Vecd> createObservationPoints()

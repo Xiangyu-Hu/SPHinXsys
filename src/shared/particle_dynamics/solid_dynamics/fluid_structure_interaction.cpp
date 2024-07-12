@@ -21,7 +21,7 @@ BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, co
 //=================================================================================================//
 ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid"),
-      vel_ave_(*solid_.AverageVelocity(particles_))
+      vel_ave_(solid_.AverageVelocity(particles_))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -40,7 +40,7 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
     {
         Real mu_k = mu_[k];
         Real smoothing_length_k = smoothing_length_[k];
-        Vecd *vel_n_k = *(contact_vel_[k]);
+        Vecd *vel_n_k = contact_vel_[k];
         Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

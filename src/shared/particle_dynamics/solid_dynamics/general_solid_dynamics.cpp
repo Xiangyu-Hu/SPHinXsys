@@ -40,12 +40,12 @@ void DistributingPointForces::getWeight()
         sum_of_weight_[i] = 0.0;
         for (size_t index = 0; index < particles_->TotalRealParticles(); ++index)
         {
-            (*weight_[i])[index] = 0.0;
+            weight_[i][index] = 0.0;
             Vecd displacement = reference_positions_[i] - pos_[index];
             if (displacement.squaredNorm() <= cutoff_radius_sqr)
             {
-                (*weight_[i])[index] = kernel_->W(h_ratio, displacement.norm(), displacement);
-                sum_of_weight_[i] += (*weight_[i])[index];
+                weight_[i][index] = kernel_->W(h_ratio, displacement.norm(), displacement);
+                sum_of_weight_[i] += weight_[i][index];
             }
         }
     }
@@ -67,7 +67,7 @@ void DistributingPointForces::update(size_t index_i, Real dt)
     force_prior_[index_i] = Vecd::Zero();
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
-        Vecd force = (*weight_[i])[index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
+        Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
         force_prior_[index_i] += force;
     }
 }

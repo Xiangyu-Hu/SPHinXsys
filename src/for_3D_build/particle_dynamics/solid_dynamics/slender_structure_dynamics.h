@@ -52,7 +52,7 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
     Real CFL_;
     ElasticSolid &elastic_solid_;
     Vecd *vel_, *force_, &angular_vel_, &dangular_vel_dt_, *force_prior_;
-    StdLargeVec<Real> &thickness_, *mass_;
+    Real *thickness_, *mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
 
@@ -97,7 +97,7 @@ class BarCorrectConfiguration : public LocalDynamics, public DataDelegateInner
   protected:
     Real *Vol_;
     Matd *B_;
-    StdLargeVec<Vecd> &n0_;
+    StdLargeVec<Vecd> *n0_;
     Matd *transformation_matrix0_;
 };
 
@@ -140,8 +140,8 @@ class BarDeformationGradientTensor : public LocalDynamics, public DataDelegateIn
 
   protected:
     Real *Vol_;
-    Vecd *pos_, &pseudo_n_, &n0_;
-    Matd *B_, &F_, &F_bending_;
+    Vecd *pos_, &pseudo_n_, *n0_;
+    Matd *B_, *F_, &F_bending_;
     Matd *transformation_matrix0_;
 
     StdLargeVec<Vecd> &pseudo_b_n_, &b_n0_;
@@ -161,9 +161,9 @@ class BaseBarRelaxation : public LocalDynamics, public DataDelegateInner
   protected:
     Real *Vol_, &thickness_, &width_;
     Vecd *pos_, *vel_, *force_, *force_prior_;
-    StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
+    StdLargeVec<Vecd> *n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
-    Matd *B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
+    Matd *B_, *F_, *dF_dt_, &F_bending_, &dF_bending_dt_;
 
     StdLargeVec<Vecd> &pseudo_b_n_, &dpseudo_b_n_dt_, &dpseudo_b_n_d2t_, &rotation_b_,
         &angular_b_vel_, dangular_b_vel_dt_;
@@ -230,7 +230,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
     Matd numerical_damping_scaling_matrix_;
     Real *rho_, *mass_;
     Matd *global_stress_, &global_moment_, &mid_surface_cauchy_stress_;
-    StdLargeVec<Vecd> &global_shear_stress_, &n_;
+    StdLargeVec<Vecd> &global_shear_stress_, *n_;
 
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
@@ -334,7 +334,7 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
 
   protected:
     const int axis_; /**< the axis direction for bounding*/
-    Vecd *pos_, &pos0_;
+    Vecd *pos_, *pos0_;
     Vecd *vel_, *force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;

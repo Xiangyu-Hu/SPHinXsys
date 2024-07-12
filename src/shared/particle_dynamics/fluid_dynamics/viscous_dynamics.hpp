@@ -75,7 +75,7 @@ void ViscousForce<Contact<Wall>, ViscosityType>::interaction(size_t index_i, Rea
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Vecd *vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+        Real *wall_Vol_k = wall_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -107,7 +107,7 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType>::interactio
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Vecd *vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+        Real *wall_Vol_k = wall_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

@@ -101,7 +101,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegateSimple
@@ -109,7 +109,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
     Real beta_epi_, beta_endo_;
     Vecd center_line_vector_; // parallel to the ventricular centerline and pointing  apex-to-base
 

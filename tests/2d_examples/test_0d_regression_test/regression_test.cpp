@@ -121,7 +121,7 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.

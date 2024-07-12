@@ -71,8 +71,8 @@ class PositionSolidBody : public MotionConstraint<SPHBody>
   public:
     PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center);
     virtual ~PositionSolidBody(){};
-    StdLargeVec<Vecd> &GetParticlePos0() { return pos0_; };
-    StdLargeVec<Vecd> &GetParticlePosN() { return pos_; };
+    Vecd *GetParticlePos0() { return pos0_; };
+    Vecd *GetParticlePosN() { return pos_; };
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -92,8 +92,8 @@ class PositionScaleSolidBody : public MotionConstraint<SPHBody>
   public:
     PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale);
     virtual ~PositionScaleSolidBody(){};
-    StdLargeVec<Vecd> &GetParticlePos0() { return pos0_; };
-    StdLargeVec<Vecd> &GetParticlePosN() { return pos_; };
+    Vecd *GetParticlePos0() { return pos0_; };
+    Vecd *GetParticlePosN() { return pos_; };
     virtual void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -230,7 +230,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
-    Vecd *n_, &n0_, &acc_;
+    Vecd *n_, *n0_, *acc_;
     const SimTK::State *simbody_state_;
     SimTKVec3 initial_mobod_origin_location_;
 };
@@ -248,7 +248,7 @@ class TotalForceForSimBody
       public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> *force_, *force_prior_, *pos_;
+    Vecd *force_, *force_prior_, *pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;

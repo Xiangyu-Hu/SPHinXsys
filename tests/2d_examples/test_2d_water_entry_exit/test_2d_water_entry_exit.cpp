@@ -77,7 +77,7 @@ class WettingFluidBodyInitialCondition : public LocalDynamics, public DataDelega
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Definition for wall body
@@ -128,7 +128,7 @@ class WettingWallBodyInitialCondition : public LocalDynamics, public DataDelegat
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Definition for cylinder body
@@ -156,7 +156,7 @@ class WettingCylinderBodyInitialCondition : public LocalDynamics, public DataDel
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
 //----------------------------------------------------------------------

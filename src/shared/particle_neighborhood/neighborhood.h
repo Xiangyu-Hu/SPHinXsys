@@ -132,7 +132,7 @@ class NeighborBuilderSelfContact : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   protected:
-    StdLargeVec<Vecd> &pos0_;
+    Vecd *pos0_;
 };
 
 /**
@@ -207,7 +207,7 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
   protected:
     UniquePtrKeeper<Kernel> kernel_keeper_;
     Vecd *n_; // normal direction of contact body
-    StdLargeVec<Real> &thickness_;
+    Real *thickness_;
     StdLargeVec<Real> &k1_ave_; // 1st principle curvature of contact body
     StdLargeVec<Real> &k2_ave_; // 2nd principle curvature of contact body
     Real particle_distance_;    // reference spacing of contact body

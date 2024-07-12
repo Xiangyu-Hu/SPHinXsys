@@ -133,7 +133,7 @@ VariableType interpolate_observer(
 {
     Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
     Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-    StdLargeVec<Vecd> &pos0_ = *particles.registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0_ = *particles.registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     VariableType variable_sum = VariableType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
@@ -383,7 +383,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     vtp_output.writeToFile(0);
     ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
 
-    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
         IndexVector ids;

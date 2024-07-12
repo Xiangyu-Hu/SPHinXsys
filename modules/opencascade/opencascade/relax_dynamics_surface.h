@@ -95,7 +95,7 @@ class SurfaceNormalDirection : public DataDelegateSimple, public LocalDynamics
 
   protected:
     SurfaceShape *surface_shape_;
-    Vecd *pos_, &n_;
+    Vecd *pos_, *n_;
 };
 
 } // namespace relax_dynamics

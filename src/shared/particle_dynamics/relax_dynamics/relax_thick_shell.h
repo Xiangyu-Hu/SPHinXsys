@@ -86,7 +86,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
-        Vecd *pos_, &n_, &n_temp_;
+        Vecd *pos_, *n_, &n_temp_;
 
       public:
         NormalPrediction(SPHBody &sph_body, Real thickness);

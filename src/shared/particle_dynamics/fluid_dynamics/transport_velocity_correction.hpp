@@ -85,7 +85,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+            Real *wall_Vol_k = wall_Vol_[k];
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {

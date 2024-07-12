@@ -63,8 +63,8 @@ class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegat
 class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSimple
 {
   protected:
-    Vecd *n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
+    Vecd *n_, *n0_;
+    Real *phi_, *phi0_;
     Matd *F_;
     Vecd getRotatedNormalDirection(const Matd &F, const Vecd &n0);
 
@@ -127,7 +127,7 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
   protected:
     Real *Vol_;
     Vecd *pos_;
-    Matd *B_, &F_;
+    Matd *B_, *F_;
 };
 
 /**
@@ -143,7 +143,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
   protected:
     Real *Vol_;
     Vecd *pos_, *vel_, *force_;
-    Matd *B_, &F_, &dF_dt_;
+    Matd *B_, *F_, *dF_dt_;
 };
 
 /**
@@ -162,7 +162,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
     ElasticSolid &elastic_solid_;
     Real rho0_, inv_rho0_;
     Real *rho_, *mass_;
-    StdLargeVec<Vecd> *force_prior_;
+    Vecd *force_prior_;
     Real smoothing_length_;
 };
 
@@ -284,8 +284,8 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Real> &J_to_minus_2_over_dimension_;
-    Matd *stress_on_particle_, &inverse_F_T_;
+    Real *J_to_minus_2_over_dimension_;
+    Matd *stress_on_particle_, *inverse_F_T_;
     const Real correction_factor_ = 1.07;
 };
 
