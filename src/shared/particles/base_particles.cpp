@@ -33,18 +33,15 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
     mass_ = registerSharedVariable<Real>("Mass",
-                                         [&](size_t i) -> Real
-                                         { return rho_[i] * ParticleVolume(i); });
+                                         [&](size_t i) -> Real { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = addUnregisteredVariable("OriginalID",
-                                           [&](size_t i) -> size_t
-                                           { return i; });
-    sorted_id_ = addUnregisteredVariable("SortedID",
-                                         [&](size_t i) -> size_t
-                                         { return i; });
-    sequence_ = addUnregisteredVariable("Sequence");
+    original_id_ = addUnregisteredVariable<size_t>("OriginalID",
+                                                   [&](size_t i) -> size_t { return i; });
+    sorted_id_ = addUnregisteredVariable<size_t>("SortedID",
+                                                 [&](size_t i) -> size_t { return i; });
+    sequence_ = addUnregisteredVariable<size_t>("Sequence");
     particle_sorting_ = particle_sort_ptr_keeper_.createPtr<ParticleSorting>(*this);
 }
 //=================================================================================================//

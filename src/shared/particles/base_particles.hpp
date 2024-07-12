@@ -57,7 +57,7 @@ DataType *BaseParticles::
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-DataType *BaseParticles::addUnregisteredVariable(const std::string &name, Args &&...args)
+DataType *BaseParticles::addUnregisteredVariable(const std::string &name, Args &&... args)
 {
 
     DiscreteVariable<DataType> *variable =
@@ -107,7 +107,7 @@ DiscreteVariable<DataType> *BaseParticles::addSharedVariable(const std::string &
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-DataType *BaseParticles::registerSharedVariable(const std::string &name, Args &&...args)
+DataType *BaseParticles::registerSharedVariable(const std::string &name, Args &&... args)
 {
 
     DiscreteVariable<DataType> *variable = addSharedVariable<DataType>(name);
@@ -136,16 +136,14 @@ DataType *BaseParticles::registerSharedVariableFrom(
     }
 
     DataType *old_data_field = variable->DataField();
-    return registerSharedVariable<DataType>(new_name, [&](size_t index)
-                                            { return old_data_field[index]; });
+    return registerSharedVariable<DataType>(new_name, [&](size_t index) { return old_data_field[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::registerSharedVariableFrom(
-    const std::string &name, const DataType *geometric_data)
+    const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {
-    return registerSharedVariable<DataType>(name, [&](size_t index)
-                                            { return geometric_data[index]; });
+    return registerSharedVariable<DataType>(name, [&](size_t index) { return geometric_data[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
