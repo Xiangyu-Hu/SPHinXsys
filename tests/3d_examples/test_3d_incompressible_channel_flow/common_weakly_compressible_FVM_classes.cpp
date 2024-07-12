@@ -22,7 +22,7 @@ Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 //=================================================================================================//
 BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      Vol_(*particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      Vol_(particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       force_from_fluid_(nullptr){};
 //=================================================================================================//
 ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index)

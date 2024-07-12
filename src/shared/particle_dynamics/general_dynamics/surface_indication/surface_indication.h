@@ -106,7 +106,7 @@ class FreeSurfaceIndication<Contact<>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 
 /**
@@ -128,7 +128,7 @@ class FreeSurfaceIndication<Contact<NonWetting>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_phi_, contact_Vol_;
+    StdVec<Real *> contact_phi_, contact_Vol_;
 };
 
 using FreeSurfaceIndicationComplex =

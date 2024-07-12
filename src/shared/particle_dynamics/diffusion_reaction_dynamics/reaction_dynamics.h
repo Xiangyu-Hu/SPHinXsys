@@ -53,7 +53,7 @@ class BaseReactionRelaxation
     static constexpr int NumReactiveSpecies = ReactionModelType::NumSpecies;
     typedef std::array<std::string, NumReactiveSpecies> ReactiveSpeciesNames;
     typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
-    StdVec<StdLargeVec<Real> *> reactive_species_;
+    StdVec<Real *> reactive_species_;
     ReactionModelType &reaction_model_;
     UpdateAReactionSpecies updateAReactionSpecies;
     void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
@@ -74,7 +74,7 @@ class ReactionRelaxationForward
 {
   public:
     template <typename... Args>
-    ReactionRelaxationForward(Args &&...args)
+    ReactionRelaxationForward(Args &&... args)
         : BaseReactionRelaxation<ReactionModelType>(std::forward<Args>(args)...){};
     virtual ~ReactionRelaxationForward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
@@ -90,7 +90,7 @@ class ReactionRelaxationBackward
 {
   public:
     template <typename... Args>
-    ReactionRelaxationBackward(Args &&...args)
+    ReactionRelaxationBackward(Args &&... args)
         : BaseReactionRelaxation<ReactionModelType>(std::forward<Args>(args)...){};
     virtual ~ReactionRelaxationBackward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };

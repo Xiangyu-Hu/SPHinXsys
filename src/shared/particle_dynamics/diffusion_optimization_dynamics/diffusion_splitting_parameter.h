@@ -71,8 +71,8 @@ class ParameterSplittingByPDEWithBoundary
 
   protected:
     StdVec<Vecd *> boundary_normal_vector_;
-    StdVec<StdLargeVec<Real> *> boundary_heat_flux_, boundary_Vol_;
-    StdVec<StdLargeVec<Real> *> boundary_species_;
+    StdVec<Real *> boundary_heat_flux_, boundary_Vol_;
+    StdVec<Real *> boundary_species_;
     virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
 };
 
@@ -85,7 +85,7 @@ class UpdateParameterPDEResidual : public ParameterSplittingType
 {
   public:
     template <typename... Args>
-    UpdateParameterPDEResidual(Args &&...args);
+    UpdateParameterPDEResidual(Args &&... args);
     virtual ~UpdateParameterPDEResidual(){};
 
   protected:

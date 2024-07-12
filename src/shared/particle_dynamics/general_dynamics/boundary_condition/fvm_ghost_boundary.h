@@ -52,7 +52,7 @@ class GhostCreationFromMesh : public DataDelegateSimple
     StdLargeVec<Vecd> &node_coordinates_;
     StdVec<StdVec<StdVec<size_t>>> &mesh_topology_;
     StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     void addGhostParticleAndSetInConfiguration();
 
   public:
@@ -70,15 +70,15 @@ class BoundaryConditionSetupInFVM : public DataDelegateInner
   public:
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation);
     virtual ~BoundaryConditionSetupInFVM(){};
-    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
-    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) {};
-    virtual void applyGivenValueInletFlow(size_t ghost_index) {};
-    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i) {};
-    virtual void applyTopBoundary(size_t ghost_index, size_t index_i) {};
-    virtual void applyFarFieldBoundary(size_t ghost_index) {};
-    virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i) {};
-    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
-    virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i) {};
+    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
+    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyGivenValueInletFlow(size_t ghost_index){};
+    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyFarFieldBoundary(size_t ghost_index){};
+    virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i){};
+    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
+    virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i){};
     // Common functionality for resetting boundary conditions
     void resetBoundaryConditions();
 

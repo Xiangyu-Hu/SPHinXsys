@@ -125,7 +125,7 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
     };
 
   protected:
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     StdLargeVec<Vecd> &pos_;
     Matd *B_, &F_;
 };
@@ -141,7 +141,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
     virtual ~BaseElasticIntegration(){};
 
   protected:
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_;
     Matd *B_, &F_, &dF_dt_;
 };

@@ -67,7 +67,7 @@ class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInner
     StdLargeVec<Vecd> &getForceFromFluid() { return *force_from_fluid_; };
 
   protected:
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     StdLargeVec<Vecd> *force_from_fluid_;
 };
 

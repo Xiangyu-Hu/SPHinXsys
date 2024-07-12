@@ -58,7 +58,7 @@ class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
 
   protected:
     StdVec<Vecd *> wall_vel_ave_, wall_acc_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_Vol_;
+    StdVec<Real *> wall_Vol_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

@@ -103,7 +103,7 @@ class SpringNormalOnSurfaceParticles : public LoadingForce
 
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_, &n_, &n0_, &vel_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *Vol_, &mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
     StdLargeVec<bool> apply_spring_force_to_particle_;
@@ -125,7 +125,7 @@ class SpringOnSurfaceParticles : public LoadingForce
 {
   protected:
     StdLargeVec<Vecd> &pos_, &pos0_, &vel_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *Vol_, &mass_;
     Real stiffness_;
     Real damping_coeff_; // damping component parallel to the spring force component
     StdLargeVec<bool> apply_spring_force_to_particle_;
@@ -188,7 +188,7 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
 
   protected:
     StdLargeVec<Vecd> &pos0_, &n_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *Vol_, &mass_;
     StdVec<std::array<Real, 2>> pressure_over_time_;
     StdLargeVec<bool> apply_pressure_to_particle_;
     Real getPressure();
@@ -198,7 +198,7 @@ class PressureForceOnShell : public LoadingForce
 {
   protected:
     Real pressure_;
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     Vecd *n_;
 
   public:

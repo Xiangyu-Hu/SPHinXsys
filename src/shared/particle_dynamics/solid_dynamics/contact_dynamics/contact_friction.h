@@ -96,9 +96,9 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
 
   protected:
     Real eta_; /**< friction coefficient */
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *Vol_, &mass_;
     StdLargeVec<Vecd> &vel_;
-    StdVec<StdLargeVec<Real> *> wall_Vol_n_;
+    StdVec<Real *> wall_Vol_n_;
     StdVec<Vecd *> wall_vel_n_, wall_n_;
 };
 

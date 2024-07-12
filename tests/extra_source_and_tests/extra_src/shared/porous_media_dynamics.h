@@ -89,7 +89,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
 
   protected:
     PorousMediaSolid &porous_solid_;
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     StdLargeVec<Vecd> &pos_, &vel_;
     Matd *B_, &F_, &dF_dt_;
     Real rho0_, inv_rho0_;

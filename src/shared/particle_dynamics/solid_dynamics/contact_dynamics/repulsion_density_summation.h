@@ -79,7 +79,7 @@ class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Ba
 
   protected:
     StdLargeVec<Real> &mass_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<Real *> contact_mass_;
     StdVec<Real> offset_W_ij_;
 };
 using ContactDensitySummation = RepulsionDensitySummation<Contact<>>;
@@ -102,7 +102,7 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateC
     Real particle_spacing_;
     StdVec<Real> calibration_factor_;
     StdVec<Real> offset_W_ij_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 
     /** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};

@@ -52,7 +52,7 @@ class BaseForceFromFluid : public LocalDynamics, public DataDelegateContact, pub
 
   protected:
     Solid &solid_;
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     StdVec<Fluid *> contact_fluids_;
     StdLargeVec<Vecd> &force_from_fluid_;
 };
@@ -70,7 +70,7 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 
   protected:
     StdLargeVec<Vecd> &vel_ave_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_;
     StdVec<Real> mu_;
     StdVec<Real> smoothing_length_;
@@ -95,7 +95,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
 
   protected:
     StdLargeVec<Vecd> &vel_ave_, &acc_ave_, &n_;
-    StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_mass_, contact_p_, contact_Vol_;
+    StdVec<Real *> contact_rho_n_, contact_mass_, contact_p_, contact_Vol_;
     StdVec<Vecd *> contact_vel_, contact_force_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
 };

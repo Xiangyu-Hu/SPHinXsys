@@ -166,7 +166,7 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
   protected:
     RiemannSolverType riemann_solver_;
     StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *Vol_, &mass_;
     Real E_, nu_;
 
     Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);

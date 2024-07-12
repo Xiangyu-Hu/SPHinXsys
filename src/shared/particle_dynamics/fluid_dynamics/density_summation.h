@@ -100,7 +100,7 @@ class DensitySummation<Contact<Base>> : public DensitySummation<Base, DataDelega
 
   protected:
     StdVec<Real> contact_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<Real *> contact_mass_;
     Real ContactSummation(size_t index_i);
 };
 
@@ -132,7 +132,7 @@ class DensitySummation<Inner<FreeSurface, SummationType...>> : public DensitySum
 {
   public:
     template <typename... Args>
-    explicit DensitySummation(Args &&...args);
+    explicit DensitySummation(Args &&... args);
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -164,7 +164,7 @@ class DensitySummation<Inner<NearSurfaceType, SummationType...>>
 {
   public:
     template <typename... Args>
-    explicit DensitySummation(Args &&...args);
+    explicit DensitySummation(Args &&... args);
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 

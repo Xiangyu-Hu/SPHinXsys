@@ -49,7 +49,7 @@ class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
 
   protected:
     CompressibleFluid compressible_fluid_;
-    StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dmass_dt_;
+    Real *Vol_, &E_, &dE_dt_, &dmass_dt_;
     StdLargeVec<Vecd> &mom_, &force_, &force_prior_;
 };
 

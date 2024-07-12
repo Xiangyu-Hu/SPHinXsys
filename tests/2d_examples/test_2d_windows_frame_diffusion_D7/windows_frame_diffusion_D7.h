@@ -411,7 +411,7 @@ class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParti
   public:
     explicit LocalConvectionDefinition(BodyPartByParticle &body_part, Real local_convection)
         : LocalQuantityDefinition<BodyPartByParticle>(body_part),
-          phi_convection_(*particles_->template getVariableDataByName<Real>("PhiConvection")),
+          phi_convection_(particles_->template getVariableDataByName<Real>("PhiConvection")),
           local_convection_(local_convection){};
 
     void update(size_t index_i, Real dt)

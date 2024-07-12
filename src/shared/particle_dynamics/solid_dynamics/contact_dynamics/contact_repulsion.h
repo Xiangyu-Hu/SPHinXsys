@@ -55,7 +55,7 @@ class RepulsionForce<Base, DataDelegationType>
 
   protected:
     StdLargeVec<Vecd> &repulsion_force_;
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
 };
 
 template <>
@@ -86,7 +86,7 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContac
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
     StdVec<Solid *> contact_solids_;
-    StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+    StdVec<Real *> contact_contact_density_, contact_Vol_;
 };
 using ContactForce = RepulsionForce<Contact<>>;
 
@@ -101,7 +101,7 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateCo
   protected:
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 using ContactForceFromWall = RepulsionForce<Contact<Wall>>;
 
@@ -116,7 +116,7 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegate
 
   protected:
     StdVec<Solid *> contact_solids_;
-    StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+    StdVec<Real *> contact_contact_density_, contact_Vol_;
 };
 using ContactForceToWall = RepulsionForce<Wall, Contact<>>;
 

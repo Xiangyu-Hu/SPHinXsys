@@ -51,7 +51,7 @@ class LinearGradientCorrectionMatrix<DataDelegationType>
     virtual ~LinearGradientCorrectionMatrix(){};
 
   protected:
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     Matd *B_;
 };
 
@@ -83,8 +83,8 @@ class LinearGradientCorrectionMatrix<Contact<>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Real *> contact_mass_;
 };
 
 using LinearGradientCorrectionMatrixComplex = ComplexInteraction<LinearGradientCorrectionMatrix<Inner<>, Contact<>>>;

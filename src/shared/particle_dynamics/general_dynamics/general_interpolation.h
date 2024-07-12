@@ -79,7 +79,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
 
   protected:
     StdLargeVec<DataType> *interpolated_quantities_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
     StdVec<StdLargeVec<DataType> *> contact_data_;
 };
 
@@ -166,7 +166,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
     };
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 } // namespace SPH
 #endif // GENERAL_INTERPOLATION_H

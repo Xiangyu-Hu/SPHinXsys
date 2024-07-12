@@ -104,7 +104,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<VariableT
         StdLargeVec<Real> &Vol_k = *(this->boundary_Vol_[k]);
         StdLargeVec<Real> &heat_flux_k = *(this->boundary_heat_flux_[k]);
         StdLargeVec<Vecd> &normal_vector_k = *(this->boundary_normal_vector_[k]);
-        StdLargeVec<VariableType> &variable_k = *(this->boundary_variable_[k]);
+        VariableType *variable_k = *(this->boundary_variable_[k]);
 
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -132,7 +132,7 @@ ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<VariableT
 template <typename TemperatureSplittingType>
 template <typename... Args>
 UpdateTemperaturePDEResidual<TemperatureSplittingType>::
-    UpdateTemperaturePDEResidual(Args &&...args)
+    UpdateTemperaturePDEResidual(Args &&... args)
     : TemperatureSplittingType(std::forward<Args>(args)...){};
 //=================================================================================================//
 template <typename TemperatureSplittingType>
