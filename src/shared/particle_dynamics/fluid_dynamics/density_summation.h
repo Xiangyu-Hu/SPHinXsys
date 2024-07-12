@@ -51,7 +51,7 @@ class DensitySummation<Base, DataDelegationType>
     virtual ~DensitySummation(){};
 
   protected:
-    Real *rho_, *mass_, &rho_sum_, *Vol_;
+    Real *rho_, *mass_, *rho_sum_, *Vol_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
@@ -88,7 +88,7 @@ class DensitySummation<Inner<Adaptive>> : public DensitySummation<Inner<Base>>
   protected:
     SPHAdaptation &sph_adaptation_;
     Kernel &kernel_;
-    StdLargeVec<Real> &h_ratio_;
+    Real *h_ratio_;
 };
 
 template <>
@@ -124,7 +124,7 @@ class DensitySummation<Contact<Adaptive>> : public DensitySummation<Contact<Base
 
   protected:
     SPHAdaptation &sph_adaptation_;
-    StdLargeVec<Real> &h_ratio_;
+    Real *h_ratio_;
 };
 
 template <typename... SummationType>

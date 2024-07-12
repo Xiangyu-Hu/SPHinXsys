@@ -48,7 +48,7 @@ class DensitySummationPressure<Base, DataDelegationType>
     virtual ~DensitySummationPressure(){};
 
   protected:
-    Real *rho_, *mass_, &rho_sum_;
+    Real *rho_, *mass_, *rho_sum_;
     Real rho0_, inv_sigma0_, W0_;
 };
 

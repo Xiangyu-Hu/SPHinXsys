@@ -124,7 +124,7 @@ class BidirectionalBuffer
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
-        StdLargeVec<size_t> &original_id_;
+        size_t *original_id_;
         Vecd *pos_n_;
         Real *rho_n_, *p_;
         int *previous_surface_indicator_, &buffer_particle_indicator_;

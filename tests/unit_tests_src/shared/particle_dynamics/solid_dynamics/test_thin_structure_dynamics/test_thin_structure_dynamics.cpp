@@ -103,7 +103,7 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
     virtual ~ControlledRotation(){};
 
   protected:
-    Vecd *vel_, &angular_vel_, &pos_;
+    Vecd *vel_, &angular_vel_, *pos_;
     Real rotation_v = Pi;
     void update(size_t index_i, Real dt = 0.0)
     {

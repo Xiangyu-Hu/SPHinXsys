@@ -49,8 +49,8 @@ class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
 
   protected:
     CompressibleFluid compressible_fluid_;
-    Real *Vol_, &E_, &dE_dt_, &dmass_dt_;
-    StdLargeVec<Vecd> &mom_, *force_, *force_prior_;
+    Real *Vol_, *E_, *dE_dt_, *dmass_dt_;
+    Vecd *mom_, *force_, *force_prior_;
 };
 
 template <class RiemannSolverType>
@@ -91,8 +91,8 @@ class CompressibleFluidInitialCondition : public FluidInitialCondition
     explicit CompressibleFluidInitialCondition(SPHBody &sph_body);
 
   protected:
-    StdLargeVec<Vecd> &mom_;
-    Real *rho_, *Vol_, *mass_, *p_, &E_;
+    Vecd *mom_;
+    Real *rho_, *Vol_, *mass_, *p_, *E_;
 };
 
 class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize

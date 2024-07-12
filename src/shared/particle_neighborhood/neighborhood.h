@@ -116,7 +116,7 @@ class NeighborBuilderInnerAdaptive : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
   protected:
-    StdLargeVec<Real> &h_ratio_;
+    Real *h_ratio_;
 };
 
 /**

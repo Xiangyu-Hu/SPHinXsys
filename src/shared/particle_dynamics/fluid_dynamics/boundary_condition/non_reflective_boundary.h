@@ -49,10 +49,10 @@ class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegat
     Real rho_farfield_, sound_speed_;
     Vecd vel_farfield_;
     Real *rho_, *p_, *Vol_, *mass_;
-    Vecd *vel_, &mom_, &pos_;
-    StdLargeVec<Real> &inner_weight_summation_, &rho_average_, &vel_normal_average_;
-    Vecd *vel_tangential_average_, &vel_average_;
-    int *indicator_, &smeared_surface_;
+    Vecd *vel_, *mom_, *pos_;
+    Real *inner_weight_summation_, *rho_average_, *vel_normal_average_;
+    Vecd *vel_tangential_average_, *vel_average_;
+    int *indicator_, *smeared_surface_;
     Vecd *n_;
 };
 } // namespace fluid_dynamics
