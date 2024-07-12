@@ -86,6 +86,7 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContac
     Solid &solid_;
     StdLargeVec<Real> &repulsion_density_;
     StdVec<Solid *> contact_solids_;
+    StdVec<Real> contact_stiffness_ave_;
     StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 };
 using ContactForce = RepulsionForce<Contact<>>;
