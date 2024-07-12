@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -129,7 +129,7 @@ int main(int ac, char *av[])
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
     InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact);
 
-    InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     //InteractionDynamics<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
     /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */

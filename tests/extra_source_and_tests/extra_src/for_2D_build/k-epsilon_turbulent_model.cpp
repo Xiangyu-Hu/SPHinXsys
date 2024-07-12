@@ -87,7 +87,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
 		: GetVelocityGradient<Base, DataDelegateInner>(inner_relation),
-		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
+		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
 	{
 		this->particles_->addVariableToSort<Matd>("VelocityGradient");
 		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
@@ -112,6 +113,11 @@ namespace fluid_dynamics
 			}
 		}
     }
+	//=================================================================================================//
+	void GetVelocityGradient<Inner<>>::update(size_t index_i, Real dt)
+	{
+	    velocity_gradient_[index_i] *= B_[index_i];
+	}
 	//=================================================================================================//
 	GetVelocityGradient<Contact<>>::GetVelocityGradient(BaseContactRelation& contact_relation)
 		: GetVelocityGradient<Base, DataDelegateContact>(contact_relation),
