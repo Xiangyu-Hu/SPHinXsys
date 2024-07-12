@@ -43,13 +43,13 @@ class OperatorSplitting
 {
 };
 
-template <typename VariableType>
+template <typename DataType>
 struct ErrorAndParameters
 {
-    VariableType error_;
+    DataType error_;
     Real a_, c_;
     ErrorAndParameters()
-        : error_(ZeroData<VariableType>::value),
+        : error_(ZeroData<DataType>::value),
           a_(0), c_(0){};
 };
 
@@ -64,24 +64,24 @@ class FixedDampingRate
 
     Real DampingRate(size_t i, size_t j) { return *damping_rate_; };
     Real DampingRate(size_t i) { return *damping_rate_; };
-    Real Capacity(size_t i) { return (*specific_capacity_) * (*mass_)[i]; };
+    Real Capacity(size_t i) { return (*specific_capacity_) * mass_[i]; };
 
   protected:
     Real *damping_rate_;
     Real *specific_capacity_;
-    StdLargeVec<Real> *mass_;
+    Real *mass_;
 };
 
 template <typename... InteractionTypes>
 class Damping;
 
-template <typename VariableType, typename DampingRateType, class DataDelegationType>
-class Damping<Base, VariableType, DampingRateType, DataDelegationType>
+template <typename DataType, typename DampingRateType, class DataDelegationType>
+class Damping<Base, DataType, DampingRateType, DataDelegationType>
     : public LocalDynamics, public DataDelegationType, public OperatorSplitting
 {
   public:
     template <class BaseRelationType, typename... Args>
-    explicit Damping(BaseRelationType &base_relation, const std::string &variable_name, Args &&... args);
+    explicit Damping(BaseRelationType &base_relation, const std::string &name, Args &&...args);
     template <typename BodyRelationType, typename... Args, size_t... Is>
     Damping(ConstructorArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
         : Damping(parameters.body_relation_, std::get<Is>(parameters.others_)...){};
@@ -91,11 +91,11 @@ class Damping<Base, VariableType, DampingRateType, DataDelegationType>
     virtual ~Damping(){};
 
   protected:
-    typedef VariableType DampingVariable;
-    std::string variable_name_;
+    typedef DataType DampingVariable;
+    std::string name_;
     DampingRateType damping_;
     Real *Vol_;
-    VariableType *variable_;
+    DataType *data_field_;
 };
 
 /**
@@ -106,73 +106,73 @@ class Damping<Base, VariableType, DampingRateType, DataDelegationType>
  * This is because the error and parameters are computed based on both.
  */
 class Projection;
-template <typename VariableType, typename DampingRateType>
-class Damping<Inner<Projection>, VariableType, DampingRateType>
-    : public Damping<Base, VariableType, DampingRateType, DataDelegateInner>
+template <typename DataType, typename DampingRateType>
+class Damping<Inner<Projection>, DataType, DampingRateType>
+    : public Damping<Base, DataType, DampingRateType, DataDelegateInner>
 {
   public:
     template <typename... Args>
-    Damping(Args &&... args)
-        : Damping<Base, VariableType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
+    Damping(Args &&...args)
+        : Damping<Base, DataType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
     virtual ~Damping(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    void updateStates(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
+    ErrorAndParameters<DataType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    void updateStates(size_t index_i, Real dt, const ErrorAndParameters<DataType> &error_and_parameters);
 };
-template <typename VariableType, typename DampingRateType>
-using DampingProjectionInner = Damping<Inner<Projection>, VariableType, DampingRateType>;
+template <typename DataType, typename DampingRateType>
+using DampingProjectionInner = Damping<Inner<Projection>, DataType, DampingRateType>;
 
 /**
  * @class Pairwise
  * @brief Pairwise-based operator splitting method solving for each pair of particles.
  */
 class Pairwise;
-template <typename VariableType, typename DampingRateType>
-class Damping<Inner<Pairwise>, VariableType, DampingRateType>
-    : public Damping<Base, VariableType, DampingRateType, DataDelegateInner>
+template <typename DataType, typename DampingRateType>
+class Damping<Inner<Pairwise>, DataType, DampingRateType>
+    : public Damping<Base, DataType, DampingRateType, DataDelegateInner>
 {
   public:
     template <typename... Args>
-    Damping(Args &&... args)
-        : Damping<Base, VariableType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
+    Damping(Args &&...args)
+        : Damping<Base, DataType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
     virtual ~Damping(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
-template <typename VariableType, typename DampingRateType>
-using DampingPairwiseInner = Damping<Inner<Pairwise>, VariableType, DampingRateType>;
+template <typename DataType, typename DampingRateType>
+using DampingPairwiseInner = Damping<Inner<Pairwise>, DataType, DampingRateType>;
 
-template <typename VariableType, typename DampingRateType>
-class Damping<Contact<Pairwise>, VariableType, DampingRateType>
-    : public Damping<Base, VariableType, DampingRateType, DataDelegateContact>
+template <typename DataType, typename DampingRateType>
+class Damping<Contact<Pairwise>, DataType, DampingRateType>
+    : public Damping<Base, DataType, DampingRateType, DataDelegateContact>
 {
   public:
     template <typename... Args>
-    Damping(Args &&... args);
+    Damping(Args &&...args);
     virtual ~Damping(){};
 
   protected:
     StdVec<Real *> contact_Vol_;
-    StdVec<StdLargeVec<VariableType> *> contact_variable_;
+    StdVec<DataType *> contact_data_field_;
 };
-template <typename VariableType, typename DampingRateType>
-class Damping<Contact<Pairwise, Wall>, VariableType, DampingRateType>
-    : public Damping<Contact<Pairwise>, VariableType, DampingRateType>
+template <typename DataType, typename DampingRateType>
+class Damping<Contact<Pairwise, Wall>, DataType, DampingRateType>
+    : public Damping<Contact<Pairwise>, DataType, DampingRateType>
 {
   public:
     template <typename... Args>
-    Damping(Args &&... args)
-        : Damping<Contact<Pairwise>, VariableType, DampingRateType>(std::forward<Args>(args)...){};
+    Damping(Args &&...args)
+        : Damping<Contact<Pairwise>, DataType, DampingRateType>(std::forward<Args>(args)...){};
     virtual ~Damping(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
-template <typename VariableType, typename DampingRateType>
-using DampingPairwiseContactWall = Damping<Contact<Pairwise, Wall>, VariableType, DampingRateType>;
+template <typename DataType, typename DampingRateType>
+using DampingPairwiseContactWall = Damping<Contact<Pairwise, Wall>, DataType, DampingRateType>;
 
-template <typename VariableType, typename DampingRateType>
+template <typename DataType, typename DampingRateType>
 using DampingPairwiseWithWall = ComplexInteraction<Damping<Inner<Pairwise>, Contact<Pairwise, Wall>>,
-                                                   VariableType, DampingRateType>;
+                                                   DataType, DampingRateType>;
 
 /**
  * @class DampingWithRandomChoice
@@ -190,7 +190,7 @@ class DampingWithRandomChoice : public DampingAlgorithmType
 
   public:
     template <typename... Args>
-    DampingWithRandomChoice(Real random_ratio, Args &&... args);
+    DampingWithRandomChoice(Real random_ratio, Args &&...args);
     virtual ~DampingWithRandomChoice(){};
 
     virtual void exec(Real dt = 0.0) override;

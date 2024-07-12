@@ -42,7 +42,7 @@ template <class MuscleType>
 class ActiveMuscle : public MuscleType
 {
   protected:
-    StdLargeVec<Real> *active_contraction_stress_; /**<  active contraction stress */
+    Real *active_contraction_stress_; /**<  active contraction stress */
 
   public:
     template <typename... Args>

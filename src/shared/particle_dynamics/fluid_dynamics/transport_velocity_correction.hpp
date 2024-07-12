@@ -121,7 +121,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
+            Real *Vol_k = this->contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             KernelCorrectionType &kernel_correction_k = this->contact_kernel_corrections_[k];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

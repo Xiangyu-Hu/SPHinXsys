@@ -51,7 +51,7 @@ class MuscleActivation : public LocalDynamics, public DataDelegateSimple
 
   protected:
     Vecd *pos0_;
-    StdLargeVec<Real> &active_contraction_stress_;
+    Real *active_contraction_stress_;
 };
 } // namespace active_muscle_dynamics
 } // namespace SPH

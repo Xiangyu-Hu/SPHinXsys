@@ -52,7 +52,7 @@ class RepulsionDensitySummation<Base, DataDelegationType>
     virtual ~RepulsionDensitySummation(){};
 
   protected:
-    StdLargeVec<Real> &repulsion_density_;
+    Real *repulsion_density_;
 };
 
 template <>

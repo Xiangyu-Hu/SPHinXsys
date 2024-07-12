@@ -172,7 +172,7 @@ class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    Real *phi_, &species_modified_, &species_recovery_;
+    Real *phi_, &species_modified_, *species_recovery_;
 };
 
 class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
@@ -189,7 +189,7 @@ class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Real> &residual_T_local_, &residual_T_global_;
+    StdLargeVec<Real> &residual_T_local_, *residual_T_global_;
 };
 } // namespace SPH
 

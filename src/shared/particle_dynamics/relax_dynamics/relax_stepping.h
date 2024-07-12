@@ -55,7 +55,7 @@ class RelaxationResidue<Base, DataDelegationType>
   protected:
     SPHAdaptation *sph_adaptation_;
     Real *Vol_;
-    StdLargeVec<Vecd> &residue_;
+    Vecd *residue_;
 };
 
 template <>
@@ -124,7 +124,7 @@ class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>,
     virtual Real outputResult(Real reduced_value);
 
   protected:
-    StdLargeVec<Vecd> &residue_;
+    Vecd *residue_;
     Real h_ref_;
 };
 
@@ -137,7 +137,7 @@ class PositionRelaxation : public LocalDynamics,
 {
   protected:
     SPHAdaptation *sph_adaptation_;
-    Vecd *pos_, &residue_;
+    Vecd *pos_, *residue_;
 
   public:
     explicit PositionRelaxation(SPHBody &sph_body);

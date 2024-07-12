@@ -96,7 +96,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
 
   protected:
     Vecd *pos_;
-    Real *phi_, &heat_source_;
+    Real *phi_, *heat_source_;
 };
 
 class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple

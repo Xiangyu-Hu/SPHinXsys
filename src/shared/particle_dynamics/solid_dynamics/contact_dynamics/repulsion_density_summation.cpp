@@ -57,7 +57,7 @@ void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
     Real sigma = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
+        Real *contact_mass_k = contact_mass_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -105,7 +105,7 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
 
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
+        Real *contact_Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

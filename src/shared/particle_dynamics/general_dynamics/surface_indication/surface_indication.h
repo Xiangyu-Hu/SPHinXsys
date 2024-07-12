@@ -54,7 +54,7 @@ class FreeSurfaceIndication<DataDelegationType>
 
   protected:
     int *indicator_;
-    StdLargeVec<Real> &pos_div_, *Vol_;
+    Real *pos_div_, *Vol_;
     Real threshold_by_dimensions_;
 };
 

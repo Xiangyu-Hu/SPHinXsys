@@ -26,7 +26,7 @@ template <class MuscleType>
 Matd ActiveMuscle<MuscleType>::StressPK2(Matd &deformation, size_t index_i)
 {
     return MuscleType::StressPK2(deformation, index_i) +
-           (*active_contraction_stress_)[index_i] * MuscleType::MuscleFiberDirection(index_i);
+           active_contraction_stress_[index_i] * MuscleType::MuscleFiberDirection(index_i);
 }
 //=============================================================================================//
 } // namespace SPH

@@ -115,7 +115,7 @@ void FreeSurfaceIndication<Contact<NonWetting>>::interaction(size_t index_i, Rea
     Real pos_div = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &wetting_k = *(contact_phi_[k]);
+        Real *wetting_k = contact_phi_[k];
         Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
