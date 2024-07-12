@@ -59,7 +59,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
     : KernelGradientCorrection<DataDelegateInner>(inner_relation),
-      average_correction_matrix_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
+      average_correction_matrix_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 {

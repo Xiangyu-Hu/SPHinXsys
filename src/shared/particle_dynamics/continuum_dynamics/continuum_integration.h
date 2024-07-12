@@ -89,7 +89,7 @@ class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegat
     GeneralContinuum &continuum_;
     StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
     StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &Vol_;
-    StdLargeVec<Matd> &B_;
+    Matd *B_;
 };
 
 template <class DataDelegationType>

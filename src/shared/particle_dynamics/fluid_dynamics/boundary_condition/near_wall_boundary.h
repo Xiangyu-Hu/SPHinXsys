@@ -48,7 +48,7 @@ class NearWallDistance : public LocalDynamics, public DataDelegateContact
   protected:
     Real spacing_ref_, distance_default_;
     StdLargeVec<Vecd> &pos_;
-    StdVec<StdLargeVec<Vecd> *> wall_pos_, wall_n_;
+    StdVec<Vecd *> wall_pos_, wall_n_;
     StdVec<StdLargeVec<Real> *> wall_phi_;
 
     void evaluateDistanceAndNormal(size_t index_i, Vecd &distance, Vecd &normal);

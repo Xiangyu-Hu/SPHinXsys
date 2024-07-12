@@ -27,7 +27,7 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
     DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions)
     : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
       diffusions_(diffusions),
-      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
 {
     for (auto &diffusion : diffusions_)
     {
@@ -60,7 +60,7 @@ void DiffusionRelaxation<DataDelegationType, DiffusionType>::initialization(size
 {
     for (size_t m = 0; m < diffusions_.size(); ++m)
     {
-        (*diffusion_dt_[m])[index_i] = 0;
+        diffusion_dt_[m][index_i] = 0;
     }
 }
 //=================================================================================================//
@@ -69,7 +69,7 @@ void DiffusionRelaxation<DataDelegationType, DiffusionType>::update(size_t index
 {
     for (size_t m = 0; m < diffusions_.size(); ++m)
     {
-        (*diffusion_species_[m])[index_i] += dt * (*diffusion_dt_[m])[index_i];
+        diffusion_species_[m][index_i] += dt * diffusion_dt_[m][index_i];
     }
 }
 //=================================================================================================//
@@ -102,7 +102,7 @@ void DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>::interaction(
             Real phi_ij = gradient_species[index_i] - gradient_species[index_j];
             d_species += diff_coeff_ij * phi_ij * surface_area_ij;
         }
-        (*this->diffusion_dt_[m])[index_i] += d_species;
+        this->diffusion_dt_[m][index_i] += d_species;
     }
 }
 //=================================================================================================//
@@ -151,7 +151,7 @@ void DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>::
     {
         for (size_t m = 0; m < this->diffusions_.size(); ++m)
         {
-            (*this->diffusion_dt_[m])[index_i] += (*this->contact_transfer_[k][m])[index_i];
+            this->diffusion_dt_[m][index_i] += (*this->contact_transfer_[k][m])[index_i];
         }
     }
 }
@@ -179,14 +179,14 @@ DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
 template <class ContactKernelGradientType, class DiffusionType>
 void DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
     getDiffusionChangeRateDirichlet(size_t particle_i, size_t particle_j, Vecd &e_ij,
-                                    Real surface_area_ij, const StdVec<StdLargeVec<Real> *> &gradient_species_k)
+                                    Real surface_area_ij, const StdVec<Real *> &gradient_species_k)
 {
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
         Real diff_coeff_ij =
             this->diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_i, e_ij);
-        Real phi_ij = 2.0 * ((*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j]);
-        (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
+        Real phi_ij = 2.0 * (this->gradient_species_[m][particle_i] - gradient_species_k[m][particle_j]);
+        this->diffusion_dt_[m][particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
@@ -196,8 +196,8 @@ void DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdVec<StdLargeVec<Real> *> &gradient_species_k = this->contact_gradient_species_[k];
-        StdLargeVec<Real> &wall_Vol_k = *(this->contact_Vol_[k]);
+        StdVec<Real *> &gradient_species_k = this->contact_gradient_species_[k];
+        Real *wall_Vol_k = this->contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -219,7 +219,7 @@ DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&...args)
     : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
           std::forward<Args>(args)...),
-      n_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection"))
+      n_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection"))
 {
     contact_diffusive_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -240,11 +240,11 @@ template <class ContactKernelGradientType, class DiffusionType>
 void DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
     getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
                                   Real surface_area_ij_Neumann,
-                                  const StdVec<StdLargeVec<Real> *> &diffusive_flux_k)
+                                  const StdVec<Real *> &diffusive_flux_k)
 {
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        (*this->diffusion_dt_[m])[particle_i] += surface_area_ij_Neumann * (*diffusive_flux_k[m])[particle_j];
+        this->diffusion_dt_[m][particle_i] += surface_area_ij_Neumann * diffusive_flux_k[m][particle_j];
     }
 }
 //=================================================================================================//
@@ -254,8 +254,8 @@ void DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
 {
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdVec<StdLargeVec<Real> *> &diffusive_flux_k = contact_diffusive_flux_[k];
-        StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
+        StdVec<Real *> &diffusive_flux_k = contact_diffusive_flux_[k];
+        Vecd *n_k = contact_n_[k];
         StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -278,7 +278,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&...args)
     : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
           std::forward<Args>(args)...),
-      n_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection"))
+      n_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection"))
 {
     contact_convection_.resize(this->contact_particles_.size());
     contact_species_infinity_.resize(this->contact_particles_.size());
@@ -303,15 +303,15 @@ template <class ContactKernelGradientType, class DiffusionType>
 void DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     getTransferRateRobin(size_t particle_i, size_t particle_j,
                          Real surface_area_ij_Robin,
-                         StdVec<StdLargeVec<Real> *> &transfer_k,
-                         StdVec<StdLargeVec<Real> *> &convection_k,
+                         StdVec<Real *> &transfer_k,
+                         StdVec<Real *> &convection_k,
                          StdVec<Real *> &species_infinity_k)
 {
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        Real phi_ij = *species_infinity_k[m] - (*this->diffusion_species_[m])[particle_i];
-        Real transfer_ij = (*convection_k[m])[particle_j] * phi_ij * surface_area_ij_Robin;
-        (*transfer_k[m])[particle_i] += transfer_ij;
+        Real phi_ij = *species_infinity_k[m] - this->diffusion_species_[m][particle_i];
+        Real transfer_ij = convection_k[m][particle_j] * phi_ij * surface_area_ij_Robin;
+        transfer_k[m][particle_i] += transfer_ij;
     }
 }
 //=================================================================================================//
@@ -322,10 +322,10 @@ void DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     this->resetContactTransfer(index_i);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
+        Vecd *n_k = contact_n_[k];
         StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
-        StdVec<StdLargeVec<Real> *> &transfer_k = this->contact_transfer_[k];
-        StdVec<StdLargeVec<Real> *> &convection_k = contact_convection_[k];
+        StdVec<Real *> &transfer_k = this->contact_transfer_[k];
+        StdVec<Real *> &convection_k = contact_convection_[k];
         StdVec<Real *> &species_infinity_k = contact_species_infinity_[k];
 
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -369,7 +369,7 @@ void FirstStageRK2<DiffusionRelaxationType>::initialization(size_t index_i, Real
 
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_s_[m])[index_i] = (*this->diffusion_species_[m])[index_i];
+        (*this->diffusion_species_s_[m])[index_i] = this->diffusion_species_[m][index_i];
     }
 }
 //=================================================================================================//
@@ -384,8 +384,8 @@ void SecondStageRK2<DiffusionRelaxationType>::update(size_t index_i, Real dt)
     DiffusionRelaxationType::update(index_i, dt);
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[index_i] = 0.5 * (*this->diffusion_species_s_[m])[index_i] +
-                                                  0.5 * (*this->diffusion_species_[m])[index_i];
+        this->diffusion_species_[m][index_i] = 0.5 * (*this->diffusion_species_s_[m])[index_i] +
+                                               0.5 * this->diffusion_species_[m][index_i];
     }
 }
 //=================================================================================================//

@@ -50,7 +50,7 @@ class BaseDerivedVariable : public DataDelegateType
     template <class DynamicsIdentifier>
     BaseDerivedVariable(DynamicsIdentifier &identifier, const std::string &variable_name)
         : DataDelegateType(identifier),
-          derived_variable_(*this->particles_->template registerSharedVariable<DataType>(variable_name))
+          derived_variable_(this->particles_->template registerSharedVariable<DataType>(variable_name))
     {
         this->particles_->template addVariableToWrite<DataType>(variable_name);
     };

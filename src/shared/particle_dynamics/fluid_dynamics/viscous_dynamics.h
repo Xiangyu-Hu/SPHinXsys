@@ -149,7 +149,7 @@ class ViscousForce<Contact<>, ViscosityType> : public ViscousForce<DataDelegateC
 
   protected:
     StdVec<ViscosityType> contact_mu_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdVec<Vecd *> contact_vel_;
     StdVec<StdLargeVec<Real> *> wall_Vol_;
 };
 

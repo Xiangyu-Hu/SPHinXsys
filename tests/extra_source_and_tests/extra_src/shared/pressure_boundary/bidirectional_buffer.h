@@ -60,9 +60,9 @@ class BidirectionalBuffer
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               DataDelegateSimple(aligned_box_part.getSPHBody()),
-              pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+              pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
-              buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
+              buffer_particle_indicator_(particles_->registerSharedVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
         };
@@ -90,11 +90,11 @@ class BidirectionalBuffer
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
               original_id_(particles_->ParticleOriginalIds()),
-              pos_n_(*particles_->getVariableDataByName<Vecd>("Position")),
-              rho_n_(*particles_->getVariableDataByName<Real>("Density")),
-              p_(*particles_->getVariableDataByName<Real>("Pressure")),
-              previous_surface_indicator_(*particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
-              buffer_particle_indicator_(*particles_->getVariableDataByName<int>("BufferParticleIndicator")),
+              pos_n_(particles_->getVariableDataByName<Vecd>("Position")),
+              rho_n_(particles_->getVariableDataByName<Real>("Density")),
+              p_(particles_->getVariableDataByName<Real>("Pressure")),
+              previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
+              buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();

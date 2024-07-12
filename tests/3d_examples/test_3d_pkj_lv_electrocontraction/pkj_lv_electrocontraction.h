@@ -106,8 +106,8 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           DataDelegateSimple(body_part.getSPHBody()),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name)){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerSharedVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -148,8 +148,8 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name))
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerSharedVariable<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -214,8 +214,8 @@ class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public DataDelega
   public:
     explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -255,8 +255,8 @@ class ApplyStimulusCurrentToPKJ : public LocalDynamics, public DataDelegateSimpl
   public:
     explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {

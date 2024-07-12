@@ -12,7 +12,7 @@ ParticleSmoothing<VariableType>::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
       smoothed_(*particles_->template getVariableDataByName<VariableType>(variable_name)),
-      temp_(*particles_->registerSharedVariable<VariableType>(variable_name + "_temp")) {}
+      temp_(particles_->registerSharedVariable<VariableType>(variable_name + "_temp")) {}
 //=================================================================================================//
 template <typename VariableType>
 void ParticleSmoothing<VariableType>::interaction(size_t index_i, Real dt)

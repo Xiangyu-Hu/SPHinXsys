@@ -8,7 +8,7 @@ namespace solid_dynamics
 RepulsionDensitySummation<Inner<>>::
     RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionDensity"),
-      mass_(*particles_->getVariableDataByName<Real>("Mass"))
+      mass_(particles_->getVariableDataByName<Real>("Mass"))
 {
     Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
     offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
@@ -29,7 +29,7 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
 RepulsionDensitySummation<Contact<>>::
     RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionDensity"),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
       offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)

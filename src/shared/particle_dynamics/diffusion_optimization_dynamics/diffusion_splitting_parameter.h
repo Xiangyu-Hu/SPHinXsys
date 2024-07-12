@@ -70,7 +70,7 @@ class ParameterSplittingByPDEWithBoundary
     virtual ~ParameterSplittingByPDEWithBoundary(){};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
+    StdVec<Vecd *> boundary_normal_vector_;
     StdVec<StdLargeVec<Real> *> boundary_heat_flux_, boundary_Vol_;
     StdVec<StdLargeVec<Real> *> boundary_species_;
     virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;

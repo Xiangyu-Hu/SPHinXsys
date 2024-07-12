@@ -49,8 +49,8 @@ class RepulsionForce<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionForce(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          repulsion_force_(*this->particles_->template registerSharedVariable<Vecd>(variable_name)),
-          Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")){};
+          repulsion_force_(this->particles_->template registerSharedVariable<Vecd>(variable_name)),
+          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")){};
     virtual ~RepulsionForce(){};
 
   protected:

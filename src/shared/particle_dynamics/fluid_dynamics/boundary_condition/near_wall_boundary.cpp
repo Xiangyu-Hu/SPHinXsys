@@ -9,7 +9,7 @@ NearWallDistance::NearWallDistance(BaseContactRelation &wall_contact_relation)
     : LocalDynamics(wall_contact_relation.getSPHBody()), DataDelegateContact(wall_contact_relation),
       spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing()),
       distance_default_(100.0 * spacing_ref_),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position"))
+      pos_(particles_->getVariableDataByName<Vecd>("Position"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -42,7 +42,7 @@ void NearWallDistance::evaluateDistanceAndNormal(size_t index_i, Vecd &distance,
 //=================================================================================================//
 DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
     : NearWallDistance(wall_contact_relation),
-      distance_from_wall_(*particles_->registerSharedVariable<Vecd>("DistanceFromWall")) {}
+      distance_from_wall_(particles_->registerSharedVariable<Vecd>("DistanceFromWall")) {}
 //=================================================================================================//
 void DistanceFromWall::interaction(size_t index_i, Real dt)
 {

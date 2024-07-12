@@ -101,7 +101,7 @@ class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRe
   public:
     ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")){};
     virtual ~ControlDisplacement(){};
 
   protected:

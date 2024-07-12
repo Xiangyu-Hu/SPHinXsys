@@ -12,7 +12,7 @@ template <class BaseRelationType>
 TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      zero_gradient_residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroGradientResidue")),
+      zero_gradient_residue_(this->particles_->template registerSharedVariable<Vecd>("ZeroGradientResidue")),
       kernel_correction_(this->particles_), within_scope_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScope>::value,
@@ -25,8 +25,8 @@ TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTyp
     : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
-      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      pos_(*this->particles_->template getVariableDataByName<Vecd>("Position")),
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_)
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,

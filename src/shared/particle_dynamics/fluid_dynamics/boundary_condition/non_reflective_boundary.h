@@ -53,7 +53,7 @@ class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegat
     StdLargeVec<Real> &inner_weight_summation_, &rho_average_, &vel_normal_average_;
     StdLargeVec<Vecd> &vel_tangential_average_, &vel_average_;
     StdLargeVec<int> &indicator_, &smeared_surface_;
-    StdLargeVec<Vecd> &n_;
+    Vecd *n_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

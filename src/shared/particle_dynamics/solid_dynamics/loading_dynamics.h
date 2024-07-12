@@ -50,7 +50,7 @@ class BaseLoadingForce : public BaseLocalDynamics<DynamicsIdentifier>, public Da
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
           ForcePrior(this->particles_, loading_force_name),
-          loading_force_(*particles_->getVariableDataByName<Vecd>(loading_force_name)){};
+          loading_force_(particles_->getVariableDataByName<Vecd>(loading_force_name)){};
     virtual ~BaseLoadingForce(){};
 
   protected:
@@ -199,7 +199,7 @@ class PressureForceOnShell : public LoadingForce
   protected:
     Real pressure_;
     StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &n_;
+    Vecd *n_;
 
   public:
     PressureForceOnShell(SPHBody &sph_body, Real pressure);

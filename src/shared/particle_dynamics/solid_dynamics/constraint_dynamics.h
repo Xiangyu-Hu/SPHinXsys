@@ -191,9 +191,9 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
                         SimTK::RungeKuttaMersonIntegrator &integ)
         : MotionConstraint<DynamicsIdentifier>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
-          n_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
-          n0_(*this->particles_->template registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-          acc_(*this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
+          n_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
+          n0_(this->particles_->template registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+          acc_(this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
     {
         simbody_state_ = &integ_.getState();
         MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
@@ -230,7 +230,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
-    StdLargeVec<Vecd> &n_, &n0_, &acc_;
+    Vecd *n_, &n0_, &acc_;
     const SimTK::State *simbody_state_;
     SimTKVec3 initial_mobod_origin_location_;
 };
@@ -261,9 +261,9 @@ class TotalForceForSimBody
                          SimTK::RungeKuttaMersonIntegrator &integ)
         : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          force_(*particles_->registerSharedVariable<Vecd>("Force")),
-          force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+          force_(particles_->registerSharedVariable<Vecd>("Force")),
+          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
         this->quantity_name_ = "TotalForceForSimBody";

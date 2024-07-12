@@ -85,9 +85,9 @@ class DynamicContactForceWithWall : public LocalDynamics,
         : LocalDynamics(solid_body_contact_relation.getSPHBody()),
           DataDelegateContact(solid_body_contact_relation),
           solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
-          Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-          force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
           penalty_strength_(penalty_strength)
     {
         impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());
@@ -140,7 +140,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
     StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_n_;
+    StdVec<Vecd *> contact_vel_, contact_n_;
     Real penalty_strength_;
     Real impedance_, reference_pressure_;
 };

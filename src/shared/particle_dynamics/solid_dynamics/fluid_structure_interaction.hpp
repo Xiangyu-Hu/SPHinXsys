@@ -14,7 +14,7 @@ PressureForceFromFluid<FluidIntegration2ndHalfType>::
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
       vel_ave_(*solid_.AverageVelocity(particles_)),
       acc_ave_(*solid_.AverageAcceleration(particles_)),
-      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection"))
+      n_(particles_->getVariableDataByName<Vecd>("NormalDirection"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

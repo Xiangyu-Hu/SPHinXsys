@@ -77,7 +77,7 @@ class SPHAdaptation
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
-    virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles){};
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
@@ -104,7 +104,7 @@ class SPHAdaptation
 class ParticleWithLocalRefinement : public SPHAdaptation
 {
   public:
-    StdLargeVec<Real> *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement(){};
@@ -113,7 +113,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
-        return (*h_ratio_)[particle_index_i];
+        return h_ratio_[particle_index_i];
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;

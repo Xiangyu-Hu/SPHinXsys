@@ -99,7 +99,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
     StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<Vecd> &vel_;
     StdVec<StdLargeVec<Real> *> wall_Vol_n_;
-    StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
+    StdVec<Vecd *> wall_vel_n_, wall_n_;
 };
 
 } // namespace solid_dynamics

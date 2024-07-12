@@ -47,7 +47,7 @@ class PressureCondition : public BaseFlowBoundaryCondition
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
           target_pressure_(*this),
-          kernel_sum_(*particles_->getVariableDataByName<Vecd>("KernelSummation")){};
+          kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")){};
     virtual ~PressureCondition(){};
     AlignedBoxShape &getAlignedBox() { return aligned_box_; };
 

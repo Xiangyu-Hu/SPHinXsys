@@ -99,7 +99,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
       protected:
         const Real convergence_criterion_;
-        StdLargeVec<Vecd> &n_, &n_temp_;
+        Vecd *n_, &n_temp_;
 
       public:
         PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
@@ -119,7 +119,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
       protected:
         std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
         const Real consistency_criterion_;
-        StdLargeVec<Vecd> &n_;
+        Vecd *n_;
         StdLargeVec<int> &updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
     };
 

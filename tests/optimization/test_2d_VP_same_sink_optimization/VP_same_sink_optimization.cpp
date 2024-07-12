@@ -81,8 +81,8 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerSharedVariable<Real>("Phi")),
           heat_source_(*(particles_->registerSharedVariable<Real>("HeatSource"))){};
 
     void update(size_t index_i, Real dt)
@@ -116,8 +116,8 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -144,9 +144,9 @@ class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          species_modified_(*particles_->getVariableDataByName<Real>("SpeciesModified")),
-          species_recovery_(*particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
+          phi_(particles_->registerSharedVariable<Real>("Phi")),
+          species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
+          species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -163,8 +163,8 @@ class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
   public:
     explicit StoreGlobalPDEResidual(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          residual_T_local_(*particles_->getVariableDataByName<Real>("ResidualTLocal")),
-          residual_T_global_(*particles_->getVariableDataByName<Real>("ResidualTGlobal")){};
+          residual_T_local_(particles_->getVariableDataByName<Real>("ResidualTLocal")),
+          residual_T_global_(particles_->getVariableDataByName<Real>("ResidualTGlobal")){};
 
     void update(size_t index_i, Real learning_rate)
     {

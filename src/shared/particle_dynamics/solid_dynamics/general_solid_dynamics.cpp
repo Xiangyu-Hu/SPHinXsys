@@ -13,9 +13,9 @@ DistributingPointForces::
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      thickness_(*particles_->getVariableDataByName<Real>("Thickness"))
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
+      thickness_(particles_->getVariableDataByName<Real>("Thickness"))
 {
     weight_.resize(point_forces_.size());
     for (size_t i = 0; i < point_forces_.size(); i++)

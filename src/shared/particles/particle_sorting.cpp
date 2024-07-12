@@ -18,8 +18,8 @@ void SwapSortableParticleData::operator()(size_t *a, size_t *b)
 {
     std::swap(*a, *b);
 
-    size_t index_a = a - sequence_.data();
-    size_t index_b = b - sequence_.data();
+    size_t index_a = a - sequence_;
+    size_t index_b = b - sequence_;
     std::swap(original_id_[index_a], original_id_[index_b]);
     swap_particle_data_value_(index_a, index_b);
 }
@@ -30,7 +30,7 @@ ParticleSorting::ParticleSorting(BaseParticles &base_particles)
       sorted_id_(base_particles.ParticleSortedIds()),
       sequence_(base_particles.ParticleSequences()),
       swap_sortable_particle_data_(base_particles), compare_(),
-      quick_sort_particle_range_(sequence_.data(), 0, compare_, swap_sortable_particle_data_),
+      quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
       quick_sort_particle_body_() {}
 //=================================================================================================//
 void ParticleSorting::sortingParticleData(size_t *begin, size_t size)

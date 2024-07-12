@@ -97,9 +97,9 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
   public:
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-          angular_vel_(*particles_->getVariableDataByName<Vecd>("AngularVelocity")),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
     virtual ~ControlledRotation(){};
 
   protected:

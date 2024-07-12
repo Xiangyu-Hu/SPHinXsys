@@ -63,7 +63,7 @@ class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegat
 class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &n_, &n0_;
+    Vecd *n_, &n0_;
     StdLargeVec<Real> &phi_, &phi0_;
     StdLargeVec<Matd> &F_;
     Vecd getRotatedNormalDirection(const Matd &F, const Vecd &n0);
@@ -127,7 +127,7 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
   protected:
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Matd> &B_, &F_;
+    Matd *B_, &F_;
 };
 
 /**
@@ -143,7 +143,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
   protected:
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_, &force_;
-    StdLargeVec<Matd> &B_, &F_, &dF_dt_;
+    Matd *B_, &F_, &dF_dt_;
 };
 
 /**

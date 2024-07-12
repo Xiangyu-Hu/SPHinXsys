@@ -91,7 +91,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
     PorousMediaSolid &porous_solid_;
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Matd> &B_, &F_, &dF_dt_;
+    Matd *B_, &F_, &dF_dt_;
     Real rho0_, inv_rho0_;
     Real smoothing_length_;
 };
@@ -193,12 +193,12 @@ class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<B
     PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           DataDelegateSimple(body_part.getSPHBody()),
-          fluid_mass_(*particles_->getVariableDataByName<Real>("FluidMass")),
-          fluid_saturation_(*particles_->getVariableDataByName<Real>("FluidSaturation")),
-          total_mass_(*particles_->getVariableDataByName<Real>("TotalMass")),
-          rho_n_(*particles_->getVariableDataByName<Real>("Density")),
-          Vol_update_(*particles_->getVariableDataByName<Real>("UpdateVolume")),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+          fluid_mass_(particles_->getVariableDataByName<Real>("FluidMass")),
+          fluid_saturation_(particles_->getVariableDataByName<Real>("FluidSaturation")),
+          total_mass_(particles_->getVariableDataByName<Real>("TotalMass")),
+          rho_n_(particles_->getVariableDataByName<Real>("Density")),
+          Vol_update_(particles_->getVariableDataByName<Real>("UpdateVolume")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
 

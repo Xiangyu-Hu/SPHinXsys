@@ -201,12 +201,12 @@ class BaseParticles;
 struct SwapParticleDataValue
 {
     template <typename DataType>
-    void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index_a, size_t index_b) const
+    void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index_a, size_t index_b) const
     {
         for (size_t i = 0; i != data_keeper.size(); ++i)
         {
-            StdLargeVec<DataType> &variable = *data_keeper[i];
-            std::swap(variable[index_a], variable[index_b]);
+            DataType *data_field = data_keeper[i];
+            std::swap(data_field[index_a], data_field[index_b]);
         }
     };
 };
@@ -230,8 +230,8 @@ struct CompareParticleSequence
 class SwapSortableParticleData
 {
   protected:
-    StdLargeVec<size_t> &sequence_;
-    StdLargeVec<size_t> &original_id_;
+    size_t *sequence_;
+    size_t *original_id_;
     ParticleData &sortable_data_;
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
@@ -253,9 +253,9 @@ class ParticleSorting
 {
   protected:
     BaseParticles &base_particles_;
-    StdLargeVec<size_t> &original_id_;
-    StdLargeVec<size_t> &sorted_id_;
-    StdLargeVec<size_t> &sequence_;
+    size_t *original_id_;
+    size_t *sorted_id_;
+    size_t *sequence_;
 
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;
