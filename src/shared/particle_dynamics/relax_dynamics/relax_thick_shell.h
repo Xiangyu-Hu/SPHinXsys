@@ -57,7 +57,7 @@ class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Real constrained_distance_;
     Real particle_spacing_ref_;
     LevelSetShape *level_set_shape_;
@@ -86,7 +86,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
-        StdLargeVec<Vecd> &pos_, &n_, &n_temp_;
+        Vecd *pos_, &n_, &n_temp_;
 
       public:
         NormalPrediction(SPHBody &sph_body, Real thickness);

@@ -48,7 +48,7 @@ class Displacement : public BaseDerivedVariable<Vecd, DataDelegateSimple>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_, &pos0_;
+    Vecd *pos_, &pos0_;
 };
 
 /**
@@ -65,7 +65,7 @@ class OffsetInitialPosition : public DataDelegateSimple,
 
   protected:
     Vecd offset_;
-    StdLargeVec<Vecd> &pos_, &pos0_;
+    Vecd *pos_, &pos0_;
 };
 
 /**
@@ -82,7 +82,7 @@ class TranslationAndRotation : public DataDelegateSimple,
 
   protected:
     Transform &transform_;
-    StdLargeVec<Vecd> &pos_, &pos0_;
+    Vecd *pos_, &pos0_;
 };
 
 class GreenLagrangeStrain : public BaseDerivedVariable<Matd, DataDelegateSimple>,

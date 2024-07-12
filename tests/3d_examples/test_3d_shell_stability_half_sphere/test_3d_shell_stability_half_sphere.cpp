@@ -127,7 +127,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // generating particles from predefined positions from obj file
     StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
-    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec) { vec *= scale; });
+    std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec)
+                  { vec *= scale; });
     Real particle_area = total_area / obj_vertices.size();
     // find out BoundingBox
     bb_system = get_particles_bounding_box(obj_vertices);
@@ -213,7 +214,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
         // test volume
         Real *Vol_ = *shell_particles->getVariableDataByName<Real>("VolumetricMeasure");
-        StdLargeVec<Real> &mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
+        Real *mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
         Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
         Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);

@@ -61,7 +61,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
         /** Contact interaction. */
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
+            Vecd *vel_k = *(wall_vel_n_[k]);
             StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
             StdLargeVec<Real> &Vol_k = *(wall_Vol_n_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -97,7 +97,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
   protected:
     Real eta_; /**< friction coefficient */
     Real *Vol_, &mass_;
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     StdVec<Real *> wall_Vol_n_;
     StdVec<Vecd *> wall_vel_n_, wall_n_;
 };

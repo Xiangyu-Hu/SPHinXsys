@@ -66,7 +66,7 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------

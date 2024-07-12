@@ -78,7 +78,7 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 {
   public:
     template <typename... Args>
-    RelaxationResidue(Args &&... args);
+    RelaxationResidue(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
     explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
@@ -86,7 +86,7 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     LevelSetShape &level_set_shape_;
 };
 
@@ -137,7 +137,7 @@ class PositionRelaxation : public LocalDynamics,
 {
   protected:
     SPHAdaptation *sph_adaptation_;
-    StdLargeVec<Vecd> &pos_, &residue_;
+    Vecd *pos_, &residue_;
 
   public:
     explicit PositionRelaxation(SPHBody &sph_body);
@@ -150,7 +150,7 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
 {
   protected:
     StdLargeVec<Real> &h_ratio_, &Vol_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Shape &target_shape_;
     ParticleRefinementByShape *particle_adaptation_;
     Real reference_spacing_;
@@ -167,7 +167,7 @@ class RelaxationStep : public BaseDynamics<void>
 {
   public:
     template <typename FirstArg, typename... OtherArgs>
-    explicit RelaxationStep(FirstArg &&first_arg, OtherArgs &&... other_args);
+    explicit RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args);
     virtual ~RelaxationStep(){};
     SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;

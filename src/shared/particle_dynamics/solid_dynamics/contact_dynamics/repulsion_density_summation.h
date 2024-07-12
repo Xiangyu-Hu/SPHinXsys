@@ -64,7 +64,7 @@ class RepulsionDensitySummation<Inner<>> : public RepulsionDensitySummation<Base
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
     Real offset_W_ij_;
 };
 using SelfContactDensitySummation = RepulsionDensitySummation<Inner<>>;
@@ -78,7 +78,7 @@ class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Ba
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
     StdVec<Real *> contact_mass_;
     StdVec<Real> offset_W_ij_;
 };

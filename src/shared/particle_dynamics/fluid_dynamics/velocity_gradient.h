@@ -50,7 +50,7 @@ class VelocityGradient<DataDelegationType>
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     StdLargeVec<Matd> &vel_grad_;
 };
 

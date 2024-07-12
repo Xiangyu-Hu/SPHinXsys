@@ -147,7 +147,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
     Real alpha_;
     Real *Vol_;
     Matd *B_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &show_neighbor_;
 
     void interaction(size_t index_i, Real dt = 0.0)

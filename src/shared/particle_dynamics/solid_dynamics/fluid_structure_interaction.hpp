@@ -34,11 +34,11 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
-        StdLargeVec<Real> &mass_k = *(contact_mass_[k]);
+        Real *mass_k = *(contact_mass_[k]);
         StdLargeVec<Real> &p_k = *(contact_p_[k]);
-        StdLargeVec<Vecd> &vel_k = *(contact_vel_[k]);
+        Vecd *vel_k = *(contact_vel_[k]);
         StdLargeVec<Vecd> &force_prior_k = *(contact_force_prior_[k]);
         RiemannSolverType &riemann_solvers_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];

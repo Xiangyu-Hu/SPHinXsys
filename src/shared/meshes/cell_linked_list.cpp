@@ -48,7 +48,7 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
 void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     clearCellLists();
-    StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
+    Vecd *pos_n = base_particles.ParticlePositions();
     size_t total_real_particles = base_particles.TotalRealParticles();
     parallel_for(
         IndexRange(0, total_real_particles),
@@ -117,7 +117,7 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     for (size_t level = 0; level != total_levels_; ++level)
         mesh_levels_[level]->clearCellLists();
 
-    StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
+    Vecd *pos_n = base_particles.ParticlePositions();
     size_t total_real_particles = base_particles.TotalRealParticles();
     // rebuild the corresponding particle list.
     parallel_for(

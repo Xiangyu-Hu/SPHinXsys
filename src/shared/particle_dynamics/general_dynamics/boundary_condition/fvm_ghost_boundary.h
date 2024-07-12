@@ -51,7 +51,7 @@ class GhostCreationFromMesh : public DataDelegateSimple
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     StdLargeVec<Vecd> &node_coordinates_;
     StdVec<StdVec<StdVec<size_t>>> &mesh_topology_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Real *Vol_;
     void addGhostParticleAndSetInConfiguration();
 
@@ -84,7 +84,7 @@ class BoundaryConditionSetupInFVM : public DataDelegateInner
 
   protected:
     StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> &vel_, &pos_, &mom_;
+    Vecd *vel_, &pos_, &mom_;
     std::pair<size_t, size_t> &ghost_bound_;
     StdVec<StdVec<size_t>> &each_boundary_type_with_all_ghosts_index_;
     StdVec<StdVec<Vecd>> &each_boundary_type_with_all_ghosts_eij_;

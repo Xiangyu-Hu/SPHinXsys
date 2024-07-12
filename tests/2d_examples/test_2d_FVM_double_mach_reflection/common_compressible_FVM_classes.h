@@ -19,7 +19,7 @@ class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTim
 {
   protected:
     StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     Real min_distance_between_nodes_;
 
   public:

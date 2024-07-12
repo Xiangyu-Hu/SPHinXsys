@@ -135,14 +135,14 @@ DataType *BaseParticles::registerSharedVariableFrom(
         exit(1);
     }
 
-    DataType old_data = variable->DataField();
+    DataType *old_data_field = variable->DataField();
     return registerSharedVariable<DataType>(new_name, [&](size_t index)
-                                            { return old_data[index]; });
+                                            { return old_data_field[index]; });
 }
 //=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::registerSharedVariableFrom(
-    const std::string &name, const StdLargeVec<DataType> &geometric_data)
+    const std::string &name, const DataType *geometric_data)
 {
     return registerSharedVariable<DataType>(name, [&](size_t index)
                                             { return geometric_data[index]; });

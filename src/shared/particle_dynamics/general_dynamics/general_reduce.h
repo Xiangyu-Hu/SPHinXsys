@@ -52,7 +52,7 @@ class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier
     Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
 
   protected:
-    StdLargeVec<DataType> &variable_;
+    DataType *variable_;
 
     template <typename Datatype>
     Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
@@ -68,7 +68,7 @@ class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>,
                            public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     Real velocity_bound_;
 
   public:
@@ -88,7 +88,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
 {
   protected:
     int axis_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
@@ -111,7 +111,7 @@ class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>,
                      public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
 
   public:
     explicit MaximumSpeed(SPHBody &sph_body);
@@ -129,7 +129,7 @@ class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>,
                            public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
     explicit PositionLowerBound(SPHBody &sph_body);
@@ -147,7 +147,7 @@ class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
                            public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
     explicit PositionUpperBound(SPHBody &sph_body);
@@ -180,7 +180,7 @@ class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, Dy
     };
 
   protected:
-    StdLargeVec<DataType> &variable_;
+    DataType *variable_;
 };
 
 /**
@@ -191,7 +191,7 @@ template <typename DataType, class DynamicsIdentifier>
 class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
 {
   protected:
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
 
   public:
     explicit QuantityMoment(DynamicsIdentifier &identifier, const std::string &variable_name)
@@ -213,8 +213,8 @@ class TotalKineticEnergy
       public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &vel_;
+    Real *mass_;
+    Vecd *vel_;
 
   public:
     explicit TotalKineticEnergy(SPHBody &sph_body);
@@ -226,7 +226,7 @@ class TotalMechanicalEnergy : public TotalKineticEnergy
 {
   protected:
     Gravity &gravity_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
     explicit TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity);

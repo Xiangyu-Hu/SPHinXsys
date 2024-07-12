@@ -94,8 +94,8 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     virtual ~LeftStretchSolidBodyRegion(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real Dt = 0.0)
     {
         pos_[index_i][0] -= 0.5e-4 * Dt;
@@ -114,8 +114,8 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     virtual ~RightStretchSolidBodyRegion(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real Dt = 0.0)
     {
         pos_[index_i][0] += 0.5e-4 * Dt;
@@ -156,8 +156,8 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     virtual ~ConstrainXVelocity(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         vel_[index_i] = Vecd(0.0, vel_[index_i][1]);

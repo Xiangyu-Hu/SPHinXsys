@@ -91,7 +91,7 @@ class BasePeriodicCondition
         Vecd periodic_translation_;
         Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
         StdVec<CellLists> &bound_cells_data_;
-        StdLargeVec<Vecd> &pos_;
+        Vecd *pos_;
 
         virtual void checkLowerBound(size_t index_i, Real dt = 0.0)
         {

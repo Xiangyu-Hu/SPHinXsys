@@ -22,7 +22,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 
 SolidBodyFromMesh::SolidBodyFromMesh(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-    SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+    SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, StdLargeVec<Real> &volume)
     : SolidBody(system, triangle_mesh_shape)
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
@@ -33,7 +33,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 
 SolidBodyForSimulation::SolidBodyForSimulation(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-    Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+    Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, StdLargeVec<Real> &volume)
     : solid_body_from_mesh_(system, triangle_mesh_shape, resolution, material_model, pos_0, volume),
       inner_body_relation_(solid_body_from_mesh_),
       initial_normal_direction_(SimpleDynamics<NormalDirectionFromBodyShape>(solid_body_from_mesh_)),
@@ -329,7 +329,7 @@ void StructuralSimulation::initializeElasticSolidBodies()
             generateAndRelaxParticlesFromMesh(body_mesh_list_[i], resolution_list_[i], particle_relaxation_list_[i], write_particle_relaxation_data_);
 
         // get the particles' initial position and their volume
-        StdLargeVec<Vecd> &pos_0 = std::get<0>(particles);
+        Vecd *pos_0 = std::get<0>(particles);
         StdLargeVec<Real> &volume = std::get<1>(particles);
 
         // create the SolidBodyForSimulation

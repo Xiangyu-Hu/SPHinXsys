@@ -23,7 +23,7 @@ void NearWallDistance::evaluateDistanceAndNormal(size_t index_i, Vecd &distance,
 {
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &pos_k = *(wall_pos_[k]);
+        Vecd *pos_k = *(wall_pos_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
         StdLargeVec<Real> &phi_k = *(wall_phi_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];

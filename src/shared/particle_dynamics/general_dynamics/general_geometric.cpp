@@ -9,7 +9,7 @@ NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
       initial_shape_(sph_body.getInitialShape()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerSharedVariable<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->registerSharedVariable<Real>("SignedDistance")),
       phi0_(particles_->registerSharedVariable<Real>("InitialSignedDistance")) {}
 //=============================================================================================//
@@ -31,7 +31,7 @@ NormalDirectionFromSubShapeAndOp::
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerSharedVariable<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->registerSharedVariable<Real>("SignedDistance")),
       phi0_(particles_->registerSharedVariable<Real>("InitialSignedDistance")) {}
 //=============================================================================================//
@@ -50,7 +50,7 @@ NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &in
       initial_shape_(sph_body_.getInitialShape()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerSharedVariable<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->registerSharedVariable<Real>("SignedDistance")),
       phi0_(particles_->registerSharedVariable<Real>("InitialSignedDistance")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")) {}

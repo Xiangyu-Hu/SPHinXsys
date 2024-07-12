@@ -105,7 +105,7 @@ class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRe
     virtual ~ControlDisplacement(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
 
     void update(size_t index_i, Real dt = 0.0)
     {

@@ -69,7 +69,7 @@ class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegat
   protected:
     Solid &solid_;
     StdLargeVec<Real> &self_repulsion_density_;
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     Real contact_impedance_;
 };
 using SelfContactForce = RepulsionForce<Contact<Inner<>>>;

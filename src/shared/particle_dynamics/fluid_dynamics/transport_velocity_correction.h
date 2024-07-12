@@ -76,7 +76,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
   protected:
     const Real h_ref_, correction_scaling_;
     Real *Vol_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     ResolutionType h_ratio_;
     LimiterType limiter_;
 };

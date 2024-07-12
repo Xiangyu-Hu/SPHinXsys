@@ -51,8 +51,8 @@ class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, publi
 
   protected:
     Real rho0_, inv_sigma0_;
-    StdLargeVec<Real> &mass_, &rho_sum_;
-    StdLargeVec<Vecd> &pos_;
+    Real *mass_, &rho_sum_;
+    Vecd *pos_;
     LevelSetShape *level_set_shape_;
 };
 
@@ -70,7 +70,7 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
   protected:
     Fluid &fluid_;
     StdLargeVec<Real> &rho_, &p_, &mass_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    Vecd *pos_, &vel_, &force_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };
@@ -89,7 +89,7 @@ class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByC
   protected:
     Fluid &fluid_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, &vel_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };

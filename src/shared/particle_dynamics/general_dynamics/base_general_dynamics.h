@@ -57,7 +57,7 @@ class BaseDerivedVariable : public DataDelegateType
     virtual ~BaseDerivedVariable(){};
 
   protected:
-    StdLargeVec<DataType> &derived_variable_;
+    DataType *derived_variable_;
 };
 } // namespace SPH
 #endif // BASE_GENERAL_DYNAMICS_H

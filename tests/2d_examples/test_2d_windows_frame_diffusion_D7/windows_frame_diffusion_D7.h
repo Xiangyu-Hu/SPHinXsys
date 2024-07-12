@@ -467,7 +467,7 @@ class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_, &phi_convection_;
     Real &phi_infinity_;
 };

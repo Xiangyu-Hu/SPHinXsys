@@ -50,7 +50,7 @@ class ShapeSurfaceBounding2 : public LocalDynamics,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Shape *shape_;
 };
 
@@ -95,7 +95,7 @@ class SurfaceNormalDirection : public DataDelegateSimple, public LocalDynamics
 
   protected:
     SurfaceShape *surface_shape_;
-    StdLargeVec<Vecd> &pos_, &n_;
+    Vecd *pos_, &n_;
 };
 
 } // namespace relax_dynamics

@@ -135,7 +135,7 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataD
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
 };
 
@@ -159,7 +159,7 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDel
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_, &phi_flux_;
 };
 //----------------------------------------------------------------------

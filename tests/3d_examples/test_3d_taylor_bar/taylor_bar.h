@@ -111,8 +111,8 @@ class DynamicContactForceWithWall : public LocalDynamics,
             particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
             StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-            StdLargeVec<Vecd> &vel_n_k = *(contact_vel_[k]);
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+            Vecd *vel_n_k = *(contact_vel_[k]);
+            Real *Vol_k = contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -138,7 +138,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
   protected:
     Solid &solid_;
     Real *Vol_;
-    StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
+    Vecd *vel_, &force_prior_; // note that prior force directly used here
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_, contact_n_;
     Real penalty_strength_;

@@ -71,7 +71,7 @@ class InvCFInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
 };
 ///----------------------------------------------------------------------
 //	InvCFBoundaryConditionSetup

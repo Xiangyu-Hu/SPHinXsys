@@ -51,7 +51,7 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
+    Vecd *vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
     StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
@@ -140,7 +140,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public DataDelegateIn
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
+    Vecd *pos_, &pseudo_n_, &n0_;
     Matd *B_, &F_, &F_bending_;
     StdLargeVec<Matd> &transformation_matrix0_;
 
@@ -160,7 +160,7 @@ class BaseBarRelaxation : public LocalDynamics, public DataDelegateInner
 
   protected:
     Real *Vol_, &thickness_, &width_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
+    Vecd *pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     Matd *B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
@@ -317,7 +317,7 @@ class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, pub
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_, &angular_vel_, &angular_b_vel_;
+    Vecd *vel_, &angular_vel_, &angular_b_vel_;
 };
 
 /**@class ConstrainBarBodyRegionAlongAxis
@@ -334,8 +334,8 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
 
   protected:
     const int axis_; /**< the axis direction for bounding*/
-    StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &vel_, &force_;
+    Vecd *pos_, &pos0_;
+    Vecd *vel_, &force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;
 };

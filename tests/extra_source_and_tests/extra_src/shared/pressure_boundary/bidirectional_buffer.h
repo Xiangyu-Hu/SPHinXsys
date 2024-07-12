@@ -74,7 +74,7 @@ class BidirectionalBuffer
         };
 
       protected:
-        StdLargeVec<Vecd> &pos_;
+        Vecd *pos_;
         AlignedBoxShape &aligned_box_;
         StdLargeVec<int> &buffer_particle_indicator_;
     };
@@ -125,7 +125,7 @@ class BidirectionalBuffer
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
         StdLargeVec<size_t> &original_id_;
-        StdLargeVec<Vecd> &pos_n_;
+        Vecd *pos_n_;
         StdLargeVec<Real> &rho_n_, &p_;
         StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;
 

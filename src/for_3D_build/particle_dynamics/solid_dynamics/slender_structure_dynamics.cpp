@@ -46,7 +46,7 @@ BarCorrectConfiguration::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       B_(particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BarDeformationGradientTensor::
@@ -54,14 +54,14 @@ BarDeformationGradientTensor::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pseudo_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      pseudo_n_(particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       F_(particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       F_bending_(particles_->registerSharedVariable<Matd>("BendingDeformationGradient")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
-      pseudo_b_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoBinormal", "BinormalDirection")),
-      b_n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
+      pseudo_b_n_(particles_->registerSharedVariableFrom<Vecd>("PseudoBinormal", "BinormalDirection")),
+      b_n0_(particles_->registerSharedVariableFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
       F_b_bending_(particles_->registerSharedVariable<Matd>("BinormalBending")) {}
 //=================================================================================================//
 BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
@@ -73,8 +73,8 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       vel_(particles_->registerSharedVariable<Vecd>("Velocity")),
       force_(particles_->registerSharedVariable<Vecd>("Force")),
       force_prior_(particles_->registerSharedVariable<Vecd>("ForcePrior")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      pseudo_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      pseudo_n_(particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
       dpseudo_n_dt_(particles_->registerSharedVariable<Vecd>("PseudoNormalChangeRate")),
       dpseudo_n_d2t_(particles_->registerSharedVariable<Vecd>("PseudoNormal2ndOrderTimeDerivative")),
       rotation_(particles_->registerSharedVariable<Vecd>("Rotation")),
@@ -85,7 +85,7 @@ BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
       dF_dt_(particles_->registerSharedVariable<Matd>("DeformationRate")),
       F_bending_(particles_->registerSharedVariable<Matd>("BendingDeformationGradient")),
       dF_bending_dt_(particles_->registerSharedVariable<Matd>("BendingDeformationRate")),
-      pseudo_b_n_(*particles_->registerSharedVariableFrom<Vecd>("PseudoBinormal", "BinormalDirection")),
+      pseudo_b_n_(particles_->registerSharedVariableFrom<Vecd>("PseudoBinormal", "BinormalDirection")),
       dpseudo_b_n_dt_(particles_->registerSharedVariable<Vecd>("PseudoBinormalChangeRate")),
       dpseudo_b_n_d2t_(particles_->registerSharedVariable<Vecd>("PseudoBinormal2ndOrderTimeDerivative")),
       rotation_b_(particles_->registerSharedVariable<Vecd>("BinormalRotation")),
@@ -305,7 +305,7 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
       axis_(axis), pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       rotation_(particles_->getVariableDataByName<Vecd>("Rotation")),

@@ -103,7 +103,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
 };
 
@@ -149,7 +149,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_, &heat_flux_;
 };
 

@@ -76,7 +76,7 @@ class ViscousForce<DataDelegationType>
 
   protected:
     StdLargeVec<Real> &rho_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &vel_, &viscous_force_;
+    Vecd *vel_, &viscous_force_;
     Real smoothing_length_;
 };
 
@@ -174,7 +174,7 @@ class VorticityInner : public LocalDynamics, public DataDelegateInner
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     StdLargeVec<AngularVecd> &vorticity_;
 };
 } // namespace fluid_dynamics

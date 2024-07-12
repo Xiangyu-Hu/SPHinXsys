@@ -45,7 +45,7 @@ class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimpl
     virtual ~ContinuumInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, &vel_;
     StdLargeVec<Mat3d> &stress_tensor_3D_;
 };
 

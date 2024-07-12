@@ -38,7 +38,7 @@ namespace SPH
 class ForcePrior
 {
   protected:
-    StdLargeVec<Vecd> &force_prior_, &current_force_, &previous_force_;
+    Vecd *force_prior_, *current_force_, *previous_force_;
 
   public:
     ForcePrior(BaseParticles *base_particles, const std::string &force_name);
@@ -53,8 +53,8 @@ class GravityForce
 {
   protected:
     Gravity &gravity_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &mass_;
+    Vecd *pos_;
+    Real *mass_;
 
   public:
     explicit GravityForce(SPHBody &sph_body, Gravity &gravity);

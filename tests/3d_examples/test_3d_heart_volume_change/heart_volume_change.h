@@ -132,7 +132,7 @@ class SurfaceOperationsVentricle
     void init_srf_area(InnerRelation &inner_relation);
 
     BaseParticles &particles_;
-    StdLargeVec<Vecd> &vel_, &n_, &n0_;
+    Vecd *vel_, &n_, &n0_;
     StdLargeVec<Matd> &F_;
     // ids_, srf_area_0_, srf_area_n_ maintain particle correspondence
     const IndexVector &ids_;  // ids of srf particles of interest

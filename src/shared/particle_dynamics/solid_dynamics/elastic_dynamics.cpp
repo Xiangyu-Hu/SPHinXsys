@@ -39,7 +39,7 @@ UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       DataDelegateSimple(sph_body),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->getVariableDataByName<Real>("SignedDistance")),
       phi0_(particles_->getVariableDataByName<Real>("InitialSignedDistance")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")) {}

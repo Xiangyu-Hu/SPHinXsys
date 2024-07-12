@@ -62,8 +62,8 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
 
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-            StdLargeVec<DataType> &data_k = *(contact_data_[k]);
+            Real *Vol_k = contact_Vol_[k];
+            DataType *data_k = contact_data_[k];
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -136,7 +136,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
 
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+            Real *Vol_k = contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {

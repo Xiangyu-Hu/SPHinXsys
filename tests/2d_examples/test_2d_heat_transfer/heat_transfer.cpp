@@ -117,7 +117,7 @@ class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegat
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------
@@ -140,7 +140,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics, public DataDelegat
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
 };
 //----------------------------------------------------------------------

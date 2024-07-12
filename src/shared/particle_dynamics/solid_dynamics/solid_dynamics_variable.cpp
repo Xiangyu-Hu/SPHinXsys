@@ -7,7 +7,7 @@ Displacement::Displacement(SPHBody &sph_body)
     : BaseDerivedVariable<Vecd, DataDelegateSimple>(sph_body, "Displacement"),
       LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
 //=============================================================================================//
 void Displacement::update(size_t index_i, Real dt)
 {
@@ -18,7 +18,7 @@ OffsetInitialPosition::OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
     : DataDelegateSimple(sph_body), LocalDynamics(sph_body),
       offset_(offset),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
 //=============================================================================================//
 void OffsetInitialPosition::update(size_t index_i, Real dt)
 {
@@ -29,7 +29,7 @@ void OffsetInitialPosition::update(size_t index_i, Real dt)
 TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transform &transform)
     : DataDelegateSimple(sph_body), LocalDynamics(sph_body), transform_(transform),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
 //=============================================================================================//
 void TranslationAndRotation::update(size_t index_i, Real dt)
 {

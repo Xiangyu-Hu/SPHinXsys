@@ -51,7 +51,7 @@ class RandomizeParticlePosition
       public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Real randomize_scale_;
 
   public:

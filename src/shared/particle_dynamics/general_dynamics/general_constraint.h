@@ -45,16 +45,16 @@ class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>,
                        DataType constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          constrained_variable_(particles_->getVariableDataByName<DataType>(variable_name)),
+          variable_data_field_(particles_->getVariableDataByName<DataType>(variable_name)),
           constrained_value_(constrained_value){};
     virtual ~ConstantConstraint(){};
     void update(size_t index_i, Real dt = 0.0)
     {
-        constrained_variable_[index_i] = constrained_value_;
+        variable_data_field_[index_i] = constrained_value_;
     };
 
   protected:
-    StdLargeVec<DataType> &constrained_variable_;
+    DataType *variable_data_field_;
     DataType constrained_value_;
 };
 
@@ -75,7 +75,7 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     LevelSetShape *level_set_shape_;
     Real constrained_distance_;
 };
@@ -102,7 +102,7 @@ class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public Da
     virtual ~MotionConstraint(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &pos0_, &vel_;
+    Vecd *pos_, *pos0_, *vel_;
 };
 using BodyPartMotionConstraint = MotionConstraint<BodyPartByParticle>;
 

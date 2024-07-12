@@ -69,7 +69,7 @@ class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Vecd> &vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
+    Vecd *vel_, &force_, &angular_vel_, &dangular_vel_dt_, &force_prior_;
     StdLargeVec<Real> &thickness_, &mass_;
     Real rho0_, E0_, nu_, c0_;
     Real smoothing_length_;
@@ -150,7 +150,7 @@ class ShellDeformationGradientTensor : public LocalDynamics, public DataDelegate
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
+    Vecd *pos_, &pseudo_n_, &n0_;
     Matd *B_, &F_, &F_bending_;
     StdLargeVec<Matd> &transformation_matrix0_;
 };
@@ -167,7 +167,7 @@ class BaseShellRelaxation : public LocalDynamics, public DataDelegateInner
 
   protected:
     StdLargeVec<Real> &thickness_, &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
+    Vecd *pos_, &vel_, &force_, &force_prior_;
     StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
         &angular_vel_, &dangular_vel_dt_;
     StdLargeVec<Matd> &transformation_matrix0_; // Transformation matrix from global to local coordinates
@@ -307,7 +307,7 @@ class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, p
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_, &angular_vel_;
+    Vecd *vel_, &angular_vel_;
 };
 
 /**@class ConstrainShellBodyRegionAlongAxis
@@ -324,10 +324,10 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
 
   protected:
     const int axis_; /**< the axis direction for bounding*/
-    StdLargeVec<Vecd> &pos_, &pos0_;
-    StdLargeVec<Vecd> &vel_, &force_;
+    Vecd *pos_, &pos0_;
+    Vecd *vel_, &force_;
     StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
 };
 
 /**

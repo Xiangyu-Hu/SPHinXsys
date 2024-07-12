@@ -12,7 +12,7 @@ SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringDamperConstraintForce"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       mass_(particles_->getVariableDataByName<Real>("Mass"))
 {
@@ -54,9 +54,9 @@ SpringNormalOnSurfaceParticles::
                                    Vecd source_point, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "NormalSpringForceOnSurface"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
@@ -124,7 +124,7 @@ SpringOnSurfaceParticles::
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringForceOnSurface"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
@@ -180,7 +180,7 @@ ForceInBodyRegion::
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time)
 {
     Real total_mass_in_region(0);
@@ -200,7 +200,7 @@ SurfacePressureFromSource::
     SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
                               StdVec<std::array<Real, 2>> pressure_over_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
-      pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),

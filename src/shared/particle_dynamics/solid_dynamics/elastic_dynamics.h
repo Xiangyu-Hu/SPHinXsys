@@ -53,7 +53,7 @@ class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegat
     virtual ~ElasticDynamicsInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, &vel_;
 };
 
 /**
@@ -86,8 +86,8 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
-    StdLargeVec<Real> &mass_;
+    Vecd *vel_, &force_, &force_prior_;
+    Real *mass_;
     Real smoothing_length_, c0_;
 
   public:
@@ -126,7 +126,7 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Matd *B_, &F_;
 };
 
@@ -142,7 +142,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    Vecd *pos_, &vel_, &force_;
     Matd *B_, &F_, &dF_dt_;
 };
 

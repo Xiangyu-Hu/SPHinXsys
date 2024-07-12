@@ -103,7 +103,7 @@ class MaterialIdInitialization
 
   protected:
     StdLargeVec<int> &material_id_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 };
 } // namespace SPH
 #endif // COMPLEX_SOLID_H

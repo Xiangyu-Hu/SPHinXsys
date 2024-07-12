@@ -130,7 +130,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
 };
 
@@ -139,7 +139,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 {
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &phi_;
     Real beta_epi_, beta_endo_;
     Vecd center_line_vector_; // parallel to the ventricular centerline and pointing  apex-to-base
@@ -232,7 +232,7 @@ class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public DataDelega
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &voltage_;
 };
 
@@ -267,7 +267,7 @@ class ApplyStimulusCurrentToPKJ : public LocalDynamics, public DataDelegateSimpl
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &voltage_;
 };
 

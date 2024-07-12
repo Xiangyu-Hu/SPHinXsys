@@ -63,7 +63,7 @@ class DepolarizationInitialCondition : public LocalDynamics, public DataDelegate
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &voltage_;
 };
 //----------------------------------------------------------------------

@@ -56,7 +56,7 @@ class SpringConstrain : public MotionConstraint<BodyPartByParticle>
 
   protected:
     Vecd stiffness_;
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
     virtual Vecd getAcceleration(Vecd &disp, Real mass);
 };
 

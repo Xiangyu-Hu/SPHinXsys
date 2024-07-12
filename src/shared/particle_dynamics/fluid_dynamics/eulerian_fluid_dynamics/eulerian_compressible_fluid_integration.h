@@ -99,7 +99,7 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
 {
   protected:
     StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     Real smoothing_length_;
 
   public:

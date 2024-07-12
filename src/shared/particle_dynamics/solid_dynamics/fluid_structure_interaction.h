@@ -69,7 +69,7 @@ class ViscousForceFromFluid : public BaseForceFromFluid
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_ave_;
+    Vecd *vel_ave_;
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_;
     StdVec<Real> mu_;
@@ -94,7 +94,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_ave_, &acc_ave_, &n_;
+    Vecd *vel_ave_, &acc_ave_, &n_;
     StdVec<Real *> contact_rho_n_, contact_mass_, contact_p_, contact_Vol_;
     StdVec<Vecd *> contact_vel_, contact_force_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
@@ -109,7 +109,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
 class InitializeDisplacement : public LocalDynamics, public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &pos_temp_;
+    Vecd *pos_, &pos_temp_;
 
   public:
     explicit InitializeDisplacement(SPHBody &sph_body);
@@ -127,7 +127,7 @@ class InitializeDisplacement : public LocalDynamics, public DataDelegateSimple
 class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &pos_temp_, &vel_ave_, &acc_ave_;
+    Vecd *pos_, &pos_temp_, &vel_ave_, &acc_ave_;
 
   public:
     explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body);

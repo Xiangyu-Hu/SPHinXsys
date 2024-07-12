@@ -51,7 +51,7 @@ class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, publ
 
   protected:
     StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, &vel_;
 };
 
 /**
@@ -128,7 +128,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
     Transform transform_;
     Real rho0_;
     StdLargeVec<Real> &rho_sum_;
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, &vel_;
     StdLargeVec<int> &indicator_;
     TargetVelocity target_velocity;
 
@@ -195,7 +195,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
   protected:
     Fluid &fluid_;
     StdLargeVec<size_t> &sorted_id_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    Vecd *pos_, &vel_, &force_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     /** inflow pressure condition */
     Real inflow_pressure_;
@@ -227,7 +227,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
     Fluid &fluid_;
     StdLargeVec<size_t> &original_id_;
     StdLargeVec<size_t> &sorted_id_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     StdLargeVec<Real> &rho_, &p_;
     ParticleBuffer<Base> &buffer_;
     AlignedBoxShape &aligned_box_;
@@ -247,7 +247,7 @@ class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public
 
   protected:
     std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     AlignedBoxShape &aligned_box_;
 };
 } // namespace fluid_dynamics

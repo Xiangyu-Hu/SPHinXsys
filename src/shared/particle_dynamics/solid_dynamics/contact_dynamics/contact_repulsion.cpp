@@ -52,7 +52,7 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         Solid *solid_k = contact_solids_[k];
 
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -88,7 +88,7 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -119,7 +119,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
         Solid *solid_k = contact_solids_[k];
 

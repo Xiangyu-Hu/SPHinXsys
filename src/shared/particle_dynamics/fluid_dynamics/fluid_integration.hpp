@@ -220,7 +220,7 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
+        Vecd *vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
@@ -261,7 +261,7 @@ void Integration2ndHalf<Contact<>, RiemannSolverType>::interaction(size_t index_
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        Vecd *vel_k = *(this->contact_vel_[k]);
         StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];

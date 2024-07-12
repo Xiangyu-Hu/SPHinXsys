@@ -338,15 +338,15 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     };
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    StdLargeVec<Vecd> &pos_axial = fluid_axial_observer.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_axial = *fluid_axial_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+    Vecd *pos_axial = fluid_axial_observer.getBaseParticles().ParticlePositions();
+    Vecd *vel_axial = *fluid_axial_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
     for (size_t i = 0; i < pos_axial.size(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_f * 5e-2);
     }
     // Radial direction
-    StdLargeVec<Vecd> &pos_radial = fluid_radial_observer.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_radial = *fluid_radial_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+    Vecd *pos_radial = fluid_radial_observer.getBaseParticles().ParticlePositions();
+    Vecd *vel_radial = *fluid_radial_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
     for (size_t i = 0; i < pos_radial.size(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_f * 5e-2);
