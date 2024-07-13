@@ -91,7 +91,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
         out_file.close();
     };
 
-    StdLargeVec<VariableType> *getObservedQuantity()
+    VariableType *getObservedQuantity()
     {
         return this->interpolated_quantities_;
     }

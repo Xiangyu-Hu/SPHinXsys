@@ -31,8 +31,8 @@ Real Youngs_modulus = 1.3024653e6; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;                /** Poisson ratio. */
 
 StdVec<int> random_index;
-StdLargeVec<Vecd> pseudo_normal;
-StdLargeVec<Vecd> normal;
+Vecd *pseudo_normal = nullptr;
+Vecd *normal = nullptr;
 StdVec<Real> von_mises_strain;
 TEST(Plate, RigidRotationTest)
 {
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(system);
     write_states.addToWrite<Vecd>(plate_body, "PseudoNormal");
     write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);
-    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableDataByName<Real>("VonMisesStrain");
+    Real *all_von_mises_strain = shell_particles->getVariableDataByName<Real>("VonMisesStrain");
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -228,8 +228,8 @@ int main(int ac, char *av[])
 
     update_normal.exec();
 
-    pseudo_normal = *shell_particles->getVariableDataByName<Vecd>("PseudoNormal");
-    normal = *shell_particles->getVariableDataByName<Vecd>("NormalDirection");
+    pseudo_normal = shell_particles->getVariableDataByName<Vecd>("PseudoNormal");
+    normal = shell_particles->getVariableDataByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

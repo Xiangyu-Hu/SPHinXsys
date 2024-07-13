@@ -49,7 +49,7 @@ void ViscousForceFromFluidInFVM::interaction(size_t index_i, Real dt)
             size_t index_j = inner_neighborhood.j_[2];
             Vecd vel_derivative = (vel_j - vel_i) / (inner_neighborhood.r_ij_[2] + TinyReal);
             force += 2.0 * mu_ * vel_derivative * Vol_i * inner_neighborhood.dW_ij_[2] * Vol_[index_j];
-            (*force_from_fluid_)[index_i] = force;
+            force_from_fluid_[index_i] = force;
         }
     }
 }

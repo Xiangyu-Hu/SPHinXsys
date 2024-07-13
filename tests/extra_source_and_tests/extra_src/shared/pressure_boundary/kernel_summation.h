@@ -47,7 +47,7 @@ class NablaWV<DataDelegationType>
     virtual ~NablaWV(){};
 
   protected:
-    StdLargeVec<Vecd> &kernel_sum_;
+    Vecd *kernel_sum_;
 };
 
 template <>

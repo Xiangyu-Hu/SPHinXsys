@@ -22,7 +22,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 
 SolidBodyFromMesh::SolidBodyFromMesh(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-    SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, StdLargeVec<Real> &volume)
+    SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : SolidBody(system, triangle_mesh_shape)
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
@@ -33,7 +33,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 
 SolidBodyForSimulation::SolidBodyForSimulation(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-    Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, StdLargeVec<Real> &volume)
+    Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : solid_body_from_mesh_(system, triangle_mesh_shape, resolution, material_model, pos_0, volume),
       inner_body_relation_(solid_body_from_mesh_),
       initial_normal_direction_(SimpleDynamics<NormalDirectionFromBodyShape>(solid_body_from_mesh_)),
@@ -103,7 +103,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
     std::cout << "The physics relaxation process of the imported model finished !" << std::endl;
 }
 
-std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMesh(
+std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
     SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution, bool particle_relaxation, bool write_particle_relaxation_data)
 {
     BoundingBox bb = triangle_mesh_shape->getBounds();
@@ -120,7 +120,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
         relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
 
-    return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());
+    return std::tuple<Vecd *, Real *>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)
@@ -325,12 +325,12 @@ void StructuralSimulation::initializeElasticSolidBodies()
        // we delete the .stl ending
         temp_name.erase(temp_name.size() - 4);
         // create the initial particles from the triangle mesh shape with particle relaxation option
-        std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> particles =
+        std::tuple<Vecd *, Real *> particles =
             generateAndRelaxParticlesFromMesh(body_mesh_list_[i], resolution_list_[i], particle_relaxation_list_[i], write_particle_relaxation_data_);
 
         // get the particles' initial position and their volume
         Vecd *pos_0 = std::get<0>(particles);
-        StdLargeVec<Real> &volume = std::get<1>(particles);
+        Real *volume = std::get<1>(particles);
 
         // create the SolidBodyForSimulation
         solid_body_list_.emplace_back(makeShared<SolidBodyForSimulation>(
@@ -947,10 +947,11 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 
 Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
-    StdLargeVec<Vecd> &pos = solid_body_list_[body_index].get()->getElasticSolidParticles()->ParticlePositions();
-    StdLargeVec<Vecd> &pos0 = *solid_body_list_[body_index].get()->getElasticSolidParticles()->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    BaseParticles *base_particles = solid_body_list_[body_index].get()->getElasticSolidParticles();
+    Vecd *pos = base_particles->ParticlePositions();
+    Vecd *pos0 = base_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     Real displ_max = 0;
-    for (size_t i = 0; i < pos0.size(); i++)
+    for (size_t i = 0; i < base_particles->TotalRealParticles(); i++)
     {
         Real displ = (pos[i] - pos0[i]).norm();
         if (displ > displ_max)

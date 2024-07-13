@@ -183,6 +183,6 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
     }
 
   protected:
-    StdLargeVec<Real> *E_;
+    Real *E_;
 };
 #endif // FVM_DOUBLE_MACH_REFLECTION_H

@@ -64,11 +64,11 @@ class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInner
   public:
     explicit BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation);
     virtual ~BaseForceFromFluidInFVM(){};
-    StdLargeVec<Vecd> &getForceFromFluid() { return *force_from_fluid_; };
+    Vecd *getForceFromFluid() { return force_from_fluid_; };
 
   protected:
     Real *Vol_;
-    StdLargeVec<Vecd> *force_from_fluid_;
+    Vecd *force_from_fluid_;
 };
 
 /**

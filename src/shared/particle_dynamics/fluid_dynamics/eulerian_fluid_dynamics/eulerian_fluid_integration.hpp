@@ -64,7 +64,7 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Vecd *n_k = wall_n_[k];
-        StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
+        Real *Vol_k = wall_Vol_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -130,8 +130,8 @@ void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(s
     Real mass_change_rate = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
+        Vecd *n_k = this->wall_n_[k];
+        Real *Vol_k = this->wall_Vol_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {

@@ -148,7 +148,7 @@ void Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     Real rho_dissipation(0);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
+        Real *p_k = this->contact_p_[k];
         Real *Vol_k = this->contact_Vol_[k];
         KernelCorrectionType &correction_k = contact_corrections_[k];
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
@@ -261,7 +261,7 @@ void Integration2ndHalf<Contact<>, RiemannSolverType>::interaction(size_t index_
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        Vecd *vel_k = *(this->contact_vel_[k]);
+        Vecd *vel_k = this->contact_vel_[k];
         Real *Vol_k = this->contact_Vol_[k];
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];

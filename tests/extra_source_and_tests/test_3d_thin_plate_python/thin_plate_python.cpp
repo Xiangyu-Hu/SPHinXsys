@@ -311,7 +311,7 @@ class Environment : public PreSettingCase
         TimeInterval tt;
         tt = t4 - t1 - interval;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-        observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
+        observed_quantity_n = write_plate_max_displacement.getObservedQuantity()[0][2];
 
         testing::InitGoogleTest();
         return RUN_ALL_TESTS();

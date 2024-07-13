@@ -161,10 +161,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
-    StdLargeVec<Vec3d> &position = *shell_particles->getVariableDataByName<Vec3d>("Position");
+    Vec3d *position = shell_particles->getVariableDataByName<Vec3d>("Position");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < position.size(); ++i)
+        for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
             if (position[i][2] < 0.67 * dp)
                 ids.push_back(i);
         return ids;
@@ -195,7 +195,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         { // checking particle distances - avoid bugs of reading file
             Real min_rij = MaxReal;
             Real max_rij = 0;
-            for (size_t i = 0; i < position.size(); ++i)
+            for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
             {
                 Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -213,11 +213,11 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         }
 
         // test volume
-        Real *Vol_ = *shell_particles->getVariableDataByName<Real>("VolumetricMeasure");
-        Real *mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
-        Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
+        Real *Vol_ = shell_particles->getVariableDataByName<Real>("VolumetricMeasure");
+        Real *mass_ = shell_particles->getVariableDataByName<Real>("Mass");
+        Real total_volume = std::accumulate(Vol_, Vol_ + shell_particles->TotalRealParticles(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
-        Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);
+        Real total_mass = std::accumulate(mass_, mass_ + shell_particles->TotalRealParticles(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
         EXPECT_FLOAT_EQ(total_mass, total_area * rho);
@@ -279,9 +279,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 GlobalStaticVariables::physical_time_ += dt;
 
                 { // checking if any position has become nan
-                    for (const auto &pos : shell_body.getBaseParticles().ParticlePositions())
-                        if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
-                            throw std::runtime_error("position has become nan, iteration: " + std::to_string(ite));
+                    Vecd *pos_ = shell_particles->getVariableDataByName<Vecd>("Position");
+                    for (size_t index_i = 0; index_i < shell_particles->TotalRealParticles(); ++index_i)
+                        if (std::isnan(pos_[index_i][0]) || std::isnan(pos_[index_i][1]) || std::isnan(pos_[index_i][2]))
+                            throw std::runtime_error("position has become nan");
                 }
             }
             { // output data

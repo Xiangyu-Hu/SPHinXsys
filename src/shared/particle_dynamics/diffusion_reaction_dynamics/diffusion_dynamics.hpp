@@ -86,7 +86,7 @@ void DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>::interaction(
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
         auto diffusion_m = this->diffusions_[m];
-        StdLargeVec<Real> &gradient_species = *this->gradient_species_[m];
+        Real *gradient_species = this->gradient_species_[m];
         Real d_species = 0.0;
         Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -369,7 +369,7 @@ void FirstStageRK2<DiffusionRelaxationType>::initialization(size_t index_i, Real
 
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_s_[m])[index_i] = this->diffusion_species_[m][index_i];
+        this->diffusion_species_s_[m][index_i] = this->diffusion_species_[m][index_i];
     }
 }
 //=================================================================================================//
@@ -384,7 +384,7 @@ void SecondStageRK2<DiffusionRelaxationType>::update(size_t index_i, Real dt)
     DiffusionRelaxationType::update(index_i, dt);
     for (size_t m = 0; m < this->diffusions_.size(); ++m)
     {
-        this->diffusion_species_[m][index_i] = 0.5 * (*this->diffusion_species_s_[m])[index_i] +
+        this->diffusion_species_[m][index_i] = 0.5 * this->diffusion_species_s_[m][index_i] +
                                                0.5 * this->diffusion_species_[m][index_i];
     }
 }

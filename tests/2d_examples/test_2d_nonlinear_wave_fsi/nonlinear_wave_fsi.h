@@ -556,7 +556,7 @@ class WaveMaking : public BodyPartMotionConstraint
     };
 
   protected:
-    StdLargeVec<Vecd> *acc_;
+    Vecd *acc_;
 };
 
 //----------------------------------------------------------------------

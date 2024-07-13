@@ -74,7 +74,7 @@ class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>, public 
     void update(size_t index_i, Real dt = 0.0) { total_momentum_[index_i] = Vecd::Zero(); };
 
   protected:
-    StdLargeVec<Vecd> &total_momentum_;
+    Vecd *total_momentum_;
 };
 
 /**
@@ -109,9 +109,9 @@ class PorousMediaStressRelaxationFirstHalf
     virtual ~PorousMediaStressRelaxationFirstHalf(){};
 
   protected:
-    StdLargeVec<Real> &Vol_update_, &fluid_saturation_, &total_mass_, &fluid_mass_, &dfluid_mass_dt_;
-    StdLargeVec<Vecd> &total_momentum_, *force_, *force_prior_, &fluid_velocity_, &relative_fluid_flux_;
-    Matd *outer_fluid_velocity_relative_fluid_flux_, &Stress_;
+    Real *Vol_update_, *fluid_saturation_, *total_mass_, *fluid_mass_, *dfluid_mass_dt_;
+    Vecd *total_momentum_, *force_, *force_prior_, *fluid_velocity_, *relative_fluid_flux_;
+    Matd *outer_fluid_velocity_relative_fluid_flux_, *Stress_;
 
     Real diffusivity_constant_, fluid_initial_density_, water_pressure_constant_;
 
@@ -160,7 +160,8 @@ class PorousMediaStressRelaxationSecondHalf
     : public PorousMediaStressRelaxationFirstHalf
 {
   public:
-    PorousMediaStressRelaxationSecondHalf(BaseInnerRelation &body_inner_relation) : PorousMediaStressRelaxationFirstHalf(body_inner_relation){};
+    PorousMediaStressRelaxationSecondHalf(BaseInnerRelation &body_inner_relation)
+        : PorousMediaStressRelaxationFirstHalf(body_inner_relation){};
     virtual ~PorousMediaStressRelaxationSecondHalf(){};
 
   protected:
@@ -203,7 +204,7 @@ class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<B
     virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
 
   protected:
-    StdLargeVec<Real> &fluid_mass_, &fluid_saturation_, &total_mass_, &rho_n_, &Vol_update_;
+    Real *fluid_mass_, *fluid_saturation_, *total_mass_, *rho_n_, *Vol_update_;
     Vecd *pos_;
 };
 

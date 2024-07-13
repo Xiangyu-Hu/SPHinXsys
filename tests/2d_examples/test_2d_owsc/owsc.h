@@ -342,7 +342,7 @@ class WaveMaking : public BodyPartMotionConstraint
     };
 
   protected:
-    StdLargeVec<Vecd> *acc_;
+    Vecd *acc_;
 };
 
 Real h = 1.3 * particle_spacing_ref;

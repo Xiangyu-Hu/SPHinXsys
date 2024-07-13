@@ -151,13 +151,13 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 
         if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
         {
-            (*muscle_material_.local_f0_)[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-            (*muscle_material_.local_s0_)[index_i] = face_norm;
+            muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+            muscle_material_.local_s0_[index_i] = face_norm;
         }
         else
         {
-            (*muscle_material_.local_f0_)[index_i] = Vecd::Zero();
-            (*muscle_material_.local_s0_)[index_i] = Vecd::Zero();
+            muscle_material_.local_f0_[index_i] = Vecd::Zero();
+            muscle_material_.local_s0_[index_i] = Vecd::Zero();
         }
     };
 };
@@ -201,7 +201,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &voltage_;
+    Real *voltage_;
 };
 /**
  * application dependent initial condition
@@ -230,7 +230,7 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
 
   protected:
     Vecd *pos_;
-    StdLargeVec<Real> &voltage_;
+    Real *voltage_;
 };
 
 StdVec<Vecd> createObservationPoints()

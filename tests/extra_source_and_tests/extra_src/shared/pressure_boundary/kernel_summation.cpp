@@ -5,7 +5,8 @@ namespace SPH
 //=================================================================================================//
 NablaWV<Inner<>>::
     NablaWV(BaseInnerRelation &inner_relation)
-    : NablaWV<DataDelegateInner>(inner_relation), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")) {}
+    : NablaWV<DataDelegateInner>(inner_relation),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 void NablaWV<Inner<>>::interaction(size_t index_i, Real dt)
 {

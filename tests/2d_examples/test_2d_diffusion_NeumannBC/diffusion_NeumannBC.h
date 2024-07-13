@@ -160,7 +160,7 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDel
 
   protected:
     Vecd *pos_;
-    Real *phi_, &phi_flux_;
+    Real *phi_, *phi_flux_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.

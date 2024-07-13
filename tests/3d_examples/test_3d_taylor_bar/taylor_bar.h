@@ -110,7 +110,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
                 1.0 / (sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
             particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
-            StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
+            Vecd *n_k = contact_n_[k];
             Vecd *vel_n_k = contact_vel_[k];
             Real *Vol_k = contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];

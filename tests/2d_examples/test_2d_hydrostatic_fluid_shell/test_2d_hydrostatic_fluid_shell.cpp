@@ -396,7 +396,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     const Real max_disp_analytical = p * std::pow(Dam_L, 4) / 384.0 / Youngs_modulus / I;
 
     // Compare with analytical solution
-    const Real max_disp = std::abs((*write_beam_tip_displacement.getObservedQuantity())[0][1]);
+    const Real max_disp = std::abs(write_beam_tip_displacement.getObservedQuantity()[0][1]);
     const Real error = std::abs((max_disp_analytical - max_disp) / max_disp_analytical) * 100.0;
 
     std::cout << "Analytical displacement: " << max_disp_analytical

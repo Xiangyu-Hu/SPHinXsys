@@ -80,7 +80,7 @@ class SolidBodyFromMesh : public SolidBody
 {
   public:
     SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-                      SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
+                      SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
     ~SolidBodyFromMesh(){};
 };
 
@@ -100,7 +100,7 @@ class SolidBodyForSimulation
     // no particle reload --> direct generator
     SolidBodyForSimulation(
         SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-        Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
+        Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
     ~SolidBodyForSimulation(){};
 
     SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
