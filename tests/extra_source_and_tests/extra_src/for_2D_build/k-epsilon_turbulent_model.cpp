@@ -87,11 +87,11 @@ namespace fluid_dynamics
 //=================================================================================================//
 	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
 		: GetVelocityGradient<DataDelegateInner>(inner_relation),
-		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient")),
 		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
 	{
-		this->particles_->addVariableToSort<Matd>("VelocityGradient");
-		this->particles_->addVariableToWrite<Matd>("VelocityGradient");
+		this->particles_->addVariableToSort<Matd>("TurbulentVelocityGradient");
+		this->particles_->addVariableToWrite<Matd>("TurbulentVelocityGradient");
 	}
 	//=================================================================================================//
 	void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
@@ -121,7 +121,7 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation& contact_relation)
 		: InteractionWithWall<GetVelocityGradient>(contact_relation),
-		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
+		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient"))
 	{
 		this->particles_->addVariableToSort<Matd>("Velocity_Gradient_Wall");
 		this->particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
@@ -149,10 +149,26 @@ namespace fluid_dynamics
 		}
 	}
 //=================================================================================================//
+	TransferVelocityGradient::
+		TransferVelocityGradient(SPHBody& sph_body)
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body), 
+		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient")),
+		vel_grad_(*this->particles_->template registerSharedVariable<Matd>("VelocityGradient")){}
+	//=================================================================================================//
+	void TransferVelocityGradient::update(size_t index_i, Real dt)
+	{
+		velocity_gradient_[index_i] = Matd::Zero();
+		if (is_near_wall_P1_[index_i] != 1)
+		{
+			velocity_gradient_[index_i]=vel_grad_[index_i]; //** Transfer value, but exclude P region */
+		}
+	}
+//=================================================================================================//
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values, int is_extr_visc_dissipa)
 		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
-		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
@@ -806,7 +822,7 @@ namespace fluid_dynamics
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
 		is_near_wall_P2_(*particles_->getVariableByName<int>("IsNearWallP2")),
-		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient")),
 		k_production_(*particles_->getVariableByName<Real>("K_Production")),
 		distance_to_dummy_interface_(*particles_->getVariableByName<Real>("DistanceToDummyInterface")),
 		distance_to_dummy_interface_up_average_(*particles_->getVariableByName<Real>("DistanceToDummyInterfaceUpAver")),

@@ -74,7 +74,7 @@ namespace fluid_dynamics
 		vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")), 
 		pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
 		is_near_wall_P1_(*this->particles_->template getVariableByName<int>("IsNearWallP1")),
-		velocity_gradient_(*(this->particles_->template registerSharedVariable<Matd>("VelocityGradient"))),
+		velocity_gradient_(*(this->particles_->template registerSharedVariable<Matd>("TurbulentVelocityGradient"))),
 		velocity_gradient_wall(*(this->particles_->template registerSharedVariable<Matd>("Velocity_Gradient_Wall"))){}
 //=================================================================================================//
 	template <class DataDelegationType>

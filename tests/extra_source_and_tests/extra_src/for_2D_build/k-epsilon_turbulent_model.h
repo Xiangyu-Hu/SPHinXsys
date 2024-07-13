@@ -130,6 +130,20 @@ namespace fluid_dynamics
 
 	//using GetVelocityGradientComplex = BaseGetVelocityGradientComplex<Inner<>, Contact<>>;
 //=================================================================================================//
+	class TransferVelocityGradient : public LocalDynamics,
+		public DataDelegateSimple
+	{
+	public:
+		explicit TransferVelocityGradient(SPHBody& sph_body);
+		virtual ~TransferVelocityGradient() {};
+
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		StdLargeVec<int> &is_near_wall_P1_;
+		StdLargeVec<Matd> &velocity_gradient_;
+		StdLargeVec<Matd> &vel_grad_;
+	};
+//=================================================================================================//
 	template <typename... T>
 	class BaseTurtbulentModel;
 	

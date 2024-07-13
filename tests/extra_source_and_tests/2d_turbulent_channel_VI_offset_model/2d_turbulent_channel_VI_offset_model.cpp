@@ -132,6 +132,10 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
+    SimpleDynamics<fluid_dynamics::TransferVelocityGradient> transfer_velocity_gradient(water_block);
+
+
     /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */
     InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
@@ -283,7 +287,12 @@ int main(int ac, char *av[])
 
                 distance_to_wall.exec();
                 update_near_wall_status.exec();
+
                 get_velocity_gradient.exec(dt);
+                vel_grad_calculation.exec();
+                //** To test the latest vel_grad without changing the current code framework */
+                transfer_velocity_gradient.exec();
+
                 standard_wall_function_correction.exec();
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
