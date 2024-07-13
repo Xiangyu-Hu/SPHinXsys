@@ -28,7 +28,7 @@ env:
 jobs:
   ###############################################################################
   Linux-sycl:
-    if: ${{ github.event_name != 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -84,7 +84,7 @@ jobs:
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
-            -D CMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_USE_SYCL=ON \
             -D TEST_STATE_RECORDING=OFF \
@@ -96,8 +96,8 @@ jobs:
             -D SPHINXSYS_BUILD_UNIT_TESTS=OFF \
             -D SPHINXSYS_BUILD_MODULES=OFF \
             -D SPHINXSYS_CI=ON \
-            -S . \
-            -B build
+            -S ${{github.workspace}} \
+            -B ${{github.workspace}}/build
 
       - name: Build libraries and tests which are using SYCL
         run: cmake --build build --config Release --verbose

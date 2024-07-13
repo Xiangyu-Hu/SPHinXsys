@@ -33,27 +33,48 @@
 #include "base_data_package.h"
 #include <cstring>
 #include <stdio.h>
+#include <typeinfo>
 
 namespace SPH
 {
-class BaseVariable
+class Entity
 {
   public:
-    explicit BaseVariable(const std::string &name) : name_(name){};
-    virtual ~BaseVariable(){};
+    explicit Entity(const std::string &name)
+        : name_(name), entity_id_(0){};
+    virtual ~Entity(){};
     std::string Name() const { return name_; };
+    size_t EntityID() const { return entity_id_; };
 
   private:
-    const std::string name_;
+    const std::string name_; // name of an entity object
+    size_t entity_id_;       // unique id for each derived entity type
+};
+
+template <typename FunctionalType>
+class FunctionalEntity : public Entity
+{
+  public:
+    template <typename... Args>
+    explicit FunctionalEntity(const std::string &name, Args &&...args)
+        : Entity(name), functional_(new FunctionalType(std::forward<Args>(args)...))
+    {
+        entity_id_ = typeid(FunctionalType).hash_code();
+    };
+    virtual ~FunctionalEntity() { delete functional_; };
+    FunctionalType *Functional() { return functional_; };
+
+  private:
+    FunctionalType *functional_;
 };
 
 template <typename DataType>
-class SingleVariable : public BaseVariable
+class SingularVariable : public Entity
 {
   public:
-    SingleVariable(const std::string &name, DataType &value)
-        : BaseVariable(name), value_(value){};
-    virtual ~SingleVariable(){};
+    SingularVariable(const std::string &name, DataType &value)
+        : Entity(name), value_(value){};
+    virtual ~SingularVariable(){};
 
     DataType *ValueAddress() { return &value_; };
 
@@ -62,11 +83,11 @@ class SingleVariable : public BaseVariable
 };
 
 template <typename DataType>
-class DiscreteVariable : public BaseVariable
+class DiscreteVariable : public Entity
 {
   public:
     DiscreteVariable(const std::string &name)
-        : BaseVariable(name), data_field_(nullptr){};
+        : Entity(name), data_field_(nullptr){};
     virtual ~DiscreteVariable() { delete[] data_field_; };
     DataType *DataField() { return data_field_; };
     void allocateDataField(const size_t size)
@@ -79,12 +100,12 @@ class DiscreteVariable : public BaseVariable
 };
 
 template <typename DataType>
-class MeshVariable : public BaseVariable
+class MeshVariable : public Entity
 {
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_field_(nullptr){};
+        : Entity(name), data_field_(nullptr){};
     virtual ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };

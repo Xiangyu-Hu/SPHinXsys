@@ -69,7 +69,7 @@ DataType *BaseParticles::addUnregisteredVariable(const std::string &name, Args &
 template <typename DataType>
 DataType *BaseParticles::registerSingleVariable(const std::string &name, DataType initial_value)
 {
-    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, name);
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, name);
 
     return variable != nullptr
                ? variable->ValueAddress()
@@ -81,7 +81,7 @@ DataType *BaseParticles::registerSingleVariable(const std::string &name, DataTyp
 template <typename DataType>
 DataType *BaseParticles::getSingleVariableByName(const std::string &name)
 {
-    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, name);
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, name);
 
     if (variable != nullptr)
     {

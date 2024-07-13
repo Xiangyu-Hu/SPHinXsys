@@ -82,8 +82,8 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<SingleVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<BaseVariable> unregistered_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
+    UniquePtrsKeeper<Entity> unregistered_variable_ptrs_;
     UniquePtrKeeper<ParticleSorting> particle_sort_ptr_keeper_;
 
   public:
@@ -136,9 +136,9 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    DataType *addUnregisteredVariable(const std::string &name, Args &&... args);
+    DataType *addUnregisteredVariable(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
-    DataType *registerSharedVariable(const std::string &name, Args &&... args);
+    DataType *registerSharedVariable(const std::string &name, Args &&...args);
     template <typename DataType>
     DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
