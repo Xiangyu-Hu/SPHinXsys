@@ -96,8 +96,8 @@ jobs:
             -D SPHINXSYS_BUILD_UNIT_TESTS=OFF \
             -D SPHINXSYS_BUILD_MODULES=OFF \
             -D SPHINXSYS_CI=ON \
-            -S ${{github.workspace}} \
-            -B ${{github.workspace}}/build
+            -S . \
+            -B build
 
       - name: Build libraries and tests which are using SYCL
         run: cmake --build build --config Release --verbose
