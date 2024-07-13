@@ -45,6 +45,7 @@ class Entity
     virtual ~Entity(){};
     std::string Name() const { return name_; };
     size_t EntityID() const { return entity_id_; };
+    void setEntityID(size_t entity_id) { entity_id_ = entity_id; };
 
   private:
     const std::string name_; // name of an entity object
@@ -59,7 +60,7 @@ class FunctionalEntity : public Entity
     explicit FunctionalEntity(const std::string &name, Args &&...args)
         : Entity(name), functional_(new FunctionalType(std::forward<Args>(args)...))
     {
-        entity_id_ = typeid(FunctionalType).hash_code();
+        setEntityID(typeid(FunctionalType).hash_code());
     };
     virtual ~FunctionalEntity() { delete functional_; };
     FunctionalType *Functional() { return functional_; };
