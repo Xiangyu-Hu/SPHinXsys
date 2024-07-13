@@ -78,11 +78,12 @@ jobs:
             gtest \
             pybind11
 
-      - name: Generate buildsystem using float (No test)
+      - name: Generate buildsystem
         run: |
           ls
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_USE_SYCL=ON \
@@ -98,7 +99,7 @@ jobs:
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 
-      - name: Build using float
+      - name: Build libraries and tests which are using SYCL
         run: cmake --build build --config Release --verbose
 
       - name: Test with the first try
