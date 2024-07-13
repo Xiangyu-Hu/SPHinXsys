@@ -67,7 +67,7 @@ class DiscreteVariable : public BaseVariable
   public:
     DiscreteVariable(const std::string &name)
         : BaseVariable(name), data_field_(nullptr){};
-    virtual ~DiscreteVariable() { delete data_field_; };
+    virtual ~DiscreteVariable() { delete[] data_field_; };
     DataType *DataField() { return data_field_; };
     void allocateDataField(const size_t size)
     {
