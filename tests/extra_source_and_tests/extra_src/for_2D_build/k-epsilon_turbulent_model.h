@@ -82,7 +82,7 @@ namespace fluid_dynamics
 	class GetVelocityGradient;
 
 	template <class DataDelegationType>
-	class GetVelocityGradient<Base, DataDelegationType>
+	class GetVelocityGradient<DataDelegationType>
 		: public LocalDynamics, public DataDelegationType
 	{
 	public:
@@ -100,11 +100,10 @@ namespace fluid_dynamics
 	};
 	//** Inner part *
 	template <>
-	class GetVelocityGradient<Inner<>> : public GetVelocityGradient<Base, DataDelegateInner>
+	class GetVelocityGradient<Inner<>> : public GetVelocityGradient<DataDelegateInner>
 	{
 	public:
 		explicit GetVelocityGradient(BaseInnerRelation& inner_relation);
-			//: GetVelocityGradient<Base, DataDelegateInner>(inner_relation) {};
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
@@ -114,25 +113,22 @@ namespace fluid_dynamics
 	};
 	using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
 	
-	//** Wall part *
+	//** Updated Wall part *
 	template <>
-	class GetVelocityGradient<Contact<>> : public GetVelocityGradient<Base, DataDelegateContact>
+	class GetVelocityGradient<Contact<Wall>> : public InteractionWithWall<GetVelocityGradient>
 	{
 	public:
 		explicit GetVelocityGradient(BaseContactRelation& contact_relation);
-			//: GetVelocityGradient<Base, DataDelegateContact>(contact_relation) {};
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Matd>& velocity_gradient_;
-		StdVec<StdLargeVec<Vecd>*> wall_vel_ave_;
 	};
 	
 	//** Interface part *
-	template <class InnerInteractionType, class... ContactInteractionTypes>
-	using BaseGetVelocityGradientComplex = ComplexInteraction<GetVelocityGradient<InnerInteractionType, ContactInteractionTypes...>>;
+	using GetVelocityGradientComplex = ComplexInteraction<GetVelocityGradient<Inner<>, Contact<Wall>>>;
 
-	using GetVelocityGradientComplex = BaseGetVelocityGradientComplex<Inner<>, Contact<>>;
+	//using GetVelocityGradientComplex = BaseGetVelocityGradientComplex<Inner<>, Contact<>>;
 //=================================================================================================//
 	template <typename... T>
 	class BaseTurtbulentModel;

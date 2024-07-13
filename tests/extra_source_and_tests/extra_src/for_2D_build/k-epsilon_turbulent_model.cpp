@@ -86,7 +86,7 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
-		: GetVelocityGradient<Base, DataDelegateInner>(inner_relation),
+		: GetVelocityGradient<DataDelegateInner>(inner_relation),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
 	{
@@ -119,15 +119,15 @@ namespace fluid_dynamics
 	    velocity_gradient_[index_i] *= B_[index_i];
 	}
 	//=================================================================================================//
-	GetVelocityGradient<Contact<>>::GetVelocityGradient(BaseContactRelation& contact_relation)
-		: GetVelocityGradient<Base, DataDelegateContact>(contact_relation),
+	GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation& contact_relation)
+		: InteractionWithWall<GetVelocityGradient>(contact_relation),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient"))
 	{
 		this->particles_->addVariableToSort<Matd>("Velocity_Gradient_Wall");
 		this->particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
 	}
 	//=================================================================================================//
-	void GetVelocityGradient<Contact<>>::interaction(size_t index_i, Real dt)
+	void GetVelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 	{
 		//** The near wall velo grad is updated in wall function part *
 		if (is_near_wall_P1_[index_i] != 1)

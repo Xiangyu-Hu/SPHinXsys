@@ -67,7 +67,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>
-	GetVelocityGradient<Base, DataDelegationType>::
+	GetVelocityGradient<DataDelegationType>::
 		GetVelocityGradient(BaseRelationType& base_relation) 
 		:LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
 		Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
