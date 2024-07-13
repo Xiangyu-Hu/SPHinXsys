@@ -114,7 +114,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
     };
     Fluid &fluid_;
     Vecd *vel_;
-    StdLargeVec<Real> *p_, &rho_;
+    Real *p_, *rho_;
     RiemannSolverType riemann_solver_;
     StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;
     virtual ~PressureForceFromFluidInFVM(){};
