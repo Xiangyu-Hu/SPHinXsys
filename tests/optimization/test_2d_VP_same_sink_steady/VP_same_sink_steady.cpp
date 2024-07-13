@@ -86,7 +86,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")),
-          heat_source_(*(particles_->registerSharedVariable<Real>("HeatSource"))){};
+          heat_source_(particles_->registerSharedVariable<Real>("HeatSource")){};
 
     void update(size_t index_i, Real dt)
     {

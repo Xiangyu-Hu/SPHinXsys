@@ -113,7 +113,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")),
-          heat_flux_(*(particles_->getVariableDataByName<Real>("HeatFlux"))) {}
+          heat_flux_(particles_->getVariableDataByName<Real>("HeatFlux")) {}
 
     void update(size_t index_i, Real dt)
     {
@@ -134,7 +134,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
 
   protected:
     Vecd *pos_;
-    Real *phi_, &heat_flux_;
+    Real *phi_, *heat_flux_;
 };
 
 StdVec<Vecd> createObservationPoints()

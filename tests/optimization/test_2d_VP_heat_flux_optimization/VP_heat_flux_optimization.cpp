@@ -112,14 +112,14 @@ class ThermalConductivityRandomInitialization : public LocalDynamics, public Dat
   public:
     explicit ThermalConductivityRandomInitialization(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          thermal_conductivity(*(particles_->getVariableDataByName<Real>("ThermalConductivity"))){};
+          thermal_conductivity(particles_->getVariableDataByName<Real>("ThermalConductivity")){};
     void update(size_t index_i, Real dt)
     {
         thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
     };
 
   protected:
-    StdLargeVec<Real> &thermal_conductivity;
+    Real *thermal_conductivity;
 };
 
 class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
@@ -129,7 +129,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")),
-          heat_flux_(*(particles_->getVariableDataByName<Real>("HeatFlux"))){};
+          heat_flux_(particles_->getVariableDataByName<Real>("HeatFlux")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -150,7 +150,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
 
   protected:
     Vecd *pos_;
-    Real *phi_, &heat_flux_;
+    Real *phi_, *heat_flux_;
 };
 
 //----------------------------------------------------------------------
@@ -172,7 +172,7 @@ class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    Real *phi_, &species_modified_, *species_recovery_;
+    Real *phi_, *species_modified_, *species_recovery_;
 };
 
 class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
@@ -189,7 +189,7 @@ class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Real> &residual_T_local_, *residual_T_global_;
+    Real *residual_T_local_, *residual_T_global_;
 };
 } // namespace SPH
 

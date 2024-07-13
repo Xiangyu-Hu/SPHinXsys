@@ -49,7 +49,7 @@ class ComputeTotalErrorOrPositiveParameter
       public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Real> &variable_;
+    Real *variable_;
 
   public:
     ComputeTotalErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name)
@@ -74,7 +74,7 @@ class ComputeMaximumError
       public DataDelegateSimple
 {
   protected:
-    StdLargeVec<Real> &variable_;
+    Real *variable_;
 
   public:
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
@@ -107,7 +107,7 @@ class ThermalConductivityConstraint
   protected:
     Real initial_thermal_conductivity_;
     Real new_average_thermal_conductivity_;
-    StdLargeVec<Real> &local_diffusivity_;
+    Real *local_diffusivity_;
     void update(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH

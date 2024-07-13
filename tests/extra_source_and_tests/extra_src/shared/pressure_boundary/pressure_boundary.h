@@ -65,7 +65,7 @@ class PressureCondition : public BaseFlowBoundaryCondition
     const int alignment_axis_;
     Transform &transform_;
     TargetPressure target_pressure_;
-    StdLargeVec<Vecd> &kernel_sum_;
+    Vecd *kernel_sum_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

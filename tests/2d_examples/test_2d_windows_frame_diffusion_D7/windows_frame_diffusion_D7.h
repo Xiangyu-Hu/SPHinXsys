@@ -402,7 +402,7 @@ class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByPart
     };
 
   protected:
-    StdLargeVec<Real> &thermal_conductivity;
+    Real *thermal_conductivity;
     Real local_diff;
 };
 
@@ -420,7 +420,7 @@ class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParti
     };
 
   protected:
-    StdLargeVec<Real> *phi_convection_;
+    Real *phi_convection_;
     Real local_convection_;
 };
 
