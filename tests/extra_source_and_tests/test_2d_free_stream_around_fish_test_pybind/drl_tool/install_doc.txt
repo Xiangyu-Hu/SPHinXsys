@@ -1,0 +1,5 @@
+1. build test_2d_free_stream_around_fish_pybind & test_2d_free_stream_around_fish_test_pybind in projects
+2. ensure one python env, for windows, install tianshou library first. Best 0.5.1 version. copy corresponding dll lib files from main_build_project\lib\Release folder to corresponding python
+ library environment such as  conda\DLLs folder. Then go to two env including train and test env. install these envs by "pip install -e .". For linux system, use default python environment to install 
+tianshou and custome RL environment. "pip install -e ."
+3. use corresponding python env to run dqn.py
