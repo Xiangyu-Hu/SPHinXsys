@@ -1,2 +1,0 @@
-gymnasium>=0.27.1
-pygame>=2.3.0
