@@ -105,12 +105,10 @@ class CellLinkedListKernel {
             VecdMin(*all_cells_, DeviceArrayi{target_cell_index + search_depth + DeviceInt{1}}),
             [&](DeviceArrayi&& cell_index) {
                 const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells_);
-                DeviceInt index_j = index_head_list_[linear_cell_index];
-                // Cell list ends when index_j == 0, if index_j is already zero then cell is empty.
-                while(index_j--) {  // abbreviates while(index_j != 0) { index_j -= 1; ... }
-                    function(pos_i, index_j, list_data_pos_[index_j]);
-                    index_j = index_list_[index_j];
-                }
+                // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+                // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+                for(DeviceInt j = offset_cell_size_[linear_cell_index]; j < offset_cell_size_[linear_cell_index+1]; ++j)
+                    function(pos_i, particle_id_list_[j], list_data_pos_[particle_id_list_[j]]);
             });
     }
 
@@ -163,9 +161,10 @@ class CellLinkedListKernel {
     DeviceReal *grid_spacing_;
     DeviceArrayi *all_grid_points_, *all_cells_;
 
-    DeviceInt* index_list_;
-    DeviceInt* index_head_list_;
-    DeviceInt index_head_list_size_;
+    DeviceInt linear_cell_size_;    // Total number of cells
+    DeviceInt *offset_cell_size_,   // Identify begin and end offsets of each cell in particle_id_list_
+              *curr_cell_size_;     // Auxiliary memory to compute particle_id_list_ starting from offset_cell_size_
+    DeviceInt *particle_id_list_;   // List of particles ordered based on their cells
 };
 
 
