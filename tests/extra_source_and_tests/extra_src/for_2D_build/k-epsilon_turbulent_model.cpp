@@ -135,14 +135,15 @@ namespace fluid_dynamics
 			Vecd vel_i = vel_[index_i];
 			for (size_t k = 0; k < DataDelegateContact::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Vecd>& vel_ave_k = *(wall_vel_ave_[k]);
+				//StdLargeVec<Vecd>& vel_ave_k = *(wall_vel_ave_[k]);
 				Neighborhood& contact_neighborhood = (*DataDelegateContact::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
 
-					velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					velocity_gradient_[index_i] += -1.0 * (vel_i ) * nablaW_ijV_j.transpose();
 				}
 			}
 
