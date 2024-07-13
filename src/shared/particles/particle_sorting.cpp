@@ -5,8 +5,10 @@
 #include "base_particles.h"
 #include "cell_linked_list.h"
 
+#ifdef SPHINXSYS_USE_ONEDPL_SORTING
 #include <oneapi/dpl/execution>
 #include <oneapi/dpl/algorithm>
+#endif
 
 namespace SPH
 {
@@ -95,9 +97,10 @@ void ParticleSorting::sortingParticleData(DeviceInt *begin, DeviceInt size, exec
     if (!index_sorting_device_variables_)
         index_sorting_device_variables_ = allocateDeviceData<DeviceInt>(size);
 
+#ifndef SPHINXSYS_USE_ONEDPL_SORTING
     device_radix_sorting.sort_by_key(begin, index_sorting_device_variables_, size, execution::executionQueue.getQueue(), 512, 4).wait();
-
-    /*execution::executionQueue.getQueue().parallel_for(execution::executionQueue.getUniformNdRange(size),
+#else
+    execution::executionQueue.getQueue().parallel_for(execution::executionQueue.getUniformNdRange(size),
                                                       [=, index_sorting = index_sorting_device_variables_](sycl::nd_item<1> it) {
                                                           DeviceInt i = it.get_global_id(0);
                                                           if(i < size)
@@ -105,7 +108,8 @@ void ParticleSorting::sortingParticleData(DeviceInt *begin, DeviceInt size, exec
                                                       }).wait();
 
     oneapi::dpl::sort_by_key(oneapi::dpl::execution::make_device_policy(execution::executionQueue.getQueue()),
-                             begin, begin + size, index_sorting_device_variables_);*/
+                             begin, begin + size, index_sorting_device_variables_);
+#endif
 
     move_sortable_particle_device_data_(index_sorting_device_variables_, size);
 
