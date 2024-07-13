@@ -374,17 +374,18 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     };
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    BaseParticles &base_particles = observer_axial.getBaseParticles();
-    Vecd *pos_axial = base_particles.ParticlePositions();
-    Vecd *vel_axial = base_particles.getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < base_particles.TotalRealParticles(); i++)
+    BaseParticles &axial_particles = observer_axial.getBaseParticles();
+    Vecd *pos_axial = axial_particles.ParticlePositions();
+    Vecd *vel_axial = axial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < axial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }
     // Radial direction
-    Vecd *pos_radial = observer_radial.getBaseParticles().ParticlePositions();
-    Vecd *vel_radial = observer_radial.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < base_particles.TotalRealParticles(); i++)
+    BaseParticles &radial_particles = observer_axial.getBaseParticles();
+    Vecd *pos_radial = radial_particles.ParticlePositions();
+    Vecd *vel_radial = radial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < radial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }

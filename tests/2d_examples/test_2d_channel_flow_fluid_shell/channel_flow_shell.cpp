@@ -346,9 +346,10 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_f * 5e-2);
     }
     // Radial direction
-    Vecd *pos_radial = fluid_axial_particles.ParticlePositions();
-    Vecd *vel_radial = fluid_axial_particles.getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < fluid_axial_particles.TotalRealParticles(); i++)
+    BaseParticles &fluid_radial_particles = fluid_radial_observer.getBaseParticles();
+    Vecd *pos_radial = fluid_radial_particles.ParticlePositions();
+    Vecd *vel_radial = fluid_radial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < fluid_radial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_f * 5e-2);
     }
