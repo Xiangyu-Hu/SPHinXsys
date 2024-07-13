@@ -202,34 +202,35 @@ namespace SPH
 template<class ValueType>
 class DeviceRadixSort
 {
-    using SortablePair = std::pair<size_t, ValueType>;
+    using SortablePair = std::pair<DeviceInt, ValueType>;
   public:
     /** Get the number of bits corresponding to the d-th digit of key,
      *  with each digit composed of a number of bits equal to radix_bits */
-    static inline size_t get_digit(size_t key, size_t d, size_t radix_bits);
+    static inline DeviceInt get_digit(DeviceInt key, DeviceInt d, DeviceInt radix_bits);
 
     /** Get the b-th bit of key */
-    static inline size_t get_bit(size_t key, size_t b);
+    static inline DeviceInt get_bit(DeviceInt key, DeviceInt b);
 
     /** Group operation to compute rank, i.e. sorted position, of each work-item based on one bit.
      *  All work-items with bit = 0 will be on the first half of the ranking, while work-items with
      *  bit = 1 will be placed on the second half. */
-    static SYCL_EXTERNAL size_t split_count(bool bit, sycl::nd_item<1> &item);
+    static SYCL_EXTERNAL DeviceInt split_count(bool bit, sycl::nd_item<1> &item);
 
-    size_t find_max_element(const size_t *data, size_t size, size_t identity);
+    DeviceInt find_max_element(const DeviceInt *data, DeviceInt size, DeviceInt identity);
 
-    void resize(size_t data_size, size_t radix_bits, size_t workgroup_size);
+    void resize(DeviceInt data_size, DeviceInt radix_bits, DeviceInt workgroup_size);
 
     sycl::event sort_by_key(
-        size_t *keys, ValueType *data, size_t data_size, sycl::queue &queue,
-        size_t workgroup_size = 256, size_t radix_bits = 4);
+        DeviceInt *keys, ValueType *data, DeviceInt data_size, sycl::queue &queue,
+        DeviceInt workgroup_size = 256, DeviceInt radix_bits = 4);
 
   private:
     bool uniform_case_masking_;
-    size_t data_size_ = 0, radix_bits_, workgroup_size_,
+    DeviceInt data_size_ = 0, radix_bits_, workgroup_size_,
            uniform_global_size_, workgroups_, radix_;
     sycl::nd_range<1> kernel_range_{0,0};
-    std::unique_ptr<sycl::buffer<size_t, 2>> global_buckets_, global_buckets_offsets_, local_buckets_offsets_buffer_;
+    std::unique_ptr<sycl::buffer<DeviceInt, 2>> global_buckets_, global_buckets_offsets_;
+    std::unique_ptr<sycl::buffer<DeviceInt, 1>> local_buckets_offsets_buffer_;
     std::unique_ptr<sycl::buffer<SortablePair>> data_swap_buffer_, uniform_extra_swap_buffer_;
 };
 
@@ -261,14 +262,14 @@ struct swapParticleDeviceDataValue
                                                 : 0;
 
         StdVec<DeviceVariable<VariableType> *> variables_ptr = std::get<DataTypeIndex<VariableType>::value>(device_variables);
-        for (size_t i = 0; i != variables_ptr.size(); ++i)
+        for (DeviceInt i = 0; i != variables_ptr.size(); ++i)
             variables_.push_back(variables_ptr[i]->VariableAddress());
 
         tmp_variable_ = allocateDeviceData<VariableType>(size_single_variable_);
     }
 
     /** Initialize swapping for extra variable not registered in DeviceVariables */
-    void init(VariableType *single_variable, size_t size_variable)
+    void init(VariableType *single_variable, DeviceInt size_variable)
     {
         size_variables_ = 1;
         size_single_variable_ = size_variable;
@@ -279,20 +280,20 @@ struct swapParticleDeviceDataValue
     ~swapParticleDeviceDataValue() { freeDeviceData(tmp_variable_); }
 
     /** Reorder initialized variables based on a permutation indicating where each element should be placed */
-    sycl::event operator()(const size_t *index_permutation, size_t size) const
+    sycl::event operator()(const DeviceInt *index_permutation, DeviceInt size) const
     {
         if (size_variables_)
             assert(size == size_single_variable_ && "Provided index permutation has different size than device variables");
 
         sycl::event sort_event{};
-        for (size_t var = 0; var < size_variables_; ++var)
+        for (DeviceInt var = 0; var < size_variables_; ++var)
         {
             auto *sortable_device_variable = variables_[var];
             auto tmp_copy_event = execution::executionQueue.getQueue().copy(sortable_device_variable, tmp_variable_, size, sort_event);
             sort_event = execution::executionQueue.getQueue().parallel_for(execution::executionQueue.getUniformNdRange(size), tmp_copy_event,
                                                                            [=, tmp_variable = tmp_variable_](sycl::nd_item<1> item)
                                                                            {
-                                                                               size_t i = item.get_global_id();
+                                                                               DeviceInt i = item.get_global_id();
                                                                                if (i < size)
                                                                                    sortable_device_variable[i] = tmp_variable[index_permutation[i]];
                                                                            });
@@ -301,7 +302,7 @@ struct swapParticleDeviceDataValue
     }
 
   private:
-    size_t size_variables_,                 // number of device variables registered,
+    DeviceInt size_variables_,                 // number of device variables registered,
         size_single_variable_;              // size of each variable
     std::vector<VariableType *> variables_; // variables to be sorted
     VariableType *tmp_variable_ = nullptr;            // temporary memory to execute sorting in parallel
@@ -347,12 +348,12 @@ class MoveSortableParticleDeviceData
     BaseParticles &base_particles_;
     bool initialized_swap_variables_;
     DeviceDataAssembleOperation<swapParticleDeviceDataValue> swap_particle_device_data_value_;
-    swapParticleDeviceDataValue<size_t> swap_unsorted_id_;
+    swapParticleDeviceDataValue<DeviceInt> swap_unsorted_id_;
 
   public:
     explicit MoveSortableParticleDeviceData(BaseParticles &base_particles);
     /** Reorder sortable device variables based on sorting permutation*/
-    void operator()(size_t *index_permutation, size_t size);
+    void operator()(DeviceInt *index_permutation, DeviceInt size);
 };
 
 /**
@@ -363,12 +364,12 @@ class ParticleSorting
 {
   protected:
     BaseParticles &base_particles_;
-    size_t *index_sorting_device_variables_;
+    DeviceInt *index_sorting_device_variables_;
 
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;
     MoveSortableParticleDeviceData move_sortable_particle_device_data_;
-    DeviceRadixSort<size_t> device_radix_sorting;
+    DeviceRadixSort<DeviceInt> device_radix_sorting;
     CompareParticleSequence compare_;
     tbb::interface9::QuickSortParticleRange<
         size_t *, CompareParticleSequence, SwapSortableParticleData>
@@ -389,8 +390,8 @@ class ParticleSorting
     {
         this->sortingParticleData(begin, size);
     }
-    template <>
-    void sortingParticleData(size_t *begin, size_t size, execution::ParallelSYCLDevicePolicy execution_policy);
+
+    void sortingParticleData(DeviceInt *begin, DeviceInt size, execution::ParallelSYCLDevicePolicy execution_policy);
 
     /** update the reference of sorted data from unsorted data */
     virtual void updateSortedId();

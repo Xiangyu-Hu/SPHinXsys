@@ -103,8 +103,6 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step(water_block);
 
     water_block.getBaseParticles().copyToDeviceMemory().wait();
-    executionQueue.setWorkGroupSize(16);
-
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

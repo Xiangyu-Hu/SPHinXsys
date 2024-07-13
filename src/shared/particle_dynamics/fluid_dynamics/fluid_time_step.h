@@ -55,7 +55,7 @@ class AcousticTimeStepSizeKernel {
 
     DeviceReal reduce(size_t index_i, Real dt = 0.0) const {
         DeviceReal acceleration_scale = 4.0 * smoothing_length_min_ *
-                                  (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+                                  VecdNorm(DeviceVecd(force_[index_i] + force_prior_[index_i])) / mass_[index_i];
         return sycl::fmax(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + VecdNorm(vel_[index_i]), acceleration_scale);
     }
 

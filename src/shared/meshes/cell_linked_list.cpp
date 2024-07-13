@@ -39,8 +39,8 @@ CellLinkedListKernel::CellLinkedListKernel(const DeviceVecd &meshLowerBound, Dev
     : total_real_particles_(0), list_data_pos_(nullptr),  // will be initialized at first UpdateCellLists execution
       mesh_lower_bound_(allocateDeviceData<DeviceVecd>(1)), grid_spacing_(allocateDeviceData<DeviceReal>(1)),
       all_grid_points_(allocateDeviceData<DeviceArrayi>(1)), all_cells_(allocateDeviceData<DeviceArrayi>(1)),
-      index_list_(nullptr), index_head_list_(allocateDeviceData<size_t>(VecdFoldProduct(allCells))),
-      index_head_list_size_(VecdFoldProduct(allCells))
+      linear_cell_size_(VecdFoldProduct(allCells)), offset_cell_size_(allocateDeviceData<DeviceInt>(linear_cell_size_+1)),
+      curr_cell_size_(allocateDeviceData<DeviceInt>(linear_cell_size_))
 {
     copyDataToDevice(&meshLowerBound, mesh_lower_bound_, 1)
         .add(copyDataToDevice(&gridSpacing, grid_spacing_, 1))
@@ -58,64 +58,91 @@ CellLinkedListKernel::~CellLinkedListKernel()
 
 execution::ExecutionEvent CellLinkedListKernel::clearCellLists()
 {
-    // Only clear head list, since index list does not depend on its previous values
-    return std::move(copyDataToDevice(static_cast<size_t>(0), index_head_list_, index_head_list_size_));
+    return std::move(copyDataToDevice(static_cast<DeviceInt>(0), offset_cell_size_, linear_cell_size_+1)
+                .add(copyDataToDevice(static_cast<DeviceInt>(0), curr_cell_size_, linear_cell_size_)));
 }
 
 execution::ExecutionEvent CellLinkedListKernel::UpdateCellLists(const SPH::BaseParticles &base_particles)
 {
-    if(!index_list_)  // initialize list data with base_particles at first execution
+    if(!list_data_pos_)  // initialize list data with base_particles at first execution
     {
         total_real_particles_ = base_particles.total_real_particles_;
         list_data_pos_ = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
-        index_list_ = allocateDeviceData<size_t>(total_real_particles_);
+        particle_id_list_ = allocateDeviceData<DeviceInt>(total_real_particles_);
     }
     auto clear_event = clearCellLists();
-    auto *pos_n = base_particles.getDeviceVariableByName<DeviceVecd>("Position");
-    size_t total_real_particles = base_particles.total_real_particles_;
+
+    DeviceInt total_real_particles = base_particles.total_real_particles_;
+    auto determine_cells_size_event =  executionQueue.getQueue().submit(
+        [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_, all_grid_points = all_grid_points_,
+         all_cells = all_cells_, offset_cell_size = offset_cell_size_, pos_n = list_data_pos_](sycl::handler &cgh)
+                      {
+                             cgh.depends_on(clear_event.getEventList());
+                             cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles),
+                                              [=](sycl::nd_item<1> item) {
+                                                  if(item.get_global_id() < total_real_particles)
+                                                  {
+                                                        const DeviceInt index_i = item.get_global_id();
+                                                        const auto cell_index = CellIndexFromPosition(pos_n[index_i], *mesh_lower_bound,
+                                                                                                     *grid_spacing, *all_grid_points);
+                                                        const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells);
+                                                        sycl::atomic_ref<DeviceInt, sycl::memory_order_relaxed, sycl::memory_scope_device,
+                                                                        sycl::access::address_space::global_space>
+                                                           atomic_cell_size(offset_cell_size[linear_cell_index]);
+                                                        ++atomic_cell_size;
+                                                  }
+                                         }); });
+
+    auto exclusive_scan_cells_size_event = executionQueue.getQueue().submit(
+        [&, offset_cell_size = offset_cell_size_, num_cells = linear_cell_size_ + 1](sycl::handler &cgh) {
+            cgh.depends_on(determine_cells_size_event);
+            cgh.parallel_for(executionQueue.getUniformNdRange(executionQueue.getWorkGroupSize()),
+                             [=](sycl::nd_item<1> item) {
+                                          if(item.get_group_linear_id() == 0) {
+                                              sycl::joint_exclusive_scan(item.get_group(), offset_cell_size,
+                                                                         offset_cell_size + num_cells,
+                                                                         offset_cell_size, sycl::plus<>{});
+                                          }
+                                      });
+                 });
+
     return executionQueue.getQueue().submit(
-                                 [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_, all_grid_points = all_grid_points_,
-                                  all_cells = all_cells_, index_list = index_list_, index_head_list = index_head_list_](sycl::handler &cgh)
+        [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_, all_grid_points = all_grid_points_,
+        all_cells = all_cells_, particle_id_list = particle_id_list_, offset_cell_size = offset_cell_size_,
+        curr_cell_size = curr_cell_size_, pos_n = list_data_pos_] (sycl::handler &cgh)
+        {
+            cgh.depends_on(exclusive_scan_cells_size_event);
+            cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles),
+                             [=](sycl::nd_item<1> item)
+                             {
+                                 if(item.get_global_id() < total_real_particles)
                                  {
-                                     cgh.depends_on(clear_event.getEventList());
-                                     cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item)
-                                                      {
-                                 const size_t index_i = item.get_global_id();
-                                 if(index_i < total_real_particles)
-                                 {
+                                     const DeviceInt index_i = item.get_global_id();
                                      const auto cell_index = CellIndexFromPosition(pos_n[index_i], *mesh_lower_bound,
                                                                                    *grid_spacing, *all_grid_points);
                                      const auto linear_cell_index = transferCellIndexTo1D(cell_index, *all_cells);
-                                     sycl::atomic_ref<size_t, sycl::memory_order_relaxed, sycl::memory_scope_device,
+                                     sycl::atomic_ref<DeviceInt, sycl::memory_order_relaxed, sycl::memory_scope_device,
                                                       sycl::access::address_space::global_space>
-                                         atomic_head_list(index_head_list[linear_cell_index]);
-                                     /*
-                                      * Insert index at the head of the list, the index previously at the top is then
-                                      * used as the next one pointed by the new index.
-                                      * Indices values are increased by 1 to let 0 be the value that indicates list termination.
-                                      * If the cell list is empty (i.e. head == 0) then head will point to the new index and the
-                                      * new index will point to 0 (i.e. the new index will be the first and last element of the cell list).
-                                      *     index_head_list[linear_cell_index] = index_i+1  ---> index_list[index_i] = 0
-                                      * Since the cell list order is not relevant, memory_order_relaxed will only ensure that each cell of
-                                      * index_head_list gets a new index one at a time.
-                                      */
-                                     index_list[index_i] = atomic_head_list.exchange(index_i + 1);
-                                 } });
-                                 });
+                                         atomic_current_cell_size(curr_cell_size[linear_cell_index]);
+
+                                     particle_id_list[offset_cell_size[linear_cell_index] + atomic_current_cell_size++] = index_i;
+                                 }
+                             });
+        });
 }
 //=================================================================================================//
-size_t *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
+DeviceInt *CellLinkedListKernel::computingSequence(BaseParticles &baseParticles)
 {
     auto *pos = baseParticles.getDeviceVariableByName<DeviceVecd>("Position");
     auto *sequence = baseParticles.sequence_device_;
-    size_t total_real_particles = baseParticles.total_real_particles_;
+    DeviceInt total_real_particles = baseParticles.total_real_particles_;
     executionQueue.getQueue().submit(
                                  [&, mesh_lower_bound = mesh_lower_bound_, grid_spacing = grid_spacing_,
                                   all_grid_points = all_grid_points_](sycl::handler &cgh)
                                  {
                                      cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item)
                                                       {
-                                                          size_t i = item.get_global_id();
+                                                          DeviceInt i = item.get_global_id();
                                                           if(i < total_real_particles)
                                                               sequence[i] = BaseMesh::transferMeshIndexToMortonOrder(
                                                                   CellIndexFromPosition(pos[i], *mesh_lower_bound,

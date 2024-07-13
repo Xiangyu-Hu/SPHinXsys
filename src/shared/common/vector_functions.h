@@ -202,6 +202,10 @@ inline execution::ExecutionEvent copyDataToDevice(const Real* host, DeviceReal* 
     return transformAndCopyDataToDevice(host, device, size, [](Real val) { return static_cast<DeviceReal>(val); });
 }
 
+inline execution::ExecutionEvent copyDataToDevice(const size_t* host, DeviceInt* device, std::size_t size) {
+    return transformAndCopyDataToDevice(host, device, size, [](size_t val) { return static_cast<DeviceInt>(val); });
+}
+
 template<class T>
 inline execution::ExecutionEvent copyDataToDevice(const T& value, T* device, std::size_t size) {
     return execution::executionQueue.getQueue().fill(device, value, size);
@@ -233,6 +237,10 @@ inline execution::ExecutionEvent copyDataFromDevice(Vec3d* host, const DeviceVec
 
 inline execution::ExecutionEvent copyDataFromDevice(Real* host, const DeviceReal* device, std::size_t size) {
     return transformAndCopyDataFromDevice(host, device, size, [](DeviceReal val) { return static_cast<Real>(val); });
+}
+
+inline execution::ExecutionEvent copyDataFromDevice(size_t* host, const DeviceInt* device, std::size_t size) {
+    return transformAndCopyDataFromDevice(host, device, size, [](DeviceInt val) { return static_cast<size_t>(val); });
 }
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

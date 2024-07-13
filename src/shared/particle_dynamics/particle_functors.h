@@ -206,7 +206,7 @@ class NoKernelCorrection : public KernelCorrection
 {
   public:
     NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
-    Real operator()(size_t index_i)
+    Real operator()(size_t index_i) const
     {
         return 1.0;
     };

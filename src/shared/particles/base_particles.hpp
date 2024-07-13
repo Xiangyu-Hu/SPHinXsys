@@ -215,7 +215,7 @@ void BaseParticles::registerSortableVariable(const std::string &variable_name)
 template <typename SequenceMethod, class ExecutionPolicy>
 void BaseParticles::sortParticles(SequenceMethod &sequence_method, ExecutionPolicy execution_policy)
 {
-    size_t* sequence = sequence_method.computingSequence(*this);
+    auto* sequence = sequence_method.computingSequence(*this);
     particle_sorting_.sortingParticleData(sequence, total_real_particles_, execution_policy);
 }
 //=================================================================================================//

@@ -344,9 +344,9 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 }
 //=================================================================================================//
 void BaseParticles::registerDeviceMemory() {
-    unsorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
-    sorted_id_device_ = allocateDeviceData<size_t>(total_real_particles_);
-    sequence_device_ = allocateDeviceData<size_t>(total_real_particles_);
+    unsorted_id_device_ = allocateDeviceData<DeviceInt>(total_real_particles_);
+    sorted_id_device_ = allocateDeviceData<DeviceInt>(total_real_particles_);
+    sequence_device_ = allocateDeviceData<DeviceInt>(total_real_particles_);
     registerDeviceVariable<DeviceVecd>("Position", total_real_particles_, pos_.data());
     registerDeviceVariable<DeviceVecd>("Velocity", total_real_particles_, vel_.data());
     registerDeviceVariable<DeviceVecd>("Force", total_real_particles_, force_.data());
