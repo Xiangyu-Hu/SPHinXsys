@@ -5,6 +5,9 @@
 #include "base_particles.h"
 #include "cell_linked_list.h"
 
+#include <oneapi/dpl/execution>
+#include <oneapi/dpl/algorithm>
+
 namespace SPH
 {
 //=================================================================================================//
@@ -94,6 +97,16 @@ void ParticleSorting::sortingParticleData(DeviceInt *begin, DeviceInt size, exec
 
     device_radix_sorting.sort_by_key(begin, index_sorting_device_variables_, size, execution::executionQueue.getQueue(), 512, 4).wait();
 
+    /*execution::executionQueue.getQueue().parallel_for(execution::executionQueue.getUniformNdRange(size),
+                                                      [=, index_sorting = index_sorting_device_variables_](sycl::nd_item<1> it) {
+                                                          DeviceInt i = it.get_global_id(0);
+                                                          if(i < size)
+                                                              index_sorting[i] = i;
+                                                      }).wait();
+
+    oneapi::dpl::sort_by_key(oneapi::dpl::execution::make_device_policy(execution::executionQueue.getQueue()),
+                             begin, begin + size, index_sorting_device_variables_);*/
+
     move_sortable_particle_device_data_(index_sorting_device_variables_, size);
 
     updateSortedDeviceId();
@@ -169,7 +182,7 @@ void DeviceRadixSort<ValueType>::resize(DeviceInt data_size, DeviceInt radix_bit
     global_buckets_ = std::make_unique<sycl::buffer<DeviceInt, 2>>(buckets_column_major_range);
     // Each entry contains global number of digits with the same and lower values
     global_buckets_offsets_ = std::make_unique<sycl::buffer<DeviceInt, 2>>(buckets_column_major_range);
-    local_buckets_offsets_buffer_ = std::make_unique<sycl::buffer<DeviceInt, 2>>(buckets_row_major_range);  // save state of local accessor
+    local_buckets_offsets_buffer_ = std::make_unique<sycl::buffer<DeviceInt, 1>>(buckets_row_major_range.size());  // save state of local accessor
     data_swap_buffer_ = std::make_unique<sycl::buffer<SortablePair>>(uniform_global_size_);  // temporary memory for swapping
     // Keep extra values to be swapped when kernel range has been made uniform
     uniform_extra_swap_buffer_ = std::make_unique<sycl::buffer<SortablePair>>(uniform_global_size_ - data_size);
@@ -250,8 +263,8 @@ sycl::event DeviceRadixSort<ValueType>::sort_by_key(DeviceInt *keys, ValueType *
                                                                        data_swap_acc[workgroup_size * workgroup + rank] = number;  // save local sorting back to data
 
                                                                    // Compute local buckets offsets
-                                                                   DeviceInt *begin = local_buckets.get_pointer(), *end = begin + radix,
-                                                                          *outBegin = local_buckets_offsets_accessor.get_pointer().get() + workgroup * radix;
+                                                                   DeviceInt *begin = local_buckets.get_multi_ptr<sycl::access::decorated::no>().get(), *end = begin + radix,
+                                                                             *outBegin = local_buckets_offsets_accessor.get_multi_ptr<sycl::access::decorated::no>().get() + workgroup * radix;
                                                                    sycl::joint_exclusive_scan(item.get_group(), begin, end, outBegin, sycl::plus<>{});
                                                                }); });
 
@@ -264,9 +277,11 @@ sycl::event DeviceRadixSort<ValueType>::sort_by_key(DeviceInt *keys, ValueType *
                                                   cgh.parallel_for(kernel_range_, [=](sycl::nd_item<1> item) {
                                                                        // Compute global buckets offsets
                                                                        if(item.get_group_linear_id() == 0) {
-                                                                           DeviceInt *begin = global_buckets_accessor.get_pointer(), *end = begin + global_buckets_accessor.size();
+                                                                           const DeviceInt *begin = global_buckets_accessor.get_multi_ptr<sycl::access::decorated::no>().get(),
+                                                                                           *end = begin + global_buckets_accessor.size();
                                                                            sycl::joint_exclusive_scan(item.get_group(), begin, end,
-                                                                                                      global_buckets_offsets_accessor.get_pointer(), sycl::plus<>{});
+                                                                                                      global_buckets_offsets_accessor.get_multi_ptr<sycl::access::decorated::no>().get(),
+                                                                                                      sycl::plus<>{});
                                                                        }
                                                                    });
                                               });
@@ -278,11 +293,13 @@ sycl::event DeviceRadixSort<ValueType>::sort_by_key(DeviceInt *keys, ValueType *
                                       auto global_buckets_accessor = global_buckets_->get_access(cgh, sycl::read_only);
                                       auto global_buckets_offsets_accessor = global_buckets_offsets_->get_access(cgh, sycl::read_write);
                                       auto local_buckets_offsets_accessor = local_buckets_offsets_buffer_->get_access(cgh, sycl::read_only);
-                                      cgh.parallel_for(kernel_range_, [=](sycl::nd_item<1> item) {
+                                      cgh.parallel_for(kernel_range_, [=, radix = radix_](sycl::nd_item<1> item) {
                                                            // Compute global buckets offsets
-                                                           DeviceInt *begin = global_buckets_accessor.get_pointer(), *end = begin + global_buckets_accessor.size();
+                                                           const DeviceInt *begin = global_buckets_accessor.get_multi_ptr<sycl::access::decorated::no>().get(),
+                                                                           *end = begin + global_buckets_accessor.size();
                                                            sycl::joint_exclusive_scan(item.get_group(), begin, end,
-                                                                                      global_buckets_offsets_accessor.get_pointer(), sycl::plus<>{});
+                                                                                      global_buckets_offsets_accessor.get_multi_ptr<sycl::access::decorated::no>().get(),
+                                                                                      sycl::plus<>{});
 
                                                            // Mask only relevant indexes. All max_keys added to homogenize the computations
                                                            // should be owned by work-items with global_id >= data_size
@@ -294,7 +311,7 @@ sycl::event DeviceRadixSort<ValueType>::sort_by_key(DeviceInt *keys, ValueType *
 
                                                                // Compute sorted position based on global and local buckets
                                                                const DeviceInt data_offset = global_buckets_offsets_accessor[radix_digit][workgroup] + rank -
-                                                                                          local_buckets_offsets_accessor[workgroup][radix_digit];
+                                                                                             local_buckets_offsets_accessor[workgroup * radix + radix_digit];
 
                                                                // Copy to original data pointers
                                                                keys[data_offset] = number.first;

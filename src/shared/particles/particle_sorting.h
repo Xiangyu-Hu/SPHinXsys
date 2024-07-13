@@ -229,7 +229,8 @@ class DeviceRadixSort
     DeviceInt data_size_ = 0, radix_bits_, workgroup_size_,
            uniform_global_size_, workgroups_, radix_;
     sycl::nd_range<1> kernel_range_{0,0};
-    std::unique_ptr<sycl::buffer<DeviceInt, 2>> global_buckets_, global_buckets_offsets_, local_buckets_offsets_buffer_;
+    std::unique_ptr<sycl::buffer<DeviceInt, 2>> global_buckets_, global_buckets_offsets_;
+    std::unique_ptr<sycl::buffer<DeviceInt, 1>> local_buckets_offsets_buffer_;
     std::unique_ptr<sycl::buffer<SortablePair>> data_swap_buffer_, uniform_extra_swap_buffer_;
 };
 
