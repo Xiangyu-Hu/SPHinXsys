@@ -9,6 +9,8 @@ include(Common) # brings macro to current namespace
 option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
+option(SPHINXSYS_BUILD_2D_EXAMPLES "SPHINXSYS_BUILD_2D_EXAMPLES" ON)
+option(SPHINXSYS_BUILD_3D_EXAMPLES "SPHINXSYS_BUILD_3D_EXAMPLES" ON)
 option(TEST_STATE_RECORDING "State recording when run Ctest" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
@@ -101,7 +103,7 @@ endif()
 
 if(SPHINXSYS_USE_SYCL)
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
+        message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
     endif()
 
     if(NOT SPHINXSYS_USE_FLOAT)
@@ -112,9 +114,10 @@ if(SPHINXSYS_USE_SYCL)
     if(NOT SPHINXSYS_SYCL_TARGETS)
         set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
     endif()
+
     message("-- Set SPHinXsysSYCL target as ${SPHINXSYS_SYCL_TARGETS}")
-    target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS}  -Wno-unknown-cuda-version)
-    target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS}  -Wno-unknown-cuda-version)
+    target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS} -Wno-unknown-cuda-version)
+    target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS} -Wno-unknown-cuda-version)
 endif()
 
 # ------ Setup the concrete libraries
