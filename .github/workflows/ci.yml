@@ -62,7 +62,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:
           committish: ${{ env.VCPKG_VERSION }}
-          cache: false
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -82,10 +82,11 @@ jobs:
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
-            -D SPHINXSYS_USE_FLOAT=OFF \
+            -D SPHINXSYS_USE_SYCL=ON \
             -D TEST_STATE_RECORDING=OFF \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build

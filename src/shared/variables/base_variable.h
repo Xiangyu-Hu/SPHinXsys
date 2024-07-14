@@ -44,7 +44,16 @@ class Entity
         : name_(name), entity_id_(0){};
     virtual ~Entity(){};
     std::string Name() const { return name_; };
-    size_t EntityID() const { return entity_id_; };
+    size_t EntityID() const
+    {
+        if (entity_id_ == 0)
+        {
+            std::cout << "Entity ID is not set for " << name_ << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return entity_id_;
+    };
     void setEntityID(size_t entity_id) { entity_id_ = entity_id; };
 
   private:
