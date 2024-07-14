@@ -97,7 +97,7 @@ jobs:
       - name: Test with the first try
         id: first-try
         run: |
-          cd build 
+          cd build/test/test_sycl 
           ctest  --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -105,7 +105,7 @@ jobs:
         id: second-try
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
-          cd build 
+          cd build/test/test_sycl 
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -113,7 +113,7 @@ jobs:
         id: third-try
         if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
-          cd build 
+          cd build/test/test_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -121,14 +121,14 @@ jobs:
         id: fourth-try
         if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
-          cd build 
+          cd build/test/test_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
-          cd build 
+          cd build/test/test_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
