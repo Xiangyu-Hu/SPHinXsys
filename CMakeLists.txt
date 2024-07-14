@@ -9,8 +9,6 @@ include(Common) # brings macro to current namespace
 option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
-option(SPHINXSYS_BUILD_2D_EXAMPLES "SPHINXSYS_BUILD_2D_EXAMPLES" ON)
-option(SPHINXSYS_BUILD_3D_EXAMPLES "SPHINXSYS_BUILD_3D_EXAMPLES" ON)
 option(TEST_STATE_RECORDING "State recording when run Ctest" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
