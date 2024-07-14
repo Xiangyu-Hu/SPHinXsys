@@ -53,9 +53,6 @@ jobs:
             libgl-dev
           wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/20f4e6a1-6b0b-4752-b8c1-e5eacba10e01/l_BaseKit_p_2024.0.0.49564_offline.sh
           sudo sh ./l_BaseKit_p_2024.0.0.49564_offline.sh -a --silent --eula accept --components intel.oneapi.lin.dpcpp-cpp-compiler
-          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
-          icpx --version
-          icx --version
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -82,6 +79,7 @@ jobs:
 
       - name: Generate buildsystem
         run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
