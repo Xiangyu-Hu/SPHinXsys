@@ -59,7 +59,7 @@ class FixedDampingRate
     FixedDampingRate(BaseParticles *particles, Real eta, Real c = 1.0)
         : damping_rate_(particles->registerSingleVariable<Real>("DampingRate", eta)),
           specific_capacity_(particles->registerSingleVariable<Real>("SpecificCapacity", c)),
-          mass_(particles->getVariableByName<Real>("Mass")){};
+          mass_(particles->getVariableDataByName<Real>("Mass")){};
     virtual ~FixedDampingRate(){};
 
     Real DampingRate(size_t i, size_t j) { return *damping_rate_; };

@@ -46,14 +46,14 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
   public:
     PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
         : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
-          mass_n_(*particles_->getVariableByName<Real>("Mass")),
-          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-          F_(*particles_->getVariableByName<Matd>("DeformationGradient")),
+          mass_n_(*particles_->getVariableDataByName<Real>("Mass")),
+          Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          F_(*particles_->getVariableDataByName<Matd>("DeformationGradient")),
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())
     {
-        area_0_.resize(particles_->total_real_particles_);
-        for (size_t i = 0; i < particles_->total_real_particles_; ++i)
+        area_0_.resize(particles_->TotalRealParticles());
+        for (size_t i = 0; i < particles_->TotalRealParticles(); ++i)
             area_0_[i] = pow(Vol_[i], 2.0 / 3.0);
     }
 
@@ -123,7 +123,7 @@ int main(int ac, char *av[])
 
     // Define Observer
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     /** topology */
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});

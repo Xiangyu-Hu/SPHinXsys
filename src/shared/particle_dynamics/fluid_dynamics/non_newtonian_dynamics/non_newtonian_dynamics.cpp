@@ -7,10 +7,10 @@ namespace fluid_dynamics
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf<Inner<>>::
     Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : Integration1stHalfInnerRiemann(inner_relation)
+    : Integration1stHalfInnerRiemann(inner_relation),
+      tau_(*particles_->registerSharedVariable<Matd>("ElasticStress")),
+      dtau_dt_(*particles_->registerSharedVariable<Matd>("ElasticStressChangeRate"))
 {
-    particles_->registerVariable(tau_, "ElasticStress");
-    particles_->registerVariable(dtau_dt_, "ElasticStressChangeRate");
     particles_->addVariableToSort<Matd>("ElasticStress");
     particles_->addVariableToRestart<Matd>("ElasticStress");
 }
@@ -43,7 +43,7 @@ void Oldroyd_BIntegration1stHalf<Inner<>>::interaction(size_t index_i, Real dt)
 Oldroyd_BIntegration1stHalf<Contact<Wall>>::
     Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation)
     : Integration1stHalfContactWallRiemann(wall_contact_relation),
-      tau_(*particles_->getVariableByName<Matd>("ElasticStress")){};
+      tau_(*particles_->getVariableDataByName<Matd>("ElasticStress")){};
 //=================================================================================================//
 void Oldroyd_BIntegration1stHalf<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -73,9 +73,9 @@ Oldroyd_BIntegration2ndHalf<Inner<>>::
     Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : Integration2ndHalfInnerRiemann(inner_relation),
       oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
-      vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),
-      tau_(*particles_->getVariableByName<Matd>("ElasticStress")),
-      dtau_dt_(*particles_->getVariableByName<Matd>("ElasticStressChangeRate"))
+      vel_grad_(*particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      tau_(*particles_->getVariableDataByName<Matd>("ElasticStress")),
+      dtau_dt_(*particles_->getVariableDataByName<Matd>("ElasticStressChangeRate"))
 {
     mu_p_ = oldroyd_b_fluid_.ReferencePolymericViscosity();
     lambda_ = oldroyd_b_fluid_.getReferenceRelaxationTime();
@@ -96,8 +96,8 @@ SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusion
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       DataDelegateSimple(sph_body),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      rho_(*this->particles_->template getVariableByName<Real>("Density")),
-      mu_srd_(*this->particles_->getVariableByName<Real>("VariableViscosity")),
+      rho_(*this->particles_->template getVariableDataByName<Real>("Density")),
+      mu_srd_(*this->particles_->getVariableDataByName<Real>("VariableViscosity")),
       diffusionCFL(diffusionCFL) {}
 //=================================================================================================//
 Real SRDViscousTimeStepSize::outputResult(Real reduced_value)
@@ -112,7 +112,7 @@ Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      vel_grad_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+      vel_grad_(*particles_->getVariableDataByName<Matd>("VelocityGradient")),
       generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial())),
       mu_srd_(*particles_->registerSharedVariable<Real>("VariableViscosity"))
 {

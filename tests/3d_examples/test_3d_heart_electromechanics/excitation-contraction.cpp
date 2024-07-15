@@ -73,7 +73,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           DataDelegateSimple(body_part.getSPHBody()),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
 
@@ -113,7 +113,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
@@ -147,13 +147,13 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 
         if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
         {
-            muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-            muscle_material_.local_s0_[index_i] = face_norm;
+            (*muscle_material_.local_f0_)[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+            (*muscle_material_.local_s0_)[index_i] = face_norm;
         }
         else
         {
-            muscle_material_.local_f0_[index_i] = Vecd::Zero();
-            muscle_material_.local_s0_[index_i] = Vecd::Zero();
+            (*muscle_material_.local_f0_)[index_i] = Vecd::Zero();
+            (*muscle_material_.local_s0_)[index_i] = Vecd::Zero();
         }
     };
 };
@@ -176,7 +176,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
   public:
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
@@ -205,7 +205,7 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
   public:
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
@@ -226,23 +226,16 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &voltage_;
 };
-/**
- * define observer particle generator.
- */
-class HeartObserver;
-template <>
-class ParticleGenerator<HeartObserver> : public ParticleGenerator<Observer>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** position and volume. */
-        positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
-        positions_.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
-        positions_.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
+    observation_points.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
+    observation_points.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
+    return observation_points;
 };
 } // namespace SPH
 
@@ -276,8 +269,13 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
+        //----------------------------------------------------------------------
+        //	Relaxation output
+        //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         ReloadParticleIO write_particle_reload_files(herat_model);
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -309,7 +307,7 @@ int main(int ac, char *av[])
         BodySurface surface_part(herat_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addVariableRecording<Real>(herat_model, "Phi");
+        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -355,10 +353,10 @@ int main(int ac, char *av[])
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<BaseParticles, HeartObserver>();
+    voltage_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<BaseParticles, HeartObserver>();
+    myocardium_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	SPHBody relation (topology) section
     //----------------------------------------------------------------------
@@ -408,10 +406,10 @@ int main(int ac, char *av[])
     //	SPH Output section
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addVariableRecording<Real>(physiology_heart, "Voltage");
-    write_states.addVariableRecording<Real>(physiology_heart, "GateVariable");
-    write_states.addVariableRecording<Real>(physiology_heart, "ActiveContractionStress");
-    write_states.addVariableRecording<Real>(mechanics_heart, "ActiveContractionStress");
+    write_states.addToWrite<Real>(physiology_heart, "Voltage");
+    write_states.addToWrite<Real>(physiology_heart, "GateVariable");
+    write_states.addToWrite<Real>(physiology_heart, "ActiveContractionStress");
+    write_states.addToWrite<Real>(mechanics_heart, "ActiveContractionStress");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_voltage("Voltage", voltage_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

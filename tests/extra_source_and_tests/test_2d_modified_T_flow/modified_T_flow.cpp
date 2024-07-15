@@ -1,9 +1,9 @@
 /*
-* @file modified_T_shaped_pipe.cpp
-* @brief This is the benchmark test of multi -inlet and multi - outlet.
-* @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D. 
-* @author Xiangyu Hu,Shuoguo Zhang
-*/
+ * @file modified_T_shaped_pipe.cpp
+ * @brief This is the benchmark test of multi -inlet and multi - outlet.
+ * @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D.
+ * @author Xiangyu Hu,Shuoguo Zhang
+ */
 
 #include "bidirectional_buffer.h"
 #include "density_correciton.h"
@@ -19,8 +19,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.2;                                               /**< Reference length. */
 Real DH = 0.1;                                               /**< Reference and the height of main channel. */
-Real DL1 = 0.75 * DL;                                         /**< The length of the main channel. */
-Real resolution_ref = 0.005;                                  /**< Initial reference particle spacing. */
+Real DL1 = 0.75 * DL;                                        /**< The length of the main channel. */
+Real resolution_ref = 0.005;                                 /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
@@ -29,11 +29,11 @@ StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement o
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
 Real Outlet_pressure = 0;
-Real rho0_f = 1000.0;                                                   /**< Reference density of fluid. */
-Real Re = 100.0;                                                     /**< Reynolds number. */
-Real U_f = 1.0;                                                      /**< Characteristic velocity. */
-Real mu_f = rho0_f * U_f * DH / Re;                                  /**< Dynamics viscosity. */
-Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1)));/** Reference sound speed needs to consider the flow speed in the narrow channels. */
+Real rho0_f = 1000.0;                                                 /**< Reference density of fluid. */
+Real Re = 100.0;                                                      /**< Reynolds number. */
+Real U_f = 1.0;                                                       /**< Characteristic velocity. */
+Real mu_f = rho0_f * U_f * DH / Re;                                   /**< Dynamics viscosity. */
+Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1))); /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
@@ -161,7 +161,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
-    velocity_observer.generateParticles<BaseParticles, Observer>(observer_location);
+    velocity_observer.generateParticles<ObserverParticles>(observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -201,31 +201,31 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
-    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer);
 
-    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer, xAxis);
+    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
     //----------------------------------------------------------------------
     // Up buffer
     //----------------------------------------------------------------------
     Vec2d up_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * BW);
-    BodyAlignedBoxByCell up_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell up_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer);
 
-    BodyAlignedBoxByCell up_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> up_disposer_outflow_deletion(up_disposer, xAxis);
+    BodyAlignedBoxByCell up_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> up_disposer_outflow_deletion(up_disposer);
     //----------------------------------------------------------------------
     // Down buffer
     //----------------------------------------------------------------------
     Vec2d down_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * BW);
-    BodyAlignedBoxByCell down_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_emitter_inflow_injection(down_emitter, in_outlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell down_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_emitter_inflow_injection(down_emitter, in_outlet_particle_buffer);
 
-    BodyAlignedBoxByCell down_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(-0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> down_disposer_outflow_deletion(down_disposer, xAxis);
+    BodyAlignedBoxByCell down_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> down_disposer_outflow_deletion(down_disposer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
@@ -237,10 +237,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
-    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
-    body_states_recording.addVariableRecording<Real>(water_block, "Density");
-    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+    body_states_recording.addToWrite<Real>(water_block, "Density");
+    body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
@@ -260,9 +260,9 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 30.0;   /**< End time. */
-    Real Output_Time = end_time/300.0; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real end_time = 30.0;                /**< End time. */
+    Real Output_Time = end_time / 300.0; /**< Time stamps for output of body states. */
+    Real dt = 0.0;                       /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

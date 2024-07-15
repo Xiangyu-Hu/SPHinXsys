@@ -21,7 +21,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);        // Tag for computation with save particles distribution
+    sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 
     IOEnvironment io_environment(sph_system);
@@ -46,9 +46,9 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
-    beam_observer.generateParticles<BaseParticles, Observer>(beam_observation_location);
+    beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<BaseParticles, FluidObserver>();
+    fluid_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -142,7 +142,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
-    BodyAlignedBoxByCell inflow_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    BodyAlignedBoxByCell inflow_buffer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);

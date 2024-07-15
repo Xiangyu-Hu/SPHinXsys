@@ -7,7 +7,7 @@ namespace relax_dynamics
 //=================================================================================================//
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part), DataDelegateSimple(body_part.getSPHBody()),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
       particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
@@ -82,12 +82,11 @@ void ShellNormalDirectionPrediction::correctNormalDirection()
 ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
     : DataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
-{
-    particles_->registerVariable(n_temp_, "PreviousNormalDirection", [&](size_t i) -> Vecd
-                                 { return n_[i]; });
-}
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      n_temp_(*particles_->registerSharedVariable<Vecd>(
+          "PreviousNormalDirection", [&](size_t i) -> Vecd
+          { return n_[i]; })) {}
 //=================================================================================================//
 void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Real dt)
 {
@@ -99,8 +98,8 @@ ShellNormalDirectionPrediction::PredictionConvergenceCheck::
     PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
     : LocalDynamicsReduce<ReduceAND>(sph_body), DataDelegateSimple(sph_body),
       convergence_criterion_(convergence_criterion),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-      n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) {}
+      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      n_temp_(*particles_->getVariableDataByName<Vecd>("PreviousNormalDirection")) {}
 //=================================================================================================//
 bool ShellNormalDirectionPrediction::PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
 {
@@ -111,11 +110,12 @@ ShellNormalDirectionPrediction::ConsistencyCorrection::
     ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       consistency_criterion_(consistency_criterion),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      updated_indicator_(*particles_->registerSharedVariable<int>(
+          "UpdatedIndicator", [&](size_t i) -> int
+          { return 0; }))
 {
-    particles_->registerVariable(updated_indicator_, "UpdatedIndicator", [&](size_t i) -> int
-                                 { return 0; });
-    updated_indicator_[particles_->total_real_particles_ / 3] = 1;
+    updated_indicator_[particles_->TotalRealParticles() / 3] = 1;
 }
 //=================================================================================================//
 void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t index_i, Real dt)
@@ -152,7 +152,7 @@ void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t i
 ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::ConsistencyUpdatedCheck(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceAND>(sph_body),
       DataDelegateSimple(sph_body),
-      updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) {}
+      updated_indicator_(*particles_->getVariableDataByName<int>("UpdatedIndicator")) {}
 //=================================================================================================//
 bool ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
 {

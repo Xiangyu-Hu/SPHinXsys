@@ -29,7 +29,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 out_file << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
                 out_file << " <PolyData>\n";
 
-                size_t total_real_particles = base_particles.total_real_particles_;
+                size_t total_real_particles = base_particles.TotalRealParticles();
                 out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles
                          << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
 
@@ -108,7 +108,7 @@ void BodyStatesRecordingToVtpString::writeVtu(std::ostream &stream, SPHBody *bod
     stream << " <UnstructuredGrid>\n";
 
     BaseParticles &base_particles = body->getBaseParticles();
-    size_t total_real_particles = base_particles.total_real_particles_;
+    size_t total_real_particles = base_particles.TotalRealParticles();
     stream << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
     body->writeParticlesToVtuFile(stream);
@@ -159,6 +159,69 @@ void WriteToVtpIfVelocityOutOfBound::writeWithFileName(const std::string &sequen
         BodyStatesRecordingToVtp::writeWithFileName(sequence);
         std::cout << "\n Velocity is out of bound at iteration step " << sequence
                   << "\n The body states have been outputted and the simulation terminates here. \n";
+    }
+}
+//=============================================================================================//
+void ParticleGenerationRecordingToVtp::writeWithFileName(const std::string &sequence)
+{
+
+    if (state_recording_)
+    {
+        std::string filefullpath = io_environment_.output_folder_ + "/" + sph_body_.getName() +
+                                   "particle_generation_" + sequence + ".vtp";
+        if (fs::exists(filefullpath))
+        {
+            fs::remove(filefullpath);
+        }
+        std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+
+        size_t total_generated_particles = position_.size();
+        // begin of the XML file
+        out_file << "<?xml version=\"1.0\"?>\n";
+        out_file << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+        out_file << " <PolyData>\n";
+
+        out_file << "  <Piece Name =\"" << sph_body_.getName() << "\" NumberOfPoints=\"" << total_generated_particles
+                 << "\" NumberOfVerts=\"" << total_generated_particles << "\">\n";
+
+        // write current/final particle positions first
+        out_file << "   <Points>\n";
+        out_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+        out_file << "    ";
+        for (size_t i = 0; i != total_generated_particles; ++i)
+        {
+            Vec3d particle_position = upgradeToVec3d(position_[i]);
+            out_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
+        }
+        out_file << std::endl;
+        out_file << "    </DataArray>\n";
+        out_file << "   </Points>\n";
+
+        // write empty cells
+        out_file << "   <Verts>\n";
+        out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
+        out_file << "    ";
+        for (size_t i = 0; i != total_generated_particles; ++i)
+        {
+            out_file << i << " ";
+        }
+        out_file << std::endl;
+        out_file << "    </DataArray>\n";
+        out_file << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
+        out_file << "    ";
+        for (size_t i = 0; i != total_generated_particles; ++i)
+        {
+            out_file << i + 1 << " ";
+        }
+        out_file << std::endl;
+        out_file << "    </DataArray>\n";
+        out_file << "   </Verts>\n";
+
+        out_file << "  </Piece>\n";
+        out_file << " </PolyData>\n";
+        out_file << "</VTKFile>\n";
+
+        out_file.close();
     }
 }
 //=================================================================================================//

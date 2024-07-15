@@ -36,9 +36,7 @@
 #define BASE_MATERIAL_H
 
 #include "base_data_package.h"
-#include "xml_engine.h"
-
-#include <string>
+#include "sph_data_containers.h"
 
 namespace SPH
 {
@@ -58,7 +56,8 @@ class BaseMaterial
     virtual ~BaseMaterial(){};
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles){};
+    virtual void registerLocalParameters(BaseParticles *base_particles){};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles){};
     /**
      * This will be called after particles generation
      * and is important because particles are not defined yet when material is constructed.

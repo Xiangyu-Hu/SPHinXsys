@@ -18,10 +18,10 @@ BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_re
     : LocalDynamics(inner_relation.getSPHBody()),
       DataDelegateInner(inner_relation),
       porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       vel_(*particles_->registerSharedVariable<Vecd>("Velocity")),
-      B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       F_(*particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       dF_dt_(*particles_->registerSharedVariable<Matd>("DeformationRate"))
 {
@@ -32,7 +32,7 @@ BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_re
 //=================================================================================================//
 MomentumConstraint::MomentumConstraint(BodyPartByParticle &body_part)
     : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
-      total_momentum_(*particles_->getVariableByName<Vecd>("TotalMomentum")) {}
+      total_momentum_(*particles_->getVariableDataByName<Vecd>("TotalMomentum")) {}
 //=================================================================================================//
 PorousMediaStressRelaxationFirstHalf::
     PorousMediaStressRelaxationFirstHalf(BaseInnerRelation &body_inner_relation)

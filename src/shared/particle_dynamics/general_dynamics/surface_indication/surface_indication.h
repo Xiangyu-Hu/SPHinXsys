@@ -84,7 +84,7 @@ class FreeSurfaceIndication<Inner<SpatialTemporal>>
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<int> previous_surface_indicator_;
+    StdLargeVec<int> &previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
 };
 using SpatialTemporalFreeSurfaceIndicationInner = FreeSurfaceIndication<Inner<SpatialTemporal>>;
@@ -99,7 +99,7 @@ class FreeSurfaceIndication<Contact<>>
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(this->contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+            contact_Vol_.push_back(this->contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~FreeSurfaceIndication(){};

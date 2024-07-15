@@ -7,14 +7,14 @@ this repository will be transferred to the SPHinXsys team
 in the next few weeks.
 After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
 
-**Project Status**  
+**Project status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
 [![Windows](https://img.shields.io/badge/os-Windows-green.svg)](https://shields.io/)
 [![macOS](https://img.shields.io/badge/os-macOs-green.svg)](https://shields.io/)
 ![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
 
-**Project Communication**  
+**Project communication**  
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/sphinxsys.svg?style=social&label=Follow%20%40sphinxsys)](https://twitter.com/sphinxsys)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
@@ -102,7 +102,7 @@ Computer Physics Communications, 267, 108066, 2021.
 
 The numerical methods and computational algorithms in SPHinXsys are based on the following [publications](assets/publication.md).
 
-## Software Architecture
+## Software architecture
 
 SPHinXsys is cross-platform can be compiled and used in Windows, Linux and McOS systems.
 
@@ -115,7 +115,7 @@ For a Docker image, check <https://hub.docker.com/r/toshev/sphinxsys>.
 ## Interaction with SPHinXsys and the team
 
 Thank you for using and supporting our open-source project! 
-We value all feedbacks.
+We value each feedback.
 
 #### For SPHinXsys users:
 
@@ -128,7 +128,7 @@ Your input is crucial to us. We encourage you to report any issues you encounter
 
 We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
-#### For SPHinXsys Developers:
+#### For SPHinXsys developers:
 
 If you don't have a GitHub account yet, please register for one. Fork the SPHinXsys repository to add new features or improve existing ones. Once your changes are ready, commit them and initiate a pull request to have your contributions merged into the main repository.
 

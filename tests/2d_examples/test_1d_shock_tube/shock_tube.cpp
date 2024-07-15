@@ -115,8 +115,8 @@ int main(int ac, char *av[])
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
     BodyStatesRecordingToPlt body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(wave_body, "TotalEnergy");
-    body_states_recording.addVariableRecording<Real>(wave_body, "Density");
+    body_states_recording.addToWrite<Real>(wave_body, "TotalEnergy");
+    body_states_recording.addToWrite<Real>(wave_body, "Density");
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(wave_body);
     //----------------------------------------------------------------------

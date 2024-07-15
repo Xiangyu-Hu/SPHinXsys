@@ -106,7 +106,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           DataDelegateSimple(body_part.getSPHBody()),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
 
@@ -148,7 +148,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
@@ -182,13 +182,13 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 
         if (pos_[index_i][2] < 2.0 * sph_body_.sph_adaptation_->ReferenceSpacing())
         {
-            muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-            muscle_material_.local_s0_[index_i] = face_norm;
+            (*muscle_material_.local_f0_)[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+            (*muscle_material_.local_s0_)[index_i] = face_norm;
         }
         else
         {
-            muscle_material_.local_f0_[index_i] = Vecd::Zero();
-            muscle_material_.local_s0_[index_i] = Vecd::Zero();
+            (*muscle_material_.local_f0_)[index_i] = Vecd::Zero();
+            (*muscle_material_.local_s0_)[index_i] = Vecd::Zero();
         }
     };
 };
@@ -214,7 +214,7 @@ class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public DataDelega
   public:
     explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
@@ -235,22 +235,18 @@ class ApplyStimulusCurrentToMyocardium : public LocalDynamics, public DataDelega
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &voltage_;
 };
-// Observer particle generator.
-class HeartObserver;
-template <>
-class ParticleGenerator<HeartObserver> : public ParticleGenerator<Observer>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** position and volume. */
-        positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
-        positions_.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
-        positions_.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
+    observation_points.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
+    observation_points.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
+    return observation_points;
 };
+
 /**
  * application dependent initial condition
  */
@@ -259,7 +255,7 @@ class ApplyStimulusCurrentToPKJ : public LocalDynamics, public DataDelegateSimpl
   public:
     explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
@@ -280,7 +276,8 @@ class ApplyStimulusCurrentToPKJ : public LocalDynamics, public DataDelegateSimpl
  */
 class NetworkWithExtraCheck;
 template <>
-class ParticleGenerator<NetworkWithExtraCheck> : public ParticleGenerator<Network>
+class ParticleGenerator<BaseParticles, NetworkWithExtraCheck>
+    : public ParticleGenerator<BaseParticles, Network>
 {
   protected:
     bool extraCheck(const Vecd &new_position) override
@@ -292,7 +289,9 @@ class ParticleGenerator<NetworkWithExtraCheck> : public ParticleGenerator<Networ
     };
 
   public:
-    ParticleGenerator(SPHBody &sph_body, Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
-        : ParticleGenerator<Network>(sph_body, starting_pnt, second_pnt, iterator, grad_factor){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
+        : ParticleGenerator<BaseParticles, Network>(
+              sph_body, base_particles, starting_pnt, second_pnt, iterator, grad_factor){};
 };
 } // namespace SPH

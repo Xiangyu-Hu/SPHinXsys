@@ -319,7 +319,7 @@ class LocalDiffusivityDefinition : public LocalQuantityDefinition<BodyPartByPart
   public:
     explicit LocalDiffusivityDefinition(BodyPartByParticle &body_part, Real local_diff)
         : LocalQuantityDefinition<BodyPartByParticle>(body_part),
-          thermal_conductivity(*particles_->getVariableByName<Real>("ThermalConductivity")),
+          thermal_conductivity(*particles_->getVariableDataByName<Real>("ThermalConductivity")),
           local_diff(local_diff){};
 
     void update(size_t index_i, Real dt)
@@ -353,9 +353,9 @@ class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
   public:
     explicit RobinBoundaryDefinition(SolidBody &diffusion_body)
         : LocalDynamics(diffusion_body), DataDelegateSimple(diffusion_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          phi_convection_(*(this->particles_->template getVariableByName<Real>("PhiConvection"))),
+          phi_convection_(*(this->particles_->template getVariableDataByName<Real>("PhiConvection"))),
           phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>("PhiInfinity"))){};
 
     void update(size_t index_i, Real dt)
@@ -385,7 +385,7 @@ class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParti
   public:
     explicit LocalConvectionDefinition(BodyPartByParticle &body_part, Real local_convection)
         : LocalQuantityDefinition<BodyPartByParticle>(body_part),
-          phi_convection_(*particles_->template getVariableByName<Real>("PhiConvection")),
+          phi_convection_(*particles_->template getVariableDataByName<Real>("PhiConvection")),
           local_convection_(local_convection){};
 
     void update(size_t index_i, Real dt)
@@ -400,28 +400,22 @@ class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParti
 
 using DiffusionBodyRelaxation =
     DiffusionBodyRelaxationComplex<BaseDiffusion, KernelGradientInner, KernelGradientContact, Robin>;
-//----------------------------------------------------------------------
-//	An observer body to measure temperature at given positions.
-//----------------------------------------------------------------------
-class TemperatureObserver;
-template <>
-class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<Observer>
-{
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** A line of measuring points at the given position. */
-        size_t number_of_observation_points = 5;
-        Real range_of_measure = H - 0.02;
-        Real start_of_measure = 0.01;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(
-                0.028, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the given position. */
+    size_t number_of_observation_points = 5;
+    Real range_of_measure = H - 0.02;
+    Real start_of_measure = 0.01;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(
+            0.028, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 #endif // WINDOWS_FRAME_DIFFUSION_D4_H

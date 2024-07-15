@@ -55,8 +55,8 @@ class VariableViscosity : public PairGeomAverageVariable<Real>
   public:
     VariableViscosity(BaseParticles *particles1, BaseParticles *particles2)
         : PairGeomAverageVariable<Real>(
-              *particles1->getVariableByName<Real>("VariableViscosity"),
-              *particles2->getVariableByName<Real>("VariableViscosity")){};
+              *particles1->getVariableDataByName<Real>("VariableViscosity"),
+              *particles2->getVariableDataByName<Real>("VariableViscosity")){};
     explicit VariableViscosity(BaseParticles *particles)
         : VariableViscosity(particles, particles){};
     virtual ~VariableViscosity(){};
@@ -175,7 +175,7 @@ class VorticityInner : public LocalDynamics, public DataDelegateInner
   protected:
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_;
-    StdLargeVec<AngularVecd> vorticity_;
+    StdLargeVec<AngularVecd> &vorticity_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

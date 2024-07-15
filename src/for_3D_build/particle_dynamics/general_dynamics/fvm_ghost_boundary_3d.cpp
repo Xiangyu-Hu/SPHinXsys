@@ -9,7 +9,7 @@ void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration()
 {
     ghost_bound_.second = ghost_bound_.first;
 
-    for (size_t index_i = 0; index_i != particles_->total_real_particles_; ++index_i)
+    for (size_t index_i = 0; index_i != particles_->TotalRealParticles(); ++index_i)
     {
         for (size_t neighbor_index = 0; neighbor_index != mesh_topology_[index_i].size(); ++neighbor_index)
         {
