@@ -2,6 +2,7 @@
 
 //---------------------------------------------------------------------------
 
+#include "base_data_type.h"
 #include "bidirectional_buffer.h"
 #include "density_correciton.h"
 #include "density_correciton.hpp"
@@ -10,6 +11,7 @@
 #include "pressure_boundary.h"
 #include "sphinxsys.h"
 #include <cmath>
+#include <filesystem>
 #include <functional>
 #include <gtest/gtest.h>
 #include <ostream>
@@ -17,7 +19,7 @@
 #include <numbers>
 #include <string>
 using namespace SPH;
-
+const Real t_ref = 0.25;
 //----------------------------------------------------------------------
 //	Circular buffer for checking convergence usage
 //----------------------------------------------------------------------
@@ -106,7 +108,7 @@ class ConvergenceChecker
         T percentage_difference = (range / average) * 100;
         percentage_difference_ = percentage_difference;
         std::cout << "converger percentage_difference_ :" << percentage_difference_ << "\n";
-        return percentage_difference < threshold;
+        return abs(percentage_difference) < threshold;
     }
 
   public:
@@ -279,7 +281,7 @@ struct FDA_nozzle_parameters
     double fluid_length = 200 * scale; // defined in mesh file
     double outlet_pressure = 0;
     // end time
-    double end_time = 500.0;
+    double end_time = 50.0;
 };
 
 void setup_directory(const std::string &path)
@@ -361,20 +363,32 @@ Real inlet_diameter = 0;
 //----------------------------------------------------------------------
 //	Define time dependent acceleration in x-direction
 //----------------------------------------------------------------------
+// TODO: add x_max in emitter zone to determined effectiness
 class TimeDependentAcceleration : public Gravity
 {
+    AlignedBoxShape &aligned_box_;
+    const int axis_;
     Real t_ref_, u_ref_, du_ave_dt_;
 
   public:
-    explicit TimeDependentAcceleration(Vecd gravity_vector)
-        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.), du_ave_dt_(0.) {}
+    explicit TimeDependentAcceleration(BodyAlignedBoxByCell &aligned_box_part, int axis, Vecd gravity_vector, Real t_ref, Real u_ref)
+        : Gravity(gravity_vector), aligned_box_(aligned_box_part.aligned_box_), axis_(axis), t_ref_(t_ref), u_ref_(u_ref), du_ave_dt_(0)
+    {
+    }
 
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        Real run_time_ = GlobalStaticVariables::physical_time_;
-        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
+        if (aligned_box_.checkUpperBound(axis_, position))
+        {
+            Real run_time_ = GlobalStaticVariables::physical_time_;
+            du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 
-        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0, 0.0) : global_acceleration_;
+            return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0, 0.0) : global_acceleration_;
+        }
+        else
+        {
+            return global_acceleration_;
+        }
     }
 };
 //----------------------------------------------------------------------
@@ -388,7 +402,10 @@ struct InflowVelocity
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_max_(0.0), radius_squared_(0.0), t_ref_(2.0) {}
+        : u_max_(2 * U_f), radius_squared_(0.0), t_ref_(t_ref)
+    {
+        std::cout << "u_max_ in parabolic flow is " << u_max_ << std::endl;
+    }
 
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
@@ -396,9 +413,9 @@ struct InflowVelocity
         pos[0] = 0; // set x direction to 0
         double radius_square = pos.squaredNorm();
         Real run_time = GlobalStaticVariables::physical_time_;
-        u_max_ = run_time < t_ref_ ? 0.5 * U_f * (1.0 - cos(Pi * run_time / t_ref_)) : U_f;
+        Real u_max = run_time < t_ref_ ? 0.5 * u_max_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_max_;
         radius_squared_ = pow(inlet_diameter * 0.5, 2);
-        double vel = u_max_ * (1 - radius_square / radius_squared_);
+        double vel = u_max * (1 - radius_square / radius_squared_);
         Vec3d target_velocity = Vec3d::UnitX() * vel;
 
         return target_velocity;
@@ -424,6 +441,67 @@ class ObserverRadial : public ObserverBody
     }
 };
 
+// Function template for writing CSV data
+template <typename T>
+void write_data_to_csv(std::ofstream &csv_output, const StdLargeVec<Vecd> &positions, const StdLargeVec<T> &properties, const std::string &property_name)
+{
+    // Write the header for Vecd type
+    if constexpr (std::is_same_v<T, Vecd>)
+    {
+        csv_output << "Position X,Position Y,Position Z," << property_name << " X," << property_name << " Y," << property_name << " Z\n";
+        for (size_t i = 0; i < positions.size(); i++)
+        {
+            csv_output << positions[i][0] << "," << positions[i][1] << "," << positions[i][2] << ","
+                       << properties[i][0] << "," << properties[i][1] << "," << properties[i][2] << "\n";
+        }
+    }
+    // Write the header for Real type
+    else if constexpr (std::is_same_v<T, Real>)
+    {
+        csv_output << "Position X,Position Y,Position Z," << property_name << "\n";
+        for (size_t i = 0; i < positions.size(); i++)
+        {
+            csv_output << positions[i][0] << "," << positions[i][1] << "," << positions[i][2] << ","
+                       << properties[i] << "\n";
+        }
+    }
+    csv_output.flush();
+}
+
+void write_observer_properties_to_output(ObserverBody &observer_body, const std::string property_name, fs::path output_path)
+{
+    // Retrieve positions
+    StdLargeVec<Vecd> &pos = observer_body.getBaseParticles().ParticlePositions();
+
+    // Determine the type of the property based on the name
+    if (property_name == "Velocity")
+    { // Example Vecd properties
+        auto *property_ptr = observer_body.getBaseParticles().getVariableByName<Vecd>(property_name);
+        if (!property_ptr)
+        {
+            throw std::runtime_error("Vecd property not found: " + property_name);
+        }
+        std::ofstream csv_output(output_path / ("observer_" + observer_body.getName() + "_" + property_name + ".csv"));
+        write_data_to_csv(csv_output, pos, *property_ptr, property_name);
+        csv_output.close();
+    }
+    else if (property_name == "Pressure")
+    { // Example Real properties
+        auto *property_ptr = observer_body.getBaseParticles().getVariableByName<Real>(property_name);
+        if (!property_ptr)
+        {
+            throw std::runtime_error("Real property not found: " + property_name);
+        }
+        std::ofstream csv_output(output_path / ("observer_" + observer_body.getName() + "_" + property_name + ".csv"));
+        write_data_to_csv(csv_output, pos, *property_ptr, property_name);
+        csv_output.close();
+    }
+    else
+    {
+        throw std::runtime_error("Invalid property name: " + property_name);
+    }
+}
+
 class RadialObserverContainer
 {
 
@@ -432,6 +510,7 @@ class RadialObserverContainer
     std::vector<std::unique_ptr<ObserverRadial>> observers_;
     std::vector<std::unique_ptr<ContactRelation>> contact_relations_;
     std::vector<std::unique_ptr<ObservingAQuantity<Vec3d>>> observing_quantities_;
+    std::vector<std::unique_ptr<BodyStatesRecordingToVtp>> body_state_recording_;
     std::vector<double> z_;
 
   public:
@@ -460,6 +539,9 @@ class RadialObserverContainer
         auto observer_contact = contact_relations_.back().get(); // Assuming this is a correct type derivation or has access to BaseContactRelation
         auto observing_velocity = std::make_unique<ObservingAQuantity<Vec3d>>(*observer_contact, "Velocity");
         observing_quantities_.push_back(std::move(observing_velocity));
+        auto body_state_recording = std::make_unique<BodyStatesRecordingToVtp>(*observers_.back());
+        body_state_recording->addVariableRecording<Vec3d>(*observers_.back(), "Velocity");
+        body_state_recording_.push_back(std::move(body_state_recording));
     }
 
     ObserverBody *get_observer(size_t index)
@@ -498,6 +580,22 @@ class RadialObserverContainer
             quantity->exec(); // Execute the observing function for each quantity
         }
     }
+
+    void writeToFile()
+    {
+        for (auto &body_state_recording : body_state_recording_)
+        {
+            body_state_recording->writeToFile(); // Write the body state output
+        }
+    }
+
+    void write_velocity_to_csv(fs::path output_path)
+    {
+        for (auto &observers : observers_)
+        {
+            write_observer_properties_to_output(*observers, "Velocity", output_path);
+        }
+    }
 };
 
 void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
@@ -520,7 +618,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     const double Q_f = params.Q_f;
     U_f = Q_f / params.inlet_area;
     double U_max = Q_f / params.throat_area * 2;                                        // U max suppose to happend at throat
-    const double max_pressure_diff = 250.;                                              // maximum pressure difference found from exp data
+    const double max_pressure_diff = SMAX(250., 450.);                                  // maximum pressure difference found from exp data is 250. low rest max pressure diff is about 450
     double c_f = SMAX(10. * U_max, pow(max_pressure_diff / 0.01 / params.rho0_f, 0.5)); // Speed of sound
     U_max = SMAX(c_f * 0.1, U_max);
 
@@ -611,7 +709,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation())
+    // if (sph_system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -619,7 +717,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_wall_body_to_vtp(wall_boundary);
+        // BodyStatesRecordingToVtp write_wall_body_to_vtp(wall_boundary);
         // Write the particle reload files.
         ReloadParticleIO write_particle_reload_files(wall_boundary);
         // A  Physics relaxation step.
@@ -629,7 +727,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         //----------------------------------------------------------------------
         random_inserted_body_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        write_wall_body_to_vtp.writeToFile(0);
+        // write_wall_body_to_vtp.writeToFile(0);
         //----------------------------------------------------------------------
         //	Particle relaxation loop.
         //----------------------------------------------------------------------
@@ -641,12 +739,12 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             if (ite_p % 200 == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-                write_wall_body_to_vtp.writeToFile(ite_p);
+                // write_wall_body_to_vtp.writeToFile(ite_p);
             }
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
         // Output particles position for reload.
-        write_particle_reload_files.writeToFile(0);
+        // write_particle_reload_files.writeToFile(0);
     }
     //----------------------------------------------------------------------
     //	Topology
@@ -657,7 +755,9 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    TimeDependentAcceleration time_dependent_acceleration(Vecd::Zero());
+    BodyAlignedBoxByCell left_time_dependent_region(
+        water_block, makeShared<AlignedBoxShape>(Transform(Vecd(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+    TimeDependentAcceleration time_dependent_acceleration(left_time_dependent_region, xAxis, Vecd::Zero(), t_ref, U_f);
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** zeroth order consistency */
@@ -698,7 +798,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
     BodyAlignedBoxByCell right_emitter(
         water_block, makeShared<AlignedBoxShape>(Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(right_bidirectional_translation)), bidirectional_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<RightInflowPressure, SequencedPolicy> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis); /** output parameters */
+    fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis); /** output parameters */
 
     /** pressure boundary condition. */
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
@@ -716,6 +816,8 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     ContactRelation axial_velocity_observer_contact(observer_axial, {&water_block});
     ObservingAQuantity<Vecd>
         update_axial_observer_velocity(axial_velocity_observer_contact, "Velocity");
+    ObservingAQuantity<Real>
+        update_axial_observer_pressure(axial_velocity_observer_contact, "Pressure");
     // Radial
     RadialObserverContainer observer_radial_container(sph_system);
     for (auto &pos : radiao_observer_X)
@@ -728,26 +830,53 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp observer_axial_recording(observer_axial);
     observer_axial_recording.addVariableRecording<Vecd>(observer_axial, "Velocity");
+    observer_axial_recording.addVariableRecording<Real>(observer_axial, "Pressure");
     BodyStatesRecordingToVtp water_body_recording(water_block);
     water_body_recording.addVariableRecording<Real>(water_block, "Pressure");
     water_body_recording.addVariableRecording<int>(water_block, "Indicator");
     water_body_recording.addVariableRecording<Real>(water_block, "Density");
     water_body_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
     water_body_recording.addVariableRecording<Vec3d>(water_block, "KernelSummation");
+    BodyStatesRecordingToVtp wall_body_recording(wall_boundary);
     //----------------------------------------------------------------------
     //	Defined convergence checker
     //----------------------------------------------------------------------
     ConvergenceChecker<double> conv_checker(10, 0.5); // Buffer of 10 values, convergence threshold of 0.5 percent
     bool is_converged = false;
     size_t mid_index_of_observer = number_of_axial_observer / 2.0;
+    size_t first_index_of_observer = 0; // the observer near by interface
+    size_t last_index_of_observer = 0;  // the observer near by interface
+    {
+        Real init_dist_x = 100;
+        Real last_dist_x = 100;
+        for (size_t index = 0; index < mid_index_of_observer; index++)
+        {
+            auto x = observer_axial.getBaseParticles().ParticlePositions()[index][0];
+            if (init_dist_x > abs(x_min_domain + boundary_width - x))
+            {
+                init_dist_x = abs(x_min_domain + boundary_width - x);
+                first_index_of_observer = index;
+            }
+            if (last_dist_x > abs(x_min_domain + boundary_width - x))
+            {
+                last_dist_x = abs(x_min_domain + boundary_width - x);
+                last_index_of_observer = index;
+            }
+        }
+        std::cout << "first_index_of_observer is " << first_index_of_observer << ", distance is " << init_dist_x << ", x location is "
+                  << observer_axial.getBaseParticles().ParticlePositions()[first_index_of_observer][0] << "last_index_of_observer is " << last_index_of_observer << last_dist_x << ", x location is " << observer_axial.getBaseParticles().ParticlePositions()[last_index_of_observer][0] << std::endl;
+    }
     // StdLargeVec<Vecd> &pos_radial = observer_axial.getBaseParticles().ParticlePositions();
     StdLargeVec<Vecd> &vel_radial = *observer_axial.getBaseParticles().getVariableByName<Vecd>("Velocity");
     auto &vel_of_mid_index_observer = vel_radial[mid_index_of_observer][0];
+    auto &vel_of_first_index_observer = vel_radial[first_index_of_observer][0];
+    auto &vel_of_last_index_observer = vel_radial[last_index_of_observer][0];
     // auto &pos_y_of_mid_index_observer = pos_radial[mid_index_of_observer][1];
 
-    int convergence_checker_output_interval = 50;
+    size_t convergence_checker_output_interval = 100;
     std::ofstream file_mid_observer(sph_system.getIOEnvironment().output_folder_ + "/output_velocity_of_mid_observer_NP" + std::to_string(number_of_particles) + ".csv");
-    file_mid_observer << "Time,Velocity X,Convergence Rate\n";
+    file_mid_observer << "Time,Velocity X,Velocity X at first index,Velocity X at last index,Convergence Rate\n";
+    file_mid_observer.flush(); // Ensure data is written to the file immediately
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -765,7 +894,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = params.end_time; /**< End time. */
-    Real Output_Time = 0.25;         /**< Time stamps for output of body states. */
+    Real Output_Time = 1.0;          /**< Time stamps for output of body states. */
     Real dt = 0.0;                   /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -780,8 +909,10 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //	First output before the main loop.
     //----------------------------------------------------------------------
     update_axial_observer_velocity.exec();
+    update_axial_observer_pressure.exec();
     observer_axial_recording.writeToFile();
     water_body_recording.writeToFile();
+    wall_body_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -853,22 +984,30 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
                     std::cout << "Converged at iteration " << vel_of_mid_index_observer << std::endl;
                 }
                 if (std::isfinite(conv_checker.get_percentage_difference()))
-                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << conv_checker.get_percentage_difference() << "\n";
+                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << vel_of_first_index_observer << "," << vel_of_last_index_observer << "," << conv_checker.get_percentage_difference() << "\n";
                 else
-                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << 0 << "\n";
+                    file_mid_observer << GlobalStaticVariables::physical_time_ << "," << vel_of_mid_index_observer << "," << vel_of_first_index_observer << "," << vel_of_last_index_observer << "," << 0 << "\n";
 
+                file_mid_observer.flush(); // Ensure data is written to the file immediately
                 // calculate_observer_avg_vel();
             }
         }
         TickCount t2 = TickCount::now();
-        axial_velocity_observer_contact.updateConfiguration();
         observer_radial_container.update_configureations();
         observer_radial_container.update_observing_quantities();
+        observer_radial_container.writeToFile();
+        observer_radial_container.write_velocity_to_csv(in_output.output_folder_);
+        axial_velocity_observer_contact.updateConfiguration();
+        update_axial_observer_velocity.exec();
+        update_axial_observer_pressure.exec();
         observer_axial_recording.writeToFile();
+        write_observer_properties_to_output(observer_axial, "Velocity", in_output.output_folder_);
+        write_observer_properties_to_output(observer_axial, "Pressure", in_output.output_folder_);
         water_body_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
+    file_mid_observer.close();
     TickCount t4 = TickCount::now();
 
     TimeInterval tt;
@@ -887,7 +1026,8 @@ int main(int argc, char *argv[])
 {
     const double Re = 500;
     FDA_nozzle_parameters params;
-    std::vector<int> number_of_particles = {5}; // Create a vector with desired particle counts
+    // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
+    std::vector<int> number_of_particles = {15, 20};
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
