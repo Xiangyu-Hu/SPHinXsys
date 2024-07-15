@@ -267,6 +267,14 @@ class MeshWithGridDataPackages : public Mesh
             },
             ap);
     }
+
+    /** Iterator on a collection of mesh data packages. sequential computing. */
+    template <typename FunctionOnData>
+    void package_for(const FunctionOnData &function)
+    {
+        for (size_t i = 2; i != num_grid_pkgs_; ++i)
+            function(i);
+    }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H
