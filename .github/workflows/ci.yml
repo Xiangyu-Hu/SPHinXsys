@@ -96,7 +96,9 @@ jobs:
             -B ${{github.workspace}}/build
 
       - name: Build libraries and tests which are using SYCL
-        run: cmake --build build --config Release --verbose
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cmake --build build --config Release --verbose
 
       - name: Test with the first try
         id: first-try
