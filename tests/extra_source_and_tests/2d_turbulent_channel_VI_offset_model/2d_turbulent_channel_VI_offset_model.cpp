@@ -120,7 +120,9 @@ int main(int ac, char *av[])
 
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     //Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_block_inner);
+    
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     
     /** Density relaxation algorithm by using position verlet time stepping. */
