@@ -28,7 +28,7 @@ env:
 jobs:
   ###############################################################################
   Linux-sycl:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
