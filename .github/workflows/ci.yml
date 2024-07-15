@@ -104,6 +104,7 @@ jobs:
       - name: Test with the first try
         id: first-try
         run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cd build/tests/tests_sycl
           ctest  --output-on-failure --timeout 1000
         continue-on-error: true
@@ -112,6 +113,7 @@ jobs:
         id: second-try
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm        
           cdbuild/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
@@ -120,6 +122,7 @@ jobs:
         id: third-try
         if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
@@ -128,6 +131,7 @@ jobs:
         id: fourth-try
         if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
@@ -135,6 +139,7 @@ jobs:
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
 
