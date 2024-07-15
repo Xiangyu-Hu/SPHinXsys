@@ -82,8 +82,8 @@ jobs:
 
       - name: Generate buildsystem
         run: |
+          # sycl environment has to be setup for each session
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm
-          sycl-ls
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
@@ -97,13 +97,14 @@ jobs:
 
       - name: Build libraries and tests which are using SYCL
         run: |
+          # sycl environment has to be setup for each session        
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cmake --build build --config Release --verbose
 
       - name: Test with the first try
         id: first-try
         run: |
-          cd build/test/test_sycl 
+          cd build/tests/tests_sycl
           ctest  --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -111,7 +112,7 @@ jobs:
         id: second-try
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
-          cd build/test/test_sycl 
+          cdbuild/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -119,7 +120,7 @@ jobs:
         id: third-try
         if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
-          cd build/test/test_sycl
+          cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -127,14 +128,14 @@ jobs:
         id: fourth-try
         if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
-          cd build/test/test_sycl
+          cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
-          cd build/test/test_sycl
+          cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
