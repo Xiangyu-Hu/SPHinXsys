@@ -6,7 +6,7 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 RepulsionForce<Contact<Inner<>>>::
-    RepulsionForce(SelfSurfaceContactRelation &self_contact_relation)
+    RepulsionForce(BaseInnerRelation &self_contact_relation)
     : RepulsionForce<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionForce"),
       ForcePrior(particles_, "SelfRepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
@@ -28,10 +28,10 @@ void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
         // force to mimic pressure
         force -= 2.0 * (p_star + impedance_p) * e_ij * inner_neighborhood.dW_ij_[n] * Vol_[index_j];
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
+RepulsionForce<Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
     : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
       ForcePrior(particles_, "RepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
@@ -66,10 +66,10 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
             force -= 2.0 * p_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Contact<Wall>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
+RepulsionForce<Contact<Wall>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
     : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
       ForcePrior(particles_, "RepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
@@ -99,10 +99,10 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             force -= 2.0 * p_i * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
-    repulsion_force_[index_i] = force * Vol_[index_i];
+    repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
 //=================================================================================================//
-RepulsionForce<Wall, Contact<>>::RepulsionForce(SurfaceContactRelation &solid_body_contact_relation)
+RepulsionForce<Wall, Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
     : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
       ForcePrior(particles_, "RepulsionForce")
 {
