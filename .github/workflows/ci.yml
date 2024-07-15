@@ -55,7 +55,7 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt update
           sudo apt install intel-basekit
-          
+
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
@@ -82,6 +82,7 @@ jobs:
       - name: Generate buildsystem
         run: |
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          ls /opt/intel/oneapi/compiler/2024.2/lib
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
