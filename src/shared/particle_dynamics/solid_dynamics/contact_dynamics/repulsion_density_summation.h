@@ -118,7 +118,7 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateC
 class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, DataDelegateInner>
 {
   private:
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
 
   public:
     explicit ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation);

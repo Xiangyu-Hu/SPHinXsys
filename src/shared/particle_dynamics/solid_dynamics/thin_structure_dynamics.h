@@ -356,6 +356,27 @@ class InitialShellCurvature : public LocalDynamics, public DataDelegateInner
 };
 
 /**
+ * @class ShellCurvature
+ * @brief  Update shell curvature during deformation
+ */
+class ShellCurvatureUpdate : public LocalDynamics, public DataDelegateSimple
+{
+  public:
+    explicit ShellCurvatureUpdate(SPHBody &sph_body);
+    void update(size_t index_i, Real);
+
+  private:
+    Matd *transformation_matrix0_;
+    Matd *F_;
+    Matd *F_bending_;
+
+    Real *k1_; // first principle curvature
+    Real *k2_; // second principle curvature
+
+    Matd *dn_0_;
+};
+
+/**
  * @class AverageShellCurvature
  * @brief  Calculate shell curvature using the cut-off radius of contact fluid body
  */

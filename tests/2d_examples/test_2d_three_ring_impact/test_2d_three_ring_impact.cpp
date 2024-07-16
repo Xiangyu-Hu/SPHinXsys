@@ -81,7 +81,7 @@ class ParticleGenerator<SurfaceParticles, ShellRing> : public ParticleGenerator<
 class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataDelegateSimple
 {
   private:
-    StdLargeVec<Vec2d> *vel_;
+    Vec2d *vel_;
     Vec2d initial_velocity_;
 
   public:
@@ -91,7 +91,7 @@ class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataD
           initial_velocity_(std::move(initial_velocity)){};
     inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)
     {
-        (*vel_)[index_i] = initial_velocity_;
+        vel_[index_i] = initial_velocity_;
     }
 };
 
@@ -258,7 +258,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Contact method
     // curvature update
     SimpleDynamics<thin_structure_dynamics::InitialShellCurvature> initial_curvature_m(ring_m_inner);
-    SimpleDynamics<thin_structure_dynamics::ShellCurvatureUpdate> curvature_m_update(ring_m_inner);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvatureUpdate> curvature_m_update(ring_m_body);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> average_curvature_m_with_s_kernel(curvature_inner_m_with_s_kernel);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> average_curvature_s_with_m_kernel(curvature_inner_s_with_m_kernel);
 
@@ -297,9 +297,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Check
     auto check_nan = [&](BaseParticles *particles)
     {
-        const auto &pos_ = particles->ParticlePositions();
-        for (const auto &pos : pos_)
-            if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+        Vecd *pos = particles->getVariableDataByName<Vecd>("Position");
+        for (size_t index_i = 0; index_i < particles->TotalRealParticles(); ++index_i)
+            if (std::isnan(pos[index_i][0]) || std::isnan(pos[index_i][1]) || std::isnan(pos[index_i][2]))
                 throw std::runtime_error("position has become nan");
     };
 

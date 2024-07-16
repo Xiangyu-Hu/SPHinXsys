@@ -301,14 +301,14 @@ void InitialShellCurvature::update(size_t index_i, Real)
     k2_[index_i] = k2;
 }
 //=================================================================================================//
-ShellCurvatureUpdate::ShellCurvatureUpdate(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      transformation_matrix0_(*particles_->getVariableDataByName<Matd>("TransformationMatrix")),
-      F_(*particles_->getVariableDataByName<Matd>("DeformationGradient")),
-      F_bending_(*particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
-      k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      dn_0_(*particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
+ShellCurvatureUpdate::ShellCurvatureUpdate(SPHBody &sph_body)
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+      transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
+      F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
+      F_bending_(particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
+      k1_(particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
+      k2_(particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
+      dn_0_(particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
 //=================================================================================================//
 void ShellCurvatureUpdate::update(size_t index_i, Real)
 {

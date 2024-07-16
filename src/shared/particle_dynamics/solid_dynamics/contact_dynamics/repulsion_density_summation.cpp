@@ -110,9 +110,7 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 ShellSelfContactDensitySummation::ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation)
     : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionDensity"),
-      mass_(*particles_->getVariableDataByName<Real>("Mass"))
-{
-}
+      mass_(particles_->getVariableDataByName<Real>("Mass")) {}
 //=================================================================================================//
 void ShellSelfContactDensitySummation::interaction(size_t index_i, Real dt)
 {

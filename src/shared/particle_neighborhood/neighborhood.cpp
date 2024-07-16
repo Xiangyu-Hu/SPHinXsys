@@ -402,9 +402,9 @@ ShellNeighborBuilderInnerWithContactKernel::ShellNeighborBuilderInnerWithContact
 NeighborBuilderShellSelfContact::
     NeighborBuilderShellSelfContact(SPHBody &body)
     : BaseNeighborBuilderContactShell(body),
-      k1_(*body.getBaseParticles().registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(*body.getBaseParticles().registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      pos0_(*body.getBaseParticles().registerSharedVariableFrom<Vecd>("InitialPosition", "Position"))
+      k1_(body.getBaseParticles().registerSharedVariable<Real>("1stPrincipleCurvature")),
+      k2_(body.getBaseParticles().registerSharedVariable<Real>("2ndPrincipleCurvature")),
+      pos0_(body.getBaseParticles().registerSharedVariableFrom<Vecd>("InitialPosition", "Position"))
 {
     // create a unreduced kernel for shell self contact
     Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();

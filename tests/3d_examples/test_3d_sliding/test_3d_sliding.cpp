@@ -168,7 +168,7 @@ void block_sliding(
     auto check_disp = [&]()
     {
         const Vec3d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
-        const Vec3d pos_observer = (*write_cube_displacement.getObservedQuantity())[0];
+        const Vec3d pos_observer = write_cube_displacement.getObservedQuantity()[0];
         const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
         for (int n = 0; n < 3; n++)
             ASSERT_NEAR(abs(rotated_disp[n]), abs(analytical_disp[n]), max_error);

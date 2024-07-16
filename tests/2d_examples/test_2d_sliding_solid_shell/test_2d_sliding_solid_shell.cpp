@@ -227,7 +227,7 @@ void run_simulation()
 
     // gtest
     const Vec2d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
-    const Vec2d disp = (*write_free_cube_displacement.getObservedQuantity())[0] - observation_location[0];
+    const Vec2d disp = write_free_cube_displacement.getObservedQuantity()[0] - observation_location[0];
     for (int n = 0; n < 2; n++)
         ASSERT_NEAR(abs(disp[n]), abs(analytical_disp[n]), 0.05 * analytical_disp.norm());
 }

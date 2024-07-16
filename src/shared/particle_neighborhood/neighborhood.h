@@ -295,9 +295,9 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   private:
-    StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
-    StdLargeVec<Vecd> &pos0_;
+    Real *k1_; // 1st principle curvature of contact body
+    Real *k2_; // 2nd principle curvature of contact body
+    Vecd *pos0_;
 };
 
 /**
