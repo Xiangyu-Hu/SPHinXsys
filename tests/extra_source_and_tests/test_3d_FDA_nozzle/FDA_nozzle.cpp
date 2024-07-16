@@ -19,7 +19,7 @@
 #include <numbers>
 #include <string>
 using namespace SPH;
-const Real t_ref = 0.25;
+const Real t_ref = 0.1;
 //----------------------------------------------------------------------
 //	Circular buffer for checking convergence usage
 //----------------------------------------------------------------------
@@ -73,7 +73,6 @@ class CircularBuffer
         return sum / buffer.size();
     }
 };
-
 //----------------------------------------------------------------------
 //	ConvergenceChecker
 //----------------------------------------------------------------------
@@ -367,18 +366,17 @@ Real inlet_diameter = 0;
 class TimeDependentAcceleration : public Gravity
 {
     AlignedBoxShape &aligned_box_;
-    const int axis_;
     Real t_ref_, u_ref_, du_ave_dt_;
 
   public:
     explicit TimeDependentAcceleration(BodyAlignedBoxByCell &aligned_box_part, int axis, Vecd gravity_vector, Real t_ref, Real u_ref)
-        : Gravity(gravity_vector), aligned_box_(aligned_box_part.aligned_box_), axis_(axis), t_ref_(t_ref), u_ref_(u_ref), du_ave_dt_(0)
+        : Gravity(gravity_vector), aligned_box_(aligned_box_part.getAlignedBoxShape()), t_ref_(t_ref), u_ref_(u_ref), du_ave_dt_(0)
     {
     }
 
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        if (aligned_box_.checkUpperBound(axis_, position))
+        if (aligned_box_.checkUpperBound(position))
         {
             Real run_time_ = GlobalStaticVariables::physical_time_;
             du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
@@ -437,7 +435,7 @@ class ObserverRadial : public ObserverBody
   public:
     ObserverRadial(SPHSystem &sph_system, std::string name, double x, double diameter) : ObserverBody(sph_system, name) // Assuming the observer has a predefined shape or characteristic name.
     {
-        this->generateParticles<BaseParticles, Observer>(ObserverRadialGenerator(x, diameter));
+        this->generateParticles<ObserverParticles>(ObserverRadialGenerator(x, diameter));
     }
 };
 
@@ -475,25 +473,21 @@ void write_observer_properties_to_output(ObserverBody &observer_body, const std:
 
     // Determine the type of the property based on the name
     if (property_name == "Velocity")
-    { // Example Vecd properties
-        auto *property_ptr = observer_body.getBaseParticles().getVariableByName<Vecd>(property_name);
-        if (!property_ptr)
-        {
-            throw std::runtime_error("Vecd property not found: " + property_name);
-        }
+    {   // Example Vecd properties
+        // TODO: need to do a precaution for invalid property_ptr
+        auto &property_ptr = *observer_body.getBaseParticles().getVariableDataByName<Vecd>(property_name);
+
         std::ofstream csv_output(output_path / ("observer_" + observer_body.getName() + "_" + property_name + ".csv"));
-        write_data_to_csv(csv_output, pos, *property_ptr, property_name);
+        write_data_to_csv(csv_output, pos, property_ptr, property_name);
         csv_output.close();
     }
     else if (property_name == "Pressure")
-    { // Example Real properties
-        auto *property_ptr = observer_body.getBaseParticles().getVariableByName<Real>(property_name);
-        if (!property_ptr)
-        {
-            throw std::runtime_error("Real property not found: " + property_name);
-        }
+    {   // Example Real properties
+        // TODO: need to do a precaution for invalid property_ptr
+        auto &property_ptr = *observer_body.getBaseParticles().getVariableDataByName<Real>(property_name);
+
         std::ofstream csv_output(output_path / ("observer_" + observer_body.getName() + "_" + property_name + ".csv"));
-        write_data_to_csv(csv_output, pos, *property_ptr, property_name);
+        write_data_to_csv(csv_output, pos, property_ptr, property_name);
         csv_output.close();
     }
     else
@@ -540,7 +534,7 @@ class RadialObserverContainer
         auto observing_velocity = std::make_unique<ObservingAQuantity<Vec3d>>(*observer_contact, "Velocity");
         observing_quantities_.push_back(std::move(observing_velocity));
         auto body_state_recording = std::make_unique<BodyStatesRecordingToVtp>(*observers_.back());
-        body_state_recording->addVariableRecording<Vec3d>(*observers_.back(), "Velocity");
+        body_state_recording->addToWrite<Vec3d>(*observers_.back(), "Velocity");
         body_state_recording_.push_back(std::move(body_state_recording));
     }
 
@@ -617,7 +611,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     inlet_diameter = params.inlet_diameter;
     const double Q_f = params.Q_f;
     U_f = Q_f / params.inlet_area;
-    double U_max = Q_f / params.throat_area * 2;                                        // U max suppose to happend at throat
+    double U_max = Q_f / params.throat_area * 2.5;                                      // U max suppose to happend at throat
     const double max_pressure_diff = SMAX(250., 450.);                                  // maximum pressure difference found from exp data is 250. low rest max pressure diff is about 450
     double c_f = SMAX(10. * U_max, pow(max_pressure_diff / 0.01 / params.rho0_f, 0.5)); // Speed of sound
     U_max = SMAX(c_f * 0.1, U_max);
@@ -721,7 +715,9 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         // Write the particle reload files.
         ReloadParticleIO write_particle_reload_files(wall_boundary);
         // A  Physics relaxation step.
-        RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
+        // RelaxationStepInner relaxation_step_inner(wall_boundary_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
+
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -756,7 +752,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
     BodyAlignedBoxByCell left_time_dependent_region(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vecd(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vecd(left_bidirectional_translation)), bidirectional_buffer_halfsize));
     TimeDependentAcceleration time_dependent_acceleration(left_time_dependent_region, xAxis, Vecd::Zero(), t_ref, U_f);
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -779,26 +775,28 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
         viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
+    // InteractionWithUpdate<fluid_dynamics::TransportVelocityKimitedCorrectionCorrectedComplex<BulkParticles>>
+    //     transport_velocity_correction(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionCorrectedComplex<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Set up boundary condition
     //----------------------------------------------------------------------
     /** delete outflow particles */
     BodyAlignedBoxByCell left_disposer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(left_disposer_translation)), bidirectional_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer, xAxis);
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(left_disposer_translation)), bidirectional_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
     BodyAlignedBoxByCell right_disposer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vecd(right_disposer_translation)), bidirectional_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer, xAxis);
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vecd(right_disposer_translation)), bidirectional_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer);
     /** bidirectional buffer */
     BodyAlignedBoxByCell left_emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vecd(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vecd(left_bidirectional_translation)), bidirectional_buffer_halfsize));
     // fluid_dynamics::BidirectionalBuffer<LeftInflowPressure, SequencedPolicy> left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer, xAxis);
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer);
     BodyAlignedBoxByCell right_emitter(
-        water_block, makeShared<AlignedBoxShape>(Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(right_bidirectional_translation)), bidirectional_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer, xAxis); /** output parameters */
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer); /** output parameters */
 
     /** pressure boundary condition. */
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
@@ -812,7 +810,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //----------------------------------------------------------------------
     // Axial
     ObserverBody observer_axial(sph_system, "fluid_observer_axial");
-    observer_axial.generateParticles<BaseParticles, Observer>(ObersverAxialGenerator(x_min_domain, x_max_domain, number_of_axial_observer));
+    observer_axial.generateParticles<ObserverParticles>(ObersverAxialGenerator(x_min_domain, x_max_domain, number_of_axial_observer));
     ContactRelation axial_velocity_observer_contact(observer_axial, {&water_block});
     ObservingAQuantity<Vecd>
         update_axial_observer_velocity(axial_velocity_observer_contact, "Velocity");
@@ -829,14 +827,14 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp observer_axial_recording(observer_axial);
-    observer_axial_recording.addVariableRecording<Vecd>(observer_axial, "Velocity");
-    observer_axial_recording.addVariableRecording<Real>(observer_axial, "Pressure");
+    observer_axial_recording.addToWrite<Vecd>(observer_axial, "Velocity");
+    observer_axial_recording.addToWrite<Real>(observer_axial, "Pressure");
     BodyStatesRecordingToVtp water_body_recording(water_block);
-    water_body_recording.addVariableRecording<Real>(water_block, "Pressure");
-    water_body_recording.addVariableRecording<int>(water_block, "Indicator");
-    water_body_recording.addVariableRecording<Real>(water_block, "Density");
-    water_body_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
-    water_body_recording.addVariableRecording<Vec3d>(water_block, "KernelSummation");
+    water_body_recording.addToWrite<Real>(water_block, "Pressure");
+    water_body_recording.addToWrite<int>(water_block, "Indicator");
+    water_body_recording.addToWrite<Real>(water_block, "Density");
+    water_body_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
+    water_body_recording.addToWrite<Vec3d>(water_block, "KernelSummation");
     BodyStatesRecordingToVtp wall_body_recording(wall_boundary);
     //----------------------------------------------------------------------
     //	Defined convergence checker
@@ -847,27 +845,33 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     size_t first_index_of_observer = 0; // the observer near by interface
     size_t last_index_of_observer = 0;  // the observer near by interface
     {
-        Real init_dist_x = 100;
-        Real last_dist_x = 100;
-        for (size_t index = 0; index < mid_index_of_observer; index++)
+        Real init_dist_x = std::numeric_limits<Real>::max(); // Initialize with max value to ensure any first comparison is smaller
+        Real last_dist_x = std::numeric_limits<Real>::max(); // Initialize with max value for correct comparison
+        for (size_t index = 0; index < number_of_axial_observer; index++)
         {
             auto x = observer_axial.getBaseParticles().ParticlePositions()[index][0];
-            if (init_dist_x > abs(x_min_domain + boundary_width - x))
+            Real dist_to_min = abs(x_min_domain + boundary_width - x);
+            Real dist_to_max = abs(x_max_domain + boundary_width - x);
+
+            if (init_dist_x > dist_to_min)
             {
-                init_dist_x = abs(x_min_domain + boundary_width - x);
+                init_dist_x = dist_to_min;
                 first_index_of_observer = index;
             }
-            if (last_dist_x > abs(x_min_domain + boundary_width - x))
+            if (last_dist_x > dist_to_max)
             {
-                last_dist_x = abs(x_min_domain + boundary_width - x);
+                last_dist_x = dist_to_max;
                 last_index_of_observer = index;
             }
         }
-        std::cout << "first_index_of_observer is " << first_index_of_observer << ", distance is " << init_dist_x << ", x location is "
-                  << observer_axial.getBaseParticles().ParticlePositions()[first_index_of_observer][0] << "last_index_of_observer is " << last_index_of_observer << last_dist_x << ", x location is " << observer_axial.getBaseParticles().ParticlePositions()[last_index_of_observer][0] << std::endl;
+        std::cout << "first_index_of_observer is " << first_index_of_observer << ", distance is " << init_dist_x
+                  << ", x location is " << observer_axial.getBaseParticles().ParticlePositions()[first_index_of_observer][0]
+                  << "\nlast_index_of_observer is " << last_index_of_observer << ", distance is " << last_dist_x
+                  << ", x location is " << observer_axial.getBaseParticles().ParticlePositions()[last_index_of_observer][0] << std::endl;
     }
     // StdLargeVec<Vecd> &pos_radial = observer_axial.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_radial = *observer_axial.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    StdLargeVec<Vecd> &vel_radial = *observer_axial.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+
     auto &vel_of_mid_index_observer = vel_radial[mid_index_of_observer][0];
     auto &vel_of_first_index_observer = vel_radial[first_index_of_observer][0];
     auto &vel_of_last_index_observer = vel_radial[last_index_of_observer][0];
@@ -894,7 +898,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = params.end_time; /**< End time. */
-    Real Output_Time = 1.0;          /**< Time stamps for output of body states. */
+    Real Output_Time = 0.1;          /**< Time stamps for output of body states. */
     Real dt = 0.0;                   /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -913,6 +917,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     observer_axial_recording.writeToFile();
     water_body_recording.writeToFile();
     wall_body_recording.writeToFile();
+    corrected_configuration_fluid.exec();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -926,8 +931,8 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
-            corrected_configuration_fluid.exec();
             viscous_acceleration.exec();
+            corrected_configuration_fluid.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -935,7 +940,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+                dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
                 pressure_relaxation.exec(dt);
                 kernel_summation.exec();
                 left_inflow_pressure_condition.exec(dt);
