@@ -88,7 +88,8 @@ namespace fluid_dynamics
 	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
 		: GetVelocityGradient<DataDelegateInner>(inner_relation),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient")),
-		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
+		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+		turbu_B_(*particles_->getVariableByName<Matd>("TurbulentLinearGradientCorrectionMatrix"))
 	{
 		this->particles_->addVariableToSort<Matd>("TurbulentVelocityGradient");
 		this->particles_->addVariableToWrite<Matd>("TurbulentVelocityGradient");
@@ -116,7 +117,8 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void GetVelocityGradient<Inner<>>::update(size_t index_i, Real dt)
 	{
-	    velocity_gradient_[index_i] *= B_[index_i];
+	    //velocity_gradient_[index_i] *= B_[index_i];
+		velocity_gradient_[index_i] *= turbu_B_[index_i];
 	}
 	//=================================================================================================//
 	GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation& contact_relation)
@@ -1086,6 +1088,31 @@ namespace fluid_dynamics
 		}
 	}
 //=================================================================================================//
+	void TurbulentLinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real dt)
+	{
+    	Matd local_configuration = Eps * Matd::Identity();
+
+    	const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    	{
+        	size_t index_j = inner_neighborhood.j_[n];
+        	Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+        	Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
+        	local_configuration -= r_ji * gradW_ij.transpose();
+    	}
+    	turbu_B_[index_i] = local_configuration;
+	}
+	//=================================================================================================//
+	void TurbulentLinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
+	{
+    	Real det_sqr = SMAX(turbu_alpha_ - turbu_B_[index_i].determinant(), Real(0));
+    	Matd inverse = turbu_B_[index_i].inverse();
+    	Real weight1_ = turbu_B_[index_i].determinant() / (turbu_B_[index_i].determinant() + det_sqr);
+    	Real weight2_ = det_sqr / (turbu_B_[index_i].determinant() + det_sqr);
+    	turbu_B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
+	}
+
+
 //=================================================================================================//
 //*********************TESTING MODULES*********************
 //=================================================================================================//

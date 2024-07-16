@@ -110,6 +110,7 @@ namespace fluid_dynamics
 	protected:
 		StdLargeVec<Matd>& velocity_gradient_;
 		StdLargeVec<Matd> &B_;
+		StdLargeVec<Matd> &turbu_B_;
 	};
 	using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
 	
@@ -622,6 +623,44 @@ class TurbulentIndicatedParticles : public WithinScope
 
 using TurbulentPlugFlowParticles = TurbulentIndicatedParticles<0>;
 //=================================================================================================//
+template <typename... InteractionTypes>
+class TurbulentLinearGradientCorrectionMatrix;
+
+template <class DataDelegationType>
+class TurbulentLinearGradientCorrectionMatrix<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class BaseRelationType>
+    explicit TurbulentLinearGradientCorrectionMatrix(BaseRelationType &base_relation);
+    virtual ~TurbulentLinearGradientCorrectionMatrix(){};
+
+  protected:
+    StdLargeVec<Real> &Vol_;
+    StdLargeVec<Matd> &turbu_B_;
+	StdLargeVec<Matd> &B_;
+};
+
+template <>
+class TurbulentLinearGradientCorrectionMatrix<Inner<>>
+    : public TurbulentLinearGradientCorrectionMatrix<DataDelegateInner>
+{
+    Real turbu_alpha_;
+
+  public:
+    explicit TurbulentLinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
+        : TurbulentLinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), turbu_alpha_(alpha){};
+    template <typename BodyRelationType, typename FirstArg>
+    explicit TurbulentLinearGradientCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+        : TurbulentLinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~TurbulentLinearGradientCorrectionMatrix(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+};
+using TurbulentLinearGradientCorrectionMatrixInner = TurbulentLinearGradientCorrectionMatrix<Inner<>>;
+
+//=================================================================================================//
+
 
 //=================================================================================================//
 //*********************TESTING MODULES*********************
