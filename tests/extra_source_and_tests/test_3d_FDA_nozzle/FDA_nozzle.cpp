@@ -19,7 +19,7 @@
 #include <numbers>
 #include <string>
 using namespace SPH;
-const Real t_ref = 0.1;
+const Real t_ref = 0.025;
 //----------------------------------------------------------------------
 //	Circular buffer for checking convergence usage
 //----------------------------------------------------------------------
@@ -376,17 +376,17 @@ class TimeDependentAcceleration : public Gravity
 
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        if (aligned_box_.checkUpperBound(position))
-        {
-            Real run_time_ = GlobalStaticVariables::physical_time_;
-            du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
+        // if (aligned_box_.checkUpperBound(position))
+        // {
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 
-            return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0, 0.0) : global_acceleration_;
-        }
-        else
-        {
-            return global_acceleration_;
-        }
+        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0, 0.0) : global_acceleration_;
+        // }
+        // else
+        // {
+        //     return global_acceleration_;
+        // }
     }
 };
 //----------------------------------------------------------------------
@@ -473,7 +473,7 @@ void write_observer_properties_to_output(ObserverBody &observer_body, const std:
 
     // Determine the type of the property based on the name
     if (property_name == "Velocity")
-    {   // Example Vecd properties
+    { // Example Vecd properties
         // TODO: need to do a precaution for invalid property_ptr
         auto &property_ptr = *observer_body.getBaseParticles().getVariableDataByName<Vecd>(property_name);
 
@@ -482,7 +482,7 @@ void write_observer_properties_to_output(ObserverBody &observer_body, const std:
         csv_output.close();
     }
     else if (property_name == "Pressure")
-    {   // Example Real properties
+    { // Example Real properties
         // TODO: need to do a precaution for invalid property_ptr
         auto &property_ptr = *observer_body.getBaseParticles().getVariableDataByName<Real>(property_name);
 
@@ -611,10 +611,12 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     inlet_diameter = params.inlet_diameter;
     const double Q_f = params.Q_f;
     U_f = Q_f / params.inlet_area;
-    double U_max = Q_f / params.throat_area * 2.5;                                      // U max suppose to happend at throat
-    const double max_pressure_diff = SMAX(250., 450.);                                  // maximum pressure difference found from exp data is 250. low rest max pressure diff is about 450
-    double c_f = SMAX(10. * U_max, pow(max_pressure_diff / 0.01 / params.rho0_f, 0.5)); // Speed of sound
-    U_max = SMAX(c_f * 0.1, U_max);
+    double U_max = 0.8; // From exp data
+    double c_f = U_max * 10;
+    // double U_max = Q_f / params.throat_area * 2.5;                                      // U max suppose to happend at throat
+    // const double max_pressure_diff = SMAX(250., 450.);                                  // maximum pressure difference found from exp data is 250. low rest max pressure diff is about 450
+    // double c_f = SMAX(10. * U_max, pow(max_pressure_diff / 0.01 / params.rho0_f, 0.5)); // Speed of sound
+    // U_max = SMAX(c_f * 0.1, U_max);
 
     std::cout << "U_f (velocity at inlet): " << U_f << std::endl;
     std::cout << "U_max                  : " << U_max << std::endl;
@@ -762,7 +764,8 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex>
         boundary_indicator(water_block_inner, water_block_contact);
 
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_complex(water_block_inner, water_block_contact);
+
     /** momentum equation. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     /** mass equation. */
@@ -775,9 +778,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
         viscous_acceleration(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
-    // InteractionWithUpdate<fluid_dynamics::TransportVelocityKimitedCorrectionCorrectedComplex<BulkParticles>>
-    //     transport_velocity_correction(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionCorrectedComplex<BulkParticles>>
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityKimitedCorrectionCorrectedComplex<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Set up boundary condition
@@ -851,7 +852,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         {
             auto x = observer_axial.getBaseParticles().ParticlePositions()[index][0];
             Real dist_to_min = abs(x_min_domain + boundary_width - x);
-            Real dist_to_max = abs(x_max_domain + boundary_width - x);
+            Real dist_to_max = abs(0.088 - x);
 
             if (init_dist_x > dist_to_min)
             {
@@ -917,7 +918,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     observer_axial_recording.writeToFile();
     water_body_recording.writeToFile();
     wall_body_recording.writeToFile();
-    corrected_configuration_fluid.exec();
+    kernel_correction_complex.exec();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -932,7 +933,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
             viscous_acceleration.exec();
-            corrected_configuration_fluid.exec();
+            kernel_correction_complex.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -1032,7 +1033,7 @@ int main(int argc, char *argv[])
     const double Re = 500;
     FDA_nozzle_parameters params;
     // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
-    std::vector<int> number_of_particles = {15, 20};
+    std::vector<int> number_of_particles = {15};
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
