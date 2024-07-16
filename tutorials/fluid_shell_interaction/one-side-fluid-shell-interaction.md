@@ -207,17 +207,17 @@ We have those new classes:
 
 `BaseNeighborBuilderContactShell`: basic class for contact with shell
 
-`NeighborBuilderContactToShell`: build the shell neighbor of a fluid particle, calculating equivalent W_ij, e_ij and dW_ijV_j
+`NeighborBuilderContactFromShell`: build the shell neighbor of a fluid particle, calculating equivalent W_ij, e_ij and dW_ijV_j
 
-`NeighborBuilderContactFromShell`: build the fluid neighbor of a shell particle, calculating equivalent e_ij and dW_ijV_j
+`NeighborBuilderContactToShell`: build the fluid neighbor of a shell particle, calculating equivalent e_ij and dW_ijV_j
 
 `ShellNeighborBuilderInnerWithContactKernel`: build the shell inner relation. The kernel is a reduced kernel, with the smoothing length of fluid
 
 2. Contact relations
 
-`ContactRelationToShell`: contact to fluid from shell. If the normal of shell points from shell to fluid, `normal_corrections` should set to true, so that the normal will be flipped in the neighbor builder.
+`ContactRelationFromShellToFluid`: fluid(source)-shell(contact) relation. If the normal of shell points from shell to fluid, `normal_corrections` should set to true, so that the normal will be flipped in the neighbor builder.
 
-`ContactRelationFromShell`: contact to shell from fluid
+`ContactRelationFromFluidToShell`: shell(source)-fluid(contact) relation
 
 `ShellInnerRelationWithContactKernel`: inner contact to calculate the average curvature. The search depth is set to the search depth of fluid.
 
@@ -232,8 +232,8 @@ The process of building up a fluid-shell interaction simulation will be:
 Example:
 
 ```
-ContactRelationToShell water_shell_contact(water_block, {&shell}, {false});
-ContactRelationFromShell shell_water_contact(shell, {&water_block}, {false});
+ContactRelationFromShell water_shell_contact(water_block, {&shell}, {false});
+ContactRelationToShell shell_water_contact(shell, {&water_block}, {false});
 ShellInnerRelationWithContactKernel shell_curvature_inner(shell, water_block);
 ```
 

@@ -331,16 +331,14 @@ class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByPar
 };
 
 /**
- * @class ShellCurvature
- * @brief  Update shell curvature during deformation
+ * @class ShellInitialCurvature
+ * @brief  Compute shell initial curvature
  */
-class ShellCurvature : public LocalDynamics, public DataDelegateInner
+class InitialShellCurvature : public LocalDynamics, public DataDelegateInner
 {
   public:
-    explicit ShellCurvature(BaseInnerRelation &inner_relation);
-
+    explicit InitialShellCurvature(BaseInnerRelation &inner_relation);
     void update(size_t index_i, Real);
-    void compute_initial_curvature();
 
   private:
     Real *Vol_;

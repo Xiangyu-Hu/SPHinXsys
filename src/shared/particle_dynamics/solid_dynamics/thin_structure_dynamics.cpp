@@ -269,7 +269,7 @@ void ConstrainShellBodyRegionAlongAxis::update(size_t index_i, Real dt)
     dangular_vel_dt_[index_i][1 - axis_] = 0.0;
 }
 //=================================================================================================//
-ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
+InitialShellCurvature::InitialShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
@@ -282,31 +282,35 @@ ShellCurvature::ShellCurvature(BaseInnerRelation &inner_relation)
       k2_(particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
       dn_0_(particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
 //=================================================================================================//
-void ShellCurvature::compute_initial_curvature()
+void InitialShellCurvature::update(size_t index_i, Real)
 {
-    particle_for(
-        par,
-        particles_->TotalRealParticles(),
-        [this](size_t index_i)
-        {
-            Matd dn_0_i = Matd::Zero();
-            // transform initial local B_ to global B_
-            const Matd B_global_i = transformation_matrix0_[index_i].transpose() * B_[index_i] * transformation_matrix0_[index_i];
-            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                const size_t index_j = inner_neighborhood.j_[n];
-                const Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-                dn_0_i -= (n0_[index_i] - n0_[index_j]) * gradW_ijV_j.transpose();
-            }
-            dn_0_[index_i] = dn_0_i * B_global_i;
-            auto [k1, k2] = get_principle_curvatures(dn_0_[index_i]);
-            k1_[index_i] = k1;
-            k2_[index_i] = k2;
-        });
+
+    Matd dn_0_i = Matd::Zero();
+    // transform initial local B_ to global B_
+    const Matd B_global_i = transformation_matrix0_[index_i].transpose() * B_[index_i] * transformation_matrix0_[index_i];
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        const size_t index_j = inner_neighborhood.j_[n];
+        const Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+        dn_0_i -= (n0_[index_i] - n0_[index_j]) * gradW_ijV_j.transpose();
+    }
+    dn_0_[index_i] = dn_0_i * B_global_i;
+    auto [k1, k2] = get_principle_curvatures(dn_0_[index_i]);
+    k1_[index_i] = k1;
+    k2_[index_i] = k2;
 }
 //=================================================================================================//
-void ShellCurvature::update(size_t index_i, Real)
+ShellCurvatureUpdate::ShellCurvatureUpdate(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      transformation_matrix0_(*particles_->getVariableDataByName<Matd>("TransformationMatrix")),
+      F_(*particles_->getVariableDataByName<Matd>("DeformationGradient")),
+      F_bending_(*particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
+      k1_(*particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
+      k2_(*particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
+      dn_0_(*particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
+//=================================================================================================//
+void ShellCurvatureUpdate::update(size_t index_i, Real)
 {
     Matd dn_0_i = dn_0_[index_i] + transformation_matrix0_[index_i].transpose() *
                                        F_bending_[index_i] * transformation_matrix0_[index_i];
