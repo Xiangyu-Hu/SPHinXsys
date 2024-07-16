@@ -277,7 +277,7 @@ int main(int ac, char *av[])
 
                 pressure_relaxation.exec(dt);
 
-                constrain_normal_velocity_in_P_region.exec();
+                //constrain_normal_velocity_in_P_region.exec();
                 
                 //** For test *
                 //constrain_Y_velocity.exec();
