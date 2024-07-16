@@ -93,7 +93,7 @@ class Heart : public ComplexShape
     explicit Heart(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation(0.0, 0.0, 0.0);
-        add<TriangleMeshShapeSTL>(full_path_to_lv, translation, length_scale);
+        add<TriangleMeshShapeGeneric>(full_path_to_lv, translation, length_scale);
     }
 };
 /** Set diffusion relaxation. */

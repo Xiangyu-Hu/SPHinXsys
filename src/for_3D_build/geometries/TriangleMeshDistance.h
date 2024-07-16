@@ -301,7 +301,7 @@ inline tmd::Result tmd::TriangleMeshDistance::signed_distance(const std::array<d
     Result result = this->unsigned_distance(p);
 
     const std::array<int, 3> &triangle = this->triangles[result.triangle_id];
-    Vec3d pseudonormal;
+    Vec3d pseudonormal(0.0, 0.0, 0.0);
     switch (result.nearest_entity)
     {
     case tmd::NearestEntity::V0:

@@ -303,9 +303,9 @@ void StructuralSimulation::createBodyMeshList()
     {
         std::string relative_input_path_copy = relative_input_path_;
 #ifdef __EMSCRIPTEN__
-        body_mesh_list_.push_back(makeShared<TriangleMeshShapeSTL>(reinterpret_cast<const uint8_t *>(imported_stl_list_[i].ptr), translation_list_[i], scale_stl_, imported_stl_list_[i].name));
+        body_mesh_list_.push_back(makeShared<TriangleMeshShapeGeneric>(reinterpret_cast<const uint8_t *>(imported_stl_list_[i].ptr), translation_list_[i], scale_stl_, imported_stl_list_[i].name));
 #else
-        body_mesh_list_.push_back(makeShared<TriangleMeshShapeSTL>(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_, imported_stl_list_[i]));
+        body_mesh_list_.push_back(makeShared<TriangleMeshShapeGeneric>(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_, imported_stl_list_[i]));
 #endif
     }
 }

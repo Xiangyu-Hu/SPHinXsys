@@ -268,7 +268,7 @@ class FloatingStructure : public ComplexShape
   public:
     explicit FloatingStructure(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(stl_structure_path, translation_str, StructureScale);
+        add<TriangleMeshShapeGeneric>(stl_structure_path, translation_str, StructureScale);
     }
 };
 
@@ -299,7 +299,7 @@ class WaterBlock : public ComplexShape
         Vecd water_pos(0.5 * DW, 0.5 * (DL - EXS), 0.5 * WH);
         Transform translation_water(water_pos);
         add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
-        subtract<TriangleMeshShapeSTL>(stl_structure_path, translation_str, StructureScale);
+        subtract<TriangleMeshShapeGeneric>(stl_structure_path, translation_str, StructureScale);
     }
 };
 

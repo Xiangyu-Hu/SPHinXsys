@@ -20,7 +20,7 @@ TEST(BernoulliBeam20x, Pressure)
     SharedPtr<SaintVenantKirchhoffSolid> material = makeShared<SaintVenantKirchhoffSolid>(rho_0, Youngs_modulus, poisson);
     std::vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list = {material};
 
-    SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d::Zero(), scale_stl, "bernoulli_beam_20x");
+    SharedPtr<TriangleMeshShapeGeneric> specimen = makeShared<TriangleMeshShapeGeneric>("./input/bernoulli_beam_20x.stl", Vec3d::Zero(), scale_stl, "bernoulli_beam_20x");
     BoundingBox fixation = specimen->getBounds();
     fixation.second_[0] = fixation.first_[0] + 0.01;
 
