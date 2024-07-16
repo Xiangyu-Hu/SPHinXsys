@@ -30,6 +30,7 @@
 #ifndef TRIANGULAR_MESH_SHAPE_H
 #define TRIANGULAR_MESH_SHAPE_H
 
+#include "TriangleMeshDistance.h"
 #include "all_simbody.h"
 #include "base_geometry.h"
 
@@ -135,6 +136,26 @@ class TriangleMeshShapeCylinder : public TriangleMeshShape
     explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation,
                                        const std::string &shape_name = "TriangleMeshShapeCylinder");
     virtual ~TriangleMeshShapeCylinder(){};
+};
+
+/**
+ * @class TriangleMeshShapeGeneric
+ * @brief Input triangle mesh with stl file.
+ */
+class TriangleMeshShapeGeneric : public TriangleMeshShape
+{
+  public:
+    explicit TriangleMeshShapeGeneric(const std::string &file_path_name, Vec3d translation, Real scale_factor,
+                                      const std::string &shape_name = "TriangleMeshShapeSTL");
+    virtual ~TriangleMeshShapeGeneric(){};
+
+    /** Here, we use the open source method TriangleMeshDistance library.
+     * https://github.com/InteractiveComputerGraphics/TriangleMeshDistance/tree/main */
+    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
+
+  protected:
+    tmd::TriangleMeshDistance triangle_mesh_distance_;
 };
 } // namespace SPH
 
