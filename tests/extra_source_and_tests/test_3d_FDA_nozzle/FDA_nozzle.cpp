@@ -8,6 +8,7 @@
 #include "density_correciton.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
+#include "large_data_containers.h"
 #include "pressure_boundary.h"
 #include "sphinxsys.h"
 #include <cmath>
@@ -18,6 +19,7 @@
 
 #include <numbers>
 #include <string>
+#include <vector>
 using namespace SPH;
 const Real t_ref = 0.025;
 //----------------------------------------------------------------------
@@ -64,13 +66,14 @@ class CircularBuffer
     T get_average() const
     {
         if (count < capacity)
-            return std::numeric_limits<T>::infinity();
-        T sum = 0;
-        for (size_t i = 0; i < buffer.size(); ++i)
+            return T::Constant(std::numeric_limits<typename T::Scalar>::infinity()); // Return a vector with all elements as infinity if the buffer isn't full
+
+        T sum = T::Zero(); // Initialize sum as a zero vector of appropriate dimensions
+        for (size_t i = 0; i < count; ++i)
         {
             sum += buffer[i];
         }
-        return sum / buffer.size();
+        return sum / count; // Divide each element of sum by the count to get the average
     }
 };
 //----------------------------------------------------------------------
@@ -270,7 +273,7 @@ struct FDA_nozzle_parameters
     // material paramaters, default: blood
     // Newtonian
     double rho0_f = 1056; //[kg/m3]
-    double mu_f = 0.0035; //[N s / m2]
+    double mu_f = 0.0035; //[N s / m2] from https://arxiv.org/pdf/2204.10566 3.5 mPa s
 
     // fluid flle path
     fs::path fluid_file_path = "./input/FDA_nozzle_fluid.stl";
@@ -278,9 +281,8 @@ struct FDA_nozzle_parameters
     fs::path wall_file_path;
     // total length of fluid
     double fluid_length = 200 * scale; // defined in mesh file
-    double outlet_pressure = 0;
     // end time
-    double end_time = 50.0;
+    double end_time = 2.0;
 };
 
 void setup_directory(const std::string &path)
@@ -352,7 +354,7 @@ struct RightInflowPressure
     Real operator()(Real &p_)
     {
         /*constant pressure*/
-        Real pressure = 0;
+        Real pressure = 1.0;
         return pressure;
     }
 };
@@ -472,7 +474,7 @@ void write_observer_properties_to_output(ObserverBody &observer_body, const std:
     StdLargeVec<Vecd> &pos = observer_body.getBaseParticles().ParticlePositions();
 
     // Determine the type of the property based on the name
-    if (property_name == "Velocity")
+    if (property_name == "Velocity" || property_name == "avg_velocity")
     { // Example Vecd properties
         // TODO: need to do a precaution for invalid property_ptr
         auto &property_ptr = *observer_body.getBaseParticles().getVariableDataByName<Vecd>(property_name);
@@ -505,6 +507,7 @@ class RadialObserverContainer
     std::vector<std::unique_ptr<ContactRelation>> contact_relations_;
     std::vector<std::unique_ptr<ObservingAQuantity<Vec3d>>> observing_quantities_;
     std::vector<std::unique_ptr<BodyStatesRecordingToVtp>> body_state_recording_;
+    std::vector<std::unique_ptr<CircularBuffer<Vecd>>> circular_buffer_avg_velocity_;
     std::vector<double> z_;
 
   public:
@@ -520,6 +523,8 @@ class RadialObserverContainer
 
         auto observer_radial =
             std::make_unique<ObserverRadial>(sph_system_, "ObserverRadial_" + std::to_string(x), x, diameter);
+        observer_radial->getBaseParticles().registerSharedVariable<Vecd>("avg_velocity");
+        observer_radial->getBaseParticles().registerSharedVariable<int>("circular_buffer_index");
         observers_.push_back(std::move(observer_radial));
 
         // Convert SPHBody pointers to RealBody pointers
@@ -535,6 +540,8 @@ class RadialObserverContainer
         observing_quantities_.push_back(std::move(observing_velocity));
         auto body_state_recording = std::make_unique<BodyStatesRecordingToVtp>(*observers_.back());
         body_state_recording->addToWrite<Vec3d>(*observers_.back(), "Velocity");
+        body_state_recording->addToWrite<Vec3d>(*observers_.back(), "avg_velocity");
+        body_state_recording->addToWrite<int>(*observers_.back(), "circular_buffer_index");
         body_state_recording_.push_back(std::move(body_state_recording));
     }
 
@@ -557,6 +564,44 @@ class RadialObserverContainer
         for (auto &contact : contact_relations_)
         {
             contact->updateConfiguration(); // Call the update function for each contact relation
+        }
+    }
+
+    void init_avg_velocity()
+    {
+        circular_buffer_avg_velocity_.clear();
+        for (auto &observer : observers_)
+        {
+            {
+                auto &circular_buffer_indices = *observer->getBaseParticles().getVariableDataByName<int>("circular_buffer_index");
+                std::cout << circular_buffer_indices.size();
+                // Create a buffer for each particle and assign an index.
+                for (size_t i = 0; i < circular_buffer_indices.size(); ++i)
+                {
+                    // Create a new buffer for this particle.
+                    circular_buffer_avg_velocity_.emplace_back(std::make_unique<CircularBuffer<Vecd>>(10));
+
+                    // Assign the index of this new buffer to the particle's index.
+                    circular_buffer_indices[i] = circular_buffer_avg_velocity_.size() - 1;
+                }
+            }
+        }
+    }
+
+    void update_avg_velocity()
+    {
+        for (auto &observer : observers_)
+        {
+            auto &velocity = *observer->getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+            auto &avg_velocity = *observer->getBaseParticles().getVariableDataByName<Vecd>("avg_velocity");
+            auto &circular_buffer_indices = *observer->getBaseParticles().getVariableDataByName<int>("circular_buffer_index");
+            for (size_t i = 0; i < circular_buffer_indices.size(); ++i)
+            {
+                auto circular_buffer_indice = circular_buffer_indices[i];
+                auto vel = velocity[i];
+                circular_buffer_avg_velocity_[circular_buffer_indice]->push(vel);
+                avg_velocity[i] = circular_buffer_avg_velocity_[circular_buffer_indice]->get_average();
+            }
         }
     }
 
@@ -588,6 +633,7 @@ class RadialObserverContainer
         for (auto &observers : observers_)
         {
             write_observer_properties_to_output(*observers, "Velocity", output_path);
+            write_observer_properties_to_output(*observers, "avg_velocity", output_path);
         }
     }
 };
@@ -824,6 +870,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         observer_radial_container.add_radial_observer(
             pos, params.inlet_diameter, water_block, wall_boundary);
     }
+    observer_radial_container.init_avg_velocity();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -1001,6 +1048,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         TickCount t2 = TickCount::now();
         observer_radial_container.update_configureations();
         observer_radial_container.update_observing_quantities();
+        observer_radial_container.update_avg_velocity();
         observer_radial_container.writeToFile();
         observer_radial_container.write_velocity_to_csv(in_output.output_folder_);
         axial_velocity_observer_contact.updateConfiguration();
@@ -1033,7 +1081,7 @@ int main(int argc, char *argv[])
     const double Re = 500;
     FDA_nozzle_parameters params;
     // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
-    std::vector<int> number_of_particles = {15};
+    std::vector<int> number_of_particles = {10, 15, 20};
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
@@ -1042,6 +1090,14 @@ int main(int argc, char *argv[])
             std::stringstream wall_file;
             wall_file << "./input/FDA_nozzle_wall_N" << params.number_of_particles << ".stl";
             params.wall_file_path = wall_file.str();
+        }
+        if (particles == 20)
+        {
+            params.end_time = 2.0;
+        }
+        else
+        {
+            params.end_time = 5.0;
         }
         FDA_nozzle(argc, argv, params, Re); // Call the function with current settings
     }
