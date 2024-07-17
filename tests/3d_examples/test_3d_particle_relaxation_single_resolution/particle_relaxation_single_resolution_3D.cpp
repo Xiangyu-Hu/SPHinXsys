@@ -47,8 +47,8 @@ class SolidBodyFromMesh : public ComplexShape
   public:
     explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<ExtrudeShape<TriangleMeshShapeGeneric>>(4.0 * dp_0, full_path_to_file, translation, scaling);
-        subtract<TriangleMeshShapeGeneric>(full_path_to_file, translation, scaling);
+        add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * dp_0, full_path_to_file, translation, scaling);
+        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
     }
 };
 //----------------------------------------------------------------------
@@ -77,7 +77,7 @@ class SolidBodyFromMesh : public ComplexShape
 //  public:
 //    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
 //    {
-//        add<TriangleMeshShapeGeneric>(full_path_to_file, translation, scaling);
+//        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
 //    }
 //};
 //-----------------------------------------------------------------------------------------------------------

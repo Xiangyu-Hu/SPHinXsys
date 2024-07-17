@@ -61,7 +61,7 @@ class Heart : public ComplexShape
     explicit Heart(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation(-53.5 * length_scale, -70.0 * length_scale, -32.5 * length_scale);
-        add<TriangleMeshShapeGeneric>(full_path_to_stl_file, translation, length_scale);
+        add<TriangleMeshShapeSTL>(full_path_to_stl_file, translation, length_scale);
     }
 };
 using FiberDirectionDiffusionRelaxation =

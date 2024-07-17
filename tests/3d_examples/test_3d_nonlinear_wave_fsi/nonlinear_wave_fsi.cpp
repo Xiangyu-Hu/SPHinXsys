@@ -187,7 +187,7 @@ int main(int ac, char *av[])
     /** mass properties of the fixed spot. */
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1, SimTK::Vec3(0), SimTK::UnitInertia(1)));
     /** mass properties of the structure. */
-    StructureSystemForSimbody structure_multibody(structure, makeShared<TriangleMeshShapeGeneric>(stl_structure_path, translation_str, StructureScale));
+    StructureSystemForSimbody structure_multibody(structure, makeShared<TriangleMeshShapeSTL>(stl_structure_path, translation_str, StructureScale));
     SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
     /** Free mobilizer */
     SimTK::MobilizedBody::Free tethered_struct(matter.Ground(), SimTK::Transform(SimTK::Vec3(translation_str[0], translation_str[1], translation_str[2])), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));

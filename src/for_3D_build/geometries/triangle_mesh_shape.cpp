@@ -97,55 +97,6 @@ BoundingBox TriangleMeshShape::findBounds()
     return BoundingBox(lower_bound, upper_bound);
 }
 //=================================================================================================//
-TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Vecd translation, Real scale_factor,
-                                           const std::string &shape_name)
-    : TriangleMeshShape(shape_name)
-{
-    if (!fs::exists(filepathname))
-    {
-        std::cout << "\n Error: the input file:" << filepathname << " is not exists" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        throw;
-    }
-    SimTK::PolygonalMesh polymesh;
-    polymesh.loadStlFile(filepathname);
-    polymesh.scaleMesh(scale_factor);
-    triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(SimTKVec3(translation[0], translation[1], translation[2])));
-}
-//=================================================================================================//
-TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Mat3d rotation,
-                                           Vec3d translation, Real scale_factor, const std::string &shape_name)
-    : TriangleMeshShape(shape_name)
-{
-    if (!fs::exists(filepathname))
-    {
-        std::cout << "\n Error: the input file:" << filepathname << " is not exists" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        throw;
-    }
-    SimTK::PolygonalMesh polymesh;
-    polymesh.loadStlFile(filepathname);
-
-    polymesh.scaleMesh(scale_factor);
-    SimTK::Transform_<double> transform(SimTK::Rotation_<double>(SimTKMat33((double)rotation(0, 0), (double)rotation(0, 1), (double)rotation(0, 2),
-                                                                            (double)rotation(1, 0), (double)rotation(1, 1), (double)rotation(1, 2),
-                                                                            (double)rotation(2, 0), (double)rotation(2, 1), (double)rotation(2, 2))),
-                                        SimTKVec3((double)translation[0], (double)translation[1], (double)translation[2]));
-    triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(transform));
-}
-//=================================================================================================//
-#ifdef __EMSCRIPTEN__
-TriangleMeshShapeSTL::TriangleMeshShapeSTL(const uint8_t *buffer, Vecd translation, Real scale_factor,
-                                           const std::string &shape_name)
-    : TriangleMeshShape(shape_name)
-{
-    SimTK::PolygonalMesh polymesh;
-    polymesh.loadStlBuffer(buffer);
-    polymesh.scaleMesh(scale_factor);
-    triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(SimTKVec3(translation[0], translation[1], translation[2])));
-}
-#endif
-//=================================================================================================//
 TriangleMeshShapeBrick::TriangleMeshShapeBrick(Vecd halfsize, int resolution, Vecd translation,
                                                const std::string &shape_name)
     : TriangleMeshShape(shape_name)
@@ -176,9 +127,8 @@ TriangleMeshShapeCylinder::TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real 
     triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(SimTKVec3(translation[0], translation[1], translation[2])));
 }
 //=================================================================================================//
-TriangleMeshShapeGeneric::
-    TriangleMeshShapeGeneric(const std::string &filepathname, Vec3d translation, Real scale_factor,
-                             const std::string &shape_name)
+TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Vec3d translation,
+                                           Real scale_factor, const std::string &shape_name)
     : TriangleMeshShape(shape_name)
 {
     if (!fs::exists(filepathname))
@@ -213,14 +163,14 @@ TriangleMeshShapeGeneric::
     triangle_mesh_distance_.construct(vertices, faces);
 }
 //=================================================================================================//
-bool TriangleMeshShapeGeneric::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
+bool TriangleMeshShapeSTL::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 {
     Real distance = triangle_mesh_distance_.signed_distance(probe_point).distance;
 
     return distance < 0.0 ? true : false;
 }
 //=================================================================================================//
-Vecd TriangleMeshShapeGeneric::findClosestPoint(const Vecd &probe_point)
+Vecd TriangleMeshShapeSTL::findClosestPoint(const Vecd &probe_point)
 {
     auto closest_pnt = triangle_mesh_distance_.signed_distance(probe_point).nearest_point;
     return Vecd(closest_pnt[0], closest_pnt[1], closest_pnt[2]);

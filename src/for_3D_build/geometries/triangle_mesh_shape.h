@@ -75,24 +75,6 @@ class TriangleMeshShape : public Shape
 };
 
 /**
- * @class TriangleMeshShapeSTL
- * @brief Input triangle mesh with stl file.
- */
-class TriangleMeshShapeSTL : public TriangleMeshShape
-{
-  public:
-    explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
-                                  const std::string &shape_name = "TriangleMeshShapeSTL");
-    /** Overloaded to include rotation. */
-    explicit TriangleMeshShapeSTL(const std::string &file_path_name, Mat3d rotation, Vec3d translation,
-                                  Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
-#ifdef __EMSCRIPTEN__
-    TriangleMeshShapeSTL(const uint8_t *buffer, Vec3d translation, Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
-#endif
-    virtual ~TriangleMeshShapeSTL(){};
-};
-
-/**
  * @class TriangleMeshShapeBrick
  * @brief Generate a brick triangle mesh using SIMBODy default shape.
  */
@@ -139,15 +121,15 @@ class TriangleMeshShapeCylinder : public TriangleMeshShape
 };
 
 /**
- * @class TriangleMeshShapeGeneric
+ * @class TriangleMeshShapeSTL
  * @brief Input triangle mesh with stl file.
  */
-class TriangleMeshShapeGeneric : public TriangleMeshShape
+class TriangleMeshShapeSTL : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeGeneric(const std::string &file_path_name, Vec3d translation, Real scale_factor,
-                                      const std::string &shape_name = "TriangleMeshShapeSTL");
-    virtual ~TriangleMeshShapeGeneric(){};
+    explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
+                                  const std::string &shape_name = "TriangleMeshShapeSTL");
+    virtual ~TriangleMeshShapeSTL(){};
 
     /** Here, we use the open source method TriangleMeshDistance library.
      * https://github.com/InteractiveComputerGraphics/TriangleMeshDistance/tree/main */

@@ -32,7 +32,7 @@ class ImportedShellModel : public ComplexShape
   public:
     explicit ImportedShellModel(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeGeneric>(full_path_to_geometry, Vecd::Zero(), 1.0);
+        add<TriangleMeshShapeSTL>(full_path_to_geometry, Vecd::Zero(), 1.0);
     }
 };
 //--------------------------------------------------------------------------

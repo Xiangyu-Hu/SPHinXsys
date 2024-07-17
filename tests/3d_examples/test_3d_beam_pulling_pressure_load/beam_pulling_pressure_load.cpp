@@ -36,7 +36,7 @@ class Beam : public ComplexShape
     {
         std::string fname_ = "./input/beam.stl";
         Vecd translation(0.0, 0.0, 0.0);
-        add<TriangleMeshShapeGeneric>(fname_, translation, 0.001);
+        add<TriangleMeshShapeSTL>(fname_, translation, 0.001);
     }
 };
 
