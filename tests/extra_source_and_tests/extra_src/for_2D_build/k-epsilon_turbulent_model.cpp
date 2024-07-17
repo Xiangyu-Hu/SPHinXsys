@@ -117,8 +117,8 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void GetVelocityGradient<Inner<>>::update(size_t index_i, Real dt)
 	{
-	    //velocity_gradient_[index_i] *= B_[index_i];
-		velocity_gradient_[index_i] *= turbu_B_[index_i];
+	    velocity_gradient_[index_i] *= B_[index_i];
+		//velocity_gradient_[index_i] *= turbu_B_[index_i];
 	}
 	//=================================================================================================//
 	GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation& contact_relation)
