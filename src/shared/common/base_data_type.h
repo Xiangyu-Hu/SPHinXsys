@@ -48,32 +48,13 @@
 
 namespace SPH
 {
-/**
- * Matrix<T, 2, 1>::Identity  return {1,0}
- * Matrix<T, 2, 2>::Identity  return {{1,0},
- *								      {0,1},}
- * Matrix<T, n, n>::Ones  Set all element to One.
- * Enable Vectorization using CXX_FLAGS = -Ofast -march=native
- * -m :
- * These ‘-m’ options are defined for the x86 family of computers.
- * -march=cpu-type
- * Generate instructions for the machine type cpu-type. In contrast to -mtune=cpu-type,
- * which merely tunes the generated code for the specified cpu-type, -march=cpu-type allows GCC to generate code that
- * may not run at all on processors other than the one indicated.
- * Specifying -march=cpu-type implies -mtune=cpu-type, except where noted otherwise.
- * The choices for cpu-type are:
- * ‘native’ -> This selects the CPU to generate code for at compilation time by determining the processor type of the compiling machine.
- * 			Using -march=native enables all instruction subsets supported by the local machine (hence the result might not run on different machines).
- * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
- */
-
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
-using EigMat = Eigen::MatrixXf;
+using Index = u_int32_t;
 #else
 using Real = double;
-using EigMat = Eigen::MatrixXd;
-#endif
+using Index = size_t;
+#endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
 using Array2i = Eigen::Array<int, 2, 1>;
@@ -84,6 +65,8 @@ using Vec3d = Eigen::Matrix<Real, 3, 1>;
 /** Small, 2*2 and 3*3, matrix with float point number. */
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
 using Mat3d = Eigen::Matrix<Real, 3, 3>;
+/** Dynamic matrix*/
+using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 /** AlignedBox */
 using AlignedBox2d = Eigen::AlignedBox<Real, 2>;
 using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
@@ -92,26 +75,15 @@ using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 
 /** Unified initialize to zero for all data type. */
-/**
- * NOTE: Eigen::Matrix<> constexpr constructor?
- * Currently, there are no constexpr constructors/methods in Eigen.
- * And implementing this would be very complicated (for any non-trivial methods),
- * e.g., because SIMD functions are not easy to handle.
- */
 template <typename DataType>
 struct ZeroData
 {
     static inline DataType value = DataType::Zero();
 };
 template <>
-struct ZeroData<float>
+struct ZeroData<Real>
 {
-    static inline float value = 0.0;
-};
-template <>
-struct ZeroData<double>
-{
-    static inline double value = 0.0;
+    static inline Real value = Real(0);
 };
 template <>
 struct ZeroData<int>
@@ -120,9 +92,9 @@ struct ZeroData<int>
 };
 
 template <>
-struct ZeroData<size_t>
+struct ZeroData<Index>
 {
-    static inline size_t value = 0;
+    static inline Index value = 0;
 };
 
 template <typename DataType>
