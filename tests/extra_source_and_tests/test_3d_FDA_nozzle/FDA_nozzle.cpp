@@ -354,7 +354,7 @@ struct RightInflowPressure
     Real operator()(Real &p_)
     {
         /*constant pressure*/
-        Real pressure = 1.0;
+        Real pressure = 0.;
         return pressure;
     }
 };
@@ -574,7 +574,6 @@ class RadialObserverContainer
         {
             {
                 auto &circular_buffer_indices = *observer->getBaseParticles().getVariableDataByName<int>("circular_buffer_index");
-                std::cout << circular_buffer_indices.size();
                 // Create a buffer for each particle and assign an index.
                 for (size_t i = 0; i < circular_buffer_indices.size(); ++i)
                 {
@@ -717,6 +716,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     SPHSystem sph_system(wall_shape->getBounds(), resolution_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(true);
+
     /** handle command line arguments. */
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
@@ -885,6 +885,11 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     water_body_recording.addToWrite<Vec3d>(water_block, "KernelSummation");
     BodyStatesRecordingToVtp wall_body_recording(wall_boundary);
     //----------------------------------------------------------------------
+    //	Defined restart
+    //----------------------------------------------------------------------
+    RestartIO restart_io(sph_system);
+
+    //----------------------------------------------------------------------
     //	Defined convergence checker
     //----------------------------------------------------------------------
     ConvergenceChecker<double> conv_checker(10, 0.5); // Buffer of 10 values, convergence threshold of 0.5 percent
@@ -939,6 +944,14 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
     wall_boundary_normal_direction.exec();
+    //----------------------------------------------------------------------
+    //	Load restart file if necessary.
+    //----------------------------------------------------------------------
+    if (sph_system.RestartStep() != 0)
+    {
+        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+    }
+    GlobalStaticVariables::physical_time_ = 0.0;
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -1058,6 +1071,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         write_observer_properties_to_output(observer_axial, "Velocity", in_output.output_folder_);
         write_observer_properties_to_output(observer_axial, "Pressure", in_output.output_folder_);
         water_body_recording.writeToFile();
+        restart_io.writeToFile(Real(number_of_iterations));
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -1081,7 +1095,7 @@ int main(int argc, char *argv[])
     const double Re = 500;
     FDA_nozzle_parameters params;
     // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
-    std::vector<int> number_of_particles = {10, 15, 20};
+    std::vector<int> number_of_particles = {20};
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
