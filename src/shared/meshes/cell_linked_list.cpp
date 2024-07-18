@@ -3,6 +3,7 @@
 #include "base_kernel.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
+#include "mesh_iterators.hpp"
 #include "particle_iterators.h"
 
 namespace SPH
@@ -37,12 +38,69 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      use_split_cell_lists_(false)
+      use_split_cell_lists_(false), cell_index_lists_(nullptr), cell_data_lists_(nullptr)
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
     size_t number_of_split_cell_lists = pow(3, Dimensions);
     split_cell_lists_.resize(number_of_split_cell_lists);
+}
+//=================================================================================================//
+void CellLinkedList ::allocateMeshDataMatrix()
+{
+    size_t number_of_all_cells = transferMeshIndexTo1D(all_cells_, all_cells_);
+    cell_index_lists_ = new ConcurrentIndexVector[number_of_all_cells];
+    cell_data_lists_ = new ListDataVector[number_of_all_cells];
+}
+//=================================================================================================//
+void CellLinkedList ::deleteMeshDataMatrix()
+{
+    delete[] cell_index_lists_;
+    delete[] cell_data_lists_;
+}
+//=================================================================================================//
+void CellLinkedList::clearCellLists()
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](const Arrayi &entry)
+                      {
+                          getCellDataList(cell_index_lists_, entry).clear();
+                      });
+}
+//=================================================================================================//
+void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
+{
+    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        [&](const Arrayi &entry)
+        {
+            ListDataVector &cell_data_list = getCellDataList(cell_data_lists_, entry);
+            cell_data_list.clear();
+            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, entry);
+            for (size_t s = 0; s != cell_list.size(); ++s)
+            {
+                size_t index = cell_list[s];
+                cell_data_list.emplace_back(std::make_pair(index, pos[index]));
+            }
+        });
+}
+//=================================================================================================//
+void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
+{
+    clearSplitCellLists(split_cell_lists);
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        [&](const Arrayi &entry)
+        {
+            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, entry);
+            size_t real_particles_in_cell = cell_list.size();
+            if (real_particles_in_cell != 0)
+            {
+                split_cell_lists[transferMeshIndexTo1D(3 * Arrayi::Ones(), mod(entry, 3))]
+                    .push_back(&cell_list);
+            }
+        });
 }
 //=================================================================================================//
 void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)

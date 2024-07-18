@@ -67,13 +67,13 @@ Real getCosineOfAngleBetweenTwoVectors(const VecType &vector_1, const VecType &v
 {
     return vector_1.dot(vector_2) / (vector_1.norm() * vector_2.norm() + TinyReal);
 };
-    
-/** get the projection of the vector_1 on vector 2, 
+
+/** get the projection of the vector_1 on vector 2,
  *  which is parallel to the vector_2, meaning it is the vector_2 * scalar */
 template <typename VecType>
 VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vector_2)
 {
-    return vector_1.dot(vector_2)  * vector_2 / (vector_2.squaredNorm() + TinyReal);
+    return vector_1.dot(vector_2) * vector_2 / (vector_2.squaredNorm() + TinyReal);
 };
 
 /** von Mises stress from stress matrix */
@@ -87,5 +87,8 @@ Vec3d getPrincipalValuesFromMatrix(const Mat3d &A);
 /** get transformation matrix. */
 Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
+/** Modulo operation for Arrayi */
+Array2i mod(const Array2i &input, int modulus);
+Array3i mod(const Array3i &input, int modulus);
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

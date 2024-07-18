@@ -11,60 +11,6 @@
 namespace SPH
 {
 //=================================================================================================//
-void CellLinkedList ::allocateMeshDataMatrix()
-{
-    Allocate3dArray(cell_index_lists_, all_cells_);
-    Allocate3dArray(cell_data_lists_, all_cells_);
-}
-//=================================================================================================//
-void CellLinkedList ::deleteMeshDataMatrix()
-{
-    Delete3dArray(cell_index_lists_, all_cells_);
-    Delete3dArray(cell_data_lists_, all_cells_);
-}
-//=================================================================================================//
-void CellLinkedList::clearCellLists()
-{
-    mesh_parallel_for(MeshRange(Array3i::Zero(), all_cells_),
-                      [&](int i, int j, int k)
-                      {
-                          cell_index_lists_[i][j][k].clear();
-                      });
-}
-//=================================================================================================//
-void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
-{
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    mesh_parallel_for(
-        MeshRange(Array3i::Zero(), all_cells_),
-        [&](int i, int j, int k)
-        {
-            cell_data_lists_[i][j][k].clear();
-            ConcurrentIndexVector &cell_list = cell_index_lists_[i][j][k];
-            for (size_t s = 0; s != cell_list.size(); ++s)
-            {
-                size_t index = cell_list[s];
-                cell_data_lists_[i][j][k].emplace_back(std::make_pair(index, pos[index]));
-            }
-        });
-}
-//=================================================================================================//
-void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
-{
-    clearSplitCellLists(split_cell_lists);
-    mesh_parallel_for(
-        MeshRange(Array3i::Zero(), all_cells_),
-        [&](int i, int j, int k)
-        {
-            size_t real_particles_in_cell = cell_index_lists_[i][j][k].size();
-            if (real_particles_in_cell != 0)
-            {
-                split_cell_lists[transferMeshIndexTo1D(Array3i(3, 3, 3), Array3i(i % 3, j % 3, k % 3))]
-                    .push_back(&cell_index_lists_[i][j][k]);
-            }
-        });
-}
-//=================================================================================================//
 void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     Array3i cell_pos = CellIndexFromPosition(particle_position);
