@@ -17,13 +17,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataListsType>
-DataListsType &CellLinkedList::getCellDataList(DataListsType *data_lists, const Arrayi &cell_index)
-{
-    size_t cell_index = transferMeshIndexTo1D(all_cells_, cell_index);
-    return data_lists[cell_index];
-}
-//=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
 void CellLinkedList::searchNeighborsByParticles(
     DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
@@ -40,9 +33,9 @@ void CellLinkedList::searchNeighborsByParticles(
                      mesh_for_each(
                          Arrayi::Zero().max(target_cell_index - search_depth * Arrayi::Ones()),
                          all_cells_.min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
-                         [&](const Arrayi &entry)
+                         [&](const Arrayi &cell_index)
                          {
-                             ListDataVector &target_particles = getCellDataList(cell_data_lists_, entry);
+                             ListDataVector &target_particles = getCellDataList(cell_data_lists_, cell_index);
                              for (const ListData &data_list : target_particles)
                              {
                                  get_neighbor_relation(neighborhood, pos[index_i], index_i, data_list);

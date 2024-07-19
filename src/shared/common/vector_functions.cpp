@@ -310,7 +310,7 @@ Array2i mod(const Array2i &input, int modulus)
     return Array2i(input[0] % modulus, input[1] % modulus);
 }
 //=================================================================================================//
-Array3i mod(const Array3i &input, int modulus);
+Array3i mod(const Array3i &input, int modulus)
 {
     return Array3i(input[0] % modulus, input[1] % modulus, input[2] % modulus);
 }

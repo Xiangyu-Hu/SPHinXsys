@@ -107,7 +107,10 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
     virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
     template <typename DataListsType>
-    DataListsType &getCellDataList(DataListsType *data_lists, const Arrayi &cell_index);
+    DataListsType &getCellDataList(DataListsType *data_lists, const Arrayi &cell_index)
+    {
+        return data_lists[transferMeshIndexTo1D(all_cells_, cell_index)];
+    };
 
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, SPHAdaptation &sph_adaptation);
