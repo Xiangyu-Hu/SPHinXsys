@@ -50,6 +50,17 @@ void LevelSet::initializeCellNeighborhood()
                           }
                       });
 }
+//=============================================================================================//
+bool LevelSet::isInnerPackage(const Arrayi &cell_index)
+{
+    return mesh_any_of(
+        Array3i::Zero().max(cell_index - Array3i::Ones()),
+        all_cells_.min(cell_index + 2 * Array3i::Ones()),
+        [&](int l, int m, int n)
+        {
+            return isCoreDataPackage(Arrayi(l, m, n));
+        });
+}
 //=================================================================================================//
 void LevelSet::diffuseLevelSetSign()
 {
