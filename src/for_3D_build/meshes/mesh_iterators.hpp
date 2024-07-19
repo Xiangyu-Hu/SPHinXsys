@@ -71,7 +71,7 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
         for (int j = (mesh_range.first)[1]; j != (mesh_range.second)[1]; ++j)
             for (int k = (mesh_range.first)[2]; k != (mesh_range.second)[2]; ++k)
             {
-                local_function(i, j, k);
+                local_function(Array3i(i, j, k));
             }
 }
 //=================================================================================================//

@@ -62,9 +62,9 @@ void CellLinkedList ::deleteMeshDataMatrix()
 void CellLinkedList::clearCellLists()
 {
     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](const Arrayi &entry)
+                      [&](const Arrayi &cell_index)
                       {
-                          getCellDataList(cell_index_lists_, entry).clear();
+                          getCellDataList(cell_index_lists_, cell_index).clear();
                       });
 }
 //=================================================================================================//
@@ -73,11 +73,11 @@ void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
     StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
     mesh_parallel_for(
         MeshRange(Arrayi::Zero(), all_cells_),
-        [&](const Arrayi &entry)
+        [&](const Arrayi &cell_index)
         {
-            ListDataVector &cell_data_list = getCellDataList(cell_data_lists_, entry);
+            ListDataVector &cell_data_list = getCellDataList(cell_data_lists_, cell_index);
             cell_data_list.clear();
-            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, entry);
+            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
             for (size_t s = 0; s != cell_list.size(); ++s)
             {
                 size_t index = cell_list[s];
@@ -91,13 +91,13 @@ void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
     clearSplitCellLists(split_cell_lists);
     mesh_parallel_for(
         MeshRange(Arrayi::Zero(), all_cells_),
-        [&](const Arrayi &entry)
+        [&](const Arrayi &cell_index)
         {
-            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, entry);
+            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
             size_t real_particles_in_cell = cell_list.size();
             if (real_particles_in_cell != 0)
             {
-                split_cell_lists[transferMeshIndexTo1D(3 * Arrayi::Ones(), mod(entry, 3))]
+                split_cell_lists[transferMeshIndexTo1D(3 * Arrayi::Ones(), mod(cell_index, 3))]
                     .push_back(&cell_list);
             }
         });
@@ -125,6 +125,67 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     {
         updateSplitCellLists(split_cell_lists_);
     }
+}
+//=================================================================================================//
+void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
+{
+    Arrayi cell_index = CellIndexFromPosition(particle_position);
+    getCellDataList(cell_index_lists_, cell_index).emplace_back(particle_index);
+}
+//=================================================================================================//
+void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
+{
+    Arrayi cell_index = CellIndexFromPosition(particle_position);
+    getCellDataList(cell_data_lists_, cell_index)
+        .emplace_back(std::make_pair(particle_index, particle_position));
+}
+//=================================================================================================//
+ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
+{
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
+
+    Arrayi cell = CellIndexFromPosition(position);
+    mesh_for_each(
+        Arrayi::Zero().max(cell - Arrayi::Ones()),
+        all_cells_.min(cell + 2 * Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            ListDataVector &target_particles = getCellDataList(cell_data_lists_, cell_index);
+            for (const ListData &list_data : target_particles)
+            {
+                Real distance_sqr = (position - std::get<1>(list_data)).squaredNorm();
+                if (distance_sqr < min_distance_sqr)
+                {
+                    min_distance_sqr = distance_sqr;
+                    nearest_entry = list_data;
+                }
+            }
+        });
+    return nearest_entry;
+}
+//=================================================================================================//
+void CellLinkedList::
+    tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+{
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        [&](const Arrayi &cell_index)
+        {
+            bool is_included = false;
+            mesh_for_each(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                all_cells_.min(cell_index + 2 * Arrayi::Ones()),
+                [&](const Arrayi &neighbor_cell_index)
+                {
+                    if (check_included(CellPositionFromIndex(neighbor_cell_index), grid_spacing_))
+                    {
+                        is_included = true;
+                    }
+                });
+            if (is_included == true)
+                cell_lists.push_back(&getCellDataList(cell_index_lists_, cell_index));
+        });
 }
 //=================================================================================================//
 StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
