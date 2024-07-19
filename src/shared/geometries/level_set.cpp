@@ -2,6 +2,7 @@
 
 #include "adaptation.h"
 #include "base_kernel.h"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
@@ -41,10 +42,69 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
       kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
       kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
+LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+                   Shape &shape, SPHAdaptation &sph_adaptation)
+    : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](const Arrayi &cell_index)
+                      {
+                          initializeDataInACell(cell_index);
+                      });
+
+    finishDataPackages();
+}
+//=================================================================================================//
+void LevelSet::finishDataPackages()
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](const Arrayi &cell_index)
+                      {
+                          tagACellIsInnerPackage(cell_index);
+                      });
+
+    initializeIndexMesh();
+    initializeCellNeighborhood();
+    resizeMeshVariableData();
+
+    Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
+    initializeDataForSingularPackage(0, -far_field_distance);
+    initializeDataForSingularPackage(1, far_field_distance);
+
+    package_parallel_for(
+        [&](size_t package_index)
+        {
+            initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
+        });
+
+    updateLevelSetGradient();
+    updateKernelIntegrals();
+}
+//=================================================================================================//
+void LevelSet::initializeIndexMesh()
+{
+    mesh_for(MeshRange(Arrayi::Zero(), all_cells_),
+             [&](const Arrayi &cell_index)
+             {
+                 if (isInnerDataPackage(cell_index))
+                 {
+                     assignDataPackageIndex(cell_index, num_grid_pkgs_);
+                     num_grid_pkgs_++;
+                 }
+             });
+}
+//=================================================================================================//
+bool LevelSet::isWithinCorePackage(Vecd position)
+{
+    Arrayi cell_index = CellIndexFromPosition(position);
+    return isCoreDataPackage(cell_index);
+}
+//=================================================================================================//
 void LevelSet::updateLevelSetGradient()
 {
     package_parallel_for(
-        [&](size_t package_index) {
+        [&](size_t package_index)
+        {
             computeGradient(phi_, phi_gradient_, package_index);
         });
 }
@@ -52,12 +112,15 @@ void LevelSet::updateLevelSetGradient()
 void LevelSet::updateKernelIntegrals()
 {
     package_parallel_for(
-        [&](size_t package_index) {
+        [&](size_t package_index)
+        {
             Arrayi cell_index = meta_data_cell_[package_index].first;
             assignByPosition(
-                kernel_weight_, cell_index, [&](const Vecd &position) -> Real { return computeKernelIntegral(position); });
+                kernel_weight_, cell_index, [&](const Vecd &position) -> Real
+                { return computeKernelIntegral(position); });
             assignByPosition(
-                kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd { return computeKernelGradientIntegral(position); });
+                kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
+                { return computeKernelGradientIntegral(position); });
         });
 }
 //=================================================================================================//
@@ -99,7 +162,8 @@ Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 void LevelSet::redistanceInterface()
 {
     package_parallel_for(
-        [&](size_t package_index) {
+        [&](size_t package_index)
+        {
             std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
             if (metadata.second == 1)
             {
@@ -205,6 +269,19 @@ void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
             assignCore(cell_index);
         }
     }
+}
+//=============================================================================================//
+RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+                                 Shape &shape, SPHAdaptation &sph_adaptation)
+    : RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](const Arrayi &cell_index)
+                      {
+                          initializeDataInACellFromCoarse(cell_index);
+                      });
+
+    finishDataPackages();
 }
 //=============================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
