@@ -70,7 +70,7 @@ void CellLinkedList::clearCellLists()
 //=================================================================================================//
 void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
+    Vecd *pos = base_particles.ParticlePositions();
     mesh_parallel_for(
         MeshRange(Arrayi::Zero(), all_cells_),
         [&](const Arrayi &cell_index)
@@ -188,10 +188,10 @@ void CellLinkedList::
         });
 }
 //=================================================================================================//
-StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
+size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.ParticleSequences();
+    Vecd *pos = base_particles.ParticlePositions();
+    size_t *sequence = base_particles.ParticleSequences();
     size_t total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
                  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
