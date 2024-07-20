@@ -119,7 +119,7 @@ class Mesh : public BaseMesh
   public:
     Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
     Mesh(Vecd mesh_lower_bound, Arrayi all_cells, Real grid_spacing);
-    virtual ~Mesh(){};
+    ~Mesh(){};
 
     /** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
     Arrayi AllCells() { return all_cells_; };
