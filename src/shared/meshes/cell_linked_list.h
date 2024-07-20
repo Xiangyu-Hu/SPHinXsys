@@ -99,17 +99,22 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
 
   protected:
     /** using concurrent vectors due to writing conflicts when building the list */
-    MeshDataMatrix<ConcurrentIndexVector> cell_index_lists_;
+    ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
-    MeshDataMatrix<ListDataVector> cell_data_lists_;
+    ListDataVector *cell_data_lists_;
 
     void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
     void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
     virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
+    template <typename DataListsType>
+    DataListsType &getCellDataList(DataListsType *data_lists, const Arrayi &cell_index)
+    {
+        return data_lists[transferMeshIndexTo1D(all_cells_, cell_index)];
+    };
 
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, SPHAdaptation &sph_adaptation);
-    virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
+    ~CellLinkedList() { deleteMeshDataMatrix(); };
 
     void clearCellLists();
     virtual SplitCellLists *getSplitCellLists() override { return &split_cell_lists_; };

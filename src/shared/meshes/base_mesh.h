@@ -64,7 +64,7 @@ class BaseMesh
     explicit BaseMesh(Arrayi all_grid_points);
     BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    virtual ~BaseMesh(){};
+    ~BaseMesh(){};
 
     /** Return the lower bound of the mesh domain. */
     Vecd MeshLowerBound() { return mesh_lower_bound_; };

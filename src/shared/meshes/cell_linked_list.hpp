@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "base_kernel.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "mesh_iterators.hpp"
@@ -28,18 +27,18 @@ void CellLinkedList::searchNeighborsByParticles(
                  [&](size_t index_i)
                  {
                      int search_depth = get_search_depth(index_i);
-                     Array3i target_cell_index = CellIndexFromPosition(pos[index_i]);
+                     Arrayi target_cell_index = CellIndexFromPosition(pos[index_i]);
 
                      Neighborhood &neighborhood = particle_configuration[index_i];
                      mesh_for_each(
-                         Array3i::Zero().max(target_cell_index - search_depth * Array3i::Ones()),
-                         all_cells_.min(target_cell_index + (search_depth + 1) * Array3i::Ones()),
-                         [&](int l, int m, int n)
+                         Arrayi::Zero().max(target_cell_index - search_depth * Arrayi::Ones()),
+                         all_cells_.min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
+                         [&](const Arrayi &cell_index)
                          {
-                             ListDataVector &target_particles = cell_data_lists_[l][m][n];
-                             for (const ListData &list_data : target_particles)
+                             ListDataVector &target_particles = getCellDataList(cell_data_lists_, cell_index);
+                             for (const ListData &data_list : target_particles)
                              {
-                                 get_neighbor_relation(neighborhood, pos[index_i], index_i, list_data);
+                                 get_neighbor_relation(neighborhood, pos[index_i], index_i, data_list);
                              }
                          });
                  });
