@@ -136,12 +136,20 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 };
 
+template <>
+class RefinedMesh<CellLinkedList> : public CellLinkedList
+{
+  public:
+    RefinedMesh(BoundingBox tentative_bounds, CellLinkedList &coarse_mesh, SPHAdaptation &sph_adaptation)
+        : CellLinkedList(tentative_bounds, 0.5 * coarse_mesh.GridSpacing(), sph_adaptation){};
+};
+
 /**
  * @class MultilevelCellLinkedList
  * @brief Defining a multilevel mesh cell linked list for a body
  * 		  for multi-resolution particle configuration.
  */
-class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>
+class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList>
 {
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
