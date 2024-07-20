@@ -125,8 +125,6 @@ class Mesh : public BaseMesh
     Arrayi AllCells() { return all_cells_; };
     /** Return the buffer size. */
     size_t MeshBufferSize() { return buffer_width_; };
-    /** Return the spacing for storing data. */
-    virtual Real DataSpacing() { return grid_spacing_; };
 };
 
 /**
@@ -150,27 +148,15 @@ class BaseMeshField
 /**
  * @class 	RefinedMesh
  * @brief 	Abstract base class derived from the coarse mesh but has double resolution.
- * 			Currently, the design is simple but can be extending for more inter-mesh operations.
  */
 template <class CoarseMeshType>
-class RefinedMesh : public CoarseMeshType
-{
-  public:
-    template <typename... Args>
-    RefinedMesh(BoundingBox tentative_bounds, CoarseMeshType &coarse_mesh, Args &&...args)
-        : CoarseMeshType(tentative_bounds, 0.5 * coarse_mesh.DataSpacing(), std::forward<Args>(args)...),
-          coarse_mesh_(coarse_mesh){};
-    virtual ~RefinedMesh(){};
-
-  protected:
-    CoarseMeshType &coarse_mesh_;
-};
+class RefinedMesh;
 
 /**
  * @class 	MultilevelMesh
  * @brief 	Multi-level Meshes with successively double the resolution
  */
-template <class MeshFieldType, class CoarsestMeshType, class RefinedMeshType>
+template <class MeshFieldType, class CoarsestMeshType>
 class MultilevelMesh : public MeshFieldType
 {
   public:
@@ -189,7 +175,7 @@ class MultilevelMesh : public MeshFieldType
             /** all mesh levels aligned at the lower bound of tentative_bounds */
             mesh_levels_.push_back(
                 mesh_level_ptr_vector_keeper_
-                    .template createPtr<RefinedMeshType>(tentative_bounds, *mesh_levels_.back(), std::forward<Args>(args)...));
+                    .template createPtr<RefinedMesh<CoarsestMeshType>>(tentative_bounds, *mesh_levels_.back(), std::forward<Args>(args)...));
         }
     };
     virtual ~MultilevelMesh(){};

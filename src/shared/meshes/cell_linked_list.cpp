@@ -201,7 +201,7 @@ StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_parti
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing,
     size_t total_levels, SPHAdaptation &sph_adaptation)
-    : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
+    : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
           tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
       h_ratio_(*DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
