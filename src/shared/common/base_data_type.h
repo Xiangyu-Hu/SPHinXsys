@@ -50,10 +50,10 @@ namespace SPH
 {
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
-using Index = u_int32_t;
+using SizeT = u_int32_t;
 #else
 using Real = double;
-using Index = size_t;
+using SizeT = size_t;
 #endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
@@ -92,9 +92,9 @@ struct ZeroData<int>
 };
 
 template <>
-struct ZeroData<Index>
+struct ZeroData<SizeT>
 {
-    static inline Index value = 0;
+    static inline SizeT value = 0;
 };
 
 template <typename DataType>
