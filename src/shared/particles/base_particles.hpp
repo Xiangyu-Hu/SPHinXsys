@@ -204,16 +204,13 @@ DiscreteVariable<DataType> *BaseParticles::
 template <typename DataType>
 void BaseParticles::addVariableToSort(const std::string &name)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
+    DiscreteVariable<DataType> *new_sortable =
+        addVariableToList<DataType>(sortable_variables_, name);
+    if (new_sortable != nullptr)
     {
-        DiscreteVariable<DataType> *new_sortable =
-            addVariableToList<DataType>(sortable_variables_, name);
-        if (new_sortable != nullptr)
-        {
-            StdLargeVec<DataType> *variable_data = new_sortable->DataField();
-            std::get<type_index>(sortable_data_).push_back(variable_data);
-        }
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        StdLargeVec<DataType> *variable_data = new_sortable->DataField();
+        std::get<type_index>(sortable_data_).push_back(variable_data);
     }
 }
 //=================================================================================================//
