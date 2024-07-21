@@ -52,9 +52,14 @@ RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
       overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
 {
-    std::transform(bodies_.begin(), bodies_.end(), std::back_inserter(file_names_),
-                   [&](SPHBody *body) -> std::string
-                   { return io_environment_.restart_folder_ + "/" + body->getName() + "_rst_"; });
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        file_names_.push_back(io_environment_.restart_folder_ + "/" + bodies_[i]->getName() + "_rst_");
+
+        // basic variable for write to restart file
+        BaseParticles &particles = bodies_[i]->getBaseParticles();
+        particles.addVariableToRestart<size_t>("OriginalID");
+    }
 }
 //=============================================================================================//
 void RestartIO::writeToFile(size_t iteration_step)

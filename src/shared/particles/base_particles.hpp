@@ -46,16 +46,6 @@ StdLargeVec<DataType> *BaseParticles::
     return &contained_data;
 }
 //=================================================================================================//
-template <typename... Args>
-StdLargeVec<size_t> *BaseParticles::addUnregisteredVariable(const std::string &name, Args &&...args)
-{
-
-    DiscreteVariable<size_t> *variable =
-        unregistered_variable_ptrs_.createPtr<DiscreteVariable<size_t>>(name);
-    initializeVariable(variable, std::forward<Args>(args)...);
-    return variable->DataField();
-}
-//=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::
     registerSingleVariable(const std::string &name, DataType initial_value)
@@ -107,7 +97,10 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
     {
         initializeVariable(variable, std::forward<Args>(args)...);
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(all_particle_data_).push_back(variable->DataField());
+        if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
+        {
+            std::get<type_index>(all_state_data_).push_back(variable->DataField());
+        }
     }
 
     return variable->DataField();
@@ -211,13 +204,16 @@ DiscreteVariable<DataType> *BaseParticles::
 template <typename DataType>
 void BaseParticles::addVariableToSort(const std::string &name)
 {
-    DiscreteVariable<DataType> *new_sortable =
-        addVariableToList<DataType>(sortable_variables_, name);
-    if (new_sortable != nullptr)
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
     {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        StdLargeVec<DataType> *variable_data = new_sortable->DataField();
-        std::get<type_index>(sortable_data_).push_back(variable_data);
+        DiscreteVariable<DataType> *new_sortable =
+            addVariableToList<DataType>(sortable_variables_, name);
+        if (new_sortable != nullptr)
+        {
+            StdLargeVec<DataType> *variable_data = new_sortable->DataField();
+            std::get<type_index>(sortable_data_).push_back(variable_data);
+        }
     }
 }
 //=================================================================================================//
