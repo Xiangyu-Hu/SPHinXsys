@@ -233,7 +233,7 @@ class BaseParticles
     // assembled variables and data sets
     //----------------------------------------------------------------------
   protected:
-    struct CopyParticleData
+    struct CopyParticleState
     {
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index);
@@ -257,7 +257,7 @@ class BaseParticles
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
     };
 
-    OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
+    OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
 };

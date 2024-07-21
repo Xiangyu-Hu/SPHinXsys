@@ -18,7 +18,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
       reload_xml_parser_("xml_particle_reload", "particles"),
-      copy_particle_data_(all_state_data_),
+      copy_particle_state_(all_state_data_),
       write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
       write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_)
@@ -80,7 +80,7 @@ void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
-    copy_particle_data_(index, another_index);
+    copy_particle_state_(index, another_index);
 }
 //=================================================================================================//
 size_t BaseParticles::allocateGhostParticles(size_t ghost_size)

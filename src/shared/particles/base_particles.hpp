@@ -243,7 +243,7 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::CopyParticleData::
+void BaseParticles::CopyParticleState::
 operator()(DataContainerAddressKeeper<StdLargeVec<DataType>> &data_keeper, size_t index, size_t another_index)
 {
     for (size_t i = 0; i != data_keeper.size(); ++i)
