@@ -231,7 +231,6 @@ class SwapSortableParticleData
 {
   protected:
     StdLargeVec<size_t> &sequence_;
-    StdLargeVec<size_t> &original_id_;
     ParticleData &sortable_data_;
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
