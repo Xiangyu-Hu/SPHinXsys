@@ -231,7 +231,6 @@ class SwapSortableParticleData
 {
   protected:
     size_t *sequence_;
-    size_t *original_id_;
     ParticleData &sortable_data_;
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 

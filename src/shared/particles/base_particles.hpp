@@ -57,11 +57,11 @@ DataType *BaseParticles::
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-DataType *BaseParticles::addUnregisteredVariable(const std::string &name, Args &&...args)
+DataType *BaseParticles::addUniqueDiscreteVariable(const std::string &name, Args &&...args)
 {
 
     DiscreteVariable<DataType> *variable =
-        unregistered_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name);
+        unique_discrete_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name);
     initializeVariable(variable, std::forward<Args>(args)...);
     return variable->DataField();
 }
@@ -116,7 +116,10 @@ DataType *BaseParticles::registerSharedVariable(const std::string &name, Args &&
     {
         initializeVariable(variable, std::forward<Args>(args)...);
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(all_particle_data_).push_back(variable->DataField());
+        if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
+        {
+            std::get<type_index>(all_state_data_).push_back(variable->DataField());
+        }
     }
 
     return variable->DataField();
@@ -256,7 +259,7 @@ void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::CopyParticleData::
+void BaseParticles::CopyParticleState::
 operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index)
 {
     for (size_t i = 0; i != data_keeper.size(); ++i)

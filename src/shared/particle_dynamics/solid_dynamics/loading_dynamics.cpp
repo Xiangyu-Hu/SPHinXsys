@@ -60,7 +60,7 @@ SpringNormalOnSurfaceParticles::
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      is_spring_force_applied_(particles_->addUnregisteredVariable<bool>("isSpringForceApplied", false))
+      is_spring_force_applied_(particles_->addUniqueDiscreteVariable<bool>("isSpringForceApplied", false))
 {
     BodySurface surface_layer(sph_body);
 
@@ -128,7 +128,7 @@ SpringOnSurfaceParticles::
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      is_spring_force_applied_(particles_->addUnregisteredVariable<bool>("isSpringForceApplied", false))
+      is_spring_force_applied_(particles_->addUniqueDiscreteVariable<bool>("isSpringForceApplied", false))
 {
     BodySurface surface_layer(sph_body);
     // select which particles the spring is applied to
@@ -205,7 +205,7 @@ SurfacePressureFromSource::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
-      is_pressure_applied_(particles_->addUnregisteredVariable<bool>("isPressureApplied", false))
+      is_pressure_applied_(particles_->addUniqueDiscreteVariable<bool>("isPressureApplied", false))
 {
     BodySurface surface_layer(body_part.getSPHBody());
 
