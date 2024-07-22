@@ -50,10 +50,10 @@ namespace SPH
 {
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
-using SizeT = u_int32_t;
+using UnsignedInt = u_int32_t;
 #else
 using Real = double;
-using SizeT = size_t;
+using UnsignedInt = size_t;
 #endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
@@ -92,9 +92,9 @@ struct ZeroData<int>
 };
 
 template <>
-struct ZeroData<SizeT>
+struct ZeroData<UnsignedInt>
 {
-    static inline SizeT value = 0;
+    static inline UnsignedInt value = 0;
 };
 
 template <typename DataType>
@@ -110,7 +110,7 @@ struct DataTypeIndex
     static constexpr int value = std::numeric_limits<int>::max();
 };
 template <>
-struct DataTypeIndex<size_t>
+struct DataTypeIndex<UnsignedInt>
 {
     static constexpr int value = 0;
 };

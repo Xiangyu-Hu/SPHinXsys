@@ -58,7 +58,7 @@ RestartIO::RestartIO(SPHSystem &sph_system)
 
         // basic variable for write to restart file
         BaseParticles &particles = bodies_[i]->getBaseParticles();
-        particles.addVariableToRestart<size_t>("OriginalID");
+        particles.addVariableToRestart<UnsignedInt>("OriginalID");
     }
 }
 //=============================================================================================//

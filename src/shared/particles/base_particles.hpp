@@ -254,7 +254,7 @@ void BaseParticles::addVariableToReload(const std::string &name)
 template <typename SequenceMethod>
 void BaseParticles::sortParticles(SequenceMethod &sequence_method)
 {
-    size_t *sequence = sequence_method.computingSequence(*this);
+    UnsignedInt *sequence = sequence_method.computingSequence(*this);
     particle_sorting_->sortingParticleData(sequence, total_real_particles_);
 }
 //=================================================================================================//

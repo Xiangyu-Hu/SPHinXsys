@@ -55,7 +55,7 @@ template <typename DataType>
 using AllocatedData = DataType *;
 
 template <template <typename> typename KeeperType, template <typename> typename ContainerType>
-using DataAssemble = std::tuple<KeeperType<ContainerType<size_t>>,
+using DataAssemble = std::tuple<KeeperType<ContainerType<UnsignedInt>>,
                                 KeeperType<ContainerType<int>>,
                                 KeeperType<ContainerType<Real>>,
                                 KeeperType<ContainerType<Vec2d>>,

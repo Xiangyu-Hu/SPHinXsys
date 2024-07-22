@@ -13,12 +13,12 @@ SwapSortableParticleData::SwapSortableParticleData(BaseParticles &base_particles
       sortable_data_(base_particles.SortableParticleData()),
       swap_particle_data_value_(sortable_data_) {}
 //=================================================================================================//
-void SwapSortableParticleData::operator()(size_t *a, size_t *b)
+void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
 {
     std::swap(*a, *b);
 
-    size_t index_a = a - sequence_;
-    size_t index_b = b - sequence_;
+    UnsignedInt index_a = a - sequence_;
+    UnsignedInt index_b = b - sequence_;
     swap_particle_data_value_(index_a, index_b);
 }
 //=================================================================================================//
@@ -31,10 +31,10 @@ ParticleSorting::ParticleSorting(BaseParticles &base_particles)
       quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
       quick_sort_particle_body_()
 {
-    base_particles.addVariableToSort<size_t>("OriginalID");
+    base_particles.addVariableToSort<UnsignedInt>("OriginalID");
 }
 //=================================================================================================//
-void ParticleSorting::sortingParticleData(size_t *begin, size_t size)
+void ParticleSorting::sortingParticleData(UnsignedInt *begin, size_t size)
 {
     quick_sort_particle_range_.begin_ = begin;
     quick_sort_particle_range_.size_ = size;

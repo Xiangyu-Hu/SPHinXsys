@@ -194,7 +194,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
 
   protected:
     Fluid &fluid_;
-    size_t *sorted_id_;
+    UnsignedInt *sorted_id_;
     Vecd *pos_, *vel_, *force_;
     Real *rho_, *p_, *drho_dt_;
     /** inflow pressure condition */
@@ -225,8 +225,8 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
   protected:
     std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
     Fluid &fluid_;
-    size_t *original_id_;
-    size_t *sorted_id_;
+    UnsignedInt *original_id_;
+    UnsignedInt *sorted_id_;
     Vecd *pos_;
     Real *rho_, *p_;
     ParticleBuffer<Base> &buffer_;

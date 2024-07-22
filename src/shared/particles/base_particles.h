@@ -172,9 +172,9 @@ class BaseParticles
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    size_t *original_id_; /**< the original ids assigned just after particle is generated. */
-    size_t *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    size_t *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
+    UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
+    UnsignedInt *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
     ParticleSorting *particle_sorting_;
@@ -184,9 +184,9 @@ class BaseParticles
     void addVariableToSort(const std::string &name);
     template <typename SequenceMethod>
     void sortParticles(SequenceMethod &sequence_method);
-    size_t *ParticleOriginalIds() { return original_id_; };
-    size_t *ParticleSortedIds() { return sorted_id_; };
-    size_t *ParticleSequences() { return sequence_; };
+    UnsignedInt *ParticleOriginalIds() { return original_id_; };
+    UnsignedInt *ParticleSortedIds() { return sorted_id_; };
+    UnsignedInt *ParticleSequences() { return sequence_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
     ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     //----------------------------------------------------------------------

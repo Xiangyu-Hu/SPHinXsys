@@ -38,11 +38,11 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerSharedVariable<size_t>("OriginalID",
-                                                  [&](size_t i) -> size_t
-                                                  { return i; });
-    sorted_id_ = registerSharedVariableFrom<size_t>("SortedID", "OriginalID");
-    sequence_ = registerSharedVariable<size_t>("Sequence");
+    original_id_ = registerSharedVariable<UnsignedInt>("OriginalID",
+                                                       [&](UnsignedInt i) -> UnsignedInt
+                                                       { return i; });
+    sorted_id_ = registerSharedVariableFrom<UnsignedInt>("SortedID", "OriginalID");
+    sequence_ = registerSharedVariable<UnsignedInt>("Sequence");
     particle_sorting_ = particle_sort_ptr_keeper_.createPtr<ParticleSorting>(*this);
 }
 //=================================================================================================//
