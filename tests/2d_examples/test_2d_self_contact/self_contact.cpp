@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addToWrite<Real>(beam_body, "SelfRepulsionDensity");
+    write_beam_states.addToWrite<Real>(beam_body, "SelfRepulsionFactor");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);
     //-----------------------------------------------------------------------------

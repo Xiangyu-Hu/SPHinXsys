@@ -48,11 +48,11 @@ class RepulsionDensitySummation<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionDensitySummation(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          repulsion_density_(*this->particles_->template registerSharedVariable<Real>(variable_name)){};
+          repulsion_factor_(*this->particles_->template registerSharedVariable<Real>(variable_name)){};
     virtual ~RepulsionDensitySummation(){};
 
   protected:
-    StdLargeVec<Real> &repulsion_density_;
+    StdLargeVec<Real> &repulsion_factor_;
 };
 
 template <>
