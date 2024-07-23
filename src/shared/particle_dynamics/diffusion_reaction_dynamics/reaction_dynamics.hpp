@@ -46,7 +46,7 @@ void BaseReactionRelaxation<ReactionModelType>::
 }
 //=================================================================================================//
 template <class ReactionModelType>
-Real BaseReactionRelaxation<ReactionModelType>::UpdateAReactionSpecies::
+Real BaseReactionRelaxation<ReactionModelType>::UpdateReactionSpecies::
 operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
 {
     return input * exp(-loss_rate * dt) +
@@ -63,7 +63,7 @@ void BaseReactionRelaxation<ReactionModelType>::
     {
         Real production_rate = reaction_model_.get_production_rates_[k](local_species);
         Real loss_rate = reaction_model_.get_loss_rates_[k](local_species);
-        local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
+        local_species[k] = update_reaction_species_(local_species[k], production_rate, loss_rate, dt);
     }
     applyGlobalSpecies(local_species, index_i);
 }
@@ -79,7 +79,7 @@ void BaseReactionRelaxation<ReactionModelType>::
         size_t m = k - 1;
         Real production_rate = reaction_model_.get_production_rates_[m](local_species);
         Real loss_rate = reaction_model_.get_loss_rates_[m](local_species);
-        local_species[m] = updateAReactionSpecies(local_species[m], production_rate, loss_rate, dt);
+        local_species[m] = update_reaction_species_(local_species[m], production_rate, loss_rate, dt);
     }
     applyGlobalSpecies(local_species, index_i);
 }

@@ -42,7 +42,7 @@ class BaseReactionRelaxation
       public DataDelegateSimple
 {
   protected:
-    struct UpdateAReactionSpecies
+    struct UpdateReactionSpecies
     {
         Real operator()(Real input, Real production_rate, Real loss_rate, Real dt) const;
     };
@@ -55,7 +55,7 @@ class BaseReactionRelaxation
     typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
     StdVec<StdLargeVec<Real> *> reactive_species_;
     ReactionModelType &reaction_model_;
-    UpdateAReactionSpecies updateAReactionSpecies;
+    UpdateReactionSpecies update_reaction_species_;
     void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
     void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
 
