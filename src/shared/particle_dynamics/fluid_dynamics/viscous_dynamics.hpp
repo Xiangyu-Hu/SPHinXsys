@@ -95,12 +95,12 @@ void ViscousForce<Contact<Wall>, ViscosityType, KernelCorrectionType>::
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Real r_ij = contact_neighborhood.r_ij_[n];
-            Vecd &e_ij = contact_neighborhood.e_ij_[n];
+            const Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
             Vecd vel_derivative = 2.0 * (vel_[index_i] - vel_ave_k[index_j]) /
                                   (r_ij + 0.01 * smoothing_length_);
@@ -127,11 +127,11 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType, KernelCorre
     {
         StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            Vecd &e_ij = contact_neighborhood.e_ij_[n];
+            const Vecd &e_ij = contact_neighborhood.e_ij_[n];
             Real r_ij = contact_neighborhood.r_ij_[n];
 
             Real v_r_ij = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(e_ij);
@@ -171,13 +171,15 @@ void ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>::
         StdLargeVec<Vecd> &vel_k = *(contact_vel_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
         KernelCorrectionType &kernel_correction_k = contact_kernel_corrections_[k];
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
+            const Vecd &e_ij = contact_neighborhood.e_ij_[n];
+
             Vecd vel_derivative = (vel_[index_i] - vel_k[index_j]) /
                                   (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-            force += (kernel_correction_(index_i) + kernel_correction_k(index_j)) *
+            force += e_ij.dot((kernel_correction_(index_i) + kernel_correction_k(index_j)) * e_ij) *
                      contact_mu_k(index_i, index_j) * vel_derivative *
                      contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
         }
