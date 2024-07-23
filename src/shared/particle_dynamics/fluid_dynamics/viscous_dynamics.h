@@ -100,10 +100,7 @@ class ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionTy
     : public ViscousForce<DataDelegateInner>, public ForcePrior
 {
   public:
-    explicit ViscousForce(BaseInnerRelation &inner_relation)
-        : ViscousForce<DataDelegateInner>(inner_relation),
-          ForcePrior(particles_, "ViscousForce"),
-          mu_(particles_){};
+    explicit ViscousForce(BaseInnerRelation &inner_relation);
     virtual ~ViscousForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -153,7 +150,8 @@ class ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>
 
   protected:
     StdVec<ViscosityType> contact_mu_;
-    StdVec<KernelCorrectionType> contact_kernel_correction_;
+    KernelCorrectionType kernel_correction_;
+    StdVec<KernelCorrectionType> contact_kernel_corrections_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
     StdVec<StdLargeVec<Real> *> wall_Vol_;
 };
