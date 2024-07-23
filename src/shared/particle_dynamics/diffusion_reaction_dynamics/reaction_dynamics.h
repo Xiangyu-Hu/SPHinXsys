@@ -21,8 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	reaction_dynamics.h
- * @author	Chi Zhang and Xiangyu Hu
+ * @file reaction_dynamics.h
+ * @brief Opertor spliting method for unconditionally stable time stepping.
+ * @author Chi Zhang and Xiangyu Hu
  */
 
 #ifndef REACTION_DYNAMICS_H
@@ -37,9 +38,7 @@ namespace SPH
  * @brief Base class for computing the reaction process of all species
  */
 template <class ReactionModelType>
-class BaseReactionRelaxation
-    : public LocalDynamics,
-      public DataDelegateSimple
+class BaseReactionRelaxation : public LocalDynamics, public DataDelegateSimple
 {
   protected:
     struct UpdateReactionSpecies
@@ -69,8 +68,7 @@ class BaseReactionRelaxation
  * @brief Compute the reaction process of all species by forward splitting
  */
 template <class ReactionModelType>
-class ReactionRelaxationForward
-    : public BaseReactionRelaxation<ReactionModelType>
+class ReactionRelaxationForward : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
     template <typename... Args>
@@ -85,8 +83,7 @@ class ReactionRelaxationForward
  * @brief Compute the reaction process of all species by backward splitting
  */
 template <class ReactionModelType>
-class ReactionRelaxationBackward
-    : public BaseReactionRelaxation<ReactionModelType>
+class ReactionRelaxationBackward : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
     template <typename... Args>

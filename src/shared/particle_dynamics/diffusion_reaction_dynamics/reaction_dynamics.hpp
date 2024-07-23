@@ -14,9 +14,7 @@ namespace SPH
 template <class ReactionModelType>
 BaseReactionRelaxation<ReactionModelType>::
     BaseReactionRelaxation(SPHBody &sph_body, ReactionModelType &reaction_model)
-    : LocalDynamics(sph_body),
-      DataDelegateSimple(sph_body),
-      reaction_model_(reaction_model)
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body), reaction_model_(reaction_model)
 {
     ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
@@ -54,8 +52,7 @@ operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
 }
 //=================================================================================================//
 template <class ReactionModelType>
-void BaseReactionRelaxation<ReactionModelType>::
-    advanceForwardStep(size_t index_i, Real dt)
+void BaseReactionRelaxation<ReactionModelType>::advanceForwardStep(size_t index_i, Real dt)
 {
     LocalSpecies local_species;
     loadLocalSpecies(local_species, index_i);
@@ -69,8 +66,7 @@ void BaseReactionRelaxation<ReactionModelType>::
 }
 //=================================================================================================//
 template <class ReactionModelType>
-void BaseReactionRelaxation<ReactionModelType>::
-    advanceBackwardStep(size_t index_i, Real dt)
+void BaseReactionRelaxation<ReactionModelType>::advanceBackwardStep(size_t index_i, Real dt)
 {
     LocalSpecies local_species;
     loadLocalSpecies(local_species, index_i);
