@@ -205,7 +205,7 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
     StdVec<SharedPtr<SurfaceContactRelation>> contact_list_;
-    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
+    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactFactorSummation>>> contact_density_list_;
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
@@ -282,7 +282,7 @@ class StructuralSimulation
     void executeSurfacePressure();
     void executeSpringDamperConstraintParticleWise();
     void executeSpringNormalOnSurfaceParticles();
-    void executeContactDensitySummation();
+    void executeContactFactorSummation();
     void executeContactForce();
     void executeStressRelaxationFirstHalf(Real dt);
     void executeConstrainSolidBody();

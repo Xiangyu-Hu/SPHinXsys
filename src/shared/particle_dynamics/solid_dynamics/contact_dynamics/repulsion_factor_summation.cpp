@@ -1,19 +1,19 @@
-#include "repulsion_density_summation.h"
+#include "repulsion_factor_summation.h"
 
 namespace SPH
 {
 namespace solid_dynamics
 {
 //=================================================================================================//
-RepulsionDensitySummation<Inner<>>::
-    RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionFactor")
+RepulsionFactorSummation<Inner<>>::
+    RepulsionFactorSummation(SelfSurfaceContactRelation &self_contact_relation)
+    : RepulsionFactorSummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionFactor")
 {
     Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
     offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
 }
 //=================================================================================================//
-void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
+void RepulsionFactorSummation<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Real sigma = 0.0;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -25,13 +25,13 @@ void RepulsionDensitySummation<Inner<>>::interaction(size_t index_i, Real dt)
     repulsion_factor_[index_i] = sigma;
 }
 //=================================================================================================//
-RepulsionDensitySummation<Contact<>>::
-    RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor")
+RepulsionFactorSummation<Contact<>>::
+    RepulsionFactorSummation(SurfaceContactRelation &solid_body_contact_relation)
+    : RepulsionFactorSummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor")
 {
 }
 //=================================================================================================//
-void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
+void RepulsionFactorSummation<Contact<>>::interaction(size_t index_i, Real dt)
 {
     /** Contact interaction. */
     Real sigma = 0.0;
@@ -47,8 +47,8 @@ void RepulsionDensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
     repulsion_factor_[index_i] = sigma;
 };
 //=================================================================================================//
-ShellContactDensity::ShellContactDensity(ShellSurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor"),
+ShellContactFactor::ShellContactFactor(ShellSurfaceContactRelation &solid_body_contact_relation)
+    : RepulsionFactorSummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
       particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
@@ -75,7 +75,7 @@ ShellContactDensity::ShellContactDensity(ShellSurfaceContactRelation &solid_body
     }
 }
 //=================================================================================================//
-void ShellContactDensity::interaction(size_t index_i, Real dt)
+void ShellContactFactor::interaction(size_t index_i, Real dt)
 {
     /** shell contact interaction. */
     Real sigma = 0.0;
@@ -100,12 +100,12 @@ void ShellContactDensity::interaction(size_t index_i, Real dt)
     repulsion_factor_[index_i] = contact_density_i;
 }
 //=================================================================================================//
-ShellSelfContactDensitySummation::ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation)
-    : RepulsionDensitySummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionFactor")
+ShellSelfContactFactorSummation::ShellSelfContactFactorSummation(ShellSelfContactRelation &self_contact_relation)
+    : RepulsionFactorSummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionFactor")
 {
 }
 //=================================================================================================//
-void ShellSelfContactDensitySummation::interaction(size_t index_i, Real dt)
+void ShellSelfContactFactorSummation::interaction(size_t index_i, Real dt)
 {
     Real sigma = 0.0;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
