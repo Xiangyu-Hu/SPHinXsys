@@ -49,8 +49,8 @@ template <class ReactionModelType>
 Real BaseReactionRelaxation<ReactionModelType>::UpdateReactionSpecies::
 operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
 {
-    return input * exp(-loss_rate * dt) +
-           production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
+    Real alpha = exp(-loss_rate * dt);
+    return input * alpha + production_rate * (1.0 - alpha) / (loss_rate + TinyReal);
 }
 //=================================================================================================//
 template <class ReactionModelType>
