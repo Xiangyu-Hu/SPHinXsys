@@ -84,11 +84,13 @@ using ContactDensitySummation = RepulsionDensitySummation<Contact<>>;
  * @class ShellContactDensity
  * @brief Computing the contact density due to shell contact using a
  * 		 surface integral being solved by Gauss-Legendre quadrature integration.
+ *     This class can only be used when there's the source body only has contact to shell bodies,
+ *     otherwise the contact density will be overwritten by that of solid contact bodies
  */
 class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateContact>
 {
   public:
-    explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
+    explicit ShellContactDensity(ShellSurfaceContactRelation &solid_body_contact_relation);
     virtual ~ShellContactDensity(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -104,6 +106,17 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateC
     /** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};
     const StdVec<Real> three_gaussian_weights_ = {0.5555555555555556, 0.8888888888888889, 0.5555555555555556};
+};
+
+/**
+ * @class ShellSelfContactDensitySummation
+ * @brief Computing the contact density due to shell contact using dummy particle.
+ */
+class ShellSelfContactDensitySummation : public RepulsionDensitySummation<Base, DataDelegateInner>
+{
+  public:
+    explicit ShellSelfContactDensitySummation(ShellSelfContactRelation &self_contact_relation);
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics
 } // namespace SPH

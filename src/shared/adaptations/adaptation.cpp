@@ -94,7 +94,7 @@ UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinem
     MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
                                           total_levels - 1, shape, *this);
     // return the finest level set only
-    return makeUnique<RefinedLevelSet>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
+    return makeUnique<RefinedMesh<LevelSet>>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::

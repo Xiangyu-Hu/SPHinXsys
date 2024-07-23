@@ -52,7 +52,8 @@ template <typename ContainedDataType>
 using DataContainerUniquePtrKeeper = UniquePtrsKeeper<ContainedDataType>;
 
 template <template <typename> typename KeeperType, template <typename> typename ContainerType>
-using DataAssemble = std::tuple<KeeperType<ContainerType<int>>,
+using DataAssemble = std::tuple<KeeperType<ContainerType<size_t>>,
+                                KeeperType<ContainerType<int>>,
                                 KeeperType<ContainerType<Real>>,
                                 KeeperType<ContainerType<Vec2d>>,
                                 KeeperType<ContainerType<Mat2d>>,
