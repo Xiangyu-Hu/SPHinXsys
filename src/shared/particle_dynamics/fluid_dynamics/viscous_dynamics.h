@@ -140,7 +140,6 @@ class ViscousForce<Contact<Wall, AngularConservative>, ViscosityType, KernelCorr
   protected:
     ViscosityType mu_;
     KernelCorrectionType kernel_correction_;
-    StdLargeVec<Vecd> &distance_from_wall_;
 };
 
 template <typename ViscosityType, class KernelCorrectionType>
