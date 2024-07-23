@@ -50,6 +50,12 @@ void ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>::interaction(siz
 }
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType>
+ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionType>::
+    ViscousForce(BaseInnerRelation &inner_relation)
+    : ViscousForce<DataDelegateInner>(inner_relation), ForcePrior(particles_, "ViscousForce"),
+      mu_(particles_), kernel_correction_(particles_) {}
+//=================================================================================================//
+template <typename ViscosityType, class KernelCorrectionType>
 void ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionType>::
     interaction(size_t index_i, Real dt)
 {
@@ -140,12 +146,13 @@ void ViscousForce<Contact<Wall, AngularConservative>, ViscosityType, KernelCorre
 template <typename ViscosityType, class KernelCorrectionType>
 ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>::
     ViscousForce(BaseContactRelation &contact_relation)
-    : ViscousForce<DataDelegateContact>(contact_relation)
+    : ViscousForce<DataDelegateContact>(contact_relation),
+      kernel_correction_(particles_)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_mu_.emplace_back(ViscosityType(particles_, contact_particles_[k]));
-        contact_kernel_correction_.emplace_back(KernelCorrectionType(contact_particles_[k]));
+        contact_kernel_corrections_.emplace_back(KernelCorrectionType(contact_particles_[k]));
         contact_vel_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("Velocity"));
         wall_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
     }
@@ -161,14 +168,14 @@ void ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>::
         auto &contact_mu_k = contact_mu_[k];
         StdLargeVec<Vecd> &vel_k = *(contact_vel_[k]);
         StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
-        KernelCorrectionType &kernel_correction_k = this->contact_kernel_corrections_[k];
+        KernelCorrectionType &kernel_correction_k = contact_kernel_corrections_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd vel_derivative = (vel_[index_i] - vel_k[index_j]) /
                                   (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-            force += (this->kernel_correction_(index_i) + kernel_correction_k(index_j)) *
+            force += (kernel_correction_(index_i) + kernel_correction_k(index_j)) *
                      contact_mu_k(index_i, index_j) * vel_derivative *
                      contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
         }
