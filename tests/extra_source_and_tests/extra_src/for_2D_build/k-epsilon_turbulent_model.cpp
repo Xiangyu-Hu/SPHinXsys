@@ -111,10 +111,12 @@ namespace fluid_dynamics
 				Real r_ij = inner_neighborhood.r_ij_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				
-				if (is_near_wall_P2_[index_i] == 1 && is_near_wall_P1_[index_j] == 1)
+				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
 				{
 					Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
                     velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ps) * nablaW_ijV_j.transpose();
+					//std::cout<<"Calculate velocity gradient according to interpolation!"<<std::endl;
+					//std::cin.get();
 				}
 				else
 				{
