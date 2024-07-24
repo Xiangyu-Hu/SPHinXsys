@@ -35,7 +35,6 @@
 
 #include "base_data_package.h"
 #include "base_variable.h"
-#include "particle_sorting.h"
 #include "sph_data_containers.h"
 #include "xml_parser.h"
 
@@ -84,7 +83,6 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
     UniquePtrsKeeper<Entity> unregistered_variable_ptrs_;
-    UniquePtrKeeper<ParticleSorting> particle_sort_ptr_keeper_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
