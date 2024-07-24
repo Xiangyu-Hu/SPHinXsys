@@ -93,6 +93,7 @@ namespace fluid_dynamics
 		StdLargeVec<Real> &Vol_;
 		StdLargeVec<Vecd>& vel_, & pos_;
 		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
+		StdLargeVec<int>& is_near_wall_P2_;
 
 		StdLargeVec<Matd> velocity_gradient_;
 		//**For test*

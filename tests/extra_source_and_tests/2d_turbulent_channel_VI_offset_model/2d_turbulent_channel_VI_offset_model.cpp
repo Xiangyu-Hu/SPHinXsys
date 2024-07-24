@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -292,12 +292,13 @@ int main(int ac, char *av[])
                 distance_to_wall.exec();
                 update_near_wall_status.exec();
 
+                standard_wall_function_correction.exec();
+                
                 get_velocity_gradient.exec(dt);
                 //vel_grad_calculation.exec();
                 //** To test the latest vel_grad without changing the current code framework */
                 //transfer_velocity_gradient.exec();
-
-                standard_wall_function_correction.exec();
+                
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
                 k_equation_relaxation.update_prior_turbulent_value();
