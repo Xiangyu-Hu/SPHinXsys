@@ -97,10 +97,10 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
     {
-		velocity_gradient_[index_i] = Matd::Zero();
 		//** The near wall velo grad is updated in wall function part *
 		if (is_near_wall_P1_[index_i] != 1)
 		{
+			velocity_gradient_[index_i] = Matd::Zero();
 			Vecd vel_i = vel_[index_i];
 			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
