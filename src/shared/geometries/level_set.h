@@ -130,17 +130,14 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     Real upwindDifference(Real sign, Real df_p, Real df_n);
 };
 
-/**
- * @class RefinedLevelSet
- * @brief level set  which has double resolution of a coarse level set.
- */
-class RefinedLevelSet : public RefinedMesh<LevelSet>
+template <>
+class RefinedMesh<LevelSet> : public LevelSet
 {
   public:
-    RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set, Shape &shape, SPHAdaptation &sph_adaptation);
-    virtual ~RefinedLevelSet(){};
+    RefinedMesh(BoundingBox tentative_bounds, LevelSet &coarse_level_set, Shape &shape, SPHAdaptation &sph_adaptation);
 
   protected:
+    LevelSet &coarse_level_set_;
     void initializeDataInACellFromCoarse(const Arrayi &cell_index);
 };
 
@@ -148,7 +145,7 @@ class RefinedLevelSet : public RefinedMesh<LevelSet>
  * @class MultilevelLevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>
+class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet>
 {
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);

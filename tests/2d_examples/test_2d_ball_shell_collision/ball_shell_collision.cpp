@@ -156,7 +156,7 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation ball_inner(ball);
-    SurfaceContactRelation ball_contact(ball, {&rigid_shell});
+    ShellSurfaceContactRelation ball_contact(ball, {&rigid_shell});
     ContactRelation ball_observer_contact(ball_observer, {&ball});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.

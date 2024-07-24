@@ -62,7 +62,7 @@ template <>
 class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegateInner>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SelfSurfaceContactRelation &self_contact_relation);
+    explicit RepulsionForce(BaseInnerRelation &self_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -78,7 +78,7 @@ template <>
 class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -94,7 +94,7 @@ template <> // Computing the repulsion force from a rigid wall.
 class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -110,7 +110,7 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegate
                                         public ForcePrior
 {
   public:
-    explicit RepulsionForce(SurfaceContactRelation &solid_body_contact_relation);
+    explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
     virtual ~RepulsionForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -119,7 +119,6 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegate
     StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 };
 using ContactForceToWall = RepulsionForce<Wall, Contact<>>;
-
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // CONTACT_REPULSION_H

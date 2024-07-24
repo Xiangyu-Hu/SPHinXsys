@@ -9,19 +9,6 @@
 namespace SPH
 {
 //=================================================================================================//
-LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-                   Shape &shape, SPHAdaptation &sph_adaptation)
-    : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          initializeDataInACell(Arrayi(i, j));
-                      });
-
-    finishDataPackages();
-}
-//=================================================================================================//
 void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set)
 {
     auto &phi = phi_.DataField()[package_index];
@@ -41,54 +28,13 @@ void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real
         });
 }
 //=================================================================================================//
-void LevelSet::finishDataPackages()
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          tagACellIsInnerPackage(Arrayi(i, j));
-                      });
-
-    initializeIndexMesh();
-    initializeCellNeighborhood();
-    resizeMeshVariableData();
-
-    Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-    initializeDataForSingularPackage(0, -far_field_distance);
-    initializeDataForSingularPackage(1, far_field_distance);
-
-    package_parallel_for(
-        [&](size_t package_index)
-        {
-            initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
-        });
-
-    updateLevelSetGradient();
-    updateKernelIntegrals();
-}
-//=================================================================================================//
-void LevelSet::initializeIndexMesh()
-{
-    mesh_for(MeshRange(Arrayi::Zero(), all_cells_),
-             [&](size_t i, size_t j)
-             {
-                 Arrayi cell_index = Arrayi(i, j);
-                 if (isInnerDataPackage(cell_index))
-                 {
-                     assignDataPackageIndex(Arrayi(i, j), num_grid_pkgs_);
-                     num_grid_pkgs_++;
-                 }
-             });
-}
-//=================================================================================================//
 void LevelSet::initializeCellNeighborhood()
 {
     cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
     meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
+                      [&](const Arrayi &cell_index)
                       {
-                          Arrayi cell_index = Arrayi(i, j);
                           if (isInnerDataPackage(cell_index))
                           {
                               CellNeighborhood &current = cell_neighborhood_[PackageIndexFromCellIndex(cell_index)];
@@ -102,12 +48,6 @@ void LevelSet::initializeCellNeighborhood()
                                   }
                           }
                       });
-}
-//=================================================================================================//
-bool LevelSet::isWithinCorePackage(Vecd position)
-{
-    Arrayi cell_index = CellIndexFromPosition(position);
-    return isCoreDataPackage(cell_index);
 }
 //=============================================================================================//
 bool LevelSet::isInnerPackage(const Arrayi &cell_index)
@@ -505,18 +445,4 @@ Vecd LevelSet::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-                                 Shape &shape, SPHAdaptation &sph_adaptation)
-    : RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          initializeDataInACellFromCoarse(Arrayi(i, j));
-                      });
-
-    finishDataPackages();
-}
-//=============================================================================================//
 } // namespace SPH
-//=============================================================================================//

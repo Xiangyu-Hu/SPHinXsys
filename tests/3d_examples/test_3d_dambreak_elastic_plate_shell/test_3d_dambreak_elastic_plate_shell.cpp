@@ -193,8 +193,8 @@ int main(int ac, char *av[])
     ContactRelation water_wall_contact(water_block, {&wall_boundary, &gate});
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
-    ContactRelationToShell water_plate_contact(water_block, {&plate}, {false});
-    ContactRelationFromShell plate_water_contact(plate, {&water_block}, {false});
+    ContactRelationFromShellToFluid water_plate_contact(water_block, {&plate}, {false});
+    ContactRelationFromFluidToShell plate_water_contact(plate, {&water_block}, {false});
     ShellInnerRelationWithContactKernel plate_curvature_inner(plate, water_block);
     ContactRelation disp_observer_contact_1(disp_observer_1, {&plate});
     ContactRelation disp_observer_contact_2(disp_observer_2, {&plate});
@@ -232,7 +232,8 @@ int main(int ac, char *av[])
         update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>>
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>,
+                                             fluid_dynamics::FixedViscosity, NoKernelCorrection>>
         viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
     // FSI
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_plate(plate_water_contact);
