@@ -251,13 +251,6 @@ void BaseParticles::addVariableToReload(const std::string &name)
     addVariableToList<DataType>(variables_to_reload_, name);
 }
 //=================================================================================================//
-template <typename SequenceMethod>
-void BaseParticles::sortParticles(SequenceMethod &sequence_method)
-{
-    UnsignedInt *sequence = sequence_method.computingSequence(*this);
-    particle_sorting_->sortingParticleData(sequence, total_real_particles_);
-}
-//=================================================================================================//
 template <typename DataType>
 void BaseParticles::CopyParticleState::
 operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index)

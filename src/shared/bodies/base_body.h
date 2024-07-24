@@ -42,7 +42,6 @@
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "particle_sorting.h"
 #include "sph_data_containers.h"
 #include "sph_system.h"
 
@@ -189,21 +188,19 @@ class RealBody : public SPHBody
 {
   private:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    size_t iteration_count_;
     bool cell_linked_list_created_;
 
   public:
     template <typename... Args>
     RealBody(Args &&...args)
         : SPHBody(std::forward<Args>(args)...),
-          iteration_count_(1), cell_linked_list_created_(false)
+          cell_linked_list_created_(false)
     {
         this->getSPHSystem().addRealBody(this);
     };
     virtual ~RealBody(){};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
-    void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
 };
 } // namespace SPH
 #endif // BASE_BODY_H

@@ -83,7 +83,6 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
     UniquePtrsKeeper<BaseVariable> unique_discrete_variable_ptrs_;
-    UniquePtrKeeper<ParticleSorting> particle_sort_ptr_keeper_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -176,13 +175,10 @@ class BaseParticles
     UnsignedInt *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
-    ParticleSorting *particle_sorting_;
 
   public:
     template <typename DataType>
     void addVariableToSort(const std::string &name);
-    template <typename SequenceMethod>
-    void sortParticles(SequenceMethod &sequence_method);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     UnsignedInt *ParticleSequences() { return sequence_; };

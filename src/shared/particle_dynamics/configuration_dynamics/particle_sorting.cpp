@@ -8,9 +8,9 @@
 namespace SPH
 {
 //=================================================================================================//
-SwapSortableParticleData::SwapSortableParticleData(BaseParticles &base_particles)
-    : sequence_(base_particles.ParticleSequences()),
-      sortable_data_(base_particles.SortableParticleData()),
+SwapSortableParticleData::SwapSortableParticleData(BaseParticles *base_particles)
+    : sequence_(base_particles->getVariableDataByName<UnsignedInt>("Sequence")),
+      sortable_data_(base_particles->SortableParticleData()),
       swap_particle_data_value_(sortable_data_) {}
 //=================================================================================================//
 void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
@@ -22,39 +22,42 @@ void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
     swap_particle_data_value_(index_a, index_b);
 }
 //=================================================================================================//
-ParticleSorting::ParticleSorting(BaseParticles &base_particles)
-    : base_particles_(base_particles),
-      original_id_(base_particles.ParticleOriginalIds()),
-      sorted_id_(base_particles.ParticleSortedIds()),
-      sequence_(base_particles.ParticleSequences()),
-      swap_sortable_particle_data_(base_particles), compare_(),
+ParticleSequence::ParticleSequence(RealBody &real_body)
+    : LocalDynamics(real_body), DataDelegateSimple(real_body),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      sequence_(particles_->registerSharedVariable<UnsignedInt>("Sequence")),
+      cell_linked_list_(real_body.getCellLinkedList()) {}
+//=================================================================================================//
+void ParticleSequence::update(size_t index_i, Real dt)
+{
+    sequence_[index_i] = cell_linked_list_.computingSequence(pos_[index_i], index_i);
+}
+//=================================================================================================//
+ParticleDataSort::ParticleDataSort(RealBody &real_body)
+    : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(real_body),
+      sequence_(particles_->getVariableDataByName<UnsignedInt>("Sequence")),
+      swap_sortable_particle_data_(particles_), compare_(),
       quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
       quick_sort_particle_body_()
 {
-    base_particles.addVariableToSort<UnsignedInt>("OriginalID");
+    particles_->addVariableToSort<UnsignedInt>("OriginalID");
 }
 //=================================================================================================//
-void ParticleSorting::sortingParticleData(UnsignedInt *begin, size_t size)
+void ParticleDataSort::exec(Real dt)
 {
-    quick_sort_particle_range_.begin_ = begin;
-    quick_sort_particle_range_.size_ = size;
+    quick_sort_particle_range_.begin_ = sequence_;
+    quick_sort_particle_range_.size_ = particles_->TotalRealParticles();
     parallel_for(quick_sort_particle_range_, quick_sort_particle_body_, ap);
-    updateSortedId();
 }
 //=================================================================================================//
-void ParticleSorting::updateSortedId()
+UpdateSortedID::UpdateSortedID(RealBody &real_body)
+    : LocalDynamics(real_body), DataDelegateSimple(real_body),
+      original_id_(particles_->getVariableDataByName<UnsignedInt>("OriginalID")),
+      sorted_id_(particles_->getVariableDataByName<UnsignedInt>("SortedID")) {}
+//=================================================================================================//
+void UpdateSortedID::update(size_t index_i, Real dt)
 {
-    size_t total_real_particles = base_particles_.TotalRealParticles();
-    parallel_for(
-        IndexRange(0, total_real_particles),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                sorted_id_[original_id_[i]] = i;
-            }
-        },
-        ap);
+    sorted_id_[original_id_[index_i]] = index_i;
 }
 //=================================================================================================//
 } // namespace SPH

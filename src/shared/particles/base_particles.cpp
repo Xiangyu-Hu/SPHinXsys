@@ -12,7 +12,6 @@ namespace SPH
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
       original_id_(nullptr), sorted_id_(nullptr), sequence_(nullptr),
-      particle_sorting_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
@@ -43,7 +42,6 @@ void BaseParticles::initializeBasicParticleVariables()
                                                        { return i; });
     sorted_id_ = registerSharedVariableFrom<UnsignedInt>("SortedID", "OriginalID");
     sequence_ = registerSharedVariable<UnsignedInt>("Sequence");
-    particle_sorting_ = particle_sort_ptr_keeper_.createPtr<ParticleSorting>(*this);
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)

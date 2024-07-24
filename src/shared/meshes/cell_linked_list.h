@@ -73,7 +73,7 @@ class BaseCellLinkedList : public BaseMeshField
     /** find the nearest list data entry */
     virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
     /** computing the sequence which indicate the order of sorted particle data */
-    virtual UnsignedInt *computingSequence(BaseParticles &base_particles) = 0;
+    virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) = 0;
     /** Tag body part by cell, call by body part */
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
@@ -124,7 +124,7 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
-    virtual UnsignedInt *computingSequence(BaseParticles &base_particles) override;
+    virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override;
     virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
@@ -167,7 +167,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
-    virtual UnsignedInt *computingSequence(BaseParticles &base_particles) override;
+    virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override{};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };

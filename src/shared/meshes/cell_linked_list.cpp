@@ -188,14 +188,9 @@ void CellLinkedList::
         });
 }
 //=================================================================================================//
-UnsignedInt *CellLinkedList::computingSequence(BaseParticles &base_particles)
+UnsignedInt CellLinkedList::computingSequence(Vecd &position, size_t index_i)
 {
-    Vecd *pos = base_particles.ParticlePositions();
-    UnsignedInt *sequence = base_particles.ParticleSequences();
-    UnsignedInt total_real_particles = base_particles.TotalRealParticles();
-    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
-                 { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
-    return sequence;
+    return transferMeshIndexToMortonOrder(CellIndexFromPosition(position));
 }
 //=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
@@ -256,19 +251,11 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-UnsignedInt *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
+UnsignedInt MultilevelCellLinkedList::computingSequence(Vecd &position, size_t index_i)
 {
-    Vecd *pos = base_particles.ParticlePositions();
-    UnsignedInt *sequence = base_particles.ParticleSequences();
-    size_t total_real_particles = base_particles.TotalRealParticles();
-    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
-                 [&](size_t i)
-                 {
-						 size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
-						 sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
-						 mesh_levels_[level]->CellIndexFromPosition(pos[i])); });
-
-    return sequence;
+    size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[index_i]));
+    return mesh_levels_[level]->transferMeshIndexToMortonOrder(
+        mesh_levels_[level]->CellIndexFromPosition(position));
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::

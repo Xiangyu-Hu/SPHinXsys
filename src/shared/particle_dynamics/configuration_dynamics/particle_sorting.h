@@ -29,8 +29,9 @@
 #ifndef PARTICLE_SORTING_H
 #define PARTICLE_SORTING_H
 
-#include "base_data_package.h"
-#include "sph_data_containers.h"
+#include "all_particle_dynamics.h"
+#include "base_body.h"
+#include "base_particles.hpp"
 
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
@@ -235,7 +236,7 @@ class SwapSortableParticleData
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
   public:
-    explicit SwapSortableParticleData(BaseParticles &base_particles);
+    explicit SwapSortableParticleData(BaseParticles *base_particles);
     ~SwapSortableParticleData(){};
 
     /** the operator overload for swapping particle data.
@@ -244,16 +245,22 @@ class SwapSortableParticleData
     void operator()(UnsignedInt *a, UnsignedInt *b);
 };
 
-/**
- * @class ParticleSorting
- * @brief The class for sorting particle according a given sequence.
- */
-class ParticleSorting
+class ParticleSequence : public LocalDynamics, public DataDelegateSimple
 {
   protected:
-    BaseParticles &base_particles_;
-    UnsignedInt *original_id_;
-    UnsignedInt *sorted_id_;
+    Vecd *pos_;
+    UnsignedInt *sequence_;
+    BaseCellLinkedList &cell_linked_list_;
+
+  public:
+    explicit ParticleSequence(RealBody &real_body);
+    virtual ~ParticleSequence(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
+
+class ParticleDataSort : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
+{
+  protected:
     UnsignedInt *sequence_;
 
     /** using pointer because it is constructed after particles. */
@@ -267,13 +274,21 @@ class ParticleSorting
         quick_sort_particle_body_;
 
   public:
-    // the construction is before particles
-    explicit ParticleSorting(BaseParticles &base_particles);
-    virtual ~ParticleSorting(){};
-    /** sorting particle data according to the cell location of particles */
-    virtual void sortingParticleData(UnsignedInt *begin, size_t size);
-    /** update the reference of sorted data from original data */
-    virtual void updateSortedId();
+    explicit ParticleDataSort(RealBody &real_body);
+    virtual ~ParticleDataSort(){};
+    virtual void exec(Real dt = 0.0) override;
+};
+
+class UpdateSortedID : public LocalDynamics, public DataDelegateSimple
+{
+  protected:
+    UnsignedInt *original_id_;
+    UnsignedInt *sorted_id_;
+
+  public:
+    explicit UpdateSortedID(RealBody &real_body);
+    virtual ~UpdateSortedID(){};
+    void update(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH
 #endif // PARTICLE_SORTING_H
