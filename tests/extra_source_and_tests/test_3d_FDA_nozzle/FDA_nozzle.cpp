@@ -637,7 +637,7 @@ class RadialObserverContainer
     }
 };
 
-void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
+int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
 {
     // Map to hold each profile accessed by the z-value as a key (obtaining radial velocity)
     std::map<double, AxialVelocityProfile> radial_velocity_profiles;
@@ -721,7 +721,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     IOEnvironment in_output(sph_system);
-    in_output.output_folder_ += std::to_string(params.number_of_particles);
+    in_output.output_folder_ += "refineWall_" + std::to_string(params.number_of_particles);
 
     setup_directory(in_output.output_folder_);
 
@@ -738,14 +738,15 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     // FLUID
     FluidBody water_block(sph_system, fluid_shape);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
+    ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.75);
+    water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0)->writeLevelSet(sph_system);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_shape);
-    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
+    wall_boundary.defineAdaptationRatios(1.15, 2.0);
+    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0)->writeLevelSet(sph_system);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
-
     InnerRelation wall_boundary_inner(wall_boundary);
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
@@ -884,11 +885,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     water_body_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
     water_body_recording.addToWrite<Vec3d>(water_block, "KernelSummation");
     BodyStatesRecordingToVtp wall_body_recording(wall_boundary);
-    //----------------------------------------------------------------------
-    //	Defined restart
-    //----------------------------------------------------------------------
-    RestartIO restart_io(sph_system);
-
+    wall_body_recording.addToWrite<Vec3d>(wall_boundary, "NormalDirection");
     //----------------------------------------------------------------------
     //	Defined convergence checker
     //----------------------------------------------------------------------
@@ -930,7 +927,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     auto &vel_of_last_index_observer = vel_radial[last_index_of_observer][0];
     // auto &pos_y_of_mid_index_observer = pos_radial[mid_index_of_observer][1];
 
-    size_t convergence_checker_output_interval = 100;
+    size_t convergence_checker_output_interval = 10;
     std::ofstream file_mid_observer(sph_system.getIOEnvironment().output_folder_ + "/output_velocity_of_mid_observer_NP" + std::to_string(number_of_particles) + ".csv");
     file_mid_observer << "Time,Velocity X,Velocity X at first index,Velocity X at last index,Convergence Rate\n";
     file_mid_observer.flush(); // Ensure data is written to the file immediately
@@ -944,23 +941,16 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
     left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
     wall_boundary_normal_direction.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-    }
     GlobalStaticVariables::physical_time_ = 0.0;
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
     Real end_time = params.end_time; /**< End time. */
     Real Output_Time = 0.1;          /**< Time stamps for output of body states. */
     Real dt = 0.0;                   /**< Default acoustic time step sizes. */
+    //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -1018,11 +1008,6 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "	convergence = " << conv_checker.get_percentage_difference() << "    is_converged = " << is_converged << "\n";
-
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    update_axial_observer_velocity.exec();
-                }
             }
 
             number_of_iterations++;
@@ -1033,7 +1018,8 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
             right_emitter_inflow_injection.injection.exec();
             left_disposer_outflow_deletion.exec();
             right_disposer_outflow_deletion.exec();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            // water_block.updateCellLinkedListWithParticleSort(100);
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();
@@ -1071,7 +1057,6 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
         write_observer_properties_to_output(observer_axial, "Velocity", in_output.output_folder_);
         write_observer_properties_to_output(observer_axial, "Pressure", in_output.output_folder_);
         water_body_recording.writeToFile();
-        restart_io.writeToFile(Real(number_of_iterations));
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -1088,6 +1073,7 @@ void FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double 
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -1095,24 +1081,21 @@ int main(int argc, char *argv[])
     const double Re = 500;
     FDA_nozzle_parameters params;
     // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
-    std::vector<int> number_of_particles = {20};
+    std::vector<int> number_of_particles = {5, 10, 15, 20, 25};
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
         params.number_of_particles = particles;
         {
             std::stringstream wall_file;
-            wall_file << "./input/FDA_nozzle_wall_N" << params.number_of_particles << ".stl";
+            size_t np = params.number_of_particles;
+            if (np > 20)
+                np = 20;
+            wall_file << "./input/FDA_nozzle_wall_N" << np << ".stl";
             params.wall_file_path = wall_file.str();
         }
-        if (particles == 20)
-        {
-            params.end_time = 2.0;
-        }
-        else
-        {
-            params.end_time = 5.0;
-        }
+        params.end_time = 1.0;
+
         FDA_nozzle(argc, argv, params, Re); // Call the function with current settings
     }
 
