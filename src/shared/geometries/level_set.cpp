@@ -253,13 +253,27 @@ Real LevelSet::upwindDifference(Real sign, Real df_p, Real df_n)
     return df;
 }
 //=============================================================================================//
-void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
+RefinedMesh<LevelSet>::RefinedMesh(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+                                   Shape &shape, SPHAdaptation &sph_adaptation)
+    : LevelSet(tentative_bounds, 0.5 * coarse_level_set.DataSpacing(), 4, shape, sph_adaptation),
+      coarse_level_set_(coarse_level_set)
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](const Arrayi &cell_index)
+                      {
+                          initializeDataInACellFromCoarse(cell_index);
+                      });
+
+    finishDataPackages();
+}
+//=============================================================================================//
+void RefinedMesh<LevelSet>::initializeDataInACellFromCoarse(const Arrayi &cell_index)
 {
     Vecd cell_position = CellPositionFromIndex(cell_index);
-    size_t package_index = coarse_mesh_.probeSignedDistance(cell_position) < 0.0 ? 0 : 1;
+    size_t package_index = coarse_level_set_.probeSignedDistance(cell_position) < 0.0 ? 0 : 1;
     assignSingular(cell_index);
     assignDataPackageIndex(cell_index, package_index);
-    if (coarse_mesh_.isWithinCorePackage(cell_position))
+    if (coarse_level_set_.isWithinCorePackage(cell_position))
     {
         Real signed_distance = shape_.findSignedDistance(cell_position);
         Vecd normal_direction = shape_.findNormalDirection(cell_position);
@@ -271,23 +285,10 @@ void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
     }
 }
 //=============================================================================================//
-RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-                                 Shape &shape, SPHAdaptation &sph_adaptation)
-    : RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](const Arrayi &cell_index)
-                      {
-                          initializeDataInACellFromCoarse(cell_index);
-                      });
-
-    finishDataPackages();
-}
-//=============================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
     Shape &shape, SPHAdaptation &sph_adaptation)
-    : MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(
+    : MultilevelMesh<BaseLevelSet, LevelSet>(
           tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation) {}
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)

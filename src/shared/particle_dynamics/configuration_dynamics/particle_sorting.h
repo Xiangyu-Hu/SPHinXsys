@@ -230,8 +230,7 @@ struct CompareParticleSequence
 class SwapSortableParticleData
 {
   protected:
-    size_t *sequence_;
-    size_t *original_id_;
+    UnsignedInt *sequence_;
     ParticleData &sortable_data_;
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
@@ -242,7 +241,7 @@ class SwapSortableParticleData
     /** the operator overload for swapping particle data.
      *  the arguments are the same with std::iter_swap
      */
-    void operator()(size_t *a, size_t *b);
+    void operator()(UnsignedInt *a, UnsignedInt *b);
 };
 
 /**
@@ -253,18 +252,18 @@ class ParticleSorting
 {
   protected:
     BaseParticles &base_particles_;
-    size_t *original_id_;
-    size_t *sorted_id_;
-    size_t *sequence_;
+    UnsignedInt *original_id_;
+    UnsignedInt *sorted_id_;
+    UnsignedInt *sequence_;
 
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;
     CompareParticleSequence compare_;
     tbb::interface9::QuickSortParticleRange<
-        size_t *, CompareParticleSequence, SwapSortableParticleData>
+        UnsignedInt *, CompareParticleSequence, SwapSortableParticleData>
         quick_sort_particle_range_;
     tbb::interface9::QuickSortParticleBody<
-        size_t *, CompareParticleSequence, SwapSortableParticleData>
+        UnsignedInt *, CompareParticleSequence, SwapSortableParticleData>
         quick_sort_particle_body_;
 
   public:
@@ -272,7 +271,7 @@ class ParticleSorting
     explicit ParticleSorting(BaseParticles &base_particles);
     virtual ~ParticleSorting(){};
     /** sorting particle data according to the cell location of particles */
-    virtual void sortingParticleData(size_t *begin, size_t size);
+    virtual void sortingParticleData(UnsignedInt *begin, size_t size);
     /** update the reference of sorted data from original data */
     virtual void updateSortedId();
 };

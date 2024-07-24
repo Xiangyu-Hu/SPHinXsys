@@ -37,24 +37,24 @@
 
 namespace SPH
 {
-class Entity
+class BaseVariable
 {
   public:
-    explicit Entity(const std::string &name)
+    explicit BaseVariable(const std::string &name)
         : name_(name), entity_id_(0){};
-    virtual ~Entity(){};
+    virtual ~BaseVariable(){};
     std::string Name() const { return name_; };
     size_t EntityID() const
     {
         if (entity_id_ == 0)
         {
-            std::cout << "Entity ID is not set for " << name_ << std::endl;
+            std::cout << "BaseVariable ID is not set for " << name_ << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
         return entity_id_;
     };
-    void setEntityID(size_t entity_id) { entity_id_ = entity_id; };
+    void setVariableID(size_t entity_id) { entity_id_ = entity_id; };
 
   private:
     const std::string name_; // name of an entity object
@@ -62,16 +62,16 @@ class Entity
 };
 
 template <typename FunctionalType>
-class FunctionalEntity : public Entity
+class FunctionalVariable : public BaseVariable
 {
   public:
     template <typename... Args>
-    explicit FunctionalEntity(const std::string &name, Args &&...args)
-        : Entity(name), functional_(new FunctionalType(std::forward<Args>(args)...))
+    explicit FunctionalVariable(const std::string &name, Args &&...args)
+        : BaseVariable(name), functional_(new FunctionalType(std::forward<Args>(args)...))
     {
-        setEntityID(typeid(FunctionalType).hash_code());
+        setVariableID(typeid(FunctionalType).hash_code());
     };
-    virtual ~FunctionalEntity() { delete functional_; };
+    virtual ~FunctionalVariable() { delete functional_; };
     FunctionalType *Functional() { return functional_; };
 
   private:
@@ -79,11 +79,11 @@ class FunctionalEntity : public Entity
 };
 
 template <typename DataType>
-class SingularVariable : public Entity
+class SingularVariable : public BaseVariable
 {
   public:
     SingularVariable(const std::string &name, DataType &value)
-        : Entity(name), value_(value){};
+        : BaseVariable(name), value_(value){};
     virtual ~SingularVariable(){};
 
     DataType *ValueAddress() { return &value_; };
@@ -93,11 +93,11 @@ class SingularVariable : public Entity
 };
 
 template <typename DataType>
-class DiscreteVariable : public Entity
+class DiscreteVariable : public BaseVariable
 {
   public:
     DiscreteVariable(const std::string &name)
-        : Entity(name), data_field_(nullptr){};
+        : BaseVariable(name), data_field_(nullptr){};
     virtual ~DiscreteVariable() { delete[] data_field_; };
     DataType *DataField() { return data_field_; };
     void allocateDataField(const size_t size)
@@ -110,12 +110,12 @@ class DiscreteVariable : public Entity
 };
 
 template <typename DataType>
-class MeshVariable : public Entity
+class MeshVariable : public BaseVariable
 {
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : Entity(name), data_field_(nullptr){};
+        : BaseVariable(name), data_field_(nullptr){};
     virtual ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };

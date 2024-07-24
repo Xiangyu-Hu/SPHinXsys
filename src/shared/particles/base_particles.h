@@ -82,7 +82,8 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unregistered_variable_ptrs_;
+    UniquePtrsKeeper<BaseVariable> unique_discrete_variable_ptrs_;
+    UniquePtrKeeper<ParticleSorting> particle_sort_ptr_keeper_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -134,7 +135,7 @@ class BaseParticles
 
   public:
     template <typename DataType, typename... Args>
-    DataType *addUnregisteredVariable(const std::string &name, Args &&...args);
+    DataType *addUniqueDiscreteVariable(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const std::string &name, Args &&...args);
     template <typename DataType>
@@ -170,9 +171,9 @@ class BaseParticles
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    size_t *original_id_; /**< the original ids assigned just after particle is generated. */
-    size_t *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    size_t *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
+    UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
+    UnsignedInt *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
     ParticleSorting *particle_sorting_;
@@ -182,9 +183,9 @@ class BaseParticles
     void addVariableToSort(const std::string &name);
     template <typename SequenceMethod>
     void sortParticles(SequenceMethod &sequence_method);
-    size_t *ParticleOriginalIds() { return original_id_; };
-    size_t *ParticleSortedIds() { return sorted_id_; };
-    size_t *ParticleSequences() { return sequence_; };
+    UnsignedInt *ParticleOriginalIds() { return original_id_; };
+    UnsignedInt *ParticleSortedIds() { return sorted_id_; };
+    UnsignedInt *ParticleSequences() { return sequence_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
     ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     //----------------------------------------------------------------------
@@ -221,7 +222,7 @@ class BaseParticles
     BaseMaterial &base_material_;
     XmlParser restart_xml_parser_;
     XmlParser reload_xml_parser_;
-    ParticleData all_particle_data_;
+    ParticleData all_state_data_; /**< all discrete variable data except those on particle IDs  */
     ParticleVariables all_discrete_variables_;
     SingleVariables all_single_variables_;
     ParticleVariables variables_to_write_;
@@ -236,7 +237,7 @@ class BaseParticles
     // assembled variables and data sets
     //----------------------------------------------------------------------
   protected:
-    struct CopyParticleData
+    struct CopyParticleState
     {
         template <typename DataType>
         void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index);
@@ -260,7 +261,7 @@ class BaseParticles
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
     };
 
-    OperationOnDataAssemble<ParticleData, CopyParticleData> copy_particle_data_;
+    OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
 };

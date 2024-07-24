@@ -50,10 +50,10 @@ namespace SPH
 {
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
-using SizeT = u_int32_t;
+using UnsignedInt = u_int32_t;
 #else
 using Real = double;
-using SizeT = size_t;
+using UnsignedInt = size_t;
 #endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
@@ -92,9 +92,9 @@ struct ZeroData<int>
 };
 
 template <>
-struct ZeroData<SizeT>
+struct ZeroData<UnsignedInt>
 {
-    static inline SizeT value = 0;
+    static inline UnsignedInt value = 0;
 };
 
 template <typename DataType>
@@ -110,34 +110,39 @@ struct DataTypeIndex
     static constexpr int value = std::numeric_limits<int>::max();
 };
 template <>
-struct DataTypeIndex<int>
+struct DataTypeIndex<UnsignedInt>
 {
     static constexpr int value = 0;
 };
 template <>
-struct DataTypeIndex<Real>
+struct DataTypeIndex<int>
 {
     static constexpr int value = 1;
 };
 template <>
-struct DataTypeIndex<Vec2d>
+struct DataTypeIndex<Real>
 {
     static constexpr int value = 2;
 };
 template <>
-struct DataTypeIndex<Mat2d>
+struct DataTypeIndex<Vec2d>
 {
     static constexpr int value = 3;
 };
 template <>
-struct DataTypeIndex<Vec3d>
+struct DataTypeIndex<Mat2d>
 {
     static constexpr int value = 4;
 };
 template <>
-struct DataTypeIndex<Mat3d>
+struct DataTypeIndex<Vec3d>
 {
     static constexpr int value = 5;
+};
+template <>
+struct DataTypeIndex<Mat3d>
+{
+    static constexpr int value = 6;
 };
 
 /** Verbal boolean for positive and negative axis directions. */

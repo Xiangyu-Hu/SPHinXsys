@@ -188,11 +188,11 @@ void CellLinkedList::
         });
 }
 //=================================================================================================//
-size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
+UnsignedInt *CellLinkedList::computingSequence(BaseParticles &base_particles)
 {
     Vecd *pos = base_particles.ParticlePositions();
-    size_t *sequence = base_particles.ParticleSequences();
-    size_t total_real_particles = base_particles.TotalRealParticles();
+    UnsignedInt *sequence = base_particles.ParticleSequences();
+    UnsignedInt total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
                  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
     return sequence;
@@ -201,7 +201,7 @@ size_t *CellLinkedList::computingSequence(BaseParticles &base_particles)
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing,
     size_t total_levels, SPHAdaptation &sph_adaptation)
-    : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
+    : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
           tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
       h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
@@ -256,10 +256,10 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-size_t *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
+UnsignedInt *MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
 {
     Vecd *pos = base_particles.ParticlePositions();
-    size_t *sequence = base_particles.ParticleSequences();
+    UnsignedInt *sequence = base_particles.ParticleSequences();
     size_t total_real_particles = base_particles.TotalRealParticles();
     particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
                  [&](size_t i)
