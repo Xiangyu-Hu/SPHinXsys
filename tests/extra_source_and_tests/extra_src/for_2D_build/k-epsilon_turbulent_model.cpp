@@ -107,24 +107,21 @@ namespace fluid_dynamics
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
-				/*
+				
 				Real r_ij = inner_neighborhood.r_ij_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				
 				if (is_near_wall_P2_[index_i] == 1 && is_near_wall_P1_[index_j] == 1)
 				{
 					Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
-
+                    velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ps) * nablaW_ijV_j.transpose();
 				}
 				else
 				{
-
+					velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
 				}
-				*/
-				//** Strong form *
-				velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
-				//** Weak form *
-				//velocity_gradient_[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+				
+
 			}
 		}
     }
