@@ -14,9 +14,7 @@ namespace SPH
 template <class ReactionModelType>
 BaseReactionRelaxation<ReactionModelType>::
     BaseReactionRelaxation(SPHBody &sph_body, ReactionModelType &reaction_model)
-    : LocalDynamics(sph_body),
-      DataDelegateSimple(sph_body),
-      reaction_model_(reaction_model)
+    : LocalDynamics(sph_body), DataDelegateSimple(sph_body), reaction_model_(reaction_model)
 {
     ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
@@ -46,16 +44,15 @@ void BaseReactionRelaxation<ReactionModelType>::
 }
 //=================================================================================================//
 template <class ReactionModelType>
-Real BaseReactionRelaxation<ReactionModelType>::UpdateAReactionSpecies::
+Real BaseReactionRelaxation<ReactionModelType>::UpdateReactionSpecies::
 operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
 {
-    return input * exp(-loss_rate * dt) +
-           production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
+    Real alpha = exp(-loss_rate * dt);
+    return input * alpha + production_rate * (1.0 - alpha) / (loss_rate + TinyReal);
 }
 //=================================================================================================//
 template <class ReactionModelType>
-void BaseReactionRelaxation<ReactionModelType>::
-    advanceForwardStep(size_t index_i, Real dt)
+void BaseReactionRelaxation<ReactionModelType>::advanceForwardStep(size_t index_i, Real dt)
 {
     LocalSpecies local_species;
     loadLocalSpecies(local_species, index_i);
@@ -63,14 +60,13 @@ void BaseReactionRelaxation<ReactionModelType>::
     {
         Real production_rate = reaction_model_.get_production_rates_[k](local_species);
         Real loss_rate = reaction_model_.get_loss_rates_[k](local_species);
-        local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
+        local_species[k] = update_reaction_species_(local_species[k], production_rate, loss_rate, dt);
     }
     applyGlobalSpecies(local_species, index_i);
 }
 //=================================================================================================//
 template <class ReactionModelType>
-void BaseReactionRelaxation<ReactionModelType>::
-    advanceBackwardStep(size_t index_i, Real dt)
+void BaseReactionRelaxation<ReactionModelType>::advanceBackwardStep(size_t index_i, Real dt)
 {
     LocalSpecies local_species;
     loadLocalSpecies(local_species, index_i);
@@ -79,7 +75,7 @@ void BaseReactionRelaxation<ReactionModelType>::
         size_t m = k - 1;
         Real production_rate = reaction_model_.get_production_rates_[m](local_species);
         Real loss_rate = reaction_model_.get_loss_rates_[m](local_species);
-        local_species[m] = updateAReactionSpecies(local_species[m], production_rate, loss_rate, dt);
+        local_species[m] = update_reaction_species_(local_species[m], production_rate, loss_rate, dt);
     }
     applyGlobalSpecies(local_species, index_i);
 }
