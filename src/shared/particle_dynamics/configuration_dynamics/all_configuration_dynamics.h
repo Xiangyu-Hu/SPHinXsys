@@ -29,6 +29,6 @@
 #ifndef ALL_CONFIGURATION_DYNAMICS_H
 #define ALL_CONFIGURATION_DYNAMICS_H
 
-#include "particle_sorting.h"
+#include "particle_sorting.hpp"
 
 #endif // ALL_CONFIGURATION_DYNAMICS_H

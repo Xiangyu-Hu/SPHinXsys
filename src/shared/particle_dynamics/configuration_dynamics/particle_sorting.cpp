@@ -33,7 +33,7 @@ void ParticleSequence::update(size_t index_i, Real dt)
     sequence_[index_i] = cell_linked_list_.computingSequence(pos_[index_i], index_i);
 }
 //=================================================================================================//
-ParticleDataSort::ParticleDataSort(RealBody &real_body)
+ParticleDataSort<ParallelPolicy>::ParticleDataSort(RealBody &real_body)
     : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(real_body),
       sequence_(particles_->getVariableDataByName<UnsignedInt>("Sequence")),
       swap_sortable_particle_data_(particles_), compare_(),
@@ -43,7 +43,7 @@ ParticleDataSort::ParticleDataSort(RealBody &real_body)
     particles_->addVariableToSort<UnsignedInt>("OriginalID");
 }
 //=================================================================================================//
-void ParticleDataSort::exec(Real dt)
+void ParticleDataSort<ParallelPolicy>::exec(Real dt)
 {
     quick_sort_particle_range_.begin_ = sequence_;
     quick_sort_particle_range_.size_ = particles_->TotalRealParticles();

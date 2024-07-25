@@ -258,7 +258,12 @@ class ParticleSequence : public LocalDynamics, public DataDelegateSimple
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class ParticleDataSort : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
+template <class ExecutionPolicy>
+class ParticleDataSort;
+
+template <>
+class ParticleDataSort<ParallelPolicy>
+    : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
 {
   protected:
     UnsignedInt *sequence_;
@@ -289,6 +294,20 @@ class UpdateSortedID : public LocalDynamics, public DataDelegateSimple
     explicit UpdateSortedID(RealBody &real_body);
     virtual ~UpdateSortedID(){};
     void update(size_t index_i, Real dt = 0.0);
+};
+
+template <class ExecutionPolicy = ParallelPolicy>
+class ParticleSorting : public BaseDynamics<void>
+{
+    SimpleDynamics<ParticleSequence, ExecutionPolicy> particle_sequence_;
+    ParticleDataSort<ParallelPolicy> particle_data_sort_;
+    SimpleDynamics<UpdateSortedID, ExecutionPolicy> update_sorted_id_;
+
+  public:
+    ParticleSorting(RealBody &real_body);
+    virtual ~ParticleSorting(){};
+
+    virtual void exec(Real dt = 0.0) override;
 };
 } // namespace SPH
 #endif // PARTICLE_SORTING_H
