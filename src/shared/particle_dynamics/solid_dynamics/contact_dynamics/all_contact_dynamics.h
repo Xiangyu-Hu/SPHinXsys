@@ -31,4 +31,4 @@
 
 #include "contact_friction.h"
 #include "contact_repulsion.h"
-#include "repulsion_density_summation.h"
+#include "repulsion_factor_summation.h"

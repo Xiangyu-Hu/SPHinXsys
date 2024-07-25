@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
-    InteractionDynamics<solid_dynamics::ShellContactDensity> beam_shell_update_contact_density(beam_contact);
+    InteractionDynamics<solid_dynamics::ShellContactFactor> beam_shell_update_contact_density(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);

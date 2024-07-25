@@ -90,8 +90,8 @@ class DynamicContactForceWithWall : public LocalDynamics,
           force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
           penalty_strength_(penalty_strength)
     {
-        impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());
-        reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
+        impedance_ = sqrt(solid_.ReferenceDensity() * solid_.ContactStiffness());
+        reference_pressure_ = solid_.ContactStiffness();
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
