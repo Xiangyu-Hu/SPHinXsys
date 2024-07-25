@@ -354,6 +354,7 @@ namespace fluid_dynamics
 	protected:
 		StdLargeVec<int>  &turbu_indicator_;
 		StdLargeVec<int> &is_extra_viscous_dissipation_;
+		StdLargeVec<Matd> &B_;
 	};
 
 	//** Wall part *

@@ -108,20 +108,21 @@ namespace fluid_dynamics
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
 				
-				Real r_ij = inner_neighborhood.r_ij_[n];
-				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
+				//Real r_ij = inner_neighborhood.r_ij_[n];
+				//const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				
-				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
-				{
-					Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
-                    velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ps) * nablaW_ijV_j.transpose();
+				//if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
+				//{
+					//Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
+					//Vecd vel_ps =  0.5 * vel_[index_j] + 0.5 * vel_[index_i] ;
+                    //velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ps) * nablaW_ijV_j.transpose();
 					//std::cout<<"Calculate velocity gradient according to interpolation!"<<std::endl;
 					//std::cin.get();
-				}
-				else
-				{
+				//}
+				//else
+				//{
 					velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
-				}
+				//}
 				
 
 			}
@@ -452,7 +453,8 @@ namespace fluid_dynamics
 		: TurbuViscousForce<DataDelegateInner>(inner_relation), 
 		ForcePrior(particles_, "ViscousForce"),
 		turbu_indicator_(*this->particles_->template getVariableByName<int>("TurbulentIndicator")),
-		is_extra_viscous_dissipation_(*this->particles_->template getVariableByName<int>("TurbulentExtraViscousDissipation"))
+		is_extra_viscous_dissipation_(*this->particles_->template getVariableByName<int>("TurbulentExtraViscousDissipation")),
+		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
 	{
 		this->particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 		this->particles_->addVariableToSort<Vecd>("ViscousAccInner");
@@ -501,7 +503,9 @@ namespace fluid_dynamics
 			shear_stress = (shear_stress - shear_stress_eij) + shear_stress_eij_corrected;
 			
 			
-			Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
+			//Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
+			Vecd force_j = e_ij.dot((B_[index_i] + B_[index_j]) * e_ij) * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
+			
 			force += force_j;
 		}
 		viscous_force_[index_i] = force / rho_[index_i];
