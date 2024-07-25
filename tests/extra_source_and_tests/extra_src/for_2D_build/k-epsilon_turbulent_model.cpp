@@ -108,21 +108,23 @@ namespace fluid_dynamics
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
 				
-				//Real r_ij = inner_neighborhood.r_ij_[n];
-				//const Vecd& e_ij = inner_neighborhood.e_ij_[n];
+				Real r_ij = inner_neighborhood.r_ij_[n];
+				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				
-				//if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
-				//{
+				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
+				{
 					//Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
 					//Vecd vel_ps =  0.5 * vel_[index_j] + 0.5 * vel_[index_i] ;
                     //velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ps) * nablaW_ijV_j.transpose();
 					//std::cout<<"Calculate velocity gradient according to interpolation!"<<std::endl;
 					//std::cin.get();
-				//}
-				//else
-				//{
+					Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
+					velocity_gradient_[index_i] += - vel_diff * nablaW_ijV_j.transpose();
+				}
+				else
+				{
 					velocity_gradient_[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
-				//}
+				}
 				
 
 			}
@@ -503,8 +505,8 @@ namespace fluid_dynamics
 			shear_stress = (shear_stress - shear_stress_eij) + shear_stress_eij_corrected;
 			
 			
-			//Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
-			Vecd force_j = e_ij.dot((B_[index_i] + B_[index_j]) * e_ij) * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
+			Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
+			//Vecd force_j = e_ij.dot((B_[index_i] + B_[index_j]) * e_ij) * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
 			
 			force += force_j;
 		}
@@ -580,8 +582,8 @@ namespace fluid_dynamics
 				
 				//** Transform local wall shear stress to global   *
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
-				//Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
-				Vecd force_j = mass_[index_i] * WSS_j * ( (B_[index_i] + B_[index_j])* e_ij ) * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
+				Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
+				//Vecd force_j = mass_[index_i] * WSS_j * ( (B_[index_i] + B_[index_j])* e_ij ) * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
 
 				//force_j = force_j - (force_j.dot(e_j_n)) * e_j_n;
 
