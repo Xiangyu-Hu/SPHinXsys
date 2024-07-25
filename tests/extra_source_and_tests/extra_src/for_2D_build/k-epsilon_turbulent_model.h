@@ -368,6 +368,7 @@ namespace fluid_dynamics
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		Real wall_particle_spacing_;
+		StdLargeVec<Matd> &B_;
 	};
 
 	//** Interface part *

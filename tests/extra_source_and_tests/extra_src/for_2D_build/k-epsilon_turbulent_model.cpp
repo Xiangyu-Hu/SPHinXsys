@@ -515,7 +515,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation& wall_contact_relation)
 		: BaseTurbuViscousForceWithWall(wall_contact_relation),
-		wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
+		wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
+		B_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"))
 	{
 		this->particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 		this->particles_->addVariableToSort<Vecd>("ViscousAccWall");
@@ -579,7 +580,8 @@ namespace fluid_dynamics
 				
 				//** Transform local wall shear stress to global   *
 				WSS_j = Q.transpose() * WSS_j_tn * Q;
-				Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
+				//Vecd force_j =  2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
+				Vecd force_j = mass_[index_i] * WSS_j * ( (B_[index_i] + B_[index_j])* e_ij ) * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
 
 				//force_j = force_j - (force_j.dot(e_j_n)) * e_j_n;
 
