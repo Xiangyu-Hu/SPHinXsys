@@ -283,8 +283,6 @@ struct FDA_nozzle_parameters
     double fluid_length = 200 * scale; // defined in mesh file
     // end time
     double end_time = 2.0;
-    // refine wall
-    bool refine_wall = false;
 };
 
 void setup_directory(const std::string &path)
@@ -639,7 +637,7 @@ class RadialObserverContainer
     }
 };
 
-int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
+int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool is_linearVisc, bool is_refineWall, FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
 {
     // Map to hold each profile accessed by the z-value as a key (obtaining radial velocity)
     std::map<double, AxialVelocityProfile> radial_velocity_profiles;
@@ -655,7 +653,7 @@ int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double R
     GlobalStaticVariables::physical_time_ = 0;
 
     const double scale = params.scale;
-    inlet_diameter = params.inlet_diameter;
+    inlet_diameter = params.thoat_diameter;
     const double Q_f = params.Q_f;
     U_f = Q_f / params.throat_area;
     double U_max = 0.8; // From exp data
@@ -733,11 +731,24 @@ int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double R
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     IOEnvironment in_output(sph_system);
-    if (params.refine_wall)
-        in_output.output_folder_ += "refineWall2_TransportVelocityCorrectionComplex_" + std::to_string(params.number_of_particles);
+    in_output.output_folder_ += "_ExpanOnly_";
+    if (is_TVLCCC)
+        in_output.output_folder_ += "_TVLCCC_";
     else
-        in_output.output_folder_ += std::to_string(params.number_of_particles);
-
+        in_output.output_folder_ += "_TVCCC_";
+    if (is_linearVisc)
+        in_output.output_folder_ += "_ViscCorrection_";
+    else
+        in_output.output_folder_ += "_NoViscCorrection_";
+    if (is_refineWall)
+        in_output.output_folder_ += "_refinewall_";
+    else
+        in_output.output_folder_ += "_Norefinewall_";
+    if (no_wallrelaxation)
+        in_output.output_folder_ += "_NoWallrelaxation_";
+    else
+        in_output.output_folder_ += "_Wallrelaxation_";
+    in_output.output_folder_ += std::to_string(params.number_of_particles);
     setup_directory(in_output.output_folder_);
 
     // Check if the folder exists
@@ -754,13 +765,13 @@ int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double R
     FluidBody water_block(sph_system, fluid_shape);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.75);
-    water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0)->writeLevelSet(sph_system);
+    water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_shape);
-    if (params.refine_wall)
+    if (is_refineWall)
         wall_boundary.defineAdaptationRatios(1.15, 2.0);
-    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0)->writeLevelSet(sph_system);
+    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     InnerRelation wall_boundary_inner(wall_boundary);
@@ -768,7 +779,7 @@ int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double R
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    // if (sph_system.RunParticleRelaxation())
+    if (no_wallrelaxation)
     {
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -838,11 +849,16 @@ int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double R
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Computing viscous acceleration. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWallCorrection>
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>
         viscous_acceleration(water_block_inner, water_block_contact);
+    /** Computing viscous acceleration. */
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWallCorrection>
+        viscous_acceleration_correction(water_block_inner, water_block_contact);
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplex<BulkParticles>>
-        transport_velocity_correction(water_block_inner, water_block_contact);
+        transport_velocity_correction_TVLCCC(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionCorrectedComplex<BulkParticles>>
+        transport_velocity_correction_TVCCC(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Set up boundary condition
     //----------------------------------------------------------------------
@@ -999,8 +1015,16 @@ int FDA_nozzle(int ac, char *av[], FDA_nozzle_parameters &params, const double R
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
             kernel_correction_complex.exec();
-            viscous_acceleration.exec();
-            transport_velocity_correction.exec();
+            if (is_linearVisc)
+                viscous_acceleration_correction.exec();
+            else
+                viscous_acceleration.exec();
+
+            if (is_TVLCCC)
+                transport_velocity_correction_TVLCCC.exec();
+            else
+                transport_velocity_correction_TVCCC.exec();
+
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -1096,7 +1120,6 @@ int main(int argc, char *argv[])
 {
     const double Re = 500;
     FDA_nozzle_parameters params;
-    params.refine_wall = true;
     // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
     std::vector<int> number_of_particles = {15};
 
@@ -1113,7 +1136,31 @@ int main(int argc, char *argv[])
         }
         params.end_time = 2.0;
 
-        FDA_nozzle(argc, argv, params, Re); // Call the function with current settings
+        bool is_TVLCCC = false;
+        bool no_wallrelaxation = false;
+        bool is_linearVisc = false;
+        bool is_refineWall = false;
+        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
+        is_TVLCCC = true;
+        no_wallrelaxation = false;
+        is_linearVisc = false;
+        is_refineWall = false;
+        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
+        is_TVLCCC = false;
+        no_wallrelaxation = true;
+        is_linearVisc = false;
+        is_refineWall = false;
+        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
+        is_TVLCCC = false;
+        no_wallrelaxation = false;
+        is_linearVisc = true;
+        is_refineWall = false;
+        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
+        is_TVLCCC = false;
+        no_wallrelaxation = false;
+        is_linearVisc = false;
+        is_refineWall = true;
+        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
     }
 
     return 0;
