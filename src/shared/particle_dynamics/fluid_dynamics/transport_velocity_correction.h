@@ -128,7 +128,7 @@ using TransportVelocityLimitedCorrectionComplex =
     BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, NoKernelCorrection, ParticleScope>;
 
 template <class ParticleScope>
-using TransportVelocityKimitedCorrectionCorrectedComplex =
+using TransportVelocityLimitedCorrectionCorrectedComplex =
     BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
 
 template <class ParticleScope>

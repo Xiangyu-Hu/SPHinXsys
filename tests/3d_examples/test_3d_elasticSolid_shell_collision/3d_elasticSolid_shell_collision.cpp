@@ -156,7 +156,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
+    InteractionDynamics<solid_dynamics::ShellContactFactor> ball_update_contact_density(ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
     DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
         ball_friction(0.1, ball_contact, physical_viscosity);

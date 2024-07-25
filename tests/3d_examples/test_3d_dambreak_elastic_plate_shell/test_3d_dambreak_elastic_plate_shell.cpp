@@ -232,7 +232,8 @@ int main(int ac, char *av[])
         update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity>>
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>,
+                                             fluid_dynamics::FixedViscosity, NoKernelCorrection>>
         viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);
     // FSI
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_plate(plate_water_contact);

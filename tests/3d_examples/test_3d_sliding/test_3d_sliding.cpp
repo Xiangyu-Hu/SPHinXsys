@@ -132,7 +132,7 @@ void block_sliding(
     // Contact relation
     SurfaceContactRelation contact_cube_to_slope(cube_body, {&slope_body}, {true});
     // Contact density
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density(contact_cube_to_slope);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_density(contact_cube_to_slope);
     // Contact Force
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope);
 

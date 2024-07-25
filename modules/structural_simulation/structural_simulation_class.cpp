@@ -350,8 +350,8 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
     contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*second_body, RealBodyVector({first_body})));
 
     int last = contact_list_.size() - 1;
-    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last - 1]));
-    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last - 1]));
+    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
 
     contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last - 1]));
     contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
@@ -375,7 +375,7 @@ void StructuralSimulation::initializeAllContacts()
 
         contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*contact_body, target_list));
         int last = contact_list_.size() - 1;
-        contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+        contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
         contact_force_list_.emplace_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
     }
     // continue appending the lists with the time dependent contacts
@@ -657,7 +657,7 @@ void StructuralSimulation::executeSpringNormalOnSurfaceParticles()
     }
 }
 
-void StructuralSimulation::executeContactDensitySummation()
+void StructuralSimulation::executeContactFactorSummation()
 {
     // number of contacts that are not time dependent: contact pairs * 2
     size_t number_of_general_contacts = contacting_body_pairs_list_.size();
@@ -844,7 +844,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     executeSpringNormalOnSurfaceParticles();
 
     /** CONTACT */
-    executeContactDensitySummation();
+    executeContactFactorSummation();
     executeContactForce();
 
     /** STRESS RELAXATION, DAMPING, POSITIONAL CONSTRAINTS */

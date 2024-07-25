@@ -21,8 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	reaction_dynamics.h
- * @author	Chi Zhang and Xiangyu Hu
+ * @file reaction_dynamics.h
+ * @brief Opertor spliting method for unconditionally stable time stepping.
+ * @author Chi Zhang and Xiangyu Hu
  */
 
 #ifndef REACTION_DYNAMICS_H
@@ -37,12 +38,10 @@ namespace SPH
  * @brief Base class for computing the reaction process of all species
  */
 template <class ReactionModelType>
-class BaseReactionRelaxation
-    : public LocalDynamics,
-      public DataDelegateSimple
+class BaseReactionRelaxation : public LocalDynamics, public DataDelegateSimple
 {
   protected:
-    struct UpdateAReactionSpecies
+    struct UpdateReactionSpecies
     {
         Real operator()(Real input, Real production_rate, Real loss_rate, Real dt) const;
     };
@@ -55,7 +54,7 @@ class BaseReactionRelaxation
     typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
     StdVec<Real *> reactive_species_;
     ReactionModelType &reaction_model_;
-    UpdateAReactionSpecies updateAReactionSpecies;
+    UpdateReactionSpecies update_reaction_species_;
     void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
     void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
 
@@ -69,8 +68,7 @@ class BaseReactionRelaxation
  * @brief Compute the reaction process of all species by forward splitting
  */
 template <class ReactionModelType>
-class ReactionRelaxationForward
-    : public BaseReactionRelaxation<ReactionModelType>
+class ReactionRelaxationForward : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
     template <typename... Args>
@@ -85,8 +83,7 @@ class ReactionRelaxationForward
  * @brief Compute the reaction process of all species by backward splitting
  */
 template <class ReactionModelType>
-class ReactionRelaxationBackward
-    : public BaseReactionRelaxation<ReactionModelType>
+class ReactionRelaxationBackward : public BaseReactionRelaxation<ReactionModelType>
 {
   public:
     template <typename... Args>
