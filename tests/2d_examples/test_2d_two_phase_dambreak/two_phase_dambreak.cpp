@@ -87,6 +87,11 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting water_particle_sorting(water_block);
+    ParticleSorting air_particle_sorting(air_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -185,9 +190,13 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
-
-            water_block.updateCellLinkedListWithParticleSort(100);
-            air_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                water_particle_sorting.exec();
+                air_particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
+            air_block.updateCellLinkedList();
             water_air_complex.updateConfiguration();
             air_water_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();

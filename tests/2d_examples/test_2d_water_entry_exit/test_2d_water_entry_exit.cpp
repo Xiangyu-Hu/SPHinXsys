@@ -303,6 +303,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(cylinder_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(fluid_density_relaxation)>> pressure_force_from_fluid(cylinder_contact);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Building Simbody.
     //----------------------------------------------------------------------
     SimTK::MultibodySystem MBsystem;
@@ -469,7 +473,11 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             cylinder.updateCellLinkedList();
             water_block_inner.updateConfiguration();
             cylinder_inner.updateConfiguration();

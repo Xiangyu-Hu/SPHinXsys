@@ -158,6 +158,10 @@ int main(int ac, char *av[])
         water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -234,7 +238,11 @@ int main(int ac, char *av[])
             disposer_down_outflow_deletion.exec();
 
             /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
         }
 

@@ -130,7 +130,10 @@ int main(int ac, char *av[])
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_cylinder(cylinder_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_cylinder(cylinder_contact);
-    /** Computing viscous force acting on wall with wall model. */
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -211,7 +214,11 @@ int main(int ac, char *av[])
             /** Water block configuration and periodic condition. */
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             periodic_condition_x.update_cell_linked_list_.exec();
             periodic_condition_y.update_cell_linked_list_.exec();
             /** one need update configuration after periodic condition. */

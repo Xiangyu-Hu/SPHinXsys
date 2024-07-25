@@ -121,6 +121,10 @@ class Environment : public PreSettingCase
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step;
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step;
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting<ParallelPolicy> particle_sorting;
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -162,6 +166,7 @@ class Environment : public PreSettingCase
           fluid_density_by_summation(water_block_inner, water_wall_contact),
           fluid_advection_time_step(water_block, U_ref),
           fluid_acoustic_time_step(water_block),
+          particle_sorting(water_block),
           body_states_recording(sph_system),
           restart_io(sph_system),
           write_water_mechanical_energy(water_block, gravity),
@@ -256,7 +261,11 @@ class Environment : public PreSettingCase
 
                 /** Update cell linked list and configuration. */
                 time_instance = TickCount::now();
-                water_block.updateCellLinkedListWithParticleSort(100);
+                if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+                {
+                    particle_sorting.exec();
+                }
+                water_block.updateCellLinkedList();
                 water_block_complex.updateConfiguration();
                 fluid_observer_contact.updateConfiguration();
                 interval_updating_configuration += TickCount::now() - time_instance;

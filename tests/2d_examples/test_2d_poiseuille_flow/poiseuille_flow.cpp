@@ -122,6 +122,10 @@ int main(int ac, char *av[])
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -199,7 +203,11 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;

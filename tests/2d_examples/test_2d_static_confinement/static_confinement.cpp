@@ -157,6 +157,10 @@ int main(int ac, char *av[])
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_triangle.surface_bounding_);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -239,7 +243,11 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;

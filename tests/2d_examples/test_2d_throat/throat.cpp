@@ -182,6 +182,10 @@ int main(int ac, char *av[])
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(fluid_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -263,7 +267,11 @@ int main(int ac, char *av[])
 
             // water block configuration and periodic condition
             periodic_condition.bounding_.exec();
-            fluid_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            fluid_block.updateCellLinkedList();
             periodic_condition.ghost_creation_.exec();
             fluid_block_complex.updateConfiguration();
         }

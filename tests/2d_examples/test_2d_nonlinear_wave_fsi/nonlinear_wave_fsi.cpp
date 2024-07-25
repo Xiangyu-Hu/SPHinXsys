@@ -170,6 +170,11 @@ int main(int ac, char *av[])
     WriteSimBodyPlanarData write_planar(sph_system, integ, tethered_spot);
 
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
@@ -208,7 +213,7 @@ int main(int ac, char *av[])
     if (sph_system.RestartStep() != 0)
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedListWithParticleSort(100);
+        water_block.updateCellLinkedList();
         wall_boundary.updateCellLinkedList();
         structure.updateCellLinkedList();
         water_block_complex.updateConfiguration();
@@ -298,7 +303,11 @@ int main(int ac, char *av[])
                     restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
             structure.updateCellLinkedList();
             water_block_complex.updateConfiguration();

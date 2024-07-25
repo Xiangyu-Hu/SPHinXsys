@@ -142,6 +142,10 @@ int main(int ac, char *av[])
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_body);
+    //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
@@ -211,8 +215,11 @@ int main(int ac, char *av[])
             /** inflow emitter injection*/
             emitter_injection.exec();
             /** Update cell linked list and configuration. */
-
-            water_body.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_body.updateCellLinkedList();
             water_body_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
         }

@@ -171,6 +171,10 @@ int main(int ac, char *av[])
     BodyRegionByParticle wave_maker(wall_boundary, transform_wave_maker_shape);
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
     std::cout << "Volume " << StructureVol << std::endl;
@@ -319,7 +323,7 @@ int main(int ac, char *av[])
     if (sph_system.RestartStep() != 0)
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedListWithParticleSort(100);
+        water_block.updateCellLinkedList();
         wall_boundary.updateCellLinkedList();
         structure.updateCellLinkedList();
         water_block_complex.updateConfiguration();
@@ -405,7 +409,11 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
             damping_wave.exec(Dt);
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
             structure.updateCellLinkedList();
             water_block_complex.updateConfiguration();

@@ -80,6 +80,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_solid(structure_contact);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
     /** set up the multi body system. */
@@ -236,7 +240,11 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
             structure.updateCellLinkedList();
             water_block_complex.updateConfiguration();

@@ -253,6 +253,10 @@ int main(int ac, char *av[])
 
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(thermofluid_body);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
@@ -331,7 +335,11 @@ int main(int ac, char *av[])
 
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-            thermofluid_body.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            thermofluid_body.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             fluid_body_complex.updateConfiguration();
         }

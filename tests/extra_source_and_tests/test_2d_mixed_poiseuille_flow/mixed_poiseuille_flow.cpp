@@ -210,6 +210,10 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_disposer);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -303,7 +307,11 @@ int main(int ac, char *av[])
             right_emitter_inflow_injection.injection.exec();
             left_disposer_outflow_deletion.exec();
             right_disposer_outflow_deletion.exec();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();

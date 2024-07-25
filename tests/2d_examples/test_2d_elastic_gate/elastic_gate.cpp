@@ -218,6 +218,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system);
@@ -301,7 +305,11 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             gate.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             gate_water_contact.updateConfiguration();

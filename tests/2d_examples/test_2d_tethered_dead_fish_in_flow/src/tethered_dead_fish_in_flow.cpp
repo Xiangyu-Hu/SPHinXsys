@@ -300,8 +300,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration.*/
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner>
-        fish_body_corrected_configuration(fish_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> fish_body_corrected_configuration(fish_body_inner);
     /**
      * Common particle dynamics.
      */
@@ -345,6 +344,10 @@ int main(int ac, char *av[])
         fish_body_update_normal(fish_body);
     /** Compute the average velocity on fish body. */
     solid_dynamics::AverageVelocityAndAcceleration fish_body_average_velocity(fish_body);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     /**
      * The multi body system from simbody.
      */
@@ -504,7 +507,11 @@ int main(int ac, char *av[])
             viz.report(integ.getState());
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             fish_body.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             water_block_complex.updateConfiguration();

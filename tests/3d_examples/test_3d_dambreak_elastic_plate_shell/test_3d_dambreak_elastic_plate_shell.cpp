@@ -239,6 +239,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_plate(plate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(plate);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
@@ -339,7 +343,11 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
 
             if (GlobalStaticVariables::physical_time_ < gate_moving_time)
             {

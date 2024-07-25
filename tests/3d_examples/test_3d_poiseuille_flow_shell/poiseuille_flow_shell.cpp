@@ -240,6 +240,10 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(system);
@@ -330,8 +334,11 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
             emitter_inflow_injection.exec();
             disposer_outflow_deletion.exec();
 
-            /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }

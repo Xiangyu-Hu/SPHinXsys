@@ -172,6 +172,10 @@ int main(int ac, char *av[])
     ObservingAQuantity<Real> observing_viscosity(fluid_observer_contact, "VariableViscosity");
     SimpleDynamics<ParticleSnapshotAverage<Real>> average_viscosity(observer_body, "VariableViscosity");
 
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(fluid);
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system);
     write_fluid_states.addToWrite<Real>(fluid, "Pressure");
@@ -227,7 +231,11 @@ int main(int ac, char *av[])
             GlobalStaticVariables::physical_time_ += dt;
         }
 
-        fluid.updateCellLinkedListWithParticleSort(100);
+        if (iteration % 100 == 0 && iteration != 1)
+        {
+            particle_sorting.exec();
+        }
+        fluid.updateCellLinkedList();
         fluid_walls_complex.updateConfiguration();
 
         if (iteration % 100 == 0 || output_counter * output_interval < GlobalStaticVariables::physical_time_)

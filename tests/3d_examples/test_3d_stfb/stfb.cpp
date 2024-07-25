@@ -90,6 +90,10 @@ int main(int ac, char *av[])
     /** Impose transport velocity formulation. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     /*-------------------------------------------------------------------------------*/
     //----------------------------------------------------------------------
     //	Define the multi-body system
@@ -247,7 +251,11 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
             structure.updateCellLinkedList();
             water_block_complex.updateConfiguration();
