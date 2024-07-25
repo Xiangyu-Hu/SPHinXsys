@@ -56,9 +56,9 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        Real *contact_density_k = contact_repulsion_factor_[k];
+        Vecd force_k = Vecd::Zero();
+        Real *contact_repulsion_facto_k = contact_repulsion_factor_[k];
         Real *Vol_k = contact_Vol_[k];
-        Solid *solid_k = contact_solids_[k];
 
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -66,7 +66,7 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
             size_t index_j = contact_neighborhood.j_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-            Real sigma_star = 0.5 * (sigma_i + contact_density_k[index_j]);
+            Real sigma_star = 0.5 * (sigma_i + contact_repulsion_facto_k[index_j]);
             // force due to pressure
             force_k -= 2.0 * sigma_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
@@ -126,7 +126,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Real *Vol_k = contact_Vol_[k];
-        Real *contact_density_k = contact_repulsion_factor_[k];
+        Real *contact_repulsion_facto_k = contact_repulsion_factor_[k];
         Solid *solid_k = contact_solids_[k];
 
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -135,7 +135,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
             size_t index_j = contact_neighborhood.j_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-            Real p_star = contact_density_k[index_j] * solid_k->ContactStiffness();
+            Real p_star = contact_repulsion_facto_k[index_j] * solid_k->ContactStiffness();
             // force due to pressure
             force -= 2.0 * p_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }

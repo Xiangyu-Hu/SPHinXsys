@@ -48,11 +48,11 @@ class RepulsionFactorSummation<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionFactorSummation(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          repulsion_factor_(*this->particles_->template registerSharedVariable<Real>(variable_name)){};
+          repulsion_factor_(this->particles_->template registerSharedVariable<Real>(variable_name)){};
     virtual ~RepulsionFactorSummation(){};
 
   protected:
-    StdLargeVec<Real> &repulsion_factor_;
+    Real *repulsion_factor_;
 };
 
 template <>
@@ -101,7 +101,7 @@ class ShellContactFactor : public RepulsionFactorSummation<Base, DataDelegateCon
     Real particle_spacing_;
     StdVec<Real> calibration_factor_;
     StdVec<Real> offset_W_ij_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 
     /** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};

@@ -170,6 +170,7 @@ void ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>::
         auto &contact_mu_k = contact_mu_[k];
         Vecd *vel_k = contact_vel_[k];
         Real *wall_Vol_k = wall_Vol_[k];
+        KernelCorrectionType &kernel_correction_k = contact_kernel_corrections_[k];
         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

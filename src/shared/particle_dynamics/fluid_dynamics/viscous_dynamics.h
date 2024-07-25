@@ -152,8 +152,8 @@ class ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>
     StdVec<ViscosityType> contact_mu_;
     KernelCorrectionType kernel_correction_;
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
-    Vecd *contact_vel_;
-    Real *wall_Vol_;
+    StdVec<Vecd *> contact_vel_;
+    StdVec<Real *> wall_Vol_;
 };
 
 using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity, NoKernelCorrection>;
