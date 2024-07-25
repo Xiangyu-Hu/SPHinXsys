@@ -172,7 +172,6 @@ class BaseParticles
   protected:
     UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
     UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    UnsignedInt *sequence_;    /**< the sequence corresponding to particle position referred for sorting. */
     ParticleData sortable_data_;
     ParticleVariables sortable_variables_;
 
@@ -181,7 +180,6 @@ class BaseParticles
     void addVariableToSort(const std::string &name);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
-    UnsignedInt *ParticleSequences() { return sequence_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
     ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     //----------------------------------------------------------------------
