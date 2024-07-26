@@ -121,8 +121,8 @@ namespace fluid_dynamics
 					//Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
 					//Vecd vel_diff = velocity_gradient_[index_j] * e_ij;
 					
-					Real factor_B = B_[index_i].norm() / turbu_B_[index_i].norm();
-					Vecd vel_diff = factor_B * velocity_gradient_[index_j] * r_ij * e_ij;
+					//Real factor_B = B_[index_i].norm() / turbu_B_[index_i].norm();
+					Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
 					
 					velocity_gradient_[index_i] += - vel_diff * nablaW_ijV_j.transpose();
 				}
@@ -140,8 +140,8 @@ namespace fluid_dynamics
 	{
 		if (is_near_wall_P1_[index_i] != 1)
 		{
-			velocity_gradient_[index_i] *= B_[index_i];
-		    //velocity_gradient_[index_i] *= turbu_B_[index_i];
+			//velocity_gradient_[index_i] *= B_[index_i];
+		    velocity_gradient_[index_i] *= turbu_B_[index_i];
 		}
 	    
 	}
