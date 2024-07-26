@@ -108,7 +108,7 @@ namespace fluid_dynamics
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
 				
-				//Real r_ij = inner_neighborhood.r_ij_[n];
+				Real r_ij = inner_neighborhood.r_ij_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				
 				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
@@ -119,7 +119,11 @@ namespace fluid_dynamics
 					//std::cout<<"Calculate velocity gradient according to interpolation!"<<std::endl;
 					//std::cin.get();
 					//Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
-					Vecd vel_diff = velocity_gradient_[index_j] * e_ij;
+					//Vecd vel_diff = velocity_gradient_[index_j] * e_ij;
+					
+					Real factor_B = B_[index_i].norm() / turbu_B_[index_i].norm();
+					Vecd vel_diff = factor_B * velocity_gradient_[index_j] * r_ij * e_ij;
+					
 					velocity_gradient_[index_i] += - vel_diff * nablaW_ijV_j.transpose();
 				}
 				else
