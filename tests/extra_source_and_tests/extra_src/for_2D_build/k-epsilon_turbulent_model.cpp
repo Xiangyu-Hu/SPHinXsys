@@ -135,8 +135,8 @@ namespace fluid_dynamics
 	{
 		if (is_near_wall_P1_[index_i] != 1)
 		{
-			//velocity_gradient_[index_i] *= B_[index_i];
-		    velocity_gradient_[index_i] *= turbu_B_[index_i];
+			velocity_gradient_[index_i] *= B_[index_i];
+		    //velocity_gradient_[index_i] *= turbu_B_[index_i];
 		}
 	    
 	}
