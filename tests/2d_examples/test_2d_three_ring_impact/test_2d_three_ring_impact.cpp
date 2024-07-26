@@ -264,11 +264,11 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     // density
     // self contact
-    InteractionDynamics<solid_dynamics::ShellSelfContactDensitySummation> self_contact_density_m(self_contact_m);
+    InteractionDynamics<solid_dynamics::ShellSelfContactFactorSummation> self_contact_density_m(self_contact_m);
     // contact
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_s(contact_s);
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_m(contact_m);
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> contact_density_l(contact_l);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_density_s(contact_s);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_density_m(contact_m);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_density_l(contact_l);
 
     // force
     // self contact

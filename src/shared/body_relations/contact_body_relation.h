@@ -88,7 +88,7 @@ class ContactRelation : public ContactRelationCrossResolution
 /**
  * @class ShellSurfaceContactRelation
  * @brief The relation between a solid body and its contact shell bodies
- *        This contact relation can only be used for ShellContactDensity
+ *        This contact relation can only be used for ShellContactFactor
  */
 class ShellSurfaceContactRelation : public ContactRelationCrossResolution
 {
@@ -194,7 +194,7 @@ class ContactRelationFromFluidToShell : public ContactRelationCrossResolution
  * @brief The relation between a solid/shell body and its contact solid/shell bodies
  *        NeighborBuilderContactFromSolidToSolid is used for solid contact bodies
  *        NeighborBuilderContactFromShellToSolid is used for shell contact bodies
- *        This class is used for RepulsionDensitySummation<Contact<>>
+ *        This class is used for RepulsionFactorSummation<Contact<>>
  */
 class SurfaceContactRelation : public ContactRelationCrossResolution
 {
