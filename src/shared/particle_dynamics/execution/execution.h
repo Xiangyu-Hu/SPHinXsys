@@ -21,44 +21,42 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution_policy.h
+ * @file 	execution.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
- * @author	Xiangyu Hu and  Fabien Pean
+ * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_POLICY_H
-#define EXECUTION_POLICY_H
+#ifndef EXECUTION_H
+#define EXECUTION_H
+
+#include "execution_policy.h"
 
 namespace SPH
 {
 namespace execution
 {
-class SequencedPolicy
-{
-};
+template <typename... T>
+class Implementation;
 
-class UnsequencedPolicy
+template <class ComputingKernelType, class ExecutionPolicy>
+class Implementation<ComputingKernelType, ExecutionPolicy>
 {
-};
+  public:
+    Implementation() = default;
 
-class ParallelPolicy
-{
-};
+    template <class... Args>
+    explicit Implementation(const ExecutionPolicy &execution_policy, Args &&...args)
+        : computing_kernel_(std::forward<Args>(args)...) {}
 
-class ParallelUnsequencedPolicy
-{
-};
+    ComputingKernelType &getBuffer()
+    {
+        return computing_kernel_;
+    }
 
-class ParallelDevicePolicy
-{
+  private:
+    ComputingKernelType computing_kernel_;
 };
-
-inline constexpr auto seq = SequencedPolicy{};
-inline constexpr auto unseq = UnsequencedPolicy{};
-inline constexpr auto par = ParallelPolicy{};
-inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
-inline constexpr auto par_device = ParallelDevicePolicy{};
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_POLICY_H
+#endif // EXECUTION_H

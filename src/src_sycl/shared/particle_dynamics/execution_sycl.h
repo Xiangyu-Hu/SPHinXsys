@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution_policy_sycl.h
+ * @file 	execution_sycl.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
  * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_POLICY_SYCL_H
-#define EXECUTION_POLICY_SYCL_H
+#ifndef EXECUTION_SYCL_H
+#define EXECUTION_SYCL_H
 
 #include "ownership.h"
 
@@ -120,6 +120,26 @@ class ExecutionEvent
     std::vector<sycl::event> event_list_;
 };
 
+template <class ComputingKernelType>
+class Implementation<ComputingKernelType, ParallelDevicePolicy>
+{
+  public:
+    Implementation() = default;
+
+    template <class... Args>
+    explicit Implementation(const ParallelDevicePolicy &execution_policy, Args &&...args)
+        : computing_kernel_(execution_policy, std::forward<Args>(args)...),
+          computing_kernel_buffer_(computing_kernel_, 1) {}
+
+    sycl::buffer<ComputingKernelType> &getBuffer()
+    {
+        return computing_kernel_buffer_;
+    }
+
+  private:
+    ComputingKernelType computing_kernel_;
+    sycl::buffer<ComputingKernelType> computing_kernel_buffer_;
+};
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_POLICY_SYCL_H
+#endif // EXECUTION_SYCL_H
