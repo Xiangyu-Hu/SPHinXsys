@@ -23,8 +23,6 @@ int main(int ac, char *av[])
      * Build up context -- a SPHSystem.
      */
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    /** Set the starting time. */
-    physical_time = 0.0;
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for reload initially relaxed particles. */
@@ -226,6 +224,7 @@ int main(int ac, char *av[])
     /**
      * main loop.
      */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;

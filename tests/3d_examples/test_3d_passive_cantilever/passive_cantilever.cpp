@@ -108,7 +108,6 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     /** apply initial condition */
@@ -117,6 +116,7 @@ int main(int ac, char *av[])
     write_states.writeToFile(0);
     write_displacement.writeToFile(0);
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 3.0;
     Real output_period = end_time / 100.0;

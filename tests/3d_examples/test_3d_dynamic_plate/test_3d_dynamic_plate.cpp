@@ -158,11 +158,11 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    physical_time = 0.0;
     write_states.writeToFile(0);
     write_plate_max_displacement.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 4.0e-5;
     // Real end_time = 0.8;

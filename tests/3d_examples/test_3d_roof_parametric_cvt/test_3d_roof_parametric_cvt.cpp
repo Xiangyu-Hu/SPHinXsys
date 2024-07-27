@@ -455,7 +455,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
      * From here the time stepping begins.
      * Set the starting time.
      */
-    physical_time = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 3.0;
     Real output_period = end_time / 100.0;

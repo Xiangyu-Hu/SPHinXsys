@@ -153,7 +153,6 @@ void run_simulation()
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
     free_cube_rotation.exec();
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();

@@ -114,8 +114,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
-    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
+    StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
+    SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_contact);
 

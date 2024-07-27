@@ -112,7 +112,7 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vec3d operator()(Vec3d &position, Vec3d &velocity)
+    Vec3d operator()(Vec3d &position, Vec3d &velocity, Real current_time)
     {
         Vec3d target_velocity = Vec3d(0, 0, 0);
         target_velocity[1] = SMAX(2.0 * U_f *

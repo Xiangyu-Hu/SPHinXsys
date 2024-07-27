@@ -227,7 +227,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
      * From here the time stepping begins.
      * Set the starting time.
      */
-    physical_time = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.5; // 1 is better
     Real output_period = end_time / 25.0;

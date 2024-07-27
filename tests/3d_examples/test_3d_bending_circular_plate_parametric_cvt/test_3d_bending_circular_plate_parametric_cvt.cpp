@@ -324,7 +324,7 @@ return_data bending_circular_plate(Real dp_ratio)
      * From here the time stepping begins.
      * Set the starting time.
      */
-    physical_time = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.001;
     Real output_period = end_time / 100.0;

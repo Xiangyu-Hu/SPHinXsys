@@ -124,7 +124,6 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
     wall_boundary_rotation.exec();
     free_cube_rotation.exec();
     sph_system.initializeSystemCellLinkedLists();

@@ -171,10 +171,9 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
-    // starting time zero
-    physical_time = 0.0;
     write_beam_states.writeToFile(0);
     write_beam_tip_displacement.writeToFile(0);
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
 
     int ite = 0;
     Real T0 = 1.0;

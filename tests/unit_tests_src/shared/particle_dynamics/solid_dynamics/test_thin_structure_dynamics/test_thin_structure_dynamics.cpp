@@ -172,10 +172,10 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    physical_time = 0.0;
     write_states.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.1;
     Real output_period = end_time / 100.0;

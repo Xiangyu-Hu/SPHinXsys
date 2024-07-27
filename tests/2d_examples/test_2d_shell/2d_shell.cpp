@@ -149,15 +149,11 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
-    /**
-     * From here the time stepping begins.
-     * Set the starting time.
-     */
-    physical_time = 0.0;
     write_states.writeToFile(0);
     write_cylinder_max_displacement.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.0;
     Real output_period = end_time / 100.0;

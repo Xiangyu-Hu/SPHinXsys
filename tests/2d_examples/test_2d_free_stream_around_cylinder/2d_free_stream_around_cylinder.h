@@ -81,22 +81,3 @@ struct FreeStreamVelocity
         return target_velocity;
     }
 };
-//----------------------------------------------------------------------
-//	Define time dependent acceleration in x-direction
-//----------------------------------------------------------------------
-class TimeDependentAcceleration : public Gravity
-{
-    Real t_ref_, u_ref_, du_ave_dt_;
-
-  public:
-    explicit TimeDependentAcceleration(Vecd gravity_vector)
-        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(U_f), du_ave_dt_(0) {}
-
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real run_time_ = physical_time;
-        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
-
-        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
-    }
-};

@@ -22,7 +22,6 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    physical_time = 0.0;
     Real mechanical_time_ = 0.0;
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
@@ -232,6 +231,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	 Physical parameters for main loop.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;

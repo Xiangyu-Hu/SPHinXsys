@@ -105,7 +105,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_normal_direction.exec();

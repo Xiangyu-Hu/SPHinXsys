@@ -131,8 +131,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(false);
-    /** Set the starting time. */
-    physical_time = 0.0;
     IOEnvironment io_environment(sph_system);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------

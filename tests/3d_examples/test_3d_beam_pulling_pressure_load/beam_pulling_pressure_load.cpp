@@ -169,7 +169,6 @@ int main(int ac, char *av[])
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */
-    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
 
@@ -178,6 +177,7 @@ int main(int ac, char *av[])
     write_states.writeToFile(0);
     write_beam_stress.writeToFile(0);
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real output_period = end_time / 200.0;
     Real dt = 0.0;

@@ -326,7 +326,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     vel_ic_s.exec();
 
     // Simulation
-    physical_time = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
     Real output_period = end_time / 100.0;

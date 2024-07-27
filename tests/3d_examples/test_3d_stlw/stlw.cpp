@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = total_physical_time;

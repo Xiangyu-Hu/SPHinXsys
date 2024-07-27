@@ -90,8 +90,6 @@ int main(int ac, char *av[])
     /** Build up a SPHSystem */
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    /** Set the starting time. */
-    physical_time = 0.0;
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

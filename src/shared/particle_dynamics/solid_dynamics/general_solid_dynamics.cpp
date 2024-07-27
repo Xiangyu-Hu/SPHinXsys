@@ -1,5 +1,5 @@
 #include "general_solid_dynamics.h"
-
+#include "sph_system.hpp"
 namespace SPH
 {
 namespace solid_dynamics

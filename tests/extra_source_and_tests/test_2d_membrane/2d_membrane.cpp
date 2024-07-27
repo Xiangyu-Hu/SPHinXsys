@@ -204,7 +204,7 @@ int main(int ac, char *av[])
     int ite = 0;
     int total_ite = 0;
 
-    physical_time = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
 
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
