@@ -46,18 +46,17 @@ class ForcePrior
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class GravityForce
-    : public LocalDynamics,
-      public DataDelegateSimple,
-      public ForcePrior
+template <class GravityType>
+class GravityForce : public LocalDynamics, public DataDelegateSimple, public ForcePrior
 {
   protected:
-    Gravity &gravity_;
+    GravityType gravity_;
     Vecd *pos_;
     Real *mass_;
+    Real *physical_time_;
 
   public:
-    explicit GravityForce(SPHBody &sph_body, Gravity &gravity);
+    explicit GravityForce(SPHBody &sph_body, const GravityType &gravity);
     virtual ~GravityForce(){};
     void update(size_t index_i, Real dt = 0.0);
 };

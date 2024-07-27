@@ -67,21 +67,21 @@ DataType *BaseParticles::addUniqueDiscreteVariable(const std::string &name, Args
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::registerSingleVariable(const std::string &name, DataType initial_value)
+DataType *BaseParticles::registerSingularVariable(const std::string &name, DataType initial_value)
 {
-    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, name);
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
 
     return variable != nullptr
                ? variable->ValueAddress()
-               : addVariableToAssemble<DataType>(all_single_variables_,
+               : addVariableToAssemble<DataType>(all_singular_variables_,
                                                  all_global_variable_ptrs_, name, initial_value)
                      ->ValueAddress();
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::getSingleVariableByName(const std::string &name)
+DataType *BaseParticles::getSingularVariableByName(const std::string &name)
 {
-    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_single_variables_, name);
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
 
     if (variable != nullptr)
     {

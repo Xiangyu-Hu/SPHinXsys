@@ -149,10 +149,10 @@ class BaseParticles
     DataType *getVariableDataByName(const std::string &name);
 
     template <typename DataType>
-    DataType *registerSingleVariable(const std::string &name,
-                                     DataType initial_value = ZeroData<DataType>::value);
+    DataType *registerSingularVariable(const std::string &name,
+                                       DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *getSingleVariableByName(const std::string &name);
+    DataType *getSingularVariableByName(const std::string &name);
     //----------------------------------------------------------------------
     // Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -218,7 +218,7 @@ class BaseParticles
     XmlParser reload_xml_parser_;
     ParticleData all_state_data_; /**< all discrete variable data except those on particle IDs  */
     ParticleVariables all_discrete_variables_;
-    SingleVariables all_single_variables_;
+    SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;
