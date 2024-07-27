@@ -237,6 +237,7 @@ int main(int ac, char *av[])
     /** Initial states output. */
     body_states_recording.writeToFile(0);
     /** Main loop. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 1.0;
     Real end_time = T0;

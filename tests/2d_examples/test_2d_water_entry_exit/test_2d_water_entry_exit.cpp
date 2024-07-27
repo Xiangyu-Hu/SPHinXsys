@@ -375,19 +375,6 @@ int main(int ac, char *av[])
     free_stream_surface_indicator.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
-        cylinder.updateCellLinkedList();
-        water_block_inner.updateConfiguration();
-        cylinder_inner.updateConfiguration();
-        cylinder_contact.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");

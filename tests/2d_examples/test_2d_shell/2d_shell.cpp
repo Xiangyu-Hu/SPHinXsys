@@ -81,20 +81,6 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = physical_time;
-        return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
-    }
-};
 } // namespace SPH
 /**
  *  The main program
@@ -123,8 +109,8 @@ int main(int ac, char *av[])
     /**
      * This section define all numerical methods will be used in this case.
      */
-    TimeDependentExternalForce time_dependent_external_force(Vec2d(0.0, gravitational_acceleration));
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
+    IncreaseToFullGravity time_dependent_external_force(Vec2d(0.0, gravitational_acceleration), time_to_full_external_force);
+    SimpleDynamics<GravityForce<IncreaseToFullGravity>> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
     /** The main shell dynamics model: stress relaxation. */
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner, 3, true);
