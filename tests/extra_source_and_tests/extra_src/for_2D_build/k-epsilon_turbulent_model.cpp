@@ -669,7 +669,48 @@ namespace fluid_dynamics
 		Real u = velocity[0];
 		Real temp_in_turbu_k = 1.5 * pow((turbulent_intensity_ * u), 2);
 		Real turbu_k_original = turbu_k;
-		if (position[0] < 0.0)
+		
+		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
+
+        //** Impose fully-developed K from PYTHON result */
+        //** Calculate the distance to wall, Y. position here is the actual postion in x-y coordinate, no transformation*/
+        Real Y = 0.0;
+		if(position[1] < channel_height/2.0)
+		{
+			Y = position[1];
+		}
+		else if(position[1] > channel_height/2.0)
+		{
+			Y = channel_height - position[1];
+		}
+
+        int polynomial_order = 8 ;
+        int num_coefficient = polynomial_order + 1 ;
+        //** Coefficient of the polynomia, 8th-order */
+        Real coeff[] = {
+            1.215679e-02, -6.681989e-02, 5.043783e-01, 
+            -2.344875e+00,  6.368016e+00, -1.041386e+01, 
+            1.009652e+01, -5.336236e+00, 1.183368e+00
+        };
+        Real polynomial_value = 0.0;
+        for (int i = 0; i < num_coefficient; ++i)
+        {
+            polynomial_value += coeff[i] * std::pow(Y, i);
+        }
+
+        if(Y > channel_height/2.0 || Y < 0.0)
+        {
+            std::cout<< "position[1]=" <<position[1]<<std::endl;
+            std::cout<< "Y=" <<Y<<std::endl;
+            std::cout<< "polynomial_value=" <<polynomial_value<<std::endl;
+            std::cout<< "Stop" <<std::endl;
+            std::cout<< "=================" <<std::endl;
+            std::cin.get();
+        }
+        
+        temp_in_turbu_k = polynomial_value;
+		
+		if (position[0] < 0.0) //** Temporarily treatment *
 		{
 			turbu_k_original = temp_in_turbu_k;
 		}
@@ -681,7 +722,48 @@ namespace fluid_dynamics
 		//Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
 		Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
 		Real turbu_E_original = turbu_E;
-		if (position[0] < 0.0)
+		
+		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
+
+        //** Impose fully-developed K from PYTHON result */
+        //** Calculate the distance to wall, Y. position here is the actual postion in x-y coordinate, no transformation*/
+        Real Y = 0.0;
+		if(position[1] < channel_height/2.0)
+		{
+			Y = position[1];
+		}
+		else if(position[1] > channel_height/2.0)
+		{
+			Y = channel_height - position[1];
+		}
+
+        int polynomial_order = 8 ;
+        int num_coefficient = polynomial_order + 1 ;
+        //** Coefficient of the polynomia, 8th-order */
+        Real coeff[] = {
+            1.633474e-02,  -2.488756e-01, 1.912092e+00, 
+            -8.381386e+00,   2.205987e+01, -3.542125e+01, 
+            3.391904e+01, -1.777442e+01, 3.918818e+00
+        };
+        Real polynomial_value = 0.0;
+        for (int i = 0; i < num_coefficient; ++i)
+        {
+            polynomial_value += coeff[i] * std::pow(Y, i);
+        }
+
+        if(Y > channel_height/2.0 || Y < 0.0)
+        {
+            std::cout<< "position[1]=" <<position[1]<<std::endl;
+            std::cout<< "Y=" <<Y<<std::endl;
+            std::cout<< "polynomial_value=" <<polynomial_value<<std::endl;
+            std::cout<< "Stop" <<std::endl;
+            std::cout<< "=================" <<std::endl;
+            std::cin.get();
+        }
+		
+		temp_in_turbu_E = polynomial_value;
+		
+		if (position[0] < 0.0) //** Temporarily treatment *
 		{
 			turbu_E_original = temp_in_turbu_E;
 		}

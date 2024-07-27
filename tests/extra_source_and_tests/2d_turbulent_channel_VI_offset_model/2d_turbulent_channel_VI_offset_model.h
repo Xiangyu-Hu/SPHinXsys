@@ -167,10 +167,44 @@ struct InflowVelocity
     {
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        //Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
         //target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         //target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / half_channel_height / half_channel_height);
-        target_velocity[0] = u_ave;
+        //target_velocity[0] = u_ave;
+ 
+        //** Impose fully-developed velocity from PYTHON result */
+        //** Calculate the distance to wall, Y. position[1] is the distance to the centerline */
+        Real Y = half_channel_height - std::abs(position[1]);
+        int polynomial_order = 8 ;
+        int num_coefficient = polynomial_order + 1 ;
+        //** Coefficient of the polynomia, 8th-order */
+        Real coeff[] = {
+            6.153336e-01, 3.095679e+00, -1.399783e+01, 
+            4.798221e+01, -1.100147e+02, 1.619762e+02, 
+            -1.464631e+02, 7.373006e+01, -1.577924e+01
+        };
+        Real polynomial_value = 0.0;
+        for (int i = 0; i < num_coefficient; ++i)
+        {
+            polynomial_value += coeff[i] * std::pow(Y, i);
+        }
+
+        if(Y>half_channel_height || Y<0.0)
+        {
+            std::cout<< "position[1]=" <<position[1]<<std::endl;
+            std::cout<< "Y=" <<Y<<std::endl;
+            std::cout<< "polynomial_value=" <<polynomial_value<<std::endl;
+            std::cout<< "Stop" <<std::endl;
+            std::cout<< "=================" <<std::endl;
+            std::cin.get();
+        }
+        
+        //** Impose inlet velocity gradually */
+        target_velocity[0] = run_time < t_ref_ ? 0.5 * polynomial_value * (1.0 - cos(Pi * run_time / t_ref_)) : polynomial_value;
+        //target_velocity[0] = polynomial_value;
+        
+
+
         if (position[1] > half_channel_height)
         {
             std::cout << "Particles out of domain, wrong inlet velocity." << std::endl;
