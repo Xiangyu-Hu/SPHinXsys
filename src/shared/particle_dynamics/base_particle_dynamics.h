@@ -44,27 +44,13 @@ using namespace std::placeholders;
 namespace SPH
 {
 /**
- * @class GlobalStaticVariables
- * @brief A place to put all global variables
- */
-class GlobalStaticVariables
-{
-  public:
-    explicit GlobalStaticVariables(){};
-    virtual ~GlobalStaticVariables(){};
-
-    /** the physical time is global value for all dynamics */
-    static inline Real physical_time_ = 0.0;
-};
-
-/**
  * @class BaseDynamics
  * @brief The base class for all dynamics
  * This class contains only the interface functions available
  * for all dynamics. An specific implementation should be realized.
  */
 template <class ReturnType = void>
-class BaseDynamics : public GlobalStaticVariables
+class BaseDynamics
 {
   public:
     BaseDynamics(SPHBody &sph_body)

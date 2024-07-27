@@ -199,6 +199,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
       io_environment_(system_),
+      physical_time_(*system_.getSystemVariableByName<Real>("PhysicalTime")),
 
       // optional: boundary conditions
       non_zero_gravity_(input.non_zero_gravity_),
@@ -405,7 +406,8 @@ void StructuralSimulation::initializeGravity()
         {
             SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(non_zero_gravity_[gravity_index_i].second);
             gravity_list_.emplace_back(non_zero_gravity_[gravity_index_i].second);
-            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce>>(*solid_body_list_[i]->getSolidBodyFromMesh(), gravity_list_.back()));
+            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce<Gravity>>>(
+                *solid_body_list_[i]->getSolidBodyFromMesh(), gravity_list_.back()));
             gravity_index_i++;
         }
     }
@@ -674,7 +676,7 @@ void StructuralSimulation::executeContactFactorSummation()
             int index = (i - number_of_general_contacts) / 2;
             Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
             Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
-            if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+            if (physical_time_ >= start_time && physical_time_ <= end_time)
             {
                 contact_density_list_[i]->exec();
             }
@@ -699,7 +701,7 @@ void StructuralSimulation::executeContactForce()
             int index = (i - number_of_general_contacts) / 2;
             Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
             Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
-            if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+            if (physical_time_ >= start_time && physical_time_ <= end_time)
             {
                 contact_force_list_[i]->exec();
             }
@@ -806,7 +808,7 @@ void StructuralSimulation::executeContactUpdateConfiguration()
             int index = (i - number_of_general_contacts) / 2;
             Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
             Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
-            if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+            if (physical_time_ >= start_time && physical_time_ <= end_time)
             {
                 contact_list_[i]->updateConfiguration();
             }
@@ -816,7 +818,7 @@ void StructuralSimulation::executeContactUpdateConfiguration()
 
 void StructuralSimulation::initializeSimulation()
 {
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time_ = 0.0;
 
     /** INITIALIZE SYSTEM */
     system_.initializeSystemCellLinkedLists();
@@ -829,7 +831,7 @@ void StructuralSimulation::initializeSimulation()
 void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 {
     if (iteration_ % 100 == 0)
-        std::cout << "N=" << iteration_ << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+        std::cout << "N=" << iteration_ << " Time: " << physical_time_ << "	dt: " << dt << "\n";
 
     /** UPDATE NORMAL DIRECTIONS */
     executeUpdateElasticNormalDirection();
@@ -873,7 +875,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     iteration_++;
     dt = system_.getSmallestTimeStepAmongSolidBodies();
     integration_time += dt;
-    GlobalStaticVariables::physical_time_ += dt;
+    physical_time_ += dt;
 
     /** UPDATE BODIES CELL LINKED LISTS */
     executeUpdateCellLinkedList();
@@ -893,7 +895,7 @@ void StructuralSimulation::runSimulation(Real end_time)
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     /** Main loop */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time_ < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -916,7 +918,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
     BodyStatesRecordingToVtp write_states(system_);
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time_ = 0.0;
 
     /** Statistics for computing time. */
     write_states.writeToFile(0);
@@ -966,7 +968,7 @@ StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &
       dt(0.0)
 {
     write_states_.writeToFile(0);
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time_ = 0.0;
 }
 
 void StructuralSimulationJS::runSimulationFixedDuration(int number_of_steps)

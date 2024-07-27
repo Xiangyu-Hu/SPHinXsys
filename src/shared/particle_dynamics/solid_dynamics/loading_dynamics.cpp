@@ -181,7 +181,8 @@ ForceInBodyRegion::
     : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-      force_vector_(Vecd::Zero()), end_time_(end_time)
+      force_vector_(Vecd::Zero()), end_time_(end_time),
+      physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime"))
 {
     Real total_mass_in_region(0);
     for (size_t index_i : body_part.body_part_particles_)
@@ -191,7 +192,7 @@ ForceInBodyRegion::
 //=================================================================================================//
 void ForceInBodyRegion::update(size_t index_i, Real dt)
 {
-    Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, Real(1.0));
+    Real time_factor = SMIN(*physical_time_ / end_time_, Real(1.0));
     loading_force_[index_i] = force_vector_ * time_factor;
     ForcePrior::update(index_i, dt);
 }
@@ -205,7 +206,8 @@ SurfacePressureFromSource::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
-      is_pressure_applied_(particles_->addUniqueDiscreteVariable<bool>("isPressureApplied", false))
+      is_pressure_applied_(particles_->addUniqueDiscreteVariable<bool>("isPressureApplied", false)),
+      physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime"))
 {
     BodySurface surface_layer(body_part.getSPHBody());
 
@@ -225,14 +227,14 @@ SurfacePressureFromSource::
 Real SurfacePressureFromSource::getPressure()
 {
     // check if we have reached the max time, if yes, return the last pressure
-    bool max_time_reached = GlobalStaticVariables::physical_time_ > pressure_over_time_[pressure_over_time_.size() - 1][0];
+    bool max_time_reached = *physical_time_ > pressure_over_time_[pressure_over_time_.size() - 1][0];
     if (max_time_reached)
         return pressure_over_time_[pressure_over_time_.size() - 1][1];
 
     int interval = 0;
     for (size_t i = 0; i < pressure_over_time_.size(); i++)
     {
-        if (GlobalStaticVariables::physical_time_ < pressure_over_time_[i][0])
+        if (*physical_time_ < pressure_over_time_[i][0])
         {
             interval = i;
             break;
@@ -247,7 +249,7 @@ Real SurfacePressureFromSource::getPressure()
     Real p_0 = pressure_over_time_[interval - 1][1];
     Real p_1 = pressure_over_time_[interval][1];
 
-    return p_0 + (p_1 - p_0) * (GlobalStaticVariables::physical_time_ - t_0) / (t_1 - t_0);
+    return p_0 + (p_1 - p_0) * (*physical_time_ - t_0) / (t_1 - t_0);
 }
 //=================================================================================================//
 void SurfacePressureFromSource::update(size_t index_i, Real dt)

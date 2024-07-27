@@ -15,7 +15,8 @@ DistributingPointForces::
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      thickness_(particles_->getVariableDataByName<Real>("Thickness"))
+      thickness_(particles_->getVariableDataByName<Real>("Thickness")),
+      physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime"))
 {
     weight_.resize(point_forces_.size());
     for (size_t i = 0; i < point_forces_.size(); i++)
@@ -53,7 +54,7 @@ void DistributingPointForces::getWeight()
 //=================================================================================================//
 void DistributingPointForces::setupDynamics(Real dt)
 {
-    Real current_time = GlobalStaticVariables::physical_time_;
+    Real current_time = *physical_time_;
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
         time_dependent_point_forces_[i] = current_time < time_to_full_external_force_

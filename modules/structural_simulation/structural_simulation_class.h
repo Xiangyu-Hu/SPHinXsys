@@ -200,6 +200,7 @@ class StructuralSimulation
     SPHSystem system_;
     Real scale_system_boundaries_;
     IOEnvironment io_environment_;
+    Real &physical_time_;
 
     StdVec<SharedPtr<SolidBodyForSimulation>> solid_body_list_;
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
@@ -210,7 +211,7 @@ class StructuralSimulation
 
     // for initializeATimeStep
     StdVec<Gravity> gravity_list_;
-    StdVec<SharedPtr<SimpleDynamics<GravityForce>>> initialize_gravity_;
+    StdVec<SharedPtr<SimpleDynamics<GravityForce<Gravity>>>> initialize_gravity_;
     StdVec<GravityPair> non_zero_gravity_;
     // for ExternalForceInBoundingBox
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ExternalForceInBoundingBox>>> force_bounding_box_;

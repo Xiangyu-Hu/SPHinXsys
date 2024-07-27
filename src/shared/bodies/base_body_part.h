@@ -51,6 +51,7 @@ class BodyPart
     virtual ~BodyPart(){};
 
     SPHBody &getSPHBody() { return sph_body_; };
+    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
     std::string getName() { return body_part_name_; };
 
   protected:

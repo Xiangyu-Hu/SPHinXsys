@@ -1,16 +1,17 @@
 #include "io_base.h"
 
-#include "sph_system.h"
+#include "sph_system.hpp"
 
 namespace SPH
 {
 //=============================================================================================//
 BaseIO::BaseIO(SPHSystem &sph_system)
-    : sph_system_(sph_system), io_environment_(sph_system.getIOEnvironment()) {}
+    : sph_system_(sph_system), io_environment_(sph_system.getIOEnvironment()),
+      physical_time_(*sph_system_.getSystemVariableByName<Real>("PhysicalTime")) {}
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
-    int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);
+    int i_time = int(physical_time_ * 1.0e6);
     return padValueWithZeros(i_time);
 }
 //=============================================================================================/
@@ -36,7 +37,7 @@ void BodyStatesRecording::writeToFile()
     {
         derived_variable->exec();
     }
-    writeWithFileName(convertPhysicalTimeToString(GlobalStaticVariables::physical_time_));
+    writeWithFileName(convertPhysicalTimeToString(physical_time_));
 }
 //=============================================================================================//
 void BodyStatesRecording::writeToFile(size_t iteration_step)
@@ -70,7 +71,7 @@ void RestartIO::writeToFile(size_t iteration_step)
         fs::remove(overall_filefullpath);
     }
     std::ofstream out_file(overall_filefullpath.c_str(), std::ios::app);
-    out_file << std::fixed << std::setprecision(9) << GlobalStaticVariables::physical_time_ << "   \n";
+    out_file << std::fixed << std::setprecision(9) << physical_time_ << "   \n";
     out_file.close();
 
     for (size_t i = 0; i < bodies_.size(); ++i)
