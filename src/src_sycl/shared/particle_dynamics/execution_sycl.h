@@ -30,20 +30,16 @@
 #ifndef EXECUTION_SYCL_H
 #define EXECUTION_SYCL_H
 
-#include "ownership.h"
+#include "execution.h"
+#include "execution_policy.h"
 
+#include "ownership.h"
 #include <sycl/sycl.hpp>
 
 namespace SPH
 {
 namespace execution
 {
-class ParallelSYCLDevicePolicy
-{
-};
-
-inline constexpr auto par_sycl = ParallelSYCLDevicePolicy{};
-
 class ExecutionInstance
 {
   public:
@@ -123,22 +119,21 @@ class ExecutionEvent
 template <class ComputingKernelType>
 class Implementation<ComputingKernelType, ParallelDevicePolicy>
 {
+    using DeviceComputingKernelType = sycl::buffer<ComputingKernelType>;
+
   public:
     Implementation() = default;
 
-    template <class... Args>
-    explicit Implementation(const ParallelDevicePolicy &execution_policy, Args &&...args)
-        : computing_kernel_(execution_policy, std::forward<Args>(args)...),
-          computing_kernel_buffer_(computing_kernel_, 1) {}
+    explicit Implementation(const ComputingKernelType &computing_kernel)
+        : device_computing_kernel_(computing_kernel, 1) {}
 
-    sycl::buffer<ComputingKernelType> &getBuffer()
+    DeviceComputingKernelType &getBuffer()
     {
-        return computing_kernel_buffer_;
+        return device_computing_kernel_;
     }
 
   private:
-    ComputingKernelType computing_kernel_;
-    sycl::buffer<ComputingKernelType> computing_kernel_buffer_;
+    DeviceComputingKernelType device_computing_kernel_;
 };
 } // namespace execution
 } // namespace SPH

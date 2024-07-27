@@ -21,42 +21,34 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution.h
- * @brief 	Here we define the execution policy relevant to parallel computing.
- * @details This analog of the standard library on the same functions.
- * @author	Alberto Guarnieri and Xiangyu Hu
+ * @file 	particle_iterators_sycl.h
+ * @brief 	This is for the base functions for particle iterator.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef EXECUTION_H
-#define EXECUTION_H
+#ifndef PARTICLE_ITERATORS_SYCL_H
+#define PARTICLE_ITERATORS_SYCL_H
 
-#include "execution_policy.h"
+#include "execution_sycl.h"
 
 namespace SPH
 {
-namespace execution
+template <class DeviceImplementation, class ComputingKernelFunction>
+inline particle_for(const DeviceImplementation &device_implementation,
+                    const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
 {
-template <typename... T>
-class Implementation;
+    auto &sycl_queue = execution_instance.getQueue();
+    auto &sycl_buffer = device_implementation.getBuffer();
+    const size_t particles_size = particles_range.size();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      {
+            auto sycl_accessor = sycl_buffer.get_access(cgh, sycl::read_write);
+            cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index) {
+                                 if(index.get_global_id(0) < particles_size)
+                                     kernel_function(index.get_global_id(0), sycl_accessor[0]);
+                             }); })
+        .wait_and_throw();
+}
 
-template <class ComputingKernelType, class ExecutionPolicy>
-class Implementation<ComputingKernelType, ExecutionPolicy>
-{
-  public:
-    Implementation() = default;
-
-    template <class... Args>
-    explicit Implementation(const ExecutionPolicy &execution_policy, Args &&...args)
-        : computing_kernel_(std::forward<Args>(args)...) {}
-
-    ComputingKernelType &getBuffer()
-    {
-        return computing_kernel_;
-    }
-
-  private:
-    ComputingKernelType &computing_kernel_;
-};
-} // namespace execution
 } // namespace SPH
-#endif // EXECUTION_H
+#endif // PARTICLE_ITERATORS_SYCL_H

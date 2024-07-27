@@ -21,42 +21,49 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution.h
- * @brief 	Here we define the execution policy relevant to parallel computing.
- * @details This analog of the standard library on the same functions.
- * @author	Alberto Guarnieri and Xiangyu Hu
+ * @file 	dynamics_algorithms_sycl.h
+ * @brief TBD.
+ * @author Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_H
-#define EXECUTION_H
+#ifndef DYNAMICS_ALGORITHMS_SYCL_H
+#define DYNAMICS_ALGORITHMS_SYCL_H
 
-#include "execution_policy.h"
+#include "dynamics_algorithms.h"
+#include "particle_iterators_sycl.h"
 
 namespace SPH
 {
-namespace execution
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+class SimpleDynamicsSYCL : public LocalDynamicsType, public BaseDynamics<void>
 {
-template <typename... T>
-class Implementation;
+    using ComputingKernelType = LocalDynamicsType::ComputingKernelType;
 
-template <class ComputingKernelType, class ExecutionPolicy>
-class Implementation<ComputingKernelType, ExecutionPolicy>
-{
   public:
-    Implementation() = default;
-
-    template <class... Args>
-    explicit Implementation(const ExecutionPolicy &execution_policy, Args &&...args)
-        : computing_kernel_(std::forward<Args>(args)...) {}
-
-    ComputingKernelType &getBuffer()
+    template <class DynamicsIdentifier, typename... Args>
+    SimpleDynamicsSYCL(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
+          BaseDynamics<void>(identifier.getSPHBody()),
+          computing_kernel_implementation_(this->computing_kernel_)
     {
-        return computing_kernel_;
-    }
+        static_assert(!has_initialize<ComputingKernelType>::value &&
+                          !has_interaction<ComputingKernelType>::value,
+                      "LocalDynamicsType does not fulfill SimpleDynamics requirements");
+    };
+    virtual ~SimpleDynamicsSYCL(){};
 
-  private:
-    ComputingKernelType &computing_kernel_;
+    virtual void exec(Real dt = 0.0) override
+    {
+        this->setUpdated();
+        this->setupDynamics(dt);
+        particle_for(computing_kernel_implementation_,
+                     this->LoopRange(),
+                     [&](size_t i, auto &&computing_kernel)
+                     { computing_kernel.update(i, dt); });
+    };
+
+  protected:
+    Implementation<ComputingKernelType, ExecutionPolicy> computing_kernel_implementation_;
 };
-} // namespace execution
 } // namespace SPH
-#endif // EXECUTION_H
+#endif // DYNAMICS_ALGORITHMS_SYCL_H
