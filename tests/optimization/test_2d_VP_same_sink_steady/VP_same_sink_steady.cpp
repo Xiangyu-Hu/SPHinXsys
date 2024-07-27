@@ -210,18 +210,10 @@ TEST(test_optimization, test_problem1_non_optimized)
     setup_diffusion_initial_condition.exec();
     setup_boundary_condition.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        diffusion_body.updateCellLinkedList();
-        diffusion_body_complex.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    int ite = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    int ite = 0;
     Real T0 = 10;
     Real End_Time = T0;
     int restart_output_interval = 1000;

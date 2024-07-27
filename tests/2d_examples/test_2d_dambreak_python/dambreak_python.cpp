@@ -94,6 +94,7 @@ class PreSettingCase : public Parameter
 class Environment : public PreSettingCase
 {
   protected:
+    SPHSystem &sph_system_;
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -154,6 +155,7 @@ class Environment : public PreSettingCase
   public:
     explicit Environment(int set_restart_step)
         : PreSettingCase(),
+          sph_system_(sph_system),
           water_block_inner(water_block),
           water_wall_contact(water_block, {&wall_boundary}),
           water_block_complex(water_block_inner, water_wall_contact),
@@ -183,16 +185,6 @@ class Environment : public PreSettingCase
         /** set restart step. */
         sph_system.setRestartStep(set_restart_step);
         //----------------------------------------------------------------------
-        //	Load restart file if necessary.
-        //----------------------------------------------------------------------
-        if (sph_system.RestartStep() != 0)
-        {
-            physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-            water_block.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
-            fluid_observer_contact.updateConfiguration();
-        }
-        //----------------------------------------------------------------------
         //	First output before the main loop.
         //----------------------------------------------------------------------
         body_states_recording.writeToFile();
@@ -213,8 +205,8 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     void runCase(Real End_time)
     {
-        /** Set restart number of iterations. */
-        size_t number_of_iterations = sph_system.RestartStep();
+        Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+        size_t number_of_iterations = 0;
         while (physical_time < End_time)
         {
             Real integration_time = 0.0;

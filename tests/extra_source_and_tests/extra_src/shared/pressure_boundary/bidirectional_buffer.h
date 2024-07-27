@@ -42,7 +42,7 @@ struct NonPrescribedPressure
     template <class BoundaryConditionType>
     NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real p)
+    Real operator()(Real p, Real current_time)
     {
         return p;
     }

@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
 
     //	Setup for time-stepping control
-    // size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     Real output_interval = end_time / number_of_outputs;
     Real dt = 0;
     Real Dt = 0;
