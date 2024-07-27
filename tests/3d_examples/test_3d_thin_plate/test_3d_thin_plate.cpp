@@ -113,22 +113,6 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
         }
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = physical_time;
-        return current_time < time_to_full_external_force
-                   ? current_time * global_acceleration_ / time_to_full_external_force
-                   : global_acceleration_;
-    }
-};
 } // namespace SPH
 
 /**

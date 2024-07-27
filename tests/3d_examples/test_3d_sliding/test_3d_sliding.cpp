@@ -165,15 +165,6 @@ void block_sliding(
     ObservedQuantityRecording<Vecd>
         write_cube_displacement("Position", cube_observer_contact);
 
-    auto check_disp = [&]()
-    {
-        const Vec3d analytical_disp = get_analytical_displacement(physical_time);
-        const Vec3d pos_observer = write_cube_displacement.getObservedQuantity()[0];
-        const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
-        for (int n = 0; n < 3; n++)
-            ASSERT_NEAR(abs(rotated_disp[n]), abs(analytical_disp[n]), max_error);
-    };
-
     // initialize
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
@@ -186,6 +177,16 @@ void block_sliding(
     int ite_output = 0;
     Real output_period = end_time / 20.0;
     Real dt = 0.0;
+
+    auto check_disp = [&]()
+    {
+        const Vec3d analytical_disp = get_analytical_displacement(physical_time);
+        const Vec3d pos_observer = write_cube_displacement.getObservedQuantity()[0];
+        const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
+        for (int n = 0; n < 3; n++)
+            ASSERT_NEAR(abs(rotated_disp[n]), abs(analytical_disp[n]), max_error);
+    };
+
     TickCount t1 = TickCount::now();
     const Real dt_ref = computing_time_step_size.exec();
     auto run_simulation = [&]()

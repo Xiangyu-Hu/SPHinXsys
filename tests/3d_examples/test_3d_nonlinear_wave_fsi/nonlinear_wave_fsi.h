@@ -456,7 +456,8 @@ class WaveMaking : public BodyPartMotionConstraint
     WaveMaking(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity_g),
-          acc_(particles_->registerSharedVariable<Vecd>("Acceleration"))
+          acc_(particles_->registerSharedVariable<Vecd>("Acceleration")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 
     {
         ComputeWaveChar();
@@ -464,7 +465,7 @@ class WaveMaking : public BodyPartMotionConstraint
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real time = physical_time;
+        Real time = *physical_time_;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
         acc_[index_i] = getAcceleration(time);
@@ -472,6 +473,7 @@ class WaveMaking : public BodyPartMotionConstraint
 
   protected:
     Vecd *acc_;
+    Real *physical_time_;
 };
 
 //----------------------------------------------------------------------

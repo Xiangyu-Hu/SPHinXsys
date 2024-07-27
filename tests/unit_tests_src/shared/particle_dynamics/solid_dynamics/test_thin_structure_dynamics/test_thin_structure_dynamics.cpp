@@ -99,15 +99,17 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
         : ConstrainShellBodyRegion(body_part),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~ControlledRotation(){};
 
   protected:
     Vecd *vel_, *angular_vel_, *pos_;
+    Real *physical_time_;
     Real rotation_v = Pi;
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real current_time = physical_time;
+        Real current_time = *physical_time_;
         if (current_time <= 0.5)
         {
             vel_[index_i] = Vecd(0.0, -rotation_v * pos_[index_i][2], rotation_v * pos_[index_i][1]);

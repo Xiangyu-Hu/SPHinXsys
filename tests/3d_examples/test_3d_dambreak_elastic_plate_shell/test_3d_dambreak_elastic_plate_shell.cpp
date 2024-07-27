@@ -135,14 +135,19 @@ class BoundaryGeometry : public BodyPartByParticle
 class GateMotionConstraint : public MotionConstraint<SPHBody>
 {
   public:
-    GateMotionConstraint(SPHBody &body) : MotionConstraint<SPHBody>(body){};
+    GateMotionConstraint(SPHBody &body)
+        : MotionConstraint<SPHBody>(body),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~GateMotionConstraint(){};
     void update(size_t index_i, Real dt)
     {
-        Real run_time = physical_time;
+        Real run_time = *physical_time_;
         Real h_g = -285.115 * run_time * run_time * run_time + 72.305 * run_time * run_time + 0.1463 * run_time;
         pos_[index_i][1] = pos0_[index_i][1] + h_g;
     };
+
+  protected:
+    Real *physical_time_;
 };
 
 // the main program with commandline options

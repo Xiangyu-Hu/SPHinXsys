@@ -429,6 +429,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	 Physical parameters for main loop.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;

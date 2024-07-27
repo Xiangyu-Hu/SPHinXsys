@@ -208,21 +208,6 @@ int main(int ac, char *av[])
     structure_normal_direction.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
-        wall_boundary.updateCellLinkedList();
-        structure.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
-        structure_contact.updateConfiguration();
-        observer_contact_with_water.updateConfiguration();
-        fp2_contact_w.updateConfiguration();
-        fp3_contact_w.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");

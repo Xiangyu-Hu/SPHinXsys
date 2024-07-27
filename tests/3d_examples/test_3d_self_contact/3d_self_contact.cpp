@@ -169,6 +169,7 @@ int main(int ac, char *av[])
     coil_constant_gravity.exec();
     write_states.writeToFile(0);
     // Setup time stepping control parameters.
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 10.0;
     Real output_period = end_time / 100.0;

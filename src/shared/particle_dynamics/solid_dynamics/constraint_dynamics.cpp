@@ -1,5 +1,5 @@
 #include "constraint_dynamics.h"
-#include <numeric>
+#include "sph_system.hpp"
 
 namespace SPH
 {

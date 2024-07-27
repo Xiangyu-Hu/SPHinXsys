@@ -185,15 +185,6 @@ int main(int ac, char *av[])
     soil_initial_condition.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        soil_block.updateCellLinkedList();
-        soil_block_complex.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
