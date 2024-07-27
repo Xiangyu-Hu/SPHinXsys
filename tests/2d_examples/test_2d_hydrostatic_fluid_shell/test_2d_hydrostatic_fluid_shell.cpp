@@ -303,6 +303,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 0.2; /**< End time. */
