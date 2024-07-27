@@ -37,15 +37,19 @@ class MyocardiumActivation
 {
   public:
     explicit MyocardiumActivation(SPHBody &sph_body)
-        : active_muscle_dynamics::MuscleActivation(sph_body){};
+        : active_muscle_dynamics::MuscleActivation(sph_body),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
 
     void update(size_t index_i, Real dt)
     {
         Real voltage = pos0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos0_[index_i][0] / PL;
-        active_contraction_stress_[index_i] += physical_time <= 1.0
+        active_contraction_stress_[index_i] += *physical_time_ <= 1.0
                                                    ? linear_active_stress_factor * voltage * dt
                                                    : 0.0;
     };
+
+  protected:
+    Real *physical_time_;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -97,13 +101,13 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.2;
     Real output_period = end_time / 60.0;

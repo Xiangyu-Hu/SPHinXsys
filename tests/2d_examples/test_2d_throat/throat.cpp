@@ -163,7 +163,7 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
     Gravity gravity(Vecd(gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(fluid_block, gravity);
     InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
 

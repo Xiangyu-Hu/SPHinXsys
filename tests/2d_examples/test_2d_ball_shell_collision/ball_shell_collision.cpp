@@ -168,7 +168,7 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> ball_constant_gravity(ball, constant_gravity);
+    SimpleDynamics<GravityForce<Gravity>> ball_constant_gravity(ball, constant_gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
 
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> ball_stress_relaxation_first_half(ball_inner);
@@ -194,6 +194,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 10.0;
     Real end_time = T0;

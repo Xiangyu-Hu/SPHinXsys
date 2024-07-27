@@ -112,6 +112,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 0.02; // for steady state
     Real End_Time = T0;

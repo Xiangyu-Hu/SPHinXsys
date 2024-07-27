@@ -147,7 +147,6 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     moving_plate_normal_direction.exec();
@@ -156,6 +155,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.1;
     Real output_period = end_time / 100.0;

@@ -110,8 +110,8 @@ int main(int ac, char *av[])
     SimpleDynamics<ImposingActiveStrain> imposing_active_strain(fish_body);
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal(fish_body);
 
-    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
-    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
+    StartupAcceleration time_dependent_acceleration(Vec2d::Zero(), 2.0);
+    SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);

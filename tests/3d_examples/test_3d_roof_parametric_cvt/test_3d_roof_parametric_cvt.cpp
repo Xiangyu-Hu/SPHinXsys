@@ -363,7 +363,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> apply_constant_gravity(shell_body, constant_gravity);
+    SimpleDynamics<GravityForce<Gravity>> apply_constant_gravity(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);

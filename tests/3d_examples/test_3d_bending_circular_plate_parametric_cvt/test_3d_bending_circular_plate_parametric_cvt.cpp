@@ -245,7 +245,7 @@ return_data bending_circular_plate(Real dp_ratio)
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_force(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);

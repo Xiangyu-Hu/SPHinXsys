@@ -236,7 +236,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 10.0;   /**< End time. */

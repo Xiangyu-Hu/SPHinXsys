@@ -157,7 +157,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(cream, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
 
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
@@ -188,6 +188,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 0.75;
     Real end_time = T0;

@@ -139,7 +139,7 @@ void block_sliding(
     // gravity
     const Real g = 9.81;
     Gravity gravity(rotation * (-g * Vec3d::UnitY()));
-    SimpleDynamics<GravityForce> constant_gravity(cube_body, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(cube_body, gravity);
 
     // analytical solution
     Real sin_theta = sin(slope_angle);

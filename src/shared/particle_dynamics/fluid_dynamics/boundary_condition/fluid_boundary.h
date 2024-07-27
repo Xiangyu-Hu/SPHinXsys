@@ -91,7 +91,8 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
         : BaseFlowBoundaryCondition(aligned_box_part),
           relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBoxShape()),
           transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
-          target_velocity(*this){};
+          target_velocity(*this),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~InflowVelocityCondition(){};
     AlignedBoxShape &getAlignedBox() { return aligned_box_; };
 
@@ -101,7 +102,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
         {
             Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
             Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-            Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity) * relaxation_rate_ +
+            Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity, *physical_time_) * relaxation_rate_ +
                                           frame_velocity * (1.0 - relaxation_rate_);
             vel_[index_i] = transform_.xformFrameVecToBase(relaxed_frame_velocity);
         }
@@ -113,6 +114,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
     Transform &transform_;
     Vecd halfsize_;
     TargetVelocity target_velocity;
+    Real *physical_time_;
 };
 
 /**
@@ -131,6 +133,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
     Vecd *pos_, *vel_;
     int *indicator_;
     TargetVelocity target_velocity;
+    Real *physical_time_;
 
   public:
     explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transform &transform = Transform())
@@ -140,7 +143,8 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           indicator_(particles_->getVariableDataByName<int>("Indicator")),
-          target_velocity(*this){};
+          target_velocity(*this),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~FreeStreamVelocityCorrection(){};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -150,7 +154,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
             Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
             Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
             Real frame_u_stream_direction = frame_velocity[0];
-            Real u_freestream = target_velocity(frame_position, frame_velocity)[0];
+            Real u_freestream = target_velocity(frame_position, frame_velocity, *physical_time_)[0];
             frame_velocity[0] = u_freestream + (frame_u_stream_direction - u_freestream) *
                                                    SMIN(rho_sum_[index_i], rho0_) / rho0_;
             vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);

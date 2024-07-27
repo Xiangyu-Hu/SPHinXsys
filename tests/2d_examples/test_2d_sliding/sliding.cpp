@@ -103,7 +103,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(free_cube, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
@@ -139,6 +139,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 2.5;
     Real end_time = T0;

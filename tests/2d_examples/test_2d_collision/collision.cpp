@@ -183,8 +183,8 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
-    SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
+    SimpleDynamics<GravityForce<Gravity>> free_ball_constant_gravity(free_ball, gravity);
+    SimpleDynamics<GravityForce<Gravity>> damping_ball_constant_gravity(damping_ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
 
@@ -231,6 +231,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 10.0;
     Real end_time = T0;

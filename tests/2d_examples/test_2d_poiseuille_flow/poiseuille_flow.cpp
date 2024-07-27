@@ -108,7 +108,7 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_complex(water_block_inner, water_wall_contact);
 
@@ -146,7 +146,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 100.0;  /**< End time. */
     Real Output_Time = 1.0; /**< Time stamps for output of body states. */

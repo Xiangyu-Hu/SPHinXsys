@@ -24,7 +24,7 @@ GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ans
 //=================================================================================================//
 BoundaryConditionSetupInFVM::
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
-    : DataDelegateInner(inner_relation),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),

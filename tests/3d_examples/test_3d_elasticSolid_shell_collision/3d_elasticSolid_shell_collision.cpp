@@ -150,7 +150,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(ball, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
@@ -180,6 +180,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 10.0;
     Real end_time = T0;

@@ -130,7 +130,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfInnerRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerRiemann> density_relaxation(water_block_inner);

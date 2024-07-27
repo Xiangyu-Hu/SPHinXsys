@@ -114,6 +114,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Setup time-stepping related simulation parameters.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.0e-4;
     int screen_output_interval = 100;

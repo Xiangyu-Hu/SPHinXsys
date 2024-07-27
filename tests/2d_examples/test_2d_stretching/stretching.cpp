@@ -282,6 +282,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int Dt_ite = 0;
     Real End_Time = 100.0;

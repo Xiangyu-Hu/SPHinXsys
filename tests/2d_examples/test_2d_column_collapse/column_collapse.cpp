@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(soil_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
@@ -130,7 +130,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;

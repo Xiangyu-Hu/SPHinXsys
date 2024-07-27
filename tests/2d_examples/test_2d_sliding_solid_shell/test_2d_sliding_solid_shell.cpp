@@ -116,7 +116,7 @@ void run_simulation()
     Transform transform2d((Rotation2d(-angle)));
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(free_cube, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(free_cube, gravity);
     /** Kernel correction. */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     /** stress relaxation for the solid body. */
@@ -169,6 +169,7 @@ void run_simulation()
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 4.0;
     Real end_time = T0;

@@ -168,6 +168,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int relax_step = 1000;
     while (ite < relax_step)

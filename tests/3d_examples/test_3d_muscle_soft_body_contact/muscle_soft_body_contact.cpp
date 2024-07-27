@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(-100.0, 0.0, 0.0));
-    SimpleDynamics<GravityForce> plate_initialize_constant_gravity(moving_plate, gravity);
+    SimpleDynamics<GravityForce<Gravity>> plate_initialize_constant_gravity(moving_plate, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
@@ -117,7 +117,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    physical_time = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
@@ -126,6 +126,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.1;
     Real output_period = end_time / 100.0;

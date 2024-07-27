@@ -13,7 +13,7 @@ PositionTranslate<DynamicsIdentifier>::
     PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation)
     : MotionConstraint<DynamicsIdentifier>(identifier),
       start_time_(start_time), end_time_(end_time),
-      physical_time_(this->sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
+      physical_time_(this->sph_system_.template getSystemVariableDataByName<Real>("PhysicalTime")),
       translation_(translation) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -94,7 +94,7 @@ void TotalForceForSimBody<DynamicsIdentifier>::setupDynamics(Real dt)
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
-SimTK::SpatialVec TotalForceForSimBody<DynamicsIdentifier>::reduce(size_t index_i, Real dt = 0.0)
+SimTK::SpatialVec TotalForceForSimBody<DynamicsIdentifier>::reduce(size_t index_i, Real dt)
 {
     Vecd force = force_[index_i] + force_prior_[index_i];
     SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));

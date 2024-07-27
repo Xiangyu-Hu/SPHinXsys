@@ -28,5 +28,12 @@ Vecd StartupAcceleration::InducedAcceleration(const Vecd &position, Real physica
     return time_factor < 1.0 ? Gravity::InducedAcceleration() : Vecd::Zero();
 }
 //=================================================================================================//
+Vecd IncreaseToFullGravity::InducedAcceleration(const Vecd &position, Real physical_time)
+{
+    Real time_factor = physical_time / time_to_full_gravity_;
+    Vecd full_gravity = Gravity::InducedAcceleration();
+    return time_factor < 1.0 ? time_factor * full_gravity : full_gravity;
+}
+//=================================================================================================//
 } // namespace SPH
   //=================================================================================================//

@@ -148,6 +148,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.8;
     Real output_period = end_time / 100.0;

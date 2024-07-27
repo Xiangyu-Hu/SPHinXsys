@@ -105,7 +105,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);

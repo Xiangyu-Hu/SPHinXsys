@@ -221,6 +221,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */

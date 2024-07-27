@@ -63,7 +63,7 @@ int main(int ac, char *av[])
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
     SimpleDynamics<OffsetInitialPosition> flap_offset_position(flap, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);

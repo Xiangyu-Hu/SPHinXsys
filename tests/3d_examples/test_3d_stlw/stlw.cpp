@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity_to_fluid(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_fluid(water_block, gravity);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_wall_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);

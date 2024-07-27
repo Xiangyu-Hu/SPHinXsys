@@ -111,7 +111,7 @@ class Environment : public PreSettingCase
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity;
-    SimpleDynamics<GravityForce> constant_gravity;
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity;
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation;

@@ -223,7 +223,7 @@ int main(int ac, char *av[])
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> plate_constraint(plate_boundary_geometry);
     // fluid
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>>
         pressure_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>>
@@ -273,7 +273,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 10;
     Real output_interval = end_time / 200.0;
     Real dt = 0.0;   // default acoustic time step sizes

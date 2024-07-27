@@ -134,7 +134,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_body_inner, water_body_contact);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_body, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_body, gravity);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 
@@ -165,7 +165,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Time stepping control parameters.
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 30.0;
     Real output_interval = 0.1;

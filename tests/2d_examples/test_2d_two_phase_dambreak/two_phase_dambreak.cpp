@@ -61,8 +61,8 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromSubShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity_to_water(water_block, gravity);
-    SimpleDynamics<GravityForce> constant_gravity_to_air(air_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_water(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_air(air_block, gravity);
     InteractionDynamics<fluid_dynamics::BoundingFromWall> air_near_wall_bounding(air_wall_contact);
 
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann>

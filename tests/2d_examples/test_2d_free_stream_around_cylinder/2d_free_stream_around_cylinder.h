@@ -74,11 +74,10 @@ struct FreeStreamVelocity
     FreeStreamVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = Vecd::Zero();
-        Real run_time = physical_time;
-        target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        target_velocity[0] = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
         return target_velocity;
     }
 };

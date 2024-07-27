@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     //	This section define all numerical methods will be used in this case.
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -1.0, 0.0));
-    SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
+    SimpleDynamics<GravityForce<Gravity>> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
 

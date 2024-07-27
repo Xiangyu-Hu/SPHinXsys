@@ -180,7 +180,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 100.0;
     Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
